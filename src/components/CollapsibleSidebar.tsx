@@ -182,7 +182,7 @@ const DesktopSidebar = ({
             <img 
               src={hubGifImg} 
               alt="H" 
-              className="h-10 w-12 object-contain"
+              className="h-10 w-16 object-contain"
               style={{ imageRendering: 'pixelated' }}
             />
           )}
@@ -369,14 +369,3 @@ const Logo = () => {
     </div>
   );
 };
-
-const LogoIcon = () => (
-  <div className="flex items-center justify-center w-12 h-10 bg-yellow-500 rounded-lg border-2 border-yellow-700 shadow-sm">
-    <img 
-      src={hubGifImg} 
-      alt="Hub Icon" 
-      className="w-10 h-8 object-contain"
-      style={{ imageRendering: 'pixelated' }}
-    />
-  </div>
-);

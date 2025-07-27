@@ -13,6 +13,8 @@ import emblema2Img from '../assets/1136__-4HX.png';
 import creditosImg from '../assets/gcreate_icon_credit.png';
 import ducketsImg from '../assets/619__-O-.png';
 import diamantesImg from '../assets/Diamante.png';
+import backgroundImg from '../assets/203__-100.png';
+import forumBgImg from '../assets/1211__-3V6.png';
 
 export const HomePage = () => {
   const { t } = useLanguage();
@@ -25,7 +27,7 @@ export const HomePage = () => {
       <PageHeader 
         title="Bem-vindo ao Habbo Hub!"
         icon={batePapoImg}
-        backgroundImage="/assets/203__-100.png"
+        backgroundImage={backgroundImg}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -162,7 +164,7 @@ export const HomePage = () => {
             className="relative bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg p-4 text-white overflow-hidden cursor-pointer hover:from-purple-700 hover:to-blue-700 transition-all"
             onClick={() => window.location.hash = 'forum'}
             style={{ 
-              backgroundImage: 'url(/assets/1211__-3V6.png)',
+              backgroundImage: `url(${forumBgImg})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
