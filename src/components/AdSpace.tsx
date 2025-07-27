@@ -101,10 +101,12 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
       style={{
         width: config.width,
         height: config.height,
-        background: getCSSBackground(),
-        maxWidth: type === 'horizontal' || type === 'wide' ? '728px' : 'auto',
-        border: '2px solid #333',
-        boxShadow: 'inset 0 0 0 2px #fff, inset 0 0 0 4px #333'
+        backgroundImage: `url(${config.image})`,
+        backgroundSize: 'contain',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
+        imageRendering: 'pixelated',
+        maxWidth: type === 'horizontal' || type === 'wide' ? '728px' : 'auto'
       }}
     >
       <div 
