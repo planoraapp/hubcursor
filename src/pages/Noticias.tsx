@@ -33,6 +33,19 @@ const Noticias = () => {
             <News />
           </div>
           
+          <div className="flex justify-center gap-4 mt-6">
+            <img 
+              src="/assets/98__-2tN._-4Ni.png" 
+              alt="Decoração Habbo" 
+              className="max-h-20 object-contain opacity-80"
+            />
+            <img 
+              src="/assets/classe_aula.png" 
+              alt="Decoração Habbo" 
+              className="max-h-20 object-contain opacity-80"
+            />
+          </div>
+          
           <AdSpace type="wide" className="mt-6" />
         </main>
       </div>

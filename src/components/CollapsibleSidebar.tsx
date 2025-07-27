@@ -57,55 +57,55 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'home', 
       label: 'Home', 
-      icon: Home,
+      icon: '/assets/home.png',
       path: '/'
     },
     { 
       id: 'noticias', 
       label: 'Notícias', 
-      icon: Newspaper,
+      icon: '/assets/news.png',
       path: '/noticias'
     },
     { 
       id: 'eventos', 
       label: 'Eventos', 
-      icon: Calendar,
+      icon: '/assets/eventos.png',
       path: '/eventos'
     },
     { 
       id: 'forum', 
       label: 'Fórum', 
-      icon: MessageSquare,
+      icon: '/assets/BatePapo1.png',
       path: '/forum'
     },
     { 
       id: 'catalogo', 
       label: 'Catálogo', 
-      icon: ShoppingCart,
+      icon: '/assets/Image 2422.png',
       path: '/catalogo'
     },
     { 
       id: 'emblemas', 
       label: 'Emblemas', 
-      icon: Shield,
+      icon: '/assets/emblemas.png',
       path: '/emblemas'
     },
     { 
       id: 'editor', 
       label: 'Editor de Visuais', 
-      icon: Palette,
+      icon: '/assets/editorvisuais.png',
       path: '/editor'
     },
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: Store,
+      icon: '/assets/purse.png',
       path: '/mercado'
     },
     { 
       id: 'ferramentas', 
       label: 'Ferramentas', 
-      icon: Wrench,
+      icon: '/assets/ferramentas.png',
       path: '/ferramentas'
     }
   ];
@@ -158,11 +158,19 @@ const DesktopSidebar = ({
         <div className="flex items-center justify-center p-4">
           {open ? (
             <div className="text-center">
-              <h1 className="text-lg font-bold text-gray-800">HABBO HUB</h1>
+              <img 
+                src="/assets/habbohub.gif" 
+                alt="HABBO HUB" 
+                className="max-w-[180px] h-auto"
+              />
             </div>
           ) : (
-            <div className="text-center">
-              <h1 className="text-sm font-bold text-gray-800">H</h1>
+            <div className="text-center w-20">
+              <img 
+                src="/assets/hub.gif" 
+                alt="HUB" 
+                className="w-full h-auto"
+              />
             </div>
           )}
         </div>
@@ -191,7 +199,15 @@ const DesktopSidebar = ({
                 `}
               >
                 <div className={`flex-shrink-0 ${!open ? '' : 'mr-3'}`}>
-                  {typeof Icon === 'function' ? <Icon /> : <Icon size={open ? 24 : 28} />}
+                  {typeof item.icon === 'string' ? (
+                    <img 
+                      src={item.icon} 
+                      alt={item.label} 
+                      className={`${open ? 'w-6 h-6' : 'w-7 h-7'} object-contain`}
+                    />
+                  ) : (
+                    <Icon size={open ? 24 : 28} />
+                  )}
                 </div>
                 <motion.span
                   animate={{
@@ -242,7 +258,11 @@ const MobileHeader = ({
     <div className="md:hidden w-full">
       {/* Mobile Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-amber-50 border-b-2 border-amber-200 px-4 py-3 flex items-center justify-between shadow-lg">
-        <Logo />
+        <img 
+          src="/assets/habbohub.gif" 
+          alt="HABBO HUB" 
+          className="h-8 w-auto"
+        />
         <div className="flex items-center space-x-3">
           <UserProfile collapsed={true} />
           <Menu
@@ -256,7 +276,6 @@ const MobileHeader = ({
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-amber-50 border-t-2 border-amber-200 px-4 py-2 shadow-lg">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {navItems.slice(0, 5).map((item) => {
-            const Icon = item.icon;
             return (
               <button
                 key={item.id}
@@ -269,7 +288,15 @@ const MobileHeader = ({
                   }
                 `}
               >
-                {typeof Icon === 'function' ? <Icon /> : <Icon size={24} />}
+                {typeof item.icon === 'string' ? (
+                  <img 
+                    src={item.icon} 
+                    alt={item.label} 
+                    className="w-6 h-6 object-contain"
+                  />
+                ) : (
+                  <item.icon size={24} />
+                )}
               </button>
             );
           })}
@@ -288,7 +315,11 @@ const MobileHeader = ({
             style={{ paddingTop: '80px', paddingBottom: '80px' }}
           >
             <div className="flex justify-between items-center mb-8">
-              <Logo />
+              <img 
+                src="/assets/habbohub.gif" 
+                alt="HABBO HUB" 
+                className="h-8 w-auto"
+              />
               <X
                 className="text-gray-800 cursor-pointer w-6 h-6"
                 onClick={() => setOpen(false)}
@@ -301,7 +332,6 @@ const MobileHeader = ({
 
             <nav className="flex flex-col space-y-2 flex-1">
               {navItems.map((item) => {
-                const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
@@ -317,7 +347,15 @@ const MobileHeader = ({
                        }
                      `}
                   >
-                    {typeof Icon === 'function' ? <Icon /> : <Icon size={20} />}
+                    {typeof item.icon === 'string' ? (
+                      <img 
+                        src={item.icon} 
+                        alt={item.label} 
+                        className="w-5 h-5 object-contain"
+                      />
+                    ) : (
+                      <item.icon size={20} />
+                    )}
                     <span>{item.label}</span>
                   </button>
                 );
@@ -333,8 +371,10 @@ const MobileHeader = ({
 
 const Logo = () => {
   return (
-    <div className="font-normal flex flex-col items-center text-sm text-black">
-      <h1 className="text-lg font-bold text-gray-800">HABBO HUB</h1>
-    </div>
+    <img 
+      src="/assets/habbohub.gif" 
+      alt="HABBO HUB" 
+      className="h-8 w-auto"
+    />
   );
 };

@@ -33,6 +33,19 @@ const Mercado = () => {
             <Marketplace />
           </div>
           
+          <div className="flex justify-center gap-4 mt-6">
+            <img 
+              src="/assets/1686__-sQ.png" 
+              alt="Decoração Habbo" 
+              className="max-h-20 object-contain opacity-80"
+            />
+            <img 
+              src="/assets/classe_aula.png" 
+              alt="Decoração Habbo" 
+              className="max-h-20 object-contain opacity-80"
+            />
+          </div>
+          
           <AdSpace type="wide" className="mt-6" />
         </main>
       </div>
