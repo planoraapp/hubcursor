@@ -36,26 +36,26 @@ export const UserProfile = () => {
 
   return (
     <div className="px-4 mb-6">
-      <div className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+      <div className="flex flex-col items-center bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
         <div className="relative mb-3">
           <img
             src={getAvatarUrl(userData?.figureString)}
             alt={userData?.name || t('userNameGuest')}
-            className="w-20 h-20 rounded-full border-4 border-white/50 shadow-lg bg-white/20 backdrop-blur-sm"
+            className="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white/20 backdrop-blur-sm"
           />
           <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white ${userData?.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
         </div>
         
-        <h3 className="font-bold text-white text-center mb-1">
+        <h3 className="font-bold text-gray-800 text-center mb-1">
           {userData?.name || t('userNameGuest')}
         </h3>
         
-        <p className={`text-xs ${userData?.online ? 'text-green-200' : 'text-red-200'} mb-2`}>
+        <p className={`text-xs mb-2 ${userData?.online ? 'text-green-600' : 'text-red-600'}`}>
           {userData?.online ? t('onlineStatus') : t('offlineStatus')}
         </p>
         
         {userData?.motto && (
-          <p className="text-xs text-white/70 text-center mb-3 italic">"{userData.motto}"</p>
+          <p className="text-xs text-gray-600 text-center mb-3 italic">"{userData.motto}"</p>
         )}
 
         {!isLoggedIn && !showLoginForm && (
@@ -74,7 +74,7 @@ export const UserProfile = () => {
               value={loginUsername}
               onChange={(e) => setLoginUsername(e.target.value)}
               placeholder="Nome do usuário Habbo..."
-              className="w-full px-3 py-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white placeholder-white/60 focus:outline-none focus:border-white/50 text-sm"
+              className="w-full px-3 py-2 rounded-lg bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 placeholder-gray-500 focus:outline-none focus:border-sky-400 text-sm"
               disabled={loading}
             />
             <div className="flex space-x-2">

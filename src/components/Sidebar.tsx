@@ -27,7 +27,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   };
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-sky-400 to-blue-600 shadow-xl flex flex-col min-h-screen">
+    <aside className="w-64 bg-gradient-to-b from-slate-100 to-slate-200 shadow-xl flex flex-col min-h-screen">
       <div className="text-center mb-6 p-6">
         <img 
           src="/assets/habbohub.png" 
@@ -48,8 +48,8 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
               className={`
                 flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
                 ${activeSection === item.id 
-                  ? 'bg-white/30 text-white shadow-lg border-l-4 border-white' 
-                  : 'text-white/80 hover:bg-white/20 hover:text-white'
+                  ? 'bg-sky-400 text-white shadow-md' 
+                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-sm'
                 }
               `}
             >
@@ -60,9 +60,9 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
         })}
       </nav>
       
-      <div className="p-4 bg-white/10 backdrop-blur-sm mx-4 rounded-lg mb-4">
-        <h3 className="font-bold text-white mb-2">{t('habboPremiumTitle')}</h3>
-        <p className="text-sm text-white/80 mb-3">{t('habboPremiumDesc')}</p>
+      <div className="p-4 bg-white/80 backdrop-blur-sm mx-4 rounded-lg mb-4 shadow-sm">
+        <h3 className="font-bold text-gray-800 mb-2">{t('habboPremiumTitle')}</h3>
+        <p className="text-sm text-gray-600 mb-3">{t('habboPremiumDesc')}</p>
         <button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-200">
           {t('subscribeNow')}
         </button>
