@@ -23,7 +23,7 @@ const Ferramentas = () => {
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
           <PageHeader 
             title="Ferramentas Habbo"
-            icon="/assets/wireds.png"
+            icon="/assets/ferramentas.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
           

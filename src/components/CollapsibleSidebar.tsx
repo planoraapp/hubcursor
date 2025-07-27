@@ -99,7 +99,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: '/assets/purse.png',
+      icon: '/assets/purse.gif',
       path: '/mercado'
     },
     { 
@@ -223,20 +223,6 @@ const DesktopSidebar = ({
           })}
         </nav>
 
-        {/* Premium Section */}
-        <motion.div
-          animate={{
-            opacity: animate ? (open ? 1 : 0) : 1,
-            display: animate ? (open ? "block" : "none") : "block",
-          }}
-          className="p-4 bg-white/80 backdrop-blur-sm mx-4 rounded-lg mb-4 shadow-sm"
-        >
-          <h3 className="font-bold text-gray-800 mb-2">Habbo Hub Premium</h3>
-          <p className="text-sm text-gray-600 mb-3">Desbloqueie filtros avançados!</p>
-          <button className="w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg border-2 border-yellow-700 hover:bg-yellow-600 transition-all duration-200 shadow-sm">
-            Assine Já!
-          </button>
-        </motion.div>
 
       </div>
     </motion.aside>
