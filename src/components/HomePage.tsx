@@ -1,136 +1,174 @@
-
-import { useState, useEffect } from 'react';
 import { PanelCard } from './PanelCard';
-import { RoomsChart } from './RoomsChart';
-import { useHotelStats, useTopUsers } from '../hooks/useHabboData';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const HomePage = () => {
   const { t } = useLanguage();
-  const { data: hotelStats } = useHotelStats();
-  const { data: topUsers } = useTopUsers();
-
-  const [news, setNews] = useState([
-    {
-      title: '🎉 Bem-vindo ao Habbo Hub!',
-      content: 'Explore as ferramentas mais completas para jogadores de Habbo Hotel. Descubra quartos, catálogos, rankings e muito mais!',
-      date: 'Hoje',
-      source: 'Oficial'
-    },
-    {
-      title: '📊 Dados em Tempo Real',
-      content: 'Agora utilizamos a API oficial do Habbo para fornecer informações atualizadas sobre usuários, quartos e emblemas.',
-      date: 'Hoje',
-      source: 'Atualização'
-    }
-  ]);
-
-  const [featuredRooms, setFeaturedRooms] = useState([
-    { name: 'Quarto da Comunidade', visitors: 45 },
-    { name: 'Festa no Jardim', visitors: 32 },
-    { name: 'Balada Secreta', visitors: 28 },
-    { name: 'Hall dos Troféus', visitors: 22 },
-    { name: 'Piscina Relaxante', visitors: 18 }
-  ]);
 
   return (
-    <div className="space-y-8">
-      <PanelCard title={t('homeTitle')}>
-        <p className="text-lg text-gray-600 mb-6">
-          {t('homeSubtitle')}
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PanelCard title={t('latestNews')}>
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888]">
-                <h4 className="font-bold text-gray-800 mb-2">🎉 Bem-vindo ao Habbo Hub!</h4>
-                <p className="text-sm text-gray-600 mb-2">
-                  Explore as ferramentas mais completas para jogadores de Habbo Hotel. 
-                  Descubra quartos, catálogos, rankings e muito mais!
-                </p>
-                <span className="text-xs text-gray-500">Hoje • Oficial</span>
-              </div>
-              
-              <div className="bg-gradient-to-r from-green-100 to-blue-100 p-4 rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888]">
-                <h4 className="font-bold text-gray-800 mb-2">📊 Dados em Tempo Real</h4>
-                <p className="text-sm text-gray-600 mb-2">
-                  Agora utilizamos a API oficial do Habbo para fornecer informações 
-                  atualizadas sobre usuários, quartos e emblemas.
-                </p>
-                <span className="text-xs text-gray-500">Hoje • Atualização</span>
+    <div className="space-y-6">
+      {/* Welcome Banner */}
+      <div 
+        className="relative bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-white overflow-hidden"
+        style={{ 
+          backgroundImage: 'url(/assets/203__-100.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        <div className="absolute inset-0 bg-black/40 rounded-lg"></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold mb-4">Bem-vindo ao Habbo Hub! 🎉</h1>
+          <p className="text-xl opacity-90">
+            Sua central completa para o mundo Habbo - Notícias, Catálogo, Emblemas e muito mais!
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Quick Actions */}
+        <PanelCard title="Acesso Rápido">
+          <div className="grid grid-cols-2 gap-4">
+            <button 
+              onClick={() => window.location.hash = 'catalogo'}
+              className="flex flex-col items-center p-4 bg-gradient-to-b from-blue-100 to-blue-200 rounded-lg hover:from-blue-200 hover:to-blue-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
+            >
+              <img src="/assets/Image 2422.png" alt="Catálogo" className="w-12 h-12 mb-2" />
+              <span className="font-bold text-gray-800">Catálogo</span>
+            </button>
+            
+            <button 
+              onClick={() => window.location.hash = 'emblemas'}
+              className="flex flex-col items-center p-4 bg-gradient-to-b from-green-100 to-green-200 rounded-lg hover:from-green-200 hover:to-green-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
+            >
+              <img src="/assets/264__-HG.png" alt="Emblemas" className="w-12 h-12 mb-2" />
+              <span className="font-bold text-gray-800">Emblemas</span>
+            </button>
+            
+            <button 
+              onClick={() => window.location.hash = 'forum'}
+              className="flex flex-col items-center p-4 bg-gradient-to-b from-purple-100 to-purple-200 rounded-lg hover:from-purple-200 hover:to-purple-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
+            >
+              <img src="/assets/BatePapo1.png" alt="Fórum" className="w-12 h-12 mb-2" />
+              <span className="font-bold text-gray-800">Fórum</span>
+            </button>
+            
+            <button 
+              onClick={() => window.location.hash = 'mercado'}
+              className="flex flex-col items-center p-4 bg-gradient-to-b from-yellow-100 to-yellow-200 rounded-lg hover:from-yellow-200 hover:to-yellow-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
+            >
+              <img src="/assets/Image 1574.png" alt="Mercado" className="w-12 h-12 mb-2" />
+              <span className="font-bold text-gray-800">Mercado</span>
+            </button>
+          </div>
+        </PanelCard>
+
+        {/* Latest News Preview */}
+        <PanelCard title="Últimas Notícias">
+          <div className="space-y-3">
+            <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-gray-300">
+              <h4 className="font-bold text-gray-800 mb-1">🎉 Novo evento disponível!</h4>
+              <p className="text-sm text-gray-600">Participe do evento especial de inverno e ganhe móveis exclusivos.</p>
+              <span className="text-xs text-gray-500">Há 2 horas</span>
+            </div>
+            
+            <div className="p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-gray-300">
+              <h4 className="font-bold text-gray-800 mb-1">📦 Novos raros no catálogo</h4>
+              <p className="text-sm text-gray-600">Confira os novos móveis raros disponíveis por tempo limitado.</p>
+              <span className="text-xs text-gray-500">Há 5 horas</span>
+            </div>
+            
+            <button 
+              onClick={() => window.location.hash = 'noticias'}
+              className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Ver todas as notícias
+            </button>
+          </div>
+        </PanelCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Latest Badges */}
+        <PanelCard title="Últimos Emblemas">
+          <div className="space-y-3">
+            <div className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-gray-300">
+              <img src="/assets/595__-3CQ.png" alt="Emblema" className="w-10 h-10 mr-3" />
+              <div>
+                <h5 className="font-bold text-gray-800">Explorador</h5>
+                <p className="text-xs text-gray-600">Visite 50 quartos diferentes</p>
               </div>
             </div>
-          </PanelCard>
-
-          <PanelCard title={t('featuredRooms')}>
-            <RoomsChart />
-          </PanelCard>
-        </div>
-      </PanelCard>
-
-      <PanelCard title="Estatísticas do Hotel">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.activeUsers || 'Carregando...'}</h3>
-            <p className="text-sm text-gray-600">Habbos Online</p>
+            
+            <div className="flex items-center p-3 bg-gradient-to-r from-pink-50 to-red-50 rounded-lg border border-gray-300">
+              <img src="/assets/1136__-4HX.png" alt="Emblema" className="w-10 h-10 mr-3" />
+              <div>
+                <h5 className="font-bold text-gray-800">Colecionador</h5>
+                <p className="text-xs text-gray-600">Possua 100 móveis únicos</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => window.location.hash = 'emblemas'}
+              className="w-full px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 transition-colors"
+            >
+              Ver todos
+            </button>
           </div>
-          <div className="text-center">
-            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.totalRooms || 'Carregando...'}</h3>
-            <p className="text-sm text-gray-600">Quartos Criados</p>
-          </div>
-          <div className="text-center">
-            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.totalBadges || 'Carregando...'}</h3>
-            <p className="text-sm text-gray-600">Total de Emblemas</p>
-          </div>
-        </div>
-      </PanelCard>
+        </PanelCard>
 
-      <PanelCard title="Top Habbos">
-        <div className="overflow-x-auto">
-          <table className="min-w-full leading-normal">
-            <thead>
-              <tr>
-                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Posição
-                </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  Nível
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {topUsers?.slice(0, 5).map((user, index) => (
-                <tr key={index}>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    <p className="text-gray-900 whitespace-no-wrap">#{index + 1}</p>
-                  </td>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 w-10 h-10">
-                        <img
-                          className="w-full h-full rounded-full"
-                          src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.look}&size=s`}
-                          alt={user.username}
-                        />
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-gray-900 whitespace-no-wrap">{user.username}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                    <p className="text-gray-900 whitespace-no-wrap">{user.level}</p>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </PanelCard>
+        {/* Currency Display */}
+        <PanelCard title="Moedas & Recursos">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded border border-gray-400">
+              <div className="flex items-center">
+                <img src="/assets/gcreate_icon_credit.png" alt="Créditos" className="w-8 h-8 mr-2" />
+                <span className="font-bold text-gray-800">Créditos</span>
+              </div>
+              <span className="font-bold text-gray-800">2,500</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-pink-100 to-pink-200 rounded border border-gray-400">
+              <div className="flex items-center">
+                <img src="/assets/619__-O-.png" alt="Duckets" className="w-8 h-8 mr-2" />
+                <span className="font-bold text-gray-800">Duckets</span>
+              </div>
+              <span className="font-bold text-gray-800">1,200</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-100 to-blue-200 rounded border border-gray-400">
+              <div className="flex items-center">
+                <img src="/assets/Diamante.png" alt="Diamantes" className="w-8 h-8 mr-2" />
+                <span className="font-bold text-gray-800">Diamantes</span>
+              </div>
+              <span className="font-bold text-gray-800">45</span>
+            </div>
+          </div>
+        </PanelCard>
+
+        {/* Forum Banner */}
+        <PanelCard title="Comunidade">
+          <div 
+            className="relative bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg p-4 text-white overflow-hidden cursor-pointer hover:from-purple-700 hover:to-blue-700 transition-all"
+            onClick={() => window.location.hash = 'forum'}
+            style={{ 
+              backgroundImage: 'url(/assets/1211__-3V6.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}
+          >
+            <div className="absolute inset-0 bg-black/40 rounded-lg"></div>
+            <div className="relative z-10">
+              <h4 className="font-bold mb-2">💬 Acesse o Fórum</h4>
+              <p className="text-sm opacity-90 mb-3">
+                Conecte-se com outros Habbos, tire dúvidas e participe das discussões!
+              </p>
+              <div className="text-xs opacity-80">
+                <span>👥 1,234 membros online</span>
+              </div>
+            </div>
+          </div>
+        </PanelCard>
+      </div>
     </div>
   );
 };

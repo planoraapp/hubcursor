@@ -54,12 +54,46 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
   const { t } = useLanguage();
 
   const navItems = [
-    { id: 'noticias', label: t('noticias'), icon: Newspaper },
-    { id: 'forum', label: t('forum'), icon: MessageCircle },
-    { id: 'catalogo', label: t('catalogo'), icon: Package },
-    { id: 'emblemas', label: t('emblemas'), icon: Award },
-    { id: 'editor', label: t('editor'), icon: Palette },
-    { id: 'mercado', label: t('mercado'), icon: ShoppingCart },
+    { 
+      id: 'home', 
+      label: 'Home', 
+      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-5 h-5 flex-shrink-0" />
+    },
+    { 
+      id: 'noticias', 
+      label: 'Notícias', 
+      icon: Newspaper
+    },
+    { 
+      id: 'eventos', 
+      label: 'Eventos', 
+      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-5 h-5 flex-shrink-0" />
+    },
+    { 
+      id: 'forum', 
+      label: 'Fórum', 
+      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-5 h-5 flex-shrink-0" />
+    },
+    { 
+      id: 'catalogo', 
+      label: 'Catálogo', 
+      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-5 h-5 flex-shrink-0" />
+    },
+    { 
+      id: 'emblemas', 
+      label: 'Emblemas', 
+      icon: Award
+    },
+    { 
+      id: 'editor', 
+      label: 'Editor de Visuais', 
+      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-5 h-5 flex-shrink-0" />
+    },
+    { 
+      id: 'mercado', 
+      label: 'Mercado', 
+      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-5 h-5 flex-shrink-0" />
+    }
   ];
 
   const handleNavClick = (id: string) => {
@@ -133,7 +167,7 @@ const DesktopSidebar = ({
                   }
                 `}
               >
-                <Icon size={20} className="flex-shrink-0" />
+                {typeof Icon === 'function' ? <Icon /> : <Icon size={20} className="flex-shrink-0" />}
                 <motion.span
                   animate={{
                     opacity: animate ? (open ? 1 : 0) : 1,
@@ -204,7 +238,7 @@ const MobileSidebar = ({
 
   return (
     <>
-      <div className="md:hidden h-16 px-4 flex items-center justify-between bg-amber-50 shadow-md w-full">
+      <div className="md:hidden h-16 px-4 flex items-center justify-between bg-white shadow-md w-full">
         <Logo />
         <Menu
           className="text-gray-800 cursor-pointer"
@@ -219,7 +253,7 @@ const MobileSidebar = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "-100%", opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed h-full w-full inset-0 bg-amber-50 p-6 z-50 flex flex-col md:hidden"
+            className="fixed h-full w-full inset-0 bg-white p-6 z-50 flex flex-col md:hidden"
           >
             <div className="flex justify-between items-center mb-8">
               <Logo />
@@ -251,7 +285,7 @@ const MobileSidebar = ({
                       }
                     `}
                   >
-                    <Icon size={20} />
+                    {typeof Icon === 'function' ? <Icon /> : <Icon size={20} />}
                     <span>{item.label}</span>
                   </button>
                 );
