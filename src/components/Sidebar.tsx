@@ -2,7 +2,6 @@
 import { Newspaper, MessageCircle, Package, Award, Palette, ShoppingCart } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { UserAvatar } from './UserAvatar';
-import { useLanguage } from '../hooks/useLanguage';
 
 interface SidebarProps {
   activeSection: string;
@@ -10,15 +9,13 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
-  const { t } = useLanguage();
-
   const navItems = [
-    { id: 'noticias', label: t('noticias'), icon: Newspaper },
-    { id: 'forum', label: t('forum'), icon: MessageCircle },
-    { id: 'catalogo', label: t('catalogo'), icon: Package },
-    { id: 'emblemas', label: t('emblemas'), icon: Award },
-    { id: 'editor', label: t('editor'), icon: Palette },
-    { id: 'mercado', label: t('mercado'), icon: ShoppingCart },
+    { id: 'noticias', label: 'Notícias', icon: Newspaper },
+    { id: 'forum', label: 'Fórum', icon: MessageCircle },
+    { id: 'catalogo', label: 'Catálogo', icon: Package },
+    { id: 'emblemas', label: 'Emblemas', icon: Award },
+    { id: 'editor', label: 'Editor', icon: Palette },
+    { id: 'mercado', label: 'Mercado', icon: ShoppingCart },
   ];
 
   const handleNavClick = (id: string) => {
@@ -65,10 +62,10 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
       
       {/* Premium Section */}
       <div className="p-4 mx-4 mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg text-gray-900">
-        <h3 className="font-bold text-sm">{t('habboPremiumTitle')}</h3>
-        <p className="text-xs mt-1 opacity-90">{t('habboPremiumDesc')}</p>
+        <h3 className="font-bold text-sm">Habbo Premium</h3>
+        <p className="text-xs mt-1 opacity-90">Acesso exclusivo a recursos especiais</p>
         <button className="w-full mt-3 bg-white hover:bg-gray-100 text-gray-900 py-2 rounded-lg text-sm font-bold transition-colors">
-          {t('subscribeNow')}
+          Assinar Agora
         </button>
       </div>
       
