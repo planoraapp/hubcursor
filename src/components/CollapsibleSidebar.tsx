@@ -190,23 +190,23 @@ const DesktopSidebar = ({
                 key={item.id}
                 onClick={() => onNavClick(item.path)}
                 className={`
-                  flex items-center transition-all duration-200 font-medium rounded-lg
+                  flex items-center transition-all duration-200 font-medium rounded-lg border-0 outline-0
                   ${isActive 
                     ? 'bg-sky-400 text-white shadow-md' 
                     : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                   }
-                  ${!open ? 'px-2 py-3 justify-center w-16' : 'px-4 py-3'}
+                  ${!open ? 'p-0 justify-center w-16 h-16' : 'px-4 py-3'}
                 `}
               >
-                <div className={`flex-shrink-0 ${!open ? '' : 'mr-3'}`}>
+                <div className={`${!open ? 'w-full h-full flex items-center justify-center' : 'flex-shrink-0 mr-3'}`}>
                   {typeof item.icon === 'string' ? (
                     <img 
                       src={item.icon} 
                       alt={item.label} 
-                      className={`${open ? 'w-6 h-6' : 'w-7 h-7'} object-contain`}
+                      className={`${open ? 'w-6 h-6' : 'w-8 h-8'} object-contain`}
                     />
                   ) : (
-                    <Icon size={open ? 24 : 28} />
+                    <Icon size={open ? 24 : 32} />
                   )}
                 </div>
                 <motion.span
@@ -267,7 +267,7 @@ const MobileHeader = ({
                 key={item.id}
                 onClick={() => onNavClick(item.path)}
                 className={`
-                  p-3 rounded-lg transition-all duration-200
+                  w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200 border-0 outline-0 p-0
                   ${currentPath === item.path 
                     ? 'bg-sky-400 shadow-md' 
                     : 'bg-transparent hover:bg-white/50'
@@ -278,10 +278,10 @@ const MobileHeader = ({
                   <img 
                     src={item.icon} 
                     alt={item.label} 
-                    className="w-6 h-6 object-contain"
+                    className="w-8 h-8 object-contain"
                   />
                 ) : (
-                  <item.icon size={24} />
+                  <item.icon size={32} />
                 )}
               </button>
             );

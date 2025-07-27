@@ -21,11 +21,14 @@ const Emblemas = () => {
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection="emblemas" setActiveSection={() => {}} />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <PageHeader 
-            title="Emblemas Habbo"
-            icon="/assets/1876__-6Ie.png"
-            backgroundImage="/assets/1360__-3C7.png"
-          />
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-center text-gray-800 mb-4">Emblemas</h1>
+            <PageHeader 
+              title="Emblemas"
+              icon="/assets/emblemas.png"
+              backgroundImage="/assets/1360__-3C7.png"
+            />
+          </div>
           
           <AdSpace type="horizontal" className="mb-6" />
           

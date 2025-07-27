@@ -21,11 +21,14 @@ const Mercado = () => {
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection="mercado" setActiveSection={() => {}} />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <PageHeader 
-            title="Mercado Habbo"
-            icon="/assets/Image 1574.png"
-            backgroundImage="/assets/1360__-3C7.png"
-          />
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-center text-gray-800 mb-4">Mercado</h1>
+            <PageHeader 
+              title="Mercado"
+              icon="/assets/purse.gif"
+              backgroundImage="/assets/1360__-3C7.png"
+            />
+          </div>
           
           <AdSpace type="horizontal" className="mb-6" />
           
