@@ -240,6 +240,11 @@
     box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
   }
 
+  /* Text Shadow */
+  .text-shadow-lg {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+  }
+
   /* Habbo Card Items */
   .habbo-card {
     @apply bg-white rounded-lg overflow-hidden transition-all duration-100;

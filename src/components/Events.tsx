@@ -1,4 +1,5 @@
 import { PanelCard } from './PanelCard';
+import { PageHeader } from './PageHeader';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const Events = () => {
@@ -72,24 +73,11 @@ export const Events = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div 
-        className="relative bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-8 text-white overflow-hidden"
-        style={{ 
-          backgroundImage: 'url(/assets/eventos.png)',
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right'
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/80 to-transparent rounded-lg"></div>
-        <div className="relative z-10 max-w-2xl">
-          <h1 className="text-4xl font-bold mb-4">🎊 Eventos Habbo</h1>
-          <p className="text-xl opacity-90">
-            Não perca nenhum evento! Participe de competições, festivais e atividades exclusivas.
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Eventos Habbo"
+        icon="/assets/eventos.png"
+        backgroundImage="/assets/1360__-3C7.png"
+      />
 
       {/* Current Events */}
       <PanelCard title="🔥 Eventos Atuais">

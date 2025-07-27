@@ -1,7 +1,6 @@
-
 import React, { useState, createContext, useContext } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X, Newspaper, MessageCircle, Package, Award, Palette, ShoppingCart } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { UserProfile } from './UserProfile';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -57,42 +56,42 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'home', 
       label: 'Home', 
-      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-5 h-5 flex-shrink-0" />
+      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'noticias', 
       label: 'Notícias', 
-      icon: Newspaper
+      icon: () => <img src="/assets/Newspaper.png" alt="Notícias" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'eventos', 
       label: 'Eventos', 
-      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-5 h-5 flex-shrink-0" />
+      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'forum', 
       label: 'Fórum', 
-      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-5 h-5 flex-shrink-0" />
+      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'catalogo', 
       label: 'Catálogo', 
-      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-5 h-5 flex-shrink-0" />
+      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'emblemas', 
       label: 'Emblemas', 
-      icon: Award
+      icon: () => <img src="/assets/Award.png" alt="Emblemas" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'editor', 
       label: 'Editor de Visuais', 
-      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-5 h-5 flex-shrink-0" />
+      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-6 h-6 flex-shrink-0" />
     },
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-5 h-5 flex-shrink-0" />
+      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-6 h-6 flex-shrink-0" />
     }
   ];
 
@@ -109,7 +108,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
           activeSection={activeSection} 
           onNavClick={handleNavClick}
         />
-        <MobileSidebar 
+        <MobileHeader 
           navItems={navItems} 
           activeSection={activeSection} 
           onNavClick={handleNavClick}
@@ -134,7 +133,7 @@ const DesktopSidebar = ({
     <motion.aside
       className="hidden md:flex md:flex-col bg-amber-50 shadow-xl min-h-screen flex-shrink-0"
       animate={{
-        width: animate ? (open ? "300px" : "80px") : "300px",
+        width: animate ? (open ? "320px" : "80px") : "320px",
       }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -160,20 +159,22 @@ const DesktopSidebar = ({
                 key={item.id}
                 onClick={() => onNavClick(item.id)}
                 className={`
-                  flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
+                  flex items-center px-4 py-3 rounded-lg transition-all duration-200 font-medium
                   ${activeSection === item.id 
                     ? 'bg-sky-400 text-white shadow-md' 
                     : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                   }
                 `}
               >
-                {typeof Icon === 'function' ? <Icon /> : <Icon size={20} className="flex-shrink-0" />}
+                <div className="flex-shrink-0">
+                  {typeof Icon === 'function' ? <Icon /> : <Icon size={24} />}
+                </div>
                 <motion.span
                   animate={{
                     opacity: animate ? (open ? 1 : 0) : 1,
                     display: animate ? (open ? "inline-block" : "none") : "inline-block",
                   }}
-                  className="whitespace-nowrap"
+                  className="ml-3 whitespace-nowrap flex-1 text-left"
                 >
                   {item.label}
                 </motion.span>
@@ -225,7 +226,7 @@ const DesktopSidebar = ({
   );
 };
 
-const MobileSidebar = ({ 
+const MobileHeader = ({ 
   navItems, 
   activeSection, 
   onNavClick 
@@ -237,15 +238,44 @@ const MobileSidebar = ({
   const { open, setOpen } = useSidebar();
 
   return (
-    <>
-      <div className="md:hidden h-16 px-4 flex items-center justify-between bg-white shadow-md w-full">
+    <div className="md:hidden w-full">
+      {/* Mobile Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-amber-50 border-b-2 border-amber-200 px-4 py-3 flex items-center justify-between shadow-lg">
         <Logo />
-        <Menu
-          className="text-gray-800 cursor-pointer"
-          onClick={() => setOpen(!open)}
-        />
+        <div className="flex items-center space-x-3">
+          <UserProfile collapsed={true} />
+          <Menu
+            className="text-gray-800 cursor-pointer w-6 h-6"
+            onClick={() => setOpen(!open)}
+          />
+        </div>
       </div>
-      
+
+      {/* Mobile Dock */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-amber-50 border-t-2 border-amber-200 px-4 py-2 shadow-lg">
+        <div className="flex justify-around items-center max-w-md mx-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavClick(item.id)}
+                className={`
+                  p-3 rounded-lg transition-all duration-200
+                  ${activeSection === item.id 
+                    ? 'bg-sky-400 shadow-md' 
+                    : 'bg-transparent hover:bg-white/50'
+                  }
+                `}
+              >
+                {typeof Icon === 'function' ? <Icon /> : <Icon size={24} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -253,12 +283,13 @@ const MobileSidebar = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "-100%", opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed h-full w-full inset-0 bg-white p-6 z-50 flex flex-col md:hidden"
+            className="fixed inset-0 bg-amber-50 p-6 z-40 flex flex-col"
+            style={{ paddingTop: '80px', paddingBottom: '80px' }}
           >
             <div className="flex justify-between items-center mb-8">
               <Logo />
               <X
-                className="text-gray-800 cursor-pointer"
+                className="text-gray-800 cursor-pointer w-6 h-6"
                 onClick={() => setOpen(false)}
               />
             </div>
@@ -308,7 +339,7 @@ const MobileSidebar = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 };
 
@@ -318,7 +349,7 @@ const Logo = () => {
       <img 
         src="/assets/habbohub.png" 
         alt="HABBO HUB" 
-        className="mb-2 max-w-[120px] h-auto"
+        className="mb-2 max-w-[140px] h-auto"
       />
     </div>
   );
@@ -326,10 +357,12 @@ const Logo = () => {
 
 const LogoIcon = () => {
   return (
-    <div className="font-normal flex items-center justify-center text-2xl font-bold text-black">
-      <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-black">
-        H
-      </div>
+    <div className="font-normal flex items-center justify-center">
+      <img 
+        src="/assets/Hmenu.png" 
+        alt="H" 
+        className="w-10 h-10"
+      />
     </div>
   );
 };

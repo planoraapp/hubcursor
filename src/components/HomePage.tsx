@@ -1,4 +1,5 @@
 import { PanelCard } from './PanelCard';
+import { PageHeader } from './PageHeader';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const HomePage = () => {
@@ -6,23 +7,11 @@ export const HomePage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
-      <div 
-        className="relative bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-white overflow-hidden"
-        style={{ 
-          backgroundImage: 'url(/assets/203__-100.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        <div className="absolute inset-0 bg-black/40 rounded-lg"></div>
-        <div className="relative z-10">
-          <h1 className="text-4xl font-bold mb-4">Bem-vindo ao Habbo Hub! 🎉</h1>
-          <p className="text-xl opacity-90">
-            Sua central completa para o mundo Habbo - Notícias, Catálogo, Emblemas e muito mais!
-          </p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Bem-vindo ao Habbo Hub!"
+        icon="/assets/habbohub.png"
+        backgroundImage="/assets/203__-100.png"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
