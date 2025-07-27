@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -105,7 +104,157 @@
 }
 
 @layer components {
-  /* Habbo Panel Style */
+  /* Habbo Mobile Dock Styles */
+  .habbo-dock {
+    background-color: #f0ede6;
+    border: 2px solid #5a5a5a;
+    border-radius: 12px;
+    box-shadow: 2px 2px 0px 0px #cccccc;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 5px;
+  }
+
+  .habbo-dock-button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 0;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    position: relative;
+    color: #38332c;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .habbo-dock-button.active .dock-icon {
+    color: #008800;
+    transform: scale(1.1);
+  }
+
+  .habbo-dock-button:hover {
+    transform: translateY(-2px);
+    color: #007bff;
+  }
+
+  .habbo-dock-button:hover .dock-icon {
+    color: #007bff;
+  }
+
+  .habbo-dock-button.center-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    transform: translateY(-10px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dock-avatar-container {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dock-avatar-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .dock-avatar-img {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    z-index: 2;
+    margin-top: -8px;
+  }
+
+  .dock-icon {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 2px;
+    color: #38332c;
+  }
+
+  .dock-icon-img {
+    width: 28px;
+    height: 28px;
+    margin-bottom: 2px;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  /* Dropdown Menu (Elevator) */
+  .habbo-dropdown-menu {
+    position: absolute;
+    bottom: 100%;
+    background-color: #ffffff;
+    border: 2px solid #5a5a5a;
+    border-bottom-color: #888888;
+    border-right-color: #888888;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0px 0px #cccccc;
+    width: 180px;
+    transform-origin: bottom;
+    animation: slideUp 0.3s ease-out forwards;
+    z-index: 40;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(10px) scaleY(0); opacity: 0; }
+    to { transform: translateY(0) scaleY(1); opacity: 1; }
+  }
+
+  .habbo-dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background-color: transparent;
+    border: none;
+    color: #38332c;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    text-align: left;
+  }
+
+  .habbo-dropdown-item:hover {
+    background-color: #eaddc7;
+  }
+
+  .habbo-dropdown-item.active {
+    background-color: #b0e0e6;
+    color: #1a1a1a;
+    font-weight: 700;
+  }
+
+  /* Existing Habbo styles */
   .habbo-panel {
     @apply bg-white rounded-lg overflow-hidden relative z-10;
     border: 2px solid hsl(var(--habbo-border));
@@ -114,7 +263,6 @@
     box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
   }
 
-  /* Habbo Panel Header */
   .habbo-header {
     @apply px-4 py-3 border-b-2 font-bold text-xl;
     background-color: hsl(var(--habbo-header));
@@ -127,7 +275,6 @@
     box-shadow: inset 0px -1px 0px hsl(0 0% 94%);
   }
 
-  /* Habbo Buttons */
   .habbo-button {
     @apply px-4 py-2 rounded font-bold uppercase cursor-pointer transition-all duration-100;
     border: 2px solid;
@@ -149,136 +296,7 @@
     background-image: linear-gradient(to bottom, hsl(var(--habbo-green-light)), hsl(var(--habbo-green)));
   }
 
-  .habbo-button-green:hover {
-    background-color: hsl(var(--habbo-green-light));
-  }
-
-  .habbo-button-red {
-    @apply habbo-button text-white;
-    background-color: hsl(var(--habbo-red));
-    border-color: hsl(0 100% 27%);
-    border-right-color: hsl(var(--habbo-red-light));
-    border-bottom-color: hsl(var(--habbo-red-light));
-    background-image: linear-gradient(to bottom, hsl(var(--habbo-red-light)), hsl(var(--habbo-red)));
-  }
-
-  .habbo-button-red:hover {
-    background-color: hsl(var(--habbo-red-light));
-  }
-
-  /* Habbo Navigation Links */
-  .habbo-nav-link {
-    @apply flex items-center space-x-3 w-full p-3 rounded-lg font-medium transition-all duration-200 no-underline;
-    background-color: hsl(var(--habbo-nav));
-    color: hsl(var(--habbo-text));
-    border: 2px solid hsl(var(--habbo-border));
-    box-shadow: 1px 1px 0px 0px hsl(var(--habbo-shadow));
-    text-shadow: 1px 1px 0px hsl(0 0% 94%);
-  }
-
-  .habbo-nav-link:hover {
-    background-color: hsl(var(--habbo-nav-hover));
-    @apply translate-x-[1px] translate-y-[1px];
-    box-shadow: none;
-  }
-
-  .habbo-nav-link.active {
-    background-color: hsl(var(--habbo-active));
-    color: hsl(0 0% 10%);
-    font-weight: 700;
-    border-color: hsl(188 43% 58%);
-    box-shadow: 1px 1px 0px 0px hsl(188 54% 71%);
-    @apply translate-x-[1px] translate-y-[1px];
-  }
-
-  /* Habbo Input */
-  .habbo-input {
-    @apply px-3 py-2 rounded bg-white;
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: inset 1px 1px 0px 0px hsl(var(--habbo-shadow));
-    color: hsl(var(--habbo-text));
-    font-family: 'Inter', sans-serif;
-  }
-
-  .habbo-input:focus {
-    outline: none;
-    border-color: hsl(214 100% 50%);
-    box-shadow: inset 1px 1px 0px 0px hsl(var(--habbo-shadow)), 0 0 0 2px hsla(214 100% 50% / 0.25);
-  }
-
-  /* Habbo Sidebar */
-  .habbo-sidebar {
-    @apply shrink-0 border-2 rounded-lg mr-6 p-6 flex flex-col;
-    background-color: hsl(var(--habbo-sidebar));
-    border-color: hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAgMEgyMFYyMEgwVjBaIiBmaWxsPSIjRTdFMEQ0Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNEMUM2QjMiLz4KPHJlY3QgeD0iMTAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNEMUM2QjMiLz4KPHJlY3QgeT0iMTAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNEMUM2QjMiLz4KPHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjRDFDNkIzIi8+Cjwvc3ZnPgo=');
-    background-repeat: repeat;
-  }
-
-  /* Habbo Profile Box */
-  .habbo-profile {
-    @apply p-4 text-center mb-6 rounded-lg;
-    background-color: hsl(var(--habbo-profile));
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  /* Habbo Premium Box */
-  .habbo-premium {
-    @apply mt-8 p-4 rounded-lg border-2 text-center;
-    background-color: hsl(var(--habbo-panel));
-    border-color: hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  /* Text Shadow */
   .text-shadow-lg {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
-  }
-
-  /* Habbo Card Items */
-  .habbo-card {
-    @apply bg-white rounded-lg overflow-hidden transition-all duration-100;
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  .habbo-card:hover {
-    @apply translate-x-[1px] translate-y-[1px];
-    box-shadow: none;
-  }
-
-  /* Habbo Tab System */
-  .habbo-tab-button {
-    @apply px-4 py-2 font-bold cursor-pointer transition-all duration-100 mr-1 rounded-t-lg;
-    background-color: hsl(var(--habbo-header));
-    border: 2px solid hsl(var(--habbo-border));
-    border-bottom: none;
-    color: hsl(var(--habbo-text));
-    text-transform: uppercase;
-    background-image: linear-gradient(to top, hsl(0 0% 75%), hsl(0 0% 88%));
-  }
-
-  .habbo-tab-button.active {
-    @apply bg-white translate-y-[2px] z-10;
-    border-bottom-color: white;
-  }
-
-  .habbo-tab-content {
-    @apply border-2 rounded-b-lg bg-white p-4;
-    border-color: hsl(var(--habbo-border));
-    border-top: none;
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
   }
 }

@@ -39,15 +39,42 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
     return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figure}&direction=2&head_direction=2&gesture=sml&size=l&frame=1&headonly=1`;
   };
 
+  const renderAvatar = () => {
+    if (isLoggedIn && userData) {
+      return (
+        <div className="relative w-12 h-12">
+          <img 
+            src="/assets/1360__-3C7.png" 
+            alt="Avatar Background" 
+            className="absolute inset-0 w-full h-full object-cover rounded-full"
+          />
+          <img 
+            src={getAvatarUrl(userData.figureString)} 
+            alt={userData.name}
+            className="absolute inset-0 w-full h-full object-contain rounded-full z-10"
+            style={{ marginTop: '-4px' }}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className="relative w-12 h-12">
+          <img 
+            src="/assets/frank.png" 
+            alt="Frank" 
+            className="w-full h-full object-contain rounded-full"
+            style={{ marginTop: '-4px' }}
+          />
+        </div>
+      );
+    }
+  };
+
   if (collapsed) {
     return (
       <div className="flex flex-col items-center">
         <div className="relative mb-2">
-          <img
-            src={getAvatarUrl(userData?.figureString)}
-            alt={userData?.name || t('userNameGuest')}
-            className="w-10 h-10 rounded-full border-2 border-white shadow-md bg-white/20 backdrop-blur-sm"
-          />
+          {renderAvatar()}
           <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${userData?.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
         </div>
       </div>
@@ -60,12 +87,8 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
       animate={{ opacity: 1 }}
       className="flex flex-col items-center bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm"
     >
-      <div className="relative mb-3">
-        <img
-          src={getAvatarUrl(userData?.figureString)}
-          alt={userData?.name || t('userNameGuest')}
-          className="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white/20 backdrop-blur-sm"
-        />
+      <div className="relative mb-3 w-20 h-20">
+        {renderAvatar()}
         <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white ${userData?.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
       </div>
       

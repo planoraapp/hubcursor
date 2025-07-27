@@ -141,8 +141,26 @@ const DesktopSidebar = ({
     >
       <div className="flex flex-col h-full">
         {/* Logo Section */}
-        <div className="p-6 text-center">
-          {open ? <Logo /> : <LogoIcon />}
+        <div className="flex items-center justify-center p-4">
+          {open ? (
+            <img 
+              src="/assets/habbohub.gif" 
+              alt="HABBO HUB" 
+              className="h-14 w-auto"
+              onError={(e) => {
+                e.currentTarget.src = "/assets/habbohub.png";
+              }}
+            />
+          ) : (
+            <img 
+              src="/assets/Hmenu.png" 
+              alt="H" 
+              className="h-10 w-10"
+              onError={(e) => {
+                e.currentTarget.src = "/assets/habbohub.png";
+              }}
+            />
+          )}
         </div>
 
         {/* User Profile */}
@@ -166,8 +184,8 @@ const DesktopSidebar = ({
                   }
                 `}
               >
-                <div className="flex-shrink-0">
-                  {typeof Icon === 'function' ? <Icon /> : <Icon size={24} />}
+                <div className={`flex-shrink-0 ${!open ? 'flex justify-center w-full' : ''}`}>
+                  {typeof Icon === 'function' ? <Icon /> : <Icon size={open ? 24 : 28} />}
                 </div>
                 <motion.span
                   animate={{
