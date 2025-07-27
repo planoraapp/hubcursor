@@ -1,7 +1,8 @@
 import { PanelCard } from './PanelCard';
 import { PageHeader } from './PageHeader';
 import { AdSpace } from './AdSpace';
-import { ShoppingCart, Shield, MessageSquare, Store, Award, Star, Coins, Gem, Diamond } from 'lucide-react';
+import { HabboIcon } from './HabboIcon';
+import { BadgeIcon } from './BadgeIcon';
 
 export const HomePage = () => {
   return (
@@ -21,7 +22,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'catalogo'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-blue-100 to-blue-200 rounded-lg hover:from-blue-200 hover:to-blue-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <ShoppingCart className="w-12 h-12 mb-2 text-gray-700" />
+              <HabboIcon icon="cart" size="lg" className="mb-2" />
               <span className="font-bold text-gray-800">Catálogo</span>
             </button>
             
@@ -29,7 +30,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'emblemas'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-green-100 to-green-200 rounded-lg hover:from-green-200 hover:to-green-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <Shield className="w-12 h-12 mb-2 text-gray-700" />
+              <BadgeIcon badgeCode="GUIDE" size="lg" className="mb-2" />
               <span className="font-bold text-gray-800">Emblemas</span>
             </button>
             
@@ -37,7 +38,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'forum'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-purple-100 to-purple-200 rounded-lg hover:from-purple-200 hover:to-purple-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <MessageSquare className="w-12 h-12 mb-2 text-gray-700" />
+              <HabboIcon icon="chat" size="lg" className="mb-2" />
               <span className="font-bold text-gray-800">Fórum</span>
             </button>
             
@@ -45,7 +46,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'mercado'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-yellow-100 to-yellow-200 rounded-lg hover:from-yellow-200 hover:to-yellow-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <Store className="w-12 h-12 mb-2 text-gray-700" />
+              <img src="/assets/1876__-6Ie.png" alt="Mercado" className="w-12 h-12 mb-2" />
               <span className="font-bold text-gray-800">Mercado</span>
             </button>
           </div>
@@ -87,7 +88,7 @@ export const HomePage = () => {
         <PanelCard title="Últimos Emblemas">
           <div className="space-y-3">
             <div className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-gray-300">
-              <Award className="w-10 h-10 mr-3 text-yellow-600" />
+              <BadgeIcon badgeCode="BUILDER" size="md" className="mr-3" />
               <div>
                 <h5 className="font-bold text-gray-800">Explorador</h5>
                 <p className="text-xs text-gray-600">Visite 50 quartos diferentes</p>
@@ -95,7 +96,7 @@ export const HomePage = () => {
             </div>
             
             <div className="flex items-center p-3 bg-gradient-to-r from-pink-50 to-red-50 rounded-lg border border-gray-300">
-              <Star className="w-10 h-10 mr-3 text-pink-600" />
+              <BadgeIcon badgeCode="COLLECTOR" size="md" className="mr-3" />
               <div>
                 <h5 className="font-bold text-gray-800">Colecionador</h5>
                 <p className="text-xs text-gray-600">Possua 100 móveis únicos</p>
@@ -116,7 +117,7 @@ export const HomePage = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded border border-gray-400">
               <div className="flex items-center">
-                <Coins className="w-8 h-8 mr-2 text-yellow-600" />
+                <HabboIcon icon="credits" size="md" className="mr-2" />
                 <span className="font-bold text-gray-800">Créditos</span>
               </div>
               <span className="font-bold text-gray-800">2,500</span>
@@ -124,7 +125,7 @@ export const HomePage = () => {
             
             <div className="flex items-center justify-between p-2 bg-gradient-to-r from-pink-100 to-pink-200 rounded border border-gray-400">
               <div className="flex items-center">
-                <Gem className="w-8 h-8 mr-2 text-pink-600" />
+                <img src="/assets/898_HabboToolbarCom_icon_pixel_0_png.png" alt="Duckets" className="w-8 h-8 mr-2" />
                 <span className="font-bold text-gray-800">Duckets</span>
               </div>
               <span className="font-bold text-gray-800">1,200</span>
@@ -132,7 +133,7 @@ export const HomePage = () => {
             
             <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-100 to-blue-200 rounded border border-gray-400">
               <div className="flex items-center">
-                <Diamond className="w-8 h-8 mr-2 text-blue-600" />
+                <HabboIcon icon="diamonds" size="md" className="mr-2" />
                 <span className="font-bold text-gray-800">Diamantes</span>
               </div>
               <span className="font-bold text-gray-800">45</span>

@@ -36,7 +36,7 @@ export const BadgeIcon = ({ badgeCode, alt, size = 'md', className = '' }: Badge
     'RARE3': '2408__-2bX.png',
     'CLASSIC': '264__-HG.png',
     'VINTAGE': '387__-4CK.png',
-    'COLLECTOR': '489__-36n.png',
+    'COLLECTOR': '522__-2uz.png',
     'TRADER': '522__-2uz.png',
     'PIXEL': '898_HabboToolbarCom_icon_pixel_0_png.png',
   };

@@ -1,8 +1,6 @@
 
 import { useLanguage, Language } from '../hooks/useLanguage';
-import flagBrazilImg from '../assets/flagbrazil.png';
-import flagSpainImg from '../assets/flagspain.png';
-import flagComImg from '../assets/flagcom.png';
+// Use direct paths to public assets instead of imports
 
 interface LanguageSelectorProps {
   isCollapsed?: boolean;
@@ -12,9 +10,9 @@ export const LanguageSelector = ({ isCollapsed = false }: LanguageSelectorProps)
   const { currentLanguage, changeLanguage } = useLanguage();
 
   const languages = [
-    { code: 'pt' as Language, flag: flagBrazilImg, name: 'Português' },
-    { code: 'es' as Language, flag: flagSpainImg, name: 'Español' },
-    { code: 'en' as Language, flag: flagComImg, name: 'English' }
+    { code: 'pt' as Language, flag: '/assets/flagbrazil.png', name: 'Português' },
+    { code: 'es' as Language, flag: '/assets/flagspain.png', name: 'Español' },
+    { code: 'en' as Language, flag: '/assets/flagcom.png', name: 'English' }
   ];
 
   const currentLang = languages.find(lang => lang.code === currentLanguage);
