@@ -1,52 +1,102 @@
 
 import { useState } from 'react';
-import { Search, User, Shield, AlertCircle } from 'lucide-react';
+import { Search, User, Shield, AlertCircle, Users, Home, Award } from 'lucide-react';
 import { PanelCard } from './PanelCard';
+import { 
+  getUserByName, 
+  getUserBadges, 
+  getUserFriends, 
+  getUserGroups, 
+  getUserRooms,
+  getAvatarUrl,
+  getBadgeUrl,
+  type HabboUser,
+  type HabboBadge,
+  type HabboGroup,
+  type HabboRoom
+} from '../services/habboApi';
 
 export const ProfileChecker = () => {
   const [username, setUsername] = useState('');
-  const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<HabboUser | null>(null);
+  const [userBadges, setUserBadges] = useState<HabboBadge[] | null>(null);
+  const [userFriends, setUserFriends] = useState<HabboUser[] | null>(null);
+  const [userGroups, setUserGroups] = useState<HabboGroup[] | null>(null);
+  const [userRooms, setUserRooms] = useState<HabboRoom[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!username.trim()) return;
 
     setLoading(true);
-    setResult(null);
+    setError(null);
+    setUserProfile(null);
+    setUserBadges(null);
+    setUserFriends(null);
+    setUserGroups(null);
+    setUserRooms(null);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      console.log('Buscando usuário:', username);
+      
+      // Buscar usuário por nome
+      const user = await getUserByName(username.trim());
+      
+      if (!user) {
+        setError('Usuário não encontrado. Verifique o nome e tente novamente.');
+        setLoading(false);
+        return;
+      }
 
-    const lowerUsername = username.toLowerCase();
-    
-    if (lowerUsername === 'privado') {
-      setResult({
-        type: 'private',
-        message: 'Este usuário configurou seu perfil como privado. De acordo com a política de privacidade do Habbo, nenhuma informação detalhada pode ser exibida.'
-      });
-    } else if (lowerUsername === 'naoexiste') {
-      setResult({
-        type: 'notfound',
-        message: 'Não foi possível encontrar um usuário com este nome. Verifique a ortografia e tente novamente.'
-      });
-    } else {
-      setResult({
-        type: 'success',
-        data: {
-          name: username,
-          motto: 'Construindo o quarto dos meus sonhos, um pixel de cada vez!',
-          badges: [
-            { name: 'Veterano 1 Ano', icon: '🏅' },
-            { name: 'Construtor Mestre', icon: '🏗️' },
-            { name: 'Colecionador', icon: '💎' }
-          ],
-          online: Math.random() > 0.5,
-          lastSeen: '2 horas atrás'
-        }
-      });
+      if (!user.profileVisible) {
+        setError('Este usuário configurou seu perfil como privado. De acordo com a política de privacidade do Habbo, nenhuma informação detalhada pode ser exibida.');
+        setLoading(false);
+        return;
+      }
+
+      setUserProfile(user);
+
+      // Buscar dados adicionais do usuário
+      const [badges, friends, groups, rooms] = await Promise.all([
+        getUserBadges(user.uniqueId),
+        getUserFriends(user.uniqueId),
+        getUserGroups(user.uniqueId),
+        getUserRooms(user.uniqueId)
+      ]);
+
+      setUserBadges(badges);
+      setUserFriends(friends);
+      setUserGroups(groups);
+      setUserRooms(rooms);
+
+      console.log('Dados do usuário carregados:', { user, badges, friends, groups, rooms });
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error);
+      setError('Erro ao carregar perfil. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const getStatusColor = (online: boolean) => {
+    return online ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusText = (user: HabboUser) => {
+    if (user.online) return 'Online';
+    const lastAccess = new Date(user.lastAccessTime);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - lastAccess.getTime()) / (1000 * 60 * 60));
+    
+    if (diffHours < 24) {
+      return `Offline - ${diffHours}h atrás`;
+    }
+    return `Offline - ${formatDate(user.lastAccessTime)}`;
   };
 
   return (
@@ -89,61 +139,145 @@ export const ProfileChecker = () => {
         </div>
       </PanelCard>
 
-      {result && (
+      {error && (
         <PanelCard>
-          {result.type === 'private' && (
-            <div className="border-l-4 border-red-400 p-4 bg-red-50 rounded-lg">
-              <div className="flex items-center space-x-2 text-red-700">
-                <Shield size={20} />
-                <h3 className="font-bold">Perfil Privado</h3>
-              </div>
-              <p className="text-red-600 mt-2">{result.message}</p>
+          <div className="border-l-4 border-red-400 p-4 bg-red-50 rounded-lg">
+            <div className="flex items-center space-x-2 text-red-700">
+              <AlertCircle size={20} />
+              <h3 className="font-bold">Erro</h3>
             </div>
-          )}
+            <p className="text-red-600 mt-2">{error}</p>
+          </div>
+        </PanelCard>
+      )}
 
-          {result.type === 'notfound' && (
-            <div className="border-l-4 border-yellow-400 p-4 bg-yellow-50 rounded-lg">
-              <div className="flex items-center space-x-2 text-yellow-700">
-                <AlertCircle size={20} />
-                <h3 className="font-bold">Usuário Não Encontrado</h3>
+      {userProfile && (
+        <div className="space-y-6">
+          <PanelCard title="Perfil do Usuário">
+            <div className="flex items-center space-x-4 mb-4">
+              <img
+                src={getAvatarUrl(userProfile.figureString)}
+                alt={`Avatar de ${userProfile.name}`}
+                className="w-20 h-20 rounded-lg border-2 border-gray-300"
+              />
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-2">
+                  <h3 className="font-bold text-2xl text-gray-800">{userProfile.name}</h3>
+                  <span className={`px-2 py-1 rounded text-sm font-medium ${getStatusColor(userProfile.online)}`}>
+                    {getStatusText(userProfile)}
+                  </span>
+                </div>
+                <p className="text-gray-600 italic mb-2">"{userProfile.motto}"</p>
+                <p className="text-sm text-gray-500">
+                  Membro desde: {formatDate(userProfile.memberSince)}
+                </p>
               </div>
-              <p className="text-yellow-600 mt-2">{result.message}</p>
             </div>
-          )}
 
-          {result.type === 'success' && (
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                  {result.data.name.substring(0, 2)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-bold text-2xl text-gray-800">{result.data.name}</h3>
-                    <span className={`px-2 py-1 rounded text-sm font-medium ${
-                      result.data.online ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {result.data.online ? 'Online' : `Offline - ${result.data.lastSeen}`}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 italic mt-1">"{result.data.motto}"</p>
-                </div>
-              </div>
-
+            {userProfile.selectedBadges && userProfile.selectedBadges.length > 0 && (
               <div>
-                <h4 className="font-bold text-gray-700 mb-3">Emblemas Públicos:</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {result.data.badges.map((badge: any, index: number) => (
-                    <div key={index} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                      <span className="text-xl">{badge.icon}</span>
-                      <span className="text-sm font-medium text-gray-700">{badge.name}</span>
+                <h4 className="font-bold text-gray-700 mb-3">Emblemas Selecionados:</h4>
+                <div className="grid grid-cols-5 gap-3">
+                  {userProfile.selectedBadges.map((badge, index) => (
+                    <div key={index} className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
+                      <img
+                        src={getBadgeUrl(badge.code)}
+                        alt={badge.name}
+                        className="w-8 h-8 mb-1"
+                        title={badge.description}
+                      />
+                      <span className="text-xs font-medium text-gray-700 text-center">{badge.name}</span>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
+            )}
+          </PanelCard>
+
+          {userBadges && userBadges.length > 0 && (
+            <PanelCard title="Todos os Emblemas">
+              <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                {userBadges.map((badge, index) => (
+                  <div key={index} className="flex flex-col items-center p-1">
+                    <img
+                      src={getBadgeUrl(badge.code)}
+                      alt={badge.name}
+                      className="w-6 h-6"
+                      title={badge.description}
+                    />
+                  </div>
+                ))}
+              </div>
+            </PanelCard>
           )}
-        </PanelCard>
+
+          {userFriends && userFriends.length > 0 && (
+            <PanelCard title="Amigos">
+              <div className="flex items-center space-x-2 mb-3">
+                <Users size={20} className="text-blue-500" />
+                <span className="font-medium text-gray-700">{userFriends.length} amigos</span>
+              </div>
+              <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                {userFriends.slice(0, 24).map((friend, index) => (
+                  <div key={index} className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
+                    <img
+                      src={getAvatarUrl(friend.figureString, 's')}
+                      alt={`Avatar de ${friend.name}`}
+                      className="w-8 h-8 rounded mb-1"
+                    />
+                    <span className="text-xs font-medium text-gray-700 text-center truncate w-full">{friend.name}</span>
+                  </div>
+                ))}
+              </div>
+              {userFriends.length > 24 && (
+                <p className="text-sm text-gray-500 mt-2">
+                  E mais {userFriends.length - 24} amigos...
+                </p>
+              )}
+            </PanelCard>
+          )}
+
+          {userGroups && userGroups.length > 0 && (
+            <PanelCard title="Grupos">
+              <div className="space-y-3">
+                {userGroups.map((group, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <img
+                      src={getBadgeUrl(group.badgeCode)}
+                      alt={`Emblema do ${group.name}`}
+                      className="w-8 h-8"
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-800">{group.name}</h4>
+                      <p className="text-sm text-gray-600">{group.memberCount} membros</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </PanelCard>
+          )}
+
+          {userRooms && userRooms.length > 0 && (
+            <PanelCard title="Quartos">
+              <div className="flex items-center space-x-2 mb-3">
+                <Home size={20} className="text-green-500" />
+                <span className="font-medium text-gray-700">{userRooms.length} quartos</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {userRooms.map((room, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <h4 className="font-bold text-gray-800 mb-1">{room.name}</h4>
+                    <p className="text-sm text-gray-600 mb-2">{room.description}</p>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-500">{room.userCount} usuários</span>
+                      <span className="text-yellow-600">⭐ {room.rating}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </PanelCard>
+          )}
+        </div>
       )}
     </div>
   );
