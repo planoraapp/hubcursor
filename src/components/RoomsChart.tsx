@@ -1,20 +1,16 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTopRooms } from '../hooks/useHabboData';
 
 export const RoomsChart = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { data: topRooms, isLoading } = useTopRooms();
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || isLoading || !topRooms || topRooms.length === 0) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Filter out rooms with invalid data and ensure we have valid scores
-    const validRooms = topRooms
+  // Memoiza dados processados para evitar recálculos
+  const validRooms = useMemo(() => {
+    if (!topRooms || topRooms.length === 0) return [];
+    
+    return topRooms
       .filter(room => {
         return room && 
                room.score !== undefined && 
@@ -24,8 +20,14 @@ export const RoomsChart = () => {
                room.name.trim().length > 0;
       })
       .slice(0, 5);
+  }, [topRooms]);
 
-    if (validRooms.length === 0) return;
+  const drawChart = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || isLoading || validRooms.length === 0) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const maxVisitors = Math.max(...validRooms.map(room => room.score));
 
@@ -95,8 +97,13 @@ export const RoomsChart = () => {
     ctx.font = 'bold 16px Inter';
     ctx.textAlign = 'center';
     ctx.fillText('Quartos Mais Visitados (Dados Reais)', canvas.width / 2, 25);
+  }, [validRooms]);
 
-  }, [topRooms, isLoading]);
+  // Throttle para reduzir redesenhos
+  useEffect(() => {
+    const timeoutId = setTimeout(drawChart, 100);
+    return () => clearTimeout(timeoutId);
+  }, [drawChart]);
 
   if (isLoading) {
     return (

@@ -82,16 +82,23 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     }
   }, [onItemClick, handleElevatorClick]);
 
-  // Fecha o dropdown ao clicar fora
+  // Fecha o dropdown ao clicar fora com debounce
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && !(event.target as HTMLElement).closest('.habbo-dock-button.elevator')) {
-        setIsDropdownOpen(false);
-      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && !(event.target as HTMLElement).closest('.habbo-dock-button.elevator')) {
+          setIsDropdownOpen(false);
+        }
+      }, 50);
     };
+    
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      clearTimeout(timeoutId);
     };
   }, []);
 
