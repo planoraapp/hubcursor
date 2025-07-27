@@ -1,279 +1,116 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Habbo 2006 Design System */
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+:root {
+  --background: 0 0% 100%;
+  --foreground: 224 71.4% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71.4% 4.1%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71.4% 4.1%;
+  --primary: 174 50% 47%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14.3% 95.9%;
+  --secondary-foreground: 220.9 39.3% 11%;
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 8.9% 46.1%;
+  --accent: 174 50% 47%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 174 50% 47%;
+  --radius: 0.5rem;
+  --sidebar-background: 221 39% 11%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 174 50% 47%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 32.6% 17.5%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 217 32.6% 17.5%;
+  --sidebar-ring: 174 50% 47%;
+}
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+.dark {
+  --background: 224 71.4% 4.1%;
+  --foreground: 0 0% 95%;
+  --card: 224 71.4% 4.1%;
+  --card-foreground: 0 0% 95%;
+  --popover: 224 71.4% 4.1%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 174 50% 47%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 27.9% 16.9%;
+  --secondary-foreground: 0 0% 95%;
+  --muted: 215 27.9% 16.9%;
+  --muted-foreground: 217.9 10.6% 64.9%;
+  --accent: 174 50% 47%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 215 27.9% 16.9%;
+  --input: 215 27.9% 16.9%;
+  --ring: 174 50% 47%;
+}
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+* {
+  @apply border-border;
+}
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+body {
+  @apply bg-background text-foreground;
+  font-family: 'Inter', sans-serif;
+}
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+/* Habbo-style custom classes */
+.habbo-card {
+  @apply bg-white border-2 border-gray-300 border-r-gray-400 border-b-gray-400 rounded-none shadow-lg;
+}
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+.habbo-button-primary {
+  @apply bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 border-2 border-primary/20 border-r-primary/40 border-b-primary/40 rounded-none font-medium transition-all duration-200 active:border-primary/60;
+}
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+.habbo-button-secondary {
+  @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground px-4 py-2 border-2 border-secondary/20 border-r-secondary/40 border-b-secondary/40 rounded-none font-medium transition-all duration-200 active:border-secondary/60;
+}
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+.habbo-input {
+  @apply bg-white border-2 border-gray-300 border-r-gray-400 border-b-gray-400 rounded-none px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+}
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
 
-    --radius: 0.5rem;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
 
-    /* Habbo 2006 Colors */
-    --habbo-sky: 201 79% 70%;
-    --habbo-sidebar: 36 27% 71%;
-    --habbo-panel: 0 0% 100%;
-    --habbo-border: 0 0% 35%;
-    --habbo-border-light: 0 0% 53%;
-    --habbo-shadow: 0 0% 80%;
-    --habbo-text: 36 26% 21%;
-    --habbo-green: 120 100% 27%;
-    --habbo-green-light: 120 100% 37%;
-    --habbo-red: 0 100% 43%;
-    --habbo-red-light: 0 100% 60%;
-    --habbo-active: 188 60% 68%;
-    --habbo-nav: 40 31% 86%;
-    --habbo-nav-hover: 40 31% 92%;
-    --habbo-header: 0 0% 82%;
-    --habbo-profile: 40 40% 95%;
+::-webkit-scrollbar-thumb {
+  background: #4ECDC4;
+  border-radius: 6px;
+}
 
-    --sidebar-background: var(--habbo-sidebar);
-    --sidebar-foreground: var(--habbo-text);
-    --sidebar-primary: var(--habbo-text);
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: var(--habbo-nav);
-    --sidebar-accent-foreground: var(--habbo-text);
-    --sidebar-border: var(--habbo-border);
-    --sidebar-ring: 217.2 91.2% 59.8%;
+::-webkit-scrollbar-thumb:hover {
+  background: #3BAEA3;
+}
+
+/* Animações para o avatar */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(78, 205, 196, 0.4);
   }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+  50% {
+    box-shadow: 0 0 16px rgba(78, 205, 196, 0.6);
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
-    /* Habbo 2006 Sky Background */
-    background-color: hsl(var(--habbo-sky));
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAgMEg0MFY0MEgwVjBaIiBmaWxsPSIjRjBFREU2Ii8+CjxyZWN0IHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNFN0UwRDQiLz4KPHJlY3QgeD0iMjAiIHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNFN0UwRDQiLz4KPHJlY3QgeT0iMjAiIHdpZHRoPSIyIiBoZWlnaHQ9IjIiIGZpbGw9IiNFN0UwRDQiLz4KPHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iMiIgaGVpZ2h0PSIyIiBmaWxsPSIjRTdFMEQ0Ii8+Cjwvc3ZnPgo=');
-    background-repeat: repeat;
-    background-size: 50px 50px;
-    color: hsl(var(--habbo-text));
-  }
-}
-
-@layer components {
-  /* Habbo Panel Style */
-  .habbo-panel {
-    @apply bg-white rounded-lg overflow-hidden relative z-10;
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  /* Habbo Panel Header */
-  .habbo-header {
-    @apply px-4 py-3 border-b-2 font-bold text-xl;
-    background-color: hsl(var(--habbo-header));
-    border-bottom-color: hsl(var(--habbo-border));
-    color: hsl(var(--habbo-text));
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-shadow: 1px 1px 0px hsl(0 0% 93%);
-    background-image: linear-gradient(to bottom, hsl(0 0% 88%), hsl(0 0% 75%));
-    box-shadow: inset 0px -1px 0px hsl(0 0% 94%);
-  }
-
-  /* Habbo Buttons */
-  .habbo-button {
-    @apply px-4 py-2 rounded font-bold uppercase cursor-pointer transition-all duration-100;
-    border: 2px solid;
-    box-shadow: 1px 1px 0px 0px hsl(var(--habbo-border));
-    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.3);
-  }
-
-  .habbo-button:hover {
-    @apply translate-x-[1px] translate-y-[1px];
-    box-shadow: 0px 0px 0px 0px hsl(var(--habbo-border));
-  }
-
-  .habbo-button-green {
-    @apply habbo-button text-white;
-    background-color: hsl(var(--habbo-green));
-    border-color: hsl(120 100% 17%);
-    border-right-color: hsl(var(--habbo-green-light));
-    border-bottom-color: hsl(var(--habbo-green-light));
-    background-image: linear-gradient(to bottom, hsl(var(--habbo-green-light)), hsl(var(--habbo-green)));
-  }
-
-  .habbo-button-green:hover {
-    background-color: hsl(var(--habbo-green-light));
-  }
-
-  .habbo-button-red {
-    @apply habbo-button text-white;
-    background-color: hsl(var(--habbo-red));
-    border-color: hsl(0 100% 27%);
-    border-right-color: hsl(var(--habbo-red-light));
-    border-bottom-color: hsl(var(--habbo-red-light));
-    background-image: linear-gradient(to bottom, hsl(var(--habbo-red-light)), hsl(var(--habbo-red)));
-  }
-
-  .habbo-button-red:hover {
-    background-color: hsl(var(--habbo-red-light));
-  }
-
-  /* Habbo Navigation Links */
-  .habbo-nav-link {
-    @apply flex items-center space-x-3 w-full p-3 rounded-lg font-medium transition-all duration-200 no-underline;
-    background-color: hsl(var(--habbo-nav));
-    color: hsl(var(--habbo-text));
-    border: 2px solid hsl(var(--habbo-border));
-    box-shadow: 1px 1px 0px 0px hsl(var(--habbo-shadow));
-    text-shadow: 1px 1px 0px hsl(0 0% 94%);
-  }
-
-  .habbo-nav-link:hover {
-    background-color: hsl(var(--habbo-nav-hover));
-    @apply translate-x-[1px] translate-y-[1px];
-    box-shadow: none;
-  }
-
-  .habbo-nav-link.active {
-    background-color: hsl(var(--habbo-active));
-    color: hsl(0 0% 10%);
-    font-weight: 700;
-    border-color: hsl(188 43% 58%);
-    box-shadow: 1px 1px 0px 0px hsl(188 54% 71%);
-    @apply translate-x-[1px] translate-y-[1px];
-  }
-
-  /* Habbo Input */
-  .habbo-input {
-    @apply px-3 py-2 rounded bg-white;
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: inset 1px 1px 0px 0px hsl(var(--habbo-shadow));
-    color: hsl(var(--habbo-text));
-    font-family: 'Inter', sans-serif;
-  }
-
-  .habbo-input:focus {
-    outline: none;
-    border-color: hsl(214 100% 50%);
-    box-shadow: inset 1px 1px 0px 0px hsl(var(--habbo-shadow)), 0 0 0 2px hsla(214 100% 50% / 0.25);
-  }
-
-  /* Habbo Sidebar */
-  .habbo-sidebar {
-    @apply shrink-0 border-2 rounded-lg mr-6 p-6 flex flex-col;
-    background-color: hsl(var(--habbo-sidebar));
-    border-color: hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAgMEgyMFYyMEgwVjBaIiBmaWxsPSIjRTdFMEQ0Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNEMUM2QjMiLz4KPHJlY3QgeD0iMTAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNEMUM2QjMiLz4KPHJlY3QgeT0iMTAiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNEMUM2QjMiLz4KPHJlY3QgeD0iMTAiIHk9IjEwIiB3aWR0aD0iMSIgaGVpZ2h0PSIxIiBmaWxsPSIjRDFDNkIzIi8+Cjwvc3ZnPgo=');
-    background-repeat: repeat;
-  }
-
-  /* Habbo Profile Box */
-  .habbo-profile {
-    @apply p-4 text-center mb-6 rounded-lg;
-    background-color: hsl(var(--habbo-profile));
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  /* Habbo Premium Box */
-  .habbo-premium {
-    @apply mt-8 p-4 rounded-lg border-2 text-center;
-    background-color: hsl(var(--habbo-panel));
-    border-color: hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  /* Habbo Card Items */
-  .habbo-card {
-    @apply bg-white rounded-lg overflow-hidden transition-all duration-100;
-    border: 2px solid hsl(var(--habbo-border));
-    border-right-color: hsl(var(--habbo-border-light));
-    border-bottom-color: hsl(var(--habbo-border-light));
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
-
-  .habbo-card:hover {
-    @apply translate-x-[1px] translate-y-[1px];
-    box-shadow: none;
-  }
-
-  /* Habbo Tab System */
-  .habbo-tab-button {
-    @apply px-4 py-2 font-bold cursor-pointer transition-all duration-100 mr-1 rounded-t-lg;
-    background-color: hsl(var(--habbo-header));
-    border: 2px solid hsl(var(--habbo-border));
-    border-bottom: none;
-    color: hsl(var(--habbo-text));
-    text-transform: uppercase;
-    background-image: linear-gradient(to top, hsl(0 0% 75%), hsl(0 0% 88%));
-  }
-
-  .habbo-tab-button.active {
-    @apply bg-white translate-y-[2px] z-10;
-    border-bottom-color: white;
-  }
-
-  .habbo-tab-content {
-    @apply border-2 rounded-b-lg bg-white p-4;
-    border-color: hsl(var(--habbo-border));
-    border-top: none;
-    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
-  }
+.avatar-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }

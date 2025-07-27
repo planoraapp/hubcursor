@@ -1,171 +1,118 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
+import { useGeolocation } from './useGeolocation';
 
-export type Language = 'pt' | 'es' | 'en';
+export type Language = 'pt' | 'es';
 
-export const translations = {
+interface LanguageContextType {
+  currentLanguage: Language;
+  changeLanguage: (lang: Language) => void;
+  t: (key: string) => string;
+}
+
+const translations = {
   pt: {
-    appTitle: 'HABBO HUB',
-    homeTitle: 'Bem-vindo ao Habbo Hub',
-    homeSubtitle: 'Sua central de ferramentas e informações para o Habbo Hotel. Explore os dados públicos mais recentes e otimize sua experiência no jogo.',
-    latestNews: 'Últimas Notícias',
-    featuredRooms: 'Quartos em Destaque',
-    exploreRoomsTitle: 'Explorador de Quartos',
-    exploreRoomsSubtitle: 'Pesquise e filtre os quartos públicos mais populares do Habbo Hotel.',
-    catalogTitle: 'Catálogo de Items',
-    catalogSubtitle: 'Explore todos os emblemas disponíveis no Habbo Hotel BR através da nossa API oficial.',
-    badgeGuideTitle: 'Guia de Emblemas',
-    badgeGuideSubtitle: 'Explore a vasta coleção de emblemas do Habbo. Descubra como obtê-los e os mais raros!',
-    rankingsTitle: 'Classificação Habbo',
-    rankingsSubtitle: 'Veja os Habbos e quartos em destaque nos rankings.',
-    profileCheckerTitle: 'Verificador de Perfil Habbo',
-    profileCheckerSubtitle: 'Pesquise por qualquer Habbo e veja seu perfil público, emblemas, grupos e quartos!',
-    toolsTitle: 'Ferramentas Habbo',
-    toolsSubtitle: 'Utilitários para otimizar sua experiência e estratégia no Habbo.',
-    languageLabel: 'Idioma:',
-    userNameGuest: 'Convidado Habbo',
-    offlineStatus: 'Offline',
-    onlineStatus: 'Online',
-    loginButton: 'Entrar',
-    logoutButton: 'Sair',
-    habboPremiumTitle: 'Habbo Hub Premium',
-    habboPremiumDesc: 'Desbloqueie filtros avançados e alertas personalizados!',
-    subscribeNow: 'Assine Já!',
+    // Navegação
     noticias: 'Notícias',
     forum: 'Fórum',
     catalogo: 'Catálogo',
     emblemas: 'Emblemas',
-    editor: 'Editor de Visuais',
+    editor: 'Editor',
     mercado: 'Mercado',
-    newsTitle: 'Notícias do Habbo',
-    newsSubtitle: 'Mantenha-se atualizado com as últimas novidades dos hotéis Habbo ao redor do mundo.',
-    forumTitle: 'Fórum da Comunidade',
-    forumSubtitle: 'Participe das discussões e conecte-se com outros Habbos.',
-    catalogEnhancedTitle: 'Catálogo Completo',
-    catalogEnhancedSubtitle: 'Explore todos os mobis e raros com detalhes completos.',
-    badgesEnhancedTitle: 'Guia Completo de Emblemas',
-    badgesEnhancedSubtitle: 'Descubra todos os emblemas disponíveis e como obtê-los.',
-    avatarEditorTitle: 'Editor de Visuais',
-    avatarEditorSubtitle: 'Crie e personalize seu avatar Habbo com nossa ferramenta interativa.',
-    marketplaceTitle: 'Mercado Habbo',
-    marketplaceSubtitle: 'Estatísticas e detalhes do marketplace de itens.'
+    
+    // Perfil
+    userNameGuest: 'Visitante',
+    onlineStatus: 'Online',
+    offlineStatus: 'Offline',
+    loginButton: 'Entrar',
+    logoutButton: 'Sair',
+    
+    // Premium
+    habboPremiumTitle: 'Habbo Premium',
+    habboPremiumDesc: 'Acesso exclusivo a recursos especiais',
+    subscribeNow: 'Assinar Agora',
+    
+    // Geral
+    languageLabel: 'Idioma',
+    homeTitle: 'Bem-vindo ao Habbo Hub',
+    homeSubtitle: 'Sua central de ferramentas para Habbo Hotel',
+    latestNews: 'Últimas Notícias',
+    featuredRooms: 'Quartos em Destaque',
+    catalogEnhancedTitle: 'Catálogo Aprimorado',
+    badgesEnhancedTitle: 'Emblemas Aprimorados'
   },
   es: {
-    appTitle: 'HABBO HUB',
-    homeTitle: 'Bienvenido a Habbo Hub',
-    homeSubtitle: 'Tu centro de herramientas e información para Habbo Hotel. Explora los datos públicos más recientes y optimiza tu experiencia de juego.',
-    latestNews: 'Últimas Noticias',
-    featuredRooms: 'Salas Destacadas',
-    exploreRoomsTitle: 'Explorador de Salas',
-    exploreRoomsSubtitle: 'Busca y filtra las salas públicas más populares de Habbo Hotel.',
-    catalogTitle: 'Catálogo de Artículos',
-    catalogSubtitle: 'Explora todas las placas disponibles en Habbo Hotel ES a través de nuestra API oficial.',
-    badgeGuideTitle: 'Guía de Placas',
-    badgeGuideSubtitle: 'Explora la vasta colección de placas de Habbo. ¡Descubre cómo conseguirlas y las más raras!',
-    rankingsTitle: 'Clasificación Habbo',
-    rankingsSubtitle: 'Mira a los Habbos y salas destacadas en los rankings.',
-    profileCheckerTitle: 'Verificador de Perfil Habbo',
-    profileCheckerSubtitle: 'Busca cualquier Habbo y ve su perfil público, placas, grupos y salas!',
-    toolsTitle: 'Herramientas Habbo',
-    toolsSubtitle: 'Utilidades para optimizar tu experiencia y estrategia en Habbo.',
-    languageLabel: 'Idioma:',
-    userNameGuest: 'Invitado Habbo',
-    offlineStatus: 'Fuera de Línea',
-    onlineStatus: 'En Línea',
-    loginButton: 'Entrar',
-    logoutButton: 'Salir',
-    habboPremiumTitle: 'Habbo Hub Premium',
-    habboPremiumDesc: '¡Desbloquea filtros avanzados y alertas personalizadas!',
-    subscribeNow: '¡Suscríbete Ahora!',
+    // Navegación
     noticias: 'Noticias',
     forum: 'Foro',
     catalogo: 'Catálogo',
-    emblemas: 'Placas',
-    editor: 'Editor de Looks',
+    emblemas: 'Emblemas',
+    editor: 'Editor',
     mercado: 'Mercado',
-    newsTitle: 'Noticias de Habbo',
-    newsSubtitle: 'Mantente actualizado con las últimas novedades de los hoteles Habbo en todo el mundo.',
-    forumTitle: 'Foro de la Comunidad',
-    forumSubtitle: 'Participa en las discusiones y conéctate con otros Habbos.',
-    catalogEnhancedTitle: 'Catálogo Completo',
-    catalogEnhancedSubtitle: 'Explora todos los muebles y raros con detalles completos.',
-    badgesEnhancedTitle: 'Guía Completa de Placas',
-    badgesEnhancedSubtitle: 'Descubre todas las placas disponibles y cómo obtenerlas.',
-    avatarEditorTitle: 'Editor de Looks',
-    avatarEditorSubtitle: 'Crea y personaliza tu avatar Habbo con nuestra herramienta interactiva.',
-    marketplaceTitle: 'Mercado Habbo',
-    marketplaceSubtitle: 'Estadísticas y detalles del marketplace de artículos.'
-  },
-  en: {
-    appTitle: 'HABBO HUB',
-    homeTitle: 'Welcome to Habbo Hub',
-    homeSubtitle: 'Your central hub for tools and information about Habbo Hotel. Explore the latest public data and optimize your in-game experience.',
-    latestNews: 'Latest News',
-    featuredRooms: 'Featured Rooms',
-    exploreRoomsTitle: 'Room Explorer',
-    exploreRoomsSubtitle: 'Search and filter the most popular public rooms in Habbo Hotel.',
-    catalogTitle: 'Item Catalog',
-    catalogSubtitle: 'Explore all badges available in Habbo Hotel through our official API.',
-    badgeGuideTitle: 'Badge Guide',
-    badgeGuideSubtitle: 'Explore the vast collection of Habbo badges. Discover how to get them and the rarest ones!',
-    rankingsTitle: 'Habbo Rankings',
-    rankingsSubtitle: 'See top Habbos and rooms on the leaderboards.',
-    profileCheckerTitle: 'Habbo Profile Checker',
-    profileCheckerSubtitle: 'Search for any Habbo and view their public profile, badges, groups, and rooms!',
-    toolsTitle: 'Habbo Tools',
-    toolsSubtitle: 'Utilities to optimize your Habbo experience and strategy.',
-    languageLabel: 'Language:',
-    userNameGuest: 'Guest Habbo',
-    offlineStatus: 'Offline',
-    onlineStatus: 'Online',
-    loginButton: 'Login',
-    logoutButton: 'Logout',
-    habboPremiumTitle: 'Habbo Hub Premium',
-    habboPremiumDesc: 'Unlock advanced filters and custom alerts!',
-    subscribeNow: 'Subscribe Now!',
-    noticias: 'News',
-    forum: 'Forum',
-    catalogo: 'Catalog',
-    emblemas: 'Badges',
-    editor: 'Avatar Editor',
-    mercado: 'Marketplace',
-    newsTitle: 'Habbo News',
-    newsSubtitle: 'Stay updated with the latest news from Habbo hotels around the world.',
-    forumTitle: 'Community Forum',
-    forumSubtitle: 'Join discussions and connect with other Habbos.',
-    catalogEnhancedTitle: 'Complete Catalog',
-    catalogEnhancedSubtitle: 'Explore all furniture and rares with complete details.',
-    badgesEnhancedTitle: 'Complete Badge Guide',
-    badgesEnhancedSubtitle: 'Discover all available badges and how to get them.',
-    avatarEditorTitle: 'Avatar Editor',
-    avatarEditorSubtitle: 'Create and customize your Habbo avatar with our interactive tool.',
-    marketplaceTitle: 'Habbo Marketplace',
-    marketplaceSubtitle: 'Statistics and details of the item marketplace.'
+    
+    // Perfil
+    userNameGuest: 'Invitado',
+    onlineStatus: 'Conectado',
+    offlineStatus: 'Desconectado',
+    loginButton: 'Entrar',
+    logoutButton: 'Salir',
+    
+    // Premium
+    habboPremiumTitle: 'Habbo Premium',
+    habboPremiumDesc: 'Acceso exclusivo a funciones especiales',
+    subscribeNow: 'Suscribirse Ahora',
+    
+    // General
+    languageLabel: 'Idioma',
+    homeTitle: 'Bienvenido a Habbo Hub',
+    homeSubtitle: 'Tu centro de herramientas para Habbo Hotel',
+    latestNews: 'Últimas Noticias',
+    featuredRooms: 'Habitaciones Destacadas',
+    catalogEnhancedTitle: 'Catálogo Mejorado',
+    badgesEnhancedTitle: 'Emblemas Mejorados'
   }
 };
 
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
 export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentLanguage, setCurrentLanguage] = useState<Language>('pt');
+  const { country, loading } = useGeolocation();
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('habboHubLang') as Language;
-    if (savedLanguage && translations[savedLanguage]) {
+    // Verificar se há idioma salvo
+    const savedLanguage = localStorage.getItem('habbo-hub-language') as Language;
+    
+    if (savedLanguage && (savedLanguage === 'pt' || savedLanguage === 'es')) {
       setCurrentLanguage(savedLanguage);
+    } else if (!loading && country) {
+      // Definir idioma baseado na geolocalização
+      const detectedLanguage = country === 'spain' ? 'es' : 'pt';
+      setCurrentLanguage(detectedLanguage);
+      localStorage.setItem('habbo-hub-language', detectedLanguage);
     }
-  }, []);
+  }, [country, loading]);
 
-  const changeLanguage = (language: Language) => {
-    setCurrentLanguage(language);
-    localStorage.setItem('habboHubLang', language);
+  const changeLanguage = (lang: Language) => {
+    setCurrentLanguage(lang);
+    localStorage.setItem('habbo-hub-language', lang);
   };
 
-  const t = (key: string) => {
-    return translations[currentLanguage][key as keyof typeof translations[Language]] || key;
+  const t = (key: string): string => {
+    return translations[currentLanguage][key] || key;
   };
 
-  return {
-    currentLanguage,
-    changeLanguage,
-    t
-  };
+  return (
+    <LanguageContext.Provider value={{ currentLanguage, changeLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
 };
