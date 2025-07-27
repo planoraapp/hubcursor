@@ -66,6 +66,60 @@ export const useRealtimeStats = () => {
   });
 };
 
+// Hook para quartos recentes (alias para discoverRooms)
+export const useRecentRooms = () => {
+  return useDiscoverRooms();
+};
+
+// Hook para estatísticas do hotel
+export const useHotelStats = () => {
+  return useQuery({
+    queryKey: ['hotel-stats'],
+    queryFn: getRealtimeStats,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    retry: 1,
+    retryDelay: 1000,
+  });
+};
+
+// Hook para top usuários (mockado por enquanto)
+export const useTopUsers = () => {
+  return useQuery({
+    queryKey: ['top-users'],
+    queryFn: async () => {
+      // Mock data for top users
+      return [
+        {
+          username: 'HabboPlayer1',
+          look: 'hd-180-1.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61',
+          level: 25
+        },
+        {
+          username: 'HabboPlayer2',
+          look: 'hd-180-7.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61',
+          level: 23
+        },
+        {
+          username: 'HabboPlayer3',
+          look: 'hd-180-2.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61',
+          level: 21
+        },
+        {
+          username: 'HabboPlayer4',
+          look: 'hd-180-3.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61',
+          level: 19
+        },
+        {
+          username: 'HabboPlayer5',
+          look: 'hd-180-4.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61',
+          level: 18
+        }
+      ];
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutos
+  });
+};
+
 // Hook para gerenciar estado de loading global
 export const useGlobalLoading = () => {
   const [isLoading, setIsLoading] = useState(false);

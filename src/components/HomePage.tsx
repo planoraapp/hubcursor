@@ -1,13 +1,13 @@
+
 import { useState, useEffect } from 'react';
 import { PanelCard } from './PanelCard';
 import { RoomsChart } from './RoomsChart';
-import { useHotelStats, useRecentRooms, useTopUsers } from '../hooks/useHabboData';
+import { useHotelStats, useTopUsers } from '../hooks/useHabboData';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const HomePage = () => {
   const { t } = useLanguage();
   const { data: hotelStats } = useHotelStats();
-  const { data: recentRooms } = useRecentRooms();
   const { data: topUsers } = useTopUsers();
 
   const [news, setNews] = useState([
@@ -72,16 +72,16 @@ export const HomePage = () => {
       <PanelCard title="Estatísticas do Hotel">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
-            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.users_online || 'Carregando...'}</h3>
+            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.activeUsers || 'Carregando...'}</h3>
             <p className="text-sm text-gray-600">Habbos Online</p>
           </div>
           <div className="text-center">
-            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.total_rooms || 'Carregando...'}</h3>
+            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.totalRooms || 'Carregando...'}</h3>
             <p className="text-sm text-gray-600">Quartos Criados</p>
           </div>
           <div className="text-center">
-            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.total_users || 'Carregando...'}</h3>
-            <p className="text-sm text-gray-600">Total de Habbos</p>
+            <h3 className="font-bold text-gray-800 text-xl">{hotelStats?.totalBadges || 'Carregando...'}</h3>
+            <p className="text-sm text-gray-600">Total de Emblemas</p>
           </div>
         </div>
       </PanelCard>

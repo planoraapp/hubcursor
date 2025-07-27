@@ -1,19 +1,19 @@
+
 import { useState } from 'react';
 import { Search, Users, Eye, MapPin, Star } from 'lucide-react';
 import { PanelCard } from './PanelCard';
 import { RoomsChart } from './RoomsChart';
-import { useTopRooms, useRecentRooms } from '../hooks/useHabboData';
+import { useTopRooms } from '../hooks/useHabboData';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const ExploreRooms = () => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const { data: topRooms, isLoading, error } = useTopRooms();
-  const { data: recentRooms } = useRecentRooms();
 
   const filteredRooms = topRooms?.filter(room =>
     room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    room.ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+    room.owner.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   return (
@@ -38,8 +38,8 @@ export const ExploreRooms = () => {
 
       <PanelCard title={t('topRoomsByVisitors')}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRooms.slice(0, 6).map((room) => (
-            <PanelCard key={room.id}>
+          {filteredRooms.slice(0, 6).map((room, index) => (
+            <PanelCard key={room.room.id || index}>
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
                   <Users className="text-blue-500" size={32} />
@@ -48,11 +48,11 @@ export const ExploreRooms = () => {
                   <h3 className="font-bold text-gray-800">{room.name}</h3>
                   <p className="text-sm text-gray-500">
                     <Eye className="inline-block mr-1" size={14} />
-                    {room.userCount} online
+                    {room.score} online
                   </p>
                   <p className="text-sm text-gray-500">
                     <MapPin className="inline-block mr-1" size={14} />
-                    {room.ownerName}
+                    {room.owner}
                   </p>
                 </div>
               </div>
