@@ -45,11 +45,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="flex">
+    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="flex min-h-screen">
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-1 p-8 overflow-y-auto">
-          {renderSection()}
+        <main className="flex-1 p-8 overflow-y-auto bg-black/20 backdrop-blur-sm">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 min-h-full">
+            {renderSection()}
+          </div>
         </main>
       </div>
     </div>
