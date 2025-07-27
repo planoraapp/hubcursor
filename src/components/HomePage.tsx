@@ -1,24 +1,9 @@
 import { PanelCard } from './PanelCard';
 import { PageHeader } from './PageHeader';
 import { AdSpace } from './AdSpace';
-import { useLanguage } from '../hooks/useLanguage';
-
-// Import das imagens
-import catalogoImg from '../assets/Image 2422.png';
-import emblemasImg from '../assets/264__-HG.png';
-import batePapoImg from '../assets/BatePapo1.png';
-import mercadoImg from '../assets/Image 1574.png';
-import emblema1Img from '../assets/595__-3CQ.png';
-import emblema2Img from '../assets/1136__-4HX.png';
-import creditosImg from '../assets/gcreate_icon_credit.png';
-import ducketsImg from '../assets/619__-O-.png';
-import diamantesImg from '../assets/Diamante.png';
-import backgroundImg from '../assets/203__-100.png';
-import forumBgImg from '../assets/1211__-3V6.png';
+import { ShoppingCart, Shield, MessageSquare, Store, Award, Star, Coins, Gem, Diamond } from 'lucide-react';
 
 export const HomePage = () => {
-  const { t } = useLanguage();
-
   return (
     <div className="space-y-6">
       {/* Top Advertisement Banner */}
@@ -26,8 +11,6 @@ export const HomePage = () => {
 
       <PageHeader 
         title="Bem-vindo ao Habbo Hub!"
-        icon={batePapoImg}
-        backgroundImage={backgroundImg}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -38,7 +21,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'catalogo'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-blue-100 to-blue-200 rounded-lg hover:from-blue-200 hover:to-blue-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <img src={catalogoImg} alt="Catálogo" className="w-12 h-12 mb-2" />
+              <ShoppingCart className="w-12 h-12 mb-2 text-gray-700" />
               <span className="font-bold text-gray-800">Catálogo</span>
             </button>
             
@@ -46,7 +29,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'emblemas'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-green-100 to-green-200 rounded-lg hover:from-green-200 hover:to-green-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <img src={emblemasImg} alt="Emblemas" className="w-12 h-12 mb-2" />
+              <Shield className="w-12 h-12 mb-2 text-gray-700" />
               <span className="font-bold text-gray-800">Emblemas</span>
             </button>
             
@@ -54,7 +37,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'forum'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-purple-100 to-purple-200 rounded-lg hover:from-purple-200 hover:to-purple-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <img src={batePapoImg} alt="Fórum" className="w-12 h-12 mb-2" />
+              <MessageSquare className="w-12 h-12 mb-2 text-gray-700" />
               <span className="font-bold text-gray-800">Fórum</span>
             </button>
             
@@ -62,7 +45,7 @@ export const HomePage = () => {
               onClick={() => window.location.hash = 'mercado'}
               className="flex flex-col items-center p-4 bg-gradient-to-b from-yellow-100 to-yellow-200 rounded-lg hover:from-yellow-200 hover:to-yellow-300 transition-all border-2 border-gray-400 border-r-gray-600 border-b-gray-600"
             >
-              <img src={mercadoImg} alt="Mercado" className="w-12 h-12 mb-2" />
+              <Store className="w-12 h-12 mb-2 text-gray-700" />
               <span className="font-bold text-gray-800">Mercado</span>
             </button>
           </div>
@@ -104,7 +87,7 @@ export const HomePage = () => {
         <PanelCard title="Últimos Emblemas">
           <div className="space-y-3">
             <div className="flex items-center p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-gray-300">
-              <img src={emblema1Img} alt="Emblema" className="w-10 h-10 mr-3" />
+              <Award className="w-10 h-10 mr-3 text-yellow-600" />
               <div>
                 <h5 className="font-bold text-gray-800">Explorador</h5>
                 <p className="text-xs text-gray-600">Visite 50 quartos diferentes</p>
@@ -112,7 +95,7 @@ export const HomePage = () => {
             </div>
             
             <div className="flex items-center p-3 bg-gradient-to-r from-pink-50 to-red-50 rounded-lg border border-gray-300">
-              <img src={emblema2Img} alt="Emblema" className="w-10 h-10 mr-3" />
+              <Star className="w-10 h-10 mr-3 text-pink-600" />
               <div>
                 <h5 className="font-bold text-gray-800">Colecionador</h5>
                 <p className="text-xs text-gray-600">Possua 100 móveis únicos</p>
@@ -133,7 +116,7 @@ export const HomePage = () => {
           <div className="space-y-3">
             <div className="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-100 to-yellow-200 rounded border border-gray-400">
               <div className="flex items-center">
-                <img src={creditosImg} alt="Créditos" className="w-8 h-8 mr-2" />
+                <Coins className="w-8 h-8 mr-2 text-yellow-600" />
                 <span className="font-bold text-gray-800">Créditos</span>
               </div>
               <span className="font-bold text-gray-800">2,500</span>
@@ -141,7 +124,7 @@ export const HomePage = () => {
             
             <div className="flex items-center justify-between p-2 bg-gradient-to-r from-pink-100 to-pink-200 rounded border border-gray-400">
               <div className="flex items-center">
-                <img src={ducketsImg} alt="Duckets" className="w-8 h-8 mr-2" />
+                <Gem className="w-8 h-8 mr-2 text-pink-600" />
                 <span className="font-bold text-gray-800">Duckets</span>
               </div>
               <span className="font-bold text-gray-800">1,200</span>
@@ -149,7 +132,7 @@ export const HomePage = () => {
             
             <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-100 to-blue-200 rounded border border-gray-400">
               <div className="flex items-center">
-                <img src={diamantesImg} alt="Diamantes" className="w-8 h-8 mr-2" />
+                <Diamond className="w-8 h-8 mr-2 text-blue-600" />
                 <span className="font-bold text-gray-800">Diamantes</span>
               </div>
               <span className="font-bold text-gray-800">45</span>
@@ -163,11 +146,6 @@ export const HomePage = () => {
           <div 
             className="relative bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg p-4 text-white overflow-hidden cursor-pointer hover:from-purple-700 hover:to-blue-700 transition-all"
             onClick={() => window.location.hash = 'forum'}
-            style={{ 
-              backgroundImage: `url(${forumBgImg})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
           >
             <div className="absolute inset-0 bg-black/40 rounded-lg"></div>
             <div className="relative z-10">
