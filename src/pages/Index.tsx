@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { Sidebar } from '../components/Sidebar';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { News } from '../components/News';
 import { Forum } from '../components/Forum';
 import { CatalogEnhanced } from '../components/CatalogEnhanced';
@@ -47,7 +46,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
-        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className="flex-1 p-8 overflow-y-auto bg-black/20 backdrop-blur-sm">
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 min-h-full">
             {renderSection()}
