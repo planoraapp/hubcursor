@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Search, Award, Package } from 'lucide-react';
 import { PanelCard } from './PanelCard';
+import { ImageWithFallback } from './ImageWithFallback';
 import { useAchievements } from '../hooks/useHabboData';
 import { getBadgeUrl } from '../services/habboApi';
 
@@ -110,15 +111,11 @@ export const Catalog = () => {
             <PanelCard key={index}>
               <div className="text-center space-y-3">
                 <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center bg-gray-100">
-                  <img
+                  <ImageWithFallback
                     src={getBadgeUrl(item.code)}
                     alt={item.name || 'Emblema'}
                     className="w-12 h-12"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.parentElement!.innerHTML = '<div class="text-yellow-600 text-2xl">🏅</div>';
-                    }}
+                    fallback="/placeholder.svg"
                   />
                 </div>
                 <h3 className="font-bold text-gray-800 text-sm">{item.name || 'Emblema'}</h3>
