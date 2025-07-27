@@ -1,5 +1,6 @@
 import { PanelCard } from './PanelCard';
 import { PageHeader } from './PageHeader';
+import { AdSpace } from './AdSpace';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const HomePage = () => {
@@ -96,6 +97,12 @@ export const HomePage = () => {
         </PanelCard>
       </div>
 
+      {/* Ad Spaces Below Quick Actions */}
+      <div className="flex flex-col lg:flex-row gap-6 items-center justify-center">
+        <AdSpace type="horizontal" className="flex-1" />
+        <AdSpace type="square" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Latest Badges */}
         <PanelCard title="Últimos Emblemas">
@@ -179,6 +186,9 @@ export const HomePage = () => {
           </div>
         </PanelCard>
       </div>
+
+      {/* Bottom Wide Ad */}
+      <AdSpace type="wide" className="mt-8" />
     </div>
   );
 };

@@ -59,7 +59,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'home', 
       label: 'Home', 
-      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src="/assets/Hmenu.png" alt="Home" className="w-8 h-8 flex-shrink-0" />,
       path: '/'
     },
     { 
@@ -169,11 +169,11 @@ const DesktopSidebar = ({
             />
           ) : (
             <img 
-              src="/assets/Hmenu.png" 
+              src="/assets/hub.gif" 
               alt="H" 
               className="h-10 w-10"
               onError={(e) => {
-                e.currentTarget.src = "/assets/habbohub.png";
+                e.currentTarget.src = "/assets/hub.gif";
               }}
             />
           )}

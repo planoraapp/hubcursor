@@ -53,26 +53,33 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
 
   return (
     <div 
-      className={`habbo-ad-placeholder mx-auto ${className}`}
+      className={`habbo-ad-placeholder relative mx-auto ${className}`}
       style={{
         width: config.width,
         height: config.height,
         backgroundImage: `url(${config.image})`,
-        backgroundSize: 'cover',
+        backgroundSize: 'contain',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
         imageRendering: 'pixelated',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#666',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
         maxWidth: type === 'horizontal' || type === 'wide' ? '728px' : 'auto'
       }}
     >
-      {config.title}
+      <div 
+        className="absolute inset-0 flex items-center justify-center"
+        style={{
+          margin: type === 'wide' ? '15px 25px' : type === 'horizontal' ? '12px 20px' : type === 'vertical' ? '20px 15px' : '15px',
+          color: '#666',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+          backgroundColor: 'rgba(255,255,255,0.1)',
+          borderRadius: '4px',
+          border: '1px solid rgba(0,0,0,0.1)'
+        }}
+      >
+        {config.title}
+      </div>
     </div>
   );
 };
