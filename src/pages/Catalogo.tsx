@@ -21,14 +21,11 @@ const Catalogo = () => {
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection="catalogo" setActiveSection={() => {}} />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-center text-gray-800 mb-4">Catálogo</h1>
-            <PageHeader 
-              title="Catálogo"
-              icon="/assets/Image 2422.png"
-              backgroundImage="/assets/1360__-3C7.png"
-            />
-          </div>
+          <PageHeader 
+            title="Catálogo"
+            icon="/assets/Image 2422.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
           
           <AdSpace type="horizontal" className="mb-6" />
           

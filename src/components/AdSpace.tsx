@@ -29,7 +29,7 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
 
   return (
     <div 
-      className={`bg-gray-200 border border-gray-300 relative mx-auto ${className}`}
+      className={`bg-gray-200 border border-gray-300 relative mx-auto rounded-lg ${className}`}
       style={{
         width: config.width,
         height: config.height,

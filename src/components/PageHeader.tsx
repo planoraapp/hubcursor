@@ -15,8 +15,9 @@ export const PageHeader = ({
     backgroundPosition: 'center'
   }}>
       <div className="absolute inset-0 bg-black/30"></div>
-      <div className="relative z-10 flex items-center justify-center">
-        {icon && <img src={icon} alt={title} className="w-16 h-16" />}
+      <div className="relative z-10 flex items-center space-x-4">
+        {icon && <img src={icon} alt={title} className="w-12 h-12" />}
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
       </div>
     </div>;
 };

@@ -192,7 +192,7 @@ const DesktopSidebar = ({
                 className={`
                   flex items-center transition-all duration-200 font-medium rounded-lg border-0 outline-0
                   ${isActive 
-                    ? 'bg-sky-400 text-white shadow-md' 
+                    ? 'bg-gray-300 text-gray-800 shadow-md' 
                     : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                   }
                   ${!open ? 'p-0 justify-center w-16 h-16' : 'px-4 py-3'}
@@ -269,7 +269,7 @@ const MobileHeader = ({
                 className={`
                   w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-200 border-0 outline-0 p-0
                   ${currentPath === item.path 
-                    ? 'bg-sky-400 shadow-md' 
+                    ? 'bg-gray-300 shadow-md' 
                     : 'bg-transparent hover:bg-white/50'
                   }
                 `}
@@ -327,10 +327,10 @@ const MobileHeader = ({
                      }}
                      className={`
                        flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
-                       ${currentPath === item.path 
-                         ? 'bg-sky-400 text-white shadow-md' 
-                         : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm'
-                       }
+                        ${currentPath === item.path 
+                          ? 'bg-gray-300 text-gray-800 shadow-md' 
+                          : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm'
+                        }
                      `}
                   >
                     {typeof item.icon === 'string' ? (
