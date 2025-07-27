@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { LanguageSelector } from './LanguageSelector';
 
 // Import das imagens
-import hmenuImg from '../assets/habbohub.png';
+import hmenuImg from '../assets/BatePapo1.png';
 import batePapoImg from '../assets/BatePapo1.png';
 import eventosImg from '../assets/eventos.png';
 import catalogoImg from '../assets/Image 2422.png';
