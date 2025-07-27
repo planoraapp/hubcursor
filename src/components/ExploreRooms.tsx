@@ -11,9 +11,11 @@ export const ExploreRooms = () => {
   const { data: rooms, isLoading: roomsLoading, error: roomsError } = useDiscoverRooms();
   const { data: topRooms, isLoading: topRoomsLoading } = useTopRooms();
 
+  // Filter rooms safely, ensuring we have valid data
   const filteredRooms = rooms?.filter(room => 
-    room.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    room.ownerName.toLowerCase().includes(searchTerm.toLowerCase())
+    room && room.name && room.ownerName && // Ensure required fields exist
+    (room.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+     room.ownerName.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
   const formatDate = (dateString: string) => {
@@ -80,7 +82,7 @@ export const ExploreRooms = () => {
         </div>
 
         <div className="mt-4 text-sm text-gray-600">
-          <p>📊 Quartos descobertos: {rooms.length} | 🔍 Resultados da pesquisa: {filteredRooms.length}</p>
+          <p>📊 Quartos descobertos: {rooms?.length || 0} | 🔍 Resultados da pesquisa: {filteredRooms.length}</p>
         </div>
       </PanelCard>
 
@@ -101,7 +103,7 @@ export const ExploreRooms = () => {
             <PanelCard key={room.id || index}>
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-lg text-gray-800 truncate">{room.name}</h3>
+                  <h3 className="font-bold text-lg text-gray-800 truncate">{room.name || 'Sem nome'}</h3>
                   <div className="flex items-center text-sm font-medium text-[#008800] bg-green-100 px-2 py-1 rounded">
                     <Users size={14} className="mr-1" />
                     {room.userCount || 0}
@@ -110,10 +112,10 @@ export const ExploreRooms = () => {
                 
                 <div className="flex items-center space-x-2">
                   <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                    {room.ownerName.substring(0, 2).toUpperCase()}
+                    {(room.ownerName || 'U').substring(0, 2).toUpperCase()}
                   </div>
                   <p className="text-gray-600 text-sm">
-                    por <span className="font-medium">{room.ownerName}</span>
+                    por <span className="font-medium">{room.ownerName || 'Desconhecido'}</span>
                   </p>
                 </div>
                 

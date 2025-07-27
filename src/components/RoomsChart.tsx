@@ -13,8 +13,14 @@ export const RoomsChart = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const sortedRooms = topRooms.slice(0, 5);
-    const maxVisitors = Math.max(...sortedRooms.map(room => room.score));
+    // Filter out rooms with invalid data and ensure we have valid scores
+    const validRooms = topRooms
+      .filter(room => room && room.score !== undefined && room.score !== null && room.name)
+      .slice(0, 5);
+
+    if (validRooms.length === 0) return;
+
+    const maxVisitors = Math.max(...validRooms.map(room => room.score || 0));
 
     // Canvas setup
     canvas.width = canvas.offsetWidth;
@@ -23,14 +29,15 @@ export const RoomsChart = () => {
     const padding = 60;
     const chartWidth = canvas.width - padding * 2;
     const chartHeight = canvas.height - padding * 2;
-    const barWidth = chartWidth / sortedRooms.length;
+    const barWidth = chartWidth / validRooms.length;
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw bars
-    sortedRooms.forEach((room, index) => {
-      const barHeight = maxVisitors > 0 ? (room.score / maxVisitors) * chartHeight : 0;
+    validRooms.forEach((room, index) => {
+      const score = room.score || 0;
+      const barHeight = maxVisitors > 0 ? (score / maxVisitors) * chartHeight : 0;
       const x = padding + index * barWidth + barWidth * 0.1;
       const y = canvas.height - padding - barHeight;
       const width = barWidth * 0.8;
@@ -39,18 +46,18 @@ export const RoomsChart = () => {
       ctx.fillStyle = '#008800';
       ctx.fillRect(x, y, width, barHeight);
 
-      // Draw value on top of bar
+      // Draw value on top of bar - ensure score is a number
       ctx.fillStyle = '#38332c';
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
-      ctx.fillText(room.score.toString(), x + width / 2, y - 5);
+      ctx.fillText(score.toString(), x + width / 2, y - 5);
 
       // Draw room name
       ctx.save();
       ctx.translate(x + width / 2, canvas.height - padding + 20);
       ctx.rotate(-Math.PI / 4);
       ctx.textAlign = 'right';
-      const displayName = room.name.length > 12 ? room.name.substring(0, 12) + '...' : room.name;
+      const displayName = room.name && room.name.length > 12 ? room.name.substring(0, 12) + '...' : (room.name || 'Sem nome');
       ctx.fillText(displayName, 0, 0);
       ctx.restore();
     });

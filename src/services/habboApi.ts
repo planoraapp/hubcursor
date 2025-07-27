@@ -1,4 +1,3 @@
-
 // Base URL para Habbo BR API
 const HABBO_API_BASE_URL = 'https://www.habbo.com.br/api/public';
 
@@ -269,11 +268,16 @@ export const getTopBadgeCollectors = async (): Promise<Array<{ name: string; sco
 export const getTopRooms = async (): Promise<Array<{ name: string; owner: string; score: number; room: HabboRoom }>> => {
   const rooms = await discoverRooms();
   
+  if (!rooms || rooms.length === 0) {
+    return [];
+  }
+  
   return rooms
+    .filter(room => room && room.name && room.ownerName) // Filter out invalid rooms
     .map(room => ({
       name: room.name,
       owner: room.ownerName,
-      score: room.userCount,
+      score: room.userCount || 0, // Ensure score is always a number
       room: room
     }))
     .sort((a, b) => b.score - a.score)
