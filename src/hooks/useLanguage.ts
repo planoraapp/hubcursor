@@ -92,13 +92,11 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const { country, loading } = useGeolocation();
 
   useEffect(() => {
-    // Verificar se há idioma salvo
     const savedLanguage = localStorage.getItem('habbo-hub-language') as Language;
     
     if (savedLanguage && (savedLanguage === 'pt' || savedLanguage === 'es')) {
       setCurrentLanguage(savedLanguage);
     } else if (!loading && country) {
-      // Definir idioma baseado na geolocalização
       const detectedLanguage = country === 'spain' ? 'es' : 'pt';
       setCurrentLanguage(detectedLanguage);
       localStorage.setItem('habbo-hub-language', detectedLanguage);
@@ -112,8 +110,8 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
 
   const t = (key: string): string => {
     const translation = translations[currentLanguage];
-    const translationKey = key as keyof typeof translation;
-    return translation[translationKey] || key;
+    const typedKey = key as keyof typeof translation;
+    return translation[typedKey] || key;
   };
 
   return (
