@@ -59,55 +59,55 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'home', 
       label: 'Home', 
-      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-8 h-8 flex-shrink-0" />,
       path: '/'
     },
     { 
       id: 'noticias', 
       label: 'Notícias', 
-      icon: () => <img src="/assets/BatePapo1.png" alt="Notícias" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/BatePapo1.png" alt="Notícias" className="w-8 h-8 flex-shrink-0" />,
       path: '/noticias'
     },
     { 
       id: 'eventos', 
       label: 'Eventos', 
-      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-8 h-8 flex-shrink-0" />,
       path: '/eventos'
     },
     { 
       id: 'forum', 
       label: 'Fórum', 
-      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-8 h-8 flex-shrink-0" />,
       path: '/forum'
     },
     { 
       id: 'catalogo', 
       label: 'Catálogo', 
-      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-8 h-8 flex-shrink-0" />,
       path: '/catalogo'
     },
     { 
       id: 'emblemas', 
       label: 'Emblemas', 
-      icon: () => <img src="/assets/1876__-6Ie.png" alt="Emblemas" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/1876__-6Ie.png" alt="Emblemas" className="w-8 h-8 flex-shrink-0" />,
       path: '/emblemas'
     },
     { 
       id: 'editor', 
       label: 'Editor de Visuais', 
-      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-8 h-8 flex-shrink-0" />,
       path: '/editor'
     },
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-8 h-8 flex-shrink-0" />,
       path: '/mercado'
     },
     { 
       id: 'ferramentas', 
       label: 'Ferramentas', 
-      icon: () => <img src="/assets/wireds.png" alt="Ferramentas" className="w-6 h-6 flex-shrink-0" />,
+      icon: () => <img src="/assets/wireds.png" alt="Ferramentas" className="w-8 h-8 flex-shrink-0" />,
       path: '/ferramentas'
     }
   ];

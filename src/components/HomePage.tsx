@@ -152,23 +152,6 @@ export const HomePage = () => {
               <span className="font-bold text-gray-800">45</span>
             </div>
 
-            {/* Small Metal Advertisement Button */}
-            <div className="habbo-ad-placeholder habbo-ad-button-style mt-4 mx-auto" style={{
-              width: '150px', 
-              height: '50px',
-              backgroundImage: 'url(/assets/adsmetal.png)',
-              backgroundSize: 'cover',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              color: '#666',
-              fontWeight: 'bold'
-            }}>
-              Espaço para Anúncio
-            </div>
           </div>
         </PanelCard>
 
