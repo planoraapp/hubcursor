@@ -1,16 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { Sidebar } from '../components/Sidebar';
-import { HomePage } from '../components/HomePage';
-import { ExploreRooms } from '../components/ExploreRooms';
-import { Catalog } from '../components/Catalog';
-import { BadgeGuide } from '../components/BadgeGuide';
-import { Rankings } from '../components/Rankings';
-import { ProfileChecker } from '../components/ProfileChecker';
-import { Tools } from '../components/Tools';
+import { News } from '../components/News';
+import { Forum } from '../components/Forum';
+import { CatalogEnhanced } from '../components/CatalogEnhanced';
+import { BadgesEnhanced } from '../components/BadgesEnhanced';
+import { AvatarEditor } from '../components/AvatarEditor';
+import { Marketplace } from '../components/Marketplace';
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState('inicio');
+  const [activeSection, setActiveSection] = useState('noticias');
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -28,22 +27,20 @@ const Index = () => {
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'inicio':
-        return <HomePage />;
-      case 'quartos':
-        return <ExploreRooms />;
+      case 'noticias':
+        return <News />;
+      case 'forum':
+        return <Forum />;
       case 'catalogo':
-        return <Catalog />;
-      case 'guias':
-        return <BadgeGuide />;
-      case 'classificacao':
-        return <Rankings />;
-      case 'perfil':
-        return <ProfileChecker />;
-      case 'ferramentas':
-        return <Tools />;
+        return <CatalogEnhanced />;
+      case 'emblemas':
+        return <BadgesEnhanced />;
+      case 'editor':
+        return <AvatarEditor />;
+      case 'mercado':
+        return <Marketplace />;
       default:
-        return <HomePage />;
+        return <News />;
     }
   };
 

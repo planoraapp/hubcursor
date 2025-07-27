@@ -35,21 +35,21 @@ export const UserProfile = () => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] text-center mb-6">
+    <div className="p-4 text-center mb-6 bg-transparent">
       <img
         src={getAvatarUrl(userData?.figureString)}
         alt={userData?.name || t('userNameGuest')}
-        className="w-16 h-16 mx-auto rounded-full border-2 border-gray-300 mb-2"
+        className="w-16 h-16 mx-auto rounded-full mb-2"
       />
-      <p className="font-bold text-gray-800">
+      <p className="font-bold text-[#38332c]">
         {userData?.name || t('userNameGuest')}
       </p>
-      <p className={`text-xs ${userData?.online ? 'text-green-500' : 'text-red-500'}`}>
+      <p className={`text-xs ${userData?.online ? 'text-green-600' : 'text-red-600'}`}>
         {userData?.online ? t('onlineStatus') : t('offlineStatus')}
       </p>
       
       {userData?.motto && (
-        <p className="text-xs text-gray-600 mt-1 italic">"{userData.motto}"</p>
+        <p className="text-xs text-[#38332c] mt-1 italic">"{userData.motto}"</p>
       )}
 
       {!isLoggedIn && !showLoginForm && (
@@ -68,7 +68,7 @@ export const UserProfile = () => {
             value={loginUsername}
             onChange={(e) => setLoginUsername(e.target.value)}
             placeholder="Nome do usuário Habbo..."
-            className="w-full px-3 py-2 text-sm border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff]"
+            className="w-full px-3 py-2 text-sm border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff] bg-white"
             disabled={loading}
           />
           <div className="flex space-x-2">
