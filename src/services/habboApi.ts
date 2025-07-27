@@ -67,7 +67,7 @@ export interface MarketplaceStats {
 
 // Cache local para evitar muitas requisições
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos - aumentado para reduzir requisições
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 // Função auxiliar para cache
 const getCachedData = (key: string) => {
@@ -82,59 +82,31 @@ const setCachedData = (key: string, data: any) => {
   cache.set(key, { data, timestamp: Date.now() });
 };
 
-// Throttle/debounce para requisições
-const pendingRequests = new Map<string, Promise<any>>();
-
 // Função auxiliar para fazer requisições à API
 const fetchData = async (endpoint: string): Promise<any> => {
   const cacheKey = endpoint;
   const cached = getCachedData(cacheKey);
   
   if (cached) {
+    console.log(`Cache hit for ${endpoint}`);
     return cached;
   }
 
-  // Evita requisições duplicadas simultâneas
-  if (pendingRequests.has(cacheKey)) {
-    return pendingRequests.get(cacheKey);
-  }
-
-  const request = async () => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-      
-      const response = await fetch(`${HABBO_API_BASE_URL}${endpoint}`, { 
-        signal: controller.signal,
-        headers: {
-          'Cache-Control': 'public, max-age=300', // 5 minutes browser cache
-        }
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`Erro HTTP! Status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setCachedData(cacheKey, data);
-      return data;
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.warn('Request timeout:', endpoint);
-      } else {
-        console.error(`Erro ao buscar dados do endpoint ${endpoint}:`, error);
-      }
-      return null;
-    } finally {
-      pendingRequests.delete(cacheKey);
+  try {
+    console.log(`Fetching data from ${HABBO_API_BASE_URL}${endpoint}`);
+    const response = await fetch(`${HABBO_API_BASE_URL}${endpoint}`);
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP! Status: ${response.status}`);
     }
-  };
-
-  const promise = request();
-  pendingRequests.set(cacheKey, promise);
-  return promise;
+    
+    const data = await response.json();
+    setCachedData(cacheKey, data);
+    return data;
+  } catch (error) {
+    console.error(`Erro ao buscar dados do endpoint ${endpoint}:`, error);
+    return null;
+  }
 };
 
 // Usuários conhecidos populares do Habbo BR para descobrir quartos

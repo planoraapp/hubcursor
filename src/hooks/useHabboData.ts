@@ -38,12 +38,9 @@ export const useTopBadgeCollectors = () => {
   return useQuery({
     queryKey: ['top-badge-collectors'],
     queryFn: getTopBadgeCollectors,
-    staleTime: 30 * 60 * 1000, // 30 minutos - aumentado
-    gcTime: 60 * 60 * 1000, // 60 minutes garbage collection
-    refetchInterval: false, // Desabilita refetch automático
-    refetchOnWindowFocus: false, // Evita refetch desnecessário
-    retry: 1, // Reduz tentativas
-    retryDelay: 5000,
+    staleTime: 15 * 60 * 1000, // 15 minutos
+    retry: 1,
+    retryDelay: 3000,
   });
 };
 
@@ -52,12 +49,9 @@ export const useTopRooms = () => {
   return useQuery({
     queryKey: ['top-rooms'],
     queryFn: getTopRooms,
-    staleTime: 20 * 60 * 1000, // 20 minutos - aumentado
-    gcTime: 40 * 60 * 1000, // 40 minutes garbage collection
-    refetchInterval: false, // Desabilita refetch automático
-    refetchOnWindowFocus: false, // Evita refetch desnecessário
-    retry: 1, // Reduz tentativas
-    retryDelay: 3000,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    retry: 2,
+    retryDelay: 2000,
   });
 };
 
