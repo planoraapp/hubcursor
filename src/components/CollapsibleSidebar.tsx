@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { UserProfile } from './UserProfile';
 import { useLanguage } from '../hooks/useLanguage';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { LanguageSelector } from './LanguageSelector';
 
 interface SidebarContextProps {
   open: boolean;
@@ -171,7 +172,8 @@ const DesktopSidebar = ({
             <img 
               src="/assets/hub.gif" 
               alt="H" 
-              className="h-10 w-10"
+              className="h-10 w-12 object-contain"
+              style={{ imageRendering: 'pixelated' }}
               onError={(e) => {
                 e.currentTarget.src = "/assets/hub.gif";
               }}
@@ -234,29 +236,8 @@ const DesktopSidebar = ({
           </button>
         </motion.div>
 
-        {/* Language Flags */}
-        <div className="p-4 border-t border-amber-200">
-          <div className="flex justify-center space-x-2">
-            <button
-              className="p-2 rounded-full transition-all duration-200 hover:scale-110 border-2 bg-white/80 border-gray-300 hover:bg-white hover:shadow-sm"
-              title="Português"
-            >
-              <span className="text-xl">🇧🇷</span>
-            </button>
-            <button
-              className="p-2 rounded-full transition-all duration-200 hover:scale-110 border-2 bg-white/80 border-gray-300 hover:bg-white hover:shadow-sm"
-              title="Español"
-            >
-              <span className="text-xl">🇪🇸</span>
-            </button>
-            <button
-              className="p-2 rounded-full transition-all duration-200 hover:scale-110 border-2 bg-white/80 border-gray-300 hover:bg-white hover:shadow-sm"
-              title="English"
-            >
-              <span className="text-xl">🇬🇧</span>
-            </button>
-          </div>
-        </div>
+        {/* Language Selector */}
+        <LanguageSelector isCollapsed={!open} />
       </div>
     </motion.aside>
   );
@@ -359,18 +340,8 @@ const MobileHeader = ({
               })}
             </nav>
 
-            <div className="mt-auto p-4 border-t border-amber-200">
-              <div className="flex justify-center space-x-2">
-                <button className="p-2 rounded-full bg-white/80 border-2 border-gray-300">
-                  <span className="text-xl">🇧🇷</span>
-                </button>
-                <button className="p-2 rounded-full bg-white/80 border-2 border-gray-300">
-                  <span className="text-xl">🇪🇸</span>
-                </button>
-                <button className="p-2 rounded-full bg-white/80 border-2 border-gray-300">
-                  <span className="text-xl">🇬🇧</span>
-                </button>
-              </div>
+            <div className="mt-auto">
+              <LanguageSelector isCollapsed={false} />
             </div>
           </motion.div>
         )}

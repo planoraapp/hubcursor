@@ -1,10 +1,3 @@
-// Using actual asset imports that exist
-import adsMetalImg from '/assets/adsmetal.png';
-import adsWhiteLargeImg from '/assets/adswhitelarge.png';
-import adsVertWhiteImg from '/assets/adsvertwhite.png';
-import adsWideMetalImg from '/assets/adswidemetal.png';
-import adBannerImg from '/assets/ad-banner-468x60.png';
-
 interface AdSpaceProps {
   type: 'square' | 'horizontal' | 'vertical' | 'wide' | 'banner' | 'medium' | 'skyscraper';
   className?: string;
@@ -14,115 +7,39 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
   const getAdConfig = () => {
     switch (type) {
       case 'square':
-        return {
-          image: adsMetalImg,
-          width: '200px',
-          height: '200px',
-          title: 'Advertisement'
-        };
+        return { width: '200px', height: '200px' };
       case 'horizontal':
-        return {
-          image: adsWhiteLargeImg,
-          width: '100%',
-          height: '90px',
-          title: 'Advertisement'
-        };
+        return { width: '100%', height: '90px', maxWidth: '728px' };
       case 'vertical':
-        return {
-          image: adsVertWhiteImg,
-          width: '160px',
-          height: '600px',
-          title: 'Advertisement'
-        };
+        return { width: '160px', height: '600px' };
       case 'wide':
-        return {
-          image: adsWideMetalImg,
-          width: '100%',
-          height: '120px',
-          title: 'Advertisement'
-        };
+        return { width: '100%', height: '120px', maxWidth: '728px' };
       case 'banner':
-        return {
-          image: adBannerImg,
-          width: '468px',
-          height: '60px',
-          title: 'Advertisement'
-        };
+        return { width: '468px', height: '60px' };
       case 'medium':
-        return {
-          image: adsWhiteLargeImg,
-          width: '300px',
-          height: '250px',
-          title: 'Advertisement'
-        };
+        return { width: '300px', height: '250px' };
       case 'skyscraper':
-        return {
-          image: adsVertWhiteImg,
-          width: '160px',
-          height: '600px',
-          title: 'Advertisement'
-        };
+        return { width: '160px', height: '600px' };
       default:
-        return {
-          image: adsMetalImg,
-          width: '200px',
-          height: '200px',
-          title: 'Advertisement'
-        };
+        return { width: '200px', height: '200px' };
     }
   };
 
   const config = getAdConfig();
 
-  const getCSSBackground = () => {
-    switch (type) {
-      case 'square':
-        return 'linear-gradient(135deg, #c4c4c4, #e0e0e0), repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)';
-      case 'horizontal':
-        return 'linear-gradient(90deg, #f5f5f5, #e8e8e8), repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(0,0,0,0.05) 5px, rgba(0,0,0,0.05) 10px)';
-      case 'vertical':
-        return 'linear-gradient(180deg, #f0f0f0, #d5d5d5), repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,0,0,0.05) 8px, rgba(0,0,0,0.05) 16px)';
-      case 'wide':
-        return 'linear-gradient(135deg, #e8e8e8, #f5f5f5), repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(0,0,0,0.08) 12px, rgba(0,0,0,0.08) 24px)';
-      case 'banner':
-        return 'linear-gradient(90deg, #f8f8f8, #e5e5e5), repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(0,0,0,0.06) 6px, rgba(0,0,0,0.06) 12px)';
-      case 'medium':
-        return 'linear-gradient(135deg, #f2f2f2, #e0e0e0), repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(0,0,0,0.04) 8px, rgba(0,0,0,0.04) 16px)';
-      case 'skyscraper':
-        return 'linear-gradient(180deg, #eeeeee, #d8d8d8), repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)';
-      default:
-        return 'linear-gradient(135deg, #c4c4c4, #e0e0e0)';
-    }
-  };
-
   return (
     <div 
-      className={`habbo-ad-placeholder relative mx-auto ${className}`}
+      className={`bg-gray-100 border-2 border-gray-300 flex items-center justify-center mx-auto ${className}`}
       style={{
         width: config.width,
         height: config.height,
-        backgroundImage: `url(${config.image})`,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        imageRendering: 'pixelated',
-        maxWidth: type === 'horizontal' || type === 'wide' ? '728px' : 'auto'
+        maxWidth: config.maxWidth || 'auto'
       }}
     >
-      <div 
-        className="absolute inset-0 flex items-center justify-center"
-        style={{
-          margin: type === 'wide' ? '15px 25px' : type === 'horizontal' ? '12px 20px' : type === 'vertical' ? '20px 15px' : '15px',
-          color: '#555',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          textShadow: '1px 1px 2px rgba(255,255,255,0.8)',
-          backgroundColor: 'rgba(255,255,255,0.8)',
-          borderRadius: '4px',
-          border: '1px solid rgba(0,0,0,0.2)'
-        }}
-      >
-        {config.title}
+      <div className="text-gray-500 text-sm font-medium text-center px-4">
+        <div>📺</div>
+        <div className="mt-1">Espaço Publicitário</div>
+        <div className="text-xs mt-1 opacity-75">{config.width} × {config.height}</div>
       </div>
     </div>
   );
