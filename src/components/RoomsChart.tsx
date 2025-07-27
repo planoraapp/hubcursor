@@ -15,12 +15,19 @@ export const RoomsChart = () => {
 
     // Filter out rooms with invalid data and ensure we have valid scores
     const validRooms = topRooms
-      .filter(room => room && room.score !== undefined && room.score !== null && room.name)
+      .filter(room => {
+        return room && 
+               room.score !== undefined && 
+               room.score !== null && 
+               typeof room.score === 'number' &&
+               room.name && 
+               room.name.trim().length > 0;
+      })
       .slice(0, 5);
 
     if (validRooms.length === 0) return;
 
-    const maxVisitors = Math.max(...validRooms.map(room => room.score || 0));
+    const maxVisitors = Math.max(...validRooms.map(room => room.score));
 
     // Canvas setup
     canvas.width = canvas.offsetWidth;
@@ -46,18 +53,20 @@ export const RoomsChart = () => {
       ctx.fillStyle = '#008800';
       ctx.fillRect(x, y, width, barHeight);
 
-      // Draw value on top of bar - ensure score is a number
+      // Draw value on top of bar - ensure score is safely converted to string
       ctx.fillStyle = '#38332c';
       ctx.font = '12px Inter';
       ctx.textAlign = 'center';
-      ctx.fillText(score.toString(), x + width / 2, y - 5);
+      const scoreText = String(score);
+      ctx.fillText(scoreText, x + width / 2, y - 5);
 
-      // Draw room name
+      // Draw room name - ensure name is safely handled
       ctx.save();
       ctx.translate(x + width / 2, canvas.height - padding + 20);
       ctx.rotate(-Math.PI / 4);
       ctx.textAlign = 'right';
-      const displayName = room.name && room.name.length > 12 ? room.name.substring(0, 12) + '...' : (room.name || 'Sem nome');
+      const roomName = room.name || 'Sem nome';
+      const displayName = roomName.length > 12 ? roomName.substring(0, 12) + '...' : roomName;
       ctx.fillText(displayName, 0, 0);
       ctx.restore();
     });
