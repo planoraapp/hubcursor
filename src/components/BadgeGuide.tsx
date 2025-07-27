@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Search, Award } from 'lucide-react';
 import { PanelCard } from './PanelCard';
@@ -58,9 +57,9 @@ export const BadgeGuide = () => {
   ];
 
   const categorizeBadge = (badge: HabboBadge): string => {
-    const code = badge.code.toLowerCase();
-    const name = badge.name.toLowerCase();
-    const description = badge.description.toLowerCase();
+    const code = badge.code?.toLowerCase() || '';
+    const name = badge.name?.toLowerCase() || '';
+    const description = badge.description?.toLowerCase() || '';
     
     if (code.includes('friend') || name.includes('amigo') || description.includes('amigo')) {
       return 'social';
@@ -78,8 +77,11 @@ export const BadgeGuide = () => {
   };
 
   const filteredBadges = badges.filter(badge => {
-    const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         badge.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const badgeName = badge.name || '';
+    const badgeDescription = badge.description || '';
+    
+    const matchesSearch = badgeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         badgeDescription.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = activeCategory === 'todos' || categorizeBadge(badge) === activeCategory;
     
     return matchesSearch && matchesCategory;
@@ -168,7 +170,7 @@ export const BadgeGuide = () => {
               <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center bg-gray-100">
                 <img
                   src={getBadgeUrl(badge.code)}
-                  alt={badge.name}
+                  alt={badge.name || 'Badge'}
                   className="w-12 h-12"
                   onError={(e) => {
                     // Fallback para quando a imagem não carrega
@@ -178,8 +180,8 @@ export const BadgeGuide = () => {
                   }}
                 />
               </div>
-              <h3 className="font-bold text-gray-800 text-sm">{badge.name}</h3>
-              <p className="text-xs text-gray-500">{badge.description}</p>
+              <h3 className="font-bold text-gray-800 text-sm">{badge.name || 'Badge'}</h3>
+              <p className="text-xs text-gray-500">{badge.description || 'Sem descrição'}</p>
               <div className="flex flex-col space-y-1 text-xs">
                 <span className={`px-2 py-1 rounded text-white font-medium ${
                   categorizeBadge(badge) === 'social' ? 'bg-blue-500' :
