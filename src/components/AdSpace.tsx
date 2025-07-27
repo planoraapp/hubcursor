@@ -29,17 +29,16 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
 
   return (
     <div 
-      className={`bg-gray-100 border-2 border-gray-300 flex items-center justify-center mx-auto ${className}`}
+      className={`bg-gray-200 border border-gray-300 relative mx-auto ${className}`}
       style={{
         width: config.width,
         height: config.height,
         maxWidth: config.maxWidth || 'auto'
       }}
     >
-      <div className="text-gray-500 text-sm font-medium text-center px-4">
-        <div>📺</div>
-        <div className="mt-1">Espaço Publicitário</div>
-        <div className="text-xs mt-1 opacity-75">{config.width} × {config.height}</div>
+      {/* Faixa preta fina no topo */}
+      <div className="absolute top-0 left-0 right-0 bg-black h-6 flex items-center justify-center">
+        <span className="text-gray-400 text-xs font-medium">Advertisement</span>
       </div>
     </div>
   );

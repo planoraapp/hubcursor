@@ -6,6 +6,18 @@ import { useLanguage } from '../hooks/useLanguage';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LanguageSelector } from './LanguageSelector';
 
+// Import das imagens
+import hmenuImg from '../assets/Hmenu.png';
+import batePapoImg from '../assets/BatePapo1.png';
+import eventosImg from '../assets/eventos.png';
+import catalogoImg from '../assets/Image 2422.png';
+import emblemasImg from '../assets/1876__-6Ie.png';
+import editorImg from '../assets/editorvisuais.png';
+import mercadoImg from '../assets/Image 1574.png';
+import wiredsImg from '../assets/wireds.png';
+import hubGifImg from '../assets/hub.gif';
+import habboHubGifImg from '../assets/habbohub.gif';
+
 interface SidebarContextProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -60,55 +72,55 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'home', 
       label: 'Home', 
-      icon: () => <img src="/assets/Hmenu.png" alt="Home" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={hmenuImg} alt="Home" className="w-8 h-8 flex-shrink-0" />,
       path: '/'
     },
     { 
       id: 'noticias', 
       label: 'Notícias', 
-      icon: () => <img src="/assets/BatePapo1.png" alt="Notícias" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={batePapoImg} alt="Notícias" className="w-8 h-8 flex-shrink-0" />,
       path: '/noticias'
     },
     { 
       id: 'eventos', 
       label: 'Eventos', 
-      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={eventosImg} alt="Eventos" className="w-8 h-8 flex-shrink-0" />,
       path: '/eventos'
     },
     { 
       id: 'forum', 
       label: 'Fórum', 
-      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={batePapoImg} alt="Fórum" className="w-8 h-8 flex-shrink-0" />,
       path: '/forum'
     },
     { 
       id: 'catalogo', 
       label: 'Catálogo', 
-      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={catalogoImg} alt="Catálogo" className="w-8 h-8 flex-shrink-0" />,
       path: '/catalogo'
     },
     { 
       id: 'emblemas', 
       label: 'Emblemas', 
-      icon: () => <img src="/assets/1876__-6Ie.png" alt="Emblemas" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={emblemasImg} alt="Emblemas" className="w-8 h-8 flex-shrink-0" />,
       path: '/emblemas'
     },
     { 
       id: 'editor', 
       label: 'Editor de Visuais', 
-      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={editorImg} alt="Editor" className="w-8 h-8 flex-shrink-0" />,
       path: '/editor'
     },
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={mercadoImg} alt="Mercado" className="w-8 h-8 flex-shrink-0" />,
       path: '/mercado'
     },
     { 
       id: 'ferramentas', 
       label: 'Ferramentas', 
-      icon: () => <img src="/assets/wireds.png" alt="Ferramentas" className="w-8 h-8 flex-shrink-0" />,
+      icon: () => <img src={wiredsImg} alt="Ferramentas" className="w-8 h-8 flex-shrink-0" />,
       path: '/ferramentas'
     }
   ];
@@ -161,22 +173,17 @@ const DesktopSidebar = ({
         <div className="flex items-center justify-center p-4">
           {open ? (
             <img 
-              src="/assets/habbohub.gif" 
+              src={habboHubGifImg} 
               alt="HABBO HUB" 
               className="h-14 w-auto"
-              onError={(e) => {
-                e.currentTarget.src = "/assets/habbohub.png";
-              }}
+              style={{ imageRendering: 'pixelated' }}
             />
           ) : (
             <img 
-              src="/assets/hub.gif" 
+              src={hubGifImg} 
               alt="H" 
               className="h-10 w-12 object-contain"
               style={{ imageRendering: 'pixelated' }}
-              onError={(e) => {
-                e.currentTarget.src = "/assets/hub.gif";
-              }}
             />
           )}
         </div>
@@ -354,22 +361,22 @@ const Logo = () => {
   return (
     <div className="font-normal flex flex-col items-center text-sm text-black">
       <img 
-        src="/assets/habbohub.png" 
+        src={habboHubGifImg} 
         alt="HABBO HUB" 
         className="mb-2 max-w-[140px] h-auto"
+        style={{ imageRendering: 'pixelated' }}
       />
     </div>
   );
 };
 
-const LogoIcon = () => {
-  return (
-    <div className="font-normal flex items-center justify-center">
-      <img 
-        src="/assets/Hmenu.png" 
-        alt="H" 
-        className="w-10 h-10"
-      />
-    </div>
-  );
-};
+const LogoIcon = () => (
+  <div className="flex items-center justify-center w-12 h-10 bg-yellow-500 rounded-lg border-2 border-yellow-700 shadow-sm">
+    <img 
+      src={hubGifImg} 
+      alt="Hub Icon" 
+      className="w-10 h-8 object-contain"
+      style={{ imageRendering: 'pixelated' }}
+    />
+  </div>
+);

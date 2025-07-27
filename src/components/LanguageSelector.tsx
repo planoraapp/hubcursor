@@ -1,8 +1,8 @@
 
 import { useLanguage, Language } from '../hooks/useLanguage';
-import flagBrazilImg from '/assets/flagbrazil.png';
-import flagSpainImg from '/assets/flagspain.png';
-import flagComImg from '/assets/flagcom.png';
+import flagBrazilImg from '../assets/flagbrazil.png';
+import flagSpainImg from '../assets/flagspain.png';
+import flagComImg from '../assets/flagcom.png';
 
 interface LanguageSelectorProps {
   isCollapsed?: boolean;
