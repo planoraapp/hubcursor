@@ -1,22 +1,8 @@
 import React, { useState, createContext, useContext } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home, Newspaper, Calendar, MessageSquare, ShoppingCart, Shield, Palette, Store, Wrench } from 'lucide-react';
 import { UserProfile } from './UserProfile';
-import { useLanguage } from '../hooks/useLanguage';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LanguageSelector } from './LanguageSelector';
-
-// Import das imagens
-import hmenuImg from '../assets/BatePapo1.png';
-import batePapoImg from '../assets/BatePapo1.png';
-import eventosImg from '../assets/eventos.png';
-import catalogoImg from '../assets/Image 2422.png';
-import emblemasImg from '../assets/1876__-6Ie.png';
-import editorImg from '../assets/editorvisuais.png';
-import mercadoImg from '../assets/Image 1574.png';
-import wiredsImg from '../assets/wireds.png';
-import hubGifImg from '../assets/hub.gif';
-import habboHubGifImg from '../assets/habbohub.gif';
 
 interface SidebarContextProps {
   open: boolean;
@@ -64,7 +50,6 @@ interface CollapsibleSidebarProps {
 
 export const CollapsibleSidebar = ({ activeSection, setActiveSection }: CollapsibleSidebarProps) => {
   const [open, setOpen] = useState(false);
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,55 +57,55 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { 
       id: 'home', 
       label: 'Home', 
-      icon: () => <img src={hmenuImg} alt="Home" className="w-8 h-8 flex-shrink-0" />,
+      icon: Home,
       path: '/'
     },
     { 
       id: 'noticias', 
       label: 'Notícias', 
-      icon: () => <img src={batePapoImg} alt="Notícias" className="w-8 h-8 flex-shrink-0" />,
+      icon: Newspaper,
       path: '/noticias'
     },
     { 
       id: 'eventos', 
       label: 'Eventos', 
-      icon: () => <img src={eventosImg} alt="Eventos" className="w-8 h-8 flex-shrink-0" />,
+      icon: Calendar,
       path: '/eventos'
     },
     { 
       id: 'forum', 
       label: 'Fórum', 
-      icon: () => <img src={batePapoImg} alt="Fórum" className="w-8 h-8 flex-shrink-0" />,
+      icon: MessageSquare,
       path: '/forum'
     },
     { 
       id: 'catalogo', 
       label: 'Catálogo', 
-      icon: () => <img src={catalogoImg} alt="Catálogo" className="w-8 h-8 flex-shrink-0" />,
+      icon: ShoppingCart,
       path: '/catalogo'
     },
     { 
       id: 'emblemas', 
       label: 'Emblemas', 
-      icon: () => <img src={emblemasImg} alt="Emblemas" className="w-8 h-8 flex-shrink-0" />,
+      icon: Shield,
       path: '/emblemas'
     },
     { 
       id: 'editor', 
       label: 'Editor de Visuais', 
-      icon: () => <img src={editorImg} alt="Editor" className="w-8 h-8 flex-shrink-0" />,
+      icon: Palette,
       path: '/editor'
     },
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: () => <img src={mercadoImg} alt="Mercado" className="w-8 h-8 flex-shrink-0" />,
+      icon: Store,
       path: '/mercado'
     },
     { 
       id: 'ferramentas', 
       label: 'Ferramentas', 
-      icon: () => <img src={wiredsImg} alt="Ferramentas" className="w-8 h-8 flex-shrink-0" />,
+      icon: Wrench,
       path: '/ferramentas'
     }
   ];
@@ -172,19 +157,13 @@ const DesktopSidebar = ({
         {/* Logo Section */}
         <div className="flex items-center justify-center p-4">
           {open ? (
-            <img 
-              src={habboHubGifImg} 
-              alt="HABBO HUB" 
-              className="h-14 w-auto"
-              style={{ imageRendering: 'pixelated' }}
-            />
+            <div className="text-center">
+              <h1 className="text-lg font-bold text-gray-800">HABBO HUB</h1>
+            </div>
           ) : (
-            <img 
-              src={hubGifImg} 
-              alt="H" 
-              className="h-10 w-16 object-contain"
-              style={{ imageRendering: 'pixelated' }}
-            />
+            <div className="text-center">
+              <h1 className="text-sm font-bold text-gray-800">H</h1>
+            </div>
           )}
         </div>
 
@@ -243,8 +222,6 @@ const DesktopSidebar = ({
           </button>
         </motion.div>
 
-        {/* Language Selector */}
-        <LanguageSelector isCollapsed={!open} />
       </div>
     </motion.aside>
   );
@@ -347,9 +324,6 @@ const MobileHeader = ({
               })}
             </nav>
 
-            <div className="mt-auto">
-              <LanguageSelector isCollapsed={false} />
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -360,12 +334,7 @@ const MobileHeader = ({
 const Logo = () => {
   return (
     <div className="font-normal flex flex-col items-center text-sm text-black">
-      <img 
-        src={habboHubGifImg} 
-        alt="HABBO HUB" 
-        className="mb-2 max-w-[140px] h-auto"
-        style={{ imageRendering: 'pixelated' }}
-      />
+      <h1 className="text-lg font-bold text-gray-800">HABBO HUB</h1>
     </div>
   );
 };
