@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Newspaper, MessageCircle, Calendar, ShoppingBag, Award, Palette, Banknote } from 'lucide-react';
 import { HabboMobileDock, DockItem } from '../components/ui/habbo-mobile-dock';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,14 +13,14 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const { userData, isLoggedIn } = useAuth();
 
   const allMenuItems: DockItem[] = [
-    { id: 'home', label: 'Início', icon: Home },
-    { id: 'noticias', label: 'Notícias', icon: Newspaper },
-    { id: 'eventos', label: 'Eventos', icon: Calendar },
-    { id: 'forum', label: 'Fórum', icon: MessageCircle },
-    { id: 'catalogo', label: 'Catálogo', icon: ShoppingBag },
-    { id: 'emblemas', label: 'Emblemas', icon: Award },
-    { id: 'editor', label: 'Editor', icon: Palette },
-    { id: 'mercado', label: 'Mercado', icon: Banknote },
+    { id: 'home', label: 'Início', icon: '/assets/habbohub.png' },
+    { id: 'noticias', label: 'Notícias', icon: '/assets/Newspaper.png' },
+    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png' },
+    { id: 'forum', label: 'Fórum', icon: '/assets/BatePapo1.png' },
+    { id: 'catalogo', label: 'Catálogo', icon: '/assets/Image 2422.png' },
+    { id: 'emblemas', label: 'Emblemas', icon: '/assets/Award.png' },
+    { id: 'editor', label: 'Editor', icon: '/assets/editorvisuais.png' },
+    { id: 'mercado', label: 'Mercado', icon: '/assets/Image 1574.png' },
   ];
 
   const handleNavigation = (itemId: string) => {
