@@ -40,7 +40,8 @@ const translations = {
     featuredRooms: 'Quartos em Destaque',
     catalogEnhancedTitle: 'Catálogo Aprimorado',
     badgesEnhancedTitle: 'Emblemas Aprimorados',
-    newsTitle: 'Notícias'
+    newsTitle: 'Notícias',
+    forumTitle: 'Fórum'
   },
   es: {
     // Navegación
@@ -71,7 +72,8 @@ const translations = {
     featuredRooms: 'Habitaciones Destacadas',
     catalogEnhancedTitle: 'Catálogo Mejorado',
     badgesEnhancedTitle: 'Emblemas Mejorados',
-    newsTitle: 'Noticias'
+    newsTitle: 'Noticias',
+    forumTitle: 'Foro'
   }
 };
 
@@ -110,7 +112,8 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
 
   const t = (key: string): string => {
     const translation = translations[currentLanguage];
-    return translation[key as keyof typeof translation] || key;
+    const translationKey = key as keyof typeof translation;
+    return translation[translationKey] || key;
   };
 
   return (
