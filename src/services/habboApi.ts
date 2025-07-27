@@ -1,8 +1,6 @@
 
-// Base URL for Habbo API (replace with specific hotel if needed)
-const HABBO_API_BASE_URL = 'https://www.habbo.com/api/public';
-// Para o Habbo BR:
-// const HABBO_API_BASE_URL = 'https://www.habbo.com.br/api/public';
+// Base URL para Habbo BR API
+const HABBO_API_BASE_URL = 'https://www.habbo.com.br/api/public';
 
 export interface HabboUser {
   uniqueId: string;
@@ -68,18 +66,75 @@ export interface MarketplaceStats {
   }>;
 }
 
+// Cache local para evitar muitas requisições
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// Função auxiliar para cache
+const getCachedData = (key: string) => {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedData = (key: string, data: any) => {
+  cache.set(key, { data, timestamp: Date.now() });
+};
+
 // Função auxiliar para fazer requisições à API
 const fetchData = async (endpoint: string): Promise<any> => {
+  const cacheKey = endpoint;
+  const cached = getCachedData(cacheKey);
+  
+  if (cached) {
+    console.log(`Cache hit for ${endpoint}`);
+    return cached;
+  }
+
   try {
+    console.log(`Fetching data from ${HABBO_API_BASE_URL}${endpoint}`);
     const response = await fetch(`${HABBO_API_BASE_URL}${endpoint}`);
+    
     if (!response.ok) {
       throw new Error(`Erro HTTP! Status: ${response.status}`);
     }
-    return await response.json();
+    
+    const data = await response.json();
+    setCachedData(cacheKey, data);
+    return data;
   } catch (error) {
     console.error(`Erro ao buscar dados do endpoint ${endpoint}:`, error);
     return null;
   }
+};
+
+// Usuários conhecidos populares do Habbo BR para descobrir quartos
+const POPULAR_USERS = [
+  'joao123', 'maria456', 'pedro789', 'ana321', 'carlos654',
+  'fernanda987', 'ricardo123', 'julia456', 'bruno789', 'carla321'
+];
+
+// Função para descobrir quartos através de usuários populares
+export const discoverRooms = async (): Promise<HabboRoom[]> => {
+  const rooms: HabboRoom[] = [];
+  
+  for (const username of POPULAR_USERS.slice(0, 5)) { // Limitar para evitar muitas requisições
+    try {
+      const user = await getUserByName(username);
+      if (user) {
+        const userRooms = await getUserRooms(user.uniqueId);
+        if (userRooms) {
+          rooms.push(...userRooms.slice(0, 3)); // Pegar apenas os primeiros 3 quartos de cada usuário
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar quartos do usuário ${username}:`, error);
+    }
+  }
+  
+  return rooms;
 };
 
 // Função para buscar usuário por nome
@@ -160,4 +215,67 @@ export const getAvatarUrl = (figureString: string, size: 's' | 'm' | 'l' = 'm'):
 // Função para gerar URL do emblema
 export const getBadgeUrl = (badgeCode: string): string => {
   return `https://images.habbo.com/c_images/album1584/${badgeCode}.gif`;
+};
+
+// Função para calcular estatísticas em tempo real
+export const getRealtimeStats = async () => {
+  try {
+    const achievements = await getAchievements();
+    const rooms = await discoverRooms();
+    
+    return {
+      totalBadges: achievements?.length || 0,
+      totalRooms: rooms?.length || 0,
+      activeUsers: rooms?.reduce((acc, room) => acc + (room.userCount || 0), 0) || 0,
+      averageRating: rooms?.length ? rooms.reduce((acc, room) => acc + (room.rating || 0), 0) / rooms.length : 0
+    };
+  } catch (error) {
+    console.error('Erro ao calcular estatísticas em tempo real:', error);
+    return {
+      totalBadges: 0,
+      totalRooms: 0,
+      activeUsers: 0,
+      averageRating: 0
+    };
+  }
+};
+
+// Função para buscar rankings de usuários com mais emblemas
+export const getTopBadgeCollectors = async (): Promise<Array<{ name: string; score: number; user: HabboUser }>> => {
+  const collectors: Array<{ name: string; score: number; user: HabboUser }> = [];
+  
+  for (const username of POPULAR_USERS.slice(0, 10)) {
+    try {
+      const user = await getUserByName(username);
+      if (user) {
+        const badges = await getUserBadges(user.uniqueId);
+        if (badges) {
+          collectors.push({
+            name: user.name,
+            score: badges.length,
+            user: user
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar emblemas do usuário ${username}:`, error);
+    }
+  }
+  
+  return collectors.sort((a, b) => b.score - a.score).slice(0, 5);
+};
+
+// Função para buscar quartos mais populares
+export const getTopRooms = async (): Promise<Array<{ name: string; owner: string; score: number; room: HabboRoom }>> => {
+  const rooms = await discoverRooms();
+  
+  return rooms
+    .map(room => ({
+      name: room.name,
+      owner: room.ownerName,
+      score: room.userCount,
+      room: room
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
 };
