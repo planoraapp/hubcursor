@@ -30,7 +30,7 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
     <aside className="w-64 habbo-sidebar">
       <div className="text-center mb-8">
         <img 
-          src="/logo-habbohub.png" 
+          src="/assets/LogoHabbo.png" 
           alt="HABBO HUB" 
           className="mx-auto mb-4 max-w-[200px] h-auto"
         />

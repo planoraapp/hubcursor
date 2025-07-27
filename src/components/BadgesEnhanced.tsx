@@ -1,96 +1,124 @@
 
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
-import { Award, Star, Trophy, Target, Calendar, Users } from 'lucide-react';
+import { BadgeIcon } from './BadgeIcon';
+import { Search, Filter, Star, Award } from 'lucide-react';
 import { useState } from 'react';
 
 export const BadgesEnhanced = () => {
   const { t } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const badgeCategories = [
+  const categories = [
     { id: 'all', name: 'Todos', icon: Award },
-    { id: 'achievements', name: 'Conquistas', icon: Trophy },
-    { id: 'events', name: 'Eventos', icon: Calendar },
-    { id: 'social', name: 'Sociais', icon: Users },
-    { id: 'games', name: 'Jogos', icon: Target },
+    { id: 'staff', name: 'Staff', icon: Star },
+    { id: 'achievement', name: 'Conquistas', icon: Award },
+    { id: 'special', name: 'Especiais', icon: Star },
     { id: 'rare', name: 'Raros', icon: Star },
   ];
 
   const mockBadges = [
     {
       id: 1,
-      name: 'Primeiro Login',
-      description: 'Fez seu primeiro login no Habbo',
-      category: 'achievements',
-      rarity: 'common',
-      earned: true,
-      earnedDate: '2024-01-01',
-      image: 'https://images.habbo.com/c_images/album1584/ACH_Login1.png'
+      code: 'ADM',
+      name: 'Administrador',
+      description: 'Emblema exclusivo da administração',
+      category: 'staff',
+      rarity: 'legendary',
+      obtained: true
     },
     {
       id: 2,
-      name: 'Explorador',
-      description: 'Visitou 50 quartos diferentes',
-      category: 'achievements',
-      rarity: 'uncommon',
-      earned: true,
-      earnedDate: '2024-01-05',
-      image: 'https://images.habbo.com/c_images/album1584/ACH_RoomEntry1.png'
+      code: 'MOD',
+      name: 'Moderador',
+      description: 'Emblema para moderadores do hotel',
+      category: 'staff',
+      rarity: 'epic',
+      obtained: true
     },
     {
       id: 3,
-      name: 'Evento de Verão 2024',
-      description: 'Participou do evento de verão',
-      category: 'events',
+      code: 'VIP',
+      name: 'VIP',
+      description: 'Emblema VIP exclusivo',
+      category: 'special',
       rarity: 'rare',
-      earned: false,
-      earnedDate: null,
-      image: 'https://images.habbo.com/c_images/album1584/ACH_Summer24.png'
+      obtained: false
     },
     {
       id: 4,
-      name: 'Amigo Fiel',
-      description: 'Adicionou 10 amigos à sua lista',
-      category: 'social',
+      code: 'HC',
+      name: 'Habbo Club',
+      description: 'Membro do Habbo Club',
+      category: 'achievement',
       rarity: 'common',
-      earned: true,
-      earnedDate: '2024-01-03',
-      image: 'https://images.habbo.com/c_images/album1584/ACH_FriendListSize1.png'
+      obtained: true
     },
     {
       id: 5,
-      name: 'Campeão do Jogo',
-      description: 'Venceu 25 partidas de jogos',
-      category: 'games',
+      code: 'STAR',
+      name: 'Estrela',
+      description: 'Emblema de destaque',
+      category: 'achievement',
       rarity: 'uncommon',
-      earned: false,
-      earnedDate: null,
-      image: 'https://images.habbo.com/c_images/album1584/ACH_GameWin1.png'
+      obtained: true
     },
     {
       id: 6,
-      name: 'Veterano',
-      description: 'Emblema especial para membros antigos',
+      code: 'CROWN',
+      name: 'Coroa',
+      description: 'Emblema real',
       category: 'rare',
       rarity: 'legendary',
-      earned: true,
-      earnedDate: '2023-12-25',
-      image: 'https://images.habbo.com/c_images/album1584/ACH_Veteran.png'
+      obtained: false
+    },
+    {
+      id: 7,
+      code: 'DIAMOND',
+      name: 'Diamante',
+      description: 'Emblema de diamante',
+      category: 'rare',
+      rarity: 'epic',
+      obtained: false
+    },
+    {
+      id: 8,
+      code: 'BUILDER',
+      name: 'Construtor',
+      description: 'Emblema de construtor expert',
+      category: 'achievement',
+      rarity: 'rare',
+      obtained: true
     }
   ];
 
   const filteredBadges = mockBadges.filter(badge => {
-    return selectedCategory === 'all' || badge.category === selectedCategory;
+    const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         badge.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || badge.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'common': return 'bg-gray-100 text-gray-800';
-      case 'uncommon': return 'bg-blue-100 text-blue-800';
-      case 'rare': return 'bg-purple-100 text-purple-800';
-      case 'legendary': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'common': return 'text-gray-600';
+      case 'uncommon': return 'text-green-600';
+      case 'rare': return 'text-blue-600';
+      case 'epic': return 'text-purple-600';
+      case 'legendary': return 'text-yellow-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  const getRarityBg = (rarity: string) => {
+    switch (rarity) {
+      case 'common': return 'bg-gray-100';
+      case 'uncommon': return 'bg-green-100';
+      case 'rare': return 'bg-blue-100';
+      case 'epic': return 'bg-purple-100';
+      case 'legendary': return 'bg-yellow-100';
+      default: return 'bg-gray-100';
     }
   };
 
@@ -98,58 +126,56 @@ export const BadgesEnhanced = () => {
     <div className="space-y-6">
       <PanelCard title={t('badgesEnhancedTitle')}>
         <div className="space-y-6">
-          <div className="flex flex-wrap gap-2 mb-6">
-            {badgeCategories.map(category => {
-              const Icon = category.icon;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`
-                    habbo-nav-link px-3 py-2 text-sm
-                    ${selectedCategory === category.id ? 'active' : ''}
-                  `}
-                >
-                  <Icon size={16} />
-                  <span>{category.name}</span>
-                </button>
-              );
-            })}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar emblemas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="habbo-input w-full pl-10 pr-4 py-2"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter size={20} className="text-gray-600" />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="habbo-input px-4 py-2"
+              >
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredBadges.map((badge) => (
-              <div key={badge.id} className={`habbo-card ${!badge.earned ? 'opacity-60' : ''}`}>
-                <div className="p-4 text-center">
-                  <div className="relative inline-block">
-                    <img
-                      src={badge.image}
-                      alt={badge.name}
-                      className="w-16 h-16 mx-auto object-contain"
-                    />
-                    {!badge.earned && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">?</span>
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-gray-800 mt-2 mb-1">{badge.name}</h3>
+              <div key={badge.id} className="habbo-card">
+                <div className={`p-4 ${getRarityBg(badge.rarity)} flex justify-center`}>
+                  <BadgeIcon 
+                    badgeCode={badge.code} 
+                    alt={badge.name} 
+                    size="lg"
+                    className={badge.obtained ? '' : 'grayscale opacity-60'}
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-gray-800 mb-1">{badge.name}</h3>
                   <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
-                  <div className="space-y-2">
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getRarityColor(badge.rarity)}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-xs font-medium ${getRarityColor(badge.rarity)}`}>
                       {badge.rarity.toUpperCase()}
                     </span>
-                    {badge.earned && badge.earnedDate && (
-                      <div className="text-xs text-gray-500">
-                        Conquistado em {badge.earnedDate}
-                      </div>
-                    )}
-                    {!badge.earned && (
-                      <div className="text-xs text-gray-500">
-                        Não conquistado
-                      </div>
-                    )}
+                    <span className={`text-xs font-bold ${badge.obtained ? 'text-green-600' : 'text-red-600'}`}>
+                      {badge.obtained ? 'OBTIDO' : 'NÃO OBTIDO'}
+                    </span>
                   </div>
+                  <button className={`w-full ${badge.obtained ? 'habbo-button-green' : 'habbo-button-red'}`}>
+                    {badge.obtained ? 'Visualizar' : 'Como Obter'}
+                  </button>
                 </div>
               </div>
             ))}

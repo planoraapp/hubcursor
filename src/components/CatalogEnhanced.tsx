@@ -1,6 +1,7 @@
 
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
+import { HabboIcon } from './HabboIcon';
 import { Search, Filter, Star, Package } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,39 +21,63 @@ export const CatalogEnhanced = () => {
   const mockItems = [
     {
       id: 1,
-      name: 'Poltrona Clássica',
-      category: 'furniture',
+      name: 'Créditos Habbo',
+      category: 'currency',
       rarity: 'common',
-      price: 50,
-      image: 'https://images.habbo.com/dcr/hof_furni/icons/chair_norja.png',
-      description: 'Uma poltrona confortável para seu quarto.'
+      price: 0,
+      image: '/assets/credits_icon.gif',
+      description: 'Moeda oficial do Habbo Hotel.',
+      animated: true
     },
     {
       id: 2,
-      name: 'Trono Dourado',
-      category: 'rares',
+      name: 'Diamantes',
+      category: 'currency',
       rarity: 'rare',
-      price: 5000,
-      image: 'https://images.habbo.com/dcr/hof_furni/icons/throne_gold.png',
-      description: 'Trono exclusivo para VIPs.'
+      price: 0,
+      image: '/assets/Diamantes.png',
+      description: 'Moeda premium do Habbo Hotel.',
+      animated: false
     },
     {
       id: 3,
-      name: 'Planta Tropical',
-      category: 'decorations',
-      rarity: 'uncommon',
-      price: 150,
-      image: 'https://images.habbo.com/dcr/hof_furni/icons/plant_jungle.png',
-      description: 'Adicione vida ao seu ambiente.'
+      name: 'Habbo Club',
+      category: 'membership',
+      rarity: 'special',
+      price: 25,
+      image: '/assets/HC.png',
+      description: 'Assinatura premium do Habbo Club.',
+      animated: false
     },
     {
       id: 4,
-      name: 'Camiseta Habbo',
-      category: 'clothing',
+      name: 'Elevador',
+      category: 'furniture',
       rarity: 'common',
-      price: 25,
-      image: 'https://images.habbo.com/dcr/hof_furni/icons/clothing_habbo_tshirt.png',
-      description: 'Vista-se com estilo Habbo.'
+      price: 150,
+      image: '/assets/Elevador.png',
+      description: 'Elevador funcional para seu quarto.',
+      animated: false
+    },
+    {
+      id: 5,
+      name: 'Patinho',
+      category: 'decorations',
+      rarity: 'cute',
+      price: 50,
+      image: '/assets/patinho.gif',
+      description: 'Patinho animado para decoração.',
+      animated: true
+    },
+    {
+      id: 6,
+      name: 'Estrela Promocional',
+      category: 'decorations',
+      rarity: 'special',
+      price: 200,
+      image: '/assets/promo_star.gif',
+      description: 'Estrela especial de eventos.',
+      animated: true
     }
   ];
 
@@ -67,6 +92,8 @@ export const CatalogEnhanced = () => {
       case 'common': return 'text-gray-600';
       case 'uncommon': return 'text-blue-600';
       case 'rare': return 'text-purple-600';
+      case 'special': return 'text-yellow-600';
+      case 'cute': return 'text-pink-600';
       default: return 'text-gray-600';
     }
   };
@@ -76,6 +103,8 @@ export const CatalogEnhanced = () => {
       case 'common': return 'bg-gray-100';
       case 'uncommon': return 'bg-blue-100';
       case 'rare': return 'bg-purple-100';
+      case 'special': return 'bg-yellow-100';
+      case 'cute': return 'bg-pink-100';
       default: return 'bg-gray-100';
     }
   };
@@ -112,11 +141,11 @@ export const CatalogEnhanced = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredItems.map((item) => (
               <div key={item.id} className="habbo-card">
-                <div className={`p-4 ${getRarityBg(item.rarity)}`}>
+                <div className={`p-4 ${getRarityBg(item.rarity)} flex justify-center`}>
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-16 h-16 mx-auto object-contain"
+                    className="w-16 h-16 object-contain"
                   />
                 </div>
                 <div className="p-4">
@@ -126,12 +155,16 @@ export const CatalogEnhanced = () => {
                     <span className={`text-xs font-medium ${getRarityColor(item.rarity)}`}>
                       {item.rarity.toUpperCase()}
                     </span>
-                    <span className="text-sm font-bold text-green-600">
-                      {item.price} moedas
-                    </span>
+                    <div className="flex items-center space-x-1">
+                      <HabboIcon icon="credits" size="sm" />
+                      <span className="text-sm font-bold text-green-600">
+                        {item.price} 
+                      </span>
+                    </div>
                   </div>
-                  <button className="habbo-button-green w-full">
-                    Ver Detalhes
+                  <button className="habbo-button-green w-full flex items-center justify-center space-x-2">
+                    <HabboIcon icon="cart" size="sm" />
+                    <span>Comprar</span>
                   </button>
                 </div>
               </div>
