@@ -1,5 +1,8 @@
 
 import { Home, Sofa, Package, Award, Trophy, User, Wrench } from 'lucide-react';
+import { LanguageSelector } from './LanguageSelector';
+import { UserProfile } from './UserProfile';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface SidebarProps {
   activeSection: string;
@@ -7,14 +10,16 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
+  const { t } = useLanguage();
+
   const navItems = [
-    { id: 'inicio', label: 'Início', icon: Home },
-    { id: 'quartos', label: 'Explorar Quartos', icon: Sofa },
-    { id: 'catalogo', label: 'Catálogo', icon: Package },
-    { id: 'guias', label: 'Guia de Emblemas', icon: Award },
-    { id: 'classificacao', label: 'Classificação', icon: Trophy },
-    { id: 'perfil', label: 'Verificador de Perfil', icon: User },
-    { id: 'ferramentas', label: 'Ferramentas', icon: Wrench },
+    { id: 'inicio', label: t('inicio'), icon: Home },
+    { id: 'quartos', label: t('quartos'), icon: Sofa },
+    { id: 'catalogo', label: t('catalogo'), icon: Package },
+    { id: 'guias', label: t('guias'), icon: Award },
+    { id: 'classificacao', label: t('classificacao'), icon: Trophy },
+    { id: 'perfil', label: t('perfil'), icon: User },
+    { id: 'ferramentas', label: t('ferramentas'), icon: Wrench },
   ];
 
   const handleNavClick = (id: string) => {
@@ -24,7 +29,11 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
 
   return (
     <aside className="w-64 bg-[#e7e0d4] p-6 flex flex-col shrink-0 border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] rounded-lg mr-6 shadow-[2px_2px_0px_0px_#cccccc]">
-      <h1 className="text-3xl font-bold text-[#38332c] mb-8 text-center">HABBO HUB</h1>
+      <h1 className="text-3xl font-bold text-[#38332c] mb-8 text-center">{t('appTitle')}</h1>
+      
+      <LanguageSelector />
+      
+      <UserProfile />
       
       <nav className="flex flex-col space-y-2 mb-auto">
         {navItems.map((item) => {
@@ -50,10 +59,10 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
       </nav>
       
       <div className="mt-8 bg-white p-4 rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] text-center">
-        <h3 className="font-bold text-gray-800">Habbo Hub Premium</h3>
-        <p className="text-sm text-gray-600 mt-1">Desbloqueie filtros avançados e alertas personalizados!</p>
+        <h3 className="font-bold text-gray-800">{t('habboPremiumTitle')}</h3>
+        <p className="text-sm text-gray-600 mt-1">{t('habboPremiumDesc')}</p>
         <button className="w-full mt-3 bg-[#008800] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100">
-          Assine Já!
+          {t('subscribeNow')}
         </button>
       </div>
     </aside>
