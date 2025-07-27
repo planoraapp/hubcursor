@@ -1,88 +1,96 @@
 
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
-import { Search, Filter, Award, Calendar, Users } from 'lucide-react';
+import { Award, Star, Trophy, Target, Calendar, Users } from 'lucide-react';
 import { useState } from 'react';
 
 export const BadgesEnhanced = () => {
   const { t } = useLanguage();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRarity, setSelectedRarity] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const rarityLevels = [
-    { id: 'all', name: 'Todos', color: 'text-gray-600' },
-    { id: 'common', name: 'Comum', color: 'text-green-600' },
-    { id: 'uncommon', name: 'Incomum', color: 'text-blue-600' },
-    { id: 'rare', name: 'Raro', color: 'text-purple-600' },
-    { id: 'legendary', name: 'Lendário', color: 'text-orange-600' }
+  const badgeCategories = [
+    { id: 'all', name: 'Todos', icon: Award },
+    { id: 'achievements', name: 'Conquistas', icon: Trophy },
+    { id: 'events', name: 'Eventos', icon: Calendar },
+    { id: 'social', name: 'Sociais', icon: Users },
+    { id: 'games', name: 'Jogos', icon: Target },
+    { id: 'rare', name: 'Raros', icon: Star },
   ];
 
   const mockBadges = [
     {
       id: 1,
-      code: 'ACH_BasicClub1',
-      name: 'Habbo Club',
-      description: 'Seja membro do Habbo Club por 1 mês',
+      name: 'Primeiro Login',
+      description: 'Fez seu primeiro login no Habbo',
+      category: 'achievements',
       rarity: 'common',
-      category: 'Achievement',
-      dateAdded: '2024-01-01',
-      obtainedBy: 12543,
-      howToGet: 'Assine o Habbo Club'
+      earned: true,
+      earnedDate: '2024-01-01',
+      image: 'https://images.habbo.com/c_images/album1584/ACH_Login1.png'
     },
     {
       id: 2,
-      code: 'ACH_RoomDecorator1',
-      name: 'Decorador',
-      description: 'Decore 10 quartos diferentes',
+      name: 'Explorador',
+      description: 'Visitou 50 quartos diferentes',
+      category: 'achievements',
       rarity: 'uncommon',
-      category: 'Achievement',
-      dateAdded: '2024-01-05',
-      obtainedBy: 8234,
-      howToGet: 'Decore quartos com mobis'
+      earned: true,
+      earnedDate: '2024-01-05',
+      image: 'https://images.habbo.com/c_images/album1584/ACH_RoomEntry1.png'
     },
     {
       id: 3,
-      code: 'ACH_EventWinner1',
-      name: 'Vencedor de Evento',
-      description: 'Vença um evento oficial',
+      name: 'Evento de Verão 2024',
+      description: 'Participou do evento de verão',
+      category: 'events',
       rarity: 'rare',
-      category: 'Event',
-      dateAdded: '2024-01-10',
-      obtainedBy: 1532,
-      howToGet: 'Participe e vença eventos oficiais'
+      earned: false,
+      earnedDate: null,
+      image: 'https://images.habbo.com/c_images/album1584/ACH_Summer24.png'
     },
     {
       id: 4,
-      code: 'ACH_BetaTester1',
-      name: 'Beta Tester',
-      description: 'Participou dos testes beta',
+      name: 'Amigo Fiel',
+      description: 'Adicionou 10 amigos à sua lista',
+      category: 'social',
+      rarity: 'common',
+      earned: true,
+      earnedDate: '2024-01-03',
+      image: 'https://images.habbo.com/c_images/album1584/ACH_FriendListSize1.png'
+    },
+    {
+      id: 5,
+      name: 'Campeão do Jogo',
+      description: 'Venceu 25 partidas de jogos',
+      category: 'games',
+      rarity: 'uncommon',
+      earned: false,
+      earnedDate: null,
+      image: 'https://images.habbo.com/c_images/album1584/ACH_GameWin1.png'
+    },
+    {
+      id: 6,
+      name: 'Veterano',
+      description: 'Emblema especial para membros antigos',
+      category: 'rare',
       rarity: 'legendary',
-      category: 'Special',
-      dateAdded: '2023-12-15',
-      obtainedBy: 234,
-      howToGet: 'Não disponível mais'
+      earned: true,
+      earnedDate: '2023-12-25',
+      image: 'https://images.habbo.com/c_images/album1584/ACH_Veteran.png'
     }
   ];
 
   const filteredBadges = mockBadges.filter(badge => {
-    const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         badge.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRarity = selectedRarity === 'all' || badge.rarity === selectedRarity;
-    return matchesSearch && matchesRarity;
+    return selectedCategory === 'all' || badge.category === selectedCategory;
   });
 
   const getRarityColor = (rarity: string) => {
-    const rarityObj = rarityLevels.find(r => r.id === rarity);
-    return rarityObj ? rarityObj.color : 'text-gray-600';
-  };
-
-  const getRarityBg = (rarity: string) => {
     switch (rarity) {
-      case 'common': return 'bg-green-100';
-      case 'uncommon': return 'bg-blue-100';
-      case 'rare': return 'bg-purple-100';
-      case 'legendary': return 'bg-orange-100';
-      default: return 'bg-gray-100';
+      case 'common': return 'bg-gray-100 text-gray-800';
+      case 'uncommon': return 'bg-blue-100 text-blue-800';
+      case 'rare': return 'bg-purple-100 text-purple-800';
+      case 'legendary': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -90,72 +98,57 @@ export const BadgesEnhanced = () => {
     <div className="space-y-6">
       <PanelCard title={t('badgesEnhancedTitle')}>
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar emblemas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff]"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Filter size={20} className="text-gray-600" />
-              <select
-                value={selectedRarity}
-                onChange={(e) => setSelectedRarity(e.target.value)}
-                className="px-4 py-2 border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff]"
-              >
-                {rarityLevels.map(rarity => (
-                  <option key={rarity.id} value={rarity.id}>{rarity.name}</option>
-                ))}
-              </select>
-            </div>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {badgeCategories.map(category => {
+              const Icon = category.icon;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`
+                    habbo-nav-link px-3 py-2 text-sm
+                    ${selectedCategory === category.id ? 'active' : ''}
+                  `}
+                >
+                  <Icon size={16} />
+                  <span>{category.name}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredBadges.map((badge) => (
-              <div key={badge.id} className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] overflow-hidden hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100">
-                <div className={`p-4 ${getRarityBg(badge.rarity)}`}>
-                  <div className="flex items-center space-x-3">
+              <div key={badge.id} className={`habbo-card ${!badge.earned ? 'opacity-60' : ''}`}>
+                <div className="p-4 text-center">
+                  <div className="relative inline-block">
                     <img
-                      src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
+                      src={badge.image}
                       alt={badge.name}
-                      className="w-16 h-16"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.habbo.com/c_images/album1584/ACH_BasicClub1.gif';
-                      }}
+                      className="w-16 h-16 mx-auto object-contain"
                     />
-                    <div>
-                      <h3 className="font-bold text-[#38332c]">{badge.name}</h3>
-                      <p className={`text-xs font-medium ${getRarityColor(badge.rarity)}`}>
-                        {badge.rarity.toUpperCase()}
-                      </p>
-                    </div>
+                    {!badge.earned && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">?</span>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="p-4">
-                  <p className="text-sm text-gray-600 mb-3">{badge.description}</p>
-                  <div className="space-y-2 text-xs text-gray-500">
-                    <div className="flex items-center space-x-2">
-                      <Award size={12} />
-                      <span>Categoria: {badge.category}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar size={12} />
-                      <span>Adicionado: {new Date(badge.dateAdded).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Users size={12} />
-                      <span>Obtido por: {badge.obtainedBy.toLocaleString()} usuários</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-                    <p className="text-xs text-gray-700">
-                      <strong>Como obter:</strong> {badge.howToGet}
-                    </p>
+                  <h3 className="font-bold text-gray-800 mt-2 mb-1">{badge.name}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
+                  <div className="space-y-2">
+                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getRarityColor(badge.rarity)}`}>
+                      {badge.rarity.toUpperCase()}
+                    </span>
+                    {badge.earned && badge.earnedDate && (
+                      <div className="text-xs text-gray-500">
+                        Conquistado em {badge.earnedDate}
+                      </div>
+                    )}
+                    {!badge.earned && (
+                      <div className="text-xs text-gray-500">
+                        Não conquistado
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
-import { Palette, Download, Share2, RotateCcw } from 'lucide-react';
+import { Palette, Shirt, Eye, Smile, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 export const AvatarEditor = () => {
@@ -10,50 +10,60 @@ export const AvatarEditor = () => {
   const [currentLook, setCurrentLook] = useState('hd-180-1.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61');
 
   const categories = [
-    { id: 'hair', name: 'Cabelo', items: ['hr-828-61', 'hr-515-61', 'hr-110-61'] },
-    { id: 'face', name: 'Rosto', items: ['hd-180-1', 'hd-180-2', 'hd-180-3'] },
-    { id: 'shirt', name: 'Camisa', items: ['ch-255-66', 'ch-210-66', 'ch-215-66'] },
-    { id: 'pants', name: 'Calça', items: ['lg-280-110', 'lg-270-110', 'lg-285-110'] },
-    { id: 'shoes', name: 'Sapatos', items: ['sh-305-62', 'sh-300-62', 'sh-310-62'] },
-    { id: 'accessories', name: 'Acessórios', items: ['ha-1012-110', 'ha-1013-110', 'ha-1014-110'] }
+    { id: 'hair', name: 'Cabelo', icon: Palette },
+    { id: 'face', name: 'Rosto', icon: Smile },
+    { id: 'eyes', name: 'Olhos', icon: Eye },
+    { id: 'clothes', name: 'Roupas', icon: Shirt },
   ];
+
+  const hairOptions = [
+    { id: 'hr-828-61', name: 'Cabelo Clássico', price: 0 },
+    { id: 'hr-834-61', name: 'Cabelo Moderno', price: 50 },
+    { id: 'hr-890-61', name: 'Cabelo Estiloso', price: 100 },
+  ];
+
+  const faceOptions = [
+    { id: 'hd-180-1', name: 'Rosto Padrão', price: 0 },
+    { id: 'hd-185-1', name: 'Rosto Sorridente', price: 25 },
+    { id: 'hd-190-1', name: 'Rosto Sério', price: 25 },
+  ];
+
+  const eyesOptions = [
+    { id: 'ey-667-1', name: 'Olhos Normais', price: 0 },
+    { id: 'ey-670-1', name: 'Olhos Grandes', price: 30 },
+    { id: 'ey-675-1', name: 'Olhos Pequenos', price: 30 },
+  ];
+
+  const clothesOptions = [
+    { id: 'ch-255-66', name: 'Camisa Básica', price: 0 },
+    { id: 'ch-260-66', name: 'Camisa Listrada', price: 75 },
+    { id: 'ch-265-66', name: 'Camisa Elegante', price: 150 },
+  ];
+
+  const getOptionsForCategory = () => {
+    switch (selectedCategory) {
+      case 'hair': return hairOptions;
+      case 'face': return faceOptions;
+      case 'eyes': return eyesOptions;
+      case 'clothes': return clothesOptions;
+      default: return [];
+    }
+  };
 
   const getAvatarUrl = (figureString: string) => {
     return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=2&gesture=sml&size=l&frame=1`;
   };
 
-  const updateLook = (newPart: string) => {
+  const updateLook = (partId: string) => {
+    // Simulação simples de atualização do look
     const parts = currentLook.split('.');
-    const category = selectedCategory;
-    
-    // Simple logic to replace parts (this would be more complex in a real implementation)
-    const newLook = parts.map(part => {
-      if (category === 'hair' && part.startsWith('hr-')) return newPart;
-      if (category === 'face' && part.startsWith('hd-')) return newPart;
-      if (category === 'shirt' && part.startsWith('ch-')) return newPart;
-      if (category === 'pants' && part.startsWith('lg-')) return newPart;
-      if (category === 'shoes' && part.startsWith('sh-')) return newPart;
-      if (category === 'accessories' && part.startsWith('ha-')) return newPart;
+    const newParts = parts.map(part => {
+      if (part.startsWith(partId.split('-')[0])) {
+        return partId;
+      }
       return part;
-    }).join('.');
-    
-    setCurrentLook(newLook);
-  };
-
-  const resetLook = () => {
-    setCurrentLook('hd-180-1.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61');
-  };
-
-  const downloadAvatar = () => {
-    const link = document.createElement('a');
-    link.href = getAvatarUrl(currentLook);
-    link.download = 'meu-avatar-habbo.png';
-    link.click();
-  };
-
-  const shareAvatar = () => {
-    navigator.clipboard.writeText(currentLook);
-    alert('Código do visual copiado para a área de transferência!');
+    });
+    setCurrentLook(newParts.join('.'));
   };
 
   return (
@@ -62,90 +72,74 @@ export const AvatarEditor = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Avatar Preview */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] p-6 text-center">
-              <h3 className="font-bold text-[#38332c] mb-4">Prévia do Avatar</h3>
-              <div className="bg-[#f0ede6] rounded-lg p-4 mb-4">
-                <img
-                  src={getAvatarUrl(currentLook)}
-                  alt="Avatar Preview"
-                  className="mx-auto w-32 h-32"
-                />
-              </div>
-              <div className="space-y-2">
-                <button
-                  onClick={downloadAvatar}
-                  className="w-full bg-[#008800] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 flex items-center justify-center space-x-2"
-                >
-                  <Download size={16} />
-                  <span>Baixar</span>
-                </button>
-                <button
-                  onClick={shareAvatar}
-                  className="w-full bg-[#007bff] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#0056b3] border-r-[#0099ff] border-b-[#0099ff] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#0099ff] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 flex items-center justify-center space-x-2"
-                >
-                  <Share2 size={16} />
-                  <span>Compartilhar</span>
-                </button>
-                <button
-                  onClick={resetLook}
-                  className="w-full bg-[#dd0000] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#aa0000] border-r-[#ff0000] border-b-[#ff0000] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#ff0000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 flex items-center justify-center space-x-2"
-                >
-                  <RotateCcw size={16} />
-                  <span>Resetar</span>
-                </button>
+            <div className="habbo-card">
+              <div className="p-6 text-center">
+                <h3 className="font-bold text-gray-800 mb-4">Preview</h3>
+                <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                  <img
+                    src={getAvatarUrl(currentLook)}
+                    alt="Avatar Preview"
+                    className="w-32 h-32 mx-auto object-contain"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <button className="habbo-button-green w-full">
+                    Salvar Look
+                  </button>
+                  <button className="habbo-button-red w-full flex items-center justify-center">
+                    <RefreshCw size={16} className="mr-2" />
+                    Resetar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Editor Controls */}
+          {/* Category Selection */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] p-6">
-              <h3 className="font-bold text-[#38332c] mb-4 flex items-center space-x-2">
-                <Palette size={20} />
-                <span>Customização</span>
-              </h3>
-              
-              {/* Category Tabs */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {categories.map(category => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`px-4 py-2 rounded-lg font-medium border-2 transition-all duration-200 ${
-                      selectedCategory === category.id
-                        ? 'bg-[#b0e0e6] text-[#1a1a1a] border-[#66b0bb]'
-                        : 'bg-[#eaddc7] text-[#38332c] border-[#d1c6b3] hover:bg-[#f0e6da]'
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {categories.map(category => {
+                  const Icon = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`
+                        habbo-nav-link px-4 py-2
+                        ${selectedCategory === category.id ? 'active' : ''}
+                      `}
+                    >
+                      <Icon size={16} />
+                      <span>{category.name}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Items Grid */}
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {categories.find(c => c.id === selectedCategory)?.items.map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={() => updateLook(item)}
-                    className="p-3 bg-[#f0ede6] rounded-lg border-2 border-[#d1c6b3] hover:border-[#66b0bb] hover:bg-[#e8e5de] transition-all duration-200"
-                  >
-                    <div className="w-12 h-12 mx-auto bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600">
-                      {item.split('-')[1]}
+              {/* Options Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getOptionsForCategory().map((option) => (
+                  <div key={option.id} className="habbo-card">
+                    <div className="p-4 text-center">
+                      <div className="bg-gray-100 rounded-lg p-4 mb-3">
+                        <div className="w-16 h-16 bg-gray-200 rounded mx-auto flex items-center justify-center">
+                          <span className="text-gray-500 text-xs">Preview</span>
+                        </div>
+                      </div>
+                      <h4 className="font-medium text-gray-800 mb-1">{option.name}</h4>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {option.price === 0 ? 'Grátis' : `${option.price} moedas`}
+                      </p>
+                      <button
+                        onClick={() => updateLook(option.id)}
+                        className="habbo-button-green w-full"
+                      >
+                        {option.price === 0 ? 'Usar' : 'Comprar'}
+                      </button>
                     </div>
-                  </button>
+                  </div>
                 ))}
-              </div>
-
-              {/* Look Code */}
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-[#38332c] mb-2">Código do Visual:</h4>
-                <input
-                  type="text"
-                  value={currentLook}
-                  onChange={(e) => setCurrentLook(e.target.value)}
-                  className="w-full px-3 py-2 border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff] text-sm font-mono"
-                />
               </div>
             </div>
           </div>

@@ -92,7 +92,7 @@ export const CatalogEnhanced = () => {
                 placeholder="Buscar itens..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff]"
+                className="habbo-input w-full pl-10 pr-4 py-2"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -100,7 +100,7 @@ export const CatalogEnhanced = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff]"
+                className="habbo-input px-4 py-2"
               >
                 {categories.map(category => (
                   <option key={category.id} value={category.id}>{category.name}</option>
@@ -111,7 +111,7 @@ export const CatalogEnhanced = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] overflow-hidden hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100">
+              <div key={item.id} className="habbo-card">
                 <div className={`p-4 ${getRarityBg(item.rarity)}`}>
                   <img
                     src={item.image}
@@ -120,17 +120,17 @@ export const CatalogEnhanced = () => {
                   />
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-[#38332c] mb-1">{item.name}</h3>
+                  <h3 className="font-bold text-gray-800 mb-1">{item.name}</h3>
                   <p className="text-sm text-gray-600 mb-2">{item.description}</p>
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-xs font-medium ${getRarityColor(item.rarity)}`}>
                       {item.rarity.toUpperCase()}
                     </span>
-                    <span className="text-sm font-bold text-[#008800]">
+                    <span className="text-sm font-bold text-green-600">
                       {item.price} moedas
                     </span>
                   </div>
-                  <button className="w-full bg-[#008800] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100">
+                  <button className="habbo-button-green w-full">
                     Ver Detalhes
                   </button>
                 </div>

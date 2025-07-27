@@ -35,13 +35,13 @@ export const UserProfile = () => {
   };
 
   return (
-    <div className="p-4 text-center mb-6 bg-transparent">
+    <div className="habbo-profile">
       <img
         src={getAvatarUrl(userData?.figureString)}
         alt={userData?.name || t('userNameGuest')}
-        className="w-16 h-16 mx-auto rounded-full mb-2"
+        className="w-16 h-16 mx-auto rounded-full mb-2 border-2 border-gray-300"
       />
-      <p className="font-bold text-[#38332c]">
+      <p className="font-bold text-gray-800">
         {userData?.name || t('userNameGuest')}
       </p>
       <p className={`text-xs ${userData?.online ? 'text-green-600' : 'text-red-600'}`}>
@@ -49,13 +49,13 @@ export const UserProfile = () => {
       </p>
       
       {userData?.motto && (
-        <p className="text-xs text-[#38332c] mt-1 italic">"{userData.motto}"</p>
+        <p className="text-xs text-gray-600 mt-1 italic">"{userData.motto}"</p>
       )}
 
       {!isLoggedIn && !showLoginForm && (
         <button
           onClick={() => setShowLoginForm(true)}
-          className="w-full mt-3 bg-[#008800] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100"
+          className="habbo-button-green w-full mt-3"
         >
           {t('loginButton')}
         </button>
@@ -68,21 +68,21 @@ export const UserProfile = () => {
             value={loginUsername}
             onChange={(e) => setLoginUsername(e.target.value)}
             placeholder="Nome do usuário Habbo..."
-            className="w-full px-3 py-2 text-sm border-2 border-[#5a5a5a] rounded-lg focus:outline-none focus:border-[#007bff] bg-white"
+            className="habbo-input w-full text-sm"
             disabled={loading}
           />
           <div className="flex space-x-2">
             <button
               type="submit"
               disabled={loading || !loginUsername.trim()}
-              className="flex-1 bg-[#008800] text-white px-3 py-2 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="habbo-button-green flex-1 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? '...' : 'OK'}
             </button>
             <button
               type="button"
               onClick={() => setShowLoginForm(false)}
-              className="flex-1 bg-[#dd0000] text-white px-3 py-2 rounded-lg font-medium border-2 border-[#aa0000] border-r-[#ff0000] border-b-[#ff0000] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#ff0000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 text-sm"
+              className="habbo-button-red flex-1 text-sm"
             >
               ✕
             </button>
@@ -93,7 +93,7 @@ export const UserProfile = () => {
       {isLoggedIn && (
         <button
           onClick={handleLogout}
-          className="w-full mt-3 bg-[#dd0000] text-white px-4 py-2 rounded-lg font-medium border-2 border-[#aa0000] border-r-[#ff0000] border-b-[#ff0000] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#ff0000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100"
+          className="habbo-button-red w-full mt-3"
         >
           {t('logoutButton')}
         </button>

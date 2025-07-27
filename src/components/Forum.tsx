@@ -1,7 +1,7 @@
 
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
-import { MessageCircle, Users, Pin, Clock, Eye } from 'lucide-react';
+import { MessageCircle, Users, Clock, Pin } from 'lucide-react';
 
 export const Forum = () => {
   const { t } = useLanguage();
@@ -10,59 +10,62 @@ export const Forum = () => {
     {
       id: 1,
       name: 'Discussões Gerais',
-      description: 'Converse sobre qualquer tópico relacionado ao Habbo',
-      topics: 245,
-      posts: 1834,
-      lastPost: '2024-01-15 14:30',
-      icon: MessageCircle
+      description: 'Conversa sobre tudo relacionado ao Habbo',
+      topics: 1250,
+      posts: 15670,
+      lastPost: '2 minutos atrás',
+      icon: MessageCircle,
+      color: 'bg-blue-100'
     },
     {
       id: 2,
-      name: 'Ajuda e Suporte',
-      description: 'Tire suas dúvidas e ajude outros jogadores',
-      topics: 89,
-      posts: 567,
-      lastPost: '2024-01-15 13:45',
-      icon: Users
+      name: 'Suporte Técnico',
+      description: 'Precisa de ajuda? Poste aqui!',
+      topics: 890,
+      posts: 4320,
+      lastPost: '15 minutos atrás',
+      icon: Users,
+      color: 'bg-green-100'
     },
     {
       id: 3,
       name: 'Eventos e Competições',
-      description: 'Fique por dentro dos eventos da comunidade',
-      topics: 67,
-      posts: 423,
-      lastPost: '2024-01-15 12:20',
-      icon: Pin
+      description: 'Fique por dentro dos eventos',
+      topics: 450,
+      posts: 2100,
+      lastPost: '1 hora atrás',
+      icon: Clock,
+      color: 'bg-purple-100'
     }
   ];
 
   const recentTopics = [
     {
       id: 1,
-      title: 'Como conseguir emblemas raros?',
-      author: 'HabboPlayer123',
+      title: 'Como conseguir moedas rápido?',
+      author: 'HabboFan2024',
       replies: 23,
-      views: 156,
-      lastReply: '2024-01-15 14:30',
-      pinned: false
+      views: 456,
+      lastReply: '5 minutos atrás',
+      isPinned: false
     },
     {
       id: 2,
-      title: '[OFICIAL] Regras do Fórum',
+      title: '[OFICIAL] Regras do Fórum - Leia antes de postar',
       author: 'Moderador',
-      replies: 5,
-      views: 1234,
-      lastReply: '2024-01-15 10:00',
-      pinned: true
+      replies: 1,
+      views: 2340,
+      lastReply: '2 dias atrás',
+      isPinned: true
     },
     {
       id: 3,
-      title: 'Compartilhe seus quartos favoritos!',
+      title: 'Dicas para decorar seu quarto',
       author: 'DesignMaster',
-      replies: 45,
-      views: 289,
-      lastReply: '2024-01-15 13:15',
-      pinned: false
+      replies: 67,
+      views: 1250,
+      lastReply: '1 hora atrás',
+      isPinned: false
     }
   ];
 
@@ -74,49 +77,52 @@ export const Forum = () => {
             {forumCategories.map((category) => {
               const Icon = category.icon;
               return (
-                <div key={category.id} className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] p-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 cursor-pointer">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <Icon size={24} className="text-[#008800]" />
-                    <h3 className="font-bold text-[#38332c]">{category.name}</h3>
+                <div key={category.id} className="habbo-card">
+                  <div className={`p-4 ${category.color}`}>
+                    <Icon size={32} className="mx-auto text-gray-600" />
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{category.description}</p>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>{category.topics} tópicos</span>
-                    <span>{category.posts} posts</span>
-                  </div>
-                  <div className="flex items-center space-x-1 mt-2 text-xs text-gray-500">
-                    <Clock size={12} />
-                    <span>{category.lastPost}</span>
+                  <div className="p-4">
+                    <h3 className="font-bold text-gray-800 mb-2">{category.name}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{category.description}</p>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <div className="flex justify-between">
+                        <span>Tópicos:</span>
+                        <span className="font-medium">{category.topics}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Posts:</span>
+                        <span className="font-medium">{category.posts}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Último post:</span>
+                        <span className="font-medium">{category.lastPost}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] p-4">
-            <h3 className="font-bold text-[#38332c] mb-4">Tópicos Recentes</h3>
-            <div className="space-y-3">
+          <div className="mt-8">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Tópicos Recentes</h3>
+            <div className="space-y-2">
               {recentTopics.map((topic) => (
-                <div key={topic.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                  <div className="flex items-center space-x-3">
-                    {topic.pinned && <Pin size={16} className="text-[#008800]" />}
-                    <div>
-                      <h4 className="font-medium text-[#38332c]">{topic.title}</h4>
-                      <p className="text-xs text-gray-500">por {topic.author}</p>
+                <div key={topic.id} className="habbo-card">
+                  <div className="p-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-3 flex-1">
+                      {topic.isPinned && (
+                        <Pin size={16} className="text-yellow-600" />
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-800">{topic.title}</h4>
+                        <p className="text-sm text-gray-600">por {topic.author}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <MessageCircle size={12} />
-                      <span>{topic.replies}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Eye size={12} />
-                      <span>{topic.views}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Clock size={12} />
-                      <span>{topic.lastReply}</span>
+                    <div className="text-right text-sm text-gray-500">
+                      <div>{topic.replies} respostas</div>
+                      <div>{topic.views} visualizações</div>
+                      <div className="text-xs">{topic.lastReply}</div>
                     </div>
                   </div>
                 </div>
