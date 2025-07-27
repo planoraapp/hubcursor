@@ -42,28 +42,29 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
   const renderAvatar = () => {
     if (isLoggedIn && userData) {
       return (
-        <div className="relative w-12 h-12">
+        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
           <img 
             src="/assets/1360__-3C7.png" 
             alt="Avatar Background" 
-            className="absolute inset-0 w-full h-full object-cover rounded-full"
+            className="absolute inset-0 w-full h-full object-cover"
           />
           <img 
             src={getAvatarUrl(userData.figureString)} 
             alt={userData.name}
-            className="absolute inset-0 w-full h-full object-contain rounded-full z-10"
-            style={{ marginTop: '-4px' }}
+            className="absolute inset-0 w-full h-full object-cover object-top scale-125 translate-y-2"
+            onError={(e) => {
+              e.currentTarget.src = "/assets/frank.png";
+            }}
           />
         </div>
       );
     } else {
       return (
-        <div className="relative w-12 h-12">
+        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
           <img 
             src="/assets/frank.png" 
             alt="Frank" 
-            className="w-full h-full object-contain rounded-full"
-            style={{ marginTop: '-4px' }}
+            className="w-full h-full object-cover object-top scale-110 translate-y-1"
           />
         </div>
       );
@@ -107,7 +108,7 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
       {!isLoggedIn && !showLoginForm && (
         <button
           onClick={() => setShowLoginForm(true)}
-          className="w-full bg-gradient-to-r from-green-400 to-green-600 text-white font-bold py-2 px-4 rounded-lg hover:from-green-500 hover:to-green-700 transition-all duration-200"
+          className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg border-2 border-green-700 hover:bg-green-600 transition-all duration-200 shadow-sm"
         >
           {t('loginButton')}
         </button>
@@ -127,13 +128,13 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
             <button
               onClick={handleLogin}
               disabled={loading || !loginUsername.trim()}
-              className="flex-1 bg-gradient-to-r from-green-400 to-green-600 text-white font-bold py-2 px-3 rounded-lg hover:from-green-500 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="flex-1 bg-green-500 text-white font-bold py-2 px-3 rounded-lg border-2 border-green-700 hover:bg-green-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm"
             >
               {loading ? '...' : 'OK'}
             </button>
             <button
               onClick={() => setShowLoginForm(false)}
-              className="flex-1 bg-gradient-to-r from-red-400 to-red-600 text-white font-bold py-2 px-3 rounded-lg hover:from-red-500 hover:to-red-700 transition-all duration-200 text-sm"
+              className="flex-1 bg-red-500 text-white font-bold py-2 px-3 rounded-lg border-2 border-red-700 hover:bg-red-600 transition-all duration-200 text-sm shadow-sm"
             >
               ✕
             </button>
@@ -144,7 +145,7 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
       {isLoggedIn && (
         <button
           onClick={handleLogout}
-          className="w-full bg-gradient-to-r from-red-400 to-red-600 text-white font-bold py-2 px-4 rounded-lg hover:from-red-500 hover:to-red-700 transition-all duration-200"
+          className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg border-2 border-red-700 hover:bg-red-600 transition-all duration-200 shadow-sm"
         >
           {t('logoutButton')}
         </button>

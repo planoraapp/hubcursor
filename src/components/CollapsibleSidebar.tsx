@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { UserProfile } from './UserProfile';
 import { useLanguage } from '../hooks/useLanguage';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarContextProps {
   open: boolean;
@@ -51,53 +52,62 @@ interface CollapsibleSidebarProps {
 export const CollapsibleSidebar = ({ activeSection, setActiveSection }: CollapsibleSidebarProps) => {
   const [open, setOpen] = useState(false);
   const { t } = useLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navItems = [
     { 
       id: 'home', 
       label: 'Home', 
-      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/habbohub.png" alt="Home" className="w-6 h-6 flex-shrink-0" />,
+      path: '/'
     },
     { 
       id: 'noticias', 
       label: 'Notícias', 
-      icon: () => <img src="/assets/Newspaper.png" alt="Notícias" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/BatePapo1.png" alt="Notícias" className="w-6 h-6 flex-shrink-0" />,
+      path: '/noticias'
     },
     { 
       id: 'eventos', 
       label: 'Eventos', 
-      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/eventos.png" alt="Eventos" className="w-6 h-6 flex-shrink-0" />,
+      path: '/eventos'
     },
     { 
       id: 'forum', 
       label: 'Fórum', 
-      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/BatePapo1.png" alt="Fórum" className="w-6 h-6 flex-shrink-0" />,
+      path: '/forum'
     },
     { 
       id: 'catalogo', 
       label: 'Catálogo', 
-      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/Image 2422.png" alt="Catálogo" className="w-6 h-6 flex-shrink-0" />,
+      path: '/catalogo'
     },
     { 
       id: 'emblemas', 
       label: 'Emblemas', 
-      icon: () => <img src="/assets/Award.png" alt="Emblemas" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/1876__-6Ie.png" alt="Emblemas" className="w-6 h-6 flex-shrink-0" />,
+      path: '/emblemas'
     },
     { 
       id: 'editor', 
       label: 'Editor de Visuais', 
-      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/editorvisuais.png" alt="Editor" className="w-6 h-6 flex-shrink-0" />,
+      path: '/editor'
     },
     { 
       id: 'mercado', 
       label: 'Mercado', 
-      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-6 h-6 flex-shrink-0" />
+      icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-6 h-6 flex-shrink-0" />,
+      path: '/mercado'
     }
   ];
 
-  const handleNavClick = (id: string) => {
-    setActiveSection(id);
-    window.location.hash = id;
+  const handleNavClick = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -105,12 +115,12 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
       <div className="flex">
         <DesktopSidebar 
           navItems={navItems} 
-          activeSection={activeSection} 
+          currentPath={location.pathname} 
           onNavClick={handleNavClick}
         />
         <MobileHeader 
           navItems={navItems} 
-          activeSection={activeSection} 
+          currentPath={location.pathname} 
           onNavClick={handleNavClick}
         />
       </div>
@@ -120,12 +130,12 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
 
 const DesktopSidebar = ({ 
   navItems, 
-  activeSection, 
+  currentPath, 
   onNavClick 
 }: {
   navItems: any[];
-  activeSection: string;
-  onNavClick: (id: string) => void;
+  currentPath: string;
+  onNavClick: (path: string) => void;
 }) => {
   const { open, setOpen, animate } = useSidebar();
 
@@ -172,19 +182,21 @@ const DesktopSidebar = ({
         <nav className="flex flex-col space-y-2 px-4 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const isActive = currentPath === item.path;
             return (
               <button
                 key={item.id}
-                onClick={() => onNavClick(item.id)}
+                onClick={() => onNavClick(item.path)}
                 className={`
-                  flex items-center px-4 py-3 rounded-lg transition-all duration-200 font-medium
-                  ${activeSection === item.id 
+                  flex items-center transition-all duration-200 font-medium rounded-lg
+                  ${isActive 
                     ? 'bg-sky-400 text-white shadow-md' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                   }
+                  ${!open ? 'px-3 py-3 justify-center' : 'px-4 py-3'}
                 `}
               >
-                <div className={`flex-shrink-0 ${!open ? 'flex justify-center w-full' : ''}`}>
+                <div className={`flex-shrink-0 ${!open ? '' : 'mr-3'}`}>
                   {typeof Icon === 'function' ? <Icon /> : <Icon size={open ? 24 : 28} />}
                 </div>
                 <motion.span
@@ -192,7 +204,7 @@ const DesktopSidebar = ({
                     opacity: animate ? (open ? 1 : 0) : 1,
                     display: animate ? (open ? "inline-block" : "none") : "inline-block",
                   }}
-                  className="ml-3 whitespace-nowrap flex-1 text-left"
+                  className="whitespace-nowrap flex-1 text-left"
                 >
                   {item.label}
                 </motion.span>
@@ -211,7 +223,7 @@ const DesktopSidebar = ({
         >
           <h3 className="font-bold text-gray-800 mb-2">Habbo Hub Premium</h3>
           <p className="text-sm text-gray-600 mb-3">Desbloqueie filtros avançados!</p>
-          <button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-200">
+          <button className="w-full bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg border-2 border-yellow-700 hover:bg-yellow-600 transition-all duration-200 shadow-sm">
             Assine Já!
           </button>
         </motion.div>
@@ -246,12 +258,12 @@ const DesktopSidebar = ({
 
 const MobileHeader = ({ 
   navItems, 
-  activeSection, 
+  currentPath, 
   onNavClick 
 }: {
   navItems: any[];
-  activeSection: string;
-  onNavClick: (id: string) => void;
+  currentPath: string;
+  onNavClick: (path: string) => void;
 }) => {
   const { open, setOpen } = useSidebar();
 
@@ -277,10 +289,10 @@ const MobileHeader = ({
             return (
               <button
                 key={item.id}
-                onClick={() => onNavClick(item.id)}
+                onClick={() => onNavClick(item.path)}
                 className={`
                   p-3 rounded-lg transition-all duration-200
-                  ${activeSection === item.id 
+                  ${currentPath === item.path 
                     ? 'bg-sky-400 shadow-md' 
                     : 'bg-transparent hover:bg-white/50'
                   }
@@ -322,17 +334,17 @@ const MobileHeader = ({
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      onNavClick(item.id);
-                      setOpen(false);
-                    }}
-                    className={`
-                      flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
-                      ${activeSection === item.id 
-                        ? 'bg-sky-400 text-white shadow-md' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm'
-                      }
-                    `}
+                     onClick={() => {
+                       onNavClick(item.path);
+                       setOpen(false);
+                     }}
+                     className={`
+                       flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
+                       ${currentPath === item.path 
+                         ? 'bg-sky-400 text-white shadow-md' 
+                         : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-sm'
+                       }
+                     `}
                   >
                     {typeof Icon === 'function' ? <Icon /> : <Icon size={20} />}
                     <span>{item.label}</span>
