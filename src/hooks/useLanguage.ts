@@ -1,5 +1,5 @@
 
-import { useState, createContext, useContext } from 'react';
+import { useState, createContext, useContext, useEffect } from 'react';
 
 export type Language = 'pt' | 'es';
 
@@ -20,6 +20,14 @@ export const useLanguage = () => {
 
 export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentLanguage, setCurrentLanguage] = useState<Language>('pt');
+
+  useEffect(() => {
+    // Load saved language from localStorage
+    const savedLanguage = localStorage.getItem('habbo-hub-language') as Language;
+    if (savedLanguage && (savedLanguage === 'pt' || savedLanguage === 'es')) {
+      setCurrentLanguage(savedLanguage);
+    }
+  }, []);
 
   const changeLanguage = (lang: Language) => {
     setCurrentLanguage(lang);
