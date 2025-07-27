@@ -58,7 +58,7 @@ export const AvatarEditor = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('avatarEditorTitle')} subtitle={t('avatarEditorSubtitle')}>
+      <PanelCard title={t('avatarEditorTitle')}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Avatar Preview */}
           <div className="lg:col-span-1">

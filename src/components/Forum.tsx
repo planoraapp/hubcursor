@@ -68,7 +68,7 @@ export const Forum = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('forumTitle')} subtitle={t('forumSubtitle')}>
+      <PanelCard title={t('forumTitle')}>
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {forumCategories.map((category) => {

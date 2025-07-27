@@ -89,7 +89,7 @@ export const Marketplace = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('marketplaceTitle')} subtitle={t('marketplaceSubtitle')}>
+      <PanelCard title={t('marketplaceTitle')}>
         <div className="space-y-6">
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

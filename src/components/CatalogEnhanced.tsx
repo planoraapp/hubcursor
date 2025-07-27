@@ -82,7 +82,7 @@ export const CatalogEnhanced = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('catalogEnhancedTitle')} subtitle={t('catalogEnhancedSubtitle')}>
+      <PanelCard title={t('catalogEnhancedTitle')}>
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">

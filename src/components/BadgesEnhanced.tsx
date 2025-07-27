@@ -88,7 +88,7 @@ export const BadgesEnhanced = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('badgesEnhancedTitle')} subtitle={t('badgesEnhancedSubtitle')}>
+      <PanelCard title={t('badgesEnhancedTitle')}>
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">

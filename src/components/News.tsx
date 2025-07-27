@@ -43,7 +43,7 @@ export const News = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('newsTitle')} subtitle={t('newsSubtitle')}>
+      <PanelCard title={t('newsTitle')}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {mockNews.map((news) => (
             <div key={news.id} className="bg-white rounded-lg border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] shadow-[2px_2px_0px_0px_#cccccc] overflow-hidden hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100">
