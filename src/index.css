@@ -301,4 +301,56 @@
   .text-shadow-lg {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
   }
+
+  /* Advertisement placeholders */
+  .habbo-ad-placeholder {
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  .habbo-ad-button-style {
+    background-color: #f0f0f0;
+    border: 2px solid #888;
+    border-right-color: #ddd;
+    border-bottom-color: #ddd;
+    box-shadow: 1px 1px 0px 0px #5a5a5a;
+    transition: all 0.1s ease;
+  }
+
+  .habbo-ad-button-style:hover {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+
+  .habbo-ad-panel-style {
+    background-color: #fff;
+    border: 2px solid #888;
+    border-right-color: #ddd;
+    border-bottom-color: #ddd;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .ad-header-bar {
+    background-color: #333;
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #666;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+  }
+
+  .ad-content-wrapper {
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+  }
 }

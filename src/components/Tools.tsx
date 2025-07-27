@@ -168,6 +168,25 @@ export const Tools = () => {
           </div>
         </div>
       </PanelCard>
+
+      {/* Vertical Advertisement Banner */}
+      <div className="habbo-ad-placeholder habbo-ad-panel-style mt-8" style={{
+        width: '300px', 
+        height: '600px', 
+        marginLeft: 'auto', 
+        marginRight: 'auto',
+        backgroundImage: 'url(/assets/adsvertwhite.png)',
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center'
+      }}>
+        <div className="ad-header-bar" style={{backgroundColor: 'transparent', borderBottom: 'none', textShadow: 'none'}}>
+          Advertisement
+        </div>
+        <div className="ad-content-wrapper" style={{backgroundColor: 'transparent'}}>
+          Espaço para Anúncio Vertical
+        </div>
+      </div>
     </div>
   );
 };

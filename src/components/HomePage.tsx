@@ -7,6 +7,26 @@ export const HomePage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Top Advertisement Banner */}
+      <div className="habbo-ad-placeholder habbo-ad-panel-style mb-8" style={{
+        width: '100%', 
+        maxWidth: '728px', 
+        height: '90px', 
+        marginLeft: 'auto', 
+        marginRight: 'auto',
+        backgroundImage: 'url(/assets/adswhitelarge.png)',
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center'
+      }}>
+        <div className="ad-header-bar" style={{backgroundColor: 'transparent', borderBottom: 'none', textShadow: 'none'}}>
+          Advertisement
+        </div>
+        <div className="ad-content-wrapper" style={{backgroundColor: 'transparent'}}>
+          Espaço para Anúncio de Topo
+        </div>
+      </div>
+
       <PageHeader 
         title="Bem-vindo ao Habbo Hub!"
         icon="/assets/habbohub.png"
@@ -130,6 +150,24 @@ export const HomePage = () => {
                 <span className="font-bold text-gray-800">Diamantes</span>
               </div>
               <span className="font-bold text-gray-800">45</span>
+            </div>
+
+            {/* Small Metal Advertisement Button */}
+            <div className="habbo-ad-placeholder habbo-ad-button-style mt-4 mx-auto" style={{
+              width: '150px', 
+              height: '50px',
+              backgroundImage: 'url(/assets/adsmetal.png)',
+              backgroundSize: 'cover',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              color: '#666',
+              fontWeight: 'bold'
+            }}>
+              Espaço para Anúncio
             </div>
           </div>
         </PanelCard>

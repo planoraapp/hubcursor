@@ -103,6 +103,12 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
       label: 'Mercado', 
       icon: () => <img src="/assets/Image 1574.png" alt="Mercado" className="w-6 h-6 flex-shrink-0" />,
       path: '/mercado'
+    },
+    { 
+      id: 'ferramentas', 
+      label: 'Ferramentas', 
+      icon: () => <img src="/assets/wireds.png" alt="Ferramentas" className="w-6 h-6 flex-shrink-0" />,
+      path: '/ferramentas'
     }
   ];
 

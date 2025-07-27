@@ -21,6 +21,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     { id: 'emblemas', label: 'Emblemas', icon: '/assets/Award.png' },
     { id: 'editor', label: 'Editor', icon: '/assets/editorvisuais.png' },
     { id: 'mercado', label: 'Mercado', icon: '/assets/Image 1574.png' },
+    { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/wireds.png' },
   ];
 
   const handleNavigation = (itemId: string) => {

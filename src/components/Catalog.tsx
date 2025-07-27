@@ -61,6 +61,26 @@ export const Catalog = () => {
 
   return (
     <div className="space-y-8">
+      {/* Wide Metal Advertisement Banner */}
+      <div className="habbo-ad-placeholder habbo-ad-panel-style mb-8" style={{
+        width: '100%', 
+        maxWidth: '900px', 
+        height: '120px', 
+        marginLeft: 'auto', 
+        marginRight: 'auto',
+        backgroundImage: 'url(/assets/adswidemetal.png)',
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center'
+      }}>
+        <div className="ad-header-bar" style={{backgroundColor: 'transparent', borderBottom: 'none', textShadow: 'none'}}>
+          Advertisement
+        </div>
+        <div className="ad-content-wrapper" style={{backgroundColor: 'transparent'}}>
+          Espaço para Anúncio Largo Metálico
+        </div>
+      </div>
+
       <PanelCard title="Catálogo de Items">
         <p className="text-lg text-gray-600 mb-4">
           Explore todos os emblemas disponíveis no Habbo Hotel BR através da nossa API oficial.

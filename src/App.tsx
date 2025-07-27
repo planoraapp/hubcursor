@@ -11,6 +11,7 @@ import Catalogo from "./pages/Catalogo";
 import Emblemas from "./pages/Emblemas";
 import Editor from "./pages/Editor";
 import Mercado from "./pages/Mercado";
+import Ferramentas from "./pages/Ferramentas";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/emblemas" element={<Emblemas />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/mercado" element={<Mercado />} />
+          <Route path="/ferramentas" element={<Ferramentas />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
