@@ -1,3 +1,8 @@
+import adsMetalImg from '/assets/adsmetal.png';
+import adsWhiteLargeImg from '/assets/adswhitelarge.png';
+import adsVertWhiteImg from '/assets/adsvertwhite.png';
+import adsWideMetalImg from '/assets/adswidemetal.png';
+
 interface AdSpaceProps {
   type: 'square' | 'horizontal' | 'vertical' | 'wide';
   className?: string;
@@ -8,35 +13,35 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
     switch (type) {
       case 'square':
         return {
-          image: '/assets/adsmetal.png',
+          image: adsMetalImg,
           width: '200px',
           height: '200px',
           title: 'Advertisement'
         };
       case 'horizontal':
         return {
-          image: '/assets/adswhitelarge.png',
+          image: adsWhiteLargeImg,
           width: '100%',
           height: '90px',
           title: 'Advertisement'
         };
       case 'vertical':
         return {
-          image: '/assets/adsvertwhite.png',
+          image: adsVertWhiteImg,
           width: '160px',
           height: '600px',
           title: 'Advertisement'
         };
       case 'wide':
         return {
-          image: '/assets/adswidemetal.png',
+          image: adsWideMetalImg,
           width: '100%',
           height: '120px',
           title: 'Advertisement'
         };
       default:
         return {
-          image: '/assets/adsmetal.png',
+          image: adsMetalImg,
           width: '200px',
           height: '200px',
           title: 'Advertisement'
