@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Search, User, Shield, AlertCircle, Users, Home, Award } from 'lucide-react';
 import { PanelCard } from './PanelCard';
-import { ImageWithFallback } from './ImageWithFallback';
 import { 
   getUserByName, 
   getUserBadges, 
@@ -41,6 +40,7 @@ export const ProfileChecker = () => {
     try {
       console.log('Buscando usuário:', username);
       
+      // Buscar usuário por nome
       const user = await getUserByName(username.trim());
       
       if (!user) {
@@ -57,6 +57,7 @@ export const ProfileChecker = () => {
 
       setUserProfile(user);
 
+      // Buscar dados adicionais do usuário
       const [badges, friends, groups, rooms] = await Promise.all([
         getUserBadges(user.uniqueId),
         getUserFriends(user.uniqueId),
@@ -154,11 +155,10 @@ export const ProfileChecker = () => {
         <div className="space-y-6">
           <PanelCard title="Perfil do Usuário">
             <div className="flex items-center space-x-4 mb-4">
-              <ImageWithFallback
+              <img
                 src={getAvatarUrl(userProfile.figureString)}
                 alt={`Avatar de ${userProfile.name}`}
                 className="w-20 h-20 rounded-lg border-2 border-gray-300"
-                fallback="/placeholder.svg"
               />
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
@@ -180,11 +180,11 @@ export const ProfileChecker = () => {
                 <div className="grid grid-cols-5 gap-3">
                   {userProfile.selectedBadges.map((badge, index) => (
                     <div key={index} className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-                      <ImageWithFallback
+                      <img
                         src={getBadgeUrl(badge.code)}
                         alt={badge.name}
                         className="w-8 h-8 mb-1"
-                        fallback="/placeholder.svg"
+                        title={badge.description}
                       />
                       <span className="text-xs font-medium text-gray-700 text-center">{badge.name}</span>
                     </div>
@@ -199,11 +199,11 @@ export const ProfileChecker = () => {
               <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                 {userBadges.map((badge, index) => (
                   <div key={index} className="flex flex-col items-center p-1">
-                    <ImageWithFallback
+                    <img
                       src={getBadgeUrl(badge.code)}
                       alt={badge.name}
                       className="w-6 h-6"
-                      fallback="/placeholder.svg"
+                      title={badge.description}
                     />
                   </div>
                 ))}
@@ -220,11 +220,10 @@ export const ProfileChecker = () => {
               <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-3">
                 {userFriends.slice(0, 24).map((friend, index) => (
                   <div key={index} className="flex flex-col items-center p-2 bg-gray-50 rounded-lg">
-                    <ImageWithFallback
+                    <img
                       src={getAvatarUrl(friend.figureString, 's')}
                       alt={`Avatar de ${friend.name}`}
                       className="w-8 h-8 rounded mb-1"
-                      fallback="/placeholder.svg"
                     />
                     <span className="text-xs font-medium text-gray-700 text-center truncate w-full">{friend.name}</span>
                   </div>
@@ -243,11 +242,10 @@ export const ProfileChecker = () => {
               <div className="space-y-3">
                 {userGroups.map((group, index) => (
                   <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <ImageWithFallback
+                    <img
                       src={getBadgeUrl(group.badgeCode)}
                       alt={`Emblema do ${group.name}`}
                       className="w-8 h-8"
-                      fallback="/placeholder.svg"
                     />
                     <div className="flex-1">
                       <h4 className="font-bold text-gray-800">{group.name}</h4>

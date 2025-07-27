@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { PanelCard } from './PanelCard';
 import { RoomsChart } from './RoomsChart';
-import { ImageWithFallback } from './ImageWithFallback';
 import { useHotelStats, useTopUsers } from '../hooks/useHabboData';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -112,11 +111,10 @@ export const HomePage = () => {
                   <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 w-10 h-10">
-                        <ImageWithFallback
+                        <img
+                          className="w-full h-full rounded-full"
                           src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.look}&size=s`}
                           alt={user.username}
-                          className="w-full h-full rounded-full"
-                          fallback="/placeholder.svg"
                         />
                       </div>
                       <div className="ml-3">

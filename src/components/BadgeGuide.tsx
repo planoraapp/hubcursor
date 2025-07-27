@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { Search, Award } from 'lucide-react';
 import { PanelCard } from './PanelCard';
-import { ImageWithFallback } from './ImageWithFallback';
 import { getAchievements, getBadgeUrl, type HabboBadge } from '../services/habboApi';
 
 export const BadgeGuide = () => {
@@ -170,11 +168,16 @@ export const BadgeGuide = () => {
           <PanelCard key={index}>
             <div className="text-center space-y-3">
               <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center bg-gray-100">
-                <ImageWithFallback
+                <img
                   src={getBadgeUrl(badge.code)}
                   alt={badge.name || 'Badge'}
                   className="w-12 h-12"
-                  fallback="/placeholder.svg"
+                  onError={(e) => {
+                    // Fallback para quando a imagem não carrega
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = '<div class="text-yellow-600 text-2xl">🏅</div>';
+                  }}
                 />
               </div>
               <h3 className="font-bold text-gray-800 text-sm">{badge.name || 'Badge'}</h3>
