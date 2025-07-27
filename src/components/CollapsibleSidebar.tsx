@@ -199,7 +199,7 @@ const DesktopSidebar = ({
                     ? 'bg-sky-400 text-white shadow-md' 
                     : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                   }
-                  ${!open ? 'px-3 py-3 justify-center' : 'px-4 py-3'}
+                  ${!open ? 'px-2 py-3 justify-center w-16' : 'px-4 py-3'}
                 `}
               >
                 <div className={`flex-shrink-0 ${!open ? '' : 'mr-3'}`}>
@@ -290,7 +290,7 @@ const MobileHeader = ({
       {/* Mobile Dock */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-amber-50 border-t-2 border-amber-200 px-4 py-2 shadow-lg">
         <div className="flex justify-around items-center max-w-md mx-auto">
-          {navItems.map((item) => {
+          {navItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             return (
               <button

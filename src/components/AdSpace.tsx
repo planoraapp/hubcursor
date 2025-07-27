@@ -2,9 +2,10 @@ import adsMetalImg from '/assets/adsmetal.png';
 import adsWhiteLargeImg from '/assets/adswhitelarge.png';
 import adsVertWhiteImg from '/assets/adsvertwhite.png';
 import adsWideMetalImg from '/assets/adswidemetal.png';
+import adBannerImg from '/assets/ad-banner-468x60.png';
 
 interface AdSpaceProps {
-  type: 'square' | 'horizontal' | 'vertical' | 'wide';
+  type: 'square' | 'horizontal' | 'vertical' | 'wide' | 'banner' | 'medium' | 'skyscraper';
   className?: string;
 }
 
@@ -37,6 +38,27 @@ export const AdSpace = ({ type, className = "" }: AdSpaceProps) => {
           image: adsWideMetalImg,
           width: '100%',
           height: '120px',
+          title: 'Advertisement'
+        };
+      case 'banner':
+        return {
+          image: adBannerImg,
+          width: '468px',
+          height: '60px',
+          title: 'Advertisement'
+        };
+      case 'medium':
+        return {
+          image: adsWhiteLargeImg,
+          width: '300px',
+          height: '250px',
+          title: 'Advertisement'
+        };
+      case 'skyscraper':
+        return {
+          image: adsVertWhiteImg,
+          width: '160px',
+          height: '600px',
           title: 'Advertisement'
         };
       default:

@@ -104,6 +104,51 @@
 }
 
 @layer components {
+  /* Advertisement Component Styles */
+  .habbo-ad-placeholder {
+    background-color: #f5f5f5;
+    border: 2px solid black;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #6b7280;
+    text-align: center;
+    position: relative;
+  }
+
+  .habbo-ad-button-style {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border: 2px solid black;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px black, inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .habbo-ad-panel-style {
+    background: linear-gradient(180deg, #ffffff, #f1f5f9);
+    border: 2px solid black;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px black, inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .ad-header-bar {
+    background: linear-gradient(90deg, #475569, #64748b);
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: bold;
+    border-bottom: 1px solid #334155;
+  }
+
+  .ad-content-wrapper {
+    padding: 8px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #64748b;
+  }
+
   /* Habbo Mobile Dock Styles */
   .habbo-dock {
     background-color: #f0ede6;

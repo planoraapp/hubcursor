@@ -27,13 +27,16 @@ const Ferramentas = () => {
             backgroundImage="/assets/1360__-3C7.png"
           />
           
-          <div className="flex gap-6 mb-6 justify-center">
-            <AdSpace type="vertical" />
-            <AdSpace type="vertical" />
-          </div>
+          <AdSpace type="horizontal" className="mb-6" />
           
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-            <Tools />
+          <div className="flex gap-6">
+            <div className="flex-1 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
+              <Tools />
+            </div>
+            <div className="flex flex-col gap-4">
+              <AdSpace type="medium" />
+              <AdSpace type="banner" />
+            </div>
           </div>
           
           <AdSpace type="wide" className="mt-6" />
