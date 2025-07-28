@@ -7,7 +7,15 @@
 @font-face {
   font-family: 'Volter';
   src: url('/fonts/volter.woff2') format('woff2');
-  font-weight: normal;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Volter';
+  src: url('/fonts/volter-bold.woff2') format('woff2');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -106,4 +114,100 @@
 
 .volter-font {
   font-family: 'Volter', monospace;
+  font-weight: 400;
+}
+
+.volter-bold {
+  font-family: 'Volter', monospace;
+  font-weight: 700;
+}
+
+/* Habbo Speech Bubble Styles */
+.habbo-speech-bubble {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-family: 'Volter', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.habbo-speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #ffffff;
+}
+
+.habbo-speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 18px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid #000000;
+}
+
+/* Habbo Overlay Styles */
+.habbo-overlay {
+  position: relative;
+  display: inline-block;
+}
+
+.habbo-overlay-content {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Volter', monospace;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.habbo-overlay:hover .habbo-overlay-content {
+  opacity: 1;
+}
+
+/* Habbo Title Styles */
+.habbo-title {
+  font-family: 'Volter', monospace;
+  font-weight: 700;
+  color: #333333;
+  text-shadow: 1px 1px 0px #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.habbo-title-large {
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+.habbo-title-medium {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.habbo-title-small {
+  font-size: 12px;
+  line-height: 1.3;
 }
