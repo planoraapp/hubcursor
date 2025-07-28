@@ -8,25 +8,28 @@ const buildHabboImageUrl = (
   hotel: string,
   user: string,
   look: string,
-  gender: 'M' | 'F', // Adiciona gender aqui, é importante para o avatar!
+  gender: 'M' | 'F',
   gesture: string,
   action: string,
   body2: string,
   left: string,
   right: string,
   sign: string,
-  object: string
+  object: string,
+  size: string = 'l',
+  direction: number = 2,
+  headDirection: number = 3
 ) => {
-  const baseUrl = `https://www.${hotel}/habbo-imaging/avatarimage?user=${user}`;
+  const baseUrl = `https://www.${hotel}/habbo-imaging/avatarimage`;
   const params = [
-    `direction=2`,
-    `head_direction=3`,
+    `size=${size}`,
+    `direction=${direction}`,
+    `head_direction=${headDirection}`,
     `img_format=png`,
     `gesture=${gesture}`,
     `frame=0`,
     `headonly=0`,
-    `size=m`,
-    `gender=${gender}`, // Incluir o gênero aqui
+    `gender=${gender}`,
   ];
 
   // Adiciona o parâmetro 'figure' (look) se ele existir e não estiver vazio
@@ -37,8 +40,9 @@ const buildHabboImageUrl = (
   if (right) params.push(`action_c=${right}`);
   if (sign) params.push(`sign=${sign}`);
   if (object) params.push(`item=${object}`);
+  if (user) params.push(`user=${user}`);
 
-  return `${baseUrl}&${params.join('&')}`;
+  return `${baseUrl}?${params.join('&')}`;
 };
 
 export const AvatarEditor = () => {
@@ -60,6 +64,11 @@ export const AvatarEditor = () => {
   const [sign, setSign] = useState('');
   const [handItem, setHandItem] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  
+  // Novos estados para controles do HabboNews
+  const [avatarSize, setAvatarSize] = useState('l'); // s, n, l
+  const [direction, setDirection] = useState(2); // 0-7
+  const [headDirection, setHeadDirection] = useState(3);
 
   const categories = [
     { id: 'gender', name: 'Gênero' },
@@ -75,17 +84,20 @@ export const AvatarEditor = () => {
       selectedHotel,
       username,
       look,
-      gender, // Passa o gênero para a construção da URL
+      gender,
       gesture,
       action,
       bodyAction,
       leftHand,
       rightHand,
       sign,
-      handItem
+      handItem,
+      avatarSize,
+      direction,
+      headDirection
     );
     setAvatarUrl(newUrl);
-  }, [selectedHotel, username, look, gender, gesture, action, bodyAction, leftHand, rightHand, sign, handItem]); // Adiciona gender como dependência
+  }, [selectedHotel, username, look, gender, gesture, action, bodyAction, leftHand, rightHand, sign, handItem, avatarSize, direction, headDirection]);
 
   const updateAvatar = () => {
     toast.success('Avatar atualizado!');
@@ -113,6 +125,32 @@ export const AvatarEditor = () => {
     }
   };
 
+  const rotateAvatar = (direction: 'left' | 'right') => {
+    setDirection(prev => {
+      if (direction === 'left') {
+        return prev === 0 ? 7 : prev - 1;
+      } else {
+        return prev === 7 ? 0 : prev + 1;
+      }
+    });
+  };
+
+  const handleSizeChange = (size: 's' | 'n' | 'l') => {
+    setAvatarSize(size);
+  };
+
+  const handItems = [
+    { id: '', name: 'Nenhum', image: 'https://i.imgur.com/l99IY2D.png' },
+    { id: '1', name: 'Leite', image: 'https://i.imgur.com/Z9sk1U9.png' },
+    { id: '2', name: 'Cenoura', image: 'https://i.imgur.com/ngn0r0i.png' },
+    { id: '3', name: 'Sorvete', image: 'https://i.imgur.com/ZEVZP7D.png' },
+    { id: '5', name: 'Suco Bubblejuice', image: 'https://i.imgur.com/LGA9lXe.png' },
+    { id: '6', name: 'Café', image: 'https://i.imgur.com/NEJdIXf.png' },
+    { id: '9', name: 'Poção', image: 'https://i.imgur.com/1DLtDul.png' },
+    { id: '76', name: 'Rosa', image: 'https://i.imgur.com/rUKlvLD.png' },
+    { id: '77', name: 'Rosa negra', image: 'https://i.imgur.com/dbKCkvN.png' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Alerta sobre o perfil público */}
@@ -129,8 +167,8 @@ export const AvatarEditor = () => {
       </div>
 
       {/* Contêiner Principal do Gerador de Imagem e Controles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/90 backdrop-blur-sm p-6 rounded-lg shadow-lg">
-        {/* Coluna da Esquerda: Imagem do Habbo e Hotel Selector */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-white/90 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+        {/* Coluna da Esquerda: Avatar Display */}
         <div className="flex flex-col items-center space-y-4">
           <div className="w-full">
             <div className="text-sm font-medium mb-2">Hotel:</div>
@@ -150,9 +188,10 @@ export const AvatarEditor = () => {
               <option value="habbo.com.tr">Habbo.com.tr (Turquia)</option>
             </select>
           </div>
-          
-          <a href={avatarUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
-            <div className="border-2 border-gray-300 rounded-lg p-4 bg-white min-h-[200px] flex items-center justify-center">
+
+          {/* Avatar Display com Controles de Rotação */}
+          <div className="relative">
+            <div className="border-2 border-gray-300 rounded-lg p-4 bg-white min-h-[250px] flex items-center justify-center relative">
               <img 
                 alt="Prévia do Habbo" 
                 src={avatarUrl}
@@ -162,18 +201,34 @@ export const AvatarEditor = () => {
                   toast.error('Erro ao carregar avatar. Verifique se o usuário existe.');
                 }}
               />
+              
+              {/* Botões de Rotação */}
+              <button
+                onClick={() => rotateAvatar('left')}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
+                title="Rotacionar para esquerda"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => rotateAvatar('right')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full"
+                title="Rotacionar para direita"
+              >
+                →
+              </button>
             </div>
-          </a>
+          </div>
 
           <div className="w-full">
             <div className="text-sm font-medium mb-2">Usuário:</div>
-          <input
-            placeholder="HabboHotel" 
-            type="text"
-            className="w-full p-2 border rounded-lg"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+            <input
+              placeholder="HabboHotel" 
+              type="text"
+              className="w-full p-2 border rounded-lg"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </div>
           
           <button onClick={updateAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-medium">
@@ -182,95 +237,112 @@ export const AvatarEditor = () => {
           <button onClick={copyImageUrl} className="w-full bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-medium">
             Copiar URL da Imagem
           </button>
-          <input
-            type="text"
-            value={avatarUrl}
-            readOnly
-            className="w-full text-center text-sm bg-gray-100 p-2 border rounded-lg"
-          />
         </div>
 
-        {/* Coluna da Direita - Controles de Avatar e o NOVO MENU DE ROUPAS */}
+        {/* Coluna do Meio - Controles de Avatar */}
         <div className="flex flex-col space-y-4">
-          {/* Seletor de Gestos */}
-          <div>
-            <div className="text-sm font-medium mb-2">Gestos:</div>
+          {/* Controle de Tamanho */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm font-medium mb-3 flex items-center">
+              <span className="mr-2">📏</span>Tamanho
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleSizeChange('s')}
+                className={`px-3 py-2 rounded ${avatarSize === 's' ? 'bg-blue-500 text-white' : 'bg-white border'}`}
+              >
+                MINI
+              </button>
+              <button
+                onClick={() => handleSizeChange('n')}
+                className={`px-3 py-2 rounded ${avatarSize === 'n' ? 'bg-blue-500 text-white' : 'bg-white border'}`}
+              >
+                ×1
+              </button>
+              <button
+                onClick={() => handleSizeChange('l')}
+                className={`px-3 py-2 rounded ${avatarSize === 'l' ? 'bg-blue-500 text-white' : 'bg-white border'}`}
+              >
+                ×2
+              </button>
+            </div>
+          </div>
+
+          {/* Gestos */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm font-medium mb-3 flex items-center">
+              <span className="mr-2">😊</span>Gestos
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { value: 'std', icon: '😐', title: 'Normal' },
+                { value: 'spk', icon: '🗣️', title: 'Falando' },
+                { value: 'sml', icon: '😊', title: 'Sorrindo' },
+                { value: 'srp', icon: '😲', title: 'Surpreso' },
+                { value: 'agr', icon: '😠', title: 'Nervoso' },
+                { value: 'sad', icon: '😢', title: 'Triste' },
+                { value: 'blw', icon: '😘', title: 'Beijo' },
+                { value: 'eyb', icon: '😴', title: 'Dormindo' }
+              ].map(gest => (
+                <button
+                  key={gest.value}
+                  onClick={() => setGesture(gest.value)}
+                  className={`p-2 rounded text-lg ${gesture === gest.value ? 'bg-blue-500 text-white' : 'bg-white border'}`}
+                  title={gest.title}
+                >
+                  {gest.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Items de Mão */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm font-medium mb-3 flex items-center">
+              <span className="mr-2">🤚</span>Item de Mão
+            </div>
             <select
               className="w-full p-2 border rounded-lg bg-white"
-              value={gesture}
-              onChange={(e) => setGesture(e.target.value)}
+              value={handItem}
+              onChange={(e) => setHandItem(e.target.value)}
             >
-              <option value="std">Normal</option>
-              <option value="spk">Falando</option>
-              <option value="sml">Sorrindo</option>
-              <option value="srp">Surpreso</option>
-              <option value="agr">Nervoso</option>
-              <option value="sad">Triste</option>
-              <option value="blw">Beijo</option>
-              <option value="eyb">Dormindo</option>
+              {handItems.map(item => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
             </select>
           </div>
 
-          {/* Seletor de Ação no Corpo */}
-          <div>
-            <div className="text-sm font-medium mb-2">Ação no corpo:</div>
-            <select
-              className="w-full p-2 border rounded-lg bg-white"
-              value={action}
-              onChange={(e) => setAction(e.target.value)}
-            >
-              <option value="">Nada</option>
-              <option value="std">Normal</option>
-              <option value="lay">Dormindo</option>
-              <option value="wlk">Andando (Animado)</option>
-            </select>
+          {/* Ações */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm font-medium mb-3 flex items-center">
+              <span className="mr-2">🎭</span>Ações
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: '', icon: '🧍', title: 'Parado' },
+                { value: 'std', icon: '🚶', title: 'Normal' },
+                { value: 'lay', icon: '🛌', title: 'Deitado' },
+                { value: 'sit', icon: '🪑', title: 'Sentado' },
+                { value: 'wlk', icon: '🏃', title: 'Andando' },
+                { value: 'wav', icon: '👋', title: 'Acenando' }
+              ].map(act => (
+                <button
+                  key={act.value}
+                  onClick={() => setAction(act.value)}
+                  className={`p-2 rounded text-sm ${action === act.value ? 'bg-blue-500 text-white' : 'bg-white border'}`}
+                  title={act.title}
+                >
+                  {act.icon} {act.title}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Seletor de Corpo2 */}
-          <div>
-            <div className="text-sm font-medium mb-2">Corpo2:</div>
-            <select
-              className="w-full p-2 border rounded-lg bg-white"
-              value={bodyAction}
-              onChange={(e) => setBodyAction(e.target.value)}
-            >
-              <option value="">Nada</option>
-              <option value="sit">Sentado</option>
-            </select>
-          </div>
-
-          {/* Seletor de Esquerda */}
-          <div>
-            <div className="text-sm font-medium mb-2">Esquerda:</div>
-            <select
-              className="w-full p-2 border rounded-lg bg-white"
-              value={leftHand}
-              onChange={(e) => setLeftHand(e.target.value)}
-            >
-              <option value="">Nada</option>
-              <option value="respect">Respeito</option>
-              <option value="wav">Acenando (Animado)</option>
-            </select>
-          </div>
-
-          {/* Seletor de Direita */}
-          <div>
-            <div className="text-sm font-medium mb-2">Direita:</div>
-            <select
-              className="w-full p-2 border rounded-lg bg-white"
-              value={rightHand}
-              onChange={(e) => setRightHand(e.target.value)}
-            >
-              <option value="">Nada</option>
-              <option value="crr">Mão esticada</option>
-              <option value="drk">Mão na boca</option>
-              <option value="blw">Mandando beijo</option>
-            </select>
-          </div>
-
-          {/* Seletor de Sinais */}
-          <div>
-            <div className="text-sm font-medium mb-2">Sinais:</div>
+          {/* Sinais */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm font-medium mb-3 flex items-center">
+              <span className="mr-2">🔢</span>Sinais
+            </div>
             <select
               className="w-full p-2 border rounded-lg bg-white"
               value={sign}
@@ -299,27 +371,20 @@ export const AvatarEditor = () => {
             </select>
           </div>
 
-          {/* Seletor de Objeto */}
-          <div>
-            <div className="text-sm font-medium mb-2">Objeto:</div>
-            <select
-              className="w-full p-2 border rounded-lg bg-white max-h-32 overflow-y-auto"
-              value={handItem}
-              onChange={(e) => setHandItem(e.target.value)}
-            >
-              <option value="">Nenhum</option>
-              <option value="1">Leite</option>
-              <option value="2">Cenoura</option>
-              <option value="3">Sorvete de Baunilha</option>
-              <option value="5">Suco Bubblejuice</option>
-              <option value="76">Rosa</option>
-              <option value="77">Rosa negra</option>
-              <option value="102">Presente</option>
-              <option value="256">Bola de Futebol</option>
-            </select>
+          {/* URL Display */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-sm font-medium mb-2">URL do Avatar:</div>
+            <input
+              type="text"
+              value={avatarUrl}
+              readOnly
+              className="w-full text-xs bg-gray-100 p-2 border rounded-lg"
+            />
           </div>
+        </div>
 
-          {/* Renderiza o componente ClothingMenu */}
+        {/* Coluna da Direita - Menu de Roupas */}
+        <div className="flex flex-col space-y-4">
           <ClothingMenu
             currentLook={look}
             onLookChange={handleLookChangeFromMenu}
