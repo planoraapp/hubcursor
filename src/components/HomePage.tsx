@@ -21,7 +21,7 @@ export const HomePage: React.FC = () => {
         
         <div className="space-y-6">
           <Rankings />
-          <AdSpace />
+          <AdSpace type="medium" />
         </div>
       </div>
     </div>
