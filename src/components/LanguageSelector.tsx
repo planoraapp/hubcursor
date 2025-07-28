@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 
@@ -6,7 +7,7 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) => {
-  const { language, setLanguage } = useLanguage();
+  const { currentLanguage, changeLanguage } = useLanguage();
 
   const languages = [
     { code: 'pt', name: 'Português', flag: '/assets/flagbrazil.png' },
@@ -19,8 +20,8 @@ export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) =
       <div className="p-2 flex justify-center">
         <div className="w-12 h-12 rounded-lg bg-white/80 hover:bg-white hover:shadow-sm transition-all duration-200 flex items-center justify-center">
           <img 
-            src={languages.find(lang => lang.code === language)?.flag} 
-            alt={language} 
+            src={languages.find(lang => lang.code === currentLanguage)?.flag} 
+            alt={currentLanguage} 
             className="w-6 h-6"
           />
         </div>
@@ -35,9 +36,9 @@ export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) =
         {languages.map((lang) => (
           <button
             key={lang.code}
-            onClick={() => setLanguage(lang.code)}
+            onClick={() => changeLanguage(lang.code)}
             className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-              language === lang.code 
+              currentLanguage === lang.code 
                 ? 'bg-sky-400 text-white shadow-md' 
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
