@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useLanguage } from '../hooks/useLanguage';
+import { useLanguage, Language } from '../hooks/useLanguage';
 
 interface LanguageSelectorProps {
   collapsed?: boolean;
@@ -36,7 +36,7 @@ export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) =
         {languages.map((lang) => (
           <button
             key={lang.code}
-            onClick={() => changeLanguage(lang.code)}
+            onClick={() => changeLanguage(lang.code as Language)}
             className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
               currentLanguage === lang.code 
                 ? 'bg-sky-400 text-white shadow-md' 
