@@ -1,0 +1,102 @@
+<div id="editor" class="content-section active">
+    <div class="habbo-panel p-6 mb-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Editor de Visuais Habbo</h2>
+        <p class="text-lg text-gray-600">Crie e experimente diferentes looks para o seu Habbo!</p>
+    </div>
+
+    <!-- Alerta sobre o perfil público -->
+    <div class="alerta bg-yellow-400 text-black text-center p-4 font-bold text-base shadow-md mb-8 flex items-center justify-center rounded">
+        <img alt="Alerta de perfil público" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhWrb7Gas1E-jwzvprJVG1JIguUMz0ZuSbk7VqzQ5kSqG8U4wSED7GRC-pKXduN9mg9-CjLcC7kHVA4eo0s6z1HG1BpAXZuzExGHUL0M2-Dr8kA4McEGg6S7FnKupjQa0zEU4FreAOoDyjp/s0/2190__-5kz.png" style="vertical-align: middle; margin-right: 10px;" class="w-8 h-8">
+        <span>O perfil do jogador precisa estar público para o uso da ferramenta. Caso algum bug com a figura se apresente, utilize os frames para ajustar ou rotacione seu avatar.<br></span>
+    </div>
+
+    <div class="gerador habbo-panel p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Coluna da Esquerda: Imagem do Habbo e Hotel Selector -->
+        <div class="habbo-imager flex flex-col items-center">
+            <div class="habbo-input-group">
+                <div class="habbo-editor-info-label">Hotel:</div>
+                <select id="hotel" name="hotel" class="habbo-input habbo-input-with-label">
+                    <!-- Opções de hotel -->
+                </select>
+            </div>
+            
+            <a href="#" id="img_link" target="_blank" class="block w-full">
+                <div class="habbo-avatar-display-box">
+                    <img alt="Prévia do Habbo" id="img" src="http://www.habbo.com.br/habbo-imaging/avatarimage?&amp;user=ViaJovem&amp;action=&amp;direction=2&amp;head_direction=3&amp;img_format=png&amp;gesture=std&amp;frame=0&amp;headonly=0&amp;size=m" style="image-rendering: pixelated;">
+                </div>
+            </a>
+
+            <div class="habbo-input-group">
+                <div class="habbo-editor-info-label">Usuário:</div>
+                <input id="usuario" placeholder="ViaJovem" name="user" type="text" class="habbo-input habbo-input-with-label">
+            </div>
+            
+            <button id="apply-visual-btn" class="habbo-green-button w-full mt-4">Atualizar Avatar</button>
+            <button id="copy-figure-string-btn" class="habbo-red-button w-full mt-2">Copiar URL da Imagem</button>
+            <input type="text" id="url_img" class="habbo-input w-full mt-2 text-center text-sm" readonly value="https://www.habbo.com.br/habbo-imaging/avatarimage?&amp;user=ViaJovem&amp;action=std&amp;direction=2&amp;head_direction=2&amp;img_format=png&amp;gesture=std&amp;frame=0&amp;headonly=0&amp;size=m">
+        </div>
+
+        <!-- Coluna da Direita: Controles de Personalização -->
+        <div class="personalizacao flex flex-col space-y-4">
+            <!-- Gestos, Ações, Sinais, Objeto, Tamanho, Formato, Apenas Cabeça, Frame, Animar Personagem -->
+            <!-- Cada um com seu respectivo habbo-input-group e select/input -->
+            <!-- ... (conteúdo detalhado desses selects/inputs) ... -->
+        </div>
+    </div>
+
+    <!-- Seções de Seleção de Roupas e Cores -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="main-navigation">
+                <!-- Menu de navegação principal de categorias (cabeça, cabelo, etc.) -->
+                <ul>
+                    <!-- ... (itens do menu principal) ... -->
+                </ul>
+            </div>
+            <div class="sub-navigation">
+                <!-- Menu de sub-navegação por categoria (gênero, estilos de cabelo, etc.) -->
+                <ul id="gender" class="display">
+                    <!-- ... (opções de gênero) ... -->
+                </ul>
+                <ul id="hair" class="hidden">
+                    <!-- ... (opções de cabelo) ... -->
+                </ul>
+                <!-- ... (outras categorias: tops, bottoms, more) ... -->
+            </div>
+            <div class="card" style="max-height: 325px; max-width: 525px; overflow: auto;">
+                <div class="card-body">
+                    <div id="clothes">
+                        <input type="text" id="search-input" placeholder="Buscar roupa..." style="margin-bottom: 10px; width: 100%; padding: 5px;">
+                        <!-- Divs para as roupas HC, Sellable, Raro, NFT, Non-HC -->
+                        <div id="hc"></div>
+                        <div id="sell"></div>
+                        <div id="ltd"></div>
+                        <div id="raro"></div>
+                        <div id="nft"></div>
+                        <div id="nonhc"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 col-lg-6 hidden" id="duoTone">
+            <!-- Cores DuoTone (oculto por padrão) -->
+            <div class="card">
+                <div class="pincel-body">
+                    <div id="second-tone">
+                        <!-- Opções de cores DuoTone -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 col-lg-6" id="singleTone">
+            <!-- Cores SingleTone (visível por padrão) -->
+            <div class="pincel">
+                <div class="pincel-body">
+                    <div id="colors">
+                        <!-- Opções de cores SingleTone -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
