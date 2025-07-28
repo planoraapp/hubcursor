@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Calculator, TrendingUp, Coins, AlertCircle } from 'lucide-react';
 import { PanelCard } from './PanelCard';
 import { getMarketplaceStatsRoomItem, getMarketplaceStatsWallItem, type MarketplaceStats } from '../services/habboApi';
+
 export const Tools = () => {
   const [mobiName, setMobiName] = useState('');
   const [loading, setLoading] = useState(false);
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceStats | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const handleCalculateValue = async () => {
     if (!mobiName.trim()) return;
     setLoading(true);
@@ -35,9 +37,11 @@ export const Tools = () => {
       setLoading(false);
     }
   };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR').format(price);
   };
+
   return <div className="space-y-8">
       <PanelCard title="Ferramentas Habbo">
         <p className="text-lg text-gray-600">
@@ -104,7 +108,13 @@ export const Tools = () => {
       </PanelCard>
 
       <PanelCard title="Rastreador de Tendências">
-        
+        <div className="flex items-center space-x-2 text-gray-600">
+          <TrendingUp size={20} />
+          <p>Monitore as tendências do mercado de mobis em tempo real.</p>
+        </div>
+        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          <span className="text-xs text-gray-500">Em desenvolvimento</span>
+        </div>
       </PanelCard>
 
       <PanelCard title="Outras Ferramentas">
