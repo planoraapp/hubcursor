@@ -1,19 +1,18 @@
-// src/data/kihabboFigures.ts
+// src/data/habboFigures.ts
 
-export interface KihabboFigurePart {
+export interface HabboFigurePart {
   id: number;
   type: string; // Ex: 'hd', 'hr', 'ch', 'lg', etc.
   name: string;
-  category: 'hc' | 'sellable' | 'ltd' | 'rare' | 'nft' | 'non-hc' | 'normal';
-  colorSlots: number; // Quantos slots de cor a peça suporta (0, 1, 2 ou 3).
+  category: 'hc' | 'normal' | 'sellable' | 'nft' | 'ltd' | 'rare';
   gender: 'M' | 'F' | 'U';
-  catalogName?: string; // Nome de catálogo para usar com a habboapi.net/furni/[NAME]/icon
+  colorSlots: number;
+  catalogName?: string;
 }
 
 // ===========================================================================
 // MAPA DE CORES HEXADECIMAIS PARA OS IDs NUMÉRICOS DE CORES DO HABBO
-// Este mapa é o mais completo e CRÍTICO para o sucesso.
-// Baseado em dados de figuredata.json da comunidade e inspeção de URLs.
+// Este mapa é fundamental para que as cores funcionem corretamente no Habbo Imaging.
 // ===========================================================================
 export const HABBO_COLOR_MAP: { [hex: string]: string } = {
   // Cores de pele e tons neutros (IDs comuns Habbo)
@@ -21,15 +20,16 @@ export const HABBO_COLOR_MAP: { [hex: string]: string } = {
   '9C543F': '9', '904925': '10', '4C311E': '11',
 
   // Cores comuns e cinzas
-  '000000': '61', // Preto (usado no seu look: hd-3704-61- , hr-678-61-61-)
+  '000000': '61', // Preto
   'FFFFFF': '1314', // Branco
   'CCCCCC': '1315', // Cinza claro
   '333333': '1316', // Cinza escuro
-  '282828': '62', // Cinza muito escuro (usado no seu look: hr-5773-61-63)
-  '828282': '63', // Cinza médio (usado no seu look: hr-5773-61-63)
+  '282828': '62', // Cinza muito escuro
+  '828282': '63', // Cinza médio
   '222222': '64', // Outro tom de cinza
+  '999999': '65', // Mais um cinza
 
-  // Cores diversas HC/normais (IDs comuns em Habbo figures)
+  // Cores HC e outras diversas (IDs comuns em Habbo figures)
   'E3AE7D': '100', 'C99263': '101', 'AE7748': '102', '945C2F': '103',
   'FFC680': '104', 'DC9B4C': '105', 'FFB696': '106', 'F0DCA3': '107',
   'DFC375': '108', 'C89F56': '109', 'A89473': '110',
@@ -48,51 +48,53 @@ export const HABBO_COLOR_MAP: { [hex: string]: string } = {
   'AA7870': '1406', 'BE8263': '1407', 'B6856D': '1408',
   'BA8A82': '1409', 'C88F82': '1410', 'D9A792': '1411', 'C68383': '1412', 'A76644': '1413', '7C5133': '1414',
   '9A7257': '1415', 'C57040': '1416', 'D98C63': '1417', 'DE9D75': '1418', 'ECA782': '1419', 'F6D3D4': '1420',
-  'E5B6B0': '1421', // Este '1422' aparece no look da faixa de cabelo
+  'E5B6B0': '1421',
 };
 
 export const getHabboColorId = (hexColor: string): string => {
   return HABBO_COLOR_MAP[hexColor.toUpperCase()] || '61'; // Fallback para '61' (preto)
 };
 
-export const KIHABBO_FIGURE_PARTS: KihabboFigurePart[] = [
-  // --- ITENS VALIDADOS DO HABBO DEFENSE E KIHABBO COM CATALOGNAMES ---
-
+export const HABBO_FIGURE_PARTS: HabboFigurePart[] = [
   // Cabeças (hd)
-  { id: 180, type: 'hd', name: 'Rosto Padrão Masculino', category: 'non-hc', gender: 'M', colorSlots: 1, catalogName: 'clothing_face_basic' },
-  { id: 600, type: 'hd', name: 'Rosto Padrão Feminino', category: 'non-hc', gender: 'F', colorSlots: 1, catalogName: 'clothing_face_femalebasic' },
+  { id: 180, type: 'hd', name: 'Rosto Padrão Masculino', category: 'normal', gender: 'M', colorSlots: 1, catalogName: 'clothing_face_basic' },
+  { id: 600, type: 'hd', name: 'Rosto Padrão Feminino', category: 'normal', gender: 'F', colorSlots: 1, catalogName: 'clothing_face_femalebasic' },
   { id: 3537, type: 'hd', name: 'Olho do Ciclope', category: 'sellable', gender: 'U', colorSlots: 1, catalogName: 'clothing_cyclops' },
   { id: 3704, type: 'hd', name: 'Máscara Robótica', category: 'sellable', gender: 'U', colorSlots: 1, catalogName: 'clothing_robotmask' },
-  { id: 5840, type: 'hd', name: 'Rosto Expressivo', category: 'nft', gender: 'U', colorSlots: 3, catalogName: 'clothing_nftface_scare' },
+  { id: 5840, type: 'hd', name: 'Rosto Expressivo NFT', category: 'nft', gender: 'U', colorSlots: 3, catalogName: 'clothing_nftface_scare' },
   { id: 3101, type: 'hd', name: 'Rosto HC Clássico', category: 'hc', gender: 'M', colorSlots: 1, catalogName: 'clothing_face_h_classic' },
-  { id: 209, type: 'hd', name: 'Rosto Expressivo M', category: 'non-hc', gender: 'M', colorSlots: 1, catalogName: 'clothing_face_expressivem' },
+  { id: 209, type: 'hd', name: 'Rosto Expressivo M', category: 'normal', gender: 'M', colorSlots: 1, catalogName: 'clothing_face_basic8' },
 
   // Cabelos (hr)
   { id: 678, type: 'hr', name: 'Cabelo Ondulado Curto', category: 'hc', gender: 'U', colorSlots: 2, catalogName: 'clothing_messycurls' },
-  { id: 5773, type: 'hr', name: 'Cabelo com Franja F', category: 'non-hc', gender: 'F', colorSlots: 2, catalogName: 'clothing_braidfringe' },
-  { id: 828, type: 'hr', name: 'Cabelo Moderno', category: 'non-hc', gender: 'U', colorSlots: 1, catalogName: 'clothing_modernhair' },
-  { id: 700, type: 'hr', name: 'Cabelo Longo Feminino', category: 'non-hc', gender: 'F', colorSlots: 2, catalogName: 'clothing_longf' },
+  { id: 5773, type: 'hr', name: 'Cabelo com Franja F', category: 'normal', gender: 'F', colorSlots: 2, catalogName: 'clothing_braidfringe' },
+  { id: 828, type: 'hr', name: 'Cabelo Moderno', category: 'normal', gender: 'U', colorSlots: 1, catalogName: 'clothing_modernhair' },
+  { id: 700, type: 'hr', name: 'Cabelo Longo Feminino', category: 'normal', gender: 'F', colorSlots: 2, catalogName: 'clothing_longf' },
 
   // Tops (ch)
   { id: 6147, type: 'ch', name: 'Camiseta Básica', category: 'sellable', gender: 'U', colorSlots: 1, catalogName: 'clothing_basictshirt' },
-  { id: 800, type: 'ch', name: 'Blusa Básica Feminina', category: 'non-hc', gender: 'F', colorSlots: 1, catalogName: 'clothing_basicblousef' },
+  { id: 800, type: 'ch', name: 'Blusa Básica Feminina', category: 'normal', gender: 'F', colorSlots: 1, catalogName: 'clothing_basicblousef' },
   { id: 3006, type: 'ch', name: 'Camisa Polo', category: 'sellable', gender: 'U', colorSlots: 2, catalogName: 'clothing_polo' },
 
   // Calças (lg)
-  { id: 900, type: 'lg', name: 'Saia Básica', category: 'non-hc', gender: 'F', colorSlots: 1, catalogName: 'clothing_basiclongskirt' },
-  { id: 275, type: 'lg', name: 'Calça Jeans', category: 'non-hc', gender: 'U', colorSlots: 1, catalogName: 'clothing_jeans' },
+  { id: 900, type: 'lg', name: 'Saia Básica', category: 'normal', gender: 'F', colorSlots: 1, catalogName: 'clothing_basiclongskirt' },
+  { id: 275, type: 'lg', name: 'Calça Jeans', category: 'normal', gender: 'U', colorSlots: 1, catalogName: 'clothing_jeans' },
 
   // Sapatos (sh)
-  { id: 100, type: 'sh', name: 'Sapato Feminino', category: 'non-hc', gender: 'F', colorSlots: 1, catalogName: 'clothing_femaleshoes' },
-  { id: 3059, type: 'sh', name: 'Tênis Básico', category: 'non-hc', gender: 'U', colorSlots: 1, catalogName: 'clothing_sneakers' },
+  { id: 100, type: 'sh', name: 'Sapato Feminino', category: 'normal', gender: 'F', colorSlots: 1, catalogName: 'clothing_femaleshoes' },
+  { id: 3059, type: 'sh', name: 'Tênis Básico', category: 'normal', gender: 'U', colorSlots: 1, catalogName: 'clothing_sneakers' },
 
   // Acessórios de cabeça (ha)
   { id: 6198, type: 'ha', name: 'Faixa de Cabelo', category: 'sellable', gender: 'U', colorSlots: 2, catalogName: 'clothing_headband' },
   { id: 1002, type: 'ha', name: 'Óculos de Sol', category: 'sellable', gender: 'U', colorSlots: 1, catalogName: 'clothing_sunglasses' },
+  { id: 1008, type: 'ha', name: 'Boné Básico', category: 'normal', gender: 'U', colorSlots: 1, catalogName: 'clothing_baseballcap' },
 
-  // Outros itens gerais
-  { id: 4043, type: 'fa', name: 'Máscara de Gás', category: 'non-hc', gender: 'U', colorSlots: 1, catalogName: 'clothing_gasmask' },
-  { id: 1, type: 'cp', name: 'Estampa Coração', category: 'non-hc', gender: 'U', colorSlots: 1, catalogName: 'clothing_heartpattern' },
+  // Acessórios de rosto (fa)
+  { id: 4043, type: 'fa', name: 'Máscara de Gás', category: 'normal', gender: 'U', colorSlots: 1, catalogName: 'clothing_gasmask' },
+  { id: 4168, type: 'fa', name: 'Pintura Facial', category: 'normal', gender: 'U', colorSlots: 2, catalogName: 'clothing_facepaint' },
+
+  // Outros
+  { id: 1, type: 'cp', name: 'Estampa Coração', category: 'normal', gender: 'U', colorSlots: 1, catalogName: 'clothing_heartpattern' },
   { id: 301, type: 'ca', name: 'Capa Simples', category: 'sellable', gender: 'U', colorSlots: 1, catalogName: 'clothing_basiccape' },
 ];
 
