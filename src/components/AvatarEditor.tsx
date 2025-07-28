@@ -45,9 +45,9 @@ export const AvatarEditor = () => {
   const [selectedHotel, setSelectedHotel] = useState('habbo.com.br');
   const [username, setUsername] = useState('HabboHotel');
 
-  // Looks padrão para masculino e feminino
-  const defaultMaleLook = 'hd-180-7.hr-828-45.ch-3006-82-62.lg-275-82.sh-3059-82.ha-1002-82';
-  const defaultFemaleLook = 'hd-600-1.hr-700-42.ch-800-90.lg-900-10.sh-100-20.ha-101-30';
+  // Looks padrão para masculino e feminino com múltiplas cores por peça
+  const defaultMaleLook = 'hd-180-7.hr-828-45-7.ch-3006-82-62.lg-275-82-7.sh-3059-82-7.ha-1002-82';
+  const defaultFemaleLook = 'hd-600-1.hr-700-42-7.ch-800-90.lg-900-10.sh-100-20.ha-101-30';
 
   const [gender, setGender] = useState<'M' | 'F'>('F'); // Inicia com Feminino
   const [look, setLook] = useState(defaultFemaleLook); // Look inicial é o feminino

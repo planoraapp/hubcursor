@@ -6,42 +6,50 @@ export interface ClothingPart {
   name: string;
   category: 'hc' | 'vendavel' | 'ltd' | 'raro' | 'nft' | 'nao-hc';
   gender: 'M' | 'F' | 'U';
+  colorSlots?: number; // Number of color slots the item has (0, 1, 2, 3)
 }
 
 export const clothingParts: ClothingPart[] = [
   // --- Corpo / Rostos (type: 'hd') ---
-  { id: 600, type: 'hd', name: 'Rosto Feminino Padrão', category: 'nao-hc', gender: 'F' },
-  { id: 180, type: 'hd', name: 'Rosto Masculino Padrão', category: 'nao-hc', gender: 'M' },
-  { id: 3600, type: 'hd', name: 'Olhos Mil e Uma Noites', category: 'vendavel', gender: 'U' },
-  { id: 3704, type: 'hd', name: 'Máscara Robótica', category: 'vendavel', gender: 'U' },
-  { id: 5041, type: 'hd', name: 'Rosto de Boneca', category: 'nft', gender: 'F' },
+  { id: 600, type: 'hd', name: 'Rosto Feminino Padrão', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 180, type: 'hd', name: 'Rosto Masculino Padrão', category: 'nao-hc', gender: 'M', colorSlots: 1 },
+  { id: 3600, type: 'hd', name: 'Olhos Mil e Uma Noites', category: 'vendavel', gender: 'U', colorSlots: 2 },
+  { id: 3704, type: 'hd', name: 'Máscara Robótica', category: 'vendavel', gender: 'U', colorSlots: 1 },
+  { id: 5041, type: 'hd', name: 'Rosto de Boneca', category: 'nft', gender: 'F', colorSlots: 1 },
+  { id: 5840, type: 'hd', name: 'Rosto Sardento', category: 'nft', gender: 'U', colorSlots: 2 },
 
   // --- Cabelos / Penteados (type: 'hr') ---
-  { id: 700, type: 'hr', name: 'Cabelo Longo Feminino', category: 'nao-hc', gender: 'F' },
-  { id: 828, type: 'hr', name: 'Cabelo Moderno', category: 'nao-hc', gender: 'U' },
-  { id: 115, type: 'hr', name: 'Cabelo Curto HC', category: 'hc', gender: 'M' },
+  { id: 700, type: 'hr', name: 'Cabelo Longo Feminino', category: 'nao-hc', gender: 'F', colorSlots: 2 },
+  { id: 828, type: 'hr', name: 'Cabelo Moderno', category: 'nao-hc', gender: 'U', colorSlots: 2 },
+  { id: 115, type: 'hr', name: 'Cabelo Curto HC', category: 'hc', gender: 'M', colorSlots: 2 },
+  { id: 678, type: 'hr', name: 'Cabelo Estiloso', category: 'hc', gender: 'U', colorSlots: 2 },
+  { id: 5773, type: 'hr', name: 'Cabelo Moderno F', category: 'nao-hc', gender: 'F', colorSlots: 2 },
 
   // --- Camisetas / Tops (type: 'ch') ---
-  { id: 800, type: 'ch', name: 'Blusa Básica Feminina', category: 'nao-hc', gender: 'F' },
-  { id: 3006, type: 'ch', name: 'Camisa Polo', category: 'vendavel', gender: 'U' },
-  { id: 210, type: 'ch', name: 'Blusa de Frio', category: 'nao-hc', gender: 'F' },
+  { id: 800, type: 'ch', name: 'Blusa Básica Feminina', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 3006, type: 'ch', name: 'Camisa Polo', category: 'vendavel', gender: 'U', colorSlots: 2 },
+  { id: 210, type: 'ch', name: 'Blusa de Frio', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 6147, type: 'ch', name: 'Top Habbonews', category: 'vendavel', gender: 'U', colorSlots: 1 },
 
   // --- Calças / Saias (type: 'lg') ---
-  { id: 900, type: 'lg', name: 'Saia Básica', category: 'nao-hc', gender: 'F' },
-  { id: 275, type: 'lg', name: 'Calça Jeans', category: 'nao-hc', gender: 'U' },
+  { id: 900, type: 'lg', name: 'Saia Básica', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 275, type: 'lg', name: 'Calça Jeans', category: 'nao-hc', gender: 'U', colorSlots: 2 },
+  { id: 3088, type: 'lg', name: 'Calça Habbonews', category: 'vendavel', gender: 'U', colorSlots: 2 },
 
   // --- Sapatos (type: 'sh') ---
-  { id: 100, type: 'sh', name: 'Sapato Feminino', category: 'nao-hc', gender: 'F' },
-  { id: 3059, type: 'sh', name: 'Tênis Básico', category: 'nao-hc', gender: 'U' },
+  { id: 100, type: 'sh', name: 'Sapato Feminino', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 3059, type: 'sh', name: 'Tênis Básico', category: 'nao-hc', gender: 'U', colorSlots: 2 },
+  { id: 906, type: 'sh', name: 'Sapato Habbonews', category: 'vendavel', gender: 'U', colorSlots: 1 },
 
   // --- Acessórios (exemplos para testar diferentes tipos de peças) ---
-  { id: 101, type: 'ha', name: 'Tiara de Flores', category: 'nao-hc', gender: 'F' }, // head accessory
-  { id: 201, type: 'fa', name: 'Maquiagem Leve', category: 'nao-hc', gender: 'F' }, // face accessory
-  { id: 301, type: 'ca', name: 'Capa Simples', category: 'vendavel', gender: 'U' }, // cape
-  { id: 401, type: 'wa', name: 'Cinto Elegante', category: 'hc', gender: 'F' }, // waist
-  { id: 501, type: 'cc', name: 'Vestido Longo Floral', category: 'vendavel', gender: 'F' }, // chest combined
-  { id: 601, type: 'cp', name: 'Estampa de Estrelas', category: 'nao-hc', gender: 'U' }, // chest pattern
-  { id: 701, type: 'ct', name: 'Cropped Top', category: 'nao-hc', gender: 'F' }, // chest top
+  { id: 101, type: 'ha', name: 'Tiara de Flores', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 6198, type: 'ha', name: 'Acessório Habbonews', category: 'vendavel', gender: 'U', colorSlots: 2 },
+  { id: 201, type: 'fa', name: 'Maquiagem Leve', category: 'nao-hc', gender: 'F', colorSlots: 1 },
+  { id: 301, type: 'ca', name: 'Capa Simples', category: 'vendavel', gender: 'U', colorSlots: 1 },
+  { id: 401, type: 'wa', name: 'Cinto Elegante', category: 'hc', gender: 'F', colorSlots: 1 },
+  { id: 501, type: 'cc', name: 'Vestido Longo Floral', category: 'vendavel', gender: 'F', colorSlots: 2 },
+  { id: 601, type: 'cp', name: 'Estampa de Estrelas', category: 'nao-hc', gender: 'U', colorSlots: 1 },
+  { id: 701, type: 'ct', name: 'Cropped Top', category: 'nao-hc', gender: 'F', colorSlots: 1 },
 ];
 
 // Paletas de cores (em HEX, como no Habbo Imaging)

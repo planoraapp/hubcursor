@@ -13,7 +13,7 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
   const [activeMainCategory, setActiveMainCategory] = useState<string>('hd');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>(currentGender);
-  const [selectedPartForColor, setSelectedPartForColor] = useState<{ type: string; id: number; color?: string } | null>(null);
+  const [selectedPartForColor, setSelectedPartForColor] = useState<{ type: string; id: number; colors: string[] } | null>(null);
 
   // Efeito para sincronizar o gênero com o componente pai
   useEffect(() => {
@@ -21,12 +21,10 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
   }, [currentGender]);
 
   // Função para gerar a URL da miniatura de uma peça de roupa
-  const getPreviewUrl = (itemType: string, itemId: number, gender: 'M' | 'F', color: string = '7') => {
-    // A URL do Habbo Imaging para partes de roupa é:
-    // https://www.habbo.com/habbo-imaging/avatarimage?figure=TYPE-ID-COLOR--&gender=GENDER&size=s&headonly=0
-    // O '--' é para a segunda cor de duotones, que aqui simplificamos para 7 (preto) se não especificado.
-    // 'size=s' para miniaturas pequenas, 'headonly=0' para mostrar o corpo se a peça for de corpo.
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${itemType}-${itemId}-${color}--&gender=${gender}&size=s&headonly=0`;
+  const getPreviewUrl = (itemType: string, itemId: number, gender: 'M' | 'F', colors: string[] = ['7', '7', '7']) => {
+    // Garante que haja pelo menos 3 cores para o figure, usando '7' como padrão se ausente
+    const figColors = colors.slice(0, 3).concat(['7', '7', '7']).slice(0, 3); // Preenche até 3 cores
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${itemType}-${itemId}-${figColors[0]}-${figColors[1] || ''}-${figColors[2] || ''}&gender=${gender}&size=s&headonly=0`;
   };
 
   // Lida com a mudança da categoria principal (botões superiores)
@@ -50,55 +48,81 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
     let newLookParts = [...currentLookParts];
     let itemFoundAndReplaced = false;
 
-    let defaultOrCurrentColor = '7';
+    // Tenta encontrar as cores atuais da peça no look
+    let currentColors: string[] = [];
+    for (const part of currentLookParts) {
+      if (part.startsWith(itemType + '-')) {
+        const colorsFromPart = part.split('-').slice(2); // Pega as cores da string (ex: '61', '61')
+        currentColors = colorsFromPart.filter(Boolean); // Remove strings vazias
+        break;
+      }
+    }
+
+    // Se o item tem colorSlots, usa a quantidade de cores necessária. Senão, tenta 1 ou 2 como padrão.
+    const numberOfColorsExpected = item.colorSlots !== undefined ? item.colorSlots : (item.type === 'hr' || item.type === 'ch' || item.type === 'lg' || item.type === 'sh' || item.type === 'ha' ? 2 : 1);
+    
+    // Constrói as cores padrão ou mantem as atuais se existirem
+    let defaultColorsForNewPart: string[] = [];
+    for (let i = 0; i < numberOfColorsExpected; i++) {
+        defaultColorsForNewPart.push(currentColors[i] || '7'); // Usa cor atual ou '7' (preto)
+    }
+
+    // A parte da string do look
+    const newItemString = `${item.type}-${item.id}-${defaultColorsForNewPart.join('-')}`;
 
     for (let i = 0; i < newLookParts.length; i++) {
       if (newLookParts[i].startsWith(itemType + '-')) {
-        const parts = newLookParts[i].split('-');
-        if (parts.length >= 3) {
-          defaultOrCurrentColor = parts[2];
-        }
-        newLookParts[i] = `${item.type}-${item.id}-${defaultOrCurrentColor}`;
+        newLookParts[i] = newItemString;
         itemFoundAndReplaced = true;
         break;
       }
     }
 
     if (!itemFoundAndReplaced) {
-      newLookParts.push(`${item.type}-${item.id}-${defaultOrCurrentColor}`);
+      newLookParts.push(newItemString);
     }
 
     const newLook = newLookParts.join('.');
     onLookChange(newLook);
-    setSelectedPartForColor({ type: item.type, id: item.id, color: defaultOrCurrentColor });
+    // Atualiza a peça selecionada para cor com as cores que foram realmente aplicadas
+    setSelectedPartForColor({ type: item.type, id: item.id, colors: defaultColorsForNewPart });
   };
 
   // Lida com o clique em uma cor na paleta de cores
-  const handleColorClick = (colorHex: string) => {
+  const handleColorClick = (colorHex: string, colorIndex: number = 0) => {
     if (selectedPartForColor) {
       const currentLookParts = currentLook.split('.').filter(part => part !== '');
       let newLookParts = [...currentLookParts];
       let partUpdated = false;
 
+      const { type, id, colors } = selectedPartForColor;
+      const updatedColors = [...colors];
+      
+      // Atualiza a cor no índice especificado
+      updatedColors[colorIndex] = colorHex;
+
+      // Garante que o array de cores tem o tamanho esperado, preenchendo com '7' se necessário
+      const partDefinition = clothingParts.find(p => p.type === type && p.id === id);
+      const expectedColorSlots = partDefinition?.colorSlots !== undefined ? partDefinition.colorSlots : (type === 'hr' || type === 'ch' || type === 'lg' || type === 'sh' || type === 'ha' ? 2 : 1);
+      
+      while (updatedColors.length < expectedColorSlots) {
+          updatedColors.push('7'); // Preenche com cor padrão se faltar slots
+      }
+
+      const newPartString = `${type}-${id}-${updatedColors.slice(0, expectedColorSlots).join('-')}`;
+
       for (let i = 0; i < newLookParts.length; i++) {
         const part = newLookParts[i];
-        // Verifica se é a peça atualmente selecionada para cor
-        // A string do look é TIPO-ID-COR1-COR2. Precisamos atualizar a COR1 (terceiro componente).
-        if (part.startsWith(`${selectedPartForColor.type}-${selectedPartForColor.id}-`)) {
-          const partsArray = part.split('-');
-          // Certifica-se de que há pelo menos 3 componentes (tipo, id, cor1)
-          if (partsArray.length >= 3) {
-            partsArray[2] = colorHex; // Atualiza a primeira cor
-            newLookParts[i] = partsArray.join('-');
-            partUpdated = true;
-            break;
-          }
+        if (part.startsWith(`${type}-${id}-`)) {
+          newLookParts[i] = newPartString;
+          partUpdated = true;
+          break;
         }
       }
 
       if (partUpdated) {
         onLookChange(newLookParts.join('.'));
-        setSelectedPartForColor(prev => prev ? { ...prev, color: colorHex } : null); // Atualiza a cor na peça selecionada
+        setSelectedPartForColor(prev => prev ? { ...prev, colors: updatedColors } : null);
       }
     } else {
       alert('Selecione uma peça de roupa no menu para alterar sua cor.');
@@ -222,31 +246,62 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
         <h5 className="font-bold text-lg mb-2">Cores da Peça Selecionada:</h5>
         {selectedPartForColor ? (
           <div>
-            <p className="text-sm mb-2 text-gray-700">Editando: **{clothingParts.find(p => p.type === selectedPartForColor.type && p.id === selectedPartForColor.id)?.name || 'Peça Desconhecida'}**</p>
-            <div className="w-full text-sm font-medium mb-2">Cores Comuns:</div>
-            <div id="nonhc" className="flex flex-wrap gap-1 mb-4">
+            <p className="text-sm mb-2 text-gray-700">
+              Editando: **{clothingParts.find(p => p.type === selectedPartForColor.type && p.id === selectedPartForColor.id)?.name || 'Peça Desconhecida'}**
+            </p>
+            {/* Paleta de Cores Primária */}
+            <div className="w-full text-sm font-medium mb-2">Cor Principal:</div>
+            <div id="nonhc-primary" className="flex flex-wrap gap-1 mb-4">
               {colorPalettes.nonHc.map(color => (
                 <button
-                  key={`nonhc-${color}`}
+                  key={`nonhc-p-${color}`}
                   className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
                   style={{ backgroundColor: `#${color}` }}
-                  onClick={() => handleColorClick(color)}
+                  onClick={() => handleColorClick(color, 0)} // Mudar cor 1
                   title={`#${color}`}
                 ></button>
               ))}
             </div>
-            <div className="w-full text-sm font-medium mb-2">Cores HC:</div>
-            <div id="hc" className="flex flex-wrap gap-1">
+            <div id="hc-primary" className="flex flex-wrap gap-1 mb-4">
               {colorPalettes.hc.map(color => (
                 <button
-                  key={`hc-${color}`}
+                  key={`hc-p-${color}`}
                   className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
                   style={{ backgroundColor: `#${color}` }}
-                  onClick={() => handleColorClick(color)}
+                  onClick={() => handleColorClick(color, 0)} // Mudar cor 1
                   title={`#${color}`}
                 ></button>
               ))}
             </div>
+
+            {/* Paleta de Cores Secundária (se a peça tiver mais de 1 slot de cor) */}
+            {selectedPartForColor.colors.length > 1 && (
+                <>
+                    <div className="w-full text-sm font-medium mb-2">Cor Secundária:</div>
+                    <div id="nonhc-secondary" className="flex flex-wrap gap-1 mb-4">
+                    {colorPalettes.nonHc.map(color => (
+                        <button
+                        key={`nonhc-s-${color}`}
+                        className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
+                        style={{ backgroundColor: `#${color}` }}
+                        onClick={() => handleColorClick(color, 1)} // Mudar cor 2
+                        title={`#${color}`}
+                        ></button>
+                    ))}
+                    </div>
+                    <div id="hc-secondary" className="flex flex-wrap gap-1">
+                    {colorPalettes.hc.map(color => (
+                        <button
+                        key={`hc-s-${color}`}
+                        className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
+                        style={{ backgroundColor: `#${color}` }}
+                        onClick={() => handleColorClick(color, 1)} // Mudar cor 2
+                        title={`#${color}`}
+                        ></button>
+                    ))}
+                    </div>
+                </>
+            )}
           </div>
         ) : (
           <p className="text-gray-500 text-sm">Selecione uma peça de roupa no menu acima para alterar sua cor.</p>
