@@ -19,23 +19,22 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
     setSelectedGender(currentGender);
   }, [currentGender]);
 
-  // Função para gerar a URL da miniatura de uma peça de roupa usando habboapi.net
+  // Função para gerar a URL da miniatura de uma peça de roupa
+  // Prioriza habboapi.net se catalogName existir, senão usa Habbo Imaging
   const getPreviewUrl = (item: ClothingPart) => {
-    // Se o item tiver um catalogName, usamos a habboapi.net.
-    // Caso contrário, voltamos a usar o Habbo Imaging com um fallback de cor.
     if (item.catalogName) {
       return `https://api.habboapi.net/furni/${item.catalogName}/icon`;
     }
-    // Fallback para Habbo Imaging se não houver catalogName
-    const previewColor = getHabboColorId('000000'); // Padrão preto
+    // Fallback para Habbo Imaging (melhorado com IDs numéricos e traços extras)
+    const previewColor = getHabboColorId('000000'); // ID para preto
     let colorsPart = '';
-    if (item.colorSlots && item.colorSlots >= 1) colorsPart = `${previewColor}`;
-    if (item.colorSlots && item.colorSlots >= 2) colorsPart += `-${previewColor}`;
-    if (item.colorSlots && item.colorSlots >= 3) colorsPart += `-${previewColor}`;
+    if (item.colorSlots >= 1) colorsPart = `${previewColor}`;
+    if (item.colorSlots >= 2) colorsPart += `-${previewColor}`;
+    if (item.colorSlots >= 3) colorsPart += `-${previewColor}`;
     
-    const finalColorsString = colorsPart ? `${colorsPart}-` : ''; // Adiciona traço se houver cores
+    const finalColorsString = colorsPart ? `${colorsPart}-` : ''; // Adiciona traço final
 
-    return `https://sandbox.habbo.com/habbo-imaging/avatarimage?figure=${item.type}-${item.id}-${finalColorsString}&gender=${currentGender}&size=s&headonly=0`;
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.type}-${item.id}-${finalColorsString}&gender=${currentGender}&size=s&headonly=0`;
   };
 
 
@@ -75,10 +74,13 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
     let finalItemString = `${item.type}-${item.id}`;
     if (numberOfColorsExpected > 0) {
         finalItemString += `-${colorsString}`;
-        // Adiciona traços finais para garantir o formato da API do Habbo Imaging
-        if (numberOfColorsExpected === 1) finalItemString += '-'; // Para TYPE-ID-C1-
-        if (numberOfColorsExpected === 2) finalItemString += '-'; // Para TYPE-ID-C1-C2-
+        if (numberOfColorsExpected === 1) finalItemString += '-';
+        if (numberOfColorsExpected === 2) finalItemString += '-';
     }
+    
+    // Log para depuração
+    console.log(`Clicou em: ${item.name} (${item.type}-${item.id}). Cores aplicadas: ${colorsToApply.join(',')} (${numberOfColorsExpected} slots)`);
+    console.log('String final para look:', finalItemString);
 
     for (let i = 0; i < newLookParts.length; i++) {
       if (newLookParts[i].startsWith(itemType + '-')) {
