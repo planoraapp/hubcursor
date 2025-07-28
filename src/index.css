@@ -398,4 +398,239 @@
     color: #666;
     text-align: center;
   }
+
+  /* Visual Editor Styles */
+  .habbo-editor-info-label {
+    @apply text-sm font-bold mb-2;
+    color: hsl(var(--habbo-text));
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.8);
+  }
+
+  .habbo-input {
+    @apply w-full px-3 py-2 rounded border-2 font-medium;
+    border-color: hsl(var(--habbo-border));
+    border-right-color: hsl(var(--habbo-border-light));
+    border-bottom-color: hsl(var(--habbo-border-light));
+    background-color: white;
+    color: hsl(var(--habbo-text));
+    box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .habbo-input:focus {
+    outline: none;
+    border-color: hsl(var(--habbo-active));
+    box-shadow: 0 0 0 2px hsla(var(--habbo-active) / 0.2);
+  }
+
+  .habbo-input-group {
+    @apply mb-4;
+  }
+
+  .habbo-input-with-label {
+    @apply mt-1;
+  }
+
+  .habbo-avatar-display-box {
+    @apply p-6 mb-4 rounded-lg border-2 bg-white;
+    border-color: hsl(var(--habbo-border));
+    border-right-color: hsl(var(--habbo-border-light));
+    border-bottom-color: hsl(var(--habbo-border-light));
+    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 150px;
+    background-image: 
+      linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+      linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+      linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
+
+  .habbo-avatar-display-box img {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .habbo-green-button {
+    @apply habbo-button text-white bg-green-600 border-green-800 hover:bg-green-700;
+    background-color: hsl(var(--habbo-green));
+    border-color: hsl(120 100% 17%);
+    border-right-color: hsl(var(--habbo-green-light));
+    border-bottom-color: hsl(var(--habbo-green-light));
+    background-image: linear-gradient(to bottom, hsl(var(--habbo-green-light)), hsl(var(--habbo-green)));
+  }
+
+  .habbo-red-button {
+    @apply habbo-button text-white;
+    background-color: hsl(var(--habbo-red));
+    border-color: hsl(0 100% 33%);
+    border-right-color: hsl(var(--habbo-red-light));
+    border-bottom-color: hsl(var(--habbo-red-light));
+    background-image: linear-gradient(to bottom, hsl(var(--habbo-red-light)), hsl(var(--habbo-red)));
+  }
+
+  .alerta {
+    @apply rounded-lg border-2 font-bold;
+    background-color: #fbbf24;
+    border-color: #d97706;
+    border-right-color: #f59e0b;
+    border-bottom-color: #f59e0b;
+    box-shadow: 2px 2px 0px 0px #d97706;
+    color: #92400e;
+  }
+
+  /* Clothing Categories Navigation */
+  .main-navigation {
+    @apply flex flex-wrap gap-2 mb-6;
+  }
+
+  .main-nav-button {
+    @apply px-4 py-2 rounded-lg border-2 font-bold cursor-pointer transition-all duration-200;
+    border-color: hsl(var(--habbo-border));
+    border-right-color: hsl(var(--habbo-border-light));
+    border-bottom-color: hsl(var(--habbo-border-light));
+    background-color: white;
+    color: hsl(var(--habbo-text));
+    box-shadow: 1px 1px 0px 0px hsl(var(--habbo-shadow));
+  }
+
+  .main-nav-button:hover {
+    @apply translate-x-[1px] translate-y-[1px];
+    box-shadow: 0px 0px 0px 0px hsl(var(--habbo-shadow));
+  }
+
+  .main-nav-button.active {
+    background-color: hsl(var(--habbo-active));
+    color: white;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+  }
+
+  .sub-navigation {
+    @apply flex flex-wrap gap-2 mb-4;
+  }
+
+  .sub-nav-button {
+    @apply px-3 py-1 rounded border font-medium cursor-pointer transition-all duration-200;
+    border-color: hsl(var(--habbo-border));
+    background-color: hsl(var(--habbo-nav));
+    color: hsl(var(--habbo-text));
+  }
+
+  .sub-nav-button:hover {
+    background-color: hsl(var(--habbo-nav-hover));
+  }
+
+  .sub-nav-button.active {
+    background-color: hsl(var(--habbo-active));
+    color: white;
+  }
+
+  /* Clothing Items Grid */
+  .clothing-items-grid {
+    @apply grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 mb-6;
+  }
+
+  .clothing-item {
+    @apply aspect-square rounded border-2 cursor-pointer transition-all duration-200 bg-white;
+    border-color: hsl(var(--habbo-border-light));
+    box-shadow: 1px 1px 0px 0px hsl(var(--habbo-shadow));
+  }
+
+  .clothing-item:hover {
+    @apply transform scale-105;
+    border-color: hsl(var(--habbo-active));
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .clothing-item.selected {
+    border-color: hsl(var(--habbo-green));
+    background-color: hsl(var(--habbo-green) / 0.1);
+    box-shadow: 0 0 0 2px hsl(var(--habbo-green) / 0.5);
+  }
+
+  /* Color Palette */
+  .color-palette {
+    @apply grid grid-cols-8 gap-2 p-4 rounded-lg border-2 bg-white;
+    border-color: hsl(var(--habbo-border));
+    border-right-color: hsl(var(--habbo-border-light));
+    border-bottom-color: hsl(var(--habbo-border-light));
+    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
+  }
+
+  .color-item {
+    @apply w-8 h-8 rounded border-2 cursor-pointer transition-all duration-200;
+    border-color: hsl(var(--habbo-border));
+  }
+
+  .color-item:hover {
+    @apply transform scale-110;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .color-item.selected {
+    @apply transform scale-125;
+    border-color: hsl(var(--habbo-text));
+    border-width: 3px;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px hsl(var(--habbo-text));
+  }
+
+  /* Rarity Categories */
+  .rarity-section {
+    @apply mb-6;
+  }
+
+  .rarity-header {
+    @apply text-lg font-bold mb-3 px-3 py-2 rounded-t-lg;
+    color: white;
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);
+  }
+
+  .rarity-hc { background-color: #8b5cf6; }
+  .rarity-vendavel { background-color: #10b981; }
+  .rarity-ltd { background-color: #f59e0b; }
+  .rarity-raro { background-color: #ef4444; }
+  .rarity-nft { background-color: #3b82f6; }
+  .rarity-nao-hc { background-color: #6b7280; }
+
+  .rarity-content {
+    @apply p-4 bg-white rounded-b-lg border-2 border-t-0;
+    border-color: hsl(var(--habbo-border));
+    border-right-color: hsl(var(--habbo-border-light));
+    border-bottom-color: hsl(var(--habbo-border-light));
+    box-shadow: 2px 2px 0px 0px hsl(var(--habbo-shadow));
+  }
+
+  /* Search Input */
+  .search-input {
+    @apply habbo-input mb-4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+  }
+
+  /* Responsive improvements */
+  @media (max-width: 768px) {
+    .clothing-items-grid {
+      @apply grid-cols-3;
+    }
+    
+    .color-palette {
+      @apply grid-cols-6;
+    }
+    
+    .main-navigation {
+      @apply flex-col;
+    }
+    
+    .main-nav-button {
+      @apply w-full text-center;
+    }
+  }
 }
