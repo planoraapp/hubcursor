@@ -1,10 +1,53 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import ClothingMenu from './ClothingMenu'; // Importa o novo componente de menu
+
+// Função auxiliar para construir a URL do Habbo Imaging
+const buildHabboImageUrl = (
+  hotel: string,
+  user: string,
+  look: string,
+  gender: 'M' | 'F', // Adiciona gender aqui, é importante para o avatar!
+  gesture: string,
+  action: string,
+  body2: string,
+  left: string,
+  right: string,
+  sign: string,
+  object: string
+) => {
+  const baseUrl = `https://www.${hotel}/habbo-imaging/avatarimage?user=${user}`;
+  const params = [
+    `direction=2`,
+    `head_direction=3`,
+    `img_format=png`,
+    `gesture=${gesture}`,
+    `frame=0`,
+    `headonly=0`,
+    `size=m`,
+    `gender=${gender}`, // Incluir o gênero aqui
+  ];
+
+  // Adiciona o parâmetro 'figure' (look) se ele existir e não estiver vazio
+  if (look) params.push(`figure=${look}`);
+  if (action) params.push(`action=${action}`);
+  if (body2) params.push(`action_a=${body2}`);
+  if (left) params.push(`action_b=${left}`);
+  if (right) params.push(`action_c=${right}`);
+  if (sign) params.push(`sign=${sign}`);
+  if (object) params.push(`item=${object}`);
+
+  return `${baseUrl}&${params.join('&')}`;
+};
 
 export const AvatarEditor = () => {
+  // Estado para guardar os valores selecionados e o URL
   const [selectedHotel, setSelectedHotel] = useState('habbo.com.br');
-  const [username, setUsername] = useState('ViaJovem');
+  const [username, setUsername] = useState('HabboHotel'); // **DEFININDO O NOME PADRÃO AQUI**
+  // Look inicial. Um bom valor inicial é importante para que o avatar apareça.
+  // Este look deve ser compatível com o gênero inicial.
+  const [look, setLook] = useState('hd-180-7.hr-828-45.ch-3006-82-62.lg-275-82.sh-3059-82.ha-1002-82');
   const [gesture, setGesture] = useState('std');
   const [action, setAction] = useState('');
   const [bodyAction, setBodyAction] = useState('');
@@ -12,6 +55,8 @@ export const AvatarEditor = () => {
   const [rightHand, setRightHand] = useState('');
   const [sign, setSign] = useState('');
   const [handItem, setHandItem] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [gender, setGender] = useState<'M' | 'F'>('M'); // Inicia com gênero Masculino
   const [selectedCategory, setSelectedCategory] = useState('gender');
 
   const categories = [
@@ -22,31 +67,23 @@ export const AvatarEditor = () => {
     { id: 'more', name: 'Mais' }
   ];
 
-  const buildAvatarUrl = () => {
-    const baseUrl = `https://www.${selectedHotel}/habbo-imaging/avatarimage`;
-    const params = new URLSearchParams({
-      user: username,
-      direction: '2',
-      head_direction: '3',
-      img_format: 'png',
-      gesture: gesture,
-      frame: '0',
-      headonly: '0',
-      size: 'm'
-    });
-
-    // Adicionar parâmetros apenas se tiverem valor
-    if (action) params.append('action', action);
-    if (bodyAction) params.append('action', `${action},${bodyAction}`);
-    if (leftHand) params.append('action', `${params.get('action') || ''},${leftHand}`);
-    if (rightHand) params.append('action', `${params.get('action') || ''},${rightHand}`);
-    if (sign) params.append('sign', sign);
-    if (handItem) params.append('item', handItem);
-    
-    return `${baseUrl}?${params.toString()}`;
-  };
-
-  const avatarUrl = buildAvatarUrl();
+  // Efeito para atualizar a URL do avatar sempre que um dos estados muda
+  useEffect(() => {
+    const newUrl = buildHabboImageUrl(
+      selectedHotel,
+      username,
+      look,
+      gender, // Passa o gênero para a construção da URL
+      gesture,
+      action,
+      bodyAction,
+      leftHand,
+      rightHand,
+      sign,
+      handItem
+    );
+    setAvatarUrl(newUrl);
+  }, [selectedHotel, username, look, gender, gesture, action, bodyAction, leftHand, rightHand, sign, handItem]); // Adiciona gender como dependência
 
   const updateAvatar = () => {
     toast.success('Avatar atualizado!');
@@ -58,6 +95,22 @@ export const AvatarEditor = () => {
       toast.success('URL copiada para a área de transferência!');
     } catch (err) {
       toast.error('Erro ao copiar URL');
+    }
+  };
+
+  // Funções passadas para o ClothingMenu para que ele possa atualizar o look e o gênero
+  const handleLookChangeFromMenu = (newLook: string) => {
+    setLook(newLook);
+  };
+
+  const handleGenderChangeFromMenu = (newGender: 'M' | 'F') => {
+    setGender(newGender);
+    // IMPORTANTE: Ao mudar o gênero, é crucial carregar um look padrão
+    // que seja compatível com o gênero. Substitua pelos looks que você deseja.
+    if (newGender === 'M') {
+      setLook('hd-180-7.hr-828-45.ch-3006-82-62.lg-275-82.sh-3059-82.ha-1002-82'); // Exemplo de look masculino
+    } else { // 'F'
+      setLook('hd-600-1.hr-700-42.ch-800-90.lg-900-10.sh-100-20.ha-101-30'); // Exemplo de look feminino
     }
   };
 
@@ -115,13 +168,13 @@ export const AvatarEditor = () => {
 
           <div className="w-full">
             <div className="text-sm font-medium mb-2">Usuário:</div>
-            <input
-              placeholder="ViaJovem" 
-              type="text"
-              className="w-full p-2 border rounded-lg"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+          <input
+            placeholder="HabboHotel" 
+            type="text"
+            className="w-full p-2 border rounded-lg"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
           </div>
           
           <button onClick={updateAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-medium">
@@ -138,12 +191,16 @@ export const AvatarEditor = () => {
           />
         </div>
 
-        {/* Coluna da Direita: Controles de Personalização */}
+        {/* Coluna da Direita - Controles de Avatar e o NOVO MENU DE ROUPAS */}
         <div className="flex flex-col space-y-4">
-          {/* Gestos */}
+          {/* Seletor de Gestos */}
           <div>
             <div className="text-sm font-medium mb-2">Gestos:</div>
-            <select value={gesture} onChange={(e) => setGesture(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+            <select
+              className="w-full p-2 border rounded-lg bg-white"
+              value={gesture}
+              onChange={(e) => setGesture(e.target.value)}
+            >
               <option value="std">Normal</option>
               <option value="spk">Falando</option>
               <option value="sml">Sorrindo</option>
@@ -155,10 +212,14 @@ export const AvatarEditor = () => {
             </select>
           </div>
 
-          {/* Ação no corpo */}
+          {/* Seletor de Ação no Corpo */}
           <div>
             <div className="text-sm font-medium mb-2">Ação no corpo:</div>
-            <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+            <select
+              className="w-full p-2 border rounded-lg bg-white"
+              value={action}
+              onChange={(e) => setAction(e.target.value)}
+            >
               <option value="">Nada</option>
               <option value="std">Normal</option>
               <option value="lay">Dormindo</option>
@@ -166,27 +227,41 @@ export const AvatarEditor = () => {
             </select>
           </div>
 
-          {/* Ação no corpo 2 (Sentado) */}
+          {/* Seletor de Corpo2 */}
           <div>
             <div className="text-sm font-medium mb-2">Corpo2:</div>
-            <select value={bodyAction} onChange={(e) => setBodyAction(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+            <select
+              className="w-full p-2 border rounded-lg bg-white"
+              value={bodyAction}
+              onChange={(e) => setBodyAction(e.target.value)}
+            >
               <option value="">Nada</option>
               <option value="sit">Sentado</option>
             </select>
           </div>
 
-          {/* Ação nas mãos */}
+          {/* Seletor de Esquerda */}
           <div>
             <div className="text-sm font-medium mb-2">Esquerda:</div>
-            <select value={leftHand} onChange={(e) => setLeftHand(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+            <select
+              className="w-full p-2 border rounded-lg bg-white"
+              value={leftHand}
+              onChange={(e) => setLeftHand(e.target.value)}
+            >
               <option value="">Nada</option>
               <option value="respect">Respeito</option>
               <option value="wav">Acenando (Animado)</option>
             </select>
           </div>
+
+          {/* Seletor de Direita */}
           <div>
             <div className="text-sm font-medium mb-2">Direita:</div>
-            <select value={rightHand} onChange={(e) => setRightHand(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+            <select
+              className="w-full p-2 border rounded-lg bg-white"
+              value={rightHand}
+              onChange={(e) => setRightHand(e.target.value)}
+            >
               <option value="">Nada</option>
               <option value="crr">Mão esticada</option>
               <option value="drk">Mão na boca</option>
@@ -194,10 +269,14 @@ export const AvatarEditor = () => {
             </select>
           </div>
 
-          {/* Sinais */}
+          {/* Seletor de Sinais */}
           <div>
             <div className="text-sm font-medium mb-2">Sinais:</div>
-            <select value={sign} onChange={(e) => setSign(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+            <select
+              className="w-full p-2 border rounded-lg bg-white"
+              value={sign}
+              onChange={(e) => setSign(e.target.value)}
+            >
               <option value="">Normal</option>
               <option value="0">0</option>
               <option value="1">1</option>
@@ -221,10 +300,14 @@ export const AvatarEditor = () => {
             </select>
           </div>
 
-          {/* Objeto (Handitem) */}
+          {/* Seletor de Objeto */}
           <div>
             <div className="text-sm font-medium mb-2">Objeto:</div>
-            <select value={handItem} onChange={(e) => setHandItem(e.target.value)} className="w-full p-2 border rounded-lg bg-white max-h-32 overflow-y-auto">
+            <select
+              className="w-full p-2 border rounded-lg bg-white max-h-32 overflow-y-auto"
+              value={handItem}
+              onChange={(e) => setHandItem(e.target.value)}
+            >
               <option value="">Nenhum</option>
               <option value="1">Leite</option>
               <option value="2">Cenoura</option>
@@ -236,88 +319,17 @@ export const AvatarEditor = () => {
               <option value="256">Bola de Futebol</option>
             </select>
           </div>
+
+          {/* Renderiza o componente ClothingMenu */}
+          <ClothingMenu
+            currentLook={look}
+            onLookChange={handleLookChangeFromMenu}
+            onGenderChange={handleGenderChangeFromMenu}
+            currentGender={gender}
+          />
         </div>
       </div>
 
-      {/* Seções de Seleção de Roupas e Cores */}
-      <div className="space-y-6">
-        <div>
-          <div className="flex space-x-2 bg-gray-100 p-2 rounded mb-4">
-            {categories.map((category) => (
-              <button 
-                key={category.id}
-                className={`px-4 py-2 rounded ${selectedCategory === category.id ? 'bg-blue-500 text-white' : 'bg-white'}`}
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-4" style={{ maxHeight: '325px', maxWidth: '525px', overflow: 'auto' }}>
-            <input 
-              type="text" 
-              placeholder="Buscar roupa..." 
-              className="mb-4 w-full p-2 border rounded"
-            />
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-bold text-yellow-600 mb-2">HC</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Items HC serão adicionados aqui */}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-green-600 mb-2">Vendável</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Items vendáveis serão adicionados aqui */}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-purple-600 mb-2">LTD</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Items LTD serão adicionados aqui */}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-red-600 mb-2">Raro</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Items raros serão adicionados aqui */}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-blue-600 mb-2">NFT</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Items NFT serão adicionados aqui */}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-600 mb-2">Não-HC</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {/* Items não-HC serão adicionados aqui */}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Seção de Cores */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white rounded-lg shadow-lg p-4">
-            <h4 className="font-bold mb-4">Cores</h4>
-            <div className="grid grid-cols-8 gap-2">
-              {Array.from({ length: 32 }, (_, i) => (
-                <div 
-                  key={i}
-                  className="w-8 h-8 border border-gray-300 cursor-pointer hover:border-black"
-                  style={{ backgroundColor: `hsl(${i * 11}, 70%, 50%)` }}
-                  onClick={() => toast.success(`Cor ${i + 1} selecionada!`)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
