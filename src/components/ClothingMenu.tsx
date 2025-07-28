@@ -70,12 +70,17 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
       colorsToApply = Array(numberOfColorsExpected).fill(getHabboColorId('000000'));
     }
 
+    // Constrói a string de cores para a URL do figure.
+    // Ex: "61-63", "1", ou vazio se colorSlots=0
     const colorsString = numberOfColorsExpected > 0 ? colorsToApply.join('-') : '';
+
+    // Constrói a parte completa do item para a string do look
     let finalItemString = `${item.type}-${item.id}`;
     if (numberOfColorsExpected > 0) {
         finalItemString += `-${colorsString}`;
-        if (numberOfColorsExpected === 1) finalItemString += '-';
-        if (numberOfColorsExpected === 2) finalItemString += '-';
+        // Adiciona um traço final para consistência, se houver cores.
+        // A API Habbo Imaging espera um traço final mesmo que não haja mais cores.
+        finalItemString += '-';
     }
     
     // Log para depuração
@@ -108,17 +113,17 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
       const habboColorId = getHabboColorId(colorHex);
       newColors[colorIndex] = habboColorId;
 
+      // Garante que o array de cores tenha o tamanho correto
       const numberOfColorsExpected = item.colorSlots !== undefined ? item.colorSlots : 1;
       while (newColors.length < numberOfColorsExpected) {
-          newColors.push(getHabboColorId('000000'));
+          newColors.push(getHabboColorId('000000')); // Preenche com cor padrão
       }
 
       const colorsString = newColors.slice(0, numberOfColorsExpected).join('-');
       let newPartString = `${item.type}-${item.id}`;
       if (numberOfColorsExpected > 0) {
           newPartString += `-${colorsString}`;
-          if (numberOfColorsExpected === 1) newPartString += '-';
-          if (numberOfColorsExpected === 2) newPartString += '-';
+          newPartString += '-'; // Adiciona traço final
       }
 
       const currentLookParts = currentLook.split('.').filter(part => part !== '');
