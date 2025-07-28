@@ -131,9 +131,9 @@ export const ProfileChecker = () => {
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center space-x-2 text-blue-700">
             <Shield size={16} />
-            <span className="text-sm font-medium">Privacidade Garantida</span>
+            <span className="text-sm font-medium volter-font">Privacidade Garantida</span>
           </div>
-          <p className="text-sm text-blue-600 mt-1">
+          <p className="text-sm text-blue-600 mt-1 volter-font">
             Respeitamos a privacidade dos usuários. Apenas informações públicas são exibidas.
           </p>
         </div>

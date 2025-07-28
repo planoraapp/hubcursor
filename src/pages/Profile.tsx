@@ -14,10 +14,10 @@ const Profile: React.FC = () => {
   const renderContent = () => (
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h2 className="text-lg font-bold text-blue-800 mb-2">
+        <h2 className="text-lg font-bold text-blue-800 mb-2 volter-font">
           Perfil de {username}
         </h2>
-        <p className="text-blue-700 text-sm">
+        <p className="text-blue-700 text-sm volter-font">
           Visualizando informações públicas do usuário Habbo.
         </p>
       </div>

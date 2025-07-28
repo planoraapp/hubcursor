@@ -6,49 +6,44 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) => {
-  const [selectedLanguage, setSelectedLanguage] = useState('pt-BR');
+  const { language, setLanguage } = useLanguage();
 
   const languages = [
-    { code: 'pt-BR', name: 'Português (BR)', flag: '/assets/flagbrazil.png' },
-    { code: 'en-US', name: 'English (US)', flag: '/assets/flagcom.png' },
-    { code: 'es-ES', name: 'Español (ES)', flag: '/assets/flagspain.png' },
+    { code: 'pt', name: 'Português', flag: '/assets/flagbrazil.png' },
+    { code: 'en', name: 'English', flag: '/assets/flagcom.png' },
+    { code: 'es', name: 'Español', flag: '/assets/flagspain.png' },
   ];
-
-  const handleLanguageChange = (langCode: string) => {
-    setSelectedLanguage(langCode);
-  };
 
   if (collapsed) {
     return (
       <div className="p-2 flex justify-center">
-        <img 
-          src="/assets/flagbrazil.png" 
-          alt="Language" 
-          className="w-6 h-6 rounded cursor-pointer hover:opacity-75 transition-opacity"
-          title="Idioma: Português (BR)"
-        />
+        <div className="w-12 h-12 rounded-lg bg-white/80 hover:bg-white hover:shadow-sm transition-all duration-200 flex items-center justify-center">
+          <img 
+            src={languages.find(lang => lang.code === language)?.flag} 
+            alt={language} 
+            className="w-6 h-6"
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4">
-      <h3 className="font-bold text-gray-800 mb-3 text-center">Idioma</h3>
-      <div className="space-y-2">
+    <div className="p-4 bg-white/80 backdrop-blur-sm rounded-lg mb-4 shadow-sm">
+      <h3 className="font-bold text-gray-800 mb-3 text-sm">Idioma</h3>
+      <div className="flex space-x-2">
         {languages.map((lang) => (
           <button
             key={lang.code}
-            onClick={() => handleLanguageChange(lang.code)}
-            className={`
-              w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200
-              ${selectedLanguage === lang.code 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-sm'
-              }
-            `}
+            onClick={() => setLanguage(lang.code)}
+            className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+              language === lang.code 
+                ? 'bg-sky-400 text-white shadow-md' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
-            <img src={lang.flag} alt={lang.name} className="w-5 h-5 rounded" />
-            <span className="text-sm font-medium">{lang.name}</span>
+            <img src={lang.flag} alt={lang.name} className="w-4 h-4" />
+            <span className="text-xs">{lang.code.toUpperCase()}</span>
           </button>
         ))}
       </div>
