@@ -1,150 +1,315 @@
 
-import { useLanguage } from '../hooks/useLanguage';
-import { PanelCard } from './PanelCard';
-import { Palette, Shirt, Eye, Smile, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 export const AvatarEditor = () => {
-  const { t } = useLanguage();
-  const [selectedCategory, setSelectedCategory] = useState('hair');
-  const [currentLook, setCurrentLook] = useState('hd-180-1.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61');
+  const [selectedHotel, setSelectedHotel] = useState('habbo.com.br');
+  const [username, setUsername] = useState('ViaJovem');
+  const [gesture, setGesture] = useState('std');
+  const [action, setAction] = useState('');
+  const [bodyAction, setBodyAction] = useState('');
+  const [leftHand, setLeftHand] = useState('');
+  const [rightHand, setRightHand] = useState('');
+  const [sign, setSign] = useState('');
+  const [handItem, setHandItem] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('gender');
 
   const categories = [
-    { id: 'hair', name: 'Cabelo', icon: Palette },
-    { id: 'face', name: 'Rosto', icon: Smile },
-    { id: 'eyes', name: 'Olhos', icon: Eye },
-    { id: 'clothes', name: 'Roupas', icon: Shirt },
+    { id: 'gender', name: 'Gênero' },
+    { id: 'hair', name: 'Cabelo' },
+    { id: 'tops', name: 'Tops' },
+    { id: 'bottoms', name: 'Bottoms' },
+    { id: 'more', name: 'Mais' }
   ];
 
-  const hairOptions = [
-    { id: 'hr-828-61', name: 'Cabelo Clássico', price: 0 },
-    { id: 'hr-834-61', name: 'Cabelo Moderno', price: 50 },
-    { id: 'hr-890-61', name: 'Cabelo Estiloso', price: 100 },
-  ];
-
-  const faceOptions = [
-    { id: 'hd-180-1', name: 'Rosto Padrão', price: 0 },
-    { id: 'hd-185-1', name: 'Rosto Sorridente', price: 25 },
-    { id: 'hd-190-1', name: 'Rosto Sério', price: 25 },
-  ];
-
-  const eyesOptions = [
-    { id: 'ey-667-1', name: 'Olhos Normais', price: 0 },
-    { id: 'ey-670-1', name: 'Olhos Grandes', price: 30 },
-    { id: 'ey-675-1', name: 'Olhos Pequenos', price: 30 },
-  ];
-
-  const clothesOptions = [
-    { id: 'ch-255-66', name: 'Camisa Básica', price: 0 },
-    { id: 'ch-260-66', name: 'Camisa Listrada', price: 75 },
-    { id: 'ch-265-66', name: 'Camisa Elegante', price: 150 },
-  ];
-
-  const getOptionsForCategory = () => {
-    switch (selectedCategory) {
-      case 'hair': return hairOptions;
-      case 'face': return faceOptions;
-      case 'eyes': return eyesOptions;
-      case 'clothes': return clothesOptions;
-      default: return [];
-    }
-  };
-
-  const getAvatarUrl = (figureString: string) => {
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=2&gesture=sml&size=l&frame=1`;
-  };
-
-  const updateLook = (partId: string) => {
-    // Simulação simples de atualização do look
-    const parts = currentLook.split('.');
-    const newParts = parts.map(part => {
-      if (part.startsWith(partId.split('-')[0])) {
-        return partId;
-      }
-      return part;
+  const buildAvatarUrl = () => {
+    const baseUrl = `https://www.${selectedHotel}/habbo-imaging/avatarimage`;
+    const params = new URLSearchParams({
+      user: username,
+      action: action,
+      direction: '2',
+      head_direction: '3',
+      img_format: 'png',
+      gesture: gesture,
+      frame: '0',
+      headonly: '0',
+      size: 'm'
     });
-    setCurrentLook(newParts.join('.'));
+    return `${baseUrl}?${params.toString()}`;
+  };
+
+  const avatarUrl = buildAvatarUrl();
+
+  const updateAvatar = () => {
+    toast.success('Avatar atualizado!');
+  };
+
+  const copyImageUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(avatarUrl);
+      toast.success('URL copiada para a área de transferência!');
+    } catch (err) {
+      toast.error('Erro ao copiar URL');
+    }
   };
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('avatarEditorTitle')}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Avatar Preview */}
-          <div className="lg:col-span-1">
-            <div className="habbo-card">
-              <div className="p-6 text-center">
-                <h3 className="font-bold text-gray-800 mb-4">Preview</h3>
-                <div className="bg-gray-100 rounded-lg p-4 mb-4">
-                  <img
-                    src={getAvatarUrl(currentLook)}
-                    alt="Avatar Preview"
-                    className="w-32 h-32 mx-auto object-contain"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <button className="habbo-button-green w-full">
-                    Salvar Look
-                  </button>
-                  <button className="habbo-button-red w-full flex items-center justify-center">
-                    <RefreshCw size={16} className="mr-2" />
-                    Resetar
-                  </button>
-                </div>
-              </div>
+      {/* Alerta sobre o perfil público */}
+      <div className="bg-yellow-400 text-black text-center p-4 font-bold text-base shadow-md flex items-center justify-center rounded">
+        <img 
+          alt="Alerta de perfil público" 
+          src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhWrb7Gas1E-jwzvprJVG1JIguUMz0ZuSbk7VqzQ5kSqG8U4eo0s6z1HG1BpAXZuzExGHUL0M2-Dr8kA4McEGg6S7FnKupjQa0zEU4FreAOoDyjp/s0/2190__-5kz.png" 
+          className="w-8 h-8 mr-3"
+        />
+        <span>
+          O perfil do jogador precisa estar público para o uso da ferramenta. 
+          Caso algum bug com a figura se apresente, utilize os frames para ajustar ou rotacione seu avatar.
+        </span>
+      </div>
+
+      {/* Contêiner Principal do Gerador de Imagem e Controles */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/90 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+        {/* Coluna da Esquerda: Imagem do Habbo e Hotel Selector */}
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-full">
+            <div className="text-sm font-medium mb-2">Hotel:</div>
+            <select 
+              className="w-full p-2 border rounded-lg bg-white"
+              value={selectedHotel}
+              onChange={(e) => setSelectedHotel(e.target.value)}
+            >
+              <option value="habbo.com.br">Habbo.com.br (Brasil/Portugal)</option>
+              <option value="habbo.com">Habbo.com (Internacional)</option>
+              <option value="habbo.de">Habbo.de (Alemanha)</option>
+              <option value="habbo.es">Habbo.es (Espanha)</option>
+              <option value="habbo.fi">Habbo.fi (Finlândia)</option>
+              <option value="habbo.fr">Habbo.fr (França)</option>
+              <option value="habbo.it">Habbo.it (Itália)</option>
+              <option value="habbo.nl">Habbo.nl (Holanda)</option>
+              <option value="habbo.com.tr">Habbo.com.tr (Turquia)</option>
+            </select>
+          </div>
+          
+          <a href={avatarUrl} target="_blank" rel="noopener noreferrer" className="block w-full">
+            <div className="border-2 border-gray-300 rounded-lg p-4 bg-white min-h-[200px] flex items-center justify-center">
+              <img 
+                alt="Prévia do Habbo" 
+                src={avatarUrl}
+                style={{ imageRendering: 'pixelated' }}
+                className="max-w-full h-auto"
+                onError={() => {
+                  toast.error('Erro ao carregar avatar. Verifique se o usuário existe.');
+                }}
+              />
             </div>
+          </a>
+
+          <div className="w-full">
+            <div className="text-sm font-medium mb-2">Usuário:</div>
+            <input
+              placeholder="ViaJovem" 
+              type="text"
+              className="w-full p-2 border rounded-lg"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          
+          <button onClick={updateAvatar} className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg font-medium">
+            Atualizar Avatar
+          </button>
+          <button onClick={copyImageUrl} className="w-full bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-medium">
+            Copiar URL da Imagem
+          </button>
+          <input
+            type="text"
+            value={avatarUrl}
+            readOnly
+            className="w-full text-center text-sm bg-gray-100 p-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Coluna da Direita: Controles de Personalização */}
+        <div className="flex flex-col space-y-4">
+          {/* Gestos */}
+          <div>
+            <div className="text-sm font-medium mb-2">Gestos:</div>
+            <select value={gesture} onChange={(e) => setGesture(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+              <option value="std">Normal</option>
+              <option value="spk">Falando</option>
+              <option value="sml">Sorrindo</option>
+              <option value="srp">Surpreso</option>
+              <option value="agr">Nervoso</option>
+              <option value="sad">Triste</option>
+              <option value="blw">Beijo</option>
+              <option value="eyb">Dormindo</option>
+            </select>
           </div>
 
-          {/* Category Selection */}
-          <div className="lg:col-span-2">
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {categories.map(category => {
-                  const Icon = category.icon;
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`
-                        habbo-nav-link px-4 py-2
-                        ${selectedCategory === category.id ? 'active' : ''}
-                      `}
-                    >
-                      <Icon size={16} />
-                      <span>{category.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Ação no corpo */}
+          <div>
+            <div className="text-sm font-medium mb-2">Ação no corpo:</div>
+            <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+              <option value="">Nada</option>
+              <option value="std">Normal</option>
+              <option value="lay">Dormindo</option>
+              <option value="wlk">Andando (Animado)</option>
+            </select>
+          </div>
 
-              {/* Options Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getOptionsForCategory().map((option) => (
-                  <div key={option.id} className="habbo-card">
-                    <div className="p-4 text-center">
-                      <div className="bg-gray-100 rounded-lg p-4 mb-3">
-                        <div className="w-16 h-16 bg-gray-200 rounded mx-auto flex items-center justify-center">
-                          <span className="text-gray-500 text-xs">Preview</span>
-                        </div>
-                      </div>
-                      <h4 className="font-medium text-gray-800 mb-1">{option.name}</h4>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {option.price === 0 ? 'Grátis' : `${option.price} moedas`}
-                      </p>
-                      <button
-                        onClick={() => updateLook(option.id)}
-                        className="habbo-button-green w-full"
-                      >
-                        {option.price === 0 ? 'Usar' : 'Comprar'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+          {/* Ação no corpo 2 (Sentado) */}
+          <div>
+            <div className="text-sm font-medium mb-2">Corpo2:</div>
+            <select value={bodyAction} onChange={(e) => setBodyAction(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+              <option value="">Nada</option>
+              <option value="sit">Sentado</option>
+            </select>
+          </div>
+
+          {/* Ação nas mãos */}
+          <div>
+            <div className="text-sm font-medium mb-2">Esquerda:</div>
+            <select value={leftHand} onChange={(e) => setLeftHand(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+              <option value="">Nada</option>
+              <option value="respect">Respeito</option>
+              <option value="wav">Acenando (Animado)</option>
+            </select>
+          </div>
+          <div>
+            <div className="text-sm font-medium mb-2">Direita:</div>
+            <select value={rightHand} onChange={(e) => setRightHand(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+              <option value="">Nada</option>
+              <option value="crr">Mão esticada</option>
+              <option value="drk">Mão na boca</option>
+              <option value="blw">Mandando beijo</option>
+            </select>
+          </div>
+
+          {/* Sinais */}
+          <div>
+            <div className="text-sm font-medium mb-2">Sinais:</div>
+            <select value={sign} onChange={(e) => setSign(e.target.value)} className="w-full p-2 border rounded-lg bg-white">
+              <option value="">Normal</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">Coração</option>
+              <option value="12">Caveira</option>
+              <option value="13">Exclamação</option>
+              <option value="14">Bola de Futebol</option>
+              <option value="15">Cara Feliz</option>
+              <option value="16">Cartão Vermelho</option>
+              <option value="17">Cartão Amarelo</option>
+              <option value="18">Nada (Imaginário)</option>
+            </select>
+          </div>
+
+          {/* Objeto (Handitem) */}
+          <div>
+            <div className="text-sm font-medium mb-2">Objeto:</div>
+            <select value={handItem} onChange={(e) => setHandItem(e.target.value)} className="w-full p-2 border rounded-lg bg-white max-h-32 overflow-y-auto">
+              <option value="">Nenhum</option>
+              <option value="1">Leite</option>
+              <option value="2">Cenoura</option>
+              <option value="3">Sorvete de Baunilha</option>
+              <option value="5">Suco Bubblejuice</option>
+              <option value="76">Rosa</option>
+              <option value="77">Rosa negra</option>
+              <option value="102">Presente</option>
+              <option value="256">Bola de Futebol</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Seções de Seleção de Roupas e Cores */}
+      <div className="space-y-6">
+        <div>
+          <div className="flex space-x-2 bg-gray-100 p-2 rounded mb-4">
+            {categories.map((category) => (
+              <button 
+                key={category.id}
+                className={`px-4 py-2 rounded ${selectedCategory === category.id ? 'bg-blue-500 text-white' : 'bg-white'}`}
+                onClick={() => setSelectedCategory(category.id)}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-4" style={{ maxHeight: '325px', maxWidth: '525px', overflow: 'auto' }}>
+            <input 
+              type="text" 
+              placeholder="Buscar roupa..." 
+              className="mb-4 w-full p-2 border rounded"
+            />
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-bold text-yellow-600 mb-2">HC</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Items HC serão adicionados aqui */}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-green-600 mb-2">Vendável</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Items vendáveis serão adicionados aqui */}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-purple-600 mb-2">LTD</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Items LTD serão adicionados aqui */}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-red-600 mb-2">Raro</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Items raros serão adicionados aqui */}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-blue-600 mb-2">NFT</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Items NFT serão adicionados aqui */}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-600 mb-2">Não-HC</h4>
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Items não-HC serão adicionados aqui */}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </PanelCard>
+
+        {/* Seção de Cores */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <h4 className="font-bold mb-4">Cores</h4>
+            <div className="grid grid-cols-8 gap-2">
+              {Array.from({ length: 32 }, (_, i) => (
+                <div 
+                  key={i}
+                  className="w-8 h-8 border border-gray-300 cursor-pointer hover:border-black"
+                  style={{ backgroundColor: `hsl(${i * 11}, 70%, 50%)` }}
+                  onClick={() => toast.success(`Cor ${i + 1} selecionada!`)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
