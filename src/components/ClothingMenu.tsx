@@ -3,17 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { clothingParts, colorPalettes, subNavCategories, ClothingPart } from '../data/clothingItems';
 
 interface ClothingMenuProps {
-  currentLook: string; // A string de look atual do avatar (ex: "hd-180-7.hr-828-45...")
-  onLookChange: (newLook: string) => void; // Função para atualizar o look no componente pai (AvatarEditor)
-  onGenderChange: (gender: 'M' | 'F') => void; // Função para mudar o gênero no AvatarEditor
-  currentGender: 'M' | 'F'; // Gênero atual do avatar
+  currentLook: string;
+  onLookChange: (newLook: string) => void;
+  onGenderChange: (gender: 'M' | 'F') => void;
+  currentGender: 'M' | 'F';
 }
 
 const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, onGenderChange, currentGender }) => {
-  const [activeMainCategory, setActiveMainCategory] = useState<string>('hd'); // Categoria principal ativa (ex: 'hd', 'hr')
+  const [activeMainCategory, setActiveMainCategory] = useState<string>('hd');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>(currentGender);
-  // Mantém a peça de roupa selecionada para aplicar cor a ela
   const [selectedPartForColor, setSelectedPartForColor] = useState<{ type: string; id: number; color?: string } | null>(null);
 
   // Efeito para sincronizar o gênero com o componente pai
@@ -44,40 +43,34 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
     setSelectedPartForColor(null);
   };
 
-  // Lida com o clique em um item de roupa/acessório na lista
   const handleItemClick = (item: ClothingPart) => {
     const currentLookParts = currentLook.split('.').filter(part => part !== '');
-    const itemType = item.type; // Ex: 'hd', 'hr'
+    const itemType = item.type;
 
     let newLookParts = [...currentLookParts];
     let itemFoundAndReplaced = false;
 
-    // A string de look é formada por "TYPE-ID-COLOR" para cada parte.
-    // Precisamos encontrar a parte do MESMO TIPO e substituí-la.
-    // Ex: Se o look atual tem "hr-123-45" e clicamos em "hr-456-78", "hr-123-45" é substituído.
+    let defaultOrCurrentColor = '7';
 
     for (let i = 0; i < newLookParts.length; i++) {
-      // Verifica se a parte existente começa com o mesmo TIPO (ex: 'hd-', 'hr-')
-      // e também se tem o formato esperado (com hífen após o tipo para separar o ID)
       if (newLookParts[i].startsWith(itemType + '-')) {
-        // Assume que a cor padrão é a cor '7' (preto) ou a primeira cor da peça, se soubermos.
-        // Para simplificar, usamos '7' como cor padrão inicial para novas peças.
-        const defaultColorForNewPart = '7';
-        newLookParts[i] = `${item.type}-${item.id}-${defaultColorForNewPart}`; // Substitui pela nova parte e cor padrão
+        const parts = newLookParts[i].split('-');
+        if (parts.length >= 3) {
+          defaultOrCurrentColor = parts[2];
+        }
+        newLookParts[i] = `${item.type}-${item.id}-${defaultOrCurrentColor}`;
         itemFoundAndReplaced = true;
         break;
       }
     }
 
-    // Se não encontrou uma parte existente do mesmo tipo, adiciona
     if (!itemFoundAndReplaced) {
-      const defaultColorForNewPart = '7';
-      newLookParts.push(`${item.type}-${item.id}-${defaultColorForNewPart}`);
+      newLookParts.push(`${item.type}-${item.id}-${defaultOrCurrentColor}`);
     }
 
     const newLook = newLookParts.join('.');
-    onLookChange(newLook); // Envia o novo look para o componente pai
-    setSelectedPartForColor({ type: item.type, id: item.id, color: '7' }); // Seleciona a peça para edição de cor
+    onLookChange(newLook);
+    setSelectedPartForColor({ type: item.type, id: item.id, color: defaultOrCurrentColor });
   };
 
   // Lida com o clique em uma cor na paleta de cores
@@ -192,10 +185,10 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
                 <div className="grid grid-cols-4 gap-2">
                   {groupedItems[category].map(item => (
                     <button
-                      key={`${item.type}-${item.id}`} // Chave única para o item
+                      key={`${item.type}-${item.id}-${item.category}`}
                       className={`flex flex-col items-center justify-center p-1 border rounded hover:bg-gray-100 ${
                         selectedPartForColor?.type === item.type && selectedPartForColor?.id === item.id
-                          ? 'border-blue-500 ring-2 ring-blue-500' // Destaca a peça selecionada para cor
+                          ? 'border-blue-500 ring-2 ring-blue-500'
                           : 'border-gray-200'
                       }`}
                       onClick={() => handleItemClick(item)}
@@ -206,9 +199,13 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
                         alt={item.name}
                         className="w-12 h-12 object-contain"
                         style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = 'https://via.placeholder.com/48x48?text=Erro';
+                          target.alt = 'Imagem não encontrada';
+                        }}
                       />
-                      {/* Opcional: Mostrar nome do item abaixo da miniatura */}
-                      {/* <span className="text-xs text-center mt-1">{item.name}</span> */}
                     </button>
                   ))}
                 </div>

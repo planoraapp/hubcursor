@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import ClothingMenu from './ClothingMenu'; // Importa o novo componente de menu
+import ClothingMenu from './ClothingMenu';
 
 // Função auxiliar para construir a URL do Habbo Imaging
 const buildHabboImageUrl = (
@@ -42,12 +42,16 @@ const buildHabboImageUrl = (
 };
 
 export const AvatarEditor = () => {
-  // Estado para guardar os valores selecionados e o URL
   const [selectedHotel, setSelectedHotel] = useState('habbo.com.br');
-  const [username, setUsername] = useState('HabboHotel'); // **DEFININDO O NOME PADRÃO AQUI**
-  // Look inicial. Um bom valor inicial é importante para que o avatar apareça.
-  // Este look deve ser compatível com o gênero inicial.
-  const [look, setLook] = useState('hd-180-7.hr-828-45.ch-3006-82-62.lg-275-82.sh-3059-82.ha-1002-82');
+  const [username, setUsername] = useState('HabboHotel');
+
+  // Looks padrão para masculino e feminino
+  const defaultMaleLook = 'hd-180-7.hr-828-45.ch-3006-82-62.lg-275-82.sh-3059-82.ha-1002-82';
+  const defaultFemaleLook = 'hd-600-1.hr-700-42.ch-800-90.lg-900-10.sh-100-20.ha-101-30';
+
+  const [gender, setGender] = useState<'M' | 'F'>('F'); // Inicia com Feminino
+  const [look, setLook] = useState(defaultFemaleLook); // Look inicial é o feminino
+
   const [gesture, setGesture] = useState('std');
   const [action, setAction] = useState('');
   const [bodyAction, setBodyAction] = useState('');
@@ -56,8 +60,6 @@ export const AvatarEditor = () => {
   const [sign, setSign] = useState('');
   const [handItem, setHandItem] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [gender, setGender] = useState<'M' | 'F'>('M'); // Inicia com gênero Masculino
-  const [selectedCategory, setSelectedCategory] = useState('gender');
 
   const categories = [
     { id: 'gender', name: 'Gênero' },
@@ -98,19 +100,16 @@ export const AvatarEditor = () => {
     }
   };
 
-  // Funções passadas para o ClothingMenu para que ele possa atualizar o look e o gênero
   const handleLookChangeFromMenu = (newLook: string) => {
     setLook(newLook);
   };
 
   const handleGenderChangeFromMenu = (newGender: 'M' | 'F') => {
     setGender(newGender);
-    // IMPORTANTE: Ao mudar o gênero, é crucial carregar um look padrão
-    // que seja compatível com o gênero. Substitua pelos looks que você deseja.
     if (newGender === 'M') {
-      setLook('hd-180-7.hr-828-45.ch-3006-82-62.lg-275-82.sh-3059-82.ha-1002-82'); // Exemplo de look masculino
-    } else { // 'F'
-      setLook('hd-600-1.hr-700-42.ch-800-90.lg-900-10.sh-100-20.ha-101-30'); // Exemplo de look feminino
+      setLook(defaultMaleLook);
+    } else {
+      setLook(defaultFemaleLook);
     }
   };
 
