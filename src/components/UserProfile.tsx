@@ -1,155 +1,90 @@
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { User, LogIn, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useLanguage } from '../hooks/useLanguage';
 
 interface UserProfileProps {
   collapsed?: boolean;
 }
 
 export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
-  const { isLoggedIn, userData, loading, login, logout } = useAuth();
-  const { t } = useLanguage();
-  const [loginUsername, setLoginUsername] = useState('');
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const { isLoggedIn, userData, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginUsername.trim()) {
-      const success = await login(loginUsername.trim());
-      if (success) {
-        setShowLoginForm(false);
-        setLoginUsername('');
-      } else {
-        alert('Usuário não encontrado!');
-      }
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    setShowLoginForm(false);
-    setLoginUsername('');
-  };
-
-  const getAvatarUrl = (figureString?: string) => {
-    const defaultFigure = 'hd-180-1.ch-255-66.lg-280-110.sh-305-62.ha-1012-110.hr-828-61';
-    const figure = figureString || defaultFigure;
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figure}&direction=2&head_direction=2&gesture=sml&size=l&frame=1&headonly=1`;
-  };
-
-  const renderAvatar = () => {
+  const handleProfileClick = () => {
     if (isLoggedIn && userData) {
-      return (
-        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
-          <img 
-            src="/assets/1360__-3C7.png" 
-            alt="Avatar Background" 
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <img 
-            src={getAvatarUrl(userData.figureString)} 
-            alt={userData.name}
-            className="absolute inset-0 w-full h-full object-cover object-top scale-125 translate-y-2"
-            onError={(e) => {
-              e.currentTarget.src = "/assets/frank.png";
-            }}
-          />
-        </div>
-      );
+      navigate(`/profile/${userData.name}`);
     } else {
-      return (
-        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
-          <img 
-            src="/assets/frank.png" 
-            alt="Frank" 
-            className="w-full h-full object-cover object-top scale-110 translate-y-1"
-          />
-        </div>
-      );
+      navigate('/connect-habbo');
     }
   };
 
   if (collapsed) {
     return (
-      <div className="flex flex-col items-center">
-        <div className="relative mb-2">
-          {renderAvatar()}
-          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${userData?.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
-        </div>
+      <div className="p-2 flex justify-center">
+        <button
+          onClick={handleProfileClick}
+          className="w-12 h-12 rounded-lg bg-white/80 hover:bg-white hover:shadow-sm transition-all duration-200 flex items-center justify-center"
+          title={isLoggedIn ? 'Meu Perfil' : 'Entrar'}
+        >
+          {isLoggedIn ? <User size={20} /> : <LogIn size={20} />}
+        </button>
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex flex-col items-center bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm"
-    >
-      <div className="relative mb-3 w-20 h-20">
-        {renderAvatar()}
-        <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-white ${userData?.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
-      </div>
-      
-      <h3 className="font-bold text-gray-800 text-center mb-1">
-        {userData?.name || t('userNameGuest')}
-      </h3>
-      
-      <p className={`text-xs mb-2 ${userData?.online ? 'text-green-600' : 'text-red-600'}`}>
-        {userData?.online ? t('onlineStatus') : t('offlineStatus')}
-      </p>
-      
-      {userData?.motto && (
-        <p className="text-xs text-gray-600 text-center mb-3 italic">"{userData.motto}"</p>
-      )}
-
-      {!isLoggedIn && !showLoginForm && (
-        <button
-          onClick={() => setShowLoginForm(true)}
-          className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg border-2 border-green-700 hover:bg-green-600 transition-all duration-200 shadow-sm"
-        >
-          {t('loginButton')}
-        </button>
-      )}
-
-      {showLoginForm && (
-        <div className="w-full space-y-2">
-          <input
-            type="text"
-            value={loginUsername}
-            onChange={(e) => setLoginUsername(e.target.value)}
-            placeholder="Nome do usuário Habbo..."
-            className="w-full px-3 py-2 rounded-lg bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 placeholder-gray-500 focus:outline-none focus:border-sky-400 text-sm"
-            disabled={loading}
-          />
+    <div className="p-4 bg-white/80 backdrop-blur-sm rounded-lg mb-4 shadow-sm">
+      {isLoggedIn && userData ? (
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1`}
+              alt={userData.name}
+              className="w-10 h-10 rounded border-2 border-gray-300"
+            />
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-800 text-sm">{userData.name}</h3>
+              <p className="text-xs text-gray-600 italic">"{userData.motto}"</p>
+            </div>
+          </div>
+          
           <div className="flex space-x-2">
             <button
-              onClick={handleLogin}
-              disabled={loading || !loginUsername.trim()}
-              className="flex-1 bg-green-500 text-white font-bold py-2 px-3 rounded-lg border-2 border-green-700 hover:bg-green-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm"
+              onClick={handleProfileClick}
+              className="flex-1 bg-blue-500 text-white text-xs py-2 px-3 rounded hover:bg-blue-600 transition-colors"
             >
-              {loading ? '...' : 'OK'}
+              Ver Perfil
             </button>
             <button
-              onClick={() => setShowLoginForm(false)}
-              className="flex-1 bg-red-500 text-white font-bold py-2 px-3 rounded-lg border-2 border-red-700 hover:bg-red-600 transition-all duration-200 text-sm shadow-sm"
+              onClick={logout}
+              className="bg-red-500 text-white text-xs py-2 px-3 rounded hover:bg-red-600 transition-colors"
             >
-              ✕
+              Sair
             </button>
           </div>
         </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded bg-gray-300 flex items-center justify-center">
+              <User size={20} className="text-gray-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-800 text-sm">Visitante</h3>
+              <p className="text-xs text-gray-600">Não conectado</p>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => navigate('/connect-habbo')}
+            className="w-full bg-green-500 text-white text-xs py-2 px-3 rounded hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
+          >
+            <LogIn size={16} />
+            <span>Entrar com Habbo</span>
+          </button>
+        </div>
       )}
-
-      {isLoggedIn && (
-        <button
-          onClick={handleLogout}
-          className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg border-2 border-red-700 hover:bg-red-600 transition-all duration-200 shadow-sm"
-        >
-          {t('logoutButton')}
-        </button>
-      )}
-    </motion.div>
+    </div>
   );
 };

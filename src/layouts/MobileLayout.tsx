@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { HabboMobileDock, DockItem } from '../components/ui/habbo-mobile-dock';
@@ -22,11 +23,14 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     { id: 'editor', label: 'Editor', icon: '/assets/editorvisuais.png' },
     { id: 'mercado', label: 'Mercado', icon: '/assets/Image 1574.png' },
     { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/wireds.png' },
+    { id: 'connect-habbo', label: 'Entrar', icon: '/assets/frank.png' },
   ];
 
   const handleNavigation = (itemId: string) => {
     if (itemId === 'home') {
       navigate('/');
+    } else if (itemId === 'connect-habbo') {
+      navigate('/connect-habbo');
     } else {
       navigate(`/${itemId}`);
     }
@@ -35,7 +39,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const getActiveId = () => {
     const path = location.pathname;
     if (path === '/') return 'home';
-    return path.substring(1); // Remove leading slash
+    if (path === '/connect-habbo') return 'connect-habbo';
+    return path.substring(1);
   };
 
   return (
@@ -51,6 +56,16 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
               e.currentTarget.src = "/assets/habbohub.png";
             }}
           />
+          {isLoggedIn && userData && (
+            <div className="flex items-center space-x-2">
+              <img 
+                src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1`}
+                alt={userData.name}
+                className="w-8 h-8 rounded border border-gray-300"
+              />
+              <span className="text-sm font-medium">{userData.name}</span>
+            </div>
+          )}
         </div>
       </header>
 
