@@ -22,7 +22,7 @@ const buildHabboImageUrl = (
     `direction=2`,
     `head_direction=3`,
     `img_format=png`,
-    `gesture=std`, // Removido o gesture do parâmetro e fixado para 'std' para simplificar o URL inicial
+    `gesture=${gesture}`,
     `frame=0`,
     `headonly=0`,
     `size=m`,
@@ -45,8 +45,9 @@ const AvatarEditor: React.FC = () => {
   const [username, setUsername] = useState('HabboHotel');
 
   // Looks padrão usando IDs numéricos de cor mapeados do nosso HABBO_COLOR_MAP
-  // Estes looks devem ser válidos e coerentes com os data-colorable em clothingParts.ts
+  // Estes looks são baseados nos seus exemplos e tentam usar cores que existem no HABBO_COLOR_MAP
   const defaultMaleLook = `hd-180-${getHabboColorId('000000')}-.hr-678-${getHabboColorId('000000')}-${getHabboColorId('828282')}.ch-3006-${getHabboColorId('000000')}-${getHabboColorId('828282')}.lg-275-${getHabboColorId('000000')}-.sh-3059-${getHabboColorId('000000')}-.ha-1002-${getHabboColorId('000000')}-`;
+  // Para o look feminino, usei o cabelo hr-5773 (que tem colorSlots:2) e outras peças com cores padrão.
   const defaultFemaleLook = `hd-600-${getHabboColorId('000000')}-.hr-5773-${getHabboColorId('000000')}-${getHabboColorId('828282')}.ch-800-${getHabboColorId('000000')}-.lg-900-${getHabboColorId('000000')}-.sh-100-${getHabboColorId('000000')}-.ha-101-${getHabboColorId('000000')}-`;
 
 
