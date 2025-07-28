@@ -16,6 +16,7 @@ import Ferramentas from "./pages/Ferramentas";
 import ConnectHabbo from "./pages/ConnectHabbo";
 import Profile from "./pages/Profile";
 import Eventos from "./pages/Eventos";
+import AdminHub from "./pages/AdminHub";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/ferramentas" element={<Ferramentas />} />
           <Route path="/connect-habbo" element={<ConnectHabbo />} />
           <Route path="/profile/:username" element={<Profile />} />
+          <Route path="/adminhub" element={<AdminHub />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

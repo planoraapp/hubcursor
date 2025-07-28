@@ -65,18 +65,24 @@ export const useAuth = () => {
     }
 
     setLoading(true);
+    console.log(`Attempting login for user: ${sanitizedUsername}`);
+    
     try {
       // Use official Habbo API with proper error handling
       const response = await fetch(`https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(sanitizedUsername)}`);
+      
+      console.log(`API Response status: ${response.status}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const users = await response.json();
+      console.log('API Response:', users);
       
       if (users && Array.isArray(users) && users.length > 0) {
         const user = users[0];
+        console.log('User found:', user);
         
         // Validate API response structure
         if (!user.name || !user.figureString) {
@@ -87,11 +93,13 @@ export const useAuth = () => {
           name: user.name,
           figureString: user.figureString,
           online: user.online || false,
-          motto: user.motto || '',
+          motto: user.motto || '', // Ensure motto is handled properly
           memberSince: user.memberSince || '',
           lastAccessTime: user.lastAccessTime || '',
           profileVisible: user.profileVisible !== false // default to true
         };
+        
+        console.log('User data to save:', userDataToSave);
         
         // Only save non-sensitive data
         const sanitizedData = {
@@ -133,11 +141,16 @@ export const useAuth = () => {
     console.log('User logged out');
   };
 
+  const isAdmin = () => {
+    return isLoggedIn && userData?.name?.toLowerCase() === 'habbohub';
+  };
+
   return {
     isLoggedIn,
     userData,
     loading,
     login,
-    logout
+    logout,
+    isAdmin
   };
 };

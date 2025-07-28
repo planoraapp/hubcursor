@@ -16,7 +16,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
   const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const { t } = useLanguage();
-  const { isLoggedIn, userData } = useAuth();
+  const { isLoggedIn, userData, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const navItems = [
@@ -29,6 +29,16 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
     { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' },
   ];
+
+  // Add admin link if user is admin
+  if (isAdmin()) {
+    navItems.push({
+      id: 'adminhub',
+      label: 'Admin Hub',
+      icon: '/assets/ferramentas.png',
+      path: '/adminhub'
+    });
+  }
 
   const handleNavClick = (item: any) => {
     setActiveSection(item.id);
@@ -47,6 +57,14 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
   };
 
   const shouldShowExpanded = !isCollapsed && (isPinned || isHovered);
+
+  // Send sidebar state to parent components
+  useEffect(() => {
+    const event = new CustomEvent('sidebarStateChange', {
+      detail: { isCollapsed: !shouldShowExpanded }
+    });
+    window.dispatchEvent(event);
+  }, [shouldShowExpanded]);
 
   return (
     <aside 
@@ -88,8 +106,8 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
             </div>
             {shouldShowExpanded && (
               <div className="text-center">
-                <h3 className="font-bold text-gray-800 text-sm">{isLoggedIn && userData ? userData.name : 'Visitante'}</h3>
-                <p className="text-xs text-gray-600">{isLoggedIn && userData ? userData.motto : 'Não conectado'}</p>
+                <h3 className="font-bold text-gray-800 text-sm volter-font">{isLoggedIn && userData ? userData.name : 'Visitante'}</h3>
+                <p className="text-xs text-gray-600 volter-font">{isLoggedIn && userData ? userData.motto : 'Não conectado'}</p>
               </div>
             )}
           </div>
@@ -102,17 +120,21 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
               key={item.id}
               onClick={() => handleNavClick(item)}
               className={`
-                flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium border-0 outline-0
+                flex items-center rounded-lg transition-all duration-200 font-medium border-0 outline-0 overflow-hidden
                 ${activeSection === item.id 
                   ? 'bg-gray-300 text-gray-800 shadow-md' 
                   : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                 }
-                ${!shouldShowExpanded ? 'justify-center w-16 h-16' : ''}
+                ${!shouldShowExpanded ? 'justify-center w-16 h-16' : 'h-12'}
               `}
               title={!shouldShowExpanded ? item.label : ''}
             >
-              <img src={item.icon} alt={item.label} className="w-5 h-5" />
-              <span className={`${!shouldShowExpanded ? 'hidden' : 'block'} transition-all duration-300`}>{item.label}</span>
+              <div className={`flex items-center justify-center ${!shouldShowExpanded ? 'w-16 h-16' : 'w-12 h-12'}`}>
+                <img src={item.icon} alt={item.label} className="w-5 h-5" />
+              </div>
+              {shouldShowExpanded && (
+                <span className="ml-3 volter-font transition-all duration-300">{item.label}</span>
+              )}
             </button>
           ))}
         </nav>

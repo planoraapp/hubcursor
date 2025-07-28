@@ -9,7 +9,19 @@ import MobileLayout from '../layouts/MobileLayout';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   const renderSection = () => {
     const path = window.location.pathname;
@@ -31,7 +43,7 @@ const Index = () => {
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto ml-20">
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           {window.location.pathname === '/eventos' ? (
             <>
               <PageHeader 

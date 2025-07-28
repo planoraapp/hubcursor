@@ -7,15 +7,7 @@
 @font-face {
   font-family: 'Volter';
   src: url('/fonts/volter.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Volter';
-  src: url('/fonts/volter-bold.woff2') format('woff2');
-  font-weight: 700;
+  font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
@@ -41,20 +33,12 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 10.6% 64.9%;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -94,120 +78,56 @@
   }
 }
 
+.volter-font {
+  font-family: 'Volter', monospace;
+}
+
 .habbo-panel {
-  background: #f0f0f0;
-  border: 2px solid #5a5a5a;
-  border-right-color: #888888;
-  border-bottom-color: #888888;
-  box-shadow: inset 1px 1px 0px 0px #cccccc;
-  margin-bottom: 1rem;
+  @apply bg-gradient-to-b from-amber-50 to-amber-100 border-4 border-amber-200 rounded-lg shadow-lg;
 }
 
 .habbo-header {
-  background: linear-gradient(to bottom, #e0e0e0, #cccccc);
-  border-bottom: 1px solid #999999;
-  padding: 0.5rem 1rem;
-  font-weight: bold;
-  color: #333333;
-  text-align: center;
+  @apply bg-gradient-to-r from-amber-200 to-amber-300 px-4 py-2 border-b-2 border-amber-400;
 }
 
-.volter-font {
-  font-family: 'Volter', monospace;
-  font-weight: 400;
-}
-
-.volter-bold {
-  font-family: 'Volter', monospace;
-  font-weight: 700;
-}
-
-/* Habbo Speech Bubble Styles */
 .habbo-speech-bubble {
-  position: relative;
-  background: #ffffff;
-  border: 2px solid #000000;
-  border-radius: 12px;
-  padding: 8px 12px;
-  margin: 8px 0;
-  font-family: 'Volter', monospace;
-  font-size: 11px;
-  line-height: 1.2;
-  max-width: 200px;
-  word-wrap: break-word;
-}
-
-.habbo-speech-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 20px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid #ffffff;
+  @apply relative bg-white border-2 border-black rounded-lg px-4 py-2 volter-font text-sm;
 }
 
 .habbo-speech-bubble::before {
   content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 18px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid #000000;
+  @apply absolute -bottom-2 left-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-black;
 }
 
-/* Habbo Overlay Styles */
-.habbo-overlay {
-  position: relative;
-  display: inline-block;
+.habbo-speech-bubble::after {
+  content: '';
+  @apply absolute -bottom-1 left-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-white;
 }
 
-.habbo-overlay-content {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-family: 'Volter', monospace;
-  font-size: 10px;
-  white-space: nowrap;
-  z-index: 100;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.habbo-overlay:hover .habbo-overlay-content {
-  opacity: 1;
-}
-
-/* Habbo Title Styles */
 .habbo-title {
-  font-family: 'Volter', monospace;
-  font-weight: 700;
-  color: #333333;
-  text-shadow: 1px 1px 0px #ffffff;
-  letter-spacing: 0.5px;
-}
-
-.habbo-title-large {
-  font-size: 18px;
-  line-height: 1.1;
-}
-
-.habbo-title-medium {
-  font-size: 14px;
-  line-height: 1.2;
+  @apply volter-font font-bold text-center;
 }
 
 .habbo-title-small {
-  font-size: 12px;
-  line-height: 1.3;
+  @apply text-lg;
+}
+
+.habbo-title-medium {
+  @apply text-2xl;
+}
+
+.habbo-title-large {
+  @apply text-4xl;
+}
+
+.habbo-overlay {
+  @apply relative inline-block;
+}
+
+.habbo-overlay:hover .habbo-overlay-content {
+  @apply opacity-100 visible;
+}
+
+.habbo-overlay-content {
+  @apply absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 invisible transition-opacity duration-200 whitespace-nowrap volter-font;
 }
