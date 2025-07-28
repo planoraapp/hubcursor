@@ -1,6 +1,6 @@
 // src/components/ClothingMenu.tsx
 import React, { useState, useEffect } from 'react';
-import { clothingParts, colorPalettes, habboColorPalette, subNavCategories, ClothingPart } from '../data/clothingItems';
+import { clothingParts, colorPalettes, subNavCategories, ClothingPart, getHabboColorId } from '../data/clothingItems';
 
 interface ClothingMenuProps {
   currentLook: string;
@@ -13,149 +13,135 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
   const [activeMainCategory, setActiveMainCategory] = useState<string>('hd');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>(currentGender);
-  const [selectedPartForColor, setSelectedPartForColor] = useState<{ type: string; id: number; colors: string[] } | null>(null);
+  const [selectedPartForColor, setSelectedPartForColor] = useState<{ item: ClothingPart; currentColors: string[] } | null>(null);
 
-  // Efeito para sincronizar o gênero com o componente pai
   useEffect(() => {
     setSelectedGender(currentGender);
   }, [currentGender]);
 
-  // Função para gerar a URL da miniatura de uma peça de roupa
-  const getPreviewUrl = (itemType: string, itemId: number, gender: 'M' | 'F', colorId: string = '22') => {
-    return `https://www.habbo.fr/habbo-imaging/avatarimage?figure=${itemType}-${itemId}-${colorId}&gender=${gender}&size=s&headonly=0`;
+  // Função para gerar a URL da miniatura de uma peça de roupa usando habboapi.net
+  const getPreviewUrl = (item: ClothingPart) => {
+    // Se o item tiver um catalogName, usamos a habboapi.net.
+    // Caso contrário, voltamos a usar o Habbo Imaging com um fallback de cor.
+    if (item.catalogName) {
+      return `https://api.habboapi.net/furni/${item.catalogName}/icon`;
+    }
+    // Fallback para Habbo Imaging se não houver catalogName
+    const previewColor = getHabboColorId('000000'); // Padrão preto
+    let colorsPart = '';
+    if (item.colorSlots && item.colorSlots >= 1) colorsPart = `${previewColor}`;
+    if (item.colorSlots && item.colorSlots >= 2) colorsPart += `-${previewColor}`;
+    if (item.colorSlots && item.colorSlots >= 3) colorsPart += `-${previewColor}`;
+    
+    const finalColorsString = colorsPart ? `${colorsPart}-` : ''; // Adiciona traço se houver cores
+
+    return `https://sandbox.habbo.com/habbo-imaging/avatarimage?figure=${item.type}-${item.id}-${finalColorsString}&gender=${currentGender}&size=s&headonly=0`;
   };
 
-  // Lida com a mudança da categoria principal (botões superiores)
+
   const handleMainCategoryClick = (type: string) => {
     setActiveMainCategory(type);
-    setSearchTerm(''); // Limpa a busca ao mudar de categoria
-    setSelectedPartForColor(null); // Desseleciona a peça para cor ao mudar de categoria
+    setSearchTerm('');
+    setSelectedPartForColor(null);
   };
 
-  // Lida com a seleção de gênero (quando na categoria "Corpo/Rostos")
   const handleGenderSelect = (gender: 'M' | 'F') => {
     setSelectedGender(gender);
-    onGenderChange(gender); // Informa o componente pai sobre a mudança de gênero
+    onGenderChange(gender);
     setSelectedPartForColor(null);
   };
 
   const handleItemClick = (item: ClothingPart) => {
     const currentLookParts = currentLook.split('.').filter(part => part !== '');
     const itemType = item.type;
+
     let newLookParts = [...currentLookParts];
     let itemFoundAndReplaced = false;
 
-    // Busca cores atuais da peça no look
-    let currentColors: string[] = [];
-    for (const part of currentLookParts) {
-      if (part.startsWith(itemType + '-')) {
-        const partSegments = part.split('-');
-        currentColors = partSegments.slice(2).filter(Boolean);
-        break;
+    const numberOfColorsExpected = item.colorSlots !== undefined ? item.colorSlots : 1;
+
+    let colorsToApply: string[] = [];
+    const existingPart = currentLookParts.find(part => part.startsWith(itemType + '-'));
+    if (existingPart) {
+      const existingColors = existingPart.split('-').slice(2).filter(Boolean);
+      for (let i = 0; i < numberOfColorsExpected; i++) {
+        colorsToApply.push(existingColors[i] || getHabboColorId('000000'));
       }
-    }
-
-    // Constrói a string da peça baseado nos colorSlots
-    let newItemString = `${item.type}-${item.id}`;
-    let colorsForSelection: string[] = [];
-
-    if (item.colorSlots === 0) {
-      // Sem cores
-      newItemString = `${item.type}-${item.id}`;
-    } else if (item.colorSlots === 1) {
-      const color1 = currentColors[0] || '22';
-      newItemString = `${item.type}-${item.id}-${color1}`;
-      colorsForSelection = [color1];
-    } else if (item.colorSlots === 2) {
-      const color1 = currentColors[0] || '22';
-      const color2 = currentColors[1] || 'undefined';
-      newItemString = `${item.type}-${item.id}-${color1}-${color2}`;
-      colorsForSelection = [color1, color2];
-    } else if (item.colorSlots === 3) {
-      const color1 = currentColors[0] || '22';
-      const color2 = currentColors[1] || 'undefined';
-      const color3 = currentColors[2] || 'undefined';
-      newItemString = `${item.type}-${item.id}-${color1}-${color2}-${color3}`;
-      colorsForSelection = [color1, color2, color3];
     } else {
-      // Fallback para casos não definidos
-      const color1 = currentColors[0] || '22';
-      newItemString = `${item.type}-${item.id}-${color1}`;
-      colorsForSelection = [color1];
+      colorsToApply = Array(numberOfColorsExpected).fill(getHabboColorId('000000'));
     }
 
-    // Substitui ou adiciona a peça no look
+    const colorsString = numberOfColorsExpected > 0 ? colorsToApply.join('-') : '';
+    let finalItemString = `${item.type}-${item.id}`;
+    if (numberOfColorsExpected > 0) {
+        finalItemString += `-${colorsString}`;
+        // Adiciona traços finais para garantir o formato da API do Habbo Imaging
+        if (numberOfColorsExpected === 1) finalItemString += '-'; // Para TYPE-ID-C1-
+        if (numberOfColorsExpected === 2) finalItemString += '-'; // Para TYPE-ID-C1-C2-
+    }
+
     for (let i = 0; i < newLookParts.length; i++) {
       if (newLookParts[i].startsWith(itemType + '-')) {
-        newLookParts[i] = newItemString;
+        newLookParts[i] = finalItemString;
         itemFoundAndReplaced = true;
         break;
       }
     }
 
     if (!itemFoundAndReplaced) {
-      newLookParts.push(newItemString);
+      newLookParts.push(finalItemString);
     }
 
     const newLook = newLookParts.join('.');
     onLookChange(newLook);
-    setSelectedPartForColor({ type: item.type, id: item.id, colors: colorsForSelection });
+    setSelectedPartForColor({ item: item, currentColors: colorsToApply });
   };
 
-  // Lida com o clique em uma cor na paleta de cores
-  const handleColorClick = (colorId: string, colorIndex: number = 0) => {
+
+  const handleColorClick = (colorHex: string, colorIndex: number) => {
     if (selectedPartForColor) {
-      const currentLookParts = currentLook.split('.').filter(part => part !== '');
-      let newLookParts = [...currentLookParts];
-      let partUpdated = false;
-
-      const { type, id, colors } = selectedPartForColor;
-      const updatedColors = [...colors];
-      const partDefinition = clothingParts.find(p => p.type === type && p.id === id);
+      const { item, currentColors } = selectedPartForColor;
+      const newColors = [...currentColors];
       
-      // Atualiza a cor no índice especificado
-      updatedColors[colorIndex] = colorId;
+      const habboColorId = getHabboColorId(colorHex);
+      newColors[colorIndex] = habboColorId;
 
-      let newPartString = '';
-      if (partDefinition?.colorSlots === 0) {
-        newPartString = `${type}-${id}`;
-      } else if (partDefinition?.colorSlots === 1) {
-        newPartString = `${type}-${id}-${updatedColors[0] || '22'}`;
-      } else if (partDefinition?.colorSlots === 2) {
-        newPartString = `${type}-${id}-${updatedColors[0] || '22'}-${updatedColors[1] || 'undefined'}`;
-      } else if (partDefinition?.colorSlots === 3) {
-        newPartString = `${type}-${id}-${updatedColors[0] || '22'}-${updatedColors[1] || 'undefined'}-${updatedColors[2] || 'undefined'}`;
-      } else {
-        newPartString = `${type}-${id}-${updatedColors[0] || '22'}`;
+      const numberOfColorsExpected = item.colorSlots !== undefined ? item.colorSlots : 1;
+      while (newColors.length < numberOfColorsExpected) {
+          newColors.push(getHabboColorId('000000'));
       }
 
-      for (let i = 0; i < newLookParts.length; i++) {
-        const part = newLookParts[i];
-        if (part.startsWith(`${type}-${id}-`) || part === `${type}-${id}`) {
-          newLookParts[i] = newPartString;
-          partUpdated = true;
-          break;
+      const colorsString = newColors.slice(0, numberOfColorsExpected).join('-');
+      let newPartString = `${item.type}-${item.id}`;
+      if (numberOfColorsExpected > 0) {
+          newPartString += `-${colorsString}`;
+          if (numberOfColorsExpected === 1) newPartString += '-';
+          if (numberOfColorsExpected === 2) newPartString += '-';
+      }
+
+      const currentLookParts = currentLook.split('.').filter(part => part !== '');
+      const updatedLookParts = currentLookParts.map(part => {
+        if (part.startsWith(`${item.type}-${item.id}-`)) {
+          return newPartString;
         }
-      }
+        return part;
+      });
 
-      if (partUpdated) {
-        onLookChange(newLookParts.join('.'));
-        setSelectedPartForColor(prev => prev ? { ...prev, colors: updatedColors } : null);
-      }
+      onLookChange(updatedLookParts.join('.'));
+      setSelectedPartForColor({ item: item, currentColors: newColors });
     } else {
       alert('Selecione uma peça de roupa no menu para alterar sua cor.');
     }
   };
 
-  // Filtra os itens de roupa com base na categoria principal ativa, termo de busca e gênero
+
   const filteredItems = clothingParts.filter(item => {
-    const matchesCategory = item.type === activeMainCategory; // Filtra pela categoria principal
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = item.type === activeMainCategory;
+    const matchesSearch = searchTerm ? item.name.toLowerCase().includes(searchTerm.toLowerCase()) : true;
     const matchesGender = item.gender === 'U' || item.gender === selectedGender;
     return matchesCategory && matchesSearch && matchesGender;
   });
 
-  // Agrupa os itens filtrados por categoria de preço (HC, Vendável, etc.)
   const groupedItems = filteredItems.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = [];
@@ -166,7 +152,6 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-4">
-      {/* Navegação Principal (Botões de Categoria - Gênero, Cabelo, Tops, etc.) */}
       <div className="flex space-x-2 bg-gray-100 p-2 rounded mb-4 overflow-x-auto">
         {Object.keys(subNavCategories).map(type => (
           <button
@@ -179,7 +164,6 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
         ))}
       </div>
 
-      {/* Conteúdo Principal do Menu de Roupas */}
       <div style={{ maxHeight: '325px', maxWidth: '525px', overflowY: 'auto' }} className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
         <input
           type="text"
@@ -189,7 +173,7 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
           onChange={(e) => setSearchTerm(e.target.value)}
         />
 
-        {activeMainCategory === 'hd' && ( // Exibir seleção de gênero apenas para 'hd' (Corpo/Rostos)
+        {activeMainCategory === 'hd' && (
           <div className="mb-4">
             <h4 className="font-bold text-gray-800 mb-2">Selecione o Gênero:</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -229,7 +213,7 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
                     <button
                       key={`${item.type}-${item.id}-${item.category}`}
                       className={`flex flex-col items-center justify-center p-1 border rounded hover:bg-gray-100 ${
-                        selectedPartForColor?.type === item.type && selectedPartForColor?.id === item.id
+                        selectedPartForColor?.item.type === item.type && selectedPartForColor?.item.id === item.id
                           ? 'border-blue-500 ring-2 ring-blue-500'
                           : 'border-gray-200'
                       }`}
@@ -237,7 +221,7 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
                       title={item.name}
                     >
                       <img
-                        src={getPreviewUrl(item.type, item.id, selectedGender)}
+                        src={getPreviewUrl(item)} // Sem o gender aqui, pois a API habboapi.net não precisa
                         alt={item.name}
                         className="w-12 h-12 object-contain"
                         style={{ imageRendering: 'pixelated' }}
@@ -265,130 +249,43 @@ const ClothingMenu: React.FC<ClothingMenuProps> = ({ currentLook, onLookChange, 
         {selectedPartForColor ? (
           <div>
             <p className="text-sm mb-2 text-gray-700">
-              Editando: **{clothingParts.find(p => p.type === selectedPartForColor.type && p.id === selectedPartForColor.id)?.name || 'Peça Desconhecida'}**
+              Editando: **{selectedPartForColor.item.name}**
             </p>
-            {/* Paleta de Cores Primária */}
-            <div className="w-full text-sm font-medium mb-2">Cor Principal:</div>
-            <div className="grid grid-cols-8 gap-1 mb-4">
-              {colorPalettes.basic.map(color => (
-                <button
-                  key={`basic-p-${color.id}`}
-                  className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                  style={{ backgroundColor: `#${color.hex}` }}
-                  onClick={() => handleColorClick(color.id, 0)}
-                  title={`${color.name} (${color.id})`}
-                ></button>
-              ))}
-            </div>
-            
-            <div className="w-full text-sm font-medium mb-2">Cores Premium:</div>
-            <div className="grid grid-cols-8 gap-1 mb-4">
-              {colorPalettes.premium.map(color => (
-                <button
-                  key={`premium-p-${color.id}`}
-                  className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                  style={{ backgroundColor: `#${color.hex}` }}
-                  onClick={() => handleColorClick(color.id, 0)}
-                  title={`${color.name} (${color.id})`}
-                ></button>
-              ))}
-            </div>
-
-            <div className="w-full text-sm font-medium mb-2">Cores HC:</div>
-            <div className="grid grid-cols-8 gap-1 mb-4">
-              {colorPalettes.hc.map(color => (
-                <button
-                  key={`hc-p-${color.id}`}
-                  className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                  style={{ backgroundColor: `#${color.hex}` }}
-                  onClick={() => handleColorClick(color.id, 0)}
-                  title={`${color.name} (${color.id})`}
-                ></button>
-              ))}
-            </div>
-
-            {/* Paleta de Cores Secundária (se a peça tiver mais de 1 slot de cor) */}
-            {selectedPartForColor.colors.length > 1 && (
-              <>
-                <div className="w-full text-sm font-medium mb-2 mt-4">Cor Secundária:</div>
-                <div className="grid grid-cols-8 gap-1 mb-2">
-                  {colorPalettes.basic.map(color => (
+            {Array.from({ length: selectedPartForColor.item.colorSlots }).map((_, colorIndex) => (
+              <div key={colorIndex}>
+                <div className="w-full text-sm font-medium mb-2">
+                  Cor {colorIndex === 0 ? 'Principal' : colorIndex === 1 ? 'Secundária' : 'Terciária'}:
+                </div>
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {colorPalettes.nonHc.map(color => (
                     <button
-                      key={`basic-s-${color.id}`}
+                      key={`nonhc-${colorIndex}-${color}`}
                       className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                      style={{ backgroundColor: `#${color.hex}` }}
-                      onClick={() => handleColorClick(color.id, 1)}
-                      title={`${color.name} (${color.id})`}
+                      style={{ backgroundColor: `#${color}` }}
+                      onClick={() => handleColorClick(color, colorIndex)}
+                      title={`#${color}`}
                     ></button>
                   ))}
                 </div>
-                <div className="grid grid-cols-8 gap-1 mb-2">
-                  {colorPalettes.premium.map(color => (
-                    <button
-                      key={`premium-s-${color.id}`}
-                      className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                      style={{ backgroundColor: `#${color.hex}` }}
-                      onClick={() => handleColorClick(color.id, 1)}
-                      title={`${color.name} (${color.id})`}
-                    ></button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-8 gap-1">
+                <div className="flex flex-wrap gap-1 mb-4">
                   {colorPalettes.hc.map(color => (
                     <button
-                      key={`hc-s-${color.id}`}
+                      key={`hc-${colorIndex}-${color}`}
                       className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                      style={{ backgroundColor: `#${color.hex}` }}
-                      onClick={() => handleColorClick(color.id, 1)}
-                      title={`${color.name} (${color.id})`}
+                      style={{ backgroundColor: `#${color}` }}
+                      onClick={() => handleColorClick(color, colorIndex)}
+                      title={`#${color}`}
                     ></button>
                   ))}
                 </div>
-              </>
-            )}
-
-            {/* Paleta de Cores Terciária (se a peça tiver 3 slots de cor) */}
-            {selectedPartForColor.colors.length > 2 && (
-              <>
-                <div className="w-full text-sm font-medium mb-2 mt-4">Cor Terciária:</div>
-                <div className="grid grid-cols-8 gap-1 mb-2">
-                  {colorPalettes.basic.map(color => (
-                    <button
-                      key={`basic-t-${color.id}`}
-                      className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                      style={{ backgroundColor: `#${color.hex}` }}
-                      onClick={() => handleColorClick(color.id, 2)}
-                      title={`${color.name} (${color.id})`}
-                    ></button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-8 gap-1 mb-2">
-                  {colorPalettes.premium.map(color => (
-                    <button
-                      key={`premium-t-${color.id}`}
-                      className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                      style={{ backgroundColor: `#${color.hex}` }}
-                      onClick={() => handleColorClick(color.id, 2)}
-                      title={`${color.name} (${color.id})`}
-                    ></button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-8 gap-1">
-                  {colorPalettes.hc.map(color => (
-                    <button
-                      key={`hc-t-${color.id}`}
-                      className="w-6 h-6 border rounded-full focus:ring-2 ring-blue-500 ring-offset-1"
-                      style={{ backgroundColor: `#${color.hex}` }}
-                      onClick={() => handleColorClick(color.id, 2)}
-                      title={`${color.name} (${color.id})`}
-                    ></button>
-                  ))}
-                </div>
-              </>
-            )}
+              </div>
+            ))}
+             {selectedPartForColor.item.colorSlots === 0 && (
+                <p className="text-gray-500 text-sm">Esta peça não possui opções de cor.</p>
+             )}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">Selecione uma peça de roupa no menu acima para alterar sua cor.</p>
+          <p className="text-gray-500 text-sm">Selecione uma peça de roupa no menu para alterar sua cor.</p>
         )}
       </div>
     </div>

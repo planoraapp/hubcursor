@@ -1,4 +1,4 @@
-import { AvatarEditor } from '../components/AvatarEditor';
+import AvatarEditor from '../components/AvatarEditor';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
