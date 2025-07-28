@@ -26,7 +26,6 @@ export const AvatarEditor = () => {
     const baseUrl = `https://www.${selectedHotel}/habbo-imaging/avatarimage`;
     const params = new URLSearchParams({
       user: username,
-      action: action,
       direction: '2',
       head_direction: '3',
       img_format: 'png',
@@ -35,6 +34,15 @@ export const AvatarEditor = () => {
       headonly: '0',
       size: 'm'
     });
+
+    // Adicionar parâmetros apenas se tiverem valor
+    if (action) params.append('action', action);
+    if (bodyAction) params.append('action', `${action},${bodyAction}`);
+    if (leftHand) params.append('action', `${params.get('action') || ''},${leftHand}`);
+    if (rightHand) params.append('action', `${params.get('action') || ''},${rightHand}`);
+    if (sign) params.append('sign', sign);
+    if (handItem) params.append('item', handItem);
+    
     return `${baseUrl}?${params.toString()}`;
   };
 
