@@ -48,8 +48,8 @@ const HabboHubEditor: React.FC = () => {
   const [headDirection, setHeadDirection] = useState(3);
 
   // Looks padrão usando IDs numéricos de cor mapeados do HABBO_COLOR_MAP
-  const defaultMaleLook = `hd-180-${getHabboColorId('F5DA88')}-.hr-678-${getHabboColorId('000000')}-${getHabboColorId('828282')}-.ch-3006-${getHabboColorId('000000')}-${getHabboColorId('828282')}-.lg-275-${getHabboColorId('000000')}-.sh-3059-${getHabboColorId('000000')}-`;
-  const defaultFemaleLook = `hd-600-${getHabboColorId('F5DA88')}-.hr-5773-${getHabboColorId('000000')}-${getHabboColorId('828282')}-.ch-800-${getHabboColorId('000000')}-.lg-900-${getHabboColorId('000000')}-.sh-100-${getHabboColorId('000000')}-`;
+  const defaultMaleLook = `hd-180-${getHabboColorId('000000')}-.hr-3791-${getHabboColorId('45')}-${getHabboColorId('0')}-.ha-1008-${getHabboColorId('000000')}-.ch-3030-${getHabboColorId('000000')}-${getHabboColorId('0')}-.lg-3138-${getHabboColorId('000000')}-${getHabboColorId('0')}-.sh-905-${getHabboColorId('000000')}-${getHabboColorId('0')}-`;
+  const defaultFemaleLook = `hd-600-${getHabboColorId('000000')}-.hr-5773-${getHabboColorId('000000')}-${getHabboColorId('828282')}-.ch-800-${getHabboColorId('000000')}-.lg-900-${getHabboColorId('000000')}-.sh-100-${getHabboColorId('000000')}-.ha-101-${getHabboColorId('000000')}-`;
 
   useEffect(() => {
     if (currentGender === 'M') {
@@ -207,7 +207,7 @@ const HabboHubEditor: React.FC = () => {
     ct: 'tops.png',
   };
 
-  const mainCategories = ['hd', 'hr', 'ch', 'lg', 'sh', 'ha', 'ea', 'fa'];
+  const mainCategories = Object.keys(subNavCategories);
 
   return (
     <main className="flex flex-col lg:flex-row h-full justify-evenly select-none gap-4 p-4">
@@ -280,7 +280,7 @@ const HabboHubEditor: React.FC = () => {
       {/* Coluna Central: Seletor de Roupas */}
       <div className="w-full lg:w-5/12 max-h-[32rem] h-[32rem] bg-gray-50 order-1 lg:order-2">
         <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-8 h-[2.5rem] shadow-inner bg-gray-200">
-          {mainCategories.map(type => (
+          {mainCategories.slice(0, 8).map(type => (
             <button
               key={type}
               className={`p-1 cursor-pointer hover:bg-gray-100 flex items-center justify-center ${activeCategory === type ? 'bg-gray-100 shadow-inner' : ''}`}
