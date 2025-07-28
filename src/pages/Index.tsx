@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { HomePage } from '../components/HomePage';
@@ -30,7 +31,7 @@ const Index = () => {
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto ml-20">
           {window.location.pathname === '/eventos' ? (
             <>
               <PageHeader 

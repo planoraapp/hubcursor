@@ -15,6 +15,7 @@ import Mercado from "./pages/Mercado";
 import Ferramentas from "./pages/Ferramentas";
 import ConnectHabbo from "./pages/ConnectHabbo";
 import Profile from "./pages/Profile";
+import Eventos from "./pages/Eventos";
 
 const queryClient = new QueryClient();
 
@@ -27,7 +28,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/noticias" element={<Noticias />} />
-          <Route path="/eventos" element={<Index />} />
+          <Route path="/eventos" element={<Eventos />} />
           <Route path="/forum" element={<Forum />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/emblemas" element={<Emblemas />} />
