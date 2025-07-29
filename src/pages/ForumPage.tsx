@@ -12,6 +12,8 @@ import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
+import { ForumCategoryCard } from '../components/forum/ForumCategoryCard';
+import { PostCard } from '../components/forum/PostCard';
 
 interface ForumPost {
   id: string;
@@ -23,219 +25,6 @@ interface ForumPost {
   created_at: string;
   likes: number;
   category?: string;
-}
-
-interface ForumComment {
-  id: string;
-  post_id: string;
-  content: string;
-  author_supabase_user_id: string;
-  author_habbo_name: string;
-  created_at: string;
-}
-
-// Componente para Card de Categoria do Fórum
-function ForumCategoryCard({ icon, title, description, topics, posts, lastPostTime, bgColorClass = "bg-blue-100" }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  topics: number;
-  posts: number;
-  lastPostTime: string;
-  bgColorClass?: string;
-}) {
-  return (
-    <div className="bg-white border border-gray-900 rounded-lg shadow-md overflow-hidden">
-      <div className={`p-4 ${bgColorClass}`}>
-        {icon}
-      </div>
-      <div className="p-4">
-        <h3 className="font-bold text-gray-800 mb-2 volter-font">{title}</h3>
-        <p className="text-sm text-gray-600 mb-3">{description}</p>
-        <div className="text-xs text-gray-500 space-y-1">
-          <div className="flex justify-between"><span>Tópicos:</span><span className="font-medium">{topics}</span></div>
-          <div className="flex justify-between"><span>Posts:</span><span className="font-medium">{posts}</span></div>
-          <div className="flex justify-between"><span>Último post:</span><span className="font-medium">{lastPostTime}</span></div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Componente para um card de Post
-function PostCard({ post, onLike, currentUserId }: { 
-  post: ForumPost; 
-  onLike: (postId: string) => void; 
-  currentUserId: string | null; 
-}) {
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<ForumComment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [isCommenting, setIsCommenting] = useState(false);
-  const { toast } = useToast();
-  const { habboAccount } = useAuth();
-
-  const fetchComments = async () => {
-    if (!showComments) return;
-    
-    setLoadingComments(true);
-    const { data, error } = await supabase
-      .from('forum_comments')
-      .select('*')
-      .eq('post_id', post.id)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching comments:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar comentários",
-        variant: "destructive"
-      });
-    } else {
-      setComments(data || []);
-    }
-    setLoadingComments(false);
-  };
-
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !currentUserId || !habboAccount) {
-      toast({
-        title: "Erro",
-        description: "Você precisa estar logado para comentar",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsCommenting(true);
-    const { data, error } = await supabase
-      .from('forum_comments')
-      .insert({
-        post_id: post.id,
-        content: newComment.trim(),
-        author_supabase_user_id: currentUserId,
-        author_habbo_name: habboAccount.habbo_name,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding comment:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao adicionar comentário",
-        variant: "destructive"
-      });
-    } else {
-      setComments([...comments, data]);
-      setNewComment('');
-      toast({
-        title: "Sucesso",
-        description: "Comentário adicionado com sucesso!"
-      });
-    }
-    setIsCommenting(false);
-  };
-
-  useEffect(() => {
-    fetchComments();
-  }, [showComments]);
-
-  return (
-    <div className="bg-white border border-gray-900 rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4">
-        {post.image_url && (
-          <div className="flex-shrink-0 w-full md:w-48 h-48 md:h-auto overflow-hidden rounded-lg">
-            <img 
-              src={post.image_url} 
-              alt={post.title} 
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xl font-bold text-gray-800 volter-font">{post.title}</h3>
-            {post.category && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                {post.category}
-              </span>
-            )}
-          </div>
-          <p className="text-gray-700 text-sm mb-3">{post.content}</p>
-          <div className="text-xs text-gray-500 mb-4">
-            Por <span className="font-semibold">{post.author_habbo_name}</span> em{' '}
-            {new Date(post.created_at).toLocaleDateString('pt-BR')}
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onLike(post.id)}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-800"
-              disabled={!currentUserId}
-            >
-              <Heart className="h-4 w-4" />
-              <span>{post.likes}</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComments(!showComments)}
-              className="flex items-center space-x-1 text-gray-600 hover:text-gray-800"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>{comments.length}</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {showComments && (
-        <div className="border-t border-gray-200 p-4 md:p-6 bg-gray-50">
-          <h4 className="font-semibold mb-3 volter-font">Comentários</h4>
-          {loadingComments ? (
-            <p className="text-gray-500">Carregando comentários...</p>
-          ) : (
-            <div className="space-y-3 mb-4">
-              {comments.map(comment => (
-                <div key={comment.id} className="bg-white p-3 rounded-lg border border-gray-200">
-                  <p className="text-sm">{comment.content}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Por {comment.author_habbo_name} em{' '}
-                    {new Date(comment.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {currentUserId ? (
-            <div className="flex space-x-2">
-              <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Escreva um comentário..."
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddComment} 
-                size="sm"
-                disabled={isCommenting}
-                className="bg-green-600 hover:bg-green-700 text-white volter-font"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">Faça login para comentar</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default function ForumPage() {
@@ -496,11 +285,11 @@ export default function ForumPage() {
   const renderContent = () => (
     <div className="space-y-6">
       {/* Seção de Categorias do Fórum */}
-      <div className="bg-white border border-gray-900 rounded-lg shadow-md">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-4 rounded-t-lg">
-          <h2 className="text-xl font-bold text-white volter-font">Categorias do Fórum</h2>
-        </div>
-        <div className="p-6">
+      <Card className="bg-white border-gray-900">
+        <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+          <CardTitle className="volter-font">Categorias do Fórum</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {forumCategories.map(category => (
               <ForumCategoryCard
@@ -515,15 +304,15 @@ export default function ForumPage() {
               />
             ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Seção de Criar Novo Post */}
-      <div className="bg-white border border-gray-900 rounded-lg shadow-md">
-        <div className="bg-gradient-to-r from-green-500 to-blue-500 px-6 py-4 rounded-t-lg">
-          <h2 className="text-xl font-bold text-white volter-font">Criar Novo Post</h2>
-        </div>
-        <div className="p-6">
+      <Card className="bg-white border-gray-900">
+        <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
+          <CardTitle className="volter-font">Criar Novo Post</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
           {isLoggedIn ? (
             <div className="space-y-4">
               <select
@@ -541,7 +330,6 @@ export default function ForumPage() {
                 value={newPostTitle}
                 onChange={(e) => setNewPostTitle(e.target.value)}
                 placeholder="Título do post"
-                className="w-full"
                 disabled={isCreatingPost}
               />
               
@@ -550,7 +338,6 @@ export default function ForumPage() {
                 onChange={(e) => setNewPostContent(e.target.value)}
                 placeholder="Conteúdo do post"
                 rows={4}
-                className="w-full"
                 disabled={isCreatingPost}
               />
               
@@ -598,14 +385,14 @@ export default function ForumPage() {
               <p className="text-gray-500">Faça login para criar um post no fórum</p>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Seção de Posts */}
-      <div className="bg-white border border-gray-900 rounded-lg shadow-md">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4 rounded-t-lg">
+      <Card className="bg-white border-gray-900">
+        <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-xl font-bold text-white volter-font">Tópicos Recentes</h2>
+            <CardTitle className="volter-font">Tópicos Recentes</CardTitle>
             <div className="flex flex-wrap gap-2">
               {['Todos', 'Geral', 'Suporte', 'Eventos'].map(category => (
                 <button
@@ -622,8 +409,8 @@ export default function ForumPage() {
               ))}
             </div>
           </div>
-        </div>
-        <div className="p-6">
+        </CardHeader>
+        <CardContent className="p-6">
           {loading ? (
             <div className="text-center py-8">
               <p className="text-gray-500">Carregando posts...</p>
@@ -644,8 +431,8 @@ export default function ForumPage() {
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 

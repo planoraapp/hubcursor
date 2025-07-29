@@ -128,7 +128,7 @@ export const useSupabaseAuth = () => {
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 [Auth] Creating link: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Only habbohub gets admin privileges
+    // Only habbohub gets admin privileges - FIXED: precise detection
     const isAdmin = habboName.toLowerCase() === 'habbohub';
     
     const maxRetries = 5;
@@ -255,22 +255,6 @@ export const useSupabaseAuth = () => {
   const verifyHabboMotto = async (habboName: string, verificationCode: string) => {
     try {
       console.log(`🔍 [MOTTO] Verifying motto for ${habboName} with code: ${verificationCode}`);
-      
-      // Special handling for habbohub admin user - skip API verification
-      if (habboName.toLowerCase() === 'habbohub') {
-        console.log(`👑 [Admin] Skipping API verification for admin user: ${habboName}`);
-        // Return a mock user object for admin
-        return {
-          id: `habbohub-admin-${Date.now()}`,
-          name: habboName,
-          uniqueId: `habbohub-admin-${habboName}-${Date.now()}`,
-          motto: verificationCode,
-          online: true,
-          memberSince: new Date().toISOString(),
-          selectedBadges: [],
-          badges: []
-        };
-      }
       
       const habboUser = await getUserByName(habboName);
       
