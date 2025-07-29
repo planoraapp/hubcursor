@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { LanguageSelector } from './LanguageSelector';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
+import { getUserByName } from '../services/habboApi';
 
 interface CollapsibleSidebarProps {
   activeSection: string;
@@ -15,9 +16,19 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [habboData, setHabboData] = useState<any>(null);
   const { t } = useLanguage();
-  const { isLoggedIn, userData, isAdmin } = useAuth();
+  const { isLoggedIn, habboAccount, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch current Habbo data when logged in
+  useEffect(() => {
+    if (isLoggedIn && habboAccount) {
+      getUserByName(habboAccount.habbo_name).then(data => {
+        setHabboData(data);
+      }).catch(console.error);
+    }
+  }, [isLoggedIn, habboAccount]);
 
   const navItems = [
     { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
@@ -97,17 +108,20 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
             <div className="relative mb-2">
               <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
                 <img
-                  src={isLoggedIn && userData ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1` : '/assets/frank.png'}
-                  alt={isLoggedIn && userData ? userData.name : 'Frank'}
-                  className="w-full h-full object-cover object-top scale-110 translate-y-1"
+                  src={isLoggedIn && habboData ? 
+                    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+                    : '/assets/frank.png'
+                  }
+                  alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
+                  className="w-full h-full object-cover object-center"
                 />
               </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isLoggedIn && userData ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
             </div>
             {shouldShowExpanded && (
               <div className="text-center">
-                <h3 className="font-bold text-gray-800 text-sm volter-font">{isLoggedIn && userData ? userData.name : 'Visitante'}</h3>
-                <p className="text-xs text-gray-600 volter-font">{isLoggedIn && userData ? userData.motto : 'Não conectado'}</p>
+                <h3 className="font-bold text-gray-800 text-sm volter-font">{isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Visitante'}</h3>
+                <p className="text-xs text-gray-600 volter-font">{isLoggedIn && habboData ? habboData.motto : 'Não conectado'}</p>
               </div>
             )}
           </div>

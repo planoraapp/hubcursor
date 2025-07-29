@@ -45,7 +45,15 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
           className="w-12 h-12 rounded-lg bg-white/80 hover:bg-white hover:shadow-sm transition-all duration-200 flex items-center justify-center"
           title={isLoggedIn ? 'Meu Perfil' : 'Entrar'}
         >
-          {isLoggedIn ? <User size={20} /> : <LogIn size={20} />}
+          {isLoggedIn && habboData ? (
+            <img 
+              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1`}
+              alt={habboAccount?.habbo_name || 'Avatar'}
+              className="w-8 h-8 rounded border"
+            />
+          ) : (
+            <User size={20} />
+          )}
         </button>
       </div>
     );
@@ -57,7 +65,7 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
         <div className="space-y-3">
           <div className="flex items-center space-x-3">
             <img 
-              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1`}
+              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1`}
               alt={habboAccount.habbo_name}
               className="w-10 h-10 rounded border-2 border-gray-300"
             />

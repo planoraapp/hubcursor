@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useNavigate } from 'react-router-dom';
 
 const generateVerificationCode = () => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -24,6 +25,7 @@ export const ConnectHabboForm = () => {
   const [isAdminUser, setIsAdminUser] = useState(false);
   
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { 
     user, 
     habboAccount, 
@@ -60,34 +62,13 @@ export const ConnectHabboForm = () => {
   useEffect(() => {
     if (user && habboAccount) {
       addLog(`✅ Usuário já logado: ${habboAccount.habbo_name}`);
-      setStep(5);
+      navigate('/');
     }
-  }, [user, habboAccount]);
+  }, [user, habboAccount, navigate]);
 
-  // Se já está logado, mostrar estado de sucesso
+  // Se já está logado, não mostrar o form
   if (user && habboAccount) {
-    return (
-      <div className="max-w-md mx-auto bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Bem-vindo de Volta!</h2>
-        <p className="text-gray-600 mb-6">
-          Você já está logado no Habbo Hub como <strong>{habboAccount.habbo_name}</strong>.
-        </p>
-        <div className="space-y-3">
-          <button
-            onClick={() => window.location.href = `/profile/${habboAccount.habbo_name}`}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Ver Meu Perfil
-          </button>
-          <button
-            onClick={() => signOut()}
-            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Sair
-          </button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const handleInitiateVerification = async (e: React.FormEvent) => {
@@ -232,12 +213,31 @@ export const ConnectHabboForm = () => {
         const linkedAccount = await getLinkedAccount(userHabboId);
         
         if (linkedAccount) {
-          addLog('🔗 Vínculo existente detectado. Redirecionando para login.');
-          setStep(3);
-          toast({
-            title: "Sucesso",
-            description: "Código verificado! Digite sua senha do Habbo Hub para acessar."
-          });
+          addLog('🔗 Vínculo existente detectado. Iniciando login automático...');
+          
+          // Automaticamente tentar fazer login com a conta vinculada
+          try {
+            addLog('🔐 Tentando login automático...');
+            await signInWithHabbo(userHabboId, 'temp_password_placeholder');
+            
+            // Se chegou aqui, o login foi bem-sucedido
+            addLog('✅ Login automático realizado com sucesso!');
+            toast({
+              title: "Sucesso",
+              description: "Login realizado com sucesso!"
+            });
+            
+            // Redirecionar para home
+            navigate('/');
+            
+          } catch (loginError) {
+            addLog('❌ Login automático falhou, solicitando senha...');
+            setStep(3);
+            toast({
+              title: "Senha Necessária",
+              description: "Digite sua senha do Habbo Hub para acessar."
+            });
+          }
         } else {
           addLog('✨ Nenhum vínculo existente. Redirecionando para criação de conta.');
           setStep(4);
@@ -287,10 +287,8 @@ export const ConnectHabboForm = () => {
           description: isAdminUser ? "Login administrativo realizado com sucesso!" : "Login realizado com sucesso!"
         });
         
-        // Aguardar um pouco para sincronização e depois redirecionar
-        setTimeout(() => {
-          window.location.href = `/profile/${habboName}`;
-        }, 1000);
+        // Redirecionar para home
+        navigate('/');
         
       } else if (step === 4) {
         addLog('➡️ Tentando criar nova conta...');
@@ -322,10 +320,8 @@ export const ConnectHabboForm = () => {
           duration: 3000
         });
         
-        // Aguardar um pouco para sincronização e depois redirecionar
-        setTimeout(() => {
-          window.location.href = `/profile/${habboName}`;
-        }, 1000);
+        // Redirecionar para home
+        navigate('/');
       }
     } catch (error) {
       let errorMessage = 'Erro desconhecido';
