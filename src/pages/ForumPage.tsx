@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../hooks/useAuth';
@@ -11,18 +10,7 @@ import MobileLayout from '../layouts/MobileLayout';
 import { ForumCategoryCard } from '../components/forum/ForumCategoryCard';
 import { CreatePostForm } from '../components/forum/CreatePostForm';
 import { PostsList } from '../components/forum/PostsList';
-
-interface ForumPost {
-  id: string;
-  title: string;
-  content: string;
-  image_url?: string;
-  author_supabase_user_id: string;
-  author_habbo_name: string;
-  created_at: string;
-  likes: number;
-  category?: string;
-}
+import type { ForumPost } from '../types/forum';
 
 export default function ForumPage() {
   const [posts, setPosts] = useState<ForumPost[]>([]);

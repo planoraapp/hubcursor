@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -6,11 +5,13 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Image as ImageIcon } from 'lucide-react';
 
+type CreatePostHandler = (title: string, content: string, image: File | null, category: string) => Promise<void>;
+
 interface CreatePostFormProps {
   isLoggedIn: boolean;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  onCreatePost: (title: string, content: string, image: File | null, category: string) => Promise<void>;
+  onCreatePost: CreatePostHandler;
   isCreatingPost: boolean;
   uploadingImage: boolean;
 }
@@ -88,38 +89,14 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
               disabled={isCreatingPost}
             />
             
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 cursor-pointer volter-font">
-                <ImageIcon className="h-4 w-4" />
-                {uploadingImage ? 'Carregando...' : 'Adicionar Imagem'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploadingImage || isCreatingPost}
-                />
-              </label>
-              
-              {imagePreview && (
-                <div className="relative">
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    className="h-16 w-16 object-cover rounded-lg border"
-                  />
-                  <button
-                    onClick={removeImage}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-sm hover:bg-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-            </div>
-
             <Button 
-              onClick={handleSubmit} 
+              onClick={async () => {
+                await onCreatePost(newPostTitle, newPostContent, newPostImage, selectedCategory);
+                setNewPostTitle('');
+                setNewPostContent('');
+                setNewPostImage(null);
+                setImagePreview(null);
+              }} 
               className="w-full bg-green-600 hover:bg-green-700 text-white volter-font"
               disabled={isCreatingPost || uploadingImage}
             >

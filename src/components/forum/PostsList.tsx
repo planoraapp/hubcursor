@@ -2,25 +2,16 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { PostCard } from './PostCard';
+import type { ForumPost } from '../../types/forum';
 
-interface ForumPost {
-  id: string;
-  title: string;
-  content: string;
-  image_url?: string;
-  author_supabase_user_id: string;
-  author_habbo_name: string;
-  created_at: string;
-  likes: number;
-  category?: string;
-}
+type LikePostHandler = (postId: string) => void;
 
 interface PostsListProps {
   posts: ForumPost[];
   loading: boolean;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  onLikePost: (postId: string) => void;
+  onLikePost: LikePostHandler;
   currentUserId: string | null;
 }
 
