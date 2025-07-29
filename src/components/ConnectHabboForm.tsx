@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
@@ -36,7 +35,7 @@ export const ConnectHabboForm = () => {
     setDebugLog(prev => [...prev, `${timestamp}: ${message}`]);
   };
 
-  // Check if user is admin
+  // Check if user is admin (only habbohub gets automatic login)
   const checkIfAdmin = (name: string) => {
     return name.toLowerCase() === 'habbohub';
   };
@@ -91,35 +90,36 @@ export const ConnectHabboForm = () => {
 
     if (isAdmin) {
       addLog(`🔑 Usuário admin detectado: ${habboName}`);
-      addLog(`⚡ Pulando verificação de motto para admin`);
+      addLog(`⚡ Implementando login automático para admin`);
       
-      // Para admin, vamos direto para verificar se já tem conta
       setIsProcessing(true);
       
       try {
-        // Simular ID do Habbo para admin (pode ser o próprio nome)
+        // Para admin, usar o nome em lowercase como ID
         const adminHabboId = habboName.toLowerCase();
         setUserHabboId(adminHabboId);
         
+        // Verificar se já existe conta vinculada
         const linkedAccount = await getLinkedAccount(adminHabboId);
         
         if (linkedAccount) {
-          addLog('🔗 Conta admin já existe. Redirecionando para login.');
+          addLog('🔗 Conta administrativa já existe. Redirecionando para login.');
           setStep(3); // Login with existing password
           toast({
             title: "Admin Detectado",
-            description: "Digite sua senha do Habbo Hub para acessar."
+            description: "Digite sua senha administrativa para acessar o Habbo Hub."
           });
         } else {
-          addLog('✨ Primeira vez do admin. Preparando para criar conta.');
+          addLog('✨ Primeira vez do admin. Preparando para criar conta administrativa.');
           setStep(4); // Create new account
           toast({
             title: "Admin Detectado",
-            description: "Crie uma senha para sua conta administrativa do Habbo Hub."
+            description: "Bem-vindo! Crie uma senha para sua conta administrativa."
           });
         }
       } catch (error) {
-        addLog(`❌ Erro ao verificar conta admin: ${error}`);
+        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+        addLog(`❌ Erro ao verificar conta admin: ${errorMessage}`);
         console.error('Erro ao verificar conta admin:', error);
         toast({
           title: "Erro",
@@ -164,7 +164,8 @@ export const ConnectHabboForm = () => {
         description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
       });
     } catch (error) {
-      addLog(`❌ Erro ao verificar nome Habbo: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      addLog(`❌ Erro ao verificar nome Habbo: ${errorMessage}`);
       console.error('Erro ao verificar nome Habbo:', error);
       toast({
         title: "Erro",
@@ -215,11 +216,12 @@ export const ConnectHabboForm = () => {
         }
       }
     } catch (error) {
-      addLog(`❌ Erro ao verificar motto: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      addLog(`❌ Erro ao verificar motto: ${errorMessage}`);
       console.error('Erro ao verificar motto:', error);
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao verificar a motto.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -252,7 +254,7 @@ export const ConnectHabboForm = () => {
         addLog('✅ Login bem-sucedido!');
         toast({
           title: "Sucesso",
-          description: "Login realizado com sucesso!"
+          description: isAdminUser ? "Login administrativo realizado com sucesso!" : "Login realizado com sucesso!"
         });
         window.location.href = `/profile/${habboName}`;
       } else if (step === 4) {
@@ -287,11 +289,25 @@ export const ConnectHabboForm = () => {
         window.location.href = `/profile/${habboName}`;
       }
     } catch (error) {
-      addLog(`❌ Erro na ação de senha: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      const errorDetails = error instanceof Error && error.message ? error.message : JSON.stringify(error);
+      
+      addLog(`❌ Erro na ação de senha: ${errorMessage}`);
       console.error('Erro na ação de senha:', error);
+      
+      // Tratamento específico para erros comuns
+      let userMessage = errorMessage;
+      if (errorMessage.includes('User already registered')) {
+        userMessage = "Este usuário já está registrado. Tente fazer login.";
+      } else if (errorMessage.includes('Invalid login credentials')) {
+        userMessage = "Senha incorreta. Verifique sua senha e tente novamente.";
+      } else if (errorMessage.includes('row-level security')) {
+        userMessage = "Erro de segurança. Aguarde um momento e tente novamente.";
+      }
+      
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao processar. Tente novamente.",
+        description: userMessage,
         variant: "destructive"
       });
     } finally {
