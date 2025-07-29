@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, User, RefreshCw, AlertCircle, CheckCircle, Bug } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName } from '../services/habboApi';
 import { PanelCard } from '../components/PanelCard';
@@ -13,8 +12,8 @@ export default function ConnectHabbo() {
   const [step, setStep] = useState<'input' | 'verification' | 'success'>('input');
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string>('');
-  const { login, isLoggedIn } = useAuth();
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const { loginWithVerification, isLoggedIn, isAdminUser, devMode } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -25,9 +24,15 @@ export default function ConnectHabbo() {
     }
   }, [isLoggedIn, navigate]);
 
+  const addDebugInfo = (message: string) => {
+    setDebugInfo(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    console.log(message);
+  };
+
   const generateVerificationCode = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     setVerificationCode(code);
+    addDebugInfo(`🔑 Generated verification code: ${code}`);
     setStep('verification');
   };
 
@@ -43,13 +48,14 @@ export default function ConnectHabbo() {
     }
 
     setIsLoading(true);
-    setDebugInfo('🔍 Verificando se usuário existe...');
+    setDebugInfo([]);
+    addDebugInfo('🔍 Iniciando verificação de usuário...');
 
     try {
       const user = await getUserByName(habboName.trim());
       
       if (!user) {
-        setDebugInfo('❌ Usuário não encontrado na API do Habbo');
+        addDebugInfo('❌ Usuário não encontrado na API do Habbo');
         toast({
           title: "Usuário não encontrado",
           description: "Verifique se o nome está correto e tente novamente.",
@@ -59,14 +65,39 @@ export default function ConnectHabbo() {
         return;
       }
 
-      console.log('=== USER DATA DEBUG ===');
-      console.log('User object:', user);
-      console.log('User motto:', `"${user.motto}"`);
-      console.log('Profile visible:', user.profileVisible);
-      console.log('User online:', user.online);
+      addDebugInfo(`✅ Usuário encontrado: ${user.name}`);
+      addDebugInfo(`👤 Online: ${user.online ? 'Sim' : 'Não'}`);
+      addDebugInfo(`💬 Motto atual: "${user.motto}"`);
+      addDebugInfo(`🔓 Perfil público: ${user.profileVisible ? 'Sim' : 'Não'}`);
+
+      // Check if user is admin
+      const isAdmin = isAdminUser(habboName.trim());
+      if (isAdmin) {
+        addDebugInfo('🛡️ Usuário admin detectado!');
+        
+        if (devMode) {
+          addDebugInfo('🛠️ Modo DEV ativo - tentando login direto...');
+          const loginSuccess = await loginWithVerification(habboName.trim(), '');
+          
+          if (loginSuccess) {
+            addDebugInfo('✅ Login admin realizado com sucesso!');
+            setStep('success');
+            toast({
+              title: "Admin Login",
+              description: "Login de administrador realizado com sucesso!",
+            });
+            
+            setTimeout(() => {
+              navigate('/');
+            }, 2000);
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
 
       if (!user.profileVisible) {
-        setDebugInfo('❌ Perfil privado detectado');
+        addDebugInfo('❌ Perfil privado detectado');
         toast({
           title: "Perfil Privado",
           description: "Seu perfil precisa estar público para fazer login.",
@@ -76,12 +107,12 @@ export default function ConnectHabbo() {
         return;
       }
 
-      setDebugInfo('✅ Usuário encontrado! Gerando código de verificação...');
+      addDebugInfo('✅ Usuário válido! Gerando código de verificação...');
       generateVerificationCode();
       
     } catch (error) {
       console.error('Error checking user:', error);
-      setDebugInfo('❌ Erro ao verificar usuário na API');
+      addDebugInfo('❌ Erro ao verificar usuário na API');
       toast({
         title: "Erro",
         description: "Erro ao verificar usuário. Tente novamente.",
@@ -95,45 +126,13 @@ export default function ConnectHabbo() {
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setDebugInfo('🔍 Verificando código na motto...');
+    addDebugInfo('🔍 Iniciando verificação do código...');
 
     try {
-      const user = await getUserByName(habboName.trim());
-      
-      if (!user) {
-        setDebugInfo('❌ Usuário não encontrado durante verificação');
-        toast({
-          title: "Erro",
-          description: "Usuário não encontrado. Tente novamente.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('=== VERIFICATION DEBUG ===');
-      console.log('User motto:', `"${user.motto}"`);
-      console.log('Verification code:', `"${verificationCode}"`);
-      console.log('Motto type:', typeof user.motto);
-      console.log('Code found in motto:', user.motto.includes(verificationCode));
-
-      if (!user.motto.includes(verificationCode)) {
-        setDebugInfo(`❌ Código não encontrado na motto. Motto atual: "${user.motto}"`);
-        toast({
-          title: "Código não encontrado",
-          description: "Verifique se você copiou o código corretamente para sua motto.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      setDebugInfo('✅ Código encontrado na motto! Fazendo login...');
-      
-      const loginSuccess = await login(habboName.trim());
+      const loginSuccess = await loginWithVerification(habboName.trim(), verificationCode);
       
       if (loginSuccess) {
-        setDebugInfo('✅ Login realizado com sucesso!');
+        addDebugInfo('✅ Verificação e login realizados com sucesso!');
         setStep('success');
         toast({
           title: "Sucesso!",
@@ -144,17 +143,17 @@ export default function ConnectHabbo() {
           navigate('/');
         }, 2000);
       } else {
-        setDebugInfo('❌ Falha no sistema de login');
+        addDebugInfo('❌ Falha na verificação ou login');
         toast({
-          title: "Erro no Login",
-          description: "Erro interno no sistema de login.",
+          title: "Erro na Verificação",
+          description: "Código não encontrado na motto ou erro no login.",
           variant: "destructive"
         });
       }
       
     } catch (error) {
       console.error('Verification error:', error);
-      setDebugInfo('❌ Erro durante verificação');
+      addDebugInfo('❌ Erro durante verificação');
       toast({
         title: "Erro",
         description: "Erro durante a verificação. Tente novamente.",
@@ -169,7 +168,7 @@ export default function ConnectHabbo() {
     setStep('input');
     setHabboName('');
     setVerificationCode('');
-    setDebugInfo('');
+    setDebugInfo([]);
   };
 
   return (
@@ -177,13 +176,18 @@ export default function ConnectHabbo() {
       <PageHeader title="Conectar Habbo" />
       
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md space-y-4">
           {step === 'input' && (
             <PanelCard title="Conectar Habbo">
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-700">
                   <strong>Instruções:</strong> Digite seu nome Habbo para conectar sua conta aos recursos exclusivos do hub.
                 </p>
+                {devMode && (
+                  <p className="text-sm text-green-700 mt-2">
+                    <strong>🛠️ Modo DEV:</strong> Admins podem fazer login direto sem verificação.
+                  </p>
+                )}
               </div>
 
               <form onSubmit={handleNameSubmit} className="space-y-4">
@@ -222,12 +226,6 @@ export default function ConnectHabbo() {
                     </>
                   )}
                 </button>
-
-                {debugInfo && (
-                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-700 font-mono">{debugInfo}</p>
-                  </div>
-                )}
               </form>
             </PanelCard>
           )}
@@ -279,12 +277,6 @@ export default function ConnectHabbo() {
                     ← Voltar
                   </button>
                 </form>
-
-                {debugInfo && (
-                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-700 font-mono">{debugInfo}</p>
-                  </div>
-                )}
               </div>
             </PanelCard>
           )}
@@ -300,11 +292,17 @@ export default function ConnectHabbo() {
                   Sua conta foi conectada com sucesso.<br/>
                   Redirecionando para o painel principal...
                 </p>
-                {debugInfo && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-700 font-mono">{debugInfo}</p>
-                  </div>
-                )}
+              </div>
+            </PanelCard>
+          )}
+
+          {/* Debug Panel */}
+          {debugInfo.length > 0 && (
+            <PanelCard title="Debug Info">
+              <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
+                {debugInfo.map((info, index) => (
+                  <div key={index} className="mb-1">{info}</div>
+                ))}
               </div>
             </PanelCard>
           )}

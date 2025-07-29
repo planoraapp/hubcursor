@@ -8,10 +8,10 @@ interface AdminRouteProps {
 }
 
 export const AdminRoute = ({ children }: AdminRouteProps) => {
-  const { isLoggedIn, userData } = useAuth();
+  const { isLoggedIn, isAdmin } = useAuth();
 
-  // Check if user is logged in and is the admin user
-  if (!isLoggedIn || userData?.name?.toLowerCase() !== 'habbohub') {
+  // Check if user is logged in and is an admin
+  if (!isLoggedIn || !isAdmin()) {
     return <Navigate to="/connect-habbo" replace />;
   }
 
