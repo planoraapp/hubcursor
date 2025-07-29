@@ -153,16 +153,30 @@ export const useSupabaseAuth = () => {
 
   const verifyHabboMotto = async (habboName: string, verificationCode: string) => {
     try {
+      console.log(`🔍 Verificando motto para ${habboName} com código: ${verificationCode}`);
+      
       const habboUser = await getUserByName(habboName);
       
       if (!habboUser || !habboUser.motto) {
+        console.log(`❌ Usuário ${habboName} não encontrado ou motto vazia`);
         throw new Error('Usuário não encontrado ou perfil privado');
       }
 
-      if (!habboUser.motto.includes(verificationCode)) {
+      console.log(`📝 Motto encontrada: "${habboUser.motto}"`);
+      
+      // Limpar e normalizar tanto a motto quanto o código
+      const normalizedMotto = habboUser.motto.trim().toLowerCase();
+      const normalizedCode = verificationCode.trim().toLowerCase();
+      
+      console.log(`🔍 Procurando "${normalizedCode}" em "${normalizedMotto}"`);
+      
+      // Verificar se o código existe na motto (case-insensitive)
+      if (!normalizedMotto.includes(normalizedCode)) {
+        console.log(`❌ Código "${normalizedCode}" não encontrado na motto "${normalizedMotto}"`);
         throw new Error('Código de verificação não encontrado na motto');
       }
 
+      console.log(`✅ Código encontrado na motto!`);
       return habboUser;
     } catch (error) {
       console.error('Error verifying motto:', error);

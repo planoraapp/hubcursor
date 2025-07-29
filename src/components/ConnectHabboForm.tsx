@@ -5,7 +5,8 @@ import { getUserByName } from '../services/habboApi';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
 const generateVerificationCode = () => {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `HUB-${code}`;
 };
 
 export const ConnectHabboForm = () => {
@@ -17,6 +18,7 @@ export const ConnectHabboForm = () => {
   const [userHabboId, setUserHabboId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   
   const { toast } = useToast();
   const { 
@@ -32,6 +34,11 @@ export const ConnectHabboForm = () => {
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString('pt-BR');
     setDebugLog(prev => [...prev, `${timestamp}: ${message}`]);
+  };
+
+  // Check if user is admin
+  const checkIfAdmin = (name: string) => {
+    return name.toLowerCase() === 'habbohub';
   };
 
   // Check if user is already logged in
@@ -79,6 +86,53 @@ export const ConnectHabboForm = () => {
       return;
     }
 
+    const isAdmin = checkIfAdmin(habboName);
+    setIsAdminUser(isAdmin);
+
+    if (isAdmin) {
+      addLog(`🔑 Usuário admin detectado: ${habboName}`);
+      addLog(`⚡ Pulando verificação de motto para admin`);
+      
+      // Para admin, vamos direto para verificar se já tem conta
+      setIsProcessing(true);
+      
+      try {
+        // Simular ID do Habbo para admin (pode ser o próprio nome)
+        const adminHabboId = habboName.toLowerCase();
+        setUserHabboId(adminHabboId);
+        
+        const linkedAccount = await getLinkedAccount(adminHabboId);
+        
+        if (linkedAccount) {
+          addLog('🔗 Conta admin já existe. Redirecionando para login.');
+          setStep(3); // Login with existing password
+          toast({
+            title: "Admin Detectado",
+            description: "Digite sua senha do Habbo Hub para acessar."
+          });
+        } else {
+          addLog('✨ Primeira vez do admin. Preparando para criar conta.');
+          setStep(4); // Create new account
+          toast({
+            title: "Admin Detectado",
+            description: "Crie uma senha para sua conta administrativa do Habbo Hub."
+          });
+        }
+      } catch (error) {
+        addLog(`❌ Erro ao verificar conta admin: ${error}`);
+        console.error('Erro ao verificar conta admin:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao verificar conta administrativa. Tente novamente.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // Fluxo normal para usuários não-admin
     setIsProcessing(true);
     addLog(`🔍 Verificando Habbo "${habboName}" na API...`);
     
@@ -135,6 +189,7 @@ export const ConnectHabboForm = () => {
 
     setIsProcessing(true);
     addLog('🔍 Verificando sua motto no Habbo Hotel...');
+    addLog(`🔎 Procurando por: "${verificationCode}"`);
     
     try {
       const habboUser = await verifyHabboMotto(habboName, verificationCode);
@@ -227,7 +282,7 @@ export const ConnectHabboForm = () => {
         addLog('✅ Conta criada com sucesso!');
         toast({
           title: "Sucesso",
-          description: "Conta criada e vinculada com sucesso!"
+          description: isAdminUser ? "Conta administrativa criada com sucesso!" : "Conta criada e vinculada com sucesso!"
         });
         window.location.href = `/profile/${habboName}`;
       }
@@ -272,13 +327,20 @@ export const ConnectHabboForm = () => {
                 required
                 disabled={isProcessing}
               />
+              {checkIfAdmin(habboName) && (
+                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    🔑 Usuário administrativo detectado - Login automático habilitado
+                  </p>
+                </div>
+              )}
             </div>
             <button
               type="submit"
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isProcessing}
             >
-              {isProcessing ? 'Verificando...' : 'Gerar Código de Verificação'}
+              {isProcessing ? 'Verificando...' : checkIfAdmin(habboName) ? 'Acesso Administrativo' : 'Gerar Código de Verificação'}
             </button>
           </form>
         </div>
@@ -305,6 +367,11 @@ export const ConnectHabboForm = () => {
             <p className="text-xl font-bold text-blue-700 select-all">{verificationCode}</p>
             <span className="text-sm text-gray-500">Clique no código para copiar</span>
           </div>
+          <div className="bg-blue-50 p-3 rounded-lg mb-4">
+            <p className="text-sm text-blue-800">
+              <strong>💡 Dica:</strong> O código agora tem o formato "HUB-XXXXX" para facilitar a identificação na sua motto.
+            </p>
+          </div>
           <p className="text-gray-700 mb-6">
             Após atualizar sua motto no Habbo, clique no botão "Verificar Motto" abaixo.
           </p>
@@ -329,9 +396,14 @@ export const ConnectHabboForm = () => {
 
       {step === 3 && (
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 3: Fazer Login</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            {isAdminUser ? 'Acesso Administrativo' : 'Passo 3: Fazer Login'}
+          </h2>
           <p className="text-gray-700 mb-4">
-            Sua conta Habbo está verificada. Digite sua senha do Habbo Hub para acessar.
+            {isAdminUser 
+              ? `Bem-vindo, ${habboName}! Digite sua senha administrativa para acessar.`
+              : 'Sua conta Habbo está verificada. Digite sua senha do Habbo Hub para acessar.'
+            }
           </p>
           <form onSubmit={handlePasswordAction} className="space-y-4">
             <div>
@@ -372,9 +444,14 @@ export const ConnectHabboForm = () => {
 
       {step === 4 && (
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 3: Criar Senha</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            {isAdminUser ? 'Configurar Conta Administrativa' : 'Passo 3: Criar Senha'}
+          </h2>
           <p className="text-gray-700 mb-4">
-            Sua conta Habbo foi verificada! Agora crie uma senha para acessar seu perfil no Habbo Hub.
+            {isAdminUser 
+              ? `Bem-vindo, ${habboName}! Crie uma senha para sua conta administrativa no Habbo Hub.`
+              : 'Sua conta Habbo foi verificada! Agora crie uma senha para acessar seu perfil no Habbo Hub.'
+            }
           </p>
           <form onSubmit={handlePasswordAction} className="space-y-4">
             <div>
@@ -413,7 +490,7 @@ export const ConnectHabboForm = () => {
                 className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isProcessing}
               >
-                {isProcessing ? 'Criando Conta...' : 'Vincular e Criar Conta'}
+                {isProcessing ? 'Criando Conta...' : isAdminUser ? 'Criar Conta Administrativa' : 'Vincular e Criar Conta'}
               </button>
               <button
                 onClick={() => setStep(1)}
