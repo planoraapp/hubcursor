@@ -97,10 +97,15 @@ const fetchData = async (endpoint: string): Promise<any> => {
     const response = await fetch(`${HABBO_API_BASE_URL}${endpoint}`);
     
     if (!response.ok) {
+      console.warn(`API responded with status ${response.status} for ${endpoint}`);
+      if (response.status === 404) {
+        return null; // User not found
+      }
       throw new Error(`Erro HTTP! Status: ${response.status}`);
     }
     
     const data = await response.json();
+    console.log(`API Response for ${endpoint}:`, data);
     setCachedData(cacheKey, data);
     return data;
   } catch (error) {
@@ -138,7 +143,71 @@ export const discoverRooms = async (): Promise<HabboRoom[]> => {
 
 // Função para buscar usuário por nome
 export const getUserByName = async (name: string): Promise<HabboUser | null> => {
-  return await fetchData(`/users?name=${encodeURIComponent(name)}`);
+  try {
+    const data = await fetchData(`/users?name=${encodeURIComponent(name)}`);
+    
+    // Log detalhado para debug
+    console.log('=== HABBO API DEBUG ===');
+    console.log('Searching for user:', name);
+    console.log('API Response:', data);
+    console.log('Response type:', typeof data);
+    console.log('Is array?:', Array.isArray(data));
+    
+    if (!data) {
+      console.warn('❌ No data returned from API for user:', name);
+      return null;
+    }
+
+    // A API do Habbo pode retornar um objeto diretamente ou um array
+    let user;
+    if (Array.isArray(data)) {
+      if (data.length === 0) {
+        console.warn('❌ Empty array returned - user not found:', name);
+        return null;
+      }
+      user = data[0];
+    } else {
+      user = data;
+    }
+
+    // Verificar se o objeto do usuário tem as propriedades essenciais
+    if (!user || !user.name || !user.figureString) {
+      console.warn('❌ Invalid user data structure:', user);
+      return null;
+    }
+
+    // Verificar se o perfil é privado
+    if (user.profileVisible === false) {
+      console.warn('❌ User profile is private:', name);
+      return null;
+    }
+
+    // Construir objeto do usuário com fallbacks seguros
+    const processedUser: HabboUser = {
+      uniqueId: user.uniqueId || user.id || '',
+      name: user.name,
+      figureString: user.figureString,
+      motto: user.motto || '', // CRÍTICO: Garantir que motto seja sempre string
+      online: user.online || false,
+      lastAccessTime: user.lastAccessTime || '',
+      memberSince: user.memberSince || '',
+      profileVisible: user.profileVisible !== false,
+      selectedBadges: user.selectedBadges || []
+    };
+
+    console.log('✅ Successfully processed user data:');
+    console.log('- Name:', processedUser.name);
+    console.log('- Motto:', `"${processedUser.motto}"`);
+    console.log('- Online:', processedUser.online);
+    console.log('- Profile Visible:', processedUser.profileVisible);
+    console.log('=======================');
+
+    return processedUser;
+    
+  } catch (error) {
+    console.error('❌ Error in getUserByName:', error);
+    return null;
+  }
 };
 
 // Função para buscar dados do usuário por ID
