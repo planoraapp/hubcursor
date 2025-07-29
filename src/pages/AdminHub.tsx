@@ -1,215 +1,309 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import { useAuth } from '../hooks/useAuth';
-import { AdminRoute } from '../components/AdminRoute';
-import { Users, BarChart3, Settings, Shield, Activity } from 'lucide-react';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useToast } from '../hooks/use-toast';
+import { supabase } from '../integrations/supabase/client';
+import { useIsMobile } from '../hooks/use-mobile';
+import MobileLayout from '../layouts/MobileLayout';
 
-const AdminHub = () => {
-  const { userData } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+interface AdminStats {
+  totalUsers: number;
+  totalPosts: number;
+  totalComments: number;
+  adminUsers: string[];
+}
 
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'users', label: 'Usuários', icon: Users },
-    { id: 'logs', label: 'Logs', icon: Activity },
-    { id: 'settings', label: 'Configurações', icon: Settings },
-    { id: 'security', label: 'Segurança', icon: Shield }
-  ];
+export default function AdminHub() {
+  const { user, habboAccount, loading } = useSupabaseAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [activeSection, setActiveSection] = useState('admin-hub');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [stats, setStats] = useState<AdminStats>({
+    totalUsers: 0,
+    totalPosts: 0,
+    totalComments: 0,
+    adminUsers: []
+  });
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 volter-font">Usuários Online</h3>
-                <p className="text-3xl font-bold text-green-600 volter-font">0</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 volter-font">Total de Usuários</h3>
-                <p className="text-3xl font-bold text-blue-600 volter-font">1</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 volter-font">Logins Hoje</h3>
-                <p className="text-3xl font-bold text-purple-600 volter-font">1</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 volter-font">Sistema</h3>
-                <p className="text-lg font-bold text-green-600 volter-font">Online</p>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 volter-font">Atividade Recente</h3>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <span className="volter-font">Login do administrador</span>
-                  <span className="text-sm text-gray-500 volter-font">Agora</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <span className="volter-font">Sistema iniciado</span>
-                  <span className="text-sm text-gray-500 volter-font">Hoje</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'users':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 volter-font">Usuários Registrados</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b-2 border-gray-200">
-                      <th className="text-left p-3 volter-font">Nome</th>
-                      <th className="text-left p-3 volter-font">Status</th>
-                      <th className="text-left p-3 volter-font">Último Login</th>
-                      <th className="text-left p-3 volter-font">Tipo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-gray-100">
-                      <td className="p-3 volter-font">habbohub</td>
-                      <td className="p-3">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded volter-font">Online</span>
-                      </td>
-                      <td className="p-3 volter-font">Agora</td>
-                      <td className="p-3">
-                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded volter-font">Admin</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'logs':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 volter-font">Logs do Sistema</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded border-l-4 border-green-500">
-                  <span className="volter-font">Admin login successful - habbohub</span>
-                  <span className="text-sm text-gray-500 volter-font">{new Date().toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded border-l-4 border-blue-500">
-                  <span className="volter-font">Sistema iniciado</span>
-                  <span className="text-sm text-gray-500 volter-font">{new Date().toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'settings':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 volter-font">Configurações do Sistema</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 volter-font">Nome do Admin</label>
-                  <input 
-                    type="text" 
-                    value="habbohub" 
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md volter-font"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 volter-font">Modo Manutenção</label>
-                  <select className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md volter-font">
-                    <option value="off">Desativado</option>
-                    <option value="on">Ativado</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'security':
-        return (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-md border-2 border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 volter-font">Segurança</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h4 className="font-bold text-green-800 volter-font">Status de Segurança</h4>
-                  <p className="text-green-700 volter-font">Sistema seguro - Apenas admin autorizado</p>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-bold text-blue-800 volter-font">Tentativas de Login</h4>
-                  <p className="text-blue-700 volter-font">Nenhuma tentativa não autorizada detectada</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      
-      default:
-        return null;
+  // Handle sidebar state changes
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
+
+  // Check admin access and load stats
+  useEffect(() => {
+    const checkAdminAccess = async () => {
+      if (loading) return;
+
+      if (!user || !habboAccount) {
+        toast({
+          title: "Acesso Negado",
+          description: "Você precisa estar logado para acessar o painel admin.",
+          variant: "destructive"
+        });
+        navigate('/connect-habbo');
+        return;
+      }
+
+      if (!habboAccount.is_admin) {
+        toast({
+          title: "Acesso Negado", 
+          description: "Você não tem permissões de administrador.",
+          variant: "destructive"
+        });
+        navigate('/');
+        return;
+      }
+
+      console.log('🔑 Admin access granted for:', habboAccount.habbo_name);
+      loadAdminStats();
+    };
+
+    checkAdminAccess();
+  }, [user, habboAccount, loading, navigate, toast]);
+
+  const loadAdminStats = async () => {
+    setIsLoadingStats(true);
+    try {
+      // Get total users
+      const { count: usersCount, error: usersError } = await supabase
+        .from('habbo_accounts')
+        .select('*', { count: 'exact' });
+
+      if (usersError) {
+        console.error('Error counting users:', usersError);
+      }
+
+      // Get total posts
+      const { count: postsCount, error: postsError } = await supabase
+        .from('forum_posts')
+        .select('*', { count: 'exact' });
+
+      if (postsError) {
+        console.error('Error counting posts:', postsError);
+      }
+
+      // Get total comments
+      const { count: commentsCount, error: commentsError } = await supabase
+        .from('forum_comments')
+        .select('*', { count: 'exact' });
+
+      if (commentsError) {
+        console.error('Error counting comments:', commentsError);
+      }
+
+      // Get admin users
+      const { data: adminData, error: adminError } = await supabase
+        .from('habbo_accounts')
+        .select('habbo_name')
+        .eq('is_admin', true);
+
+      if (adminError) {
+        console.error('Error fetching admin users:', adminError);
+      }
+
+      setStats({
+        totalUsers: usersCount || 0,
+        totalPosts: postsCount || 0,
+        totalComments: commentsCount || 0,
+        adminUsers: adminData?.map(admin => admin.habbo_name) || []
+      });
+
+      toast({
+        title: "Painel Carregado",
+        description: "Estatísticas do Habbo Hub carregadas com sucesso!"
+      });
+
+    } catch (error) {
+      console.error('Error loading admin stats:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar estatísticas do painel.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingStats(false);
     }
   };
 
-  return (
-    <AdminRoute>
-      <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="flex min-h-screen">
-          <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-            <PageHeader 
-              title="Painel Administrativo"
-              icon="/assets/ferramentas.png"
-              backgroundImage="/assets/1360__-3C7.png"
-            />
-            
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 volter-font mb-2">
-                  Bem-vindo, {userData?.name}!
-                </h2>
-                <p className="text-gray-600 volter-font">
-                  Painel de controle e administração do Habbo Hub
-                </p>
-              </div>
+  const renderContent = () => {
+    if (isLoadingStats) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando estatísticas...</p>
+          </div>
+        </div>
+      );
+    }
 
-              <div className="border-b border-gray-200 mb-6">
-                <nav className="flex space-x-8">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm volter-font ${
-                          activeTab === tab.id
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
-                      >
-                        <Icon size={16} />
-                        <span>{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </div>
+    return (
+      <div className="space-y-6">
+        {/* Welcome Message */}
+        <div className="bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg p-6 border border-purple-200">
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            🎉 Bem-vindo ao Painel Admin, {habboAccount?.habbo_name}!
+          </h2>
+          <p className="text-gray-600">
+            Aqui você pode visualizar estatísticas e gerenciar o Habbo Hub.
+          </p>
+        </div>
 
-              {renderTabContent()}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Total Users */}
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.totalUsers}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-xl">👥</span>
+              </div>
             </div>
-          </main>
+          </div>
+
+          {/* Total Posts */}
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Posts no Fórum</p>
+                <p className="text-3xl font-bold text-green-600">{stats.totalPosts}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 text-xl">📝</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Total Comments */}
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Comentários</p>
+                <p className="text-3xl font-bold text-purple-600">{stats.totalComments}</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <span className="text-purple-600 text-xl">💬</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Users */}
+          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Administradores</p>
+                <p className="text-3xl font-bold text-red-600">{stats.adminUsers.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-xl">👑</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Users List */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Lista de Administradores</h3>
+          <div className="space-y-2">
+            {stats.adminUsers.map((adminName, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${adminName}&direction=2&head_direction=2&gesture=sml&size=s&action=std`}
+                    alt={adminName}
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <span className="font-medium text-gray-800">{adminName}</span>
+                </div>
+                <span className="text-sm text-purple-600 font-medium">Admin</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Ações Rápidas</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button
+              onClick={() => navigate('/forum')}
+              className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-md transition-colors"
+            >
+              <span>📋</span>
+              <span>Gerenciar Fórum</span>
+            </button>
+            <button
+              onClick={loadAdminStats}
+              className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-md transition-colors"
+            >
+              <span>🔄</span>
+              <span>Atualizar Stats</span>
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-md transition-colors"
+            >
+              <span>🏠</span>
+              <span>Voltar ao Hub</span>
+            </button>
+          </div>
         </div>
       </div>
-    </AdminRoute>
-  );
-};
+    );
+  };
 
-export default AdminHub;
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p className="text-white">Verificando acesso admin...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        {renderContent()}
+      </MobileLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="flex min-h-screen">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+          <PageHeader 
+            title="Painel de Administração"
+            icon="/assets/frank.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}

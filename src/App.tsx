@@ -18,6 +18,7 @@ import ConnectHabbo from "./pages/ConnectHabbo";
 import Profile from "./pages/Profile";
 import Eventos from "./pages/Eventos";
 import AdminHub from "./pages/AdminHub";
+import ForumPage from "./pages/ForumPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +41,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Index />} />
             <Route path="/noticias" element={<Noticias />} />
             <Route path="/eventos" element={<Eventos />} />
-            <Route path="/forum" element={<Forum />} />
+            <Route path="/forum" element={<ForumPage />} />
             <Route path="/catalogo" element={<Catalogo />} />
             <Route path="/emblemas" element={<Emblemas />} />
             <Route path="/editor" element={<Editor />} />

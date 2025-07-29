@@ -13,13 +13,13 @@ interface ProfileModalProps {
   isLoginAttempt: boolean;
 }
 
-// Gera código com prefixo HUB- padronizado
+// Generate verification code with HUB- prefix
 const generateVerificationCode = () => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
   return `HUB-${code}`;
 };
 
-// Componente para exibir um emblema no modal
+// Component to display a badge in the modal
 function SmallBadge({ badgeCode }: { badgeCode: string }) {
   const badgeUrl = getBadgeUrl(badgeCode);
   return (
@@ -44,7 +44,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
     verifyHabboMotto
   } = useSupabaseAuth();
 
-  // Estados para login/cadastro no modal
+  // States for login/signup in modal
   const [habboNameInput, setHabboNameInput] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
@@ -105,7 +105,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
     }
   };
 
-  // Funções de login/cadastro adaptadas para o modal
+  // Login/signup functions adapted for modal
   const handleInitiateLoginVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!habboNameInput.trim()) {
@@ -118,6 +118,61 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
     }
 
     setIsProcessing(true);
+
+    // Special flow for habbohub admin user
+    if (habboNameInput.toLowerCase() === 'habbohub') {
+      console.log('👑 Admin habbohub detected in modal, prompting for password');
+      
+      if (!password) {
+        toast({
+          title: "Admin Login",
+          description: "Digite sua senha do Habbo Hub para fazer login como administrador.",
+          variant: "default"
+        });
+        setLoginStep(3); // Skip to password step
+        setIsProcessing(false);
+        return;
+      }
+
+      try {
+        // Generate admin habbo ID
+        const adminHabboId = `habbohub-admin-${habboNameInput}-${Date.now()}`;
+        setUserHabboId(adminHabboId);
+
+        // Try login first, then signup if needed
+        let authResult;
+        try {
+          authResult = await signInWithHabbo(adminHabboId, password);
+        } catch (loginError: any) {
+          if (loginError.message.includes('Invalid login credentials')) {
+            console.log('Creating new admin account...');
+            authResult = await signUpWithHabbo(adminHabboId, habboNameInput, password);
+          } else {
+            throw loginError;
+          }
+        }
+
+        toast({
+          title: "Sucesso",
+          description: `Login admin realizado com sucesso! Bem-vindo, ${habboNameInput}!`
+        });
+        onClose();
+        window.location.href = `/profile/${habboNameInput}`;
+
+      } catch (err: any) {
+        console.error('Admin login error in modal:', err);
+        toast({
+          title: "Erro",
+          description: `Erro no login admin: ${err.message}`,
+          variant: "destructive"
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // Normal flow for other users
     try {
       const habboUserCheck = await getUserByName(habboNameInput);
 
@@ -171,20 +226,20 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
         const linkedAccount = await getLinkedAccount(habboUser.uniqueId);
         
         if (linkedAccount) {
-          setLoginStep(4); // Login com senha existente
+          setLoginStep(4); // Login with existing password
           toast({
             title: "Sucesso",
             description: "Código verificado! Digite sua senha do Habbo Hub."
           });
         } else {
-          setLoginStep(3); // Criar senha
+          setLoginStep(3); // Create password
           toast({
             title: "Sucesso",
             description: "Código verificado! Crie uma senha para o seu Habbo Hub."
           });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao verificar motto';
       toast({
         title: "Erro",
@@ -198,12 +253,12 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
 
   const handlePasswordActionInModal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userHabboId) return;
+    if (!userHabboId && habboNameInput.toLowerCase() !== 'habbohub') return;
     
     setIsProcessing(true);
 
     try {
-      if (loginStep === 4) { // Login
+      if (loginStep === 4) { // Login with existing password
         if (!password) {
           toast({
             title: "Erro",
@@ -213,7 +268,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
           return;
         }
         
-        await signInWithHabbo(userHabboId, password);
+        await signInWithHabbo(userHabboId!, password);
         toast({
           title: "Sucesso",
           description: "Login realizado com sucesso!"
@@ -221,7 +276,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
         onClose();
         window.location.href = `/profile/${habboNameInput}`;
         
-      } else if (loginStep === 3) { // Criar conta
+      } else if (loginStep === 3) { // Create new account
         if (password.length < 6) {
           toast({
             title: "Erro",
@@ -240,12 +295,8 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
           return;
         }
         
-        await signUpWithHabbo(userHabboId, habboNameInput, password);
-        
-        // Log discreto para admin
-        if (habboNameInput.toLowerCase() === 'habbohub') {
-          console.log('🔑 [Admin] Conta administrativa criada via modal');
-        }
+        const finalHabboId = userHabboId || `habbohub-admin-${habboNameInput}-${Date.now()}`;
+        await signUpWithHabbo(finalHabboId, habboNameInput, password);
         
         toast({
           title: "Sucesso",
@@ -254,7 +305,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
         onClose();
         window.location.href = `/profile/${habboNameInput}`;
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Erro na autenticação';
       toast({
         title: "Erro",
@@ -304,12 +355,28 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                     disabled={isProcessing}
                   />
                 </div>
+                {habboNameInput.toLowerCase() === 'habbohub' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Senha Admin:
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Sua senha de administrador"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      disabled={isProcessing}
+                    />
+                  </div>
+                )}
                 <button
                   type="submit"
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                   disabled={isProcessing}
                 >
-                  {isProcessing ? 'Verificando...' : 'Gerar Código'}
+                  {isProcessing ? 'Processando...' : (habboNameInput.toLowerCase() === 'habbohub' ? 'Login Admin' : 'Gerar Código')}
                 </button>
               </form>
             )}
@@ -421,7 +488,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
                   <img
-                    src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&direction=2&head_direction=2&gesture=sml&size=l&frame=1`}
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userData.name}&direction=2&head_direction=2&gesture=sml&size=l&action=std`}
                     alt={userData.name}
                     className="w-24 h-auto rounded-lg border-4 border-yellow-400 shadow-lg"
                   />

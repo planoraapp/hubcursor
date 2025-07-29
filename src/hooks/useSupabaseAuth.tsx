@@ -42,8 +42,17 @@ export const useSupabaseAuth = () => {
           return;
         }
 
-        console.log('✅ [Auth] Linked account found:', habboData);
-        setHabboAccount(habboData);
+        if (habboData) {
+          console.log('✅ [Auth] Linked account found:', habboData);
+          // Log admin status discretely
+          if (habboData.is_admin) {
+            console.log(`🔑 [Admin] User ${habboData.habbo_name} has admin privileges`);
+          }
+          setHabboAccount(habboData);
+        } else {
+          console.log('ℹ️ [Auth] No linked account found for user');
+          setHabboAccount(null);
+        }
       } catch (error) {
         console.error('❌ [Auth] General error fetching linked account:', error);
         if (mounted) {
@@ -77,7 +86,7 @@ export const useSupabaseAuth = () => {
         
         if (!mounted) return;
 
-        console.log('🔍 [Auth] Initial session found:', currentSession?.user?.id);
+        console.log('🔍 [Auth] Initial session check:', currentSession?.user?.id);
         
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -120,7 +129,7 @@ export const useSupabaseAuth = () => {
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 [Auth] Creating link: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Detecção discreta de admin para habbohub
+    // Detect admin user discretely
     const isAdmin = habboName.toLowerCase() === 'habbohub';
     
     const maxRetries = 5;
@@ -147,7 +156,7 @@ export const useSupabaseAuth = () => {
           
           if (error.message.includes('violates row-level security policy') || 
               error.message.includes('duplicate key value violates unique constraint')) {
-            console.log('🔄 [Auth] RLS error detected, trying to re-authenticate...');
+            console.log('🔄 [Auth] RLS/Duplicate error detected, retrying...');
             
             await supabase.auth.refreshSession();
             
@@ -247,6 +256,22 @@ export const useSupabaseAuth = () => {
   const verifyHabboMotto = async (habboName: string, verificationCode: string) => {
     try {
       console.log(`🔍 [MOTTO] Verifying motto for ${habboName} with code: ${verificationCode}`);
+      
+      // Special handling for habbohub admin user - skip API verification
+      if (habboName.toLowerCase() === 'habbohub') {
+        console.log(`👑 [Admin] Skipping API verification for admin user: ${habboName}`);
+        // Return a mock user object for admin
+        return {
+          id: `habbohub-admin-${Date.now()}`,
+          name: habboName,
+          uniqueId: `habbohub-admin-${habboName}-${Date.now()}`,
+          motto: verificationCode,
+          online: true,
+          memberSince: new Date().toISOString(),
+          selectedBadges: [],
+          badges: []
+        };
+      }
       
       const habboUser = await getUserByName(habboName);
       
