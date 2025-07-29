@@ -15,12 +15,22 @@ interface CollapsibleSidebarProps {
 
 export const CollapsibleSidebar = ({ activeSection, setActiveSection }: CollapsibleSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isPinned, setIsPinned] = useState(true);
+  const [isPinned, setIsPinned] = useState(false); // Changed to false by default
   const [isHovered, setIsHovered] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const [habboData, setHabboData] = useState<any>(null);
   const { t } = useLanguage();
   const { isLoggedIn, habboAccount, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  // Initialize expanded on first load
+  useEffect(() => {
+    if (!hasInitialized) {
+      setIsCollapsed(false);
+      setIsPinned(false);
+      setHasInitialized(true);
+    }
+  }, [hasInitialized]);
 
   // Fetch current Habbo data when logged in
   useEffect(() => {
@@ -65,6 +75,9 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
 
   const handleMouseEnter = () => {
     setIsHovered(true);
+    if (!isPinned) {
+      setIsCollapsed(false);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -128,7 +141,9 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
               </div>
               {shouldShowExpanded && (
                 <div className="text-center">
-                  <h3 className="font-bold text-gray-800 text-sm volter-font text-white" style={{textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000'}}>
+                  <h3 className="font-bold text-gray-800 text-sm volter-font text-white" style={{
+                    textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000'
+                  }}>
                     {isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Visitante'}
                   </h3>
                   <p className="text-xs text-gray-600 volter-font">{isLoggedIn && habboData ? habboData.motto : 'Não conectado'}</p>
@@ -158,7 +173,9 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
                 <img src={item.icon} alt={item.label} className={`${!shouldShowExpanded ? 'w-8 h-8' : 'w-6 h-6'}`} />
               </div>
               {shouldShowExpanded && (
-                <span className="ml-3 volter-font transition-all duration-300 text-white" style={{textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000'}}>
+                <span className="ml-3 volter-font transition-all duration-300 text-white" style={{
+                  textShadow: '2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000'
+                }}>
                   {item.label}
                 </span>
               )}

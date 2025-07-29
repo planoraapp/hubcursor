@@ -1,44 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../hooks/useLanguage';
 import { UserProfilePopover } from '../components/UserProfilePopover';
 import { getUserByName } from '../services/habboApi';
 
-interface MobileLayoutProps {
-  children: React.ReactNode;
-}
-
-const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
+const MobileLayout = ({ children }: { children: React.ReactNode }) => {
+  const [showExpandedDock, setShowExpandedDock] = useState(false);
+  const [habboData, setHabboData] = useState<any>(null);
+  const { isLoggedIn, habboAccount, isAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
-  const { isLoggedIn, habboAccount } = useAuth();
-  const [habboData, setHabboData] = useState<any>(null);
-  const [showExpandedMenu, setShowExpandedMenu] = useState(false);
 
-  const mainNavItems = [
-    { id: 'home', label: 'Home', icon: '/assets/home.png', path: '/' },
-    { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
-    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', path: '/eventos' },
-    { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', path: '/forum' }
-  ];
-
-  const expandedNavItems = [
-    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', path: '/catalogo' },
-    { id: 'emblemas', label: t('emblemas'), icon: '/assets/emblemas.png', path: '/emblemas' },
-    { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', path: '/editor' },
-    { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
-    { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' }
-  ];
-
-  const handleNavClick = (path: string) => {
-    navigate(path);
-    setShowExpandedMenu(false);
-  };
-
+  // Fetch current Habbo data when logged in
   useEffect(() => {
     if (isLoggedIn && habboAccount) {
       getUserByName(habboAccount.habbo_name).then(data => {
@@ -47,96 +23,140 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     }
   }, [isLoggedIn, habboAccount]);
 
+  const mainNavItems = [
+    { id: 'home', label: 'Home', icon: '/assets/home.png', path: '/' },
+    { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
+    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', path: '/eventos' },
+    { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', path: '/forum' },
+    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', path: '/catalogo' },
+  ];
+
+  const additionalNavItems = [
+    { id: 'emblemas', label: t('emblemas'), icon: '/assets/emblemas.png', path: '/emblemas' },
+    { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', path: '/editor' },
+    { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
+    { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' },
+  ];
+
+  // Add admin link if user is admin
+  if (isAdmin()) {
+    additionalNavItems.push({
+      id: 'adminhub',
+      label: 'Admin Hub',
+      icon: '/assets/ferramentas.png',
+      path: '/adminhub'
+    });
+  }
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setShowExpandedDock(false);
+  };
+
+  const getCurrentActiveSection = () => {
+    const path = location.pathname;
+    const allItems = [...mainNavItems, ...additionalNavItems];
+    const activeItem = allItems.find(item => item.path === path);
+    return activeItem?.id || 'home';
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      {/* Header */}
-      <header className="bg-amber-50/95 backdrop-blur-sm border-b border-amber-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center space-x-3">
+    <div className="min-h-screen bg-repeat pb-20" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      {/* Header with logo and avatar */}
+      <div className="bg-amber-50 shadow-lg p-4 flex items-center justify-between">
+        <div className="flex items-center">
           <img 
             src="/assets/habbohub.gif" 
             alt="HABBO HUB" 
-            className="w-32 h-auto"
+            className="h-10 w-auto"
           />
         </div>
-        
-        <UserProfilePopover side="bottom" align="end">
-          <div className="relative cursor-pointer">
-            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-md">
-              <img
-                src={isLoggedIn && habboData ? 
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
-                  : '/assets/frank.png'
-                }
-                alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
-                className="w-full h-full object-cover object-center"
-              />
+        <div className="flex items-center space-x-4">
+          <UserProfilePopover side="bottom" align="end">
+            <div className="flex items-center cursor-pointer hover:bg-amber-100 rounded-lg p-2 transition-colors">
+              <div className="relative">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                  <img
+                    src={isLoggedIn && habboData ? 
+                      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+                      : '/assets/frank.png'
+                    }
+                    alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              </div>
             </div>
-            <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          </div>
-        </UserProfilePopover>
-      </header>
+          </UserProfilePopover>
+        </div>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      {/* Main content */}
+      <div className="flex-1">
         {children}
-      </main>
+      </div>
 
-      {/* Bottom Dock Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-amber-50/95 backdrop-blur-sm border-t border-amber-200 px-4 py-2 z-30">
-        <div className="flex justify-around items-center max-w-md mx-auto">
-          {mainNavItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.path)}
-                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
-                  isActive 
-                    ? 'bg-sky-400 text-white shadow-md' 
-                    : 'text-gray-600 hover:bg-amber-100'
-                }`}
-              >
-                <img src={item.icon} alt={item.label} className="w-5 h-5" />
-                <span className="text-xs volter-font">{item.label}</span>
-              </button>
-            );
-          })}
+      {/* Bottom dock */}
+      <div className="fixed bottom-0 left-0 right-0 bg-amber-50 shadow-lg border-t border-amber-200 z-50">
+        <div className="flex items-center justify-center px-4 py-2">
+          {/* Main navigation items */}
+          {mainNavItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleNavClick(item.path)}
+              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                getCurrentActiveSection() === item.id
+                  ? 'bg-amber-200 text-amber-800'
+                  : 'text-gray-600 hover:bg-amber-100'
+              }`}
+            >
+              <img src={item.icon} alt={item.label} className="w-6 h-6 mb-1" />
+              <span className="text-xs font-medium">{item.label}</span>
+            </button>
+          ))}
           
-          {/* Expandable Menu Button */}
-          <button 
-            onClick={() => setShowExpandedMenu(!showExpandedMenu)}
-            className="flex flex-col items-center space-y-1 px-3 py-2 rounded-lg text-gray-600 hover:bg-amber-100 transition-all duration-200"
+          {/* Expand button */}
+          <button
+            onClick={() => setShowExpandedDock(!showExpandedDock)}
+            className="flex flex-col items-center justify-center p-3 rounded-lg text-gray-600 hover:bg-amber-100 transition-all duration-200"
           >
-            {showExpandedMenu ? <X size={20} /> : <Plus size={20} />}
-            <span className="text-xs volter-font">Mais</span>
+            <div className="w-6 h-6 mb-1 flex items-center justify-center">
+              <svg 
+                className={`w-5 h-5 transition-transform duration-200 ${showExpandedDock ? 'rotate-45' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <span className="text-xs font-medium">Mais</span>
           </button>
         </div>
 
-        {/* Expanded Menu */}
-        {showExpandedMenu && (
-          <div className="absolute bottom-full left-0 right-0 bg-amber-50/95 backdrop-blur-sm border-t border-amber-200 py-4">
-            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto px-4">
-              {expandedNavItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavClick(item.path)}
-                    className={`flex flex-col items-center space-y-2 p-3 rounded-lg transition-all duration-200 ${
-                      isActive 
-                        ? 'bg-sky-400 text-white shadow-md' 
-                        : 'text-gray-600 hover:bg-amber-100'
-                    }`}
-                  >
-                    <img src={item.icon} alt={item.label} className="w-6 h-6" />
-                    <span className="text-xs volter-font text-center">{item.label}</span>
-                  </button>
-                );
-              })}
+        {/* Expanded dock */}
+        {showExpandedDock && (
+          <div className="border-t border-amber-200 bg-amber-50 p-4">
+            <div className="grid grid-cols-4 gap-2">
+              {additionalNavItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.path)}
+                  className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 ${
+                    getCurrentActiveSection() === item.id
+                      ? 'bg-amber-200 text-amber-800'
+                      : 'text-gray-600 hover:bg-amber-100'
+                  }`}
+                >
+                  <img src={item.icon} alt={item.label} className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium text-center">{item.label}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
-      </nav>
+      </div>
     </div>
   );
 };

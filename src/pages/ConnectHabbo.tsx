@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { ConnectHabboForm } from '../components/ConnectHabboForm';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
@@ -12,6 +13,20 @@ export default function ConnectHabbo() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [forceShowForm, setForceShowForm] = useState(false);
+  const [activeSection, setActiveSection] = useState('connect-habbo');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Handle sidebar state changes
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   // Redirect if already logged in and authenticated
   useEffect(() => {
@@ -74,7 +89,8 @@ export default function ConnectHabbo() {
   return (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
             title="Conectar Habbo"
             icon="/assets/frank.png"
