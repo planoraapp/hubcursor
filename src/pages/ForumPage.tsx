@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { Heart, MessageCircle, Send, Image as ImageIcon, Clock, Users } from 'lucide-react';
+import { Image as ImageIcon } from 'lucide-react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -251,63 +251,44 @@ export default function ForumPage() {
     fetchPosts();
   }, [selectedCategory]);
 
-  // Dados das categorias do fórum
-  const forumCategories = [
-    { 
-      name: "Discussões Gerais", 
-      description: "Conversa sobre tudo relacionado ao Habbo", 
-      icon: <MessageCircle className="w-8 h-8 mx-auto text-gray-600" />, 
-      topics: 1250, 
-      posts: 15670, 
-      lastPostTime: "2 minutos atrás", 
-      bgColor: "bg-blue-100" 
-    },
-    { 
-      name: "Suporte Técnico", 
-      description: "Precisa de ajuda? Poste aqui!", 
-      icon: <Users className="w-8 h-8 mx-auto text-gray-600" />, 
-      topics: 890, 
-      posts: 4320, 
-      lastPostTime: "15 minutos atrás", 
-      bgColor: "bg-green-100" 
-    },
-    { 
-      name: "Eventos e Competições", 
-      description: "Fique por dentro dos eventos e competições", 
-      icon: <Clock className="w-8 h-8 mx-auto text-gray-600" />, 
-      topics: 450, 
-      posts: 2100, 
-      lastPostTime: "1 hora atrás", 
-      bgColor: "bg-purple-100" 
-    },
-  ];
-
   const renderContent = () => (
     <div className="space-y-6">
-      {/* Seção de Categorias do Fórum */}
+      {/* Forum Categories Section */}
       <Card className="bg-white border-gray-900">
         <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
           <CardTitle className="volter-font">Categorias do Fórum</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {forumCategories.map(category => (
-              <ForumCategoryCard
-                key={category.name}
-                icon={category.icon}
-                title={category.name}
-                description={category.description}
-                topics={category.topics}
-                posts={category.posts}
-                lastPostTime={category.lastPostTime}
-                bgColorClass={category.bgColor}
-              />
-            ))}
+            <ForumCategoryCard
+              title="Discussões Gerais"
+              description="Conversa sobre tudo relacionado ao Habbo"
+              topics={1250}
+              posts={15670}
+              lastPostTime="2 minutos atrás"
+              bgColorClass="bg-blue-100"
+            />
+            <ForumCategoryCard
+              title="Suporte Técnico"
+              description="Precisa de ajuda? Poste aqui!"
+              topics={890}
+              posts={4320}
+              lastPostTime="15 minutos atrás"
+              bgColorClass="bg-green-100"
+            />
+            <ForumCategoryCard
+              title="Eventos e Competições"
+              description="Fique por dentro dos eventos e competições"
+              topics={450}
+              posts={2100}
+              lastPostTime="1 hora atrás"
+              bgColorClass="bg-purple-100"
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Seção de Criar Novo Post */}
+      {/* Create New Post Section */}
       <Card className="bg-white border-gray-900">
         <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white">
           <CardTitle className="volter-font">Criar Novo Post</CardTitle>
@@ -388,7 +369,7 @@ export default function ForumPage() {
         </CardContent>
       </Card>
 
-      {/* Seção de Posts */}
+      {/* Recent Posts Section */}
       <Card className="bg-white border-gray-900">
         <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
