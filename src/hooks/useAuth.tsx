@@ -1,7 +1,7 @@
 
 import { useSupabaseAuth } from './useSupabaseAuth';
 
-// Admin users list - using Supabase data
+// Admin users list - agora usando dados do Supabase
 const ADMIN_USERS = ['habbohub', 'beebop'];
 
 export const useAuth = () => {
@@ -20,7 +20,7 @@ export const useAuth = () => {
   } : null;
 
   const isAdmin = () => {
-    return isLoggedIn && habboAccount?.habbo_name && ADMIN_USERS.includes(habboAccount.habbo_name.toLowerCase());
+    return isLoggedIn && habboAccount?.is_admin === true;
   };
 
   const isAdminUser = (username: string) => {

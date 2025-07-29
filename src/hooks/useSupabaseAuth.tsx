@@ -10,6 +10,7 @@ interface HabboAccount {
   habbo_id: string;
   habbo_name: string;
   supabase_user_id: string;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -70,7 +71,6 @@ export const useSupabaseAuth = () => {
       }
     );
 
-    // Verificar sessão inicial
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -117,9 +117,11 @@ export const useSupabaseAuth = () => {
     return data;
   };
 
-  // VERSÃO MELHORADA com retry logic para RLS
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 Criando vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
+    
+    // Detecção discreta de admin
+    const isAdmin = habboName.toLowerCase() === 'habbohub';
     
     const maxRetries = 5;
     let lastError: any = null;
@@ -133,7 +135,8 @@ export const useSupabaseAuth = () => {
           .insert({ 
             habbo_id: habboId, 
             habbo_name: habboName, 
-            supabase_user_id: supabaseUserId 
+            supabase_user_id: supabaseUserId,
+            is_admin: isAdmin
           })
           .select()
           .single();
@@ -142,23 +145,22 @@ export const useSupabaseAuth = () => {
           lastError = error;
           console.error(`❌ Erro na tentativa ${attempt}: ${error.message}`);
           
-          // Se for erro de RLS ou duplicate key, tenta reautenticar
           if (error.message.includes('violates row-level security policy') || 
               error.message.includes('duplicate key value violates unique constraint')) {
             console.log('🔄 Erro de RLS detectado, tentando reautenticar...');
             
-            // Força refresh da sessão
             await supabase.auth.refreshSession();
             
-            // Delay exponencial
             await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             continue;
           } else {
-            // Se não for erro de RLS, para as tentativas
             break;
           }
         } else {
           console.log('✅ Vínculo criado com sucesso:', data);
+          if (isAdmin) {
+            console.log(`🔑 [Admin] Usuário ${habboName} marcado como administrador`);
+          }
           return data;
         }
       } catch (generalError) {
@@ -175,49 +177,22 @@ export const useSupabaseAuth = () => {
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
     console.log(`🔐 Iniciando signUp para: habboId=${habboId}, habboName=${habboName}`);
     
-    // Tratamento especial para admins
-    let authUser = null;
     const authEmail = `${habboId}@habbohub.com`;
 
-    // Para usuários admin, tentar login primeiro
-    if (habboName.toLowerCase() === 'habbohub' || habboName.toLowerCase() === 'beebop') {
-      console.log('🛠️ Usuário admin detectado, tentando login direto primeiro...');
-      try {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: authEmail,
-          password: password,
-        });
-        
-        if (signInData.user) {
-          authUser = signInData.user;
-          console.log('✅ Login admin automático bem-sucedido');
-          return { user: authUser };
-        } else if (signInError && !signInError.message.includes('not found')) {
-          throw signInError;
-        }
-      } catch (error) {
-        console.log('⚠️ Login admin falhou, tentando signup...', error);
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: authEmail,
+      password: password,
+      options: {
+        data: { habbo_name: habboName }
       }
+    });
+
+    if (authError) {
+      console.error('❌ Erro na autenticação:', authError);
+      throw authError;
     }
-
-    // Se não conseguiu fazer login (ou não é admin), tenta signUp
-    if (!authUser) {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: authEmail,
-        password: password,
-        options: {
-          data: { habbo_name: habboName }
-        }
-      });
-
-      if (authError) {
-        console.error('❌ Erro na autenticação:', authError);
-        throw authError;
-      }
-      
-      authUser = authData.user;
-    }
-
+    
+    const authUser = authData.user;
     console.log('✅ Usuário autenticado no Supabase Auth:', authUser?.id);
 
     if (authUser) {

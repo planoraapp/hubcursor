@@ -241,6 +241,12 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
         }
         
         await signUpWithHabbo(userHabboId, habboNameInput, password);
+        
+        // Log discreto para admin
+        if (habboNameInput.toLowerCase() === 'habbohub') {
+          console.log('🔑 [Admin] Conta administrativa criada via modal');
+        }
+        
         toast({
           title: "Sucesso",
           description: "Conta criada com sucesso!"
