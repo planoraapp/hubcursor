@@ -1,93 +1,122 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Home, Calendar, MessageCircle, Package, Award, Palette, ShoppingCart, User } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
-import { ProfileModal } from '../components/ProfileModal';
+import { UserProfilePopover } from '../components/UserProfilePopover';
+import { getUserByName } from '../services/habboApi';
 
 interface MobileLayoutProps {
   children: React.ReactNode;
 }
 
 const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
-  const { t } = useLanguage();
-  const { isLoggedIn, userData } = useAuth();
   const navigate = useNavigate();
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const location = useLocation();
+  const { t } = useLanguage();
+  const { isLoggedIn, habboAccount } = useAuth();
+  const [habboData, setHabboData] = useState<any>(null);
 
   const navItems = [
-    { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
-    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', path: '/eventos' },
-    { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', path: '/forum' },
-    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', path: '/catalogo' },
-    { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' },
+    { id: 'home', label: 'Home', icon: Home, path: '/' },
+    { id: 'noticias', label: t('noticias'), icon: MessageCircle, path: '/noticias' },
+    { id: 'eventos', label: 'Eventos', icon: Calendar, path: '/eventos' },
+    { id: 'forum', label: t('forum'), icon: MessageCircle, path: '/forum' },
+    { id: 'catalogo', label: t('catalogo'), icon: Package, path: '/catalogo' },
+    { id: 'emblemas', label: t('emblemas'), icon: Award, path: '/emblemas' },
+    { id: 'editor', label: t('editor'), icon: Palette, path: '/editor' },
+    { id: 'mercado', label: t('mercado'), icon: ShoppingCart, path: '/mercado' }
   ];
 
   const handleNavClick = (path: string) => {
     navigate(path);
   };
 
-  const handleAvatarClick = () => {
-    setShowProfileModal(true);
-  };
+  useEffect(() => {
+    if (isLoggedIn && habboAccount) {
+      getUserByName(habboAccount.habbo_name).then(data => {
+        setHabboData(data);
+      }).catch(console.error);
+    }
+  }, [isLoggedIn, habboAccount]);
 
   return (
-    <div className="min-h-screen bg-repeat pb-20" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    <div className="flex flex-col min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       {/* Header */}
-      <div className="bg-amber-50 shadow-lg p-4 flex items-center justify-between">
+      <header className="bg-amber-50/95 backdrop-blur-sm border-b border-amber-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center space-x-3">
           <img 
-            src="/assets/habbohub.png" 
+            src="/assets/habbohub.gif" 
             alt="HABBO HUB" 
-            className="h-8"
+            className="w-8 h-8"
           />
-          <span className="font-bold text-gray-800">Habbo Hub</span>
+          <h1 className="font-bold text-gray-800 volter-font">HABBO HUB</h1>
         </div>
         
-        <div className="flex items-center space-x-3">
-          <div className="cursor-pointer" onClick={handleAvatarClick}>
-            <div className="relative">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
-                <img
-                  src={isLoggedIn && userData ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1` : '/assets/frank.png'}
-                  alt={isLoggedIn && userData ? userData.name : 'Frank'}
-                  className="w-full h-full object-cover object-top scale-110 translate-y-1"
-                />
-              </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isLoggedIn && userData ? 'bg-green-500' : 'bg-red-500'}`}></div>
+        <UserProfilePopover side="bottom" align="end">
+          <div className="relative cursor-pointer">
+            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-md">
+              <img
+                src={isLoggedIn && habboData ? 
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+                  : '/assets/frank.png'
+                }
+                alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
+                className="w-full h-full object-cover object-center"
+              />
             </div>
+            <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
           </div>
-        </div>
-      </div>
+        </UserProfilePopover>
+      </header>
 
       {/* Main Content */}
-      <main className="p-4">
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-[calc(100vh-12rem)]">
-          {children}
-        </div>
+      <main className="flex-1 overflow-y-auto pb-20">
+        {children}
       </main>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-amber-50 border-t-2 border-amber-200 px-4 py-2 shadow-lg">
+      {/* Bottom Dock Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-amber-50/95 backdrop-blur-sm border-t border-amber-200 px-4 py-2 z-30">
         <div className="flex justify-around items-center max-w-md mx-auto">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.path)}
-              className="flex flex-col items-center space-y-1 p-2 rounded-lg hover:bg-white/50 transition-colors"
-            >
-              <img src={item.icon} alt={item.label} className="w-6 h-6" />
-              <span className="text-xs text-gray-700">{item.label}</span>
+          {navItems.slice(0, 4).map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.path)}
+                className={`flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-sky-400 text-white shadow-md' 
+                    : 'text-gray-600 hover:bg-amber-100'
+                }`}
+              >
+                <Icon size={20} />
+                <span className="text-xs volter-font">{item.label}</span>
+              </button>
+            );
+          })}
+          
+          <UserProfilePopover side="top" align="center">
+            <button className="flex flex-col items-center space-y-1 px-3 py-2 rounded-lg text-gray-600 hover:bg-amber-100 transition-all duration-200">
+              <div className="relative">
+                <div className="w-5 h-5 rounded-full overflow-hidden border border-amber-300">
+                  <img
+                    src={isLoggedIn && habboData ? 
+                      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+                      : '/assets/frank.png'
+                    }
+                    alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Perfil'}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+                <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              </div>
+              <span className="text-xs volter-font">Perfil</span>
             </button>
-          ))}
+          </UserProfilePopover>
         </div>
-      </div>
-
-      <ProfileModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        isLoginAttempt={!isLoggedIn}
-      />
+      </nav>
     </div>
   );
 };

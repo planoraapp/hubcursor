@@ -1,3 +1,5 @@
+
+import { useState, useEffect } from 'react';
 import { Tools } from '../components/Tools';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
@@ -7,6 +9,18 @@ import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 
 const Ferramentas = () => {
   const isMobile = useIsMobile();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   if (isMobile) {
     return (
@@ -20,7 +34,7 @@ const Ferramentas = () => {
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection="ferramentas" setActiveSection={() => {}} />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
             title="Ferramentas"
             icon="/assets/ferramentas.png"

@@ -9,7 +9,7 @@ import MobileLayout from '../layouts/MobileLayout';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Mudado para false por padrão
   const isMobile = useIsMobile();
 
   useEffect(() => {

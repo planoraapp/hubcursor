@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LanguageSelector } from './LanguageSelector';
+import { UserProfilePopover } from './UserProfilePopover';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName } from '../services/habboApi';
@@ -13,8 +14,8 @@ interface CollapsibleSidebarProps {
 }
 
 export const CollapsibleSidebar = ({ activeSection, setActiveSection }: CollapsibleSidebarProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false); // Mudado para false por padrão
+  const [isPinned, setIsPinned] = useState(true); // Mudado para true por padrão
   const [isHovered, setIsHovered] = useState(false);
   const [habboData, setHabboData] = useState<any>(null);
   const { t } = useLanguage();
@@ -57,11 +58,6 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
     navigate(item.path);
   };
 
-  const handleAvatarClick = () => {
-    setIsPinned(true);
-    navigate('/connect-habbo');
-  };
-
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
     setIsPinned(!isCollapsed);
@@ -88,7 +84,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
         <div className="relative">
           <div className="text-center p-6">
             <img 
-              src="/assets/habbohub.png" 
+              src={shouldShowExpanded ? "/assets/habbohub.gif" : "/assets/hub.gif"}
               alt="HABBO HUB" 
               className={`mx-auto mb-4 ${shouldShowExpanded ? 'max-w-[180px]' : 'w-12'} h-auto transition-all duration-300`}
             />
@@ -102,29 +98,31 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
           </button>
         </div>
         
-        {/* Avatar Interativo */}
-        <div className={`${shouldShowExpanded ? 'px-4' : 'px-2'} mb-6 cursor-pointer transition-all duration-300`} onClick={handleAvatarClick}>
-          <div className="flex flex-col items-center">
-            <div className="relative mb-2">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
-                <img
-                  src={isLoggedIn && habboData ? 
-                    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
-                    : '/assets/frank.png'
-                  }
-                  alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
-                  className="w-full h-full object-cover object-center"
-                />
+        {/* Avatar Interativo com Popover */}
+        <div className={`${shouldShowExpanded ? 'px-4' : 'px-2'} mb-6 transition-all duration-300`}>
+          <UserProfilePopover side="right" align="start">
+            <div className="flex flex-col items-center cursor-pointer hover:bg-amber-100 rounded-lg p-2 transition-colors">
+              <div className="relative mb-2">
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                  <img
+                    src={isLoggedIn && habboData ? 
+                      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+                      : '/assets/frank.png'
+                    }
+                    alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+                <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
               </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              {shouldShowExpanded && (
+                <div className="text-center">
+                  <h3 className="font-bold text-gray-800 text-sm volter-font">{isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Visitante'}</h3>
+                  <p className="text-xs text-gray-600 volter-font">{isLoggedIn && habboData ? habboData.motto : 'Não conectado'}</p>
+                </div>
+              )}
             </div>
-            {shouldShowExpanded && (
-              <div className="text-center">
-                <h3 className="font-bold text-gray-800 text-sm volter-font">{isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Visitante'}</h3>
-                <p className="text-xs text-gray-600 volter-font">{isLoggedIn && habboData ? habboData.motto : 'Não conectado'}</p>
-              </div>
-            )}
-          </div>
+          </UserProfilePopover>
         </div>
         
         {/* Navigation */}
@@ -144,7 +142,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
               title={!shouldShowExpanded ? item.label : ''}
             >
               <div className={`flex items-center justify-center ${!shouldShowExpanded ? 'w-16 h-16' : 'w-12 h-12'}`}>
-                <img src={item.icon} alt={item.label} className="w-5 h-5" />
+                <img src={item.icon} alt={item.label} className={`${!shouldShowExpanded ? 'w-8 h-8' : 'w-5 h-5'}`} />
               </div>
               {shouldShowExpanded && (
                 <span className="ml-3 volter-font transition-all duration-300">{item.label}</span>
