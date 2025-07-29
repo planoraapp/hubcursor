@@ -3,6 +3,7 @@ import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../integrations/supabase/client';
 
 const generateVerificationCode = () => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -48,6 +49,36 @@ export const ConnectHabboForm = () => {
     return name.toLowerCase() === 'habbohub' || name.toLowerCase() === 'beebop';
   };
 
+  // Função para buscar habbo_id correto na base de dados
+  const findHabboIdByName = async (habboName: string): Promise<string | null> => {
+    try {
+      addLog(`🔍 Buscando habbo_id para ${habboName} na base de dados...`);
+      
+      const { data, error } = await supabase
+        .from('habbo_accounts')
+        .select('habbo_id')
+        .ilike('habbo_name', habboName)
+        .maybeSingle();
+
+      if (error) {
+        addLog(`❌ Erro ao buscar na base de dados: ${error.message}`);
+        return null;
+      }
+
+      if (!data) {
+        addLog(`❌ Conta não encontrada na base de dados para: ${habboName}`);
+        return null;
+      }
+
+      addLog(`✅ Encontrado habbo_id: ${data.habbo_id} para ${habboName}`);
+      return data.habbo_id;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      addLog(`❌ Erro na busca por habbo_id: ${errorMessage}`);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const savedCode = localStorage.getItem(STORAGE_KEY);
     const savedHabboName = localStorage.getItem(STORAGE_HABBO_KEY);
@@ -86,10 +117,23 @@ export const ConnectHabboForm = () => {
     addLog(`🔐 Tentando login direto para: ${habboName}`);
 
     try {
-      // Para usuarios admin, usar o nome como ID
-      const loginId = checkIfAdmin(habboName) ? habboName.toLowerCase() : habboName;
+      // Primeiro, buscar o habbo_id correto na base de dados
+      const correctHabboId = await findHabboIdByName(habboName);
       
-      await signInWithHabbo(loginId, password);
+      if (!correctHabboId) {
+        addLog(`❌ Não foi possível encontrar conta para: ${habboName}`);
+        toast({
+          title: "Conta Não Encontrada",
+          description: `A conta "${habboName}" não foi encontrada na base de dados. Certifique-se de que a conta foi criada anteriormente.`,
+          variant: "destructive"
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      addLog(`📧 Tentando login com email: ${correctHabboId}@habbohub.com`);
+      
+      await signInWithHabbo(correctHabboId, password);
       addLog('✅ Login direto realizado com sucesso!');
       toast({
         title: "Sucesso",
@@ -108,7 +152,11 @@ export const ConnectHabboForm = () => {
       
       let userMessage = errorMessage;
       if (errorMessage.includes('Invalid login credentials')) {
-        userMessage = "Nome de usuário ou senha incorretos. Verifique e tente novamente.";
+        if (checkIfAdmin(habboName)) {
+          userMessage = `Credenciais inválidas para conta administrativa "${habboName}". Verifique se a senha está correta (dica: tente "290684" para contas de teste).`;
+        } else {
+          userMessage = "Nome de usuário ou senha incorretos. Verifique e tente novamente.";
+        }
       }
       
       toast({
