@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Heart, MessageCircle, Send, Image as ImageIcon } from 'lucide-react';
+import { Heart, MessageCircle, Send, Image as ImageIcon, Upload } from 'lucide-react';
 
 interface ForumPost {
   id: string;
@@ -39,6 +39,7 @@ function PostCard({ post, onLike, currentUserId }: {
   const [comments, setComments] = useState<ForumComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
+  const [isCommenting, setIsCommenting] = useState(false);
   const { toast } = useToast();
   const { habboAccount } = useAuth();
 
@@ -75,6 +76,7 @@ function PostCard({ post, onLike, currentUserId }: {
       return;
     }
 
+    setIsCommenting(true);
     const { data, error } = await supabase
       .from('forum_comments')
       .insert({
@@ -101,6 +103,7 @@ function PostCard({ post, onLike, currentUserId }: {
         description: "Comentário adicionado com sucesso!"
       });
     }
+    setIsCommenting(false);
   };
 
   useEffect(() => {
@@ -108,7 +111,7 @@ function PostCard({ post, onLike, currentUserId }: {
   }, [showComments]);
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 bg-white border-gray-900 shadow-md">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           {post.image_url && (
@@ -132,7 +135,7 @@ function PostCard({ post, onLike, currentUserId }: {
                 variant="ghost"
                 size="sm"
                 onClick={() => onLike(post.id)}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-1 text-blue-600 hover:text-blue-800"
                 disabled={!currentUserId}
               >
                 <Heart className="h-4 w-4" />
@@ -142,7 +145,7 @@ function PostCard({ post, onLike, currentUserId }: {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowComments(!showComments)}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-1 text-gray-600 hover:text-gray-800"
               >
                 <MessageCircle className="h-4 w-4" />
                 <span>{comments.length}</span>
@@ -178,7 +181,12 @@ function PostCard({ post, onLike, currentUserId }: {
                   placeholder="Escreva um comentário..."
                   className="flex-1"
                 />
-                <Button onClick={handleAddComment} size="sm">
+                <Button 
+                  onClick={handleAddComment} 
+                  size="sm"
+                  disabled={isCommenting}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
@@ -196,7 +204,11 @@ export default function ForumPage() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  const [newPostImage, setNewPostImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const { isLoggedIn, user, habboAccount } = useAuth();
   const { toast } = useToast();
 
@@ -220,6 +232,61 @@ export default function ForumPage() {
     setLoading(false);
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione apenas arquivos de imagem",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setNewPostImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImageToSupabase = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `forum_images/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('habbo-hub-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('habbo-hub-images')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   const handleCreatePost = async () => {
     if (!newPostTitle.trim() || !newPostContent.trim()) {
       toast({
@@ -239,11 +306,32 @@ export default function ForumPage() {
       return;
     }
 
+    setIsCreatingPost(true);
+    let imageUrl = null;
+
+    // Upload image if provided
+    if (newPostImage) {
+      setUploadingImage(true);
+      imageUrl = await uploadImageToSupabase(newPostImage);
+      setUploadingImage(false);
+      
+      if (!imageUrl) {
+        toast({
+          title: "Erro",
+          description: "Erro ao fazer upload da imagem",
+          variant: "destructive"
+        });
+        setIsCreatingPost(false);
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from('forum_posts')
       .insert({
         title: newPostTitle.trim(),
         content: newPostContent.trim(),
+        image_url: imageUrl,
         author_supabase_user_id: user.id,
         author_habbo_name: habboAccount.habbo_name,
       });
@@ -258,12 +346,15 @@ export default function ForumPage() {
     } else {
       setNewPostTitle('');
       setNewPostContent('');
+      setNewPostImage(null);
+      setImagePreview(null);
       toast({
         title: "Sucesso",
         description: "Post criado com sucesso!"
       });
       fetchPosts();
     }
+    setIsCreatingPost(false);
   };
 
   const handleLikePost = async (postId: string) => {
@@ -300,6 +391,11 @@ export default function ForumPage() {
     }
   };
 
+  const removeImage = () => {
+    setNewPostImage(null);
+    setImagePreview(null);
+  };
+
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -316,7 +412,7 @@ export default function ForumPage() {
       </div>
 
       {/* Create Post Form */}
-      <Card className="mb-8">
+      <Card className="mb-8 bg-white border-gray-900 shadow-md">
         <CardHeader>
           <CardTitle>Criar Novo Post</CardTitle>
         </CardHeader>
@@ -336,8 +432,44 @@ export default function ForumPage() {
                 rows={4}
                 className="w-full"
               />
-              <Button onClick={handleCreatePost} className="w-full">
-                Publicar Post
+              
+              {/* Image Upload */}
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 cursor-pointer">
+                  <ImageIcon className="h-4 w-4" />
+                  {uploadingImage ? 'Carregando...' : 'Adicionar Imagem'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={uploadingImage || isCreatingPost}
+                  />
+                </label>
+                
+                {imagePreview && (
+                  <div className="relative">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="h-16 w-16 object-cover rounded-lg border"
+                    />
+                    <button
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-sm hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                onClick={handleCreatePost} 
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                disabled={isCreatingPost || uploadingImage}
+              >
+                {isCreatingPost ? 'Criando...' : 'Publicar Post'}
               </Button>
             </div>
           ) : (
