@@ -1,10 +1,8 @@
 
 import { useState } from 'react';
-import { Shield, User, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useToast } from '../hooks/use-toast';
-import { PanelCard } from './PanelCard';
 import { getUserByName } from '../services/habboApi';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
 const generateVerificationCode = () => {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -15,20 +13,39 @@ export const ConnectHabboForm = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [step, setStep] = useState<'input' | 'verification' | 'login' | 'signup' | 'success'>('input');
+  const [step, setStep] = useState(1);
   const [userHabboId, setUserHabboId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
-
-  const { getLinkedAccount, signUpWithHabbo, signInWithHabbo, verifyHabboMotto } = useSupabaseAuth();
+  
   const { toast } = useToast();
+  const { 
+    user, 
+    habboAccount, 
+    getLinkedAccount, 
+    signUpWithHabbo, 
+    signInWithHabbo, 
+    verifyHabboMotto 
+  } = useSupabaseAuth();
 
-  const addDebugInfo = (message: string) => {
-    setDebugInfo(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
-    console.log(message);
-  };
+  // If user is already logged in, show success state
+  if (user && habboAccount) {
+    return (
+      <div className="max-w-md mx-auto bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Bem-vindo de Volta!</h2>
+        <p className="text-gray-600 mb-6">
+          Você já está logado no Habbo Hub como <strong>{habboAccount.habbo_name}</strong>.
+        </p>
+        <button
+          onClick={() => window.location.href = `/profile/${habboAccount.habbo_name}`}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Ver Meu Perfil
+        </button>
+      </div>
+    );
+  }
 
-  const handleNameSubmit = async (e: React.FormEvent) => {
+  const handleInitiateVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!habboName.trim()) {
       toast({
@@ -40,37 +57,32 @@ export const ConnectHabboForm = () => {
     }
 
     setIsProcessing(true);
-    setDebugInfo([]);
-    addDebugInfo('🔍 Verificando usuário Habbo...');
-
     try {
-      const habboUser = await getUserByName(habboName.trim());
-      
+      const habboUser = await getUserByName(habboName);
       if (!habboUser || !habboUser.motto) {
-        addDebugInfo('❌ Usuário não encontrado ou perfil privado');
         toast({
-          title: "Usuário não encontrado",
-          description: "Verifique se o nome está correto e se o perfil está público.",
+          title: "Erro",
+          description: `O Habbo "${habboName}" não foi encontrado, está offline ou tem perfil privado.`,
           variant: "destructive"
         });
         setIsProcessing(false);
         return;
       }
 
-      addDebugInfo(`✅ Usuário encontrado: ${habboUser.name}`);
-      addDebugInfo(`👤 Online: ${habboUser.online ? 'Sim' : 'Não'}`);
-      addDebugInfo(`💬 Motto atual: "${habboUser.motto}"`);
-
-      setUserHabboId(habboUser.id);
-      const code = generateVerificationCode();
-      setVerificationCode(code);
-      addDebugInfo(`🔑 Código gerado: ${code}`);
-      setStep('verification');
+      setUserHabboId(habboUser.uniqueId); // Fixed: use uniqueId instead of id
+      const newCode = generateVerificationCode();
+      setVerificationCode(newCode);
+      setStep(2);
+      
+      toast({
+        title: "Código Gerado",
+        description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
+      });
     } catch (error) {
-      addDebugInfo('❌ Erro ao verificar usuário');
+      console.error('Erro ao verificar nome Habbo:', error);
       toast({
         title: "Erro",
-        description: "Erro ao verificar usuário. Tente novamente.",
+        description: "Não foi possível verificar o nome Habbo. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -78,47 +90,43 @@ export const ConnectHabboForm = () => {
     }
   };
 
-  const handleVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userHabboId || !verificationCode) {
+  const handleVerifyMotto = async () => {
+    if (!habboName.trim() || !verificationCode || !userHabboId) {
       toast({
         title: "Erro",
-        description: "Erro na verificação. Reinicie o processo.",
+        description: "Erro na verificação. Por favor, reinicie o processo.",
         variant: "destructive"
       });
+      setStep(1);
       return;
     }
 
     setIsProcessing(true);
-    addDebugInfo('🔍 Verificando código na motto...');
-
     try {
       const habboUser = await verifyHabboMotto(habboName, verificationCode);
-      addDebugInfo(`✅ Código verificado na motto: "${habboUser.motto}"`);
-
-      // Check if account already exists
-      const linkedAccount = await getLinkedAccount(userHabboId);
       
-      if (linkedAccount) {
-        addDebugInfo('🔑 Conta existente encontrada - solicitando login');
-        setStep('login');
-        toast({
-          title: "Conta encontrada",
-          description: "Digite sua senha para entrar no Habbo Hub.",
-        });
-      } else {
-        addDebugInfo('🆕 Nova conta - solicitando criação de senha');
-        setStep('signup');
-        toast({
-          title: "Nova conta",
-          description: "Crie uma senha para sua conta no Habbo Hub.",
-        });
+      if (habboUser) {
+        const linkedAccount = await getLinkedAccount(userHabboId);
+        
+        if (linkedAccount) {
+          setStep(3); // Login with existing password
+          toast({
+            title: "Sucesso",
+            description: "Código verificado! Digite sua senha do Habbo Hub para acessar."
+          });
+        } else {
+          setStep(4); // Create new account
+          toast({
+            title: "Sucesso",
+            description: "Código verificado! Agora crie uma senha para o seu Habbo Hub."
+          });
+        }
       }
     } catch (error) {
-      addDebugInfo('❌ Falha na verificação');
+      console.error('Erro ao verificar motto:', error);
       toast({
-        title: "Erro na verificação",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao verificar a motto.",
         variant: "destructive"
       });
     } finally {
@@ -126,348 +134,246 @@ export const ConnectHabboForm = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handlePasswordAction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userHabboId || !password) {
-      toast({
-        title: "Erro",
-        description: "Por favor, digite sua senha.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!userHabboId) return;
 
     setIsProcessing(true);
-    addDebugInfo('🔐 Tentando login...');
 
     try {
-      await signInWithHabbo(userHabboId, password);
-      addDebugInfo('✅ Login realizado com sucesso!');
-      setStep('success');
-      toast({
-        title: "Sucesso",
-        description: "Login realizado com sucesso!",
-      });
+      if (step === 3) {
+        // Login with existing account
+        if (!password) {
+          toast({
+            title: "Erro",
+            description: "Por favor, digite sua senha.",
+            variant: "destructive"
+          });
+          setIsProcessing(false);
+          return;
+        }
+
+        await signInWithHabbo(userHabboId, password);
+        toast({
+          title: "Sucesso",
+          description: "Login realizado com sucesso!"
+        });
+        window.location.href = `/profile/${habboName}`;
+      } else if (step === 4) {
+        // Create new account
+        if (password.length < 6) {
+          toast({
+            title: "Erro",
+            description: "A senha deve ter pelo menos 6 caracteres.",
+            variant: "destructive"
+          });
+          setIsProcessing(false);
+          return;
+        }
+        
+        if (password !== confirmPassword) {
+          toast({
+            title: "Erro",
+            description: "As senhas não coincidem.",
+            variant: "destructive"
+          });
+          setIsProcessing(false);
+          return;
+        }
+
+        await signUpWithHabbo(userHabboId, habboName, password);
+        toast({
+          title: "Sucesso",
+          description: "Conta criada e vinculada com sucesso!"
+        });
+        window.location.href = `/profile/${habboName}`;
+      }
     } catch (error) {
-      addDebugInfo('❌ Falha no login');
+      console.error('Erro na ação de senha:', error);
       toast({
-        title: "Erro de login",
-        description: "Senha incorreta. Tente novamente.",
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao processar. Tente novamente.",
         variant: "destructive"
       });
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userHabboId || !password || !confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "Por favor, preencha todos os campos.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    addDebugInfo('🆕 Criando nova conta...');
-
-    try {
-      await signUpWithHabbo(userHabboId, habboName, password);
-      addDebugInfo('✅ Conta criada com sucesso!');
-      setStep('success');
-      toast({
-        title: "Sucesso",
-        description: "Conta criada e vinculada com sucesso!",
-      });
-    } catch (error) {
-      addDebugInfo('❌ Falha na criação da conta');
-      toast({
-        title: "Erro",
-        description: "Erro ao criar conta. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const resetProcess = () => {
-    setStep('input');
-    setHabboName('');
-    setVerificationCode('');
-    setPassword('');
-    setConfirmPassword('');
-    setUserHabboId(null);
-    setDebugInfo([]);
   };
 
   return (
-    <div className="w-full max-w-md space-y-4">
-      {step === 'input' && (
-        <PanelCard title="Conectar Habbo">
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Instruções:</strong> Digite seu nome Habbo para conectar sua conta aos recursos exclusivos do hub.
-            </p>
-          </div>
-
-          <form onSubmit={handleNameSubmit} className="space-y-4">
+    <div className="max-w-md mx-auto space-y-6">
+      {step === 1 && (
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 1: Nome do Habbo</h2>
+          <form onSubmit={handleInitiateVerification} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nome do seu Habbo
+              <label htmlFor="habboName" className="block text-sm font-medium text-gray-700 mb-2">
+                Qual é o seu nome no Habbo Hotel?
               </label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  value={habboName}
-                  onChange={(e) => setHabboName(e.target.value)}
-                  placeholder="Digite seu nome Habbo..."
-                  className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] rounded-lg shadow-[inset_1px_1px_0px_0px_#cccccc] focus:outline-none focus:border-[#007bff] focus:shadow-[inset_1px_1px_0px_0px_#cccccc,_0_0_0_2px_rgba(0,123,255,0.25)]"
-                  required
-                  disabled={isProcessing}
-                />
-              </div>
+              <input
+                id="habboName"
+                type="text"
+                value={habboName}
+                onChange={(e) => setHabboName(e.target.value)}
+                placeholder="Ex: SeuNomeHabbo"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                disabled={isProcessing}
+              />
             </div>
-
             <button
               type="submit"
-              disabled={isProcessing || !habboName.trim()}
-              className="w-full bg-[#008800] text-white py-3 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isProcessing}
             >
-              {isProcessing ? (
-                <>
-                  <RefreshCw className="animate-spin" size={18} />
-                  <span>Verificando...</span>
-                </>
-              ) : (
-                <>
-                  <Shield size={18} />
-                  <span>Continuar</span>
-                </>
-              )}
+              {isProcessing ? 'Verificando...' : 'Gerar Código de Verificação'}
             </button>
           </form>
-        </PanelCard>
+        </div>
       )}
 
-      {step === 'verification' && (
-        <PanelCard title="Verificação de Conta">
-          <div className="space-y-4">
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="font-bold text-yellow-800 mb-2">📋 Passo 1: Copie o código</h3>
-              <div className="bg-white p-3 rounded border font-mono text-lg font-bold text-center border-dashed border-2 border-yellow-300">
-                {verificationCode}
-              </div>
-            </div>
+      {step === 2 && (
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 2: Verifique sua Motto</h2>
+          <p className="text-gray-700 mb-4">
+            Para vincular sua conta, defina sua motto (legenda) no Habbo Hotel para o código abaixo.
+            Certifique-se de que você está <strong>online</strong> no Habbo Hotel.
+          </p>
+          <div
+            className="bg-gray-100 p-4 rounded-lg border border-gray-300 mb-4 text-center cursor-pointer hover:bg-gray-200 transition-colors"
+            onClick={() => {
+              navigator.clipboard.writeText(verificationCode);
+              toast({
+                title: "Copiado",
+                description: "Código copiado para a área de transferência!"
+              });
+            }}
+            title="Clique para copiar"
+          >
+            <p className="text-xl font-bold text-blue-700 select-all">{verificationCode}</p>
+            <span className="text-sm text-gray-500">Clique no código para copiar</span>
+          </div>
+          <p className="text-gray-700 mb-6">
+            Após atualizar sua motto no Habbo, clique no botão "Verificar Motto" abaixo.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={handleVerifyMotto}
+              className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
+            </button>
+            <button
+              onClick={() => setStep(1)}
+              className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+              disabled={isProcessing}
+            >
+              Voltar
+            </button>
+          </div>
+        </div>
+      )}
 
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-bold text-blue-800 mb-2">✏️ Passo 2: Cole na sua motto</h3>
-              <p className="text-sm text-blue-700 mb-2">
-                1. Abra o Habbo Hotel<br/>
-                2. Clique no seu avatar<br/>
-                3. Cole o código na sua <strong>motto</strong><br/>
-                4. Salve e clique em "Verificar"
-              </p>
+      {step === 3 && (
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 3: Fazer Login</h2>
+          <p className="text-gray-700 mb-4">
+            Sua conta Habbo está verificada. Digite sua senha do Habbo Hub para acessar.
+          </p>
+          <form onSubmit={handlePasswordAction} className="space-y-4">
+            <div>
+              <label htmlFor="passwordLogin" className="block text-sm font-medium text-gray-700 mb-2">
+                Senha do Habbo Hub:
+              </label>
+              <input
+                id="passwordLogin"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Sua senha"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                disabled={isProcessing}
+              />
             </div>
-
-            <form onSubmit={handleVerification} className="space-y-4">
+            <div className="space-y-3">
               <button
                 type="submit"
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isProcessing}
-                className="w-full bg-[#008800] text-white py-3 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
-                {isProcessing ? (
-                  <>
-                    <RefreshCw className="animate-spin" size={18} />
-                    <span>Verificando motto...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle size={18} />
-                    <span>Verificar Código</span>
-                  </>
-                )}
+                {isProcessing ? 'Entrando...' : 'Entrar'}
               </button>
-
               <button
+                onClick={() => setStep(1)}
                 type="button"
-                onClick={resetProcess}
-                className="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
+                className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                disabled={isProcessing}
               >
-                ← Voltar
+                Voltar
               </button>
-            </form>
-          </div>
-        </PanelCard>
-      )}
-
-      {step === 'login' && (
-        <PanelCard title="Login no Habbo Hub">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg mb-4">
-            <p className="text-sm text-green-700">
-              <strong>Conta encontrada!</strong> Digite sua senha para entrar no Habbo Hub.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha do Habbo Hub
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Digite sua senha..."
-                className="w-full px-4 py-3 bg-white border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] rounded-lg shadow-[inset_1px_1px_0px_0px_#cccccc] focus:outline-none focus:border-[#007bff] focus:shadow-[inset_1px_1px_0px_0px_#cccccc,_0_0_0_2px_rgba(0,123,255,0.25)]"
-                required
-                disabled={isProcessing}
-              />
             </div>
-
-            <button
-              type="submit"
-              disabled={isProcessing || !password}
-              className="w-full bg-[#008800] text-white py-3 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              {isProcessing ? (
-                <>
-                  <RefreshCw className="animate-spin" size={18} />
-                  <span>Entrando...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={18} />
-                  <span>Entrar</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={resetProcess}
-              className="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
-            >
-              ← Voltar
-            </button>
           </form>
-        </PanelCard>
+        </div>
       )}
 
-      {step === 'signup' && (
-        <PanelCard title="Criar Conta no Habbo Hub">
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-            <p className="text-sm text-blue-700">
-              <strong>Nova conta!</strong> Crie uma senha para acessar os recursos exclusivos do Habbo Hub.
-            </p>
-          </div>
-
-          <form onSubmit={handleSignUp} className="space-y-4">
+      {step === 4 && (
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 3: Criar Senha</h2>
+          <p className="text-gray-700 mb-4">
+            Sua conta Habbo foi verificada! Agora crie uma senha para acessar seu perfil no Habbo Hub.
+          </p>
+          <form onSubmit={handlePasswordAction} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nova Senha (mínimo 6 caracteres)
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                Nova Senha (min. 6 caracteres):
               </label>
               <input
+                id="newPassword"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Crie uma senha..."
-                className="w-full px-4 py-3 bg-white border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] rounded-lg shadow-[inset_1px_1px_0px_0px_#cccccc] focus:outline-none focus:border-[#007bff] focus:shadow-[inset_1px_1px_0px_0px_#cccccc,_0_0_0_2px_rgba(0,123,255,0.25)]"
+                placeholder="Crie uma senha"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
                 disabled={isProcessing}
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar Senha
+              <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                Confirmar Senha:
               </label>
               <input
+                id="confirmNewPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirme sua senha..."
-                className="w-full px-4 py-3 bg-white border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] rounded-lg shadow-[inset_1px_1px_0px_0px_#cccccc] focus:outline-none focus:border-[#007bff] focus:shadow-[inset_1px_1px_0px_0px_#cccccc,_0_0_0_2px_rgba(0,123,255,0.25)]"
+                placeholder="Confirme sua senha"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
                 disabled={isProcessing}
               />
             </div>
-
-            <button
-              type="submit"
-              disabled={isProcessing || !password || !confirmPassword}
-              className="w-full bg-[#008800] text-white py-3 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              {isProcessing ? (
-                <>
-                  <RefreshCw className="animate-spin" size={18} />
-                  <span>Criando conta...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={18} />
-                  <span>Criar Conta</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={resetProcess}
-              className="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
-            >
-              ← Voltar
-            </button>
+            <div className="space-y-3">
+              <button
+                type="submit"
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Criando Conta...' : 'Vincular e Criar Conta'}
+              </button>
+              <button
+                onClick={() => setStep(1)}
+                type="button"
+                className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                disabled={isProcessing}
+              >
+                Voltar
+              </button>
+            </div>
           </form>
-        </PanelCard>
-      )}
-
-      {step === 'success' && (
-        <PanelCard title="Login Realizado!">
-          <div className="text-center space-y-4">
-            <CheckCircle size={48} className="text-green-500 mx-auto" />
-            <h3 className="text-lg font-bold text-green-700">
-              🎉 Bem-vindo ao Habbo Hub!
-            </h3>
-            <p className="text-gray-600">
-              Sua conta foi conectada com sucesso.<br/>
-              Redirecionando para o painel principal...
-            </p>
-          </div>
-        </PanelCard>
-      )}
-
-      {/* Debug Panel */}
-      {debugInfo.length > 0 && (
-        <PanelCard title="Debug Info">
-          <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
-            {debugInfo.map((info, index) => (
-              <div key={index} className="mb-1">{info}</div>
-            ))}
-          </div>
-        </PanelCard>
+        </div>
       )}
     </div>
   );

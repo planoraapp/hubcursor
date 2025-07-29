@@ -12,55 +12,11 @@ interface ProfileModalProps {
 }
 
 export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalProps) => {
-  const { isLoggedIn, userData, login, logout } = useAuth();
+  const { isLoggedIn, userData, logout } = useAuth();
   const { toast } = useToast();
-  const [habboNameInput, setHabboNameInput] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!habboNameInput.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, digite seu nome Habbo.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const success = await login(habboNameInput);
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Login realizado com sucesso!"
-        });
-        onClose();
-      } else {
-        toast({
-          title: "Erro",
-          description: "Usuário não encontrado. Verifique o nome.",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao fazer login. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Sucesso",
-      description: "Logout realizado com sucesso!"
-    });
+  const handleLogout = async () => {
+    await logout();
     onClose();
   };
 
@@ -85,29 +41,25 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
         {isLoginAttempt ? (
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Login Habbo</h3>
-            <form onSubmit={handleLogin} className="flex flex-col gap-3">
-              <input
-                type="text"
-                value={habboNameInput}
-                onChange={(e) => setHabboNameInput(e.target.value)}
-                placeholder="Nome do seu Habbo"
-                className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                required
-                disabled={isProcessing}
-              />
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">
+                Para fazer login, você precisa conectar sua conta Habbo primeiro.
+              </p>
               <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isProcessing}
+                onClick={() => {
+                  window.location.href = '/connect-habbo';
+                  onClose();
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                {isProcessing ? 'Entrando...' : 'Entrar'}
+                Conectar Conta Habbo
               </button>
-            </form>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Meu Perfil</h3>
-            {userData && (
+            {isLoggedIn && userData ? (
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
                   <img
@@ -139,6 +91,21 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                     Sair
                   </button>
                 </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-600 mb-4">
+                  Você não está conectado. Para acessar seu perfil, conecte sua conta Habbo primeiro.
+                </p>
+                <button
+                  onClick={() => {
+                    window.location.href = '/connect-habbo';
+                    onClose();
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Conectar Conta Habbo
+                </button>
               </div>
             )}
           </div>
