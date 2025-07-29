@@ -14,8 +14,8 @@ interface CollapsibleSidebarProps {
 }
 
 export const CollapsibleSidebar = ({ activeSection, setActiveSection }: CollapsibleSidebarProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false); // Mudado para false por padrão
-  const [isPinned, setIsPinned] = useState(true); // Mudado para true por padrão
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [habboData, setHabboData] = useState<any>(null);
   const { t } = useLanguage();
@@ -32,6 +32,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
   }, [isLoggedIn, habboAccount]);
 
   const navItems = [
+    { id: 'home', label: 'Home', icon: '/assets/home.png', path: '/' },
     { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
     { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', path: '/eventos' },
     { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', path: '/forum' },
@@ -54,13 +55,23 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
 
   const handleNavClick = (item: any) => {
     setActiveSection(item.id);
-    setIsPinned(true);
     navigate(item.path);
   };
 
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
     setIsPinned(!isCollapsed);
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (!isPinned) {
+      setIsCollapsed(true);
+    }
   };
 
   const shouldShowExpanded = !isCollapsed && (isPinned || isHovered);
@@ -76,8 +87,8 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
   return (
     <aside 
       className={`${shouldShowExpanded ? 'w-64' : 'w-20'} bg-amber-50 shadow-xl flex flex-col min-h-screen fixed left-0 top-0 z-20 transition-all duration-300`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="flex flex-col h-full">
         {/* Header com Logo e Toggle */}
@@ -117,7 +128,9 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
               </div>
               {shouldShowExpanded && (
                 <div className="text-center">
-                  <h3 className="font-bold text-gray-800 text-sm volter-font">{isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Visitante'}</h3>
+                  <h3 className="font-bold text-gray-800 text-sm volter-font text-white" style={{textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000'}}>
+                    {isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Visitante'}
+                  </h3>
                   <p className="text-xs text-gray-600 volter-font">{isLoggedIn && habboData ? habboData.motto : 'Não conectado'}</p>
                 </div>
               )}
@@ -142,10 +155,12 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: Collapsi
               title={!shouldShowExpanded ? item.label : ''}
             >
               <div className={`flex items-center justify-center ${!shouldShowExpanded ? 'w-16 h-16' : 'w-12 h-12'}`}>
-                <img src={item.icon} alt={item.label} className={`${!shouldShowExpanded ? 'w-8 h-8' : 'w-5 h-5'}`} />
+                <img src={item.icon} alt={item.label} className={`${!shouldShowExpanded ? 'w-8 h-8' : 'w-6 h-6'}`} />
               </div>
               {shouldShowExpanded && (
-                <span className="ml-3 volter-font transition-all duration-300">{item.label}</span>
+                <span className="ml-3 volter-font transition-all duration-300 text-white" style={{textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000'}}>
+                  {item.label}
+                </span>
               )}
             </button>
           ))}

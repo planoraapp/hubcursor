@@ -1,17 +1,40 @@
-import { CatalogEnhanced } from '../components/CatalogEnhanced';
-import { AdSpace } from '../components/AdSpace';
+
+import { useState, useEffect } from 'react';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
+import { CatalogEnhanced } from '../components/CatalogEnhanced';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 
-const Catalogo = () => {
+export default function Catalogo() {
+  const [activeSection, setActiveSection] = useState('catalogo');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   if (isMobile) {
     return (
       <MobileLayout>
-        <CatalogEnhanced />
+        <div className="p-4">
+          <PageHeader 
+            title="Catálogo Habbo"
+            icon="/assets/Carrinho.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
+            <CatalogEnhanced />
+          </div>
+        </div>
       </MobileLayout>
     );
   }
@@ -19,38 +42,18 @@ const Catalogo = () => {
   return (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection="catalogo" setActiveSection={() => {}} />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
-            title="Catálogo"
-            icon="/assets/Image 2422.png"
+            title="Catálogo Habbo"
+            icon="/assets/Carrinho.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          
-          <AdSpace type="horizontal" className="mb-6" />
-          
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
             <CatalogEnhanced />
           </div>
-          
-          <div className="flex justify-center gap-4 mt-6">
-            <img 
-              src="/assets/classe_aula.png" 
-              alt="Decoração Habbo" 
-              className="max-h-20 object-contain opacity-80"
-            />
-            <img 
-              src="/assets/1686__-sQ.png" 
-              alt="Decoração Habbo" 
-              className="max-h-20 object-contain opacity-80"
-            />
-          </div>
-          
-          <AdSpace type="wide" className="mt-6" />
         </main>
       </div>
     </div>
   );
-};
-
-export default Catalogo;
+}

@@ -1,17 +1,40 @@
-import { Forum as ForumComponent } from '../components/Forum';
-import { AdSpace } from '../components/AdSpace';
+
+import { useState, useEffect } from 'react';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
+import { Forum } from '../components/Forum';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 
-const Forum = () => {
+export default function ForumPage() {
+  const [activeSection, setActiveSection] = useState('forum');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   if (isMobile) {
     return (
       <MobileLayout>
-        <ForumComponent />
+        <div className="p-4">
+          <PageHeader 
+            title="Fórum Habbo"
+            icon="/assets/BatePapo1.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
+            <Forum />
+          </div>
+        </div>
       </MobileLayout>
     );
   }
@@ -19,38 +42,18 @@ const Forum = () => {
   return (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection="forum" setActiveSection={() => {}} />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
-            title="Fórum"
+            title="Fórum Habbo"
             icon="/assets/BatePapo1.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          
-          <AdSpace type="horizontal" className="mb-6" />
-          
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-            <ForumComponent />
+            <Forum />
           </div>
-          
-          <div className="flex justify-center gap-4 mt-6">
-            <img 
-              src="/assets/98__-2tN._-4Ni.png" 
-              alt="Decoração Habbo" 
-              className="max-h-20 object-contain opacity-80"
-            />
-            <img 
-              src="/assets/1686__-sQ.png" 
-              alt="Decoração Habbo" 
-              className="max-h-20 object-contain opacity-80"
-            />
-          </div>
-          
-          <AdSpace type="wide" className="mt-6" />
         </main>
       </div>
     </div>
   );
-};
-
-export default Forum;
+}

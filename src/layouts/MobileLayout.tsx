@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Home, Calendar, MessageCircle, Package, Award, Palette, ShoppingCart, User } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useAuth } from '../hooks/useAuth';
@@ -16,20 +17,26 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const { t } = useLanguage();
   const { isLoggedIn, habboAccount } = useAuth();
   const [habboData, setHabboData] = useState<any>(null);
+  const [showExpandedMenu, setShowExpandedMenu] = useState(false);
 
-  const navItems = [
-    { id: 'home', label: 'Home', icon: Home, path: '/' },
-    { id: 'noticias', label: t('noticias'), icon: MessageCircle, path: '/noticias' },
-    { id: 'eventos', label: 'Eventos', icon: Calendar, path: '/eventos' },
-    { id: 'forum', label: t('forum'), icon: MessageCircle, path: '/forum' },
-    { id: 'catalogo', label: t('catalogo'), icon: Package, path: '/catalogo' },
-    { id: 'emblemas', label: t('emblemas'), icon: Award, path: '/emblemas' },
-    { id: 'editor', label: t('editor'), icon: Palette, path: '/editor' },
-    { id: 'mercado', label: t('mercado'), icon: ShoppingCart, path: '/mercado' }
+  const mainNavItems = [
+    { id: 'home', label: 'Home', icon: '/assets/home.png', path: '/' },
+    { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
+    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', path: '/eventos' },
+    { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', path: '/forum' }
+  ];
+
+  const expandedNavItems = [
+    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', path: '/catalogo' },
+    { id: 'emblemas', label: t('emblemas'), icon: '/assets/emblemas.png', path: '/emblemas' },
+    { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', path: '/editor' },
+    { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
+    { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' }
   ];
 
   const handleNavClick = (path: string) => {
     navigate(path);
+    setShowExpandedMenu(false);
   };
 
   useEffect(() => {
@@ -48,9 +55,8 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
           <img 
             src="/assets/habbohub.gif" 
             alt="HABBO HUB" 
-            className="w-8 h-8"
+            className="w-32 h-auto"
           />
-          <h1 className="font-bold text-gray-800 volter-font">HABBO HUB</h1>
         </div>
         
         <UserProfilePopover side="bottom" align="end">
@@ -78,8 +84,7 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       {/* Bottom Dock Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-amber-50/95 backdrop-blur-sm border-t border-amber-200 px-4 py-2 z-30">
         <div className="flex justify-around items-center max-w-md mx-auto">
-          {navItems.slice(0, 4).map((item) => {
-            const Icon = item.icon;
+          {mainNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <button
@@ -91,31 +96,46 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
                     : 'text-gray-600 hover:bg-amber-100'
                 }`}
               >
-                <Icon size={20} />
+                <img src={item.icon} alt={item.label} className="w-5 h-5" />
                 <span className="text-xs volter-font">{item.label}</span>
               </button>
             );
           })}
           
-          <UserProfilePopover side="top" align="center">
-            <button className="flex flex-col items-center space-y-1 px-3 py-2 rounded-lg text-gray-600 hover:bg-amber-100 transition-all duration-200">
-              <div className="relative">
-                <div className="w-5 h-5 rounded-full overflow-hidden border border-amber-300">
-                  <img
-                    src={isLoggedIn && habboData ? 
-                      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
-                      : '/assets/frank.png'
-                    }
-                    alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Perfil'}
-                    className="w-full h-full object-cover object-center"
-                  />
-                </div>
-                <div className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white ${isLoggedIn && habboAccount ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              </div>
-              <span className="text-xs volter-font">Perfil</span>
-            </button>
-          </UserProfilePopover>
+          {/* Expandable Menu Button */}
+          <button 
+            onClick={() => setShowExpandedMenu(!showExpandedMenu)}
+            className="flex flex-col items-center space-y-1 px-3 py-2 rounded-lg text-gray-600 hover:bg-amber-100 transition-all duration-200"
+          >
+            {showExpandedMenu ? <X size={20} /> : <Plus size={20} />}
+            <span className="text-xs volter-font">Mais</span>
+          </button>
         </div>
+
+        {/* Expanded Menu */}
+        {showExpandedMenu && (
+          <div className="absolute bottom-full left-0 right-0 bg-amber-50/95 backdrop-blur-sm border-t border-amber-200 py-4">
+            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto px-4">
+              {expandedNavItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNavClick(item.path)}
+                    className={`flex flex-col items-center space-y-2 p-3 rounded-lg transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-sky-400 text-white shadow-md' 
+                        : 'text-gray-600 hover:bg-amber-100'
+                    }`}
+                  >
+                    <img src={item.icon} alt={item.label} className="w-6 h-6" />
+                    <span className="text-xs volter-font text-center">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </nav>
     </div>
   );
