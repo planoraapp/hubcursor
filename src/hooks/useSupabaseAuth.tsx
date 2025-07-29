@@ -85,23 +85,58 @@ export const useSupabaseAuth = () => {
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 Tentando criar vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    const { data, error } = await supabase
-      .from('habbo_accounts')
-      .insert({ 
-        habbo_id: habboId, 
-        habbo_name: habboName, 
-        supabase_user_id: supabaseUserId 
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('❌ Erro ao criar vínculo:', JSON.stringify(error, null, 2));
-      throw error;
-    }
+    // Implementar retry logic para resolver race condition com RLS
+    let linkedAccountCreated = false;
+    let lastError = null;
     
-    console.log('✅ Vínculo criado com sucesso:', data);
-    return data;
+    for (let i = 0; i < 5; i++) { // Tentar 5 vezes
+      try {
+        console.log(`🔄 Tentativa ${i + 1} de criar vínculo...`);
+        
+        const { data, error } = await supabase
+          .from('habbo_accounts')
+          .insert({ 
+            habbo_id: habboId, 
+            habbo_name: habboName, 
+            supabase_user_id: supabaseUserId 
+          })
+          .select()
+          .single();
+
+        if (error) {
+          lastError = error;
+          console.error(`❌ Tentativa ${i + 1} falhou:`, JSON.stringify(error, null, 2));
+          
+          // Se for erro de RLS, aguardar um pouco mais antes de tentar novamente
+          if (error.code === '42501' || error.message.includes('row-level security')) {
+            console.log(`⏳ Erro de RLS detectado, aguardando ${(i + 1) * 1000}ms antes da próxima tentativa...`);
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
+            continue;
+          } else {
+            // Se não for erro de RLS, não vale a pena tentar novamente
+            throw error;
+          }
+        }
+        
+        console.log('✅ Vínculo criado com sucesso:', data);
+        linkedAccountCreated = true;
+        return data;
+        
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ Tentativa ${i + 1} falhou com erro:`, JSON.stringify(error, null, 2));
+        
+        // Aguardar antes da próxima tentativa
+        if (i < 4) { // Não aguardar na última tentativa
+          await new Promise(resolve => setTimeout(resolve, (i + 1) * 500));
+        }
+      }
+    }
+
+    if (!linkedAccountCreated) {
+      console.error('❌ Falha persistente ao criar vínculo após todas as tentativas:', JSON.stringify(lastError, null, 2));
+      throw lastError || new Error('Falha ao criar vínculo após múltiplas tentativas');
+    }
   };
 
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
@@ -125,31 +160,17 @@ export const useSupabaseAuth = () => {
 
       console.log('✅ Usuário criado no Supabase Auth:', authData.user?.id);
 
-      // Aguardar um pouco para garantir que a autenticação foi processada
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Depois, criar o vínculo na tabela habbo_accounts
+      // Depois, criar o vínculo na tabela habbo_accounts com retry logic
       if (authData.user) {
         try {
           const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
           console.log('✅ Vínculo criado:', linkedAccount);
         } catch (linkError) {
-          console.error('❌ Erro ao criar vínculo, mas usuário foi criado:', JSON.stringify(linkError, null, 2));
+          console.error('❌ Erro ao criar vínculo:', JSON.stringify(linkError, null, 2));
           
-          // Se o erro for de RLS, pode ser que o usuário não esteja totalmente autenticado ainda
-          if (linkError.code === '42501') {
-            // Tentar novamente após mais tempo
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            try {
-              const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
-              console.log('✅ Vínculo criado na segunda tentativa:', linkedAccount);
-            } catch (secondTryError) {
-              console.error('❌ Falha na segunda tentativa:', JSON.stringify(secondTryError, null, 2));
-              throw secondTryError;
-            }
-          } else {
-            throw linkError;
-          }
+          // Se falhar em criar o vínculo, deslogar para evitar conta órfã
+          await supabase.auth.signOut();
+          throw new Error('Falha ao vincular conta Habbo. Tente novamente em alguns segundos.');
         }
       }
 
@@ -209,38 +230,25 @@ export const useSupabaseAuth = () => {
       const originalMotto = habboUser.motto;
       console.log(`📝 [MOTTO] Motto encontrada: "${originalMotto}"`);
       
-      // Tentar várias formas de verificação
-      const checks = [
-        // Verificação exata (case-sensitive)
-        { name: 'Exata', motto: originalMotto, code: verificationCode },
-        // Verificação case-insensitive
-        { name: 'Case-insensitive', motto: originalMotto.toLowerCase(), code: verificationCode.toLowerCase() },
-        // Verificação com trim
-        { name: 'Com trim', motto: originalMotto.trim(), code: verificationCode.trim() },
-        // Verificação case-insensitive com trim
-        { name: 'Case-insensitive + trim', motto: originalMotto.trim().toLowerCase(), code: verificationCode.trim().toLowerCase() },
-        // Verificação apenas do sufixo (sem HUB-)
-        { name: 'Sem prefixo HUB-', motto: originalMotto.toLowerCase(), code: verificationCode.replace(/^hub-/i, '') },
-      ];
-
-      let found = false;
-      for (const check of checks) {
-        console.log(`🔍 [MOTTO] Verificação ${check.name}: procurando "${check.code}" em "${check.motto}"`);
-        if (check.motto.includes(check.code)) {
-          console.log(`✅ [MOTTO] Código encontrado com verificação ${check.name}!`);
-          found = true;
-          break;
-        }
-      }
-
-      if (!found) {
+      // Verificação robusta com múltiplas tentativas
+      const normalizedMotto = originalMotto.trim().toLowerCase();
+      const normalizedCode = verificationCode.trim().toLowerCase();
+      
+      console.log(`🔍 [MOTTO] Motto normalizada: "${normalizedMotto}"`);
+      console.log(`🔍 [MOTTO] Código normalizado: "${normalizedCode}"`);
+      console.log(`🔍 [MOTTO] Motto bruta: "${originalMotto}"`);
+      
+      if (normalizedMotto.includes(normalizedCode)) {
+        console.log(`✅ [MOTTO] Código encontrado na motto!`);
+        return habboUser;
+      } else {
         console.log(`❌ [MOTTO] Código "${verificationCode}" não encontrado na motto "${originalMotto}"`);
-        console.log(`📊 [MOTTO] Tentativas realizadas:`, checks.map(c => `${c.name}: "${c.code}" in "${c.motto}"`));
-        throw new Error('Código de verificação não encontrado na motto');
+        console.log(`📊 [MOTTO] Detalhes da verificação:`);
+        console.log(`   - Motto lida (normalizada): "${normalizedMotto}"`);
+        console.log(`   - Código esperado (normalizado): "${normalizedCode}"`);
+        console.log(`   - Motto bruta: "${originalMotto}"`);
+        throw new Error(`Código de verificação não encontrado na motto. Motto atual: "${originalMotto}"`);
       }
-
-      console.log(`✅ [MOTTO] Verificação bem-sucedida!`);
-      return habboUser;
     } catch (error) {
       console.error('❌ [MOTTO] Erro na verificação:', JSON.stringify(error, null, 2));
       throw error;

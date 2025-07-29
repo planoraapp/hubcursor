@@ -32,7 +32,9 @@ export const ConnectHabboForm = () => {
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString('pt-BR');
-    setDebugLog(prev => [...prev, `${timestamp}: ${message}`]);
+    const logEntry = `${timestamp}: ${message}`;
+    console.log(logEntry);
+    setDebugLog(prev => [...prev, logEntry]);
   };
 
   // Check if user is admin (only habbohub gets automatic login)
@@ -289,8 +291,13 @@ export const ConnectHabboForm = () => {
         window.location.href = `/profile/${habboName}`;
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      const errorDetails = error instanceof Error && error.message ? error.message : JSON.stringify(error);
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = JSON.stringify(error, null, 2);
+      }
       
       addLog(`❌ Erro na ação de senha: ${errorMessage}`);
       console.error('Erro na ação de senha:', error);
@@ -301,8 +308,10 @@ export const ConnectHabboForm = () => {
         userMessage = "Este usuário já está registrado. Tente fazer login.";
       } else if (errorMessage.includes('Invalid login credentials')) {
         userMessage = "Senha incorreta. Verifique sua senha e tente novamente.";
-      } else if (errorMessage.includes('row-level security')) {
+      } else if (errorMessage.includes('row-level security') || errorMessage.includes('RLS')) {
         userMessage = "Erro de segurança. Aguarde um momento e tente novamente.";
+      } else if (errorMessage.includes('Falha ao vincular conta')) {
+        userMessage = "Erro ao vincular conta. Tente novamente em alguns segundos.";
       }
       
       toast({

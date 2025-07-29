@@ -67,10 +67,12 @@ export interface MarketplaceStats {
 
 // Cache local para evitar muitas requisições
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const CACHE_DURATION = 0; // DESABILITADO TEMPORARIAMENTE PARA TESTES - era 5 * 60 * 1000
 
 // Função auxiliar para cache
 const getCachedData = (key: string) => {
+  if (CACHE_DURATION === 0) return null; // Cache desabilitado
+  
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached.data;
@@ -79,6 +81,7 @@ const getCachedData = (key: string) => {
 };
 
 const setCachedData = (key: string, data: any) => {
+  if (CACHE_DURATION === 0) return; // Cache desabilitado
   cache.set(key, { data, timestamp: Date.now() });
 };
 
@@ -88,16 +91,19 @@ const fetchData = async (endpoint: string): Promise<any> => {
   const cached = getCachedData(cacheKey);
   
   if (cached) {
-    console.log(`Cache hit for ${endpoint}`);
+    console.log(`📦 Cache hit for ${endpoint}`);
     return cached;
   }
 
   try {
-    console.log(`Fetching data from ${HABBO_API_BASE_URL}${endpoint}`);
-    const response = await fetch(`${HABBO_API_BASE_URL}${endpoint}`);
+    const fullUrl = `${HABBO_API_BASE_URL}${endpoint}`;
+    console.log(`🌐 Fazendo requisição para: ${fullUrl}`);
+    
+    const response = await fetch(fullUrl);
+    console.log(`📡 Resposta da API: Status ${response.status} para ${endpoint}`);
     
     if (!response.ok) {
-      console.warn(`API responded with status ${response.status} for ${endpoint}`);
+      console.warn(`⚠️ API respondeu com status ${response.status} para ${endpoint}`);
       if (response.status === 404) {
         return null; // User not found
       }
@@ -105,11 +111,11 @@ const fetchData = async (endpoint: string): Promise<any> => {
     }
     
     const data = await response.json();
-    console.log(`API Response for ${endpoint}:`, data);
+    console.log(`📊 Dados recebidos da API para ${endpoint}:`, JSON.stringify(data, null, 2));
     setCachedData(cacheKey, data);
     return data;
   } catch (error) {
-    console.error(`Erro ao buscar dados do endpoint ${endpoint}:`, error);
+    console.error(`❌ Erro ao buscar dados do endpoint ${endpoint}:`, error);
     return null;
   }
 };
@@ -144,17 +150,18 @@ export const discoverRooms = async (): Promise<HabboRoom[]> => {
 // Função para buscar usuário por nome
 export const getUserByName = async (name: string): Promise<HabboUser | null> => {
   try {
+    console.log(`🔍 [API] Buscando usuário: ${name}`);
     const data = await fetchData(`/users?name=${encodeURIComponent(name)}`);
     
     // Log detalhado para debug
     console.log('=== HABBO API DEBUG ===');
-    console.log('Searching for user:', name);
-    console.log('API Response:', data);
-    console.log('Response type:', typeof data);
-    console.log('Is array?:', Array.isArray(data));
+    console.log('🔍 Procurando usuário:', name);
+    console.log('📡 Resposta da API:', JSON.stringify(data, null, 2));
+    console.log('📊 Tipo da resposta:', typeof data);
+    console.log('📋 É array?:', Array.isArray(data));
     
     if (!data) {
-      console.warn('❌ No data returned from API for user:', name);
+      console.warn('❌ Nenhum dado retornado da API para usuário:', name);
       return null;
     }
 
@@ -162,7 +169,7 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
     let user;
     if (Array.isArray(data)) {
       if (data.length === 0) {
-        console.warn('❌ Empty array returned - user not found:', name);
+        console.warn('❌ Array vazio retornado - usuário não encontrado:', name);
         return null;
       }
       user = data[0];
@@ -172,13 +179,13 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
 
     // Verificar se o objeto do usuário tem as propriedades essenciais
     if (!user || !user.name || !user.figureString) {
-      console.warn('❌ Invalid user data structure:', user);
+      console.warn('❌ Estrutura de dados do usuário inválida:', user);
       return null;
     }
 
     // Verificar se o perfil é privado
     if (user.profileVisible === false) {
-      console.warn('❌ User profile is private:', name);
+      console.warn('❌ Perfil do usuário é privado:', name);
       return null;
     }
 
@@ -195,17 +202,18 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
       selectedBadges: user.selectedBadges || []
     };
 
-    console.log('✅ Successfully processed user data:');
-    console.log('- Name:', processedUser.name);
-    console.log('- Motto:', `"${processedUser.motto}"`);
-    console.log('- Online:', processedUser.online);
-    console.log('- Profile Visible:', processedUser.profileVisible);
+    console.log('✅ Usuário processado com sucesso:');
+    console.log('👤 Nome:', processedUser.name);
+    console.log('💬 Motto:', `"${processedUser.motto}"`);
+    console.log('🟢 Online:', processedUser.online);
+    console.log('👁️ Perfil Visível:', processedUser.profileVisible);
+    console.log('🆔 Unique ID:', processedUser.uniqueId);
     console.log('=======================');
 
     return processedUser;
     
   } catch (error) {
-    console.error('❌ Error in getUserByName:', error);
+    console.error('❌ Erro em getUserByName:', error);
     return null;
   }
 };
