@@ -44,7 +44,6 @@ export const useSupabaseAuth = () => {
 
         if (habboData) {
           console.log('✅ [Auth] Linked account found:', habboData);
-          // Log admin status discretely
           if (habboData.is_admin) {
             console.log(`🔑 [Admin] User ${habboData.habbo_name} has admin privileges`);
           }
@@ -129,7 +128,7 @@ export const useSupabaseAuth = () => {
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 [Auth] Creating link: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Detect admin user discretely
+    // Only habbohub gets admin privileges
     const isAdmin = habboName.toLowerCase() === 'habbohub';
     
     const maxRetries = 5;

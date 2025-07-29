@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/use-toast';
-import { getUserByName, getUserBadges, getAvatarUrl, getBadgeUrl } from '../services/habboApi';
+import { getUserByName, getUserBadges, getBadgeUrl } from '../services/habboApi';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
 interface ProfileModalProps {
@@ -119,72 +119,8 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
 
     setIsProcessing(true);
 
-    // Special flow for habbohub admin user
-    if (habboNameInput.toLowerCase() === 'habbohub') {
-      console.log('👑 Admin habbohub detected in modal, prompting for password');
-      
-      if (!password) {
-        toast({
-          title: "Admin Login",
-          description: "Digite sua senha do Habbo Hub para fazer login como administrador.",
-          variant: "default"
-        });
-        setLoginStep(3); // Skip to password step
-        setIsProcessing(false);
-        return;
-      }
-
-      try {
-        // Generate admin habbo ID
-        const adminHabboId = `habbohub-admin-${habboNameInput}-${Date.now()}`;
-        setUserHabboId(adminHabboId);
-
-        // Try login first, then signup if needed
-        let authResult;
-        try {
-          authResult = await signInWithHabbo(adminHabboId, password);
-        } catch (loginError: any) {
-          if (loginError.message.includes('Invalid login credentials')) {
-            console.log('Creating new admin account...');
-            authResult = await signUpWithHabbo(adminHabboId, habboNameInput, password);
-          } else {
-            throw loginError;
-          }
-        }
-
-        toast({
-          title: "Sucesso",
-          description: `Login admin realizado com sucesso! Bem-vindo, ${habboNameInput}!`
-        });
-        onClose();
-        window.location.href = `/profile/${habboNameInput}`;
-
-      } catch (err: any) {
-        console.error('Admin login error in modal:', err);
-        toast({
-          title: "Erro",
-          description: `Erro no login admin: ${err.message}`,
-          variant: "destructive"
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-      return;
-    }
-
-    // Normal flow for other users
     try {
-      const habboUserCheck = await getUserByName(habboNameInput);
-
-      if (!habboUserCheck || !habboUserCheck.motto) {
-        toast({
-          title: "Erro",
-          description: `O Habbo "${habboNameInput}" não foi encontrado, está offline ou tem perfil privado.`,
-          variant: "destructive"
-        });
-        return;
-      }
-      
+      // Always use the normal verification flow for all users
       const newCode = generateVerificationCode();
       setVerificationCode(newCode);
       setLoginStep(2);
@@ -192,7 +128,6 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
         title: "Código Gerado",
         description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
       });
-
     } catch (err) {
       console.error('Erro ao iniciar verificação no modal:', err);
       toast({
@@ -253,7 +188,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
 
   const handlePasswordActionInModal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userHabboId && habboNameInput.toLowerCase() !== 'habbohub') return;
+    if (!userHabboId) return;
     
     setIsProcessing(true);
 
@@ -268,7 +203,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
           return;
         }
         
-        await signInWithHabbo(userHabboId!, password);
+        await signInWithHabbo(userHabboId, password);
         toast({
           title: "Sucesso",
           description: "Login realizado com sucesso!"
@@ -295,8 +230,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
           return;
         }
         
-        const finalHabboId = userHabboId || `habbohub-admin-${habboNameInput}-${Date.now()}`;
-        await signUpWithHabbo(finalHabboId, habboNameInput, password);
+        await signUpWithHabbo(userHabboId, habboNameInput, password);
         
         toast({
           title: "Sucesso",
@@ -325,7 +259,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
       onClick={onClose}
     >
       <div
-        className="bg-amber-50 rounded-lg shadow-xl p-6 relative w-11/12 max-w-sm"
+        className="bg-amber-50 rounded-lg shadow-xl p-6 relative w-11/12 max-w-sm border border-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -337,7 +271,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
 
         {isLoginAttempt ? (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Login / Vincular Habbo</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center volter-font">Login / Vincular Habbo</h3>
 
             {loginStep === 1 && (
               <form onSubmit={handleInitiateLoginVerification} className="space-y-4">
@@ -355,28 +289,12 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                     disabled={isProcessing}
                   />
                 </div>
-                {habboNameInput.toLowerCase() === 'habbohub' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Senha Admin:
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Sua senha de administrador"
-                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      disabled={isProcessing}
-                    />
-                  </div>
-                )}
                 <button
                   type="submit"
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 volter-font"
                   disabled={isProcessing}
                 >
-                  {isProcessing ? 'Processando...' : (habboNameInput.toLowerCase() === 'habbohub' ? 'Login Admin' : 'Gerar Código')}
+                  {isProcessing ? 'Processando...' : 'Gerar Código'}
                 </button>
               </form>
             )}
@@ -395,12 +313,12 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                   }}
                   title="Clique para copiar"
                 >
-                  <p className="text-2xl font-bold text-blue-700 select-all">{verificationCode}</p>
+                  <p className="text-2xl font-bold text-blue-700 select-all volter-font">{verificationCode}</p>
                 </div>
                 <p className="text-sm text-gray-600">Certifique-se de estar online e com o perfil público.</p>
                 <button
                   onClick={handleVerifyMottoInModal}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 volter-font"
                   disabled={isProcessing}
                 >
                   {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
@@ -438,7 +356,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                 />
                 <button
                   type="submit"
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 volter-font"
                   disabled={isProcessing}
                 >
                   {isProcessing ? 'Criando Conta...' : 'Criar Conta'}
@@ -460,7 +378,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                 />
                 <button
                   type="submit"
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 volter-font"
                   disabled={isProcessing}
                 >
                   {isProcessing ? 'Entrando...' : 'Entrar'}
@@ -470,7 +388,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
           </div>
         ) : (
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">Meu Perfil</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 text-center volter-font">Meu Perfil</h3>
             
             {loading && (
               <div className="flex justify-center items-center py-8">
@@ -500,7 +418,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                   />
                 </div>
                 
-                <h4 className="text-lg font-semibold text-gray-800">{userData.name}</h4>
+                <h4 className="text-lg font-semibold text-gray-800 volter-font">{userData.name}</h4>
                 <p className="text-gray-600 italic">"{profileData.motto}"</p>
                 <p className="text-sm text-gray-500">
                   Membro desde: {new Date(profileData.memberSince).toLocaleDateString('pt-BR')}
@@ -520,13 +438,13 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                 <div className="flex space-x-2">
                   <button
                     onClick={() => window.location.href = `/profile/${userData.name}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors volter-font"
                   >
                     Ver Perfil Completo
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors volter-font"
                   >
                     Sair
                   </button>
@@ -544,7 +462,7 @@ export const ProfileModal = ({ isOpen, onClose, isLoginAttempt }: ProfileModalPr
                     window.location.href = '/connect-habbo';
                     onClose();
                   }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors volter-font"
                 >
                   Conectar Conta Habbo
                 </button>
