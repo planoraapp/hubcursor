@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
@@ -23,6 +22,7 @@ export const ConnectHabboForm = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const [showDirectLogin, setShowDirectLogin] = useState(false);
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ export const ConnectHabboForm = () => {
   };
 
   const checkIfAdmin = (name: string) => {
-    return name.toLowerCase() === 'habbohub';
+    return name.toLowerCase() === 'habbohub' || name.toLowerCase() === 'beebop';
   };
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export const ConnectHabboForm = () => {
     }
   }, [habboName]);
 
-  // Verificar se já está logado independentemente do authLoading
+  // Verificar se já está logado
   useEffect(() => {
     if (user && habboAccount) {
       addLog(`✅ Usuário já logado: ${habboAccount.habbo_name}`);
@@ -70,6 +70,56 @@ export const ConnectHabboForm = () => {
   if (user && habboAccount) {
     return null;
   }
+
+  const handleDirectLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!habboName.trim() || !password.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha o nome Habbo e a senha.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    addLog(`🔐 Tentando login direto para: ${habboName}`);
+
+    try {
+      // Para usuarios admin, usar o nome como ID
+      const loginId = checkIfAdmin(habboName) ? habboName.toLowerCase() : habboName;
+      
+      await signInWithHabbo(loginId, password);
+      addLog('✅ Login direto realizado com sucesso!');
+      toast({
+        title: "Sucesso",
+        description: "Login realizado com sucesso!"
+      });
+      
+      navigate('/');
+    } catch (error) {
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      addLog(`❌ Erro no login direto: ${errorMessage}`);
+      
+      let userMessage = errorMessage;
+      if (errorMessage.includes('Invalid login credentials')) {
+        userMessage = "Nome de usuário ou senha incorretos. Verifique e tente novamente.";
+      }
+      
+      toast({
+        title: "Erro no Login",
+        description: userMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleInitiateVerification = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,31 +263,12 @@ export const ConnectHabboForm = () => {
         const linkedAccount = await getLinkedAccount(userHabboId);
         
         if (linkedAccount) {
-          addLog('🔗 Vínculo existente detectado. Iniciando login automático...');
-          
-          // Automaticamente tentar fazer login com a conta vinculada
-          try {
-            addLog('🔐 Tentando login automático...');
-            await signInWithHabbo(userHabboId, 'temp_password_placeholder');
-            
-            // Se chegou aqui, o login foi bem-sucedido
-            addLog('✅ Login automático realizado com sucesso!');
-            toast({
-              title: "Sucesso",
-              description: "Login realizado com sucesso!"
-            });
-            
-            // Redirecionar para home
-            navigate('/');
-            
-          } catch (loginError) {
-            addLog('❌ Login automático falhou, solicitando senha...');
-            setStep(3);
-            toast({
-              title: "Senha Necessária",
-              description: "Digite sua senha do Habbo Hub para acessar."
-            });
-          }
+          addLog('🔗 Vínculo existente detectado. Redirecionando para login.');
+          setStep(3);
+          toast({
+            title: "Conta Encontrada",
+            description: "Sua conta foi verificada! Digite sua senha para acessar."
+          });
         } else {
           addLog('✨ Nenhum vínculo existente. Redirecionando para criação de conta.');
           setStep(4);
@@ -287,7 +318,6 @@ export const ConnectHabboForm = () => {
           description: isAdminUser ? "Login administrativo realizado com sucesso!" : "Login realizado com sucesso!"
         });
         
-        // Redirecionar para home
         navigate('/');
         
       } else if (step === 4) {
@@ -320,7 +350,6 @@ export const ConnectHabboForm = () => {
           duration: 3000
         });
         
-        // Redirecionar para home
         navigate('/');
       }
     } catch (error) {
@@ -362,38 +391,108 @@ export const ConnectHabboForm = () => {
 
       {step === 1 && (
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 1: Nome do Habbo</h2>
-          <form onSubmit={handleInitiateVerification} className="space-y-4">
-            <div>
-              <label htmlFor="habboName" className="block text-sm font-medium text-gray-700 mb-2">
-                Qual é o seu nome no Habbo Hotel?
-              </label>
-              <input
-                id="habboName"
-                type="text"
-                value={habboName}
-                onChange={(e) => setHabboName(e.target.value)}
-                placeholder="Ex: SeuNomeHabbo"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-                disabled={isProcessing}
-              />
-              {checkIfAdmin(habboName) && (
-                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    🔑 Usuário administrativo detectado - Bypass completo habilitado
-                  </p>
-                </div>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isProcessing}
-            >
-              {isProcessing ? 'Verificando...' : checkIfAdmin(habboName) ? 'Acesso Administrativo' : 'Verificar Habbo'}
-            </button>
-          </form>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            {showDirectLogin ? 'Login Direto' : 'Passo 1: Nome do Habbo'}
+          </h2>
+          
+          {!showDirectLogin ? (
+            <form onSubmit={handleInitiateVerification} className="space-y-4">
+              <div>
+                <label htmlFor="habboName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Qual é o seu nome no Habbo Hotel?
+                </label>
+                <input
+                  id="habboName"
+                  type="text"
+                  value={habboName}
+                  onChange={(e) => setHabboName(e.target.value)}
+                  placeholder="Ex: SeuNomeHabbo"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  disabled={isProcessing}
+                />
+                {checkIfAdmin(habboName) && (
+                  <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      🔑 Usuário administrativo detectado - Você pode usar login direto
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Verificando...' : checkIfAdmin(habboName) ? 'Acesso Administrativo' : 'Verificar Habbo'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDirectLogin(true)}
+                  className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Já tenho conta - Login Direto
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleDirectLogin} className="space-y-4">
+              <div>
+                <label htmlFor="directHabboName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome do Habbo:
+                </label>
+                <input
+                  id="directHabboName"
+                  type="text"
+                  value={habboName}
+                  onChange={(e) => setHabboName(e.target.value)}
+                  placeholder="Ex: Beebop, habbohub"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  disabled={isProcessing}
+                />
+              </div>
+              <div>
+                <label htmlFor="directPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Senha:
+                </label>
+                <input
+                  id="directPassword"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Digite sua senha"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  disabled={isProcessing}
+                />
+                {(habboName.toLowerCase() === 'beebop' || habboName.toLowerCase() === 'habbohub') && (
+                  <div className="mt-2 p-2 bg-blue-100 border border-blue-300 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      💡 Dica: Use a senha teste "290684" para estas contas
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Entrando...' : 'Entrar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDirectLogin(false)}
+                  className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                >
+                  Voltar para Verificação
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       )}
 
