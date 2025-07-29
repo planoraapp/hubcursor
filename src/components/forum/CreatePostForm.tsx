@@ -1,17 +1,15 @@
+
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { Image as ImageIcon } from 'lucide-react';
-
-type CreatePostHandler = (title: string, content: string, image: File | null, category: string) => Promise<void>;
 
 interface CreatePostFormProps {
   isLoggedIn: boolean;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  onCreatePost: CreatePostHandler;
+  onCreatePost: (title: string, content: string, image: File | null, category: string) => Promise<void>;
   isCreatingPost: boolean;
   uploadingImage: boolean;
 }
@@ -24,35 +22,15 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
   isCreatingPost,
   uploadingImage
 }) => {
-  const [newPostTitle, setNewPostTitle] = useState('');
-  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostTitle, setNewPostTitle] = useState<string>('');
+  const [newPostContent, setNewPostContent] = useState<string>('');
   const [newPostImage, setNewPostImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setNewPostImage(file);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeImage = () => {
-    setNewPostImage(null);
-    setImagePreview(null);
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     await onCreatePost(newPostTitle, newPostContent, newPostImage, selectedCategory);
     setNewPostTitle('');
     setNewPostContent('');
     setNewPostImage(null);
-    setImagePreview(null);
   };
 
   return (
@@ -90,13 +68,7 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
             />
             
             <Button 
-              onClick={async () => {
-                await onCreatePost(newPostTitle, newPostContent, newPostImage, selectedCategory);
-                setNewPostTitle('');
-                setNewPostContent('');
-                setNewPostImage(null);
-                setImagePreview(null);
-              }} 
+              onClick={handleSubmit}
               className="w-full bg-green-600 hover:bg-green-700 text-white volter-font"
               disabled={isCreatingPost || uploadingImage}
             >

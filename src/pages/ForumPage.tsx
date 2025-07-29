@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../hooks/useAuth';
@@ -14,12 +15,12 @@ import type { ForumPost } from '../types/forum';
 
 export default function ForumPage() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isCreatingPost, setIsCreatingPost] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('Geral');
-  const [activeSection, setActiveSection] = useState('forum');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isCreatingPost, setIsCreatingPost] = useState<boolean>(false);
+  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Geral');
+  const [activeSection, setActiveSection] = useState<string>('forum');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   
   const { isLoggedIn, user, habboAccount } = useAuth();
   const { toast } = useToast();
@@ -36,7 +37,7 @@ export default function ForumPage() {
     };
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (): Promise<void> => {
     setLoading(true);
     let query = supabase
       .from('forum_posts')
@@ -83,7 +84,7 @@ export default function ForumPage() {
     return publicUrl;
   };
 
-  const handleCreatePost = async (title: string, content: string, image: File | null, category: string) => {
+  const handleCreatePost = async (title: string, content: string, image: File | null, category: string): Promise<void> => {
     if (!title.trim() || !content.trim()) {
       toast({
         title: "Erro",
@@ -103,7 +104,7 @@ export default function ForumPage() {
     }
 
     setIsCreatingPost(true);
-    let imageUrl = null;
+    let imageUrl: string | null = null;
 
     if (image) {
       setUploadingImage(true);
@@ -149,7 +150,7 @@ export default function ForumPage() {
     setIsCreatingPost(false);
   };
 
-  const handleLikePost = async (postId: string) => {
+  const handleLikePost = async (postId: string): Promise<void> => {
     if (!isLoggedIn) {
       toast({
         title: "Erro",
@@ -181,6 +182,10 @@ export default function ForumPage() {
       });
       fetchPosts();
     }
+  };
+
+  const handleCategoryChange = (category: string): void => {
+    setSelectedCategory(category);
   };
 
   useEffect(() => {
@@ -226,7 +231,7 @@ export default function ForumPage() {
       <CreatePostForm
         isLoggedIn={isLoggedIn}
         selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        setSelectedCategory={handleCategoryChange}
         onCreatePost={handleCreatePost}
         isCreatingPost={isCreatingPost}
         uploadingImage={uploadingImage}
@@ -236,7 +241,7 @@ export default function ForumPage() {
         posts={posts}
         loading={loading}
         selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        setSelectedCategory={handleCategoryChange}
         onLikePost={handleLikePost}
         currentUserId={user?.id || null}
       />

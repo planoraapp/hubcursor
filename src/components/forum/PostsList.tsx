@@ -4,14 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { PostCard } from './PostCard';
 import type { ForumPost } from '../../types/forum';
 
-type LikePostHandler = (postId: string) => void;
-
 interface PostsListProps {
   posts: ForumPost[];
   loading: boolean;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  onLikePost: LikePostHandler;
+  onLikePost: (postId: string) => Promise<void>;
   currentUserId: string | null;
 }
 
@@ -23,7 +21,7 @@ export const PostsList: React.FC<PostsListProps> = ({
   onLikePost,
   currentUserId
 }) => {
-  const categories = ['Todos', 'Geral', 'Suporte', 'Eventos'];
+  const categories: string[] = ['Todos', 'Geral', 'Suporte', 'Eventos'];
 
   return (
     <Card className="bg-white border-gray-900">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../integrations/supabase/client';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,43 +10,20 @@ import type { ForumPost, ForumComment } from '../../types/forum';
 
 interface PostCardProps {
   post: ForumPost;
-  onLike: (postId: string) => void;
+  onLike: (postId: string) => Promise<void>;
   currentUserId: string | null;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onLike, currentUserId }) => {
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState<boolean>(false);
   const [comments, setComments] = useState<ForumComment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [isCommenting, setIsCommenting] = useState(false);
+  const [newComment, setNewComment] = useState<string>('');
+  const [loadingComments, setLoadingComments] = useState<boolean>(false);
+  const [isCommenting, setIsCommenting] = useState<boolean>(false);
   const { toast } = useToast();
   const { habboAccount } = useAuth();
 
-  const fetchComments = async () => {
-    if (!showComments) return;
-    
-    setLoadingComments(true);
-    const { data, error } = await supabase
-      .from('forum_comments')
-      .select('*')
-      .eq('post_id', post.id)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching comments:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar comentários",
-        variant: "destructive"
-      });
-    } else {
-      setComments(data || []);
-    }
-    setLoadingComments(false);
-  };
-
-  const handleAddComment = async () => {
+  const handleAddComment = async (): Promise<void> => {
     if (!newComment.trim() || !currentUserId || !habboAccount) {
       toast({
         title: "Erro",
@@ -87,7 +65,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, currentUserId 
 
   useEffect(() => {
     if (showComments) {
-      const fetchComments = async () => {
+      const fetchComments = async (): Promise<void> => {
         setLoadingComments(true);
         const { data, error } = await supabase
           .from('forum_comments')
@@ -184,10 +162,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, currentUserId 
                 className="flex-1"
               />
               <Button 
-                onClick={() => {
-                  // Simplified handler to avoid type complexity
-                  console.log('Adding comment:', newComment);
-                }} 
+                onClick={handleAddComment} 
                 size="sm"
                 disabled={isCommenting}
                 className="bg-green-600 hover:bg-green-700 text-white volter-font"
