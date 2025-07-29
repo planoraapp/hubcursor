@@ -1,15 +1,10 @@
+
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Admin users with direct password access
-const ADMIN_CREDENTIALS = {
-  'beebop': '290684',
-  'habbohub': '290684'
-};
 
 // Gera código com prefixo HUB- padronizado
 const generateVerificationCode = () => {
@@ -17,161 +12,220 @@ const generateVerificationCode = () => {
   return `HUB-${code}`;
 };
 
-const STORAGE_KEY = 'habbo_verification_code';
-const STORAGE_HABBO_KEY = 'habbo_name_for_code';
-
 export const ConnectHabboForm = () => {
-  // Motto verification states
-  const [habboName, setHabboName] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [mottoStep, setMottoStep] = useState(1);
-  const [userHabboId, setUserHabboId] = useState<string | null>(null);
-  
-  // Password login states
-  const [loginHabboName, setLoginHabboName] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [signupHabboName, setSignupHabboName] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [pendingVerification, setPendingVerification] = useState<{habboName: string, habboId: string} | null>(null);
-  
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-  
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const { 
-    user, 
-    habboAccount, 
-    loading: authLoading,
-    getLinkedAccount, 
-    signUpWithHabbo, 
-    signInWithHabbo, 
-    verifyHabboMotto,
-    signOut 
+  const { toast } = useToast();
+  const {
+    user,
+    habboAccount,
+    getLinkedAccount,
+    createLinkedAccount,
+    signUpWithHabbo,
+    signInWithHabbo,
+    verifyHabboMotto
   } = useSupabaseAuth();
 
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString('pt-BR');
-    const logEntry = `${timestamp}: ${message}`;
-    console.log(logEntry);
-    setDebugLog(prev => [...prev, logEntry]);
-  };
+  // Estados para login/cadastro por motto
+  const [habboName, setHabboName] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [step, setStep] = useState(1);
+  const [userHabboId, setUserHabboId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    const savedCode = localStorage.getItem(STORAGE_KEY);
-    const savedHabboName = localStorage.getItem(STORAGE_HABBO_KEY);
-    
-    if (savedCode && savedHabboName === habboName && habboName) {
-      setVerificationCode(savedCode);
-      addLog(`🔄 Código persistido carregado: ${savedCode} para ${habboName}`);
-    }
-  }, [habboName]);
+  // Estados para login direto por senha
+  const [directLoginName, setDirectLoginName] = useState('');
+  const [directLoginPassword, setDirectLoginPassword] = useState('');
+  const [isDirectLoginProcessing, setIsDirectLoginProcessing] = useState(false);
 
-  // Check if already logged in
+  // Estados para cadastro por senha
+  const [signupName, setSignupName] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [signupStep, setSignupStep] = useState(1);
+  const [signupHabboId, setSignupHabboId] = useState<string | null>(null);
+  const [signupVerificationCode, setSignupVerificationCode] = useState('');
+  const [isSignupProcessing, setIsSignupProcessing] = useState(false);
+
+  // Reset states when user changes
   useEffect(() => {
     if (user && habboAccount) {
-      addLog(`✅ Usuário já logado: ${habboAccount.habbo_name}`);
       navigate('/');
     }
   }, [user, habboAccount, navigate]);
 
-  if (user && habboAccount) {
-    return null;
-  }
-
-  // Password login handlers
-  const handlePasswordLogin = async (e: React.FormEvent) => {
+  // Funções para login por motto
+  const handleInitiateVerification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginHabboName.trim() || !loginPassword) {
+    const currentHabboName = habboName.trim();
+    if (!currentHabboName) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha todos os campos.",
+        description: "Por favor, digite seu nome Habbo.",
         variant: "destructive"
       });
       return;
     }
 
     setIsProcessing(true);
-    addLog(`🔐 Tentando login por senha para: ${loginHabboName}`);
+
+    // Lógica específica para "habbohub" (Admin)
+    if (currentHabboName.toLowerCase() === 'habbohub') {
+      setUserHabboId(`habbohub-id-${currentHabboName}`);
+      setStep(3);
+      toast({
+        title: "Modo Admin",
+        description: "Por favor, digite sua senha do Habbo Hub."
+      });
+      setIsProcessing(false);
+      return;
+    }
 
     try {
-      // Check for admin credentials first
-      if (ADMIN_CREDENTIALS[loginHabboName.toLowerCase()] === loginPassword) {
-        addLog(`👑 Login admin detectado para: ${loginHabboName}`);
-        
-        // For admin users, create/login directly
-        const habboUser = await getUserByName(loginHabboName);
-        if (habboUser) {
-          try {
-            await signInWithHabbo(habboUser.uniqueId, loginPassword);
-            addLog('✅ Login admin bem-sucedido!');
-            navigate('/');
-            return;
-          } catch (signInError) {
-            // If sign in fails, try to create the account
-            await signUpWithHabbo(habboUser.uniqueId, loginHabboName, loginPassword);
-            addLog('✅ Conta admin criada e login realizado!');
-            navigate('/');
-            return;
-          }
-        }
-      }
+      const habboUserCheck = await getUserByName(currentHabboName);
 
-      // For regular users, check if account exists
-      const habboUser = await getUserByName(loginHabboName);
-      if (!habboUser) {
+      if (!habboUserCheck || !habboUserCheck.motto) {
         toast({
           title: "Erro",
-          description: "Usuário Habbo não encontrado.",
+          description: `O Habbo "${currentHabboName}" não foi encontrado, está offline ou tem perfil privado.`,
           variant: "destructive"
         });
         return;
       }
-
-      const linkedAccount = await getLinkedAccount(habboUser.uniqueId);
-      if (!linkedAccount) {
-        toast({
-          title: "Conta não encontrada",
-          description: "Esta conta ainda não foi registrada. Use a aba 'Criar Conta' primeiro.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      await signInWithHabbo(habboUser.uniqueId, loginPassword);
-      addLog('✅ Login por senha bem-sucedido!');
-      toast({
-        title: "Sucesso",
-        description: "Login realizado com sucesso!"
-      });
-      navigate('/');
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
-      addLog(`❌ Erro no login por senha: ${errorMessage}`);
       
-      if (errorMessage.includes('Invalid login credentials')) {
-        toast({
-          title: "Erro",
-          description: "Nome de usuário ou senha incorretos.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      }
+      const newCode = generateVerificationCode();
+      setVerificationCode(newCode);
+      setStep(2);
+      toast({
+        title: "Código Gerado",
+        description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
+      });
+
+    } catch (err) {
+      console.error('Erro ao iniciar verificação:', err);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar o nome Habbo. Tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handlePasswordSignup = async (e: React.FormEvent) => {
+  const handleVerifyMotto = async () => {
+    if (!habboName.trim() || !verificationCode) {
+      toast({
+        title: "Erro",
+        description: "Erro na verificação. Por favor, reinicie o processo.",
+        variant: "destructive"
+      });
+      setStep(1);
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const habboUser = await verifyHabboMotto(habboName, verificationCode);
+      
+      if (habboUser) {
+        setUserHabboId(habboUser.uniqueId);
+        
+        const linkedAccount = await getLinkedAccount(habboUser.uniqueId);
+        
+        if (linkedAccount) {
+          setStep(4);
+          toast({
+            title: "Sucesso",
+            description: "Código verificado! Digite sua senha do Habbo Hub."
+          });
+        } else {
+          setStep(3);
+          toast({
+            title: "Sucesso",
+            description: "Código verificado! Crie uma senha para o seu Habbo Hub."
+          });
+        }
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao verificar motto';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePasswordAction = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupHabboName.trim() || !signupPassword || !confirmPassword) {
+    if (!userHabboId) return;
+    
+    setIsProcessing(true);
+
+    try {
+      if (step === 4) { // Login
+        if (!password) {
+          toast({
+            title: "Erro",
+            description: "Por favor, digite sua senha.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        await signInWithHabbo(userHabboId, password);
+        toast({
+          title: "Sucesso",
+          description: "Login realizado com sucesso!"
+        });
+        navigate('/');
+        
+      } else if (step === 3) { // Criar conta
+        if (password.length < 6) {
+          toast({
+            title: "Erro",
+            description: "A senha deve ter pelo menos 6 caracteres.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (password !== confirmPassword) {
+          toast({
+            title: "Erro",
+            description: "As senhas não coincidem.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        await signUpWithHabbo(userHabboId, habboName, password);
+        toast({
+          title: "Sucesso",
+          description: "Conta criada com sucesso!"
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro na autenticação';
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Funções para login direto por senha
+  const handleDirectLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directLoginName.trim() || !directLoginPassword.trim()) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos.",
@@ -180,10 +234,53 @@ export const ConnectHabboForm = () => {
       return;
     }
 
-    if (signupPassword !== confirmPassword) {
+    setIsDirectLoginProcessing(true);
+    try {
+      // Para usuários que já têm conta vinculada
+      const habboUser = await getUserByName(directLoginName);
+      if (habboUser) {
+        await signInWithHabbo(habboUser.uniqueId, directLoginPassword);
+        toast({
+          title: "Sucesso",
+          description: "Login realizado com sucesso!"
+        });
+        navigate('/');
+      } else {
+        // Para usuários admin como habbohub
+        if (directLoginName.toLowerCase() === 'habbohub') {
+          await signInWithHabbo(`habbohub-id-${directLoginName}`, directLoginPassword);
+          toast({
+            title: "Sucesso",
+            description: "Login admin realizado com sucesso!"
+          });
+          navigate('/');
+        } else {
+          toast({
+            title: "Erro",
+            description: "Usuário não encontrado ou senha incorreta.",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
       toast({
         title: "Erro",
-        description: "As senhas não coincidem.",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsDirectLoginProcessing(false);
+    }
+  };
+
+  // Funções para cadastro por senha
+  const handleSignupInitiate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupName.trim() || !signupPassword.trim() || !signupConfirmPassword.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos.",
         variant: "destructive"
       });
       return;
@@ -198,637 +295,340 @@ export const ConnectHabboForm = () => {
       return;
     }
 
-    setIsProcessing(true);
-    addLog(`📝 Tentando criar conta para: ${signupHabboName}`);
-
-    try {
-      const habboUser = await getUserByName(signupHabboName);
-      if (!habboUser) {
-        toast({
-          title: "Erro",
-          description: "Usuário Habbo não encontrado ou perfil privado.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const existingAccount = await getLinkedAccount(habboUser.uniqueId);
-      if (existingAccount) {
-        toast({
-          title: "Erro",
-          description: "Esta conta Habbo já está registrada. Use a aba 'Fazer Login'.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Create account but mark as pending verification
-      setPendingVerification({ habboName: signupHabboName, habboId: habboUser.uniqueId });
-      
-      toast({
-        title: "Conta Criada",
-        description: "Conta criada! Agora você precisa verificar seu perfil Habbo para completar o registro."
-      });
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro na criação da conta';
-      addLog(`❌ Erro na criação da conta: ${errorMessage}`);
+    if (signupPassword !== signupConfirmPassword) {
       toast({
         title: "Erro",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleVerifyPendingAccount = async () => {
-    if (!pendingVerification) return;
-
-    setIsProcessing(true);
-    try {
-      const newCode = generateVerificationCode();
-      setVerificationCode(newCode);
-      localStorage.setItem(STORAGE_KEY, newCode);
-      localStorage.setItem(STORAGE_HABBO_KEY, pendingVerification.habboName);
-      
-      toast({
-        title: "Código Gerado",
-        description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel para completar o registro.`
-      });
-      
-      // Switch to motto verification with pre-filled data
-      setHabboName(pendingVerification.habboName);
-      setUserHabboId(pendingVerification.habboId);
-      setMottoStep(2);
-      
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao gerar código de verificação.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleInitiateVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!habboName.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, digite seu nome Habbo.",
+        description: "As senhas não coincidem.",
         variant: "destructive"
       });
       return;
     }
 
-    setIsProcessing(true);
-    addLog(`🔍 Verificando Habbo "${habboName}" na API...`);
-    
+    setIsSignupProcessing(true);
     try {
-      const habboUser = await getUserByName(habboName);
-      
-      if (!habboUser || !habboUser.motto) {
-        addLog(`❌ Habbo "${habboName}" não encontrado ou perfil privado.`);
+      const habboUser = await getUserByName(signupName);
+      if (!habboUser) {
         toast({
           title: "Erro",
-          description: `O Habbo "${habboName}" não foi encontrado, está offline ou tem perfil privado.`,
+          description: "Usuário Habbo não encontrado. Verifique o nome e se o perfil está público.",
           variant: "destructive"
         });
-        setIsProcessing(false);
         return;
       }
 
-      addLog(`✅ Habbo encontrado: ${habboUser.name}`);
-      addLog(`💬 Motto atual: "${habboUser.motto}"`);
-      
-      setUserHabboId(habboUser.uniqueId);
-      
-      const hubCodePattern = /HUB-[A-Z0-9]{5}/gi;
-      const existingCode = habboUser.motto.match(hubCodePattern);
-      
-      if (existingCode && existingCode.length > 0) {
-        const foundCode = existingCode[0].toUpperCase();
-        addLog(`🔍 Código HUB encontrado na motto: ${foundCode}`);
-        setVerificationCode(foundCode);
-        localStorage.setItem(STORAGE_KEY, foundCode);
-        localStorage.setItem(STORAGE_HABBO_KEY, habboName);
-        setMottoStep(2);
-        toast({
-          title: "Código Encontrado",
-          description: `Código "${foundCode}" já está na sua motto. Você pode verificar agora ou gerar um novo.`
-        });
-      } else {
-        const newCode = generateVerificationCode();
-        setVerificationCode(newCode);
-        localStorage.setItem(STORAGE_KEY, newCode);
-        localStorage.setItem(STORAGE_HABBO_KEY, habboName);
-        setMottoStep(2);
-        
-        addLog(`🔑 Código de verificação gerado: ${newCode}`);
-        toast({
-          title: "Código Gerado",
-          description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
-        });
-      }
+      const newCode = generateVerificationCode();
+      setSignupVerificationCode(newCode);
+      setSignupHabboId(habboUser.uniqueId);
+      setSignupStep(2);
+      toast({
+        title: "Verificação Necessária",
+        description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel para confirmar a conta.`
+      });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      addLog(`❌ Erro ao verificar nome Habbo: ${errorMessage}`);
       toast({
         title: "Erro",
-        description: "Não foi possível verificar o nome Habbo. Tente novamente.",
+        description: "Erro ao verificar usuário Habbo.",
         variant: "destructive"
       });
     } finally {
-      setIsProcessing(false);
+      setIsSignupProcessing(false);
     }
   };
 
-  const handleVerifyMotto = async () => {
-    if (!habboName.trim() || !verificationCode || !userHabboId) {
+  const handleSignupVerify = async () => {
+    if (!signupName.trim() || !signupVerificationCode) {
       toast({
         title: "Erro",
         description: "Erro na verificação. Por favor, reinicie o processo.",
         variant: "destructive"
       });
-      setMottoStep(1);
+      setSignupStep(1);
       return;
     }
 
-    setIsProcessing(true);
-    addLog('🔍 Verificando sua motto no Habbo Hotel...');
-    
+    setIsSignupProcessing(true);
     try {
-      const habboUser = await verifyHabboMotto(habboName, verificationCode);
+      const habboUser = await verifyHabboMotto(signupName, signupVerificationCode);
       
-      if (habboUser) {
-        addLog('✅ Código de verificação encontrado na motto!');
-        
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(STORAGE_HABBO_KEY);
-
-        // If this is from pending verification, complete the signup
-        if (pendingVerification && pendingVerification.habboName === habboName) {
-          await signUpWithHabbo(userHabboId, habboName, signupPassword);
-          setPendingVerification(null);
-          toast({
-            title: "Sucesso",
-            description: "Conta verificada e criada com sucesso!"
-          });
-          navigate('/');
-          return;
-        }
-        
-        const linkedAccount = await getLinkedAccount(userHabboId);
-        
-        if (linkedAccount) {
-          addLog('🔗 Vínculo existente detectado. Redirecionando para login.');
-          setMottoStep(3);
-          toast({
-            title: "Conta Encontrada",
-            description: "Sua conta foi verificada! Digite sua senha para acessar."
-          });
-        } else {
-          addLog('✨ Nenhum vínculo existente. Redirecionando para criação de conta.');
-          setMottoStep(4);
-          toast({
-            title: "Sucesso",
-            description: "Código verificado! Agora crie uma senha para o seu Habbo Hub."
-          });
-        }
+      if (habboUser && signupHabboId) {
+        await signUpWithHabbo(signupHabboId, signupName, signupPassword);
+        toast({
+          title: "Sucesso",
+          description: "Conta criada e verificada com sucesso!"
+        });
+        navigate('/');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-      addLog(`❌ Erro ao verificar motto: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro na verificação';
       toast({
         title: "Erro",
         description: errorMessage,
         variant: "destructive"
       });
     } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleMottoPasswordAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userHabboId) return;
-
-    setIsProcessing(true);
-    addLog('🔐 Iniciando ação de senha...');
-
-    try {
-      if (mottoStep === 3) {
-        addLog('➡️ Tentando login com senha existente...');
-        if (!loginPassword) {
-          toast({
-            title: "Erro",
-            description: "Por favor, digite sua senha.",
-            variant: "destructive"
-          });
-          setIsProcessing(false);
-          return;
-        }
-
-        await signInWithHabbo(userHabboId, loginPassword);
-        addLog('✅ Login bem-sucedido!');
-        toast({
-          title: "Sucesso",
-          description: "Login realizado com sucesso!"
-        });
-        
-        navigate('/');
-        
-      } else if (mottoStep === 4) {
-        addLog('➡️ Tentando criar nova conta...');
-        if (signupPassword.length < 6) {
-          toast({
-            title: "Erro",
-            description: "A senha deve ter pelo menos 6 caracteres.",
-            variant: "destructive"
-          });
-          setIsProcessing(false);
-          return;
-        }
-        
-        if (signupPassword !== confirmPassword) {
-          toast({
-            title: "Erro",
-            description: "As senhas não coincidem.",
-            variant: "destructive"
-          });
-          setIsProcessing(false);
-          return;
-        }
-
-        await signUpWithHabbo(userHabboId, habboName, signupPassword);
-        addLog('✅ Conta criada com sucesso!');
-        
-        if (habboName.toLowerCase() === 'habbohub') {
-          addLog('🔑 [Admin] Conta administrativa criada com sucesso');
-        }
-        
-        toast({
-          title: "Sucesso",
-          description: "Conta criada e vinculada com sucesso!",
-          duration: 3000
-        });
-        
-        navigate('/');
-      }
-    } catch (error) {
-      let errorMessage = 'Erro desconhecido';
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      addLog(`❌ Erro na ação de senha: ${errorMessage}`);
-      
-      let userMessage = errorMessage;
-      if (errorMessage.includes('Invalid login credentials')) {
-        userMessage = "Senha incorreta. Verifique sua senha e tente novamente.";
-      } else if (errorMessage.includes('User already registered')) {
-        userMessage = "Este usuário já está registrado. Tente fazer login.";
-      }
-      
-      toast({
-        title: "Erro",
-        description: userMessage,
-        variant: "destructive",
-        duration: 5000
-      });
-    } finally {
-      setIsProcessing(false);
+      setIsSignupProcessing(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto space-y-6">
-      {/* Console de Debug */}
-      <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
-        <h3 className="text-yellow-400 mb-2">Console de Debug:</h3>
-        {debugLog.map((log, index) => (
-          <div key={index} className="mb-1">{log}</div>
-        ))}
-      </div>
+    <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+      <Tabs defaultValue="motto" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="motto">Verificação por Motto</TabsTrigger>
+          <TabsTrigger value="password">Login por Senha</TabsTrigger>
+        </TabsList>
 
-      <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
-        <Tabs defaultValue="password" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="password">Login por Senha</TabsTrigger>
-            <TabsTrigger value="motto">Verificação por Motto</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="password" className="space-y-4">
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Login e Cadastro</h2>
-              
-              {pendingVerification && (
-                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-yellow-800 mb-2">
-                    Conta criada para <strong>{pendingVerification.habboName}</strong>! 
-                    Agora você precisa verificar seu perfil Habbo para completar o registro.
-                  </p>
-                  <button
-                    onClick={handleVerifyPendingAccount}
-                    className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
-                    disabled={isProcessing}
-                  >
-                    Verificar Perfil Habbo
-                  </button>
-                </div>
-              )}
+        <TabsContent value="motto" className="space-y-4">
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold">Conectar com Verificação por Motto</h3>
+            <p className="text-sm text-gray-600">Processo seguro usando sua motto do Habbo</p>
+          </div>
 
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">Fazer Login</TabsTrigger>
-                  <TabsTrigger value="signup">Criar Conta</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="login">
-                  <form onSubmit={handlePasswordLogin} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nome Habbo:
-                      </label>
-                      <input
-                        type="text"
-                        value={loginHabboName}
-                        onChange={(e) => setLoginHabboName(e.target.value)}
-                        placeholder="Seu nome no Habbo"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        disabled={isProcessing}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Senha:
-                      </label>
-                      <input
-                        type="password"
-                        value={loginPassword}
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                        placeholder="Sua senha"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        disabled={isProcessing}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Entrando...' : 'Fazer Login'}
-                    </button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="signup">
-                  <form onSubmit={handlePasswordSignup} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nome Habbo:
-                      </label>
-                      <input
-                        type="text"
-                        value={signupHabboName}
-                        onChange={(e) => setSignupHabboName(e.target.value)}
-                        placeholder="Seu nome no Habbo"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        disabled={isProcessing}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Senha:
-                      </label>
-                      <input
-                        type="password"
-                        value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        placeholder="Crie uma senha (mín. 6 caracteres)"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        disabled={isProcessing}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Confirmar Senha:
-                      </label>
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Confirme sua senha"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                        disabled={isProcessing}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Criando Conta...' : 'Criar Conta'}
-                    </button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="motto" className="space-y-4">
-            {mottoStep === 1 && (
+          {step === 1 && (
+            <form onSubmit={handleInitiateVerification} className="space-y-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 1: Nome do Habbo</h2>
-                <form onSubmit={handleInitiateVerification} className="space-y-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nome do seu Habbo:
+                </label>
+                <input
+                  type="text"
+                  value={habboName}
+                  onChange={(e) => setHabboName(e.target.value)}
+                  placeholder="Digite seu nome Habbo"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  disabled={isProcessing}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Verificando...' : 'Gerar Código'}
+              </button>
+            </form>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4 text-center">
+              <p className="text-gray-700">Copie este código para sua motto no Habbo Hotel:</p>
+              <div
+                className="bg-gray-100 p-3 rounded-lg border border-gray-300 cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText(verificationCode);
+                  toast({
+                    title: "Copiado",
+                    description: "Código copiado para a área de transferência!"
+                  });
+                }}
+                title="Clique para copiar"
+              >
+                <p className="text-2xl font-bold text-blue-700 select-all">{verificationCode}</p>
+              </div>
+              <p className="text-sm text-gray-600">Certifique-se de estar online e com o perfil público.</p>
+              <button
+                onClick={handleVerifyMotto}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
+              </button>
+              <button
+                onClick={() => setStep(1)}
+                className="w-full px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors"
+                disabled={isProcessing}
+              >
+                Voltar
+              </button>
+            </div>
+          )}
+
+          {(step === 3 || step === 4) && (
+            <form onSubmit={handlePasswordAction} className="space-y-4">
+              <p className="text-gray-700">
+                {step === 3 ? 'Crie uma senha para seu Habbo Hub:' : 'Digite sua senha do Habbo Hub:'}
+              </p>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={step === 3 ? "Nova Senha (min. 6 caracteres)" : "Sua senha"}
+                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                disabled={isProcessing}
+              />
+              {step === 3 && (
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirmar Senha"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  disabled={isProcessing}
+                />
+              )}
+              <button
+                type="submit"
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (step === 3 ? 'Criando Conta...' : 'Entrando...') : (step === 3 ? 'Criar Conta' : 'Entrar')}
+              </button>
+            </form>
+          )}
+        </TabsContent>
+
+        <TabsContent value="password" className="space-y-4">
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="login" className="space-y-4">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold">Login por Senha</h3>
+                <p className="text-sm text-gray-600">Para contas já verificadas</p>
+              </div>
+
+              <form onSubmit={handleDirectLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome Habbo:
+                  </label>
+                  <input
+                    type="text"
+                    value={directLoginName}
+                    onChange={(e) => setDirectLoginName(e.target.value)}
+                    placeholder="Digite seu nome Habbo"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                    disabled={isDirectLoginProcessing}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Senha:
+                  </label>
+                  <input
+                    type="password"
+                    value={directLoginPassword}
+                    onChange={(e) => setDirectLoginPassword(e.target.value)}
+                    placeholder="Sua senha do Habbo Hub"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                    disabled={isDirectLoginProcessing}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  disabled={isDirectLoginProcessing}
+                >
+                  {isDirectLoginProcessing ? 'Entrando...' : 'Entrar'}
+                </button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="signup" className="space-y-4">
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-semibold">Cadastrar por Senha</h3>
+                <p className="text-sm text-gray-600">Requer verificação por motto</p>
+              </div>
+
+              {signupStep === 1 && (
+                <form onSubmit={handleSignupInitiate} className="space-y-4">
                   <div>
-                    <label htmlFor="habboName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Qual é o seu nome no Habbo Hotel?
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome Habbo:
                     </label>
                     <input
-                      id="habboName"
                       type="text"
-                      value={habboName}
-                      onChange={(e) => setHabboName(e.target.value)}
-                      placeholder="Ex: SeuNomeHabbo"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      placeholder="Digite seu nome Habbo"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
-                      disabled={isProcessing}
+                      disabled={isSignupProcessing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Senha:
+                    </label>
+                    <input
+                      type="password"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      placeholder="Senha (min. 6 caracteres)"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      disabled={isSignupProcessing}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirmar Senha:
+                    </label>
+                    <input
+                      type="password"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      placeholder="Confirme sua senha"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      disabled={isSignupProcessing}
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    disabled={isProcessing}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                    disabled={isSignupProcessing}
                   >
-                    {isProcessing ? 'Verificando...' : 'Verificar Habbo'}
+                    {isSignupProcessing ? 'Verificando...' : 'Continuar'}
                   </button>
                 </form>
-              </div>
-            )}
+              )}
 
-            {mottoStep === 2 && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 2: Verifique sua Motto</h2>
-                <p className="text-gray-700 mb-4">
-                  Para vincular sua conta, certifique-se de que sua motto (legenda) no Habbo Hotel contém o código abaixo.
-                  Certifique-se de que você está <strong>online</strong> no Habbo Hotel.
-                </p>
-                <div
-                  className="bg-gray-100 p-4 rounded-lg border border-gray-300 mb-4 text-center cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => {
-                    navigator.clipboard.writeText(verificationCode);
-                    toast({
-                      title: "Copiado",
-                      description: "Código copiado para a área de transferência!"
-                    });
-                  }}
-                  title="Clique para copiar"
-                >
-                  <p className="text-xl font-bold text-blue-700 select-all">{verificationCode}</p>
-                  <span className="text-sm text-gray-500">Clique no código para copiar</span>
-                </div>
-                <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>💡 Dica:</strong> O código tem o formato "HUB-XXXXX" e foi salvo automaticamente. 
-                    Se você já tem este código na sua motto, pode verificar diretamente.
-                  </p>
-                </div>
-                <p className="text-gray-700 mb-6">
-                  Após garantir que sua motto contém o código, clique em "Verificar Motto".
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={handleVerifyMotto}
-                    className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                    disabled={isProcessing}
+              {signupStep === 2 && (
+                <div className="space-y-4 text-center">
+                  <p className="text-gray-700">Copie este código para sua motto no Habbo Hotel:</p>
+                  <div
+                    className="bg-gray-100 p-3 rounded-lg border border-gray-300 cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(signupVerificationCode);
+                      toast({
+                        title: "Copiado",
+                        description: "Código copiado para a área de transferência!"
+                      });
+                    }}
+                    title="Clique para copiar"
                   >
-                    {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
+                    <p className="text-2xl font-bold text-blue-700 select-all">{signupVerificationCode}</p>
+                  </div>
+                  <p className="text-sm text-gray-600">Após colar o código na motto, clique em verificar.</p>
+                  <button
+                    onClick={handleSignupVerify}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                    disabled={isSignupProcessing}
+                  >
+                    {isSignupProcessing ? 'Verificando e Criando Conta...' : 'Verificar e Criar Conta'}
                   </button>
                   <button
-                    onClick={() => setMottoStep(1)}
-                    className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
-                    disabled={isProcessing}
+                    onClick={() => setSignupStep(1)}
+                    className="w-full px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors"
+                    disabled={isSignupProcessing}
                   >
                     Voltar
                   </button>
                 </div>
-              </div>
-            )}
-
-            {mottoStep === 3 && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 3: Fazer Login</h2>
-                <p className="text-gray-700 mb-4">
-                  Sua conta Habbo está verificada. Digite sua senha do Habbo Hub para acessar.
-                </p>
-                <form onSubmit={handleMottoPasswordAction} className="space-y-4">
-                  <div>
-                    <label htmlFor="passwordLogin" className="block text-sm font-medium text-gray-700 mb-2">
-                      Senha do Habbo Hub:
-                    </label>
-                    <input
-                      id="passwordLogin"
-                      type="password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Sua senha"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      disabled={isProcessing}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <button
-                      type="submit"
-                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Entrando...' : 'Entrar'}
-                    </button>
-                    <button
-                      onClick={() => setMottoStep(1)}
-                      type="button"
-                      className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
-                      disabled={isProcessing}
-                    >
-                      Voltar
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {mottoStep === 4 && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 3: Criar Senha</h2>
-                <p className="text-gray-700 mb-4">
-                  Sua conta Habbo foi verificada! Agora crie uma senha para acessar seu perfil no Habbo Hub.
-                </p>
-                <form onSubmit={handleMottoPasswordAction} className="space-y-4">
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nova Senha (min. 6 caracteres):
-                    </label>
-                    <input
-                      id="newPassword"
-                      type="password"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      placeholder="Crie uma senha"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      disabled={isProcessing}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="confirmNewPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirmar Senha:
-                    </label>
-                    <input
-                      id="confirmNewPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirme sua senha"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      disabled={isProcessing}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <button
-                      type="submit"
-                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? 'Criando Conta...' : 'Vincular e Criar Conta'}
-                    </button>
-                    <button
-                      onClick={() => setMottoStep(1)}
-                      type="button"
-                      className="w-full px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
-                      disabled={isProcessing}
-                    >
-                      Voltar
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
