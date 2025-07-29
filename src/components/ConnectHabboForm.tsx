@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
@@ -352,19 +351,22 @@ export const ConnectHabboForm = () => {
           return;
         }
 
-        // Para admin, aguardar um pouco mais entre tentativas para evitar rate limiting
-        if (isAdminUser) {
-          addLog('⏳ Aguardando para evitar rate limiting...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
+        // Para admin ou usuários normais, aguardar um pouco para evitar problemas
+        addLog('⏳ Preparando para criar conta...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         await signUpWithHabbo(userHabboId, habboName, password);
         addLog('✅ Conta criada com sucesso!');
         toast({
           title: "Sucesso",
-          description: isAdminUser ? "Conta administrativa criada com sucesso!" : "Conta criada e vinculada com sucesso!"
+          description: isAdminUser ? "Conta administrativa criada com sucesso!" : "Conta criada e vinculada com sucesso!",
+          duration: 3000
         });
-        window.location.href = `/profile/${habboName}`;
+        
+        // Aguardar um pouco antes de redirecionar para garantir que tudo esteja sincronizado
+        setTimeout(() => {
+          window.location.href = `/profile/${habboName}`;
+        }, 2000);
       }
     } catch (error) {
       let errorMessage = 'Erro desconhecido';
@@ -385,27 +387,20 @@ export const ConnectHabboForm = () => {
       } else if (errorMessage.includes('Invalid login credentials')) {
         userMessage = "Senha incorreta. Verifique sua senha e tente novamente.";
       } else if (errorMessage.includes('row-level security') || errorMessage.includes('RLS')) {
-        userMessage = "Erro de segurança. Aguarde um momento e tente novamente.";
+        userMessage = "Erro de sincronização. Aguarde alguns segundos e tente novamente.";
       } else if (errorMessage.includes('Falha ao vincular conta')) {
-        userMessage = "Erro ao vincular conta. Tente novamente em alguns segundos.";
+        userMessage = "Erro ao vincular conta. Aguarde alguns segundos e tente novamente.";
       } else if (errorMessage.includes('For security purposes')) {
-        userMessage = "Rate limit atingido. Aguarde alguns segundos e tente novamente.";
-        // Para admin, aguardar mais tempo
-        if (isAdminUser) {
-          addLog('⏳ Rate limit detectado. Aguardando 15 segundos...');
-          setTimeout(() => {
-            toast({
-              title: "Pronto",
-              description: "Agora você pode tentar novamente."
-            });
-          }, 15000);
-        }
+        userMessage = "Limite de tentativas atingido. Aguarde alguns segundos e tente novamente.";
+      } else if (errorMessage.includes('Falha ao criar vínculo após múltiplas tentativas')) {
+        userMessage = "Problema de conexão. Verifique sua internet e tente novamente.";
       }
       
       toast({
         title: "Erro",
         description: userMessage,
-        variant: "destructive"
+        variant: "destructive",
+        duration: 5000
       });
     } finally {
       setIsProcessing(false);

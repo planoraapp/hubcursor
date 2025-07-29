@@ -82,14 +82,32 @@ export const useSupabaseAuth = () => {
     return data;
   };
 
+  const waitForSession = async (maxAttempts: number = 20): Promise<Session | null> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log(`✅ Sessão encontrada na tentativa ${i + 1}`);
+        return session;
+      }
+      console.log(`⏳ Aguardando sessão... tentativa ${i + 1}/${maxAttempts}`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    return null;
+  };
+
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 Tentando criar vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Implementar retry logic para resolver race condition com RLS
-    let linkedAccountCreated = false;
+    // Aguardar sessão estar completamente estabelecida
+    const session = await waitForSession();
+    if (!session) {
+      throw new Error('Falha ao estabelecer sessão. Tente novamente.');
+    }
+
+    // Implementar retry logic mais robusto
     let lastError = null;
     
-    for (let i = 0; i < 5; i++) { // Tentar 5 vezes
+    for (let i = 0; i < 8; i++) { // Aumentar para 8 tentativas
       try {
         console.log(`🔄 Tentativa ${i + 1} de criar vínculo...`);
         
@@ -107,36 +125,40 @@ export const useSupabaseAuth = () => {
           lastError = error;
           console.error(`❌ Tentativa ${i + 1} falhou:`, JSON.stringify(error, null, 2));
           
-          // Se for erro de RLS, aguardar um pouco mais antes de tentar novamente
+          // Estratégia de retry baseada no tipo de erro
           if (error.code === '42501' || error.message.includes('row-level security')) {
-            console.log(`⏳ Erro de RLS detectado, aguardando ${(i + 1) * 1000}ms antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
+            console.log(`⏳ Erro de RLS detectado, aguardando ${(i + 1) * 1500}ms...`);
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 1500));
             continue;
+          } else if (error.code === '23505') {
+            // Duplicate key error - vínculo já existe
+            console.log('✅ Vínculo já existe, verificando...');
+            const existingAccount = await getLinkedAccount(habboId);
+            if (existingAccount) {
+              return existingAccount;
+            }
           } else {
-            // Se não for erro de RLS, não vale a pena tentar novamente
-            throw error;
+            // Para outros erros, aguardar menos tempo
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
+        } else {
+          console.log('✅ Vínculo criado com sucesso:', data);
+          return data;
         }
-        
-        console.log('✅ Vínculo criado com sucesso:', data);
-        linkedAccountCreated = true;
-        return data;
         
       } catch (error) {
         lastError = error;
         console.error(`❌ Tentativa ${i + 1} falhou com erro:`, JSON.stringify(error, null, 2));
         
         // Aguardar antes da próxima tentativa
-        if (i < 4) { // Não aguardar na última tentativa
-          await new Promise(resolve => setTimeout(resolve, (i + 1) * 500));
+        if (i < 7) {
+          await new Promise(resolve => setTimeout(resolve, (i + 1) * 800));
         }
       }
     }
 
-    if (!linkedAccountCreated) {
-      console.error('❌ Falha persistente ao criar vínculo após todas as tentativas:', JSON.stringify(lastError, null, 2));
-      throw lastError || new Error('Falha ao criar vínculo após múltiplas tentativas');
-    }
+    console.error('❌ Falha persistente ao criar vínculo após todas as tentativas:', JSON.stringify(lastError, null, 2));
+    throw new Error('Falha ao criar vínculo após múltiplas tentativas. Verifique sua conexão e tente novamente.');
   };
 
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
@@ -160,17 +182,36 @@ export const useSupabaseAuth = () => {
 
       console.log('✅ Usuário criado no Supabase Auth:', authData.user?.id);
 
-      // Depois, criar o vínculo na tabela habbo_accounts com retry logic
+      // Aguardar um pouco para garantir que a sessão seja estabelecida
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Depois, criar o vínculo na tabela habbo_accounts
       if (authData.user) {
         try {
           const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
           console.log('✅ Vínculo criado:', linkedAccount);
+          
+          // Aguardar mais um pouco para garantir que tudo esteja sincronizado
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          return authData;
         } catch (linkError) {
           console.error('❌ Erro ao criar vínculo:', JSON.stringify(linkError, null, 2));
           
-          // Se falhar em criar o vínculo, deslogar para evitar conta órfã
-          await supabase.auth.signOut();
-          throw new Error('Falha ao vincular conta Habbo. Tente novamente em alguns segundos.');
+          // Se falhar em criar o vínculo, tentar uma vez mais após aguardar
+          console.log('🔄 Tentando criar vínculo novamente após aguardar...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          
+          try {
+            const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
+            console.log('✅ Vínculo criado na segunda tentativa:', linkedAccount);
+            return authData;
+          } catch (finalError) {
+            console.error('❌ Falha final ao criar vínculo:', JSON.stringify(finalError, null, 2));
+            // Se falhar definitivamente, deslogar para evitar conta órfã
+            await supabase.auth.signOut();
+            throw new Error('Falha ao vincular conta Habbo. A conta foi limpa. Tente novamente em alguns segundos.');
+          }
         }
       }
 
