@@ -21,13 +21,7 @@ export const useSupabaseAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    // Timeout de segurança para evitar loading infinito
-    const safetyTimeout = setTimeout(() => {
-      console.log('⏰ Timeout de segurança ativado - forçando loading = false');
-      setLoading(false);
-    }, 10000); // 10 segundos
+    let mounted = true;
 
     const fetchHabboAccount = async (userId: string) => {
       try {
@@ -39,29 +33,28 @@ export const useSupabaseAuth = () => {
           .eq('supabase_user_id', userId)
           .maybeSingle();
 
+        if (!mounted) return;
+
         if (error) {
           console.error('❌ Erro ao buscar conta vinculada:', error);
-          console.error('📊 Detalhes do erro:', JSON.stringify(error, null, 2));
-          
-          // Mesmo com erro, não deixar loading infinito
           setHabboAccount(null);
-          setLoading(false);
           return;
         }
 
         console.log('✅ Conta vinculada encontrada:', habboData);
         setHabboAccount(habboData);
-        setLoading(false);
       } catch (error) {
         console.error('❌ Erro geral ao buscar conta vinculada:', error);
-        setHabboAccount(null);
-        setLoading(false);
+        if (mounted) {
+          setHabboAccount(null);
+        }
       }
     };
 
-    // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+
         console.log(`🔄 Auth state changed: ${event}`, session?.user?.id);
         
         setSession(session);
@@ -71,18 +64,19 @@ export const useSupabaseAuth = () => {
           await fetchHabboAccount(session.user.id);
         } else {
           setHabboAccount(null);
-          setLoading(false);
         }
         
-        // Limpar timeout se a autenticação foi resolvida
-        clearTimeout(safetyTimeout);
+        setLoading(false);
       }
     );
 
-    // Verificar sessão existente - UMA ÚNICA VEZ
+    // Verificar sessão inicial
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
         console.log('🔍 Sessão inicial encontrada:', currentSession?.user?.id);
         
         setSession(currentSession);
@@ -90,24 +84,22 @@ export const useSupabaseAuth = () => {
         
         if (currentSession?.user) {
           await fetchHabboAccount(currentSession.user.id);
-        } else {
-          setLoading(false);
         }
         
-        // Limpar timeout se inicialização foi bem-sucedida
-        clearTimeout(safetyTimeout);
+        setLoading(false);
       } catch (error) {
         console.error('❌ Erro na inicialização da auth:', error);
-        setLoading(false);
-        clearTimeout(safetyTimeout);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     initializeAuth();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
-      clearTimeout(safetyTimeout);
     };
   }, []);
 
@@ -125,124 +117,56 @@ export const useSupabaseAuth = () => {
     return data;
   };
 
-  const waitForSession = async (maxAttempts: number = 20): Promise<Session | null> => {
-    for (let i = 0; i < maxAttempts; i++) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log(`✅ Sessão encontrada na tentativa ${i + 1}`);
-        return session;
-      }
-      console.log(`⏳ Aguardando sessão... tentativa ${i + 1}/${maxAttempts}`);
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    return null;
-  };
-
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
-    console.log(`🔗 Tentando criar vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
+    console.log(`🔗 Criando vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Aguardar sessão estar completamente estabelecida
-    const session = await waitForSession();
-    if (!session) {
-      throw new Error('Falha ao estabelecer sessão. Tente novamente.');
+    const { data, error } = await supabase
+      .from('habbo_accounts')
+      .insert({ 
+        habbo_id: habboId, 
+        habbo_name: habboName, 
+        supabase_user_id: supabaseUserId 
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao criar vínculo:', error);
+      throw error;
     }
 
-    // Implementar retry logic mais robusto
-    let lastError = null;
-    
-    for (let i = 0; i < 5; i++) { // Reduzir para 5 tentativas
-      try {
-        console.log(`🔄 Tentativa ${i + 1} de criar vínculo...`);
-        
-        const { data, error } = await supabase
-          .from('habbo_accounts')
-          .insert({ 
-            habbo_id: habboId, 
-            habbo_name: habboName, 
-            supabase_user_id: supabaseUserId 
-          })
-          .select()
-          .single();
-
-        if (error) {
-          lastError = error;
-          console.error(`❌ Tentativa ${i + 1} falhou:`, JSON.stringify(error, null, 2));
-          
-          if (error.code === '23505') {
-            // Duplicate key error - vínculo já existe
-            console.log('✅ Vínculo já existe, verificando...');
-            const existingAccount = await getLinkedAccount(habboId);
-            if (existingAccount) {
-              return existingAccount;
-            }
-          }
-          
-          // Aguardar antes da próxima tentativa
-          if (i < 4) {
-            await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
-          }
-        } else {
-          console.log('✅ Vínculo criado com sucesso:', data);
-          return data;
-        }
-        
-      } catch (error) {
-        lastError = error;
-        console.error(`❌ Tentativa ${i + 1} falhou com erro:`, JSON.stringify(error, null, 2));
-        
-        if (i < 4) {
-          await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
-        }
-      }
-    }
-
-    console.error('❌ Falha persistente ao criar vínculo após todas as tentativas:', JSON.stringify(lastError, null, 2));
-    throw new Error('Falha ao criar vínculo após múltiplas tentativas. Tente novamente.');
+    console.log('✅ Vínculo criado com sucesso:', data);
+    return data;
   };
 
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
     console.log(`🔐 Iniciando signUp para: habboId=${habboId}, habboName=${habboName}`);
     
-    try {
-      // Primeiro, criar o usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: `${habboId}@habbohub.com`,
-        password: password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: `${habboId}@habbohub.com`,
+      password: password
+    });
 
-      if (authError) {
-        console.error('❌ Erro na autenticação:', JSON.stringify(authError, null, 2));
-        throw authError;
-      }
-
-      console.log('✅ Usuário criado no Supabase Auth:', authData.user?.id);
-
-      // Aguardar sessão ser estabelecida
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Criar o vínculo na tabela habbo_accounts
-      if (authData.user) {
-        try {
-          const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
-          console.log('✅ Vínculo criado:', linkedAccount);
-          return authData;
-        } catch (linkError) {
-          console.error('❌ Erro ao criar vínculo:', JSON.stringify(linkError, null, 2));
-          
-          // Se falhar em criar o vínculo, deslogar para evitar conta órfã
-          await supabase.auth.signOut();
-          throw new Error('Falha ao vincular conta Habbo. Tente novamente.');
-        }
-      }
-
-      return authData;
-    } catch (error) {
-      console.error('❌ Erro geral no signUpWithHabbo:', JSON.stringify(error, null, 2));
-      throw error;
+    if (authError) {
+      console.error('❌ Erro na autenticação:', authError);
+      throw authError;
     }
+
+    console.log('✅ Usuário criado no Supabase Auth:', authData.user?.id);
+
+    if (authData.user) {
+      try {
+        const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
+        console.log('✅ Vínculo criado:', linkedAccount);
+        return authData;
+      } catch (linkError) {
+        console.error('❌ Erro ao criar vínculo:', linkError);
+        await supabase.auth.signOut();
+        throw new Error('Falha ao vincular conta Habbo. Tente novamente.');
+      }
+    }
+
+    return authData;
   };
 
   const signInWithHabbo = async (habboId: string, password: string) => {
@@ -254,7 +178,7 @@ export const useSupabaseAuth = () => {
     });
 
     if (error) {
-      console.error('❌ Erro no login:', JSON.stringify(error, null, 2));
+      console.error('❌ Erro no login:', error);
       throw error;
     }
 
@@ -304,7 +228,7 @@ export const useSupabaseAuth = () => {
         throw new Error(`Código de verificação não encontrado na motto. Motto atual: "${originalMotto}"`);
       }
     } catch (error) {
-      console.error('❌ [MOTTO] Erro na verificação:', JSON.stringify(error, null, 2));
+      console.error('❌ [MOTTO] Erro na verificação:', error);
       throw error;
     }
   };

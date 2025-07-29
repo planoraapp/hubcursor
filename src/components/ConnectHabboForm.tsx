@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
@@ -26,6 +27,7 @@ export const ConnectHabboForm = () => {
   const { 
     user, 
     habboAccount, 
+    loading: authLoading,
     getLinkedAccount, 
     signUpWithHabbo, 
     signInWithHabbo, 
@@ -40,12 +42,10 @@ export const ConnectHabboForm = () => {
     setDebugLog(prev => [...prev, logEntry]);
   };
 
-  // Check if user is admin (only habbohub gets automatic login)
   const checkIfAdmin = (name: string) => {
     return name.toLowerCase() === 'habbohub';
   };
 
-  // Load persisted verification code for the same habbo name
   useEffect(() => {
     const savedCode = localStorage.getItem(STORAGE_KEY);
     const savedHabboName = localStorage.getItem(STORAGE_HABBO_KEY);
@@ -56,15 +56,15 @@ export const ConnectHabboForm = () => {
     }
   }, [habboName]);
 
-  // Check if user is already logged in
+  // Verificar se já está logado independentemente do authLoading
   useEffect(() => {
     if (user && habboAccount) {
       addLog(`✅ Usuário já logado: ${habboAccount.habbo_name}`);
-      setStep(5); // Already logged in
+      setStep(5);
     }
   }, [user, habboAccount]);
 
-  // If user is already logged in, show success state
+  // Se já está logado, mostrar estado de sucesso
   if (user && habboAccount) {
     return (
       <div className="max-w-md mx-auto bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 text-center">
@@ -106,28 +106,24 @@ export const ConnectHabboForm = () => {
 
     if (isAdmin) {
       addLog(`🔑 Usuário admin detectado: ${habboName}`);
-      addLog(`⚡ Implementando bypass completo para admin`);
-      
       setIsProcessing(true);
       
       try {
-        // Para admin, usar o nome em lowercase como ID
         const adminHabboId = habboName.toLowerCase();
         setUserHabboId(adminHabboId);
         
-        // Verificar se já existe conta vinculada
         const linkedAccount = await getLinkedAccount(adminHabboId);
         
         if (linkedAccount) {
           addLog('🔗 Conta administrativa já existe. Redirecionando para login.');
-          setStep(3); // Login with existing password
+          setStep(3);
           toast({
             title: "Admin Detectado",
             description: "Digite sua senha administrativa para acessar o Habbo Hub."
           });
         } else {
           addLog('✨ Primeira vez do admin. Preparando para criar conta administrativa.');
-          setStep(4); // Create new account
+          setStep(4);
           toast({
             title: "Admin Detectado",
             description: "Bem-vindo! Crie uma senha para sua conta administrativa."
@@ -136,7 +132,6 @@ export const ConnectHabboForm = () => {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
         addLog(`❌ Erro ao verificar conta admin: ${errorMessage}`);
-        console.error('Erro ao verificar conta admin:', error);
         toast({
           title: "Erro",
           description: "Erro ao verificar conta administrativa. Tente novamente.",
@@ -171,7 +166,6 @@ export const ConnectHabboForm = () => {
       
       setUserHabboId(habboUser.uniqueId);
       
-      // Verificar se já existe um código válido na motto
       const hubCodePattern = /HUB-[A-Z0-9]{5}/gi;
       const existingCode = habboUser.motto.match(hubCodePattern);
       
@@ -187,7 +181,6 @@ export const ConnectHabboForm = () => {
           description: `Código "${foundCode}" já está na sua motto. Você pode verificar agora ou gerar um novo.`
         });
       } else {
-        // Gerar novo código apenas se não existir um válido
         const newCode = generateVerificationCode();
         setVerificationCode(newCode);
         localStorage.setItem(STORAGE_KEY, newCode);
@@ -203,39 +196,9 @@ export const ConnectHabboForm = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       addLog(`❌ Erro ao verificar nome Habbo: ${errorMessage}`);
-      console.error('Erro ao verificar nome Habbo:', error);
       toast({
         title: "Erro",
         description: "Não foi possível verificar o nome Habbo. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleGenerateNewCode = async () => {
-    if (!habboName.trim()) return;
-    
-    setIsProcessing(true);
-    addLog('🔄 Gerando novo código de verificação...');
-    
-    try {
-      const newCode = generateVerificationCode();
-      setVerificationCode(newCode);
-      localStorage.setItem(STORAGE_KEY, newCode);
-      localStorage.setItem(STORAGE_HABBO_KEY, habboName);
-      
-      addLog(`🔑 Novo código gerado: ${newCode}`);
-      toast({
-        title: "Novo Código Gerado",
-        description: `Novo código: "${newCode}". Atualize sua motto no Habbo Hotel.`
-      });
-    } catch (error) {
-      addLog(`❌ Erro ao gerar novo código: ${error}`);
-      toast({
-        title: "Erro",
-        description: "Erro ao gerar novo código. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -256,7 +219,6 @@ export const ConnectHabboForm = () => {
 
     setIsProcessing(true);
     addLog('🔍 Verificando sua motto no Habbo Hotel...');
-    addLog(`🔎 Procurando por: "${verificationCode}"`);
     
     try {
       const habboUser = await verifyHabboMotto(habboName, verificationCode);
@@ -264,22 +226,21 @@ export const ConnectHabboForm = () => {
       if (habboUser) {
         addLog('✅ Código de verificação encontrado na motto!');
         
-        // Limpar dados persistidos após verificação bem-sucedida
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(STORAGE_HABBO_KEY);
         
         const linkedAccount = await getLinkedAccount(userHabboId);
         
         if (linkedAccount) {
-          addLog('🔗 Vínculo existente detectado.');
-          setStep(3); // Login with existing password
+          addLog('🔗 Vínculo existente detectado. Redirecionando para login.');
+          setStep(3);
           toast({
             title: "Sucesso",
             description: "Código verificado! Digite sua senha do Habbo Hub para acessar."
           });
         } else {
-          addLog('✨ Nenhum vínculo existente. Preparando para criar.');
-          setStep(4); // Create new account
+          addLog('✨ Nenhum vínculo existente. Redirecionando para criação de conta.');
+          setStep(4);
           toast({
             title: "Sucesso",
             description: "Código verificado! Agora crie uma senha para o seu Habbo Hub."
@@ -289,7 +250,6 @@ export const ConnectHabboForm = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       addLog(`❌ Erro ao verificar motto: ${errorMessage}`);
-      console.error('Erro ao verificar motto:', error);
       toast({
         title: "Erro",
         description: errorMessage,
@@ -309,7 +269,6 @@ export const ConnectHabboForm = () => {
 
     try {
       if (step === 3) {
-        // Login with existing account
         addLog('➡️ Tentando login com senha existente...');
         if (!password) {
           toast({
@@ -327,9 +286,13 @@ export const ConnectHabboForm = () => {
           title: "Sucesso",
           description: isAdminUser ? "Login administrativo realizado com sucesso!" : "Login realizado com sucesso!"
         });
-        window.location.href = `/profile/${habboName}`;
+        
+        // Aguardar um pouco para sincronização e depois redirecionar
+        setTimeout(() => {
+          window.location.href = `/profile/${habboName}`;
+        }, 1000);
+        
       } else if (step === 4) {
-        // Create new account
         addLog('➡️ Tentando criar nova conta...');
         if (password.length < 6) {
           toast({
@@ -351,10 +314,6 @@ export const ConnectHabboForm = () => {
           return;
         }
 
-        // Para admin ou usuários normais, aguardar um pouco para evitar problemas
-        addLog('⏳ Preparando para criar conta...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         await signUpWithHabbo(userHabboId, habboName, password);
         addLog('✅ Conta criada com sucesso!');
         toast({
@@ -363,37 +322,25 @@ export const ConnectHabboForm = () => {
           duration: 3000
         });
         
-        // Aguardar um pouco antes de redirecionar para garantir que tudo esteja sincronizado
+        // Aguardar um pouco para sincronização e depois redirecionar
         setTimeout(() => {
           window.location.href = `/profile/${habboName}`;
-        }, 2000);
+        }, 1000);
       }
     } catch (error) {
       let errorMessage = 'Erro desconhecido';
       
       if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null) {
-        errorMessage = JSON.stringify(error, null, 2);
       }
       
       addLog(`❌ Erro na ação de senha: ${errorMessage}`);
-      console.error('Erro na ação de senha:', error);
       
-      // Tratamento específico para erros comuns
       let userMessage = errorMessage;
-      if (errorMessage.includes('User already registered')) {
-        userMessage = "Este usuário já está registrado. Tente fazer login.";
-      } else if (errorMessage.includes('Invalid login credentials')) {
+      if (errorMessage.includes('Invalid login credentials')) {
         userMessage = "Senha incorreta. Verifique sua senha e tente novamente.";
-      } else if (errorMessage.includes('row-level security') || errorMessage.includes('RLS')) {
-        userMessage = "Erro de sincronização. Aguarde alguns segundos e tente novamente.";
-      } else if (errorMessage.includes('Falha ao vincular conta')) {
-        userMessage = "Erro ao vincular conta. Aguarde alguns segundos e tente novamente.";
-      } else if (errorMessage.includes('For security purposes')) {
-        userMessage = "Limite de tentativas atingido. Aguarde alguns segundos e tente novamente.";
-      } else if (errorMessage.includes('Falha ao criar vínculo após múltiplas tentativas')) {
-        userMessage = "Problema de conexão. Verifique sua internet e tente novamente.";
+      } else if (errorMessage.includes('User already registered')) {
+        userMessage = "Este usuário já está registrado. Tente fazer login.";
       }
       
       toast({
@@ -491,13 +438,6 @@ export const ConnectHabboForm = () => {
               disabled={isProcessing}
             >
               {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
-            </button>
-            <button
-              onClick={handleGenerateNewCode}
-              className="w-full px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isProcessing}
-            >
-              {isProcessing ? 'Gerando...' : 'Gerar Novo Código'}
             </button>
             <button
               onClick={() => setStep(1)}
