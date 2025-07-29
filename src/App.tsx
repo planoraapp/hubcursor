@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ConnectHabbo from "./pages/ConnectHabbo";
 import Profile from "./pages/Profile";
+import ProfileEnhanced from "./pages/ProfileEnhanced";
 import Forum from "./pages/Forum";
 import ForumPage from "./pages/ForumPage";
 import Noticias from "./pages/Noticias";
@@ -30,7 +31,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/connect-habbo" element={<ConnectHabbo />} />
-          <Route path="/profile/:username" element={<Profile />} />
+          <Route path="/profile/:username" element={<ProfileEnhanced />} />
           <Route path="/forum-old" element={<Forum />} />
           <Route path="/forum" element={<ForumPage />} />
           <Route path="/noticias" element={<Noticias />} />
