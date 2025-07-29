@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      forum_comments: {
+        Row: {
+          author_habbo_name: string
+          author_supabase_user_id: string
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          author_habbo_name: string
+          author_supabase_user_id: string
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          author_habbo_name?: string
+          author_supabase_user_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_posts: {
+        Row: {
+          author_habbo_name: string
+          author_supabase_user_id: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          likes: number
+          title: string
+        }
+        Insert: {
+          author_habbo_name: string
+          author_supabase_user_id: string
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          likes?: number
+          title: string
+        }
+        Update: {
+          author_habbo_name?: string
+          author_supabase_user_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          likes?: number
+          title?: string
+        }
+        Relationships: []
+      }
       habbo_accounts: {
         Row: {
           created_at: string
