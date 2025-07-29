@@ -43,21 +43,27 @@ export default function ConnectHabbo() {
     }
 
     setIsLoading(true);
-    setDebugInfo('Verificando se usuário existe...');
+    setDebugInfo('🔍 Verificando se usuário existe...');
 
     try {
       const user = await getUserByName(habboName.trim());
       
       if (!user) {
-        setDebugInfo('❌ Usuário não encontrado ou perfil privado');
+        setDebugInfo('❌ Usuário não encontrado na API do Habbo');
         toast({
           title: "Usuário não encontrado",
-          description: "Verifique se o nome está correto e se seu perfil está público.",
+          description: "Verifique se o nome está correto e tente novamente.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
+
+      console.log('=== USER DATA DEBUG ===');
+      console.log('User object:', user);
+      console.log('User motto:', `"${user.motto}"`);
+      console.log('Profile visible:', user.profileVisible);
+      console.log('User online:', user.online);
 
       if (!user.profileVisible) {
         setDebugInfo('❌ Perfil privado detectado');
@@ -70,12 +76,12 @@ export default function ConnectHabbo() {
         return;
       }
 
-      setDebugInfo('✅ Usuário encontrado! Gerando código...');
+      setDebugInfo('✅ Usuário encontrado! Gerando código de verificação...');
       generateVerificationCode();
       
     } catch (error) {
       console.error('Error checking user:', error);
-      setDebugInfo('❌ Erro ao verificar usuário');
+      setDebugInfo('❌ Erro ao verificar usuário na API');
       toast({
         title: "Erro",
         description: "Erro ao verificar usuário. Tente novamente.",
@@ -89,7 +95,7 @@ export default function ConnectHabbo() {
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setDebugInfo('Verificando código na motto...');
+    setDebugInfo('🔍 Verificando código na motto...');
 
     try {
       const user = await getUserByName(habboName.trim());
@@ -108,10 +114,11 @@ export default function ConnectHabbo() {
       console.log('=== VERIFICATION DEBUG ===');
       console.log('User motto:', `"${user.motto}"`);
       console.log('Verification code:', `"${verificationCode}"`);
+      console.log('Motto type:', typeof user.motto);
       console.log('Code found in motto:', user.motto.includes(verificationCode));
 
       if (!user.motto.includes(verificationCode)) {
-        setDebugInfo(`❌ Código não encontrado. Motto atual: "${user.motto}"`);
+        setDebugInfo(`❌ Código não encontrado na motto. Motto atual: "${user.motto}"`);
         toast({
           title: "Código não encontrado",
           description: "Verifique se você copiou o código corretamente para sua motto.",
@@ -121,7 +128,7 @@ export default function ConnectHabbo() {
         return;
       }
 
-      setDebugInfo('✅ Código encontrado! Fazendo login...');
+      setDebugInfo('✅ Código encontrado na motto! Fazendo login...');
       
       const loginSuccess = await login(habboName.trim());
       
@@ -137,7 +144,7 @@ export default function ConnectHabbo() {
           navigate('/');
         }, 2000);
       } else {
-        setDebugInfo('❌ Falha no login');
+        setDebugInfo('❌ Falha no sistema de login');
         toast({
           title: "Erro no Login",
           description: "Erro interno no sistema de login.",
@@ -167,15 +174,18 @@ export default function ConnectHabbo() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-400 via-yellow-500 to-orange-500 flex flex-col">
-      <PageHeader 
-        title="Conectar Habbo" 
-        subtitle="Conecte sua conta Habbo para acessar recursos exclusivos"
-      />
+      <PageHeader title="Conectar Habbo" />
       
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {step === 'input' && (
             <PanelCard title="Conectar Habbo">
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  <strong>Instruções:</strong> Digite seu nome Habbo para conectar sua conta aos recursos exclusivos do hub.
+                </p>
+              </div>
+
               <form onSubmit={handleNameSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -214,8 +224,8 @@ export default function ConnectHabbo() {
                 </button>
 
                 {debugInfo && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-700 font-mono">{debugInfo}</p>
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-700 font-mono">{debugInfo}</p>
                   </div>
                 )}
               </form>
@@ -223,19 +233,22 @@ export default function ConnectHabbo() {
           )}
 
           {step === 'verification' && (
-            <PanelCard title="Verificação">
+            <PanelCard title="Verificação de Conta">
               <div className="space-y-4">
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h3 className="font-bold text-yellow-800 mb-2">Passo 1: Copie o código</h3>
-                  <div className="bg-white p-3 rounded border font-mono text-lg font-bold text-center">
+                  <h3 className="font-bold text-yellow-800 mb-2">📋 Passo 1: Copie o código</h3>
+                  <div className="bg-white p-3 rounded border font-mono text-lg font-bold text-center border-dashed border-2 border-yellow-300">
                     {verificationCode}
                   </div>
                 </div>
 
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h3 className="font-bold text-blue-800 mb-2">Passo 2: Cole na sua motto</h3>
-                  <p className="text-sm text-blue-700">
-                    Cole o código acima na sua motto do Habbo Hotel e clique em "Verificar"
+                  <h3 className="font-bold text-blue-800 mb-2">✏️ Passo 2: Cole na sua motto</h3>
+                  <p className="text-sm text-blue-700 mb-2">
+                    1. Abra o Habbo Hotel<br/>
+                    2. Clique no seu avatar<br/>
+                    3. Cole o código na sua <strong>motto</strong><br/>
+                    4. Salve e clique em "Verificar"
                   </p>
                 </div>
 
@@ -248,12 +261,12 @@ export default function ConnectHabbo() {
                     {isLoading ? (
                       <>
                         <RefreshCw className="animate-spin" size={18} />
-                        <span>Verificando...</span>
+                        <span>Verificando motto...</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle size={18} />
-                        <span>Verificar</span>
+                        <span>Verificar Código</span>
                       </>
                     )}
                   </button>
@@ -263,13 +276,13 @@ export default function ConnectHabbo() {
                     onClick={resetProcess}
                     className="w-full bg-gray-500 text-white py-2 rounded-lg font-medium hover:bg-gray-600 transition-colors"
                   >
-                    Voltar
+                    ← Voltar
                   </button>
                 </form>
 
                 {debugInfo && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-700 font-mono">{debugInfo}</p>
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-700 font-mono">{debugInfo}</p>
                   </div>
                 )}
               </div>
@@ -277,13 +290,14 @@ export default function ConnectHabbo() {
           )}
 
           {step === 'success' && (
-            <PanelCard title="Sucesso!">
+            <PanelCard title="Login Realizado!">
               <div className="text-center space-y-4">
                 <CheckCircle size={48} className="text-green-500 mx-auto" />
                 <h3 className="text-lg font-bold text-green-700">
-                  Login realizado com sucesso!
+                  🎉 Bem-vindo ao Habbo Hub!
                 </h3>
                 <p className="text-gray-600">
+                  Sua conta foi conectada com sucesso.<br/>
                   Redirecionando para o painel principal...
                 </p>
                 {debugInfo && (
