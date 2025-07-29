@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
@@ -7,6 +8,9 @@ const generateVerificationCode = () => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
   return `HUB-${code}`;
 };
+
+const STORAGE_KEY = 'habbo_verification_code';
+const STORAGE_HABBO_KEY = 'habbo_name_for_code';
 
 export const ConnectHabboForm = () => {
   const [habboName, setHabboName] = useState('');
@@ -41,6 +45,17 @@ export const ConnectHabboForm = () => {
   const checkIfAdmin = (name: string) => {
     return name.toLowerCase() === 'habbohub';
   };
+
+  // Load persisted verification code for the same habbo name
+  useEffect(() => {
+    const savedCode = localStorage.getItem(STORAGE_KEY);
+    const savedHabboName = localStorage.getItem(STORAGE_HABBO_KEY);
+    
+    if (savedCode && savedHabboName === habboName && habboName) {
+      setVerificationCode(savedCode);
+      addLog(`🔄 Código persistido carregado: ${savedCode} para ${habboName}`);
+    }
+  }, [habboName]);
 
   // Check if user is already logged in
   useEffect(() => {
@@ -92,7 +107,7 @@ export const ConnectHabboForm = () => {
 
     if (isAdmin) {
       addLog(`🔑 Usuário admin detectado: ${habboName}`);
-      addLog(`⚡ Implementando login automático para admin`);
+      addLog(`⚡ Implementando bypass completo para admin`);
       
       setIsProcessing(true);
       
@@ -156,15 +171,36 @@ export const ConnectHabboForm = () => {
       addLog(`💬 Motto atual: "${habboUser.motto}"`);
       
       setUserHabboId(habboUser.uniqueId);
-      const newCode = generateVerificationCode();
-      setVerificationCode(newCode);
-      setStep(2);
       
-      addLog(`🔑 Código de verificação gerado: ${newCode}`);
-      toast({
-        title: "Código Gerado",
-        description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
-      });
+      // Verificar se já existe um código válido na motto
+      const hubCodePattern = /HUB-[A-Z0-9]{5}/gi;
+      const existingCode = habboUser.motto.match(hubCodePattern);
+      
+      if (existingCode && existingCode.length > 0) {
+        const foundCode = existingCode[0].toUpperCase();
+        addLog(`🔍 Código HUB encontrado na motto: ${foundCode}`);
+        setVerificationCode(foundCode);
+        localStorage.setItem(STORAGE_KEY, foundCode);
+        localStorage.setItem(STORAGE_HABBO_KEY, habboName);
+        setStep(2);
+        toast({
+          title: "Código Encontrado",
+          description: `Código "${foundCode}" já está na sua motto. Você pode verificar agora ou gerar um novo.`
+        });
+      } else {
+        // Gerar novo código apenas se não existir um válido
+        const newCode = generateVerificationCode();
+        setVerificationCode(newCode);
+        localStorage.setItem(STORAGE_KEY, newCode);
+        localStorage.setItem(STORAGE_HABBO_KEY, habboName);
+        setStep(2);
+        
+        addLog(`🔑 Código de verificação gerado: ${newCode}`);
+        toast({
+          title: "Código Gerado",
+          description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
+        });
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       addLog(`❌ Erro ao verificar nome Habbo: ${errorMessage}`);
@@ -172,6 +208,35 @@ export const ConnectHabboForm = () => {
       toast({
         title: "Erro",
         description: "Não foi possível verificar o nome Habbo. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleGenerateNewCode = async () => {
+    if (!habboName.trim()) return;
+    
+    setIsProcessing(true);
+    addLog('🔄 Gerando novo código de verificação...');
+    
+    try {
+      const newCode = generateVerificationCode();
+      setVerificationCode(newCode);
+      localStorage.setItem(STORAGE_KEY, newCode);
+      localStorage.setItem(STORAGE_HABBO_KEY, habboName);
+      
+      addLog(`🔑 Novo código gerado: ${newCode}`);
+      toast({
+        title: "Novo Código Gerado",
+        description: `Novo código: "${newCode}". Atualize sua motto no Habbo Hotel.`
+      });
+    } catch (error) {
+      addLog(`❌ Erro ao gerar novo código: ${error}`);
+      toast({
+        title: "Erro",
+        description: "Erro ao gerar novo código. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -199,6 +264,11 @@ export const ConnectHabboForm = () => {
       
       if (habboUser) {
         addLog('✅ Código de verificação encontrado na motto!');
+        
+        // Limpar dados persistidos após verificação bem-sucedida
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_HABBO_KEY);
+        
         const linkedAccount = await getLinkedAccount(userHabboId);
         
         if (linkedAccount) {
@@ -282,6 +352,12 @@ export const ConnectHabboForm = () => {
           return;
         }
 
+        // Para admin, aguardar um pouco mais entre tentativas para evitar rate limiting
+        if (isAdminUser) {
+          addLog('⏳ Aguardando para evitar rate limiting...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
         await signUpWithHabbo(userHabboId, habboName, password);
         addLog('✅ Conta criada com sucesso!');
         toast({
@@ -312,6 +388,18 @@ export const ConnectHabboForm = () => {
         userMessage = "Erro de segurança. Aguarde um momento e tente novamente.";
       } else if (errorMessage.includes('Falha ao vincular conta')) {
         userMessage = "Erro ao vincular conta. Tente novamente em alguns segundos.";
+      } else if (errorMessage.includes('For security purposes')) {
+        userMessage = "Rate limit atingido. Aguarde alguns segundos e tente novamente.";
+        // Para admin, aguardar mais tempo
+        if (isAdminUser) {
+          addLog('⏳ Rate limit detectado. Aguardando 15 segundos...');
+          setTimeout(() => {
+            toast({
+              title: "Pronto",
+              description: "Agora você pode tentar novamente."
+            });
+          }, 15000);
+        }
       }
       
       toast({
@@ -355,7 +443,7 @@ export const ConnectHabboForm = () => {
               {checkIfAdmin(habboName) && (
                 <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    🔑 Usuário administrativo detectado - Login automático habilitado
+                    🔑 Usuário administrativo detectado - Bypass completo habilitado
                   </p>
                 </div>
               )}
@@ -365,7 +453,7 @@ export const ConnectHabboForm = () => {
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isProcessing}
             >
-              {isProcessing ? 'Verificando...' : checkIfAdmin(habboName) ? 'Acesso Administrativo' : 'Gerar Código de Verificação'}
+              {isProcessing ? 'Verificando...' : checkIfAdmin(habboName) ? 'Acesso Administrativo' : 'Verificar Habbo'}
             </button>
           </form>
         </div>
@@ -375,7 +463,7 @@ export const ConnectHabboForm = () => {
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 2: Verifique sua Motto</h2>
           <p className="text-gray-700 mb-4">
-            Para vincular sua conta, defina sua motto (legenda) no Habbo Hotel para o código abaixo.
+            Para vincular sua conta, certifique-se de que sua motto (legenda) no Habbo Hotel contém o código abaixo.
             Certifique-se de que você está <strong>online</strong> no Habbo Hotel.
           </p>
           <div
@@ -394,11 +482,12 @@ export const ConnectHabboForm = () => {
           </div>
           <div className="bg-blue-50 p-3 rounded-lg mb-4">
             <p className="text-sm text-blue-800">
-              <strong>💡 Dica:</strong> O código agora tem o formato "HUB-XXXXX" para facilitar a identificação na sua motto.
+              <strong>💡 Dica:</strong> O código tem o formato "HUB-XXXXX" e foi salvo automaticamente. 
+              Se você já tem este código na sua motto, pode verificar diretamente.
             </p>
           </div>
           <p className="text-gray-700 mb-6">
-            Após atualizar sua motto no Habbo, clique no botão "Verificar Motto" abaixo.
+            Após garantir que sua motto contém o código, clique em "Verificar Motto".
           </p>
           <div className="space-y-3">
             <button
@@ -407,6 +496,13 @@ export const ConnectHabboForm = () => {
               disabled={isProcessing}
             >
               {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
+            </button>
+            <button
+              onClick={handleGenerateNewCode}
+              className="w-full px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Gerando...' : 'Gerar Novo Código'}
             </button>
             <button
               onClick={() => setStep(1)}
