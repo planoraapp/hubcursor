@@ -67,8 +67,8 @@ export interface MarketplaceStats {
 
 // Cache local para evitar muitas requisições
 const cache = new Map<string, { data: any; timestamp: number }>();
-// TEMPORARIAMENTE DESABILITADO PARA TESTES DE MOTTO - reative para 5 * 60 * 1000 após os testes
-const CACHE_DURATION = 0; // 0 = sem cache; 5 * 60 * 1000 = 5 minutos
+// TEMPORARIAMENTE DESABILITADO PARA TESTES DE MOTTO - 0 = sem cache para debug
+const CACHE_DURATION = 0; // Mude para 5 * 60 * 1000 (5 minutos) após os testes
 
 // Função auxiliar para cache
 const getCachedData = (key: string) => {
@@ -76,7 +76,7 @@ const getCachedData = (key: string) => {
   
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`📦 Cache hit for ${key}`);
+    console.log(`📦 [API Cache] Hit for ${key}`);
     return cached.data;
   }
   return null;
@@ -93,50 +93,49 @@ const fetchData = async (endpoint: string): Promise<any> => {
   const cached = getCachedData(cacheKey);
   
   if (cached) {
-    console.log(`📦 Cache hit for ${endpoint}`);
+    console.log(`📦 [API Cache] Returning cached data for ${endpoint}`);
     return cached;
   }
 
   try {
     const fullUrl = `${HABBO_API_BASE_URL}${endpoint}`;
-    console.log(`🌐 Fazendo requisição para: ${fullUrl}`);
+    console.log(`🌐 [API Request] Fetching: ${fullUrl}`);
     
     const response = await fetch(fullUrl);
-    console.log(`📡 Resposta da API: Status ${response.status} para ${endpoint}`);
+    console.log(`📡 [API Response] Status ${response.status} for ${endpoint}`);
     
     if (!response.ok) {
-      console.warn(`⚠️ API respondeu com status ${response.status} para ${endpoint}`);
+      console.warn(`⚠️ [API Warning] Status ${response.status} for ${endpoint}`);
       if (response.status === 404) {
         return null; // User not found
       }
-      throw new Error(`Erro HTTP! Status: ${response.status}`);
+      throw new Error(`HTTP Error! Status: ${response.status}`);
     }
     
     const data = await response.json();
-    console.log(`📊 Dados recebidos da API para ${endpoint}:`, JSON.stringify(data, null, 2));
+    console.log(`📊 [API Data] Received for ${endpoint}:`, JSON.stringify(data, null, 2));
     setCachedData(cacheKey, data);
     return data;
   } catch (error) {
-    console.error(`❌ Erro ao buscar dados do endpoint ${endpoint}:`, error);
+    console.error(`❌ [API Error] Failed to fetch ${endpoint}:`, error);
     return null;
   }
 };
 
-// Função para buscar usuário por nome - MELHORADA para robustez
+// Função para buscar usuário por nome - MELHORADA com robustez para motto
 export const getUserByName = async (name: string): Promise<HabboUser | null> => {
   try {
-    console.log(`🔍 [API] Buscando usuário: ${name}`);
+    console.log(`🔍 [API] Searching for user: ${name}`);
     const data = await fetchData(`/users?name=${encodeURIComponent(name)}`);
     
-    // Log detalhado para debug
     console.log('=== HABBO API DEBUG ===');
-    console.log('🔍 Procurando usuário:', name);
-    console.log('📡 Resposta da API:', JSON.stringify(data, null, 2));
-    console.log('📊 Tipo da resposta:', typeof data);
-    console.log('📋 É array?:', Array.isArray(data));
+    console.log('🔍 Target user:', name);
+    console.log('📡 API response:', JSON.stringify(data, null, 2));
+    console.log('📊 Response type:', typeof data);
+    console.log('📋 Is array?:', Array.isArray(data));
     
     if (!data) {
-      console.warn('❌ Nenhum dado retornado da API para usuário:', name);
+      console.warn('❌ No data returned from API for user:', name);
       return null;
     }
 
@@ -144,7 +143,7 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
     let user;
     if (Array.isArray(data)) {
       if (data.length === 0) {
-        console.warn('❌ Array vazio retornado - usuário não encontrado:', name);
+        console.warn('❌ Empty array returned - user not found:', name);
         return null;
       }
       user = data[0];
@@ -154,41 +153,41 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
 
     // Verificar se o objeto do usuário tem as propriedades essenciais
     if (!user || !user.name || !user.figureString) {
-      console.warn('❌ Estrutura de dados do usuário inválida:', user);
+      console.warn('❌ Invalid user data structure:', user);
       return null;
     }
 
     // Verificar se o perfil é privado
     if (user.profileVisible === false) {
-      console.warn('❌ Perfil do usuário é privado:', name);
+      console.warn('❌ User profile is private:', name);
       return null;
     }
 
-    // Construir objeto do usuário com fallbacks seguros e sanitização melhorada
+    // Construir objeto do usuário com fallbacks seguros e sanitização melhorada da motto
     const processedUser: HabboUser = {
       uniqueId: user.uniqueId || user.id || '',
       name: user.name,
       figureString: user.figureString,
       motto: user.motto ? String(user.motto).trim() : '', // CRÍTICO: Sanitização da motto
-      online: user.online || false,
+      online: user.online === true,
       lastAccessTime: user.lastAccessTime || '',
       memberSince: user.memberSince || '',
       profileVisible: user.profileVisible !== false,
       selectedBadges: user.selectedBadges || []
     };
 
-    console.log('✅ Usuário processado com sucesso:');
-    console.log('👤 Nome:', processedUser.name);
+    console.log('✅ User processed successfully:');
+    console.log('👤 Name:', processedUser.name);
     console.log('💬 Motto:', `"${processedUser.motto}"`);
     console.log('🟢 Online:', processedUser.online);
-    console.log('👁️ Perfil Visível:', processedUser.profileVisible);
+    console.log('👁️ Profile Visible:', processedUser.profileVisible);
     console.log('🆔 Unique ID:', processedUser.uniqueId);
     console.log('=======================');
 
     return processedUser;
     
   } catch (error) {
-    console.error('❌ Erro em getUserByName:', error);
+    console.error('❌ Error in getUserByName:', error);
     return null;
   }
 };

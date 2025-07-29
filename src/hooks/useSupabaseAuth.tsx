@@ -26,7 +26,7 @@ export const useSupabaseAuth = () => {
 
     const fetchHabboAccount = async (userId: string) => {
       try {
-        console.log(`🔍 Buscando conta vinculada para usuário: ${userId}`);
+        console.log(`🔍 [Auth] Looking for linked account for user: ${userId}`);
         
         const { data: habboData, error } = await supabase
           .from('habbo_accounts')
@@ -37,15 +37,15 @@ export const useSupabaseAuth = () => {
         if (!mounted) return;
 
         if (error) {
-          console.error('❌ Erro ao buscar conta vinculada:', error);
+          console.error('❌ [Auth] Error fetching linked account:', error);
           setHabboAccount(null);
           return;
         }
 
-        console.log('✅ Conta vinculada encontrada:', habboData);
+        console.log('✅ [Auth] Linked account found:', habboData);
         setHabboAccount(habboData);
       } catch (error) {
-        console.error('❌ Erro geral ao buscar conta vinculada:', error);
+        console.error('❌ [Auth] General error fetching linked account:', error);
         if (mounted) {
           setHabboAccount(null);
         }
@@ -56,7 +56,7 @@ export const useSupabaseAuth = () => {
       async (event, session) => {
         if (!mounted) return;
 
-        console.log(`🔄 Auth state changed: ${event}`, session?.user?.id);
+        console.log(`🔄 [Auth] State changed: ${event}`, session?.user?.id);
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -77,7 +77,7 @@ export const useSupabaseAuth = () => {
         
         if (!mounted) return;
 
-        console.log('🔍 Sessão inicial encontrada:', currentSession?.user?.id);
+        console.log('🔍 [Auth] Initial session found:', currentSession?.user?.id);
         
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
@@ -88,7 +88,7 @@ export const useSupabaseAuth = () => {
         
         setLoading(false);
       } catch (error) {
-        console.error('❌ Erro na inicialização da auth:', error);
+        console.error('❌ [Auth] Error initializing auth:', error);
         if (mounted) {
           setLoading(false);
         }
@@ -118,9 +118,9 @@ export const useSupabaseAuth = () => {
   };
 
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
-    console.log(`🔗 Criando vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
+    console.log(`🔗 [Auth] Creating link: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Detecção discreta de admin
+    // Detecção discreta de admin para habbohub
     const isAdmin = habboName.toLowerCase() === 'habbohub';
     
     const maxRetries = 5;
@@ -128,7 +128,7 @@ export const useSupabaseAuth = () => {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`📝 Tentativa ${attempt}/${maxRetries} de criar vínculo...`);
+        console.log(`📝 [Auth] Attempt ${attempt}/${maxRetries} to create link...`);
         
         const { data, error } = await supabase
           .from('habbo_accounts')
@@ -143,11 +143,11 @@ export const useSupabaseAuth = () => {
 
         if (error) {
           lastError = error;
-          console.error(`❌ Erro na tentativa ${attempt}: ${error.message}`);
+          console.error(`❌ [Auth] Error on attempt ${attempt}: ${error.message}`);
           
           if (error.message.includes('violates row-level security policy') || 
               error.message.includes('duplicate key value violates unique constraint')) {
-            console.log('🔄 Erro de RLS detectado, tentando reautenticar...');
+            console.log('🔄 [Auth] RLS error detected, trying to re-authenticate...');
             
             await supabase.auth.refreshSession();
             
@@ -157,25 +157,25 @@ export const useSupabaseAuth = () => {
             break;
           }
         } else {
-          console.log('✅ Vínculo criado com sucesso:', data);
+          console.log('✅ [Auth] Link created successfully:', data);
           if (isAdmin) {
-            console.log(`🔑 [Admin] Usuário ${habboName} marcado como administrador`);
+            console.log(`🔑 [Admin] User ${habboName} marked as administrator`);
           }
           return data;
         }
       } catch (generalError) {
         lastError = generalError;
-        console.error(`❌ Erro geral na tentativa ${attempt}:`, generalError);
+        console.error(`❌ [Auth] General error on attempt ${attempt}:`, generalError);
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
 
-    console.error(`❌ Falhou após ${maxRetries} tentativas. Último erro:`, lastError);
-    throw lastError || new Error('Falha ao criar vínculo após múltiplas tentativas');
+    console.error(`❌ [Auth] Failed after ${maxRetries} attempts. Last error:`, lastError);
+    throw lastError || new Error('Failed to create link after multiple attempts');
   };
 
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
-    console.log(`🔐 Iniciando signUp para: habboId=${habboId}, habboName=${habboName}`);
+    console.log(`🔐 [Auth] Starting signUp for: habboId=${habboId}, habboName=${habboName}`);
     
     const authEmail = `${habboId}@habbohub.com`;
 
@@ -188,30 +188,30 @@ export const useSupabaseAuth = () => {
     });
 
     if (authError) {
-      console.error('❌ Erro na autenticação:', authError);
+      console.error('❌ [Auth] Authentication error:', authError);
       throw authError;
     }
     
     const authUser = authData.user;
-    console.log('✅ Usuário autenticado no Supabase Auth:', authUser?.id);
+    console.log('✅ [Auth] User authenticated in Supabase Auth:', authUser?.id);
 
     if (authUser) {
       try {
         const linkedAccount = await createLinkedAccount(habboId, habboName, authUser.id);
-        console.log('✅ Vínculo criado:', linkedAccount);
+        console.log('✅ [Auth] Link created:', linkedAccount);
         return { user: authUser };
       } catch (linkError) {
-        console.error('❌ Erro ao criar vínculo:', linkError);
+        console.error('❌ [Auth] Error creating link:', linkError);
         await supabase.auth.signOut();
-        throw new Error('Falha ao vincular conta Habbo. Tente novamente.');
+        throw new Error('Failed to link Habbo account. Please try again.');
       }
     }
 
-    throw new Error('Falha na autenticação');
+    throw new Error('Authentication failed');
   };
 
   const signInWithHabbo = async (habboId: string, password: string) => {
-    console.log(`🔐 Tentando login para: habboId=${habboId}`);
+    console.log(`🔐 [Auth] Attempting login for: habboId=${habboId}`);
     
     const { data, error } = await supabase.auth.signInWithPassword({
       email: `${habboId}@habbohub.com`,
@@ -219,11 +219,11 @@ export const useSupabaseAuth = () => {
     });
 
     if (error) {
-      console.error('❌ Erro no login:', error);
+      console.error('❌ [Auth] Login error:', error);
       throw error;
     }
 
-    console.log('✅ Login realizado com sucesso');
+    console.log('✅ [Auth] Login successful');
     return data;
   };
 
@@ -246,30 +246,30 @@ export const useSupabaseAuth = () => {
 
   const verifyHabboMotto = async (habboName: string, verificationCode: string) => {
     try {
-      console.log(`🔍 [MOTTO] Verificando motto para ${habboName} com código: ${verificationCode}`);
+      console.log(`🔍 [MOTTO] Verifying motto for ${habboName} with code: ${verificationCode}`);
       
       const habboUser = await getUserByName(habboName);
       
       if (!habboUser || !habboUser.motto) {
-        console.log(`❌ [MOTTO] Usuário ${habboName} não encontrado ou motto vazia`);
-        throw new Error('Usuário não encontrado ou perfil privado');
+        console.log(`❌ [MOTTO] User ${habboName} not found or empty motto`);
+        throw new Error('User not found or private profile');
       }
 
       const originalMotto = habboUser.motto;
-      console.log(`📝 [MOTTO] Motto encontrada: "${originalMotto}"`);
+      console.log(`📝 [MOTTO] Found motto: "${originalMotto}"`);
       
       const normalizedMotto = originalMotto.trim().toLowerCase();
       const normalizedCode = verificationCode.trim().toLowerCase();
       
       if (normalizedMotto.includes(normalizedCode)) {
-        console.log(`✅ [MOTTO] Código encontrado na motto!`);
+        console.log(`✅ [MOTTO] Code found in motto!`);
         return habboUser;
       } else {
-        console.log(`❌ [MOTTO] Código "${verificationCode}" não encontrado na motto "${originalMotto}"`);
-        throw new Error(`Código de verificação não encontrado na motto. Motto atual: "${originalMotto}"`);
+        console.log(`❌ [MOTTO] Code "${verificationCode}" not found in motto "${originalMotto}"`);
+        throw new Error(`Verification code not found in motto. Current motto: "${originalMotto}"`);
       }
     } catch (error) {
-      console.error('❌ [MOTTO] Erro na verificação:', error);
+      console.error('❌ [MOTTO] Verification error:', error);
       throw error;
     }
   };
