@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
 
+// Gera código com prefixo HUB- padronizado
 const generateVerificationCode = () => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
   return `HUB-${code}`;
@@ -49,7 +50,7 @@ export const ConnectHabboForm = () => {
     return name.toLowerCase() === 'habbohub' || name.toLowerCase() === 'beebop';
   };
 
-  // Função para buscar habbo_id correto na base de dados
+  // Função melhorada para buscar habbo_id correto na base de dados
   const findHabboIdByName = async (habboName: string): Promise<string | null> => {
     try {
       addLog(`🔍 Buscando habbo_id para ${habboName} na base de dados...`);
@@ -117,7 +118,7 @@ export const ConnectHabboForm = () => {
     addLog(`🔐 Tentando login direto para: ${habboName}`);
 
     try {
-      // Primeiro, buscar o habbo_id correto na base de dados
+      // Buscar o habbo_id correto na base de dados
       const correctHabboId = await findHabboIdByName(habboName);
       
       if (!correctHabboId) {
@@ -245,6 +246,7 @@ export const ConnectHabboForm = () => {
       
       setUserHabboId(habboUser.uniqueId);
       
+      // Verifica se já existe um código HUB- na motto
       const hubCodePattern = /HUB-[A-Z0-9]{5}/gi;
       const existingCode = habboUser.motto.match(hubCodePattern);
       
@@ -429,9 +431,9 @@ export const ConnectHabboForm = () => {
 
   return (
     <div className="max-w-md mx-auto space-y-6">
-      {/* Debug Console */}
+      {/* Console de Debug Melhorado */}
       <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
-        <h3 className="text-yellow-400 mb-2">Console de Debug:</h3>
+        <h3 className="text-yellow-400 mb-2">Console de Debug (Primeira Etapa):</h3>
         {debugLog.map((log, index) => (
           <div key={index} className="mb-1">{log}</div>
         ))}

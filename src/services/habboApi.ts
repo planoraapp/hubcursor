@@ -67,7 +67,8 @@ export interface MarketplaceStats {
 
 // Cache local para evitar muitas requisições
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 0; // DESABILITADO TEMPORARIAMENTE PARA TESTES - era 5 * 60 * 1000
+// TEMPORARIAMENTE DESABILITADO PARA TESTES DE MOTTO - reative para 5 * 60 * 1000 após os testes
+const CACHE_DURATION = 0; // 0 = sem cache; 5 * 60 * 1000 = 5 minutos
 
 // Função auxiliar para cache
 const getCachedData = (key: string) => {
@@ -75,6 +76,7 @@ const getCachedData = (key: string) => {
   
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`📦 Cache hit for ${key}`);
     return cached.data;
   }
   return null;
@@ -120,34 +122,7 @@ const fetchData = async (endpoint: string): Promise<any> => {
   }
 };
 
-// Usuários conhecidos populares do Habbo BR para descobrir quartos
-const POPULAR_USERS = [
-  'joao123', 'maria456', 'pedro789', 'ana321', 'carlos654',
-  'fernanda987', 'ricardo123', 'julia456', 'bruno789', 'carla321'
-];
-
-// Função para descobrir quartos através de usuários populares
-export const discoverRooms = async (): Promise<HabboRoom[]> => {
-  const rooms: HabboRoom[] = [];
-  
-  for (const username of POPULAR_USERS.slice(0, 5)) { // Limitar para evitar muitas requisições
-    try {
-      const user = await getUserByName(username);
-      if (user) {
-        const userRooms = await getUserRooms(user.uniqueId);
-        if (userRooms) {
-          rooms.push(...userRooms.slice(0, 3)); // Pegar apenas os primeiros 3 quartos de cada usuário
-        }
-      }
-    } catch (error) {
-      console.error(`Erro ao buscar quartos do usuário ${username}:`, error);
-    }
-  }
-  
-  return rooms;
-};
-
-// Função para buscar usuário por nome
+// Função para buscar usuário por nome - MELHORADA para robustez
 export const getUserByName = async (name: string): Promise<HabboUser | null> => {
   try {
     console.log(`🔍 [API] Buscando usuário: ${name}`);
@@ -189,12 +164,12 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
       return null;
     }
 
-    // Construir objeto do usuário com fallbacks seguros
+    // Construir objeto do usuário com fallbacks seguros e sanitização melhorada
     const processedUser: HabboUser = {
       uniqueId: user.uniqueId || user.id || '',
       name: user.name,
       figureString: user.figureString,
-      motto: user.motto || '', // CRÍTICO: Garantir que motto seja sempre string
+      motto: user.motto ? String(user.motto).trim() : '', // CRÍTICO: Sanitização da motto
       online: user.online || false,
       lastAccessTime: user.lastAccessTime || '',
       memberSince: user.memberSince || '',
@@ -216,6 +191,33 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
     console.error('❌ Erro em getUserByName:', error);
     return null;
   }
+};
+
+// Usuários conhecidos populares do Habbo BR para descobrir quartos
+const POPULAR_USERS = [
+  'joao123', 'maria456', 'pedro789', 'ana321', 'carlos654',
+  'fernanda987', 'ricardo123', 'julia456', 'bruno789', 'carla321'
+];
+
+// Função para descobrir quartos através de usuários populares
+export const discoverRooms = async (): Promise<HabboRoom[]> => {
+  const rooms: HabboRoom[] = [];
+  
+  for (const username of POPULAR_USERS.slice(0, 5)) { // Limitar para evitar muitas requisições
+    try {
+      const user = await getUserByName(username);
+      if (user) {
+        const userRooms = await getUserRooms(user.uniqueId);
+        if (userRooms) {
+          rooms.push(...userRooms.slice(0, 3)); // Pegar apenas os primeiros 3 quartos de cada usuário
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar quartos do usuário ${username}:`, error);
+    }
+  }
+  
+  return rooms;
 };
 
 // Função para buscar dados do usuário por ID

@@ -117,48 +117,114 @@ export const useSupabaseAuth = () => {
     return data;
   };
 
+  // VERSÃO MELHORADA com retry logic para RLS
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 Criando vínculo: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    const { data, error } = await supabase
-      .from('habbo_accounts')
-      .insert({ 
-        habbo_id: habboId, 
-        habbo_name: habboName, 
-        supabase_user_id: supabaseUserId 
-      })
-      .select()
-      .single();
+    const maxRetries = 5;
+    let lastError: any = null;
 
-    if (error) {
-      console.error('❌ Erro ao criar vínculo:', error);
-      throw error;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`📝 Tentativa ${attempt}/${maxRetries} de criar vínculo...`);
+        
+        const { data, error } = await supabase
+          .from('habbo_accounts')
+          .insert({ 
+            habbo_id: habboId, 
+            habbo_name: habboName, 
+            supabase_user_id: supabaseUserId 
+          })
+          .select()
+          .single();
+
+        if (error) {
+          lastError = error;
+          console.error(`❌ Erro na tentativa ${attempt}: ${error.message}`);
+          
+          // Se for erro de RLS ou duplicate key, tenta reautenticar
+          if (error.message.includes('violates row-level security policy') || 
+              error.message.includes('duplicate key value violates unique constraint')) {
+            console.log('🔄 Erro de RLS detectado, tentando reautenticar...');
+            
+            // Força refresh da sessão
+            await supabase.auth.refreshSession();
+            
+            // Delay exponencial
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            continue;
+          } else {
+            // Se não for erro de RLS, para as tentativas
+            break;
+          }
+        } else {
+          console.log('✅ Vínculo criado com sucesso:', data);
+          return data;
+        }
+      } catch (generalError) {
+        lastError = generalError;
+        console.error(`❌ Erro geral na tentativa ${attempt}:`, generalError);
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
     }
 
-    console.log('✅ Vínculo criado com sucesso:', data);
-    return data;
+    console.error(`❌ Falhou após ${maxRetries} tentativas. Último erro:`, lastError);
+    throw lastError || new Error('Falha ao criar vínculo após múltiplas tentativas');
   };
 
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
     console.log(`🔐 Iniciando signUp para: habboId=${habboId}, habboName=${habboName}`);
     
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: `${habboId}@habbohub.com`,
-      password: password
-    });
+    // Tratamento especial para admins
+    let authUser = null;
+    const authEmail = `${habboId}@habbohub.com`;
 
-    if (authError) {
-      console.error('❌ Erro na autenticação:', authError);
-      throw authError;
+    // Para usuários admin, tentar login primeiro
+    if (habboName.toLowerCase() === 'habbohub' || habboName.toLowerCase() === 'beebop') {
+      console.log('🛠️ Usuário admin detectado, tentando login direto primeiro...');
+      try {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: password,
+        });
+        
+        if (signInData.user) {
+          authUser = signInData.user;
+          console.log('✅ Login admin automático bem-sucedido');
+          return { user: authUser };
+        } else if (signInError && !signInError.message.includes('not found')) {
+          throw signInError;
+        }
+      } catch (error) {
+        console.log('⚠️ Login admin falhou, tentando signup...', error);
+      }
     }
 
-    console.log('✅ Usuário criado no Supabase Auth:', authData.user?.id);
+    // Se não conseguiu fazer login (ou não é admin), tenta signUp
+    if (!authUser) {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: authEmail,
+        password: password,
+        options: {
+          data: { habbo_name: habboName }
+        }
+      });
 
-    if (authData.user) {
+      if (authError) {
+        console.error('❌ Erro na autenticação:', authError);
+        throw authError;
+      }
+      
+      authUser = authData.user;
+    }
+
+    console.log('✅ Usuário autenticado no Supabase Auth:', authUser?.id);
+
+    if (authUser) {
       try {
-        const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
+        const linkedAccount = await createLinkedAccount(habboId, habboName, authUser.id);
         console.log('✅ Vínculo criado:', linkedAccount);
-        return authData;
+        return { user: authUser };
       } catch (linkError) {
         console.error('❌ Erro ao criar vínculo:', linkError);
         await supabase.auth.signOut();
@@ -166,7 +232,7 @@ export const useSupabaseAuth = () => {
       }
     }
 
-    return authData;
+    throw new Error('Falha na autenticação');
   };
 
   const signInWithHabbo = async (habboId: string, password: string) => {
