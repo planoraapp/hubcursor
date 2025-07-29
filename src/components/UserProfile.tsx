@@ -2,21 +2,39 @@
 import { User, LogIn, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useEffect, useState } from 'react';
+import { getUserByName } from '../services/habboApi';
 
 interface UserProfileProps {
   collapsed?: boolean;
 }
 
 export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
-  const { isLoggedIn, userData, logout } = useAuth();
+  const { isLoggedIn, habboAccount } = useAuth();
+  const { signOut } = useSupabaseAuth();
   const navigate = useNavigate();
+  const [habboData, setHabboData] = useState<any>(null);
+
+  // Fetch current Habbo data when logged in
+  useEffect(() => {
+    if (isLoggedIn && habboAccount) {
+      getUserByName(habboAccount.habbo_name).then(data => {
+        setHabboData(data);
+      }).catch(console.error);
+    }
+  }, [isLoggedIn, habboAccount]);
 
   const handleProfileClick = () => {
-    if (isLoggedIn && userData) {
-      navigate(`/profile/${userData.name}`);
+    if (isLoggedIn && habboAccount) {
+      navigate(`/profile/${habboAccount.habbo_name}`);
     } else {
       navigate('/connect-habbo');
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
   };
 
   if (collapsed) {
@@ -35,17 +53,17 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
 
   return (
     <div className="p-4 bg-white/80 backdrop-blur-sm rounded-lg mb-4 shadow-sm">
-      {isLoggedIn && userData ? (
+      {isLoggedIn && habboAccount && habboData ? (
         <div className="space-y-3">
           <div className="flex items-center space-x-3">
             <img 
-              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1`}
-              alt={userData.name}
+              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1`}
+              alt={habboAccount.habbo_name}
               className="w-10 h-10 rounded border-2 border-gray-300"
             />
             <div className="flex-1">
-              <h3 className="font-bold text-gray-800 text-sm">{userData.name}</h3>
-              <p className="text-xs text-gray-600 italic">"{userData.motto}"</p>
+              <h3 className="font-bold text-gray-800 text-sm">{habboAccount.habbo_name}</h3>
+              <p className="text-xs text-gray-600 italic">"{habboData.motto}"</p>
             </div>
           </div>
           
@@ -57,7 +75,7 @@ export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
               Ver Perfil
             </button>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="bg-red-500 text-white text-xs py-2 px-3 rounded hover:bg-red-600 transition-colors"
             >
               Sair
