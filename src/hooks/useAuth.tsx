@@ -1,7 +1,7 @@
 
 import { useSupabaseAuth } from './useSupabaseAuth';
 
-// Admin users list - now using Supabase data
+// Admin users list - using Supabase data
 const ADMIN_USERS = ['habbohub', 'beebop'];
 
 export const useAuth = () => {

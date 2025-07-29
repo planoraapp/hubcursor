@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '../hooks/use-toast';
 import { getUserByName } from '../services/habboApi';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -16,6 +16,7 @@ export const ConnectHabboForm = () => {
   const [step, setStep] = useState(1);
   const [userHabboId, setUserHabboId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
   
   const { toast } = useToast();
   const { 
@@ -24,8 +25,22 @@ export const ConnectHabboForm = () => {
     getLinkedAccount, 
     signUpWithHabbo, 
     signInWithHabbo, 
-    verifyHabboMotto 
+    verifyHabboMotto,
+    signOut 
   } = useSupabaseAuth();
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('pt-BR');
+    setDebugLog(prev => [...prev, `${timestamp}: ${message}`]);
+  };
+
+  // Check if user is already logged in
+  useEffect(() => {
+    if (user && habboAccount) {
+      addLog(`✅ Usuário já logado: ${habboAccount.habbo_name}`);
+      setStep(5); // Already logged in
+    }
+  }, [user, habboAccount]);
 
   // If user is already logged in, show success state
   if (user && habboAccount) {
@@ -35,12 +50,20 @@ export const ConnectHabboForm = () => {
         <p className="text-gray-600 mb-6">
           Você já está logado no Habbo Hub como <strong>{habboAccount.habbo_name}</strong>.
         </p>
-        <button
-          onClick={() => window.location.href = `/profile/${habboAccount.habbo_name}`}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Ver Meu Perfil
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={() => window.location.href = `/profile/${habboAccount.habbo_name}`}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Ver Meu Perfil
+          </button>
+          <button
+            onClick={() => signOut()}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     );
   }
@@ -57,9 +80,13 @@ export const ConnectHabboForm = () => {
     }
 
     setIsProcessing(true);
+    addLog(`🔍 Verificando Habbo "${habboName}" na API...`);
+    
     try {
       const habboUser = await getUserByName(habboName);
+      
       if (!habboUser || !habboUser.motto) {
+        addLog(`❌ Habbo "${habboName}" não encontrado ou perfil privado.`);
         toast({
           title: "Erro",
           description: `O Habbo "${habboName}" não foi encontrado, está offline ou tem perfil privado.`,
@@ -69,16 +96,21 @@ export const ConnectHabboForm = () => {
         return;
       }
 
-      setUserHabboId(habboUser.uniqueId); // Fixed: use uniqueId instead of id
+      addLog(`✅ Habbo encontrado: ${habboUser.name}`);
+      addLog(`💬 Motto atual: "${habboUser.motto}"`);
+      
+      setUserHabboId(habboUser.uniqueId);
       const newCode = generateVerificationCode();
       setVerificationCode(newCode);
       setStep(2);
       
+      addLog(`🔑 Código de verificação gerado: ${newCode}`);
       toast({
         title: "Código Gerado",
         description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
       });
     } catch (error) {
+      addLog(`❌ Erro ao verificar nome Habbo: ${error}`);
       console.error('Erro ao verificar nome Habbo:', error);
       toast({
         title: "Erro",
@@ -102,19 +134,24 @@ export const ConnectHabboForm = () => {
     }
 
     setIsProcessing(true);
+    addLog('🔍 Verificando sua motto no Habbo Hotel...');
+    
     try {
       const habboUser = await verifyHabboMotto(habboName, verificationCode);
       
       if (habboUser) {
+        addLog('✅ Código de verificação encontrado na motto!');
         const linkedAccount = await getLinkedAccount(userHabboId);
         
         if (linkedAccount) {
+          addLog('🔗 Vínculo existente detectado.');
           setStep(3); // Login with existing password
           toast({
             title: "Sucesso",
             description: "Código verificado! Digite sua senha do Habbo Hub para acessar."
           });
         } else {
+          addLog('✨ Nenhum vínculo existente. Preparando para criar.');
           setStep(4); // Create new account
           toast({
             title: "Sucesso",
@@ -123,6 +160,7 @@ export const ConnectHabboForm = () => {
         }
       }
     } catch (error) {
+      addLog(`❌ Erro ao verificar motto: ${error}`);
       console.error('Erro ao verificar motto:', error);
       toast({
         title: "Erro",
@@ -139,10 +177,12 @@ export const ConnectHabboForm = () => {
     if (!userHabboId) return;
 
     setIsProcessing(true);
+    addLog('🔐 Iniciando ação de senha...');
 
     try {
       if (step === 3) {
         // Login with existing account
+        addLog('➡️ Tentando login com senha existente...');
         if (!password) {
           toast({
             title: "Erro",
@@ -154,6 +194,7 @@ export const ConnectHabboForm = () => {
         }
 
         await signInWithHabbo(userHabboId, password);
+        addLog('✅ Login bem-sucedido!');
         toast({
           title: "Sucesso",
           description: "Login realizado com sucesso!"
@@ -161,6 +202,7 @@ export const ConnectHabboForm = () => {
         window.location.href = `/profile/${habboName}`;
       } else if (step === 4) {
         // Create new account
+        addLog('➡️ Tentando criar nova conta...');
         if (password.length < 6) {
           toast({
             title: "Erro",
@@ -182,6 +224,7 @@ export const ConnectHabboForm = () => {
         }
 
         await signUpWithHabbo(userHabboId, habboName, password);
+        addLog('✅ Conta criada com sucesso!');
         toast({
           title: "Sucesso",
           description: "Conta criada e vinculada com sucesso!"
@@ -189,6 +232,7 @@ export const ConnectHabboForm = () => {
         window.location.href = `/profile/${habboName}`;
       }
     } catch (error) {
+      addLog(`❌ Erro na ação de senha: ${error}`);
       console.error('Erro na ação de senha:', error);
       toast({
         title: "Erro",
@@ -202,6 +246,14 @@ export const ConnectHabboForm = () => {
 
   return (
     <div className="max-w-md mx-auto space-y-6">
+      {/* Debug Console */}
+      <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-40 overflow-y-auto">
+        <h3 className="text-yellow-400 mb-2">Console de Debug:</h3>
+        {debugLog.map((log, index) => (
+          <div key={index} className="mb-1">{log}</div>
+        ))}
+      </div>
+
       {step === 1 && (
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Passo 1: Nome do Habbo</h2>

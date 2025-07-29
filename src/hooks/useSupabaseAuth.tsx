@@ -24,12 +24,13 @@ export const useSupabaseAuth = () => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           // Load linked Habbo account
-          const { data: habboData } = await (supabase as any)
+          const { data: habboData } = await supabase
             .from('habbo_accounts')
             .select('*')
             .eq('supabase_user_id', session.user.id)
@@ -50,7 +51,7 @@ export const useSupabaseAuth = () => {
       
       if (session?.user) {
         // Load linked Habbo account
-        (supabase as any)
+        supabase
           .from('habbo_accounts')
           .select('*')
           .eq('supabase_user_id', session.user.id)
@@ -68,7 +69,7 @@ export const useSupabaseAuth = () => {
   }, []);
 
   const getLinkedAccount = async (habboId: string) => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('habbo_accounts')
       .select('*')
       .eq('habbo_id', habboId)
@@ -82,7 +83,7 @@ export const useSupabaseAuth = () => {
   };
 
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('habbo_accounts')
       .insert({ 
         habbo_id: habboId, 
