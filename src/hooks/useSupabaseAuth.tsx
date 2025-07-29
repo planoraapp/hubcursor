@@ -21,51 +21,94 @@ export const useSupabaseAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let timeoutId: NodeJS.Timeout;
+
+    // Timeout de segurança para evitar loading infinito
+    const safetyTimeout = setTimeout(() => {
+      console.log('⏰ Timeout de segurança ativado - forçando loading = false');
+      setLoading(false);
+    }, 10000); // 10 segundos
+
+    const fetchHabboAccount = async (userId: string) => {
+      try {
+        console.log(`🔍 Buscando conta vinculada para usuário: ${userId}`);
+        
+        const { data: habboData, error } = await supabase
+          .from('habbo_accounts')
+          .select('*')
+          .eq('supabase_user_id', userId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('❌ Erro ao buscar conta vinculada:', error);
+          console.error('📊 Detalhes do erro:', JSON.stringify(error, null, 2));
+          
+          // Mesmo com erro, não deixar loading infinito
+          setHabboAccount(null);
+          setLoading(false);
+          return;
+        }
+
+        console.log('✅ Conta vinculada encontrada:', habboData);
+        setHabboAccount(habboData);
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Erro geral ao buscar conta vinculada:', error);
+        setHabboAccount(null);
+        setLoading(false);
+      }
+    };
+
+    // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log(`🔄 Auth state changed: ${event}`, session?.user?.id);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Load linked Habbo account
-          const { data: habboData } = await supabase
-            .from('habbo_accounts')
-            .select('*')
-            .eq('supabase_user_id', session.user.id)
-            .single();
-          
-          setHabboAccount(habboData);
+          await fetchHabboAccount(session.user.id);
         } else {
           setHabboAccount(null);
+          setLoading(false);
         }
-        setLoading(false);
+        
+        // Limpar timeout se a autenticação foi resolvida
+        clearTimeout(safetyTimeout);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Load linked Habbo account
-        supabase
-          .from('habbo_accounts')
-          .select('*')
-          .eq('supabase_user_id', session.user.id)
-          .single()
-          .then(({ data: habboData }: { data: HabboAccount }) => {
-            setHabboAccount(habboData);
-            setLoading(false);
-          });
-      } else {
+    // Verificar sessão existente - UMA ÚNICA VEZ
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('🔍 Sessão inicial encontrada:', currentSession?.user?.id);
+        
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
+          await fetchHabboAccount(currentSession.user.id);
+        } else {
+          setLoading(false);
+        }
+        
+        // Limpar timeout se inicialização foi bem-sucedida
+        clearTimeout(safetyTimeout);
+      } catch (error) {
+        console.error('❌ Erro na inicialização da auth:', error);
         setLoading(false);
+        clearTimeout(safetyTimeout);
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   const getLinkedAccount = async (habboId: string) => {
@@ -107,7 +150,7 @@ export const useSupabaseAuth = () => {
     // Implementar retry logic mais robusto
     let lastError = null;
     
-    for (let i = 0; i < 8; i++) { // Aumentar para 8 tentativas
+    for (let i = 0; i < 5; i++) { // Reduzir para 5 tentativas
       try {
         console.log(`🔄 Tentativa ${i + 1} de criar vínculo...`);
         
@@ -125,21 +168,18 @@ export const useSupabaseAuth = () => {
           lastError = error;
           console.error(`❌ Tentativa ${i + 1} falhou:`, JSON.stringify(error, null, 2));
           
-          // Estratégia de retry baseada no tipo de erro
-          if (error.code === '42501' || error.message.includes('row-level security')) {
-            console.log(`⏳ Erro de RLS detectado, aguardando ${(i + 1) * 1500}ms...`);
-            await new Promise(resolve => setTimeout(resolve, (i + 1) * 1500));
-            continue;
-          } else if (error.code === '23505') {
+          if (error.code === '23505') {
             // Duplicate key error - vínculo já existe
             console.log('✅ Vínculo já existe, verificando...');
             const existingAccount = await getLinkedAccount(habboId);
             if (existingAccount) {
               return existingAccount;
             }
-          } else {
-            // Para outros erros, aguardar menos tempo
-            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          
+          // Aguardar antes da próxima tentativa
+          if (i < 4) {
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
           }
         } else {
           console.log('✅ Vínculo criado com sucesso:', data);
@@ -150,15 +190,14 @@ export const useSupabaseAuth = () => {
         lastError = error;
         console.error(`❌ Tentativa ${i + 1} falhou com erro:`, JSON.stringify(error, null, 2));
         
-        // Aguardar antes da próxima tentativa
-        if (i < 7) {
-          await new Promise(resolve => setTimeout(resolve, (i + 1) * 800));
+        if (i < 4) {
+          await new Promise(resolve => setTimeout(resolve, (i + 1) * 1000));
         }
       }
     }
 
     console.error('❌ Falha persistente ao criar vínculo após todas as tentativas:', JSON.stringify(lastError, null, 2));
-    throw new Error('Falha ao criar vínculo após múltiplas tentativas. Verifique sua conexão e tente novamente.');
+    throw new Error('Falha ao criar vínculo após múltiplas tentativas. Tente novamente.');
   };
 
   const signUpWithHabbo = async (habboId: string, habboName: string, password: string) => {
@@ -170,8 +209,7 @@ export const useSupabaseAuth = () => {
         email: `${habboId}@habbohub.com`,
         password: password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: { habbo_name: habboName }
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
@@ -182,36 +220,21 @@ export const useSupabaseAuth = () => {
 
       console.log('✅ Usuário criado no Supabase Auth:', authData.user?.id);
 
-      // Aguardar um pouco para garantir que a sessão seja estabelecida
+      // Aguardar sessão ser estabelecida
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Depois, criar o vínculo na tabela habbo_accounts
+      // Criar o vínculo na tabela habbo_accounts
       if (authData.user) {
         try {
           const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
           console.log('✅ Vínculo criado:', linkedAccount);
-          
-          // Aguardar mais um pouco para garantir que tudo esteja sincronizado
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
           return authData;
         } catch (linkError) {
           console.error('❌ Erro ao criar vínculo:', JSON.stringify(linkError, null, 2));
           
-          // Se falhar em criar o vínculo, tentar uma vez mais após aguardar
-          console.log('🔄 Tentando criar vínculo novamente após aguardar...');
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          
-          try {
-            const linkedAccount = await createLinkedAccount(habboId, habboName, authData.user.id);
-            console.log('✅ Vínculo criado na segunda tentativa:', linkedAccount);
-            return authData;
-          } catch (finalError) {
-            console.error('❌ Falha final ao criar vínculo:', JSON.stringify(finalError, null, 2));
-            // Se falhar definitivamente, deslogar para evitar conta órfã
-            await supabase.auth.signOut();
-            throw new Error('Falha ao vincular conta Habbo. A conta foi limpa. Tente novamente em alguns segundos.');
-          }
+          // Se falhar em criar o vínculo, deslogar para evitar conta órfã
+          await supabase.auth.signOut();
+          throw new Error('Falha ao vincular conta Habbo. Tente novamente.');
         }
       }
 
@@ -264,30 +287,20 @@ export const useSupabaseAuth = () => {
       
       if (!habboUser || !habboUser.motto) {
         console.log(`❌ [MOTTO] Usuário ${habboName} não encontrado ou motto vazia`);
-        console.log(`📊 [MOTTO] Dados do usuário:`, JSON.stringify(habboUser, null, 2));
         throw new Error('Usuário não encontrado ou perfil privado');
       }
 
       const originalMotto = habboUser.motto;
       console.log(`📝 [MOTTO] Motto encontrada: "${originalMotto}"`);
       
-      // Verificação robusta com múltiplas tentativas
       const normalizedMotto = originalMotto.trim().toLowerCase();
       const normalizedCode = verificationCode.trim().toLowerCase();
-      
-      console.log(`🔍 [MOTTO] Motto normalizada: "${normalizedMotto}"`);
-      console.log(`🔍 [MOTTO] Código normalizado: "${normalizedCode}"`);
-      console.log(`🔍 [MOTTO] Motto bruta: "${originalMotto}"`);
       
       if (normalizedMotto.includes(normalizedCode)) {
         console.log(`✅ [MOTTO] Código encontrado na motto!`);
         return habboUser;
       } else {
         console.log(`❌ [MOTTO] Código "${verificationCode}" não encontrado na motto "${originalMotto}"`);
-        console.log(`📊 [MOTTO] Detalhes da verificação:`);
-        console.log(`   - Motto lida (normalizada): "${normalizedMotto}"`);
-        console.log(`   - Código esperado (normalizado): "${normalizedCode}"`);
-        console.log(`   - Motto bruta: "${originalMotto}"`);
         throw new Error(`Código de verificação não encontrado na motto. Motto atual: "${originalMotto}"`);
       }
     } catch (error) {
