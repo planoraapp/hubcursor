@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { Calculator, TrendingUp, Coins, AlertCircle } from 'lucide-react';
 import { PanelCard } from './PanelCard';
 import { getMarketplaceStatsRoomItem, getMarketplaceStatsWallItem, type MarketplaceStats } from '../services/habboApi';
-
 export const Tools = () => {
   const [mobiName, setMobiName] = useState('');
   const [loading, setLoading] = useState(false);
   const [marketplaceStats, setMarketplaceStats] = useState<MarketplaceStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const handleCalculateValue = async () => {
     if (!mobiName.trim()) return;
     setLoading(true);
@@ -37,11 +35,9 @@ export const Tools = () => {
       setLoading(false);
     }
   };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR').format(price);
   };
-
   return <div className="space-y-8">
       <PanelCard title="Ferramentas Habbo">
         <p className="text-lg text-gray-600">
@@ -134,28 +130,6 @@ export const Tools = () => {
       </PanelCard>
 
       {/* Vertical Advertisement Banner */}
-      <div className="habbo-ad-placeholder habbo-ad-panel-style mt-8" style={{
-      width: '300px',
-      height: '600px',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      backgroundImage: 'url(/assets/adsvertwhite.png)',
-      backgroundSize: 'cover',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center'
-    }}>
-        <div className="ad-header-bar" style={{
-        backgroundColor: 'transparent',
-        borderBottom: 'none',
-        textShadow: 'none'
-      }}>
-          Advertisement
-        </div>
-        <div className="ad-content-wrapper" style={{
-        backgroundColor: 'transparent'
-      }}>
-          Espaço para Anúncio Vertical
-        </div>
-      </div>
+      
     </div>;
 };
