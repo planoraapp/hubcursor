@@ -53,6 +53,7 @@ export type Database = {
         Row: {
           author_habbo_name: string
           author_supabase_user_id: string
+          category: string | null
           content: string
           created_at: string
           id: string
@@ -63,6 +64,7 @@ export type Database = {
         Insert: {
           author_habbo_name: string
           author_supabase_user_id: string
+          category?: string | null
           content: string
           created_at?: string
           id?: string
@@ -73,6 +75,7 @@ export type Database = {
         Update: {
           author_habbo_name?: string
           author_supabase_user_id?: string
+          category?: string | null
           content?: string
           created_at?: string
           id?: string

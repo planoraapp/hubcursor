@@ -22,11 +22,11 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
   isCreatingPost,
   uploadingImage
 }) => {
-  const [newPostTitle, setNewPostTitle] = useState<string>('');
-  const [newPostContent, setNewPostContent] = useState<string>('');
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [newPostContent, setNewPostContent] = useState('');
   const [newPostImage, setNewPostImage] = useState<File | null>(null);
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async () => {
     await onCreatePost(newPostTitle, newPostContent, newPostImage, selectedCategory);
     setNewPostTitle('');
     setNewPostContent('');

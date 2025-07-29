@@ -15,12 +15,12 @@ import type { ForumPost } from '../types/forum';
 
 export default function ForumPage() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isCreatingPost, setIsCreatingPost] = useState<boolean>(false);
-  const [uploadingImage, setUploadingImage] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('Geral');
-  const [activeSection, setActiveSection] = useState<string>('forum');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('Geral');
+  const [activeSection, setActiveSection] = useState('forum');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   const { isLoggedIn, user, habboAccount } = useAuth();
   const { toast } = useToast();
@@ -37,7 +37,7 @@ export default function ForumPage() {
     };
   }, []);
 
-  const fetchPosts = async (): Promise<void> => {
+  const fetchPosts = async () => {
     setLoading(true);
     let query = supabase
       .from('forum_posts')
@@ -63,7 +63,7 @@ export default function ForumPage() {
     setLoading(false);
   };
 
-  const uploadImageToSupabase = async (file: File): Promise<string | null> => {
+  const uploadImageToSupabase = async (file: File) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `forum_images/${fileName}`;
@@ -84,7 +84,7 @@ export default function ForumPage() {
     return publicUrl;
   };
 
-  const handleCreatePost = async (title: string, content: string, image: File | null, category: string): Promise<void> => {
+  const handleCreatePost = async (title: string, content: string, image: File | null, category: string) => {
     if (!title.trim() || !content.trim()) {
       toast({
         title: "Erro",
@@ -104,7 +104,7 @@ export default function ForumPage() {
     }
 
     setIsCreatingPost(true);
-    let imageUrl: string | null = null;
+    let imageUrl = null;
 
     if (image) {
       setUploadingImage(true);
@@ -150,7 +150,7 @@ export default function ForumPage() {
     setIsCreatingPost(false);
   };
 
-  const handleLikePost = async (postId: string): Promise<void> => {
+  const handleLikePost = async (postId: string) => {
     if (!isLoggedIn) {
       toast({
         title: "Erro",
@@ -184,7 +184,7 @@ export default function ForumPage() {
     }
   };
 
-  const handleCategoryChange = (category: string): void => {
+  const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
   };
 

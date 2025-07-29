@@ -21,7 +21,7 @@ export const PostsList: React.FC<PostsListProps> = ({
   onLikePost,
   currentUserId
 }) => {
-  const categories: string[] = ['Todos', 'Geral', 'Suporte', 'Eventos'];
+  const categories = ['Todos', 'Geral', 'Suporte', 'Eventos'];
 
   return (
     <Card className="bg-white border-gray-900">
