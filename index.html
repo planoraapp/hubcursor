@@ -1,27 +1,32 @@
 
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HabboHub</title>
+    <title>HabboHub - Sua central de ferramentas para Habbo</title>
     <style>
-      /* Remove bordas indesejadas do elemento de notificação */
-      div[role="region"][aria-label="Notifications (F8)"] {
+      /* Remove bordas brancas dos elementos de notificação */
+      .toast, .notification, .alert, .sonner-toast {
         border: none !important;
-        outline: none !important;
-        box-shadow: none !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
       }
-      /* Remove bordas da lista ordenada dentro do elemento de notificação */
-      div[role="region"][aria-label="Notifications (F8)"] ol {
+      
+      /* Remove bordas de elementos do editor */
+      .habbo-panel, .editor-panel, .visual-editor {
         border: none !important;
-        outline: none !important;
-        box-shadow: none !important;
       }
-      /* Remove qualquer borda adicional que possa aparecer */
-      #root > div {
-        border: none !important;
+      
+      /* Garantir que não haja bordas brancas indesejadas */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        border: none;
       }
     </style>
   </head>
