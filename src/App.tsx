@@ -13,12 +13,17 @@ import ForumPage from "./pages/ForumPage";
 import Noticias from "./pages/Noticias";
 import Eventos from "./pages/Eventos";
 import Catalogo from "./pages/Catalogo";
-import Emblemas from "./pages/Emblemas";
+import BadgesPage from "./pages/BadgesPage";
+import ToolsPage from "./pages/ToolsPage";
+import AdminPanelPage from "./pages/AdminPanelPage";
 import Editor from "./pages/Editor";
 import Mercado from "./pages/Mercado";
 import Ferramentas from "./pages/Ferramentas";
 import AdminHub from "./pages/AdminHub";
 import NotFound from "./pages/NotFound";
+
+// Add CSS for volter-font
+import "./App.css";
 
 const queryClient = new QueryClient();
 
@@ -37,11 +42,11 @@ const App = () => (
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/catalogo" element={<Catalogo />} />
-          <Route path="/emblemas" element={<Emblemas />} />
+          <Route path="/emblemas" element={<BadgesPage />} />
+          <Route path="/ferramentas" element={<ToolsPage />} />
+          <Route path="/adminhub" element={<AdminPanelPage />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/mercado" element={<Mercado />} />
-          <Route path="/ferramentas" element={<Ferramentas />} />
-          <Route path="/adminhub" element={<AdminHub />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

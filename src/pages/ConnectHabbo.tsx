@@ -46,7 +46,11 @@ export default function ConnectHabbo() {
       <div className="min-h-screen bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
-          <p className="text-white mb-4">Carregando Habbo Hub...</p>
+          <p className="text-white mb-4 volter-font" style={{
+            textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000'
+          }}>
+            Carregando Habbo Hub...
+          </p>
         </div>
       </div>
     );
@@ -76,7 +80,7 @@ export default function ConnectHabbo() {
             icon="/assets/frank.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full border border-gray-900">
             <div className="flex justify-center">
               {renderContent()}
             </div>

@@ -1,3 +1,4 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,19 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Volter Font Styling */
+.volter-font {
+  font-family: 'Volter Bold', 'Inter', sans-serif;
+  text-shadow: 
+    1px 1px 0px black,   /* Top-left */
+    -1px -1px 0px black, /* Bottom-right */
+    1px -1px 0px black,  /* Top-right */
+    -1px 1px 0px black;  /* Bottom-left */
+}
+
+/* Sidebar text weight enhancement */
+.sidebar-text {
+  font-weight: 600;
 }

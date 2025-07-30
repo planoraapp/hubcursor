@@ -7,7 +7,7 @@ import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { getUserByName } from '../lib/habboApi';
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '../lib/supabaseClient';
 import { generateVerificationCode } from './auth/AuthUtils';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 
@@ -17,14 +17,14 @@ export const ConnectHabboFormTabs = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [step, setStep] = useState(1);
-  const [userHabboId, setUserHabboId] = useState(null);
+  const [userHabboId, setUserHabboId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState('password');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signUpWithHabbo, signInWithHabbo, verifyHabboMotto, getLinkedAccount } = useSupabaseAuth();
 
-  const handleLoginByPassword = async (e) => {
+  const handleLoginByPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentHabboName = habboNameInput.trim();
     if (!currentHabboName || !password) {
@@ -38,6 +38,8 @@ export const ConnectHabboFormTabs = () => {
 
     setIsProcessing(true);
     try {
+      console.log(`🔐 [ConnectHabbo] Attempting login by password for: ${currentHabboName}`);
+      
       const { data: linkedAccount } = await supabase
         .from('habbo_accounts')
         .select('habbo_id')
@@ -59,10 +61,11 @@ export const ConnectHabboFormTabs = () => {
         description: "Login realizado com sucesso!"
       });
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ [ConnectHabbo] Login by password error:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || 'Erro no login',
         variant: "destructive"
       });
     } finally {
@@ -70,7 +73,7 @@ export const ConnectHabboFormTabs = () => {
     }
   };
 
-  const handleInitiateMottoVerification = async (e) => {
+  const handleInitiateMottoVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentHabboName = habboNameInput.trim();
     if (!currentHabboName) {
@@ -84,6 +87,8 @@ export const ConnectHabboFormTabs = () => {
 
     setIsProcessing(true);
     try {
+      console.log(`🔍 [ConnectHabbo] Starting motto verification for: ${currentHabboName}`);
+      
       const habboUserCheck = await getUserByName(currentHabboName);
       if (!habboUserCheck) {
         toast({
@@ -112,6 +117,7 @@ export const ConnectHabboFormTabs = () => {
         description: `Copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`
       });
     } catch (error) {
+      console.error('❌ [ConnectHabbo] Motto verification init error:', error);
       toast({
         title: "Erro",
         description: "Não foi possível verificar o nome Habbo. Tente novamente.",
@@ -135,11 +141,13 @@ export const ConnectHabboFormTabs = () => {
 
     setIsProcessing(true);
     try {
+      console.log(`✅ [ConnectHabbo] Verifying motto for: ${habboNameInput}`);
+      
       const habboUser = await verifyHabboMotto(habboNameInput, verificationCode);
       
       if (habboUser) {
-        setUserHabboId(habboUser.uniqueId);
-        const linkedAccount = await getLinkedAccount(habboUser.uniqueId);
+        setUserHabboId(habboUser.id);
+        const linkedAccount = await getLinkedAccount(habboUser.id);
         
         if (linkedAccount) {
           setStep(4); // Login with existing password
@@ -155,10 +163,11 @@ export const ConnectHabboFormTabs = () => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ [ConnectHabbo] Motto verification error:', error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || 'Erro ao verificar motto',
         variant: "destructive"
       });
     } finally {
@@ -166,7 +175,7 @@ export const ConnectHabboFormTabs = () => {
     }
   };
 
-  const handlePasswordAction = async (e, actionType) => {
+  const handlePasswordAction = async (e: React.FormEvent, actionType: 'login' | 'signup') => {
     e.preventDefault();
     if (!userHabboId) return;
     
@@ -183,6 +192,7 @@ export const ConnectHabboFormTabs = () => {
           return;
         }
         
+        console.log(`🔐 [ConnectHabbo] Login existing user: ${habboNameInput}`);
         await signInWithHabbo(userHabboId, password);
         toast({
           title: "Sucesso",
@@ -209,6 +219,7 @@ export const ConnectHabboFormTabs = () => {
           return;
         }
         
+        console.log(`📝 [ConnectHabbo] Creating new user: ${habboNameInput}`);
         await signUpWithHabbo(userHabboId, habboNameInput, password);
         toast({
           title: "Sucesso",
@@ -216,10 +227,11 @@ export const ConnectHabboFormTabs = () => {
         });
         navigate('/');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error(`❌ [ConnectHabbo] Password action error (${actionType}):`, error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || `Erro no ${actionType === 'login' ? 'login' : 'cadastro'}`,
         variant: "destructive"
       });
     } finally {
