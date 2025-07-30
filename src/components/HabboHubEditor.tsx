@@ -11,6 +11,7 @@ interface HabboFigurePart {
     sellable: boolean;
     colors: string[];
     previewUrl: string;
+    originalFilename?: string;
 }
 
 interface HabboColor {
@@ -25,15 +26,11 @@ interface FigurePartsResponse {
 }
 
 const HabboHubEditor: React.FC = () => {
-    // --- URLs Base ---
-    const HABBO_IMAGING_BASE_URL = (hotel: string) => `https://www.${hotel}/habbo-imaging/avatarimage?`;
-    const HABBO_API_PROFILE_URL = (username: string, hotelCode: string) => `https://www.habbo.com/api/public/users?name=${username}&hotel=${hotelCode}`;
-    
-    // URL da Edge Function
+    // URLs Base
     const FIGURE_PARTS_API_URL = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/get-habbo-figures';
 
-    // --- Variáveis de Estado ---
-    const DEFAULT_FIGURE_M = "hd-180-61.hr-3791-45.ha-1008-61.ch-3030-61.lg-3138-61.sh-905-61";
+    // Estados
+    const DEFAULT_FIGURE_M = "hd-180-61.hr-3791-45.ch-3030-61.lg-3138-61.sh-905-61";
     const DEFAULT_FIGURE_F = "hd-180-1.hr-828-42.ch-665-92.lg-700-1.sh-705-1";
 
     const [hotel, setHotel] = useState('habbo.com.br');
@@ -41,13 +38,14 @@ const HabboHubEditor: React.FC = () => {
     const [currentGender, setCurrentGender] = useState<'M' | 'F'>('M');
     const [currentLook, setCurrentLook] = useState(DEFAULT_FIGURE_M);
     const [avatarUrl, setAvatarUrl] = useState('');
-    const [activeCategory, setActiveCategory] = useState<string>('hd');
+    const [activeCategory, setActiveCategory] = useState<string>('hr');
     const [direction, setDirection] = useState(2);
     const [headDirection, setHeadDirection] = useState(3);
     const [allFigurePartsData, setAllFigurePartsData] = useState<{[key: string]: HabboFigurePart[]}>({});
     const [allColorsData, setAllColorsData] = useState<{[key: string]: HabboColor}>({});
     const [selectedPartForColor, setSelectedPartForColor] = useState<{item: HabboFigurePart | null, currentColors: string[]} | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const myHabboImgRef = useRef<HTMLImageElement>(null);
     const itemsDisplayAreaRef = useRef<HTMLDivElement>(null);
@@ -60,22 +58,23 @@ const HabboHubEditor: React.FC = () => {
         'Parte de baixo': 'lg',
         'Sapatos': 'sh',
         'Chapéus': 'he',
-        'Acessórios Cabelo': 'ea',
-        'Óculos': 'fa'
+        'Acessórios Cabelo': 'ha',
+        'Óculos': 'ea'
     };
 
+    // Usar assets locais para as imagens das categorias
     const categoryImages: {[key: string]: string} = {
-        'hd': 'body.png',
-        'hr': 'hair.png',
-        'ch': 'top.png',
-        'lg': 'bottom.png',
-        'sh': 'shoes.png',
-        'he': 'hat.png',
-        'ea': 'accessories.png',
-        'fa': 'glasses.png'
+        'hd': '/assets/body.png',
+        'hr': '/assets/hair.png', 
+        'ch': '/assets/top.png',
+        'lg': '/assets/bottom.png',
+        'sh': '/assets/shoes.png',
+        'he': '/assets/hat.png',
+        'ha': '/assets/accessories.png',
+        'ea': '/assets/glasses.png'
     };
 
-    // --- Funções Auxiliares ---
+    // Funções auxiliares
     const buildHabboImageUrl = (
         figure: string,
         gender: 'M' | 'F',
@@ -144,6 +143,7 @@ const HabboHubEditor: React.FC = () => {
     const loadFigurePartsData = async () => {
         try {
             setLoading(true);
+            setError(null);
             console.log('Carregando dados das peças de roupa...');
             
             const response = await fetch(FIGURE_PARTS_API_URL, {
@@ -170,12 +170,13 @@ const HabboHubEditor: React.FC = () => {
 
         } catch (error) {
             console.error('Failed to load figure parts:', error);
+            setError('Erro ao carregar peças de roupa. Tente novamente.');
         } finally {
             setLoading(false);
         }
     };
 
-    // --- Handlers de Eventos ---
+    // Handlers de eventos
     const handleItemClick = (item: HabboFigurePart) => {
         const currentFigurePart = getFigurePartCurrent(currentLook, item.type);
         let currentColor = getColorCodeFromFigurePart(currentFigurePart);
@@ -268,7 +269,7 @@ const HabboHubEditor: React.FC = () => {
             if (searchUsername) {
                 try {
                     const hotelCode = hotel.split('.')[1] || hotel.split('.')[0];
-                    const response = await fetch(HABBO_API_PROFILE_URL(searchUsername, hotelCode));
+                    const response = await fetch(`https://www.habbo.com/api/public/users?name=${searchUsername}&hotel=${hotelCode}`);
                     if (!response.ok) {
                         throw new Error(`Usuário não encontrado! Status: ${response.status}`);
                     }
@@ -291,18 +292,18 @@ const HabboHubEditor: React.FC = () => {
             }
         }
     };
-    
-    // UseEffects para carregar dados e atualizar a UI
+
+    // UseEffects
     useEffect(() => {
         loadFigurePartsData();
     }, []);
 
-    // Update avatar URL when figure, gender, directions or hotel change
     useEffect(() => {
         const newAvatarUrl = buildHabboImageUrl(currentLook, currentGender, hotel, direction, headDirection);
         setAvatarUrl(newAvatarUrl);
     }, [currentLook, currentGender, hotel, direction, headDirection]);
 
+    // Renderizar itens da categoria ativa
     useEffect(() => {
         if (!loading && itemsDisplayAreaRef.current) {
             itemsDisplayAreaRef.current.innerHTML = '';
@@ -312,6 +313,11 @@ const HabboHubEditor: React.FC = () => {
                 const matchesGender = item.gender === 'U' || item.gender === currentGender;
                 return matchesGender;
             });
+
+            if (filteredItems.length === 0) {
+                itemsDisplayAreaRef.current.innerHTML = `<p class="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado para esta categoria.</p>`;
+                return;
+            }
 
             const groupedItems = filteredItems.reduce((acc, item) => {
                 let itemType = 'NORMAL';
@@ -347,9 +353,9 @@ const HabboHubEditor: React.FC = () => {
                         itemButton.title = item.name;
 
                         itemButton.innerHTML = `
-                            ${item.club ? '<img decoding="async" class="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4" src="https://habbodefense.com/wp-content/uploads/2024/03/hc_icon.png" alt="hc icon">' : ''}
+                            ${item.club ? '<div class="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4 bg-yellow-400 rounded-full"></div>' : ''}
                             <div class="absolute rounded-full z-0 w-full h-full overflow-hidden">
-                                <img decoding="async" loading="lazy" src="${item.previewUrl}" alt="${item.name}" class="w-full h-full object-contain" style="transform: translateY(-2px);">
+                                <img loading="lazy" src="${item.previewUrl}" alt="${item.name}" class="w-full h-full object-contain" style="transform: translateY(-2px);" onerror="this.style.display='none';">
                             </div>
                         `;
 
@@ -361,12 +367,10 @@ const HabboHubEditor: React.FC = () => {
                     itemsDisplayAreaRef.current?.appendChild(grid);
                 }
             });
-            if (filteredItems.length === 0) {
-                itemsDisplayAreaRef.current.innerHTML = `<p class="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado para esta categoria.</p>`;
-            }
         }
     }, [activeCategory, allFigurePartsData, currentGender, loading]);
 
+    // Renderizar seletor de cores
     useEffect(() => {
         if (!selectedPartForColor || !colorSelectorAreaRef.current) return;
         
@@ -375,7 +379,7 @@ const HabboHubEditor: React.FC = () => {
         const colorsToDisplay = selectedPartForColor.item?.colors || [];
         
         if (colorsToDisplay.length === 0) {
-            colorSelectorAreaRef.current.innerHTML = `<div className="p-4"><p className="text-gray-500 text-sm text-center">Nenhuma opção de cor para esta peça.</p></div>`;
+            colorSelectorAreaRef.current.innerHTML = `<div class="p-4"><p class="text-gray-500 text-sm text-center">Nenhuma opção de cor para esta peça.</p></div>`;
             return;
         }
 
@@ -403,6 +407,33 @@ const HabboHubEditor: React.FC = () => {
         colorSelectorAreaRef.current.appendChild(colorGrid);
     }, [selectedPartForColor, allColorsData]);
 
+    if (loading) {
+        return (
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Carregando peças de roupa...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-600 mb-4">{error}</p>
+                    <button 
+                        onClick={loadFigurePartsData}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    >
+                        Tentar Novamente
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
             <main className="flex flex-col lg:flex-row h-full justify-evenly select-none gap-4 p-4">
@@ -413,21 +444,28 @@ const HabboHubEditor: React.FC = () => {
                         <div id="avatar-container" className="flex flex-row items-center justify-center p-4">
                             <div className="w-1/4 h-full flex flex-col justify-center items-center gap-8">
                                 <div onClick={() => rotateHead('left')} className="cursor-pointer">
-                                    <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_left.png" alt="Girar Cabeça Esquerda" />
+                                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white">←</div>
                                 </div>
                                 <div onClick={() => rotateBody('left')} className="cursor-pointer">
-                                    <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_left.png" alt="Girar Corpo Esquerda" />
+                                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white">←</div>
                                 </div>
                             </div>
                             <div className="w-1/2 object-center relative">
-                                <img ref={myHabboImgRef} decoding="async" id="myHabbo" className="mx-auto max-w-full h-auto" src={avatarUrl} alt="Meu Habbo" style={{ imageRendering: 'pixelated' }} />
+                                <img 
+                                    ref={myHabboImgRef} 
+                                    id="myHabbo" 
+                                    className="mx-auto max-w-full h-auto" 
+                                    src={avatarUrl} 
+                                    alt="Meu Habbo" 
+                                    style={{ imageRendering: 'pixelated' }} 
+                                />
                             </div>
                             <div className="w-1/4 h-full flex flex-col justify-center items-center gap-8">
                                 <div onClick={() => rotateHead('right')} className="cursor-pointer">
-                                    <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_right.png" alt="Girar Cabeça Direita" />
+                                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white">→</div>
                                 </div>
                                 <div onClick={() => rotateBody('right')} className="cursor-pointer">
-                                    <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_right.png" alt="Girar Corpo Direita" />
+                                    <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white">→</div>
                                 </div>
                             </div>
                         </div>
@@ -469,11 +507,13 @@ const HabboHubEditor: React.FC = () => {
                         </div>
                     </div>
                 </div>
+                
                 {/* Coluna Central: Seletor de Roupas */}
                 <div className="w-full lg:w-5/12 max-h-[32rem] h-[32rem] bg-gray-50 order-1 lg:order-2">
                     <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-8 h-[2.5rem] shadow-inner bg-gray-200">
                         {Object.keys(categoryPrefixMap).map(type => {
                             const categoryKey = categoryPrefixMap[type];
+                            const imagePath = categoryImages[categoryKey];
                             return (
                                 <button
                                     key={type}
@@ -481,10 +521,17 @@ const HabboHubEditor: React.FC = () => {
                                     onClick={() => setActiveCategory(categoryKey)}
                                 >
                                     <img 
-                                        decoding="async" 
                                         className="w-4 h-4 sm:w-6 sm:h-6" 
-                                        src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[categoryKey] || 'body.png'}`} 
+                                        src={imagePath}
                                         alt={type}
+                                        onError={(e) => {
+                                            // Fallback para texto se a imagem não carregar
+                                            e.currentTarget.style.display = 'none';
+                                            const span = document.createElement('span');
+                                            span.textContent = type.charAt(0);
+                                            span.className = 'text-xs font-bold';
+                                            e.currentTarget.parentElement?.appendChild(span);
+                                        }}
                                     />
                                 </button>
                             );
@@ -492,13 +539,10 @@ const HabboHubEditor: React.FC = () => {
                     </div>
                     <div className="h-[0.5rem] bg-gray-100"></div>
                     <div ref={itemsDisplayAreaRef} className="flex flex-wrap justify-center max-h-[26.5rem] overflow-y-auto p-2">
-                        {loading ? (
-                            <p className="text-gray-500 text-center p-4 text-sm">Carregando peças de roupa...</p>
-                        ) : (
-                            <p className="text-gray-500 text-center p-4 text-sm">Selecione uma categoria acima para ver as peças de roupa.</p>
-                        )}
+                        <p className="text-gray-500 text-center p-4 text-sm">Carregando itens...</p>
                     </div>
                 </div>
+                
                 {/* Coluna Direita: Seletor de Cores */}
                 <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-3">
                     <h1 className="font-sans text-slate-600 font-bold w-full h-[2.5rem] bg-gray-200 p-2 shadow-inner text-center">Seletor de Cores</h1>
