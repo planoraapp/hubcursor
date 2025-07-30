@@ -1,16 +1,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Copy, Shuffle, Download, Upload, RefreshCw, User, Palette } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import AvatarPreview from './HabboEditor/AvatarPreview';
+import ClothingSelector from './HabboEditor/ClothingSelector';
+import ColorPalette from './HabboEditor/ColorPalette';
 
 interface FigurePart {
   id: string;
@@ -47,20 +45,6 @@ const DEFAULT_FIGURE: CurrentFigure = {
   sh: { id: '705', colors: ['1'] }
 };
 
-const PART_CATEGORIES = {
-  hd: 'Rosto & Corpo',
-  hr: 'Cabelos',
-  ch: 'Parte de cima',
-  lg: 'Parte de baixo', 
-  sh: 'Sapatos',
-  ha: 'Chapéus',
-  ea: 'Óculos',
-  fa: 'Máscaras/Rosto',
-  cc: 'Casacos/Vestidos',
-  ca: 'Capas',
-  wa: 'Cintos'
-};
-
 const HabboHubEditor = () => {
   const { toast } = useToast();
   
@@ -82,11 +66,6 @@ const HabboHubEditor = () => {
       .join('.');
     return parts;
   }, [currentFigure]);
-
-  const getAvatarUrl = useCallback(() => {
-    const figureString = generateFigureString();
-    return `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=3&size=m&img_format=png&gesture=std&action=std`;
-  }, [generateFigureString, selectedHotel]);
 
   const fetchFigureData = useCallback(async () => {
     try {
@@ -126,23 +105,21 @@ const HabboHubEditor = () => {
         ...prev,
         [activeCategory]: {
           id: partId,
-          colors: [part.colors[0]] // Use primeira cor disponível
+          colors: [part.colors[0]]
         }
       }));
     }
   };
 
-  const handleColorSelect = (colorId: string, colorIndex: number = 0) => {
+  const handleColorSelect = (colorId: string) => {
     setCurrentFigure(prev => {
       const currentPart = prev[activeCategory as keyof CurrentFigure];
       if (currentPart) {
-        const newColors = [...currentPart.colors];
-        newColors[colorIndex] = colorId;
         return {
           ...prev,
           [activeCategory]: {
             ...currentPart,
-            colors: newColors
+            colors: [colorId]
           }
         };
       }
@@ -155,7 +132,7 @@ const HabboHubEditor = () => {
 
     const newFigure: CurrentFigure = { ...DEFAULT_FIGURE };
     
-    Object.keys(PART_CATEGORIES).forEach(category => {
+    Object.keys(newFigure).forEach(category => {
       const parts = figureData.figureParts[category];
       if (parts && parts.length > 0) {
         const randomPart = parts[Math.floor(Math.random() * parts.length)];
@@ -176,7 +153,9 @@ const HabboHubEditor = () => {
   };
 
   const handleCopyUrl = async () => {
-    const url = getAvatarUrl();
+    const figureString = generateFigureString();
+    const url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=3&size=l&img_format=png&gesture=std&action=std`;
+    
     try {
       await navigator.clipboard.writeText(url);
       toast({
@@ -209,44 +188,24 @@ const HabboHubEditor = () => {
     });
   };
 
-  const filteredParts = figureData?.figureParts[activeCategory]?.filter(part =>
-    part.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-
   if (loading && retryCount === 0) {
     return (
-      <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-amber-600 mb-2">Editor de Visuais Habbo</h2>
           <p className="text-gray-600">Carregando peças de roupa...</p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-40" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Skeleton className="h-64 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 gap-2">
-                {[...Array(16)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div>
+            <Skeleton className="h-96 w-full" />
+          </div>
+          <div>
+            <Skeleton className="h-96 w-full" />
+          </div>
+          <div>
+            <Skeleton className="h-48 w-full" />
+          </div>
         </div>
       </div>
     );
@@ -286,11 +245,14 @@ const HabboHubEditor = () => {
     );
   }
 
+  const currentPart = figureData?.figureParts[activeCategory]?.find(p => p.id === selectedPart);
+  const availableColors = currentPart?.colors || [];
+
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-amber-600 mb-2">Editor de Visuais Habbo</h2>
+        <h2 className="text-3xl font-bold text-amber-600 mb-2 volter-font">Editor de Visuais Habbo</h2>
         <p className="text-gray-600">Crie e personalize seu avatar Habbo!</p>
       </div>
 
@@ -306,177 +268,45 @@ const HabboHubEditor = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Main Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Avatar Preview */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Preview do Avatar
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Hotel Selector */}
-            <div className="space-y-2">
-              <Label htmlFor="hotel">Hotel:</Label>
-              <Select value={selectedHotel} onValueChange={setSelectedHotel}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="com.br">🇧🇷 Habbo.com.br</SelectItem>
-                  <SelectItem value="com">🇺🇸 Habbo.com</SelectItem>
-                  <SelectItem value="es">🇪🇸 Habbo.es</SelectItem>
-                  <SelectItem value="fr">🇫🇷 Habbo.fr</SelectItem>
-                  <SelectItem value="de">🇩🇪 Habbo.de</SelectItem>
-                  <SelectItem value="it">🇮🇹 Habbo.it</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="lg:col-span-1">
+          <AvatarPreview
+            figureString={generateFigureString()}
+            selectedHotel={selectedHotel}
+            setSelectedHotel={setSelectedHotel}
+            username={username}
+            setUsername={setUsername}
+            onRandomize={handleRandomize}
+            onCopyUrl={handleCopyUrl}
+            onExportFigure={handleExportFigure}
+          />
+        </div>
 
-            {/* Avatar Image */}
-            <div className="flex justify-center">
-              <div className="bg-gradient-to-br from-blue-100 to-purple-100 p-8 rounded-lg border-2 border-dashed border-gray-300">
-                <img 
-                  src={getAvatarUrl()}
-                  alt="Preview do Avatar"
-                  className="max-w-full h-auto pixelated"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              </div>
-            </div>
+        {/* Clothing Selector */}
+        <div className="lg:col-span-1">
+          <ClothingSelector
+            figureParts={figureData?.figureParts || {}}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            selectedPart={selectedPart}
+            onPartSelect={handlePartSelect}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+        </div>
 
-            {/* Username Input */}
-            <div className="space-y-2">
-              <Label htmlFor="username">Usuário:</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Digite o nome do usuário"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <Button onClick={handleRandomize} variant="outline" size="sm">
-                <Shuffle className="w-4 h-4 mr-2" />
-                Randomizar
-              </Button>
-              <Button onClick={handleCopyUrl} variant="outline" size="sm">
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar URL
-              </Button>
-              <Button onClick={handleExportFigure} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar
-              </Button>
-              <Button variant="outline" size="sm">
-                <Upload className="w-4 h-4 mr-2" />
-                Importar
-              </Button>
-            </div>
-
-            {/* Figure String Display */}
-            <div className="space-y-2">
-              <Label>Figure String:</Label>
-              <Input
-                value={generateFigureString()}
-                readOnly
-                className="text-xs font-mono bg-gray-50"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Parts Selector */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="w-5 h-5" />
-              Peças de Roupa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-              <TabsList className="grid grid-cols-5 lg:grid-cols-6 mb-4">
-                {Object.entries(PART_CATEGORIES).map(([key, label]) => (
-                  <TabsTrigger key={key} value={key} className="text-xs">
-                    {label.split(' ')[0]}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              <div className="space-y-4">
-                {/* Search */}
-                <Input
-                  placeholder="Buscar peças..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-
-                {/* Parts Grid */}
-                <div className="max-h-80 overflow-y-auto">
-                  <div className="grid grid-cols-4 gap-2">
-                    {filteredParts.map((part) => (
-                      <Button
-                        key={part.id}
-                        variant={selectedPart === part.id ? "default" : "outline"}
-                        size="sm"
-                        className="h-auto p-2 flex flex-col items-center gap-1"
-                        onClick={() => handlePartSelect(part.id)}
-                      >
-                        <div className="text-xs font-medium truncate w-full text-center">
-                          {part.name}
-                        </div>
-                        <div className="flex gap-1">
-                          <Badge variant={part.category === 'hc' ? 'default' : 'secondary'} className="text-xs">
-                            {part.category.toUpperCase()}
-                          </Badge>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
+        {/* Color Palette */}
+        <div className="lg:col-span-1">
+          <ColorPalette
+            colors={figureData?.colors || []}
+            availableColors={availableColors}
+            selectedColor={currentFigure[activeCategory as keyof CurrentFigure]?.colors[0]}
+            onColorSelect={handleColorSelect}
+          />
+        </div>
       </div>
-
-      {/* Colors Section */}
-      {selectedPart && figureData && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Cores Disponíveis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-10 gap-2">
-              {figureData.colors
-                .filter(color => 
-                  figureData.figureParts[activeCategory]
-                    ?.find(p => p.id === selectedPart)
-                    ?.colors.includes(color.id)
-                )
-                .map((color) => (
-                  <Button
-                    key={color.id}
-                    variant="outline"
-                    size="sm"
-                    className="h-12 p-1 flex flex-col items-center"
-                    style={{ backgroundColor: color.hex }}
-                    onClick={() => handleColorSelect(color.id)}
-                    title={color.name}
-                  >
-                    <div className="text-xs text-white bg-black bg-opacity-50 px-1 rounded">
-                      {color.name}
-                    </div>
-                  </Button>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
