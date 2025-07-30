@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 
 interface HabboFigurePart {
@@ -40,7 +39,7 @@ const HabboHubEditor: React.FC = () => {
   const HABBO_IMAGING_BASE_URL = (hotel: string) => `https://www.${hotel}/habbo-imaging/avatarimage?`;
   const HABBO_API_PROFILE_URL = (username: string) => `https://www.habbo.com/api/public/users?name=${username}`;
   
-  // ATUALIZE COM SUA URL DA EDGE FUNCTION
+  // URL da Edge Function atualizada
   const FIGURE_PARTS_API_URL = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/get-habbo-figures';
 
   const DEFAULT_FIGURE_M = "hd-180-61.hr-3791-45.ch-3030-61.lg-3138-61.sh-905-61";
@@ -103,7 +102,15 @@ const HabboHubEditor: React.FC = () => {
   const loadFigurePartsData = async () => {
     try {
       console.log('Carregando dados das peças de roupa...');
-      const response = await fetch(FIGURE_PARTS_API_URL);
+      
+      // Requisição otimizada conforme recomendação
+      const response = await fetch(FIGURE_PARTS_API_URL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
       if (!response.ok) {
         throw new Error(`Erro ao carregar dados: ${response.status}`);
       }
