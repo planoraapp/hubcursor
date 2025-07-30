@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 
 // Tipagens para os dados da API
@@ -28,9 +29,8 @@ const HabboHubEditor: React.FC = () => {
     const HABBO_IMAGING_BASE_URL = (hotel: string) => `https://www.${hotel}/habbo-imaging/avatarimage?`;
     const HABBO_API_PROFILE_URL = (username: string, hotelCode: string) => `https://www.habbo.com/api/public/users?name=${username}&hotel=${hotelCode}`;
     
-    // URL da Edge Function com a sua chave de API
+    // URL da Edge Function
     const FIGURE_PARTS_API_URL = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/get-habbo-figures';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NDczODYsImV4cCI6MjA2OTMyMzM4Nn0.anj1HLW-eXLyZd0SQmB6Rmkf00-wndFKqtOW4PV5bmc';
 
     // --- Variáveis de Estado ---
     const DEFAULT_FIGURE_M = "hd-180-61.hr-3791-45.ha-1008-61.ch-3030-61.lg-3138-61.sh-905-61";
@@ -49,10 +49,9 @@ const HabboHubEditor: React.FC = () => {
     const [selectedPartForColor, setSelectedPartForColor] = useState<{item: HabboFigurePart | null, currentColors: string[]} | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const myHabboImgRef = useRef<HTMLImageElement>(null);
     const itemsDisplayAreaRef = useRef<HTMLDivElement>(null);
     const colorSelectorAreaRef = useRef<HTMLDivElement>(null);
-    const categoryButtonRefs = useRef<{[key: string]: HTMLButtonElement | null}>({});
-    const genderButtonRefs = useRef<{[key: string]: HTMLButtonElement | null}>({});
 
     const categoryPrefixMap: {[key: string]: string} = {
         'Rosto & Corpo': 'hd',
@@ -63,6 +62,17 @@ const HabboHubEditor: React.FC = () => {
         'Chapéus': 'he',
         'Acessórios Cabelo': 'ea',
         'Óculos': 'fa'
+    };
+
+    const categoryImages: {[key: string]: string} = {
+        'hd': 'body.png',
+        'hr': 'hair.png',
+        'ch': 'top.png',
+        'lg': 'bottom.png',
+        'sh': 'shoes.png',
+        'he': 'hat.png',
+        'ea': 'accessories.png',
+        'fa': 'glasses.png'
     };
 
     // --- Funções Auxiliares ---
@@ -140,8 +150,6 @@ const HabboHubEditor: React.FC = () => {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'apikey': SUPABASE_ANON_KEY,
                 },
             });
             
@@ -289,6 +297,12 @@ const HabboHubEditor: React.FC = () => {
         loadFigurePartsData();
     }, []);
 
+    // Update avatar URL when figure, gender, directions or hotel change
+    useEffect(() => {
+        const newAvatarUrl = buildHabboImageUrl(currentLook, currentGender, hotel, direction, headDirection);
+        setAvatarUrl(newAvatarUrl);
+    }, [currentLook, currentGender, hotel, direction, headDirection]);
+
     useEffect(() => {
         if (!loading && itemsDisplayAreaRef.current) {
             itemsDisplayAreaRef.current.innerHTML = '';
@@ -303,7 +317,6 @@ const HabboHubEditor: React.FC = () => {
                 let itemType = 'NORMAL';
                 if (item.club) itemType = 'HC';
                 else if (item.sellable) itemType = 'SELLABLE';
-                else if (item.type === 'nft') itemType = 'NFT'; // Assumindo que a API pode ter um tipo 'nft'
                 
                 if (!acc[itemType]) {
                     acc[itemType] = [];
@@ -335,7 +348,6 @@ const HabboHubEditor: React.FC = () => {
 
                         itemButton.innerHTML = `
                             ${item.club ? '<img decoding="async" class="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4" src="https://habbodefense.com/wp-content/uploads/2024/03/hc_icon.png" alt="hc icon">' : ''}
-                            ${item.type === 'NFT' ? '<img decoding="async" class="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4" src="https://habbodefense.com/wp-content/uploads/2024/03/nft_icon.png" alt="nft icon">' : ''}
                             <div class="absolute rounded-full z-0 w-full h-full overflow-hidden">
                                 <img decoding="async" loading="lazy" src="${item.previewUrl}" alt="${item.name}" class="w-full h-full object-contain" style="transform: translateY(-2px);">
                             </div>
@@ -471,7 +483,7 @@ const HabboHubEditor: React.FC = () => {
                                     <img 
                                         decoding="async" 
                                         className="w-4 h-4 sm:w-6 sm:h-6" 
-                                        src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[categoryKey as keyof typeof categoryImages] || 'body.png'}`} 
+                                        src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[categoryKey] || 'body.png'}`} 
                                         alt={type}
                                     />
                                 </button>
@@ -483,62 +495,7 @@ const HabboHubEditor: React.FC = () => {
                         {loading ? (
                             <p className="text-gray-500 text-center p-4 text-sm">Carregando peças de roupa...</p>
                         ) : (
-                            <div className="w-full">
-                                {Object.keys(groupedItems).length > 0 ? (
-                                    Object.keys(groupedItems).map(category => (
-                                        <div key={category} className="w-full">
-                                            <h4 className={`font-bold mb-2 p-2 text-sm ${
-                                                category === 'HC' ? 'text-yellow-600' :
-                                                category === 'SELLABLE' ? 'text-green-600' :
-                                                'text-gray-600'
-                                            }`}>
-                                                {category}
-                                            </h4>
-                                            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
-                                                {groupedItems[category].map(item => (
-                                                    <button
-                                                        key={`${item.type}-${item.id}-${category}`}
-                                                        className={`relative rounded-full w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 cursor-pointer hover:shadow-inner hover:bg-gray-300 ${
-                                                            selectedPartForColor?.item?.type === item.type && selectedPartForColor?.item?.id === item.id
-                                                            ? 'border-blue-500 ring-2 ring-blue-500'
-                                                            : ''
-                                                        }`}
-                                                        onClick={() => handleItemClick(item)}
-                                                        title={item.name}
-                                                    >
-                                                        {(item.club || category === 'HC') && (
-                                                            <img
-                                                                decoding="async"
-                                                                className="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4"
-                                                                src="https://habbodefense.com/wp-content/uploads/2024/03/hc_icon.png"
-                                                                alt="hc icon"
-                                                            />
-                                                        )}
-                                                        <div className="absolute rounded-full z-0 w-full h-full overflow-hidden">
-                                                            <img
-                                                                decoding="async"
-                                                                style={{ transform: 'translateY(-2px)' }}
-                                                                loading="lazy"
-                                                                src={item.previewUrl}
-                                                                alt={item.name}
-                                                                className="w-full h-full object-contain"
-                                                                onError={(e) => {
-                                                                    const target = e.target as HTMLImageElement;
-                                                                    target.onerror = null;
-                                                                    target.src = 'https://via.placeholder.com/48x48?text=X';
-                                                                    target.alt = 'Erro';
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado nesta categoria.</p>
-                                )}
-                            </div>
+                            <p className="text-gray-500 text-center p-4 text-sm">Selecione uma categoria acima para ver as peças de roupa.</p>
                         )}
                     </div>
                 </div>
@@ -546,42 +503,9 @@ const HabboHubEditor: React.FC = () => {
                 <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-3">
                     <h1 className="font-sans text-slate-600 font-bold w-full h-[2.5rem] bg-gray-200 p-2 shadow-inner text-center">Seletor de Cores</h1>
                     <div ref={colorSelectorAreaRef} className="flex flex-col h-[29rem] overflow-y-auto">
-                        {selectedPartForColor ? (
-                            <div className="p-2">
-                                <p className="text-sm mb-2 text-gray-700">Editando: <strong>{selectedPartForColor.item?.name}</strong></p>
-                                <div className="mb-4">
-                                    <h2 className="font-sans text-slate-600 font-bold p-2 h-[2rem] bg-gray-100 rounded-lg mb-2 shadow-inner text-center text-sm">
-                                        Cores Disponíveis
-                                    </h2>
-                                    <div className="flex flex-wrap bg-gray-100 rounded-lg p-2 justify-center gap-1">
-                                        {selectedPartForColor.item?.colors.map(colorId => {
-                                            const color = allColorsData[colorId];
-                                            if (color) {
-                                                return (
-                                                    <button
-                                                        key={colorId}
-                                                        className={`w-6 h-6 border rounded-full hover:scale-110 transition-transform ${
-                                                            selectedPartForColor?.currentColors.includes(colorId) ? 'ring-2 ring-blue-500' : ''
-                                                        }`}
-                                                        style={{ backgroundColor: `${color.hex}` }}
-                                                        onClick={() => handleColorClick(colorId)}
-                                                        title={color.name || `${color.hex}`}
-                                                    />
-                                                );
-                                            }
-                                            return null;
-                                        })}
-                                    </div>
-                                </div>
-                                {selectedPartForColor.item?.colors.length === 0 && (
-                                    <p className="text-gray-500 text-sm p-2">Esta peça não possui opções de cor.</p>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="p-4">
-                                <p className="text-gray-500 text-sm text-center">Selecione uma peça de roupa no menu para alterar sua cor.</p>
-                            </div>
-                        )}
+                        <div className="p-4">
+                            <p className="text-gray-500 text-sm text-center">Selecione uma peça de roupa no menu para alterar sua cor.</p>
+                        </div>
                     </div>
                 </div>
             </main>
