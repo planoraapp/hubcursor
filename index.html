@@ -1,31 +1,30 @@
 
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Habbo Hub - Central de Ferramentas para Habbo Hotel</title>
-    <meta name="description" content="Central interativa para jogadores de Habbo Hotel com ferramentas, rankings, catálogo e muito mais!" />
-    <meta name="author" content="Habbo Hub Team" />
-    <link rel="icon" href="/assets/hub.gif" type="image/gif">
-
-    <meta property="og:title" content="Habbo Hub - Central de Ferramentas para Habbo Hotel" />
-    <meta property="og:description" content="Central interativa para jogadores de Habbo Hotel com ferramentas, rankings, catálogo e muito mais!" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4575639044781209"
-     crossorigin="anonymous"></script>
+    <title>HabboHub</title>
+    <style>
+      /* Remove bordas indesejadas do elemento de notificação */
+      div[role="region"][aria-label="Notifications (F8)"] {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      /* Remove bordas da lista ordenada dentro do elemento de notificação */
+      div[role="region"][aria-label="Notifications (F8)"] ol {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+      }
+      /* Remove qualquer borda adicional que possa aparecer */
+      #root > div {
+        border: none !important;
+      }
+    </style>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

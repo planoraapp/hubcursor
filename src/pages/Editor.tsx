@@ -22,6 +22,22 @@ const Editor = () => {
     };
   }, []);
 
+  // Carregar o script do avatar editor quando o componente monta
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = '/js/avatarEditor.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      // Remove o script quando o componente desmonta
+      const existingScript = document.querySelector('script[src="/js/avatarEditor.js"]');
+      if (existingScript) {
+        document.body.removeChild(existingScript);
+      }
+    };
+  }, []);
+
   if (isMobile) {
     return (
       <MobileLayout>
