@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 
 interface HabboFigurePart {
@@ -39,10 +40,8 @@ const HabboHubEditor: React.FC = () => {
   const HABBO_IMAGING_BASE_URL = (hotel: string) => `https://www.${hotel}/habbo-imaging/avatarimage?`;
   const HABBO_API_PROFILE_URL = (username: string) => `https://www.habbo.com/api/public/users?name=${username}`;
   
-  // URL da Edge Function atualizada
+  // URL da Edge Function - sem autenticação necessária
   const FIGURE_PARTS_API_URL = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/get-habbo-figures';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NDczODYsImV4cCI6MjA2OTMyMzM4Nn0.anj1HLW-eXLyZd0SQmB6Rmkf00-wndFKqtOW4PV5bmc'; // <-- COLE SUA CHAVE DE API AQUI!
-
 
   const DEFAULT_FIGURE_M = "hd-180-61.hr-3791-45.ch-3030-61.lg-3138-61.sh-905-61";
   const DEFAULT_FIGURE_F = "hd-180-1.hr-828-42.ch-665-92.lg-700-1.sh-705-1";
@@ -105,7 +104,7 @@ const HabboHubEditor: React.FC = () => {
     try {
       console.log('Carregando dados das peças de roupa...');
       
-      // Requisição otimizada conforme recomendação
+      // Requisição simples sem autenticação (já que a Edge Function está pública)
       const response = await fetch(FIGURE_PARTS_API_URL, {
         method: 'GET',
         headers: {
@@ -114,7 +113,7 @@ const HabboHubEditor: React.FC = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Erro ao carregar dados: ${response.status}`);
+        throw new Error(`Erro ao carregar dados: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
       setAllFigurePartsData(data.figureParts);
