@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
@@ -6,7 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { getUserByName } from '../lib/habboApi';
+import { getUserByName } from '../services/habboApi';
 import { supabase } from '../lib/supabaseClient';
 import { generateVerificationCode } from './auth/AuthUtils';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -110,7 +109,7 @@ export const ConnectHabboFormTabs = () => {
 
       const newCode = generateVerificationCode();
       setVerificationCode(newCode);
-      setUserHabboId(habboUserCheck.id);
+      setUserHabboId(habboUserCheck.uniqueId);
       setStep(2);
       toast({
         title: "Código Gerado",
@@ -146,8 +145,8 @@ export const ConnectHabboFormTabs = () => {
       const habboUser = await verifyHabboMotto(habboNameInput, verificationCode);
       
       if (habboUser) {
-        setUserHabboId(habboUser.id);
-        const linkedAccount = await getLinkedAccount(habboUser.id);
+        setUserHabboId(habboUser.uniqueId);
+        const linkedAccount = await getLinkedAccount(habboUser.uniqueId);
         
         if (linkedAccount) {
           setStep(4); // Login with existing password
