@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import HabboHubEditor from '../components/HabboHubEditor';
 import { AdSpace } from '../components/AdSpace';
@@ -19,22 +18,6 @@ const Editor = () => {
     window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
-
-  // Carregar o script do avatar editor quando o componente monta
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = '/js/avatarEditor.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Remove o script quando o componente desmonta
-      const existingScript = document.querySelector('script[src="/js/avatarEditor.js"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
     };
   }, []);
 

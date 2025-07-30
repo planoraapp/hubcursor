@@ -1,80 +1,202 @@
-// src/components/HabboHubEditor.tsx
-import React, { useState, useEffect } from 'react';
-import { HABBO_FIGURE_PARTS, HABBO_COLOR_MAP, getHabboColorId, HabboFigurePart, subNavCategories, colorPalettes } from '../data/habboFigures';
 
-type Gender = 'M' | 'F' | 'U';
+import React, { useState, useEffect, useRef } from 'react';
 
-// Função para construir a URL do Habbo Imaging
-const buildHabboImageUrl = (
-  figure: string,
-  gender: Gender,
-  hotel: string = 'habbo.com.br',
-  direction: number = 2,
-  headDirection: number = 3,
-  action: string = 'std',
-  gesture: string = 'std',
-  frame: number = 0,
-  size: 's' | 'm' | 'l' = 'l'
-) => {
-  const baseUrl = `https://www.${hotel}/habbo-imaging/avatarimage?`;
-  
-  const params = [
-    `figure=${figure}`,
-    `gender=${gender}`,
-    `direction=${direction}`,
-    `head_direction=${headDirection}`,
-    `action=${action}`,
-    `gesture=${gesture}`,
-    `frame=${frame}`,
-    `size=${size}`,
-    `headonly=0`,
-    `img_format=png`,
-  ];
-  
-  return `${baseUrl}${params.join('&')}`;
-};
+interface HabboFigurePart {
+  id: string;
+  type: string;
+  name: string;
+  gender: 'M' | 'F' | 'U';
+  club: boolean;
+  sellable: boolean;
+  colors: string[];
+  previewUrl: string;
+}
+
+interface HabboColor {
+  id: string;
+  hex: string;
+  name: string;
+}
 
 const HabboHubEditor: React.FC = () => {
   const [hotel, setHotel] = useState('habbo.com.br');
   const [username, setUsername] = useState('HabboHub');
-  const [currentGender, setCurrentGender] = useState<Gender>('M');
+  const [currentGender, setCurrentGender] = useState<'M' | 'F'>('M');
   const [currentLook, setCurrentLook] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('hd');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPartForColor, setSelectedPartForColor] = useState<{ item: HabboFigurePart; currentColors: string[] } | null>(null);
-
   const [direction, setDirection] = useState(2);
   const [headDirection, setHeadDirection] = useState(3);
 
-  // Looks padrão usando IDs numéricos de cor mapeados do HABBO_COLOR_MAP
-  const defaultMaleLook = `hd-180-${getHabboColorId('000000')}-.hr-3791-${getHabboColorId('45')}-${getHabboColorId('0')}-.ha-1008-${getHabboColorId('000000')}-.ch-3030-${getHabboColorId('000000')}-${getHabboColorId('0')}-.lg-3138-${getHabboColorId('000000')}-${getHabboColorId('0')}-.sh-905-${getHabboColorId('000000')}-${getHabboColorId('0')}-`;
-  const defaultFemaleLook = `hd-600-${getHabboColorId('000000')}-.hr-5773-${getHabboColorId('000000')}-${getHabboColorId('828282')}-.ch-800-${getHabboColorId('000000')}-.lg-900-${getHabboColorId('000000')}-.sh-100-${getHabboColorId('000000')}-.ha-101-${getHabboColorId('000000')}-`;
+  const [allFigurePartsData, setAllFigurePartsData] = useState<{[key: string]: HabboFigurePart[]}>({});
+  const [allColorsData, setAllColorsData] = useState<{[key: string]: HabboColor}>({});
+  const [selectedPartForColor, setSelectedPartForColor] = useState<{item: HabboFigurePart, currentColors: string[]} | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const itemsDisplayAreaRef = useRef<HTMLDivElement>(null);
+  const colorSelectorAreaRef = useRef<HTMLDivElement>(null);
+
+  // URLs Base
+  const HABBO_IMAGING_BASE_URL = (hotel: string) => `https://www.${hotel}/habbo-imaging/avatarimage?`;
+  const HABBO_API_PROFILE_URL = (username: string) => `https://www.habbo.com/api/public/users?name=${username}`;
+  
+  // ATUALIZE COM SUA URL DA EDGE FUNCTION
+  const FIGURE_PARTS_API_URL = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/get-habbo-figures';
+
+  const DEFAULT_FIGURE_M = "hd-180-61.hr-3791-45.ch-3030-61.lg-3138-61.sh-905-61";
+  const DEFAULT_FIGURE_F = "hd-180-1.hr-828-42.ch-665-92.lg-700-1.sh-705-1";
+
+  const categoryPrefixMap: {[key: string]: string} = {
+    'Rosto & Corpo': 'hd',
+    'Cabelos': 'hr',
+    'Parte de cima': 'ch',
+    'Parte de baixo': 'lg',
+    'Sapatos': 'sh',
+    'Chapéus': 'he',
+    'Acessórios Cabelo': 'ea', 
+    'Óculos': 'fa' 
+  };
 
   useEffect(() => {
     if (currentGender === 'M') {
-      setCurrentLook(defaultMaleLook);
+      setCurrentLook(DEFAULT_FIGURE_M);
     } else {
-      setCurrentLook(defaultFemaleLook);
+      setCurrentLook(DEFAULT_FIGURE_F);
     }
-  }, [currentGender, defaultMaleLook, defaultFemaleLook]);
+  }, [currentGender]);
 
   useEffect(() => {
-    const newUrl = buildHabboImageUrl(
-      currentLook, currentGender, hotel, direction, headDirection, 'std', 'std', 0, 'l'
-    );
+    const newUrl = buildHabboImageUrl(currentLook, currentGender, hotel, direction, headDirection, 'std', 'std', 0, 'l');
     setAvatarUrl(newUrl);
     console.log('NOVA URL FINAL DO AVATAR:', newUrl);
   }, [currentLook, currentGender, hotel, direction, headDirection]);
 
-  const handleHotelChange = (e: React.ChangeEvent<HTMLSelectElement>) => setHotel(e.target.value);
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value);
-
-  const rotateHead = (dir: 'left' | 'right') => {
-    setHeadDirection(prev => (dir === 'left' ? (prev === 0 ? 7 : prev - 1) : (prev === 7 ? 0 : prev + 1)));
+  const buildHabboImageUrl = (
+    figure: string,
+    gender: 'M' | 'F',
+    hotel: string = 'habbo.com.br',
+    direction: number = 2,
+    headDirection: number = 3,
+    action: string = 'std',
+    gesture: string = 'std',
+    frame: number = 0,
+    size: 's' | 'm' | 'l' = 'l'
+  ) => {
+    const baseUrl = `https://www.${hotel}/habbo-imaging/avatarimage?`;
+    
+    const params = [
+      `figure=${figure}`,
+      `gender=${gender}`,
+      `direction=${direction}`,
+      `head_direction=${headDirection}`,
+      `action=${action}`,
+      `gesture=${gesture}`,
+      `frame=${frame}`,
+      `size=${size}`,
+      `headonly=0`,
+      `img_format=png`,
+    ];
+    
+    return `${baseUrl}${params.join('&')}`;
   };
-  const rotateBody = (dir: 'left' | 'right') => {
-    setDirection(prev => (dir === 'left' ? (prev === 0 ? 7 : prev - 1) : (prev === 7 ? 0 : prev + 1)));
+
+  const loadFigurePartsData = async () => {
+    try {
+      console.log('Carregando dados das peças de roupa...');
+      const response = await fetch(FIGURE_PARTS_API_URL);
+      if (!response.ok) {
+        throw new Error(`Erro ao carregar dados: ${response.status}`);
+      }
+      const data = await response.json();
+      setAllFigurePartsData(data.figureParts);
+      
+      const colorsMap = data.colors.reduce((acc: {[key: string]: HabboColor}, color: HabboColor) => {
+        acc[color.id] = color;
+        return acc;
+      }, {});
+      setAllColorsData(colorsMap);
+
+      console.log("Dados de visuais carregados:", Object.keys(data.figureParts));
+      console.log("Cores carregadas:", Object.keys(colorsMap).length);
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load figure parts:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFigurePartsData();
+  }, []);
+
+  const getFigurePartCurrent = (figureString: string, partPrefix: string) => {
+    const regex = new RegExp(`(^|\\.)(${partPrefix}-\\d+(?:-\\d+)?)(?=\\.|$)`);
+    const match = figureString.match(regex);
+    return match ? match[2] : '';
+  };
+
+  const getColorCodeFromFigurePart = (figurePartString: string) => {
+    const parts = figurePartString.split('-');
+    if (parts.length >= 3) {
+      return parts[2];
+    }
+    return null;
+  };
+
+  const setFigurePart = (figureString: string, partPrefix: string, newPartId: string, newColorCode: string | null = null) => {
+    let newFigure = figureString;
+    const currentPartRegex = new RegExp(`(^|\\.)(${partPrefix}-\\d+(?:-\\d+)?)(?=\\.|$)`);
+    const existingPartMatch = newFigure.match(currentPartRegex);
+
+    let partToInsert = `${partPrefix}-${newPartId}`;
+    if (newColorCode !== null) {
+      partToInsert += `-${newColorCode}`;
+    } else {
+      const currentPartWithColor = getFigurePartCurrent(figureString, partPrefix);
+      const currentPartColor = getColorCodeFromFigurePart(currentPartWithColor);
+      if (currentPartColor) {
+        partToInsert += `-${currentPartColor}`;
+      }
+    }
+
+    if (existingPartMatch) {
+      newFigure = newFigure.replace(existingPartMatch[0], `${existingPartMatch[1]}${partToInsert}`);
+    } else {
+      newFigure += (newFigure.length > 0 ? '.' : '') + partToInsert;
+    }
+    return newFigure;
+  };
+
+  const handleItemClick = (item: HabboFigurePart) => {
+    const currentFigurePart = getFigurePartCurrent(currentLook, item.type);
+    let currentColor = getColorCodeFromFigurePart(currentFigurePart);
+    
+    if (!currentColor && item.colors && item.colors.length > 0) {
+      currentColor = item.colors[0];
+    } else if (!currentColor) {
+      currentColor = '1';
+    }
+
+    const newLook = setFigurePart(currentLook, item.type, item.id, currentColor);
+    setCurrentLook(newLook);
+    setSelectedPartForColor({ item: item, currentColors: [currentColor] });
+
+    console.log(`Item selecionado: ${item.name}. Novo look: ${newLook}`);
+  };
+
+  const handleColorClick = (colorId: string) => {
+    if (!selectedPartForColor) {
+      alert('Selecione uma peça de roupa primeiro para alterar a cor.');
+      return;
+    }
+
+    const { item } = selectedPartForColor;
+    const newLook = setFigurePart(currentLook, item.type, item.id, colorId);
+    setCurrentLook(newLook);
+    setSelectedPartForColor({ item: item, currentColors: [colorId] });
+
+    console.log(`Cor alterada para: ${colorId}. Novo look: ${newLook}`);
   };
 
   const handleCopyUrl = async () => {
@@ -87,106 +209,99 @@ const HabboHubEditor: React.FC = () => {
     }
   };
 
-  const getPreviewUrl = (item: HabboFigurePart) => {
-    if (item.catalogName) {
-      return `https://api.habboapi.net/furni/${item.catalogName}/icon`;
+  const handleCopyFaceUrl = async () => {
+    try {
+      const faceUrl = avatarUrl.replace('headonly=0', 'headonly=1');
+      await navigator.clipboard.writeText(faceUrl);
+      alert('URL do rosto copiada para a área de transferência!');
+    } catch (err) {
+      console.error('Falha ao copiar: ', err);
+      alert('Erro ao copiar a URL do rosto. Por favor, copie manualmente.');
     }
-    const fallbackColorId = getHabboColorId('000000');
-    let colorsPart = '';
-    for (let i = 0; i < item.colorSlots; i++) {
-        colorsPart += `${fallbackColorId}` + (i < item.colorSlots - 1 ? '-' : '');
-    }
-    if (item.colorSlots > 0) colorsPart += '-';
-
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.type}-${item.id}-${colorsPart}&gender=${currentGender}&size=s&headonly=0`;
   };
 
-  const handleItemClick = (item: HabboFigurePart) => {
-    const currentParts = currentLook.split('.').filter(Boolean);
-    let newParts: string[] = [];
-    let updated = false;
+  const rotateHead = (dir: 'left' | 'right') => {
+    setHeadDirection(prev => (dir === 'left' ? (prev === 0 ? 7 : prev - 1) : (prev === 7 ? 0 : prev + 1)));
+  };
 
-    const defaultColorId = getHabboColorId('000000');
+  const rotateBody = (dir: 'left' | 'right') => {
+    setDirection(prev => (dir === 'left' ? (prev === 0 ? 7 : prev - 1) : (prev === 7 ? 0 : prev + 1)));
+  };
 
-    let colorsForThisItem: string[] = Array(item.colorSlots).fill(defaultColorId);
-
-    const existingPart = currentParts.find(p => p.startsWith(item.type + '-'));
-    if (existingPart) {
-        const existingColors = existingPart.split('-').slice(2).filter(Boolean);
-        for(let i = 0; i < item.colorSlots; i++) {
-            colorsForThisItem[i] = existingColors[i] || defaultColorId;
-        }
-    }
-
-    let itemFigureString = `${item.type}-${item.id}`;
-    if (item.colorSlots > 0) {
-        itemFigureString += `-${colorsForThisItem.join('-')}`;
-        itemFigureString += '-';
-    }
-
-    for (const part of currentParts) {
-        if (part.startsWith(item.type + '-')) {
-            newParts.push(itemFigureString);
-            updated = true;
-        } else {
-            newParts.push(part);
-        }
-    }
-    if (!updated) {
-        newParts.push(itemFigureString);
-    }
+  const handleRandomize = () => {
+    const partsToRandomize = Object.keys(allFigurePartsData);
+    let newFigure = '';
+    const newGender: 'M' | 'F' = Math.random() < 0.5 ? 'M' : 'F';
     
-    const newLook = newParts.join('.');
-    setCurrentLook(newLook);
-    setSelectedPartForColor({ item: item, currentColors: colorsForThisItem });
+    partsToRandomize.forEach(partType => {
+      const availableParts = allFigurePartsData[partType].filter(item => {
+        if (item.gender === 'U') return true;
+        if (newGender === 'M' && item.gender === 'M') return true;
+        if (newGender === 'F' && item.gender === 'F') return true;
+        return false;
+      });
 
-    console.log(`Item selecionado: ${item.name}. Novo look: ${newLook}`);
+      if (availableParts && availableParts.length > 0) {
+        const randomPart = availableParts[Math.floor(Math.random() * availableParts.length)];
+        let randomColor = '1';
+        if (randomPart.colors && randomPart.colors.length > 0) {
+          randomColor = randomPart.colors[Math.floor(Math.random() * randomPart.colors.length)];
+        }
+        newFigure = setFigurePart(newFigure, partType, randomPart.id, randomColor);
+      }
+    });
+    
+    setCurrentLook(newFigure || (newGender === 'M' ? DEFAULT_FIGURE_M : DEFAULT_FIGURE_F));
+    setCurrentGender(newGender);
+    setDirection(Math.floor(Math.random() * 8));
+    setHeadDirection(Math.floor(Math.random() * 8));
+    
+    alert('Avatar aleatorizado!');
   };
 
-  const handleColorClick = (colorHex: string, colorIndex: number) => {
-    if (!selectedPartForColor) {
-      alert('Selecione uma peça de roupa primeiro para alterar a cor.');
-      return;
+  const handleUsernameSearch = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const target = event.target as HTMLInputElement;
+      const searchUsername = target.value.trim();
+      if (searchUsername) {
+        try {
+          const response = await fetch(`${HABBO_API_PROFILE_URL(searchUsername)}`);
+          if (!response.ok) {
+            throw new Error(`Usuário não encontrado! Status: ${response.status}`);
+          }
+          const userData = await response.json();
+          
+          const user = Array.isArray(userData) ? userData[0] : userData;
+          
+          if (user && user.figureString) {
+            setCurrentLook(user.figureString);
+            alert(`Visual de ${searchUsername} carregado com sucesso!`);
+          } else {
+            alert(`Não foi possível obter o visual de ${searchUsername}.`);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar usuário:', error);
+          alert(`Erro ao buscar usuário: ${error.message}`);
+        }
+      }
     }
-
-    const { item, currentColors } = selectedPartForColor;
-    const newColors = [...currentColors];
-    newColors[colorIndex] = getHabboColorId(colorHex);
-
-    while (newColors.length < item.colorSlots) {
-      newColors.push(getHabboColorId('000000'));
-    }
-
-    let newPartString = `${item.type}-${item.id}`;
-    if (item.colorSlots > 0) {
-        newPartString += `-${newColors.slice(0, item.colorSlots).join('-')}`;
-        newPartString += '-';
-    }
-
-    const currentParts = currentLook.split('.').filter(Boolean);
-    const updatedParts = currentParts.map(part => 
-        part.startsWith(`${item.type}-${item.id}-`) ? newPartString : part
-    );
-
-    const newLook = updatedParts.join('.');
-    setCurrentLook(newLook);
-    setSelectedPartForColor({ item: item, currentColors: newColors });
-
-    console.log(`Cor alterada para: ${colorHex}. Novo look: ${newLook}`);
   };
 
-  const filteredItems = HABBO_FIGURE_PARTS.filter(item => {
-    const matchesCategory = item.type === activeCategory;
-    const matchesSearch = searchTerm ? item.name.toLowerCase().includes(searchTerm.toLowerCase()) : true;
+  const filteredItems = allFigurePartsData[activeCategory] || [];
+  const categoryFilteredItems = filteredItems.filter(item => {
     const matchesGender = item.gender === 'U' || item.gender === currentGender;
-    return matchesCategory && matchesSearch && matchesGender;
+    return matchesGender;
   });
 
-  const groupedItems = filteredItems.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
+  const groupedItems = categoryFilteredItems.reduce((acc, item) => {
+    let itemType = 'NORMAL';
+    if (item.club) itemType = 'HC';
+    else if (item.sellable) itemType = 'SELLABLE';
+    
+    if (!acc[itemType]) {
+      acc[itemType] = [];
     }
-    acc[item.category].push(item);
+    acc[itemType].push(item);
     return acc;
   }, {} as Record<string, HabboFigurePart[]>);
 
@@ -196,18 +311,12 @@ const HabboHubEditor: React.FC = () => {
     ch: 'tops.png',
     lg: 'bottoms.png',
     sh: 'shoes.png',
-    ha: 'hats.png',
-    he: 'hair.png',
+    he: 'hats.png',
     ea: 'eyes.png',
     fa: 'face.png',
-    cp: 'chest.png',
-    cc: 'coats.png',
-    wa: 'waist.png',
-    ca: 'back.png',
-    ct: 'tops.png',
   };
 
-  const mainCategories = Object.keys(subNavCategories);
+  const mainCategories = Object.keys(categoryPrefixMap);
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
@@ -239,10 +348,10 @@ const HabboHubEditor: React.FC = () => {
             </div>
 
             <div className="flex flex-col justify-evenly bg-gray-100 p-2 gap-2 shadow-inner">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white p-2 m-1 rounded cursor-pointer">Aleatorizar</button>
+              <button onClick={handleRandomize} className="bg-blue-500 hover:bg-blue-600 text-white p-2 m-1 rounded cursor-pointer">Aleatorizar</button>
               <div className="flex gap-1">
                 <button onClick={handleCopyUrl} className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Completa</button>
-                <button className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Rosto</button>
+                <button onClick={handleCopyFaceUrl} className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Rosto</button>
               </div>
               
               <div className="flex flex-col w-full">
@@ -250,7 +359,7 @@ const HabboHubEditor: React.FC = () => {
                 <select
                   className="w-full p-2 border rounded-lg bg-white text-sm"
                   value={hotel}
-                  onChange={handleHotelChange}
+                  onChange={(e) => setHotel(e.target.value)}
                 >
                   <option value="habbo.com.br">Habbo.com.br (Brasil/Portugal)</option>
                   <option value="habbo.com">Habbo.com (Internacional)</option>
@@ -271,7 +380,8 @@ const HabboHubEditor: React.FC = () => {
                   className="w-full placeholder-gray-400 p-2 rounded-lg border outline-none text-black text-sm"
                   placeholder="Nome de Usuário"
                   value={username}
-                  onChange={handleUsernameChange}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={handleUsernameSearch}
                 />
               </div>
             </div>
@@ -281,25 +391,28 @@ const HabboHubEditor: React.FC = () => {
         {/* Coluna Central: Seletor de Roupas */}
         <div className="w-full lg:w-5/12 max-h-[32rem] h-[32rem] bg-gray-50 order-1 lg:order-2">
           <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-8 h-[2.5rem] shadow-inner bg-gray-200">
-            {mainCategories.slice(0, 8).map(type => (
-              <button
-                key={type}
-                className={`p-1 cursor-pointer hover:bg-gray-100 flex items-center justify-center ${activeCategory === type ? 'bg-gray-100 shadow-inner' : ''}`}
-                onClick={() => setActiveCategory(type)}
-              >
-                <img 
-                  decoding="async" 
-                  className="w-4 h-4 sm:w-6 sm:h-6" 
-                  src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[type as keyof typeof categoryImages] || 'body.png'}`} 
-                  alt={subNavCategories[type]}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = 'https://via.placeholder.com/24x24?text=?';
-                  }}
-                />
-              </button>
-            ))}
+            {mainCategories.slice(0, 8).map(type => {
+              const categoryKey = categoryPrefixMap[type];
+              return (
+                <button
+                  key={type}
+                  className={`p-1 cursor-pointer hover:bg-gray-100 flex items-center justify-center ${activeCategory === categoryKey ? 'bg-gray-100 shadow-inner' : ''}`}
+                  onClick={() => setActiveCategory(categoryKey)}
+                >
+                  <img 
+                    decoding="async" 
+                    className="w-4 h-4 sm:w-6 sm:h-6" 
+                    src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[categoryKey as keyof typeof categoryImages] || 'body.png'}`} 
+                    alt={type}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = 'https://via.placeholder.com/24x24?text=?';
+                    }}
+                  />
+                </button>
+              );
+            })}
           </div>
 
           <div className="h-[0.5rem] bg-gray-100"></div>
@@ -323,104 +436,98 @@ const HabboHubEditor: React.FC = () => {
           )}
           
           {/* Lista de Itens */}
-          <div className="flex flex-wrap justify-center max-h-[26.5rem] overflow-y-auto p-2">
-              {Object.keys(groupedItems).length > 0 ? (
-                  Object.keys(groupedItems).map(category => (
-                      <div key={category} className="w-full">
-                          <h4 className={`font-bold mb-2 p-2 text-sm ${
-                              category === 'hc' ? 'text-yellow-600' :
-                              category === 'sellable' ? 'text-green-600' :
-                              category === 'ltd' ? 'text-purple-600' :
-                              category === 'rare' ? 'text-red-600' :
-                              category === 'nft' ? 'text-blue-600' :
-                              'text-gray-600'
-                          }`}>
-                              {category.toUpperCase()}
-                          </h4>
-                          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
-                              {groupedItems[category].map(item => (
-                                  <button
-                                      key={`${item.type}-${item.id}-${item.category}`}
-                                      className={`relative rounded-full w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 cursor-pointer hover:shadow-inner hover:bg-gray-300 ${
-                                          selectedPartForColor?.item.type === item.type && selectedPartForColor?.item.id === item.id
-                                          ? 'border-blue-500 ring-2 ring-blue-500'
-                                          : ''
-                                      }`}
-                                      onClick={() => handleItemClick(item)}
-                                      title={item.name}
-                                  >
-                                      {(item.category === 'hc' || item.category === 'nft') && (
-                                          <img
-                                              decoding="async"
-                                              className="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4"
-                                              src={`https://habbodefense.com/wp-content/uploads/2024/03/${item.category}_icon.png`}
-                                              alt={`${item.category} icon`}
-                                          />
-                                      )}
-                                      <div className="absolute rounded-full z-0 w-full h-full overflow-hidden">
-                                          <img
-                                              decoding="async"
-                                              style={{ transform: 'translateY(-2px)' }}
-                                              loading="lazy"
-                                              src={getPreviewUrl(item)}
-                                              alt={item.name}
-                                              className="w-full h-full object-contain"
-                                              onError={(e) => {
-                                                  const target = e.target as HTMLImageElement;
-                                                  target.onerror = null;
-                                                  target.src = 'https://via.placeholder.com/48x48?text=X';
-                                                  target.alt = 'Erro';
-                                              }}
-                                          />
-                                      </div>
-                                  </button>
-                              ))}
-                          </div>
-                      </div>
-                  ))
-              ) : (
-                  <p className="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado nesta categoria.</p>
-              )}
+          <div ref={itemsDisplayAreaRef} className="flex flex-wrap justify-center max-h-[26.5rem] overflow-y-auto p-2">
+            {loading ? (
+              <p className="text-gray-500 text-center p-4 text-sm">Carregando peças de roupa...</p>
+            ) : Object.keys(groupedItems).length > 0 ? (
+              Object.keys(groupedItems).map(category => (
+                <div key={category} className="w-full">
+                  <h4 className={`font-bold mb-2 p-2 text-sm ${
+                    category === 'HC' ? 'text-yellow-600' :
+                    category === 'SELLABLE' ? 'text-green-600' :
+                    'text-gray-600'
+                  }`}>
+                    {category}
+                  </h4>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
+                    {groupedItems[category].map(item => (
+                      <button
+                        key={`${item.type}-${item.id}-${category}`}
+                        className={`relative rounded-full w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 cursor-pointer hover:shadow-inner hover:bg-gray-300 ${
+                          selectedPartForColor?.item.type === item.type && selectedPartForColor?.item.id === item.id
+                          ? 'border-blue-500 ring-2 ring-blue-500'
+                          : ''
+                        }`}
+                        onClick={() => handleItemClick(item)}
+                        title={item.name}
+                      >
+                        {(item.club || category === 'HC') && (
+                          <img
+                            decoding="async"
+                            className="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4"
+                            src="https://habbodefense.com/wp-content/uploads/2024/03/hc_icon.png"
+                            alt="hc icon"
+                          />
+                        )}
+                        <div className="absolute rounded-full z-0 w-full h-full overflow-hidden">
+                          <img
+                            decoding="async"
+                            style={{ transform: 'translateY(-2px)' }}
+                            loading="lazy"
+                            src={item.previewUrl}
+                            alt={item.name}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = 'https://via.placeholder.com/48x48?text=X';
+                              target.alt = 'Erro';
+                            }}
+                          />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado nesta categoria.</p>
+            )}
           </div>
         </div>
 
         {/* Coluna Direita: Seletor de Cores */}
         <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-3">
           <h1 className="font-sans text-slate-600 font-bold w-full h-[2.5rem] bg-gray-200 p-2 shadow-inner text-center">Seletor de Cores</h1>
-          <div className="flex flex-col h-[29rem] overflow-y-auto">
+          <div ref={colorSelectorAreaRef} className="flex flex-col h-[29rem] overflow-y-auto">
             {selectedPartForColor ? (
               <div className="p-2">
                 <p className="text-sm mb-2 text-gray-700">Editando: <strong>{selectedPartForColor.item.name}</strong></p>
-                {Array.from({ length: selectedPartForColor.item.colorSlots }).map((_, colorIndex) => (
-                  <div key={colorIndex} className="mb-4">
-                    <h2 className="font-sans text-slate-600 font-bold p-2 h-[2rem] bg-gray-100 rounded-lg mb-2 shadow-inner text-center text-sm">
-                      Cor {colorIndex === 0 ? 'Principal' : colorIndex === 1 ? 'Secundária' : 'Terciária'}
-                    </h2>
-                    <div className="flex flex-wrap bg-gray-100 rounded-lg p-2 justify-center gap-1">
-                      {colorPalettes.nonHc.map(color => (
+                <div className="mb-4">
+                  <h2 className="font-sans text-slate-600 font-bold p-2 h-[2rem] bg-gray-100 rounded-lg mb-2 shadow-inner text-center text-sm">
+                    Cores Disponíveis
+                  </h2>
+                  <div className="flex flex-wrap bg-gray-100 rounded-lg p-2 justify-center gap-1">
+                    {selectedPartForColor.item.colors.map(colorId => {
+                      const color = allColorsData[colorId];
+                      if (color) {
+                        return (
                           <button
-                              key={`nonhc-${colorIndex}-${color}`}
-                              className="w-5 h-5 sm:w-6 sm:h-6 border rounded-full hover:scale-110 transition-transform"
-                              style={{ backgroundColor: `#${color}` }}
-                              onClick={() => handleColorClick(color, colorIndex)}
-                              title={`#${color}`}
-                          ></button>
-                      ))}
-                      {colorPalettes.hc.map(color => (
-                          <button
-                              key={`hc-${colorIndex}-${color}`}
-                              className="w-5 h-5 sm:w-6 sm:h-6 border rounded-full hover:scale-110 transition-transform"
-                              style={{ backgroundColor: `#${color}` }}
-                              onClick={() => handleColorClick(color, colorIndex)}
-                              title={`#${color}`}
-                          ></button>
-                      ))}
-                    </div>
+                            key={colorId}
+                            className="w-6 h-6 border rounded-full hover:scale-110 transition-transform"
+                            style={{ backgroundColor: `#${color.hex}` }}
+                            onClick={() => handleColorClick(colorId)}
+                            title={color.name || `#${color.hex}`}
+                          />
+                        );
+                      }
+                      return null;
+                    })}
                   </div>
-              ))}
-               {selectedPartForColor.item.colorSlots === 0 && (
+                </div>
+                {selectedPartForColor.item.colors.length === 0 && (
                   <p className="text-gray-500 text-sm p-2">Esta peça não possui opções de cor.</p>
-               )}
+                )}
               </div>
             ) : (
               <div className="p-4">

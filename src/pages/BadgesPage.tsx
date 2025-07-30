@@ -19,6 +19,8 @@ interface Badge {
   url?: string;
 }
 
+const HABBO_ASSETS_API_URL = 'https://www.habboassets.com/api/v1/badges';
+
 // Componente para um card de Painel
 function HabboPanel({ title, children, headerComponent }: { 
   title: string; 
@@ -115,6 +117,19 @@ export default function BadgesPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
+  // Estados para os emblemas
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState<number>(0);
+  const [allBadgesLoaded, setAllBadgesLoaded] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+
+  const limit = 1000;
+  const emblemasContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -126,17 +141,85 @@ export default function BadgesPage() {
     };
   }, []);
 
-  // Carregar o script de emblemas quando o componente monta
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = '/js/emblemas.js';
-    script.async = true;
-    document.body.appendChild(script);
+  const carregarEmblemas = useCallback(async (loadMore: boolean = false) => {
+    if ((allBadgesLoaded && loadMore) || loading) {
+      return;
+    }
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    setLoading(true);
+    setError(null);
+
+    if (!loadMore) {
+      setBadges([]);
+      setOffset(0);
+      setAllBadgesLoaded(false);
+    }
+
+    try {
+      const currentOffset = loadMore ? offset : 0;
+      const requestUrl = `${HABBO_ASSETS_API_URL}?limit=${limit}&offset=${currentOffset}&order=asc`;
+      console.log(`Buscando emblemas: ${requestUrl}`);
+
+      const response = await fetch(requestUrl);
+      if (!response.ok) {
+        throw new Error(`Erro HTTP! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const newEmblemas: Badge[] = data.badges || data;
+
+      if (newEmblemas && Array.isArray(newEmblemas) && newEmblemas.length > 0) {
+        setBadges(prevEmblemas => loadMore ? [...prevEmblemas, ...newEmblemas] : newEmblemas);
+        setOffset(currentOffset + newEmblemas.length);
+
+        if (newEmblemas.length < limit) {
+          setAllBadgesLoaded(true);
+        }
+      } else {
+        if (!loadMore) {
+          setError('Nenhum emblema encontrado. Verifique a API ou tente novamente mais tarde.');
+        } else {
+          setAllBadgesLoaded(true);
+        }
+      }
+    } catch (err: any) {
+      console.error('Falha ao carregar emblemas:', err);
+      setError('Não foi possível carregar os emblemas devido a um erro de conexão. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, allBadgesLoaded, offset, limit]);
+
+  useEffect(() => {
+    carregarEmblemas(false);
   }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      if (scrollTop + clientHeight >= scrollHeight - 200 && !loading && !allBadgesLoaded) {
+        carregarEmblemas(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading, allBadgesLoaded, carregarEmblemas]);
+
+  const filteredBadges = badges.filter(badge => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      (badge.name && badge.name.toLowerCase().includes(search)) ||
+      (badge.code && badge.code.toLowerCase().includes(search)) ||
+      (badge.description && badge.description.toLowerCase().includes(search))
+    );
+  });
+
+  const handleBadgeClick = (badge: Badge) => {
+    setSelectedBadge(badge);
+    setModalOpen(true);
+  };
 
   const renderContent = () => (
     <div className="space-y-6">
@@ -146,16 +229,57 @@ export default function BadgesPage() {
           type="text"
           placeholder="Pesquisar por nome, código ou descrição..."
           className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </HabboPanel>
 
       {/* Grade de Emblemas */}
       <HabboPanel title="Galeria de Emblemas">
-        <p className="text-red-600 text-center" style={{ display: 'none' }}>Não foi possível carregar os emblemas. Tente novamente mais tarde.</p>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
-          {/* Os emblemas serão inseridos aqui pelo JavaScript */}
+        {error && <p className="text-red-600 text-center mb-4">{error}</p>}
+        
+        <div ref={emblemasContainerRef} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+          {filteredBadges.map(badge => (
+            <div 
+              key={badge.code} 
+              className="badge-item flex flex-col items-center p-2 bg-gray-200 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow duration-200 relative"
+              onClick={() => handleBadgeClick(badge)}
+            >
+              <img 
+                src={badge.image || badge.url || `https://images.habbo.com/c_images/album1584/${badge.code}.png`} 
+                alt={badge.name || 'Emblema'} 
+                className="w-16 h-16 object-contain" 
+                loading="lazy" 
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/assets/emblemas.png';
+                }}
+              />
+            </div>
+          ))}
         </div>
+
+        {loading && (
+          <p className="text-center text-gray-500 col-span-full mt-4">
+            {badges.length > 0 ? 'Carregando mais emblemas...' : 'Carregando emblemas...'}
+          </p>
+        )}
+
+        {!loading && allBadgesLoaded && badges.length > 0 && (
+          <p className="text-center text-gray-500 mt-4">Todos os emblemas carregados!</p>
+        )}
+
+        {!loading && filteredBadges.length === 0 && searchTerm && (
+          <p className="text-gray-500 text-center p-4">Nenhum emblema encontrado para sua pesquisa.</p>
+        )}
       </HabboPanel>
+
+      <BadgeDetailModal 
+        isOpen={modalOpen} 
+        onClose={() => setModalOpen(false)} 
+        badge={selectedBadge} 
+      />
     </div>
   );
 
