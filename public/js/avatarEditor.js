@@ -1,4 +1,3 @@
-
 // avatarEditor.js
 document.addEventListener('DOMContentLoaded', () => {
     // --- Elementos do DOM ---
