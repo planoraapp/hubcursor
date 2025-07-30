@@ -151,7 +151,7 @@ export default function ConnectHabbo() {
       }
     );
 
-    return () => { authListener?.unsubscribe(); };
+    return () => { authListener.subscription.unsubscribe(); };
   }, []);
 
   // handleLoginByPassword
@@ -243,9 +243,9 @@ export default function ConnectHabbo() {
       }
 
       // Check if a link already exists for this Habbo ID
-      const existingLink = await getSupabaseLinkedAccount(habboUserCheck.id);
+      const existingLink = await getSupabaseLinkedAccount(habboUserCheck.uniqueId);
       if (existingLink) {
-        addLog(`❗ Vínculo Habbo existente para ID ${habboUserCheck.id}. Prosseguindo para login por senha.`);
+        addLog(`❗ Vínculo Habbo existente para ID ${habboUserCheck.uniqueId}. Prosseguindo para login por senha.`);
         toast.info("Este Habbo já está vinculado a uma conta. Por favor, use a aba 'Login por Senha'.");
         setHabboName(currentHabboName); // Fill the name for the login tab
         setStep(1);
@@ -256,7 +256,7 @@ export default function ConnectHabbo() {
       const newCode = generateVerificationCode(); 
       setVerificationCode(newCode); 
       addLog(`🔑 Código de verificação gerado: ${newCode}`);
-      setUserHabboId(habboUserCheck.id);
+      setUserHabboId(habboUserCheck.uniqueId);
       setStep(2); // Go to motto display step
       toast.info(`Agora, copie o código "${newCode}" e cole-o na sua motto do Habbo Hotel.`);
 
