@@ -43,8 +43,11 @@ const App = () => (
           <Route path="/eventos" element={<Eventos />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/emblemas" element={<BadgesPage />} />
+          <Route path="/badges" element={<BadgesPage />} />
           <Route path="/ferramentas" element={<ToolsPage />} />
+          <Route path="/tools" element={<ToolsPage />} />
           <Route path="/adminhub" element={<AdminPanelPage />} />
+          <Route path="/admin-panel" element={<AdminPanelPage />} />
           <Route path="/editor" element={<Editor />} />
           <Route path="/mercado" element={<Mercado />} />
           <Route path="*" element={<NotFound />} />
