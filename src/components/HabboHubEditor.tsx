@@ -210,225 +210,227 @@ const HabboHubEditor: React.FC = () => {
   const mainCategories = Object.keys(subNavCategories);
 
   return (
-    <main className="flex flex-col lg:flex-row h-full justify-evenly select-none gap-4 p-4">
-      {/* Coluna Esquerda: Avatar e Controles */}
-      <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-2 lg:order-1">
-        <h1 className="font-sans text-slate-600 font-bold w-full bg-gray-200 p-2 shadow-inner text-center">Geração de Avatar HabboHub</h1>
-        <div className="flex flex-col h-full">
-          <div id="avatar-container" className="flex flex-row items-center justify-center p-4">
-            <div className="w-1/4 h-full flex flex-col justify-center items-center gap-8">
-              <div onClick={() => rotateHead('left')} className="cursor-pointer">
-                <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_left.png" alt="Girar Cabeça Esquerda" />
-              </div>
-              <div onClick={() => rotateBody('left')} className="cursor-pointer">
-                <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_left.png" alt="Girar Corpo Esquerda" />
-              </div>
-            </div>
-            <div className="w-1/2 object-center relative">
-              <img decoding="async" id="myHabbo" className="mx-auto max-w-full h-auto" src={avatarUrl} alt="Meu Habbo" style={{ imageRendering: 'pixelated' }} />
-            </div>
-            <div className="w-1/4 h-full flex flex-col justify-center items-center gap-8">
-              <div onClick={() => rotateHead('right')} className="cursor-pointer">
-                <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_right.png" alt="Girar Cabeça Direita" />
-              </div>
-              <div onClick={() => rotateBody('right')} className="cursor-pointer">
-                <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_right.png" alt="Girar Corpo Direita" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-evenly bg-gray-100 p-2 gap-2 shadow-inner">
-            <button className="bg-blue-500 hover:bg-blue-600 text-white p-2 m-1 rounded cursor-pointer">Aleatorizar</button>
-            <div className="flex gap-1">
-              <button onClick={handleCopyUrl} className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Completa</button>
-              <button className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Rosto</button>
-            </div>
-            
-            <div className="flex flex-col w-full">
-              <h2 className="font-sans text-slate-600 font-bold p-2 text-center text-sm">Seletor de Região</h2>
-              <select
-                className="w-full p-2 border rounded-lg bg-white text-sm"
-                value={hotel}
-                onChange={handleHotelChange}
-              >
-                <option value="habbo.com.br">Habbo.com.br (Brasil/Portugal)</option>
-                <option value="habbo.com">Habbo.com (Internacional)</option>
-                <option value="habbo.de">Habbo.de (Alemanha)</option>
-                <option value="habbo.es">Habbo.es (Espanha)</option>
-                <option value="habbo.fi">Habbo.fi (Finlândia)</option>
-                <option value="habbo.fr">Habbo.fr (França)</option>
-                <option value="habbo.it">Habbo.it (Itália)</option>
-                <option value="habbo.nl">Habbo.nl (Holanda)</option>
-                <option value="habbo.com.tr">Habbo.com.tr (Turquia)</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col">
-              <h2 className="font-sans text-slate-600 font-bold p-2 text-center text-sm">Buscar Usuário</h2>
-              <input
-                type="text"
-                className="w-full placeholder-gray-400 p-2 rounded-lg border outline-none text-black text-sm"
-                placeholder="Nome de Usuário"
-                value={username}
-                onChange={handleUsernameChange}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Coluna Central: Seletor de Roupas */}
-      <div className="w-full lg:w-5/12 max-h-[32rem] h-[32rem] bg-gray-50 order-1 lg:order-2">
-        <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-8 h-[2.5rem] shadow-inner bg-gray-200">
-          {mainCategories.slice(0, 8).map(type => (
-            <button
-              key={type}
-              className={`p-1 cursor-pointer hover:bg-gray-100 flex items-center justify-center ${activeCategory === type ? 'bg-gray-100 shadow-inner' : ''}`}
-              onClick={() => setActiveCategory(type)}
-            >
-              <img 
-                decoding="async" 
-                className="w-4 h-4 sm:w-6 sm:h-6" 
-                src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[type as keyof typeof categoryImages] || 'body.png'}`} 
-                alt={subNavCategories[type]}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = 'https://via.placeholder.com/24x24?text=?';
-                }}
-              />
-            </button>
-          ))}
-        </div>
-
-        <div className="h-[0.5rem] bg-gray-100"></div>
-
-        {/* Sub-navegação para o gênero */}
-        {activeCategory === 'hd' && (
-          <div className="flex flex-row h-[2.5rem] shadow-inner bg-gray-200 justify-evenly">
-            <button 
-              className={`w-full cursor-pointer hover:bg-gray-100 flex items-center justify-center ${currentGender === 'M' ? 'bg-gray-100 shadow-md' : ''}`} 
-              onClick={() => setCurrentGender('M')}
-            >
-              <img decoding="async" className="w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/male.png" alt="Masculino" />
-            </button>
-            <button 
-              className={`w-full cursor-pointer hover:bg-gray-100 flex items-center justify-center ${currentGender === 'F' ? 'bg-gray-100 shadow-md' : ''}`} 
-              onClick={() => setCurrentGender('F')}
-            >
-              <img decoding="async" className="w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/female.png" alt="Feminino" />
-            </button>
-          </div>
-        )}
-        
-        {/* Lista de Itens */}
-        <div className="flex flex-wrap justify-center max-h-[26.5rem] overflow-y-auto p-2">
-            {Object.keys(groupedItems).length > 0 ? (
-                Object.keys(groupedItems).map(category => (
-                    <div key={category} className="w-full">
-                        <h4 className={`font-bold mb-2 p-2 text-sm ${
-                            category === 'hc' ? 'text-yellow-600' :
-                            category === 'sellable' ? 'text-green-600' :
-                            category === 'ltd' ? 'text-purple-600' :
-                            category === 'rare' ? 'text-red-600' :
-                            category === 'nft' ? 'text-blue-600' :
-                            'text-gray-600'
-                        }`}>
-                            {category.toUpperCase()}
-                        </h4>
-                        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
-                            {groupedItems[category].map(item => (
-                                <button
-                                    key={`${item.type}-${item.id}-${item.category}`}
-                                    className={`relative rounded-full w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 cursor-pointer hover:shadow-inner hover:bg-gray-300 ${
-                                        selectedPartForColor?.item.type === item.type && selectedPartForColor?.item.id === item.id
-                                        ? 'border-blue-500 ring-2 ring-blue-500'
-                                        : ''
-                                    }`}
-                                    onClick={() => handleItemClick(item)}
-                                    title={item.name}
-                                >
-                                    {(item.category === 'hc' || item.category === 'nft') && (
-                                        <img
-                                            decoding="async"
-                                            className="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4"
-                                            src={`https://habbodefense.com/wp-content/uploads/2024/03/${item.category}_icon.png`}
-                                            alt={`${item.category} icon`}
-                                        />
-                                    )}
-                                    <div className="absolute rounded-full z-0 w-full h-full overflow-hidden">
-                                        <img
-                                            decoding="async"
-                                            style={{ transform: 'translateY(-2px)' }}
-                                            loading="lazy"
-                                            src={getPreviewUrl(item)}
-                                            alt={item.name}
-                                            className="w-full h-full object-contain"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.onerror = null;
-                                                target.src = 'https://via.placeholder.com/48x48?text=X';
-                                                target.alt = 'Erro';
-                                            }}
-                                        />
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                ))
-            ) : (
-                <p className="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado nesta categoria.</p>
-            )}
-        </div>
-      </div>
-
-      {/* Coluna Direita: Seletor de Cores */}
-      <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-3">
-        <h1 className="font-sans text-slate-600 font-bold w-full h-[2.5rem] bg-gray-200 p-2 shadow-inner text-center">Seletor de Cores</h1>
-        <div className="flex flex-col h-[29rem] overflow-y-auto">
-          {selectedPartForColor ? (
-            <div className="p-2">
-              <p className="text-sm mb-2 text-gray-700">Editando: <strong>{selectedPartForColor.item.name}</strong></p>
-              {Array.from({ length: selectedPartForColor.item.colorSlots }).map((_, colorIndex) => (
-                <div key={colorIndex} className="mb-4">
-                  <h2 className="font-sans text-slate-600 font-bold p-2 h-[2rem] bg-gray-100 rounded-lg mb-2 shadow-inner text-center text-sm">
-                    Cor {colorIndex === 0 ? 'Principal' : colorIndex === 1 ? 'Secundária' : 'Terciária'}
-                  </h2>
-                  <div className="flex flex-wrap bg-gray-100 rounded-lg p-2 justify-center gap-1">
-                    {colorPalettes.nonHc.map(color => (
-                        <button
-                            key={`nonhc-${colorIndex}-${color}`}
-                            className="w-5 h-5 sm:w-6 sm:h-6 border rounded-full hover:scale-110 transition-transform"
-                            style={{ backgroundColor: `#${color}` }}
-                            onClick={() => handleColorClick(color, colorIndex)}
-                            title={`#${color}`}
-                        ></button>
-                    ))}
-                    {colorPalettes.hc.map(color => (
-                        <button
-                            key={`hc-${colorIndex}-${color}`}
-                            className="w-5 h-5 sm:w-6 sm:h-6 border rounded-full hover:scale-110 transition-transform"
-                            style={{ backgroundColor: `#${color}` }}
-                            onClick={() => handleColorClick(color, colorIndex)}
-                            title={`#${color}`}
-                        ></button>
-                    ))}
-                  </div>
+    <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
+      <main className="flex flex-col lg:flex-row h-full justify-evenly select-none gap-4 p-4">
+        {/* Coluna Esquerda: Avatar e Controles */}
+        <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-2 lg:order-1">
+          <h1 className="font-sans text-slate-600 font-bold w-full bg-gray-200 p-2 shadow-inner text-center">Geração de Avatar HabboHub</h1>
+          <div className="flex flex-col h-full">
+            <div id="avatar-container" className="flex flex-row items-center justify-center p-4">
+              <div className="w-1/4 h-full flex flex-col justify-center items-center gap-8">
+                <div onClick={() => rotateHead('left')} className="cursor-pointer">
+                  <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_left.png" alt="Girar Cabeça Esquerda" />
                 </div>
-            ))}
-             {selectedPartForColor.item.colorSlots === 0 && (
-                <p className="text-gray-500 text-sm p-2">Esta peça não possui opções de cor.</p>
-             )}
+                <div onClick={() => rotateBody('left')} className="cursor-pointer">
+                  <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_left.png" alt="Girar Corpo Esquerda" />
+                </div>
+              </div>
+              <div className="w-1/2 object-center relative">
+                <img decoding="async" id="myHabbo" className="mx-auto max-w-full h-auto" src={avatarUrl} alt="Meu Habbo" style={{ imageRendering: 'pixelated' }} />
+              </div>
+              <div className="w-1/4 h-full flex flex-col justify-center items-center gap-8">
+                <div onClick={() => rotateHead('right')} className="cursor-pointer">
+                  <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_right.png" alt="Girar Cabeça Direita" />
+                </div>
+                <div onClick={() => rotateBody('right')} className="cursor-pointer">
+                  <img decoding="async" className="mx-auto w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/sticker_arrow_right.png" alt="Girar Corpo Direita" />
+                </div>
+              </div>
             </div>
-          ) : (
-            <div className="p-4">
-              <p className="text-gray-500 text-sm text-center">Selecione uma peça de roupa no menu para alterar sua cor.</p>
+
+            <div className="flex flex-col justify-evenly bg-gray-100 p-2 gap-2 shadow-inner">
+              <button className="bg-blue-500 hover:bg-blue-600 text-white p-2 m-1 rounded cursor-pointer">Aleatorizar</button>
+              <div className="flex gap-1">
+                <button onClick={handleCopyUrl} className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Completa</button>
+                <button className="bg-green-500 hover:bg-green-600 text-white p-2 flex-1 rounded text-sm">Copiar URL Rosto</button>
+              </div>
+              
+              <div className="flex flex-col w-full">
+                <h2 className="font-sans text-slate-600 font-bold p-2 text-center text-sm">Seletor de Região</h2>
+                <select
+                  className="w-full p-2 border rounded-lg bg-white text-sm"
+                  value={hotel}
+                  onChange={handleHotelChange}
+                >
+                  <option value="habbo.com.br">Habbo.com.br (Brasil/Portugal)</option>
+                  <option value="habbo.com">Habbo.com (Internacional)</option>
+                  <option value="habbo.de">Habbo.de (Alemanha)</option>
+                  <option value="habbo.es">Habbo.es (Espanha)</option>
+                  <option value="habbo.fi">Habbo.fi (Finlândia)</option>
+                  <option value="habbo.fr">Habbo.fr (França)</option>
+                  <option value="habbo.it">Habbo.it (Itália)</option>
+                  <option value="habbo.nl">Habbo.nl (Holanda)</option>
+                  <option value="habbo.com.tr">Habbo.com.tr (Turquia)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <h2 className="font-sans text-slate-600 font-bold p-2 text-center text-sm">Buscar Usuário</h2>
+                <input
+                  type="text"
+                  className="w-full placeholder-gray-400 p-2 rounded-lg border outline-none text-black text-sm"
+                  placeholder="Nome de Usuário"
+                  value={username}
+                  onChange={handleUsernameChange}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Coluna Central: Seletor de Roupas */}
+        <div className="w-full lg:w-5/12 max-h-[32rem] h-[32rem] bg-gray-50 order-1 lg:order-2">
+          <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-8 h-[2.5rem] shadow-inner bg-gray-200">
+            {mainCategories.slice(0, 8).map(type => (
+              <button
+                key={type}
+                className={`p-1 cursor-pointer hover:bg-gray-100 flex items-center justify-center ${activeCategory === type ? 'bg-gray-100 shadow-inner' : ''}`}
+                onClick={() => setActiveCategory(type)}
+              >
+                <img 
+                  decoding="async" 
+                  className="w-4 h-4 sm:w-6 sm:h-6" 
+                  src={`https://habbodefense.com/wp-content/uploads/2024/03/${categoryImages[type as keyof typeof categoryImages] || 'body.png'}`} 
+                  alt={subNavCategories[type]}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = 'https://via.placeholder.com/24x24?text=?';
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+
+          <div className="h-[0.5rem] bg-gray-100"></div>
+
+          {/* Sub-navegação para o gênero */}
+          {activeCategory === 'hd' && (
+            <div className="flex flex-row h-[2.5rem] shadow-inner bg-gray-200 justify-evenly">
+              <button 
+                className={`w-full cursor-pointer hover:bg-gray-100 flex items-center justify-center ${currentGender === 'M' ? 'bg-gray-100 shadow-md' : ''}`} 
+                onClick={() => setCurrentGender('M')}
+              >
+                <img decoding="async" className="w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/male.png" alt="Masculino" />
+              </button>
+              <button 
+                className={`w-full cursor-pointer hover:bg-gray-100 flex items-center justify-center ${currentGender === 'F' ? 'bg-gray-100 shadow-md' : ''}`} 
+                onClick={() => setCurrentGender('F')}
+              >
+                <img decoding="async" className="w-6 h-6" src="https://habbodefense.com/wp-content/uploads/2024/03/female.png" alt="Feminino" />
+              </button>
             </div>
           )}
+          
+          {/* Lista de Itens */}
+          <div className="flex flex-wrap justify-center max-h-[26.5rem] overflow-y-auto p-2">
+              {Object.keys(groupedItems).length > 0 ? (
+                  Object.keys(groupedItems).map(category => (
+                      <div key={category} className="w-full">
+                          <h4 className={`font-bold mb-2 p-2 text-sm ${
+                              category === 'hc' ? 'text-yellow-600' :
+                              category === 'sellable' ? 'text-green-600' :
+                              category === 'ltd' ? 'text-purple-600' :
+                              category === 'rare' ? 'text-red-600' :
+                              category === 'nft' ? 'text-blue-600' :
+                              'text-gray-600'
+                          }`}>
+                              {category.toUpperCase()}
+                          </h4>
+                          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-4 gap-2">
+                              {groupedItems[category].map(item => (
+                                  <button
+                                      key={`${item.type}-${item.id}-${item.category}`}
+                                      className={`relative rounded-full w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 cursor-pointer hover:shadow-inner hover:bg-gray-300 ${
+                                          selectedPartForColor?.item.type === item.type && selectedPartForColor?.item.id === item.id
+                                          ? 'border-blue-500 ring-2 ring-blue-500'
+                                          : ''
+                                      }`}
+                                      onClick={() => handleItemClick(item)}
+                                      title={item.name}
+                                  >
+                                      {(item.category === 'hc' || item.category === 'nft') && (
+                                          <img
+                                              decoding="async"
+                                              className="absolute z-10 top-0 left-0 h-3 w-3 sm:h-4 sm:w-4"
+                                              src={`https://habbodefense.com/wp-content/uploads/2024/03/${item.category}_icon.png`}
+                                              alt={`${item.category} icon`}
+                                          />
+                                      )}
+                                      <div className="absolute rounded-full z-0 w-full h-full overflow-hidden">
+                                          <img
+                                              decoding="async"
+                                              style={{ transform: 'translateY(-2px)' }}
+                                              loading="lazy"
+                                              src={getPreviewUrl(item)}
+                                              alt={item.name}
+                                              className="w-full h-full object-contain"
+                                              onError={(e) => {
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.onerror = null;
+                                                  target.src = 'https://via.placeholder.com/48x48?text=X';
+                                                  target.alt = 'Erro';
+                                              }}
+                                          />
+                                      </div>
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+                  ))
+              ) : (
+                  <p className="text-gray-500 text-center p-4 text-sm">Nenhum item encontrado nesta categoria.</p>
+              )}
+          </div>
         </div>
-      </div>
-    </main>
+
+        {/* Coluna Direita: Seletor de Cores */}
+        <div className="w-full lg:w-3/12 max-h-[32rem] h-[32rem] bg-gray-50 order-3">
+          <h1 className="font-sans text-slate-600 font-bold w-full h-[2.5rem] bg-gray-200 p-2 shadow-inner text-center">Seletor de Cores</h1>
+          <div className="flex flex-col h-[29rem] overflow-y-auto">
+            {selectedPartForColor ? (
+              <div className="p-2">
+                <p className="text-sm mb-2 text-gray-700">Editando: <strong>{selectedPartForColor.item.name}</strong></p>
+                {Array.from({ length: selectedPartForColor.item.colorSlots }).map((_, colorIndex) => (
+                  <div key={colorIndex} className="mb-4">
+                    <h2 className="font-sans text-slate-600 font-bold p-2 h-[2rem] bg-gray-100 rounded-lg mb-2 shadow-inner text-center text-sm">
+                      Cor {colorIndex === 0 ? 'Principal' : colorIndex === 1 ? 'Secundária' : 'Terciária'}
+                    </h2>
+                    <div className="flex flex-wrap bg-gray-100 rounded-lg p-2 justify-center gap-1">
+                      {colorPalettes.nonHc.map(color => (
+                          <button
+                              key={`nonhc-${colorIndex}-${color}`}
+                              className="w-5 h-5 sm:w-6 sm:h-6 border rounded-full hover:scale-110 transition-transform"
+                              style={{ backgroundColor: `#${color}` }}
+                              onClick={() => handleColorClick(color, colorIndex)}
+                              title={`#${color}`}
+                          ></button>
+                      ))}
+                      {colorPalettes.hc.map(color => (
+                          <button
+                              key={`hc-${colorIndex}-${color}`}
+                              className="w-5 h-5 sm:w-6 sm:h-6 border rounded-full hover:scale-110 transition-transform"
+                              style={{ backgroundColor: `#${color}` }}
+                              onClick={() => handleColorClick(color, colorIndex)}
+                              title={`#${color}`}
+                          ></button>
+                      ))}
+                    </div>
+                  </div>
+              ))}
+               {selectedPartForColor.item.colorSlots === 0 && (
+                  <p className="text-gray-500 text-sm p-2">Esta peça não possui opções de cor.</p>
+               )}
+              </div>
+            ) : (
+              <div className="p-4">
+                <p className="text-gray-500 text-sm text-center">Selecione uma peça de roupa no menu para alterar sua cor.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

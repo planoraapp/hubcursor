@@ -25,7 +25,28 @@ const Editor = () => {
   if (isMobile) {
     return (
       <MobileLayout>
-        <HabboHubEditor />
+        <div className="p-4">
+          <PageHeader 
+            title="Editor de Visuais"
+            icon="/assets/editorvisuais.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          <AdSpace type="horizontal" className="mb-6" />
+          <HabboHubEditor />
+          <div className="flex justify-center gap-4 mt-6">
+            <img 
+              src="/assets/1686__-sQ.png" 
+              alt="Decoração Habbo" 
+              className="max-h-20 object-contain opacity-80"
+            />
+            <img 
+              src="/assets/98__-2tN._-4Ni.png" 
+              alt="Decoração Habbo" 
+              className="max-h-20 object-contain opacity-80"
+            />
+          </div>
+          <AdSpace type="wide" className="mt-6" />
+        </div>
       </MobileLayout>
     );
   }
@@ -43,9 +64,7 @@ const Editor = () => {
           
           <AdSpace type="horizontal" className="mb-6" />
           
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-            <HabboHubEditor />
-          </div>
+          <HabboHubEditor />
           
           <div className="flex justify-center gap-4 mt-6">
             <img 
