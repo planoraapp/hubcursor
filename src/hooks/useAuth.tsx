@@ -5,7 +5,9 @@ import { User, Session } from '@supabase/supabase-js';
 
 interface HabboAccount {
   id: string;
+  habbo_id: string;
   habbo_name: string;
+  supabase_user_id: string;
   figure_string?: string;
   motto?: string;
   is_admin: boolean;
@@ -18,6 +20,7 @@ interface AuthContextType {
   habboAccount: HabboAccount | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  loading: boolean; // Add this for AdminRoute compatibility
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isAdmin: () => boolean;
@@ -42,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase
         .from('habbo_accounts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('supabase_user_id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -182,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     habboAccount,
     isLoggedIn: !!user,
     isLoading,
+    loading: isLoading, // Add this alias for compatibility
     login,
     logout,
     isAdmin,

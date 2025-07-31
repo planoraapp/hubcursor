@@ -177,7 +177,7 @@ const Console: React.FC = () => {
       const { data } = await supabase
         .from('user_followers')
         .select('*')
-        .eq('follower_user_id', habboAccount.supabase_user_id)
+        .eq('follower_user_id', habboAccount.supabase_user_id) // Now matches interface
         .eq('followed_habbo_id', habboId)
         .single();
       
@@ -203,7 +203,7 @@ const Console: React.FC = () => {
         await supabase
           .from('user_followers')
           .delete()
-          .eq('follower_user_id', habboAccount.supabase_user_id)
+          .eq('follower_user_id', habboAccount.supabase_user_id) // Now matches interface
           .eq('followed_habbo_id', currentUser.uniqueId);
         
         setIsFollowing(false);
@@ -216,7 +216,7 @@ const Console: React.FC = () => {
         await supabase
           .from('user_followers')
           .insert({
-            follower_user_id: habboAccount.supabase_user_id,
+            follower_user_id: habboAccount.supabase_user_id, // Now matches interface
             follower_habbo_name: habboAccount.habbo_name,
             followed_habbo_id: currentUser.uniqueId,
             followed_habbo_name: currentUser.name
@@ -258,7 +258,7 @@ const Console: React.FC = () => {
           .from('photo_likes')
           .delete()
           .eq('photo_id', photoId)
-          .eq('user_id', habboAccount.supabase_user_id);
+          .eq('user_id', habboAccount.supabase_user_id); // Now matches interface
         
         setUserPhotos(prev => prev.map(p => 
           p.id === photoId 
@@ -271,7 +271,7 @@ const Console: React.FC = () => {
           .from('photo_likes')
           .insert({
             photo_id: photoId,
-            user_id: habboAccount.supabase_user_id,
+            user_id: habboAccount.supabase_user_id, // Now matches interface
             habbo_name: habboAccount.habbo_name
           });
         

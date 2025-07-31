@@ -56,7 +56,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
       
       Promise.all([
         getUserByName(habboAccount.habbo_name),
-        getUserBadges(habboAccount.habbo_id)
+        getUserBadges(habboAccount.habbo_id) // This now matches the interface
       ]).then(([userData, badgeData]) => {
         if (userData) {
           setHabboData(userData);
