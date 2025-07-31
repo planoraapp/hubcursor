@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -64,6 +65,19 @@ const Console: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [photoComments, setPhotoComments] = useState<{[key: string]: any[]}>({});
   const [activeSection, setActiveSection] = useState('console');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Listen for sidebar state changes
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   const searchUser = async () => {
     if (!searchInput.trim()) {
@@ -314,17 +328,21 @@ const Console: React.FC = () => {
     if (isLoggedIn) return null;
     
     return (
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center gap-2">
-          <Info className="w-5 h-5 text-blue-600" />
-          <div>
-            <h3 className="font-semibold text-blue-800">Console Público</h3>
-            <p className="text-sm text-blue-600">
-              Você pode buscar usuários sem estar logado, mas funcionalidades como seguir, curtir e ver feed de amigos requerem login.
-            </p>
+      <Card className="mb-6 border-blue-200 bg-blue-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-full bg-blue-100">
+              <Info className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <CardTitle className="text-lg text-blue-800 mb-2">Console Público</CardTitle>
+              <p className="text-sm text-blue-700">
+                Você pode buscar usuários sem estar logado, mas funcionalidades como seguir, curtir e ver feed de amigos requerem login.
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -333,111 +351,125 @@ const Console: React.FC = () => {
       {currentUser ? (
         <>
           {/* User Info Card */}
-          <PanelCard>
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <Avatar className="w-32 h-32">
-                <AvatarImage 
-                  src={getAvatarUrl(currentUser.figureString, 'l')} 
-                  alt={currentUser.name}
-                />
-                <AvatarFallback>{currentUser.name[0]}</AvatarFallback>
-              </Avatar>
-              
-              <div className="text-center md:text-left flex-1">
-                <h2 className="text-3xl font-bold text-primary mb-2">{currentUser.name}</h2>
-                <p className="text-lg text-muted-foreground mb-4">{currentUser.motto}</p>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>Membro desde: {new Date(currentUser.memberSince).toLocaleDateString('pt-BR')}</p>
-                  <p>Status: {currentUser.online ? '🟢 Online' : '🔴 Offline'}</p>
-                  {currentUser.friends && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                <Avatar className="w-32 h-32">
+                  <AvatarImage 
+                    src={getAvatarUrl(currentUser.figureString, 'l')} 
+                    alt={currentUser.name}
+                  />
+                  <AvatarFallback>{currentUser.name[0]}</AvatarFallback>
+                </Avatar>
+                
+                <div className="text-center md:text-left flex-1">
+                  <CardTitle className="text-3xl text-primary mb-2">{currentUser.name}</CardTitle>
+                  <p className="text-lg text-muted-foreground mb-4">{currentUser.motto}</p>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>Membro desde: {new Date(currentUser.memberSince).toLocaleDateString('pt-BR')}</p>
+                    <p>Status: {currentUser.online ? '🟢 Online' : '🔴 Offline'}</p>
+                    {currentUser.friends && (
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => setActiveTab('friends')}
+                        className="text-primary hover:text-primary/80"
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        {currentUser.friends.length} Amigos
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {isLoggedIn && (
                     <Button 
-                      variant="ghost" 
-                      onClick={() => setActiveTab('friends')}
-                      className="text-primary hover:text-primary/80"
+                      onClick={toggleFollow}
+                      variant={isFollowing ? "outline" : "default"}
+                      className="mt-4"
                     >
-                      <Users className="w-4 h-4 mr-2" />
-                      {currentUser.friends.length} Amigos
+                      {isFollowing ? 'Deixar de Seguir' : 'Seguir'}
+                    </Button>
+                  )}
+                  
+                  {!isLoggedIn && (
+                    <Button 
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => navigate('/connect-habbo')}
+                    >
+                      Fazer Login para Seguir
                     </Button>
                   )}
                 </div>
-                
-                {isLoggedIn && (
-                  <Button 
-                    onClick={toggleFollow}
-                    variant={isFollowing ? "outline" : "default"}
-                    className="mt-4"
-                  >
-                    {isFollowing ? 'Deixar de Seguir' : 'Seguir'}
-                  </Button>
-                )}
-                
-                {!isLoggedIn && (
-                  <Button 
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => navigate('/connect-habbo')}
-                  >
-                    Fazer Login para Seguir
-                  </Button>
-                )}
               </div>
-            </div>
-          </PanelCard>
+            </CardContent>
+          </Card>
 
           {/* Badges */}
-          <PanelCard title={`Emblemas (${currentUser.selectedBadges?.length || 0})`}>
-            <div className="flex flex-wrap gap-2">
-              {currentUser.selectedBadges?.map((badge, index) => (
-                <div key={index} className="text-center">
-                  <img 
-                    src={getBadgeUrl(badge.code)} 
-                    alt={badge.name}
-                    className="w-12 h-12 mx-auto"
-                    title={badge.description}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">{badge.name}</p>
-                </div>
-              ))}
-            </div>
-          </PanelCard>
+          <Card>
+            <CardHeader>
+              <CardTitle>Emblemas ({currentUser.selectedBadges?.length || 0})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {currentUser.selectedBadges?.map((badge, index) => (
+                  <div key={index} className="text-center">
+                    <img 
+                      src={getBadgeUrl(badge.code)} 
+                      alt={badge.name}
+                      className="w-12 h-12 mx-auto"
+                      title={badge.description}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">{badge.name}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Photos */}
-          <PanelCard title={`Fotos Públicas (${userPhotos.length})`}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {userPhotos.map((photo) => (
-                <div key={photo.id} className="relative group">
-                  <img 
-                    src={photo.url} 
-                    alt="User photo"
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                  <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-                    <Button
-                      size="sm"
-                      variant={photo.isLiked ? "default" : "secondary"}
-                      onClick={() => togglePhotoLike(photo.id)}
-                      disabled={!isLoggedIn}
-                    >
-                      <Heart className="w-4 h-4 mr-1" />
-                      {photo.likes}
-                    </Button>
-                    <Badge variant="secondary">
-                      <MessageCircle className="w-3 h-3 mr-1" />
-                      {photo.comments}
-                    </Badge>
+          <Card>
+            <CardHeader>
+              <CardTitle>Fotos Públicas ({userPhotos.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {userPhotos.map((photo) => (
+                  <div key={photo.id} className="relative group">
+                    <img 
+                      src={photo.url} 
+                      alt="User photo"
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
+                      <Button
+                        size="sm"
+                        variant={photo.isLiked ? "default" : "secondary"}
+                        onClick={() => togglePhotoLike(photo.id)}
+                        disabled={!isLoggedIn}
+                      >
+                        <Heart className="w-4 h-4 mr-1" />
+                        {photo.likes}
+                      </Button>
+                      <Badge variant="secondary">
+                        <MessageCircle className="w-3 h-3 mr-1" />
+                        {photo.comments}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </PanelCard>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </>
       ) : (
-        <PanelCard>
-          <div className="text-center py-8">
-            <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Busque um usuário para ver o perfil</p>
-          </div>
-        </PanelCard>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Busque um usuário para ver o perfil</p>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -446,45 +478,55 @@ const Console: React.FC = () => {
     if (!isLoggedIn) {
       return (
         <div className="space-y-6">
-          <PanelCard title="Feed de Atividades">
-            <div className="text-center py-8">
-              <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                O feed de atividades requer login para funcionar.
-              </p>
-              <Button onClick={() => navigate('/connect-habbo')}>
-                Fazer Login
-              </Button>
-            </div>
-          </PanelCard>
+          <Card>
+            <CardHeader>
+              <CardTitle>Feed de Atividades</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  O feed de atividades requer login para funcionar.
+                </p>
+                <Button onClick={() => navigate('/connect-habbo')}>
+                  Fazer Login
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       );
     }
 
     return (
       <div className="space-y-6">
-        <PanelCard title="Feed de Atividades">
-          <Button onClick={fetchFriendsActivity} className="mb-4">
-            Atualizar Feed
-          </Button>
-          <div className="space-y-4">
-            {friendsActivities.length > 0 ? (
-              friendsActivities.map((activity, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold">{(activity as any).friendName}</span>
-                    <span className="text-sm text-muted-foreground">{activity.time}</span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Feed de Atividades</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={fetchFriendsActivity} className="mb-4">
+              Atualizar Feed
+            </Button>
+            <div className="space-y-4">
+              {friendsActivities.length > 0 ? (
+                friendsActivities.map((activity, index) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">{(activity as any).friendName}</span>
+                      <span className="text-sm text-muted-foreground">{activity.time}</span>
+                    </div>
+                    <p className="text-sm">{activity.activity}</p>
                   </div>
-                  <p className="text-sm">{activity.activity}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma atividade recente encontrada
-              </p>
-            )}
-          </div>
-        </PanelCard>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma atividade recente encontrada
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -493,83 +535,93 @@ const Console: React.FC = () => {
     if (!currentUser) {
       return (
         <div className="space-y-6">
-          <PanelCard title="Amigos">
-            <div className="text-center py-8">
-              <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                Busque um usuário primeiro para ver seus amigos
-              </p>
-            </div>
-          </PanelCard>
+          <Card>
+            <CardHeader>
+              <CardTitle>Amigos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  Busque um usuário primeiro para ver seus amigos
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       );
     }
 
     return (
       <div className="space-y-6">
-        <PanelCard title="Amigos">
-          <Tabs defaultValue="activity">
-            <TabsList>
-              <TabsTrigger value="activity">Atividade Recente</TabsTrigger>
-              <TabsTrigger value="list">Lista Completa</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="activity">
-              {!isLoggedIn ? (
-                <div className="text-center py-8">
-                  <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">
-                    Login necessário para ver atividades de amigos
-                  </p>
-                  <Button onClick={() => navigate('/connect-habbo')}>
-                    Fazer Login
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <Button onClick={fetchFriendsActivity}>
-                    Carregar Atividades
-                  </Button>
-                  {friendsActivities.map((activity, index) => (
-                    <div key={index} className="p-4 border rounded-lg">
-                      <p>{activity.activity}</p>
-                      <small className="text-muted-foreground">{activity.time}</small>
+        <Card>
+          <CardHeader>
+            <CardTitle>Amigos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="activity">
+              <TabsList>
+                <TabsTrigger value="activity">Atividade Recente</TabsTrigger>
+                <TabsTrigger value="list">Lista Completa</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="activity">
+                {!isLoggedIn ? (
+                  <div className="text-center py-8">
+                    <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Login necessário para ver atividades de amigos
+                    </p>
+                    <Button onClick={() => navigate('/connect-habbo')}>
+                      Fazer Login
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Button onClick={fetchFriendsActivity}>
+                      Carregar Atividades
+                    </Button>
+                    {friendsActivities.map((activity, index) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <p>{activity.activity}</p>
+                        <small className="text-muted-foreground">{activity.time}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="list">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {currentUser?.friends?.map((friend) => (
+                    <div key={friend.uniqueId} className="p-4 border rounded-lg flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={getAvatarUrl(friend.figureString)} />
+                        <AvatarFallback>{friend.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{friend.name}</p>
+                        <p className="text-sm text-muted-foreground">{friend.motto}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSearchInput(friend.name);
+                            searchUser();
+                            setActiveTab('profile');
+                          }}
+                          className="text-xs mt-1"
+                        >
+                          Ver Perfil
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="list">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentUser?.friends?.map((friend) => (
-                  <div key={friend.uniqueId} className="p-4 border rounded-lg flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={getAvatarUrl(friend.figureString)} />
-                      <AvatarFallback>{friend.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{friend.name}</p>
-                      <p className="text-sm text-muted-foreground">{friend.motto}</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSearchInput(friend.name);
-                          searchUser();
-                          setActiveTab('profile');
-                        }}
-                        className="text-xs mt-1"
-                      >
-                        Ver Perfil
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </PanelCard>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -586,26 +638,28 @@ const Console: React.FC = () => {
       {renderAuthNotice()}
 
       {/* Search */}
-      <PanelCard>
-        <div className="flex gap-4">
-          <Input
-            placeholder="Digite o nome do usuário Habbo"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchUser()}
-            className="flex-1"
-          />
-          <Button onClick={searchUser} disabled={loading}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            Buscar
-          </Button>
-        </div>
-        {error && (
-          <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-lg">
-            <p className="text-destructive">{error}</p>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
+            <Input
+              placeholder="Digite o nome do usuário Habbo"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && searchUser()}
+              className="flex-1"
+            />
+            <Button onClick={searchUser} disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              Buscar
+            </Button>
           </div>
-        )}
-      </PanelCard>
+          {error && (
+            <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-destructive">{error}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -630,7 +684,7 @@ const Console: React.FC = () => {
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 overflow-y-auto transition-all duration-300`}>
+        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg m-4 min-h-[calc(100vh-2rem)]">
             {renderContent()}
           </div>
