@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -10,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Users, Search, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Users, Search, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PanelCard } from '../components/PanelCard';
 import MobileLayout from '../layouts/MobileLayout';
@@ -65,18 +66,6 @@ const Console: React.FC = () => {
   const [photoComments, setPhotoComments] = useState<{[key: string]: any[]}>({});
   const [activeSection, setActiveSection] = useState('console');
 
-  // Check if user is logged in
-  useEffect(() => {
-    if (!isLoggedIn) {
-      toast({
-        title: "Acesso Negado",
-        description: "Você precisa estar logado para acessar o Console.",
-        variant: "destructive"
-      });
-      navigate('/auth');
-    }
-  }, [isLoggedIn, navigate, toast]);
-
   const searchUser = async () => {
     if (!searchInput.trim()) {
       toast({
@@ -104,8 +93,10 @@ const Console: React.FC = () => {
       // Fetch user photos
       await fetchUserPhotos(userData.uniqueId);
       
-      // Check if following
-      await checkFollowingStatus(userData.uniqueId);
+      // Check if following (only if logged in)
+      if (isLoggedIn && habboAccount) {
+        await checkFollowingStatus(userData.uniqueId);
+      }
       
       toast({
         title: "Usuário encontrado!",
@@ -126,26 +117,34 @@ const Console: React.FC = () => {
       if (response.ok) {
         const photos = await response.json();
         
-        // Transform photos and get like counts
+        // Transform photos and get like counts (only if logged in)
         const transformedPhotos = await Promise.all(
           photos.map(async (photo: any) => {
-            const { data: likes } = await supabase
-              .from('photo_likes')
-              .select('*')
-              .eq('photo_id', photo.id);
-            
-            const { data: comments } = await supabase
-              .from('photo_comments')
-              .select('*')
-              .eq('photo_id', photo.id);
+            let likes = [];
+            let comments = [];
+            let isLiked = false;
 
-            const isLiked = likes?.some(like => like.user_id === habboAccount?.supabase_user_id) || false;
+            if (isLoggedIn) {
+              const { data: likesData } = await supabase
+                .from('photo_likes')
+                .select('*')
+                .eq('photo_id', photo.id);
+              
+              const { data: commentsData } = await supabase
+                .from('photo_comments')
+                .select('*')
+                .eq('photo_id', photo.id);
+
+              likes = likesData || [];
+              comments = commentsData || [];
+              isLiked = likes?.some(like => like.user_id === habboAccount?.supabase_user_id) || false;
+            }
 
             return {
               id: photo.id,
               url: photo.url,
-              likes: likes?.length || 0,
-              comments: comments?.length || 0,
+              likes: likes.length,
+              comments: comments.length,
               isLiked
             };
           })
@@ -176,7 +175,14 @@ const Console: React.FC = () => {
   };
 
   const toggleFollow = async () => {
-    if (!currentUser || !habboAccount) return;
+    if (!currentUser || !habboAccount || !isLoggedIn) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para seguir usuários.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       if (isFollowing) {
@@ -220,7 +226,14 @@ const Console: React.FC = () => {
   };
 
   const togglePhotoLike = async (photoId: string) => {
-    if (!habboAccount) return;
+    if (!habboAccount || !isLoggedIn) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para curtir fotos.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       const photo = userPhotos.find(p => p.id === photoId);
@@ -262,6 +275,14 @@ const Console: React.FC = () => {
 
   const fetchFriendsActivity = async () => {
     if (!currentUser?.friends) return;
+    if (!isLoggedIn) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para ver atividades de amigos.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       // Get activities from friends using the proxy
@@ -288,6 +309,24 @@ const Console: React.FC = () => {
     } catch (err) {
       console.error('Error fetching friends activities:', err);
     }
+  };
+
+  const renderAuthNotice = () => {
+    if (isLoggedIn) return null;
+    
+    return (
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Info className="w-5 h-5 text-blue-600" />
+          <div>
+            <h3 className="font-semibold text-blue-800">Console Público</h3>
+            <p className="text-sm text-blue-600">
+              Você pode buscar usuários sem estar logado, mas funcionalidades como seguir, curtir e ver feed de amigos requerem login.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderProfileTab = () => (
@@ -323,13 +362,25 @@ const Console: React.FC = () => {
                   )}
                 </div>
                 
-                <Button 
-                  onClick={toggleFollow}
-                  variant={isFollowing ? "outline" : "default"}
-                  className="mt-4"
-                >
-                  {isFollowing ? 'Deixar de Seguir' : 'Seguir'}
-                </Button>
+                {isLoggedIn && (
+                  <Button 
+                    onClick={toggleFollow}
+                    variant={isFollowing ? "outline" : "default"}
+                    className="mt-4"
+                  >
+                    {isFollowing ? 'Deixar de Seguir' : 'Seguir'}
+                  </Button>
+                )}
+                
+                {!isLoggedIn && (
+                  <Button 
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => navigate('/connect-habbo')}
+                  >
+                    Fazer Login para Seguir
+                  </Button>
+                )}
               </div>
             </div>
           </PanelCard>
@@ -366,6 +417,7 @@ const Console: React.FC = () => {
                       size="sm"
                       variant={photo.isLiked ? "default" : "secondary"}
                       onClick={() => togglePhotoLike(photo.id)}
+                      disabled={!isLoggedIn}
                     >
                       <Heart className="w-4 h-4 mr-1" />
                       {photo.likes}
@@ -391,76 +443,137 @@ const Console: React.FC = () => {
     </div>
   );
 
-  const renderFeedTab = () => (
-    <div className="space-y-6">
-      <PanelCard title="Feed de Atividades">
-        <Button onClick={fetchFriendsActivity} className="mb-4">
-          Atualizar Feed
-        </Button>
-        <div className="space-y-4">
-          {friendsActivities.length > 0 ? (
-            friendsActivities.map((activity, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">{(activity as any).friendName}</span>
-                  <span className="text-sm text-muted-foreground">{activity.time}</span>
-                </div>
-                <p className="text-sm">{activity.activity}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma atividade recente encontrada
-            </p>
-          )}
-        </div>
-      </PanelCard>
-    </div>
-  );
-
-  const renderFriendsTab = () => (
-    <div className="space-y-6">
-      <PanelCard title="Amigos">
-        <Tabs defaultValue="activity">
-          <TabsList>
-            <TabsTrigger value="activity">Atividade Recente</TabsTrigger>
-            <TabsTrigger value="list">Lista Completa</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="activity">
-            <div className="space-y-4">
-              <Button onClick={fetchFriendsActivity}>
-                Carregar Atividades
+  const renderFeedTab = () => {
+    if (!isLoggedIn) {
+      return (
+        <div className="space-y-6">
+          <PanelCard title="Feed de Atividades">
+            <div className="text-center py-8">
+              <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground mb-4">
+                O feed de atividades requer login para funcionar.
+              </p>
+              <Button onClick={() => navigate('/connect-habbo')}>
+                Fazer Login
               </Button>
-              {friendsActivities.map((activity, index) => (
+            </div>
+          </PanelCard>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <PanelCard title="Feed de Atividades">
+          <Button onClick={fetchFriendsActivity} className="mb-4">
+            Atualizar Feed
+          </Button>
+          <div className="space-y-4">
+            {friendsActivities.length > 0 ? (
+              friendsActivities.map((activity, index) => (
                 <div key={index} className="p-4 border rounded-lg">
-                  <p>{activity.activity}</p>
-                  <small className="text-muted-foreground">{activity.time}</small>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="list">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentUser?.friends?.map((friend) => (
-                <div key={friend.uniqueId} className="p-4 border rounded-lg flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={getAvatarUrl(friend.figureString)} />
-                    <AvatarFallback>{friend.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{friend.name}</p>
-                    <p className="text-sm text-muted-foreground">{friend.motto}</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold">{(activity as any).friendName}</span>
+                    <span className="text-sm text-muted-foreground">{activity.time}</span>
                   </div>
+                  <p className="text-sm">{activity.activity}</p>
                 </div>
-              ))}
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Nenhuma atividade recente encontrada
+              </p>
+            )}
+          </div>
+        </PanelCard>
+      </div>
+    );
+  };
+
+  const renderFriendsTab = () => {
+    if (!currentUser) {
+      return (
+        <div className="space-y-6">
+          <PanelCard title="Amigos">
+            <div className="text-center py-8">
+              <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                Busque um usuário primeiro para ver seus amigos
+              </p>
             </div>
-          </TabsContent>
-        </Tabs>
-      </PanelCard>
-    </div>
-  );
+          </PanelCard>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <PanelCard title="Amigos">
+          <Tabs defaultValue="activity">
+            <TabsList>
+              <TabsTrigger value="activity">Atividade Recente</TabsTrigger>
+              <TabsTrigger value="list">Lista Completa</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="activity">
+              {!isLoggedIn ? (
+                <div className="text-center py-8">
+                  <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">
+                    Login necessário para ver atividades de amigos
+                  </p>
+                  <Button onClick={() => navigate('/connect-habbo')}>
+                    Fazer Login
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Button onClick={fetchFriendsActivity}>
+                    Carregar Atividades
+                  </Button>
+                  {friendsActivities.map((activity, index) => (
+                    <div key={index} className="p-4 border rounded-lg">
+                      <p>{activity.activity}</p>
+                      <small className="text-muted-foreground">{activity.time}</small>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="list">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {currentUser?.friends?.map((friend) => (
+                  <div key={friend.uniqueId} className="p-4 border rounded-lg flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={getAvatarUrl(friend.figureString)} />
+                      <AvatarFallback>{friend.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{friend.name}</p>
+                      <p className="text-sm text-muted-foreground">{friend.motto}</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearchInput(friend.name);
+                          searchUser();
+                          setActiveTab('profile');
+                        }}
+                        className="text-xs mt-1"
+                      >
+                        Ver Perfil
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </PanelCard>
+      </div>
+    );
+  };
 
   const renderContent = () => (
     <div className="container mx-auto max-w-6xl p-4 space-y-6">
@@ -469,6 +582,9 @@ const Console: React.FC = () => {
         <h1 className="text-4xl font-bold text-primary">HabboHub Console</h1>
         <p className="text-muted-foreground">Seu centro de informações do Habbo!</p>
       </div>
+
+      {/* Auth Notice */}
+      {renderAuthNotice()}
 
       {/* Search */}
       <PanelCard>
@@ -506,10 +622,6 @@ const Console: React.FC = () => {
       </Tabs>
     </div>
   );
-
-  if (!isLoggedIn) {
-    return null;
-  }
 
   if (isMobile) {
     return <MobileLayout>{renderContent()}</MobileLayout>;

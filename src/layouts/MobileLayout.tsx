@@ -42,10 +42,10 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
   // Add admin link if user is admin
   if (isAdmin()) {
     additionalNavItems.push({
-      id: 'adminhub',
+      id: 'admin-hub',
       label: 'Admin Hub',
       icon: '/assets/ferramentas.png',
-      path: '/adminhub'
+      path: '/admin-hub'
     });
   }
 
