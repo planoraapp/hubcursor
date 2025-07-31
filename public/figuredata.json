@@ -3,24 +3,87 @@
   "hd": [
     {
       "id": "180",
-      "gender": "U",
+      "gender": "M",
       "club": "0",
       "colorable": true,
       "colors": ["1", "2", "3", "4", "5"]
     },
     {
       "id": "181",
-      "gender": "U",
+      "gender": "M",
       "club": "0",
       "colorable": true,
       "colors": ["1", "2", "3", "4", "5"]
     },
     {
       "id": "182",
-      "gender": "U",
+      "gender": "M",
       "club": "0",
       "colorable": true,
       "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "185",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "190",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "195",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "600",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "605",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "610",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5"]
+    },
+    {
+      "id": "3091",
+      "gender": "M",
+      "club": "1",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5", "45", "61"]
+    },
+    {
+      "id": "3092",
+      "gender": "M",
+      "club": "1",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5", "45", "61"]
+    },
+    {
+      "id": "3093",
+      "gender": "F",
+      "club": "1",
+      "colorable": true,
+      "colors": ["1", "2", "3", "4", "5", "45", "61"]
     }
   ],
   "hr": [
@@ -34,6 +97,27 @@
     {
       "id": "130",
       "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "135",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "140",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "145",
+      "gender": "F",
       "club": "0",
       "colorable": true,
       "colors": ["45", "61", "92", "100", "101", "102"]
@@ -65,6 +149,90 @@
       "club": "0",
       "colorable": true,
       "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "745",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "750",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "755",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "760",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "3001",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3002",
+      "gender": "M",
+      "club": "1",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3003",
+      "gender": "F",
+      "club": "1",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3791",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "678",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "5773",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "831",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "700",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
     }
   ],
   "ch": [
@@ -78,6 +246,27 @@
     {
       "id": "225",
       "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "230",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "235",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "240",
+      "gender": "F",
       "club": "0",
       "colorable": true,
       "colors": ["92", "61", "100", "101", "102"]
@@ -109,6 +298,76 @@
       "club": "0",
       "colorable": true,
       "colors": ["92", "61", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "800",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "3006",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "3030",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "6147",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "3100",
+      "gender": "M",
+      "club": "1",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3101",
+      "gender": "F",
+      "club": "1",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3102",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "670",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "675",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "680",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
     }
   ],
   "lg": [
@@ -122,6 +381,20 @@
     {
       "id": "285",
       "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "290",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "295",
+      "gender": "F",
       "club": "0",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102"]
@@ -153,6 +426,76 @@
       "club": "1",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "900",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "275",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "3138",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "710",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "720",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "3200",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3201",
+      "gender": "M",
+      "club": "1",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3202",
+      "gender": "F",
+      "club": "1",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "5221",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "104", "105", "61"]
+    },
+    {
+      "id": "5229",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["100", "104", "105", "106"]
     }
   ],
   "sh": [
@@ -166,6 +509,20 @@
     {
       "id": "305",
       "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "310",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "315",
+      "gender": "F",
       "club": "0",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102"]
@@ -197,6 +554,62 @@
       "club": "1",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "100",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "3059",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "3300",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3301",
+      "gender": "M",
+      "club": "1",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "3302",
+      "gender": "F",
+      "club": "1",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "320",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "325",
+      "gender": "M",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "330",
+      "gender": "F",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
     }
   ],
   "ha": [
@@ -234,6 +647,90 @@
       "club": "1",
       "colorable": true,
       "colors": ["45", "61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "1008",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "6198",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "5246",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "45"]
+    },
+    {
+      "id": "5222",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["104", "105", "106", "92"]
+    },
+    {
+      "id": "5226",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["104", "105", "106", "61"]
+    },
+    {
+      "id": "5217",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "104"]
+    },
+    {
+      "id": "5219",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106", "92"]
+    },
+    {
+      "id": "5233",
+      "gender": "U",
+      "club": "0",
+      "colorable": false,
+      "colors": ["104"]
+    },
+    {
+      "id": "5234",
+      "gender": "U",
+      "club": "0",
+      "colorable": false,
+      "colors": ["105"]
+    },
+    {
+      "id": "5235",
+      "gender": "U",
+      "club": "0",
+      "colorable": false,
+      "colors": ["106"]
+    },
+    {
+      "id": "5241",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106"]
+    },
+    {
+      "id": "5245",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106"]
     }
   ],
   "ea": [
@@ -264,6 +761,34 @@
       "club": "1",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "1405",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "5252",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100"]
+    },
+    {
+      "id": "5215",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100"]
+    },
+    {
+      "id": "5216",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100"]
     }
   ],
   "fa": [
@@ -287,6 +812,20 @@
       "club": "1",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "4043",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "4168",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "101", "102"]
     }
   ],
   "cc": [
@@ -310,6 +849,20 @@
       "club": "0",
       "colorable": true,
       "colors": ["92", "61", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "5251",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["61", "92", "100", "104"]
+    },
+    {
+      "id": "5225",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106", "92"]
     }
   ],
   "ca": [
@@ -340,6 +893,83 @@
       "club": "0",
       "colorable": true,
       "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "301",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "4173",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "5253",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "61"]
+    },
+    {
+      "id": "5249",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106", "61"]
+    },
+    {
+      "id": "5227",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "92", "61"]
+    },
+    {
+      "id": "5231",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["100", "104", "105"]
+    },
+    {
+      "id": "5237",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["100", "104", "105"]
+    },
+    {
+      "id": "5238",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106"]
+    },
+    {
+      "id": "5239",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["105", "106", "143"]
+    },
+    {
+      "id": "5240",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["106", "143", "100"]
+    },
+    {
+      "id": "5243",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["100", "104", "143"]
     }
   ],
   "wa": [
@@ -370,6 +1000,27 @@
       "club": "0",
       "colorable": true,
       "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "5224",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106", "92"]
+    },
+    {
+      "id": "5232",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["106", "104", "105"]
+    },
+    {
+      "id": "5242",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["143", "100", "104"]
     }
   ],
   "he": [
@@ -400,6 +1051,43 @@
       "club": "0",
       "colorable": true,
       "colors": ["61", "92", "100", "101", "102"]
+    },
+    {
+      "id": "5218",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["45", "61", "100", "102"]
+    }
+  ],
+  "cp": [
+    {
+      "id": "1",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "2",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102"]
+    },
+    {
+      "id": "3",
+      "gender": "U",
+      "club": "1",
+      "colorable": true,
+      "colors": ["92", "61", "100", "101", "102", "104", "105", "106", "143"]
+    },
+    {
+      "id": "5244",
+      "gender": "U",
+      "club": "0",
+      "colorable": true,
+      "colors": ["104", "105", "106"]
     }
   ]
 }
