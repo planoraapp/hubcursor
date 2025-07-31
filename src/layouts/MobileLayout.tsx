@@ -36,6 +36,7 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
     { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', path: '/editor' },
     { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
     { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' },
+    { id: 'console', label: 'Console', icon: '/assets/ferramentas.png', path: '/console' },
   ];
 
   // Add admin link if user is admin

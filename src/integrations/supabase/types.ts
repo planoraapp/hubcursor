@@ -133,6 +133,84 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_comments: {
+        Row: {
+          comment_text: string
+          created_at: string
+          habbo_name: string
+          id: string
+          photo_id: string
+          user_id: string
+        }
+        Insert: {
+          comment_text: string
+          created_at?: string
+          habbo_name: string
+          id?: string
+          photo_id: string
+          user_id: string
+        }
+        Update: {
+          comment_text?: string
+          created_at?: string
+          habbo_name?: string
+          id?: string
+          photo_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      photo_likes: {
+        Row: {
+          created_at: string
+          habbo_name: string
+          id: string
+          photo_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          habbo_name: string
+          id?: string
+          photo_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          habbo_name?: string
+          id?: string
+          photo_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_followers: {
+        Row: {
+          created_at: string
+          followed_habbo_id: string
+          followed_habbo_name: string
+          follower_habbo_name: string
+          follower_user_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          followed_habbo_id: string
+          followed_habbo_name: string
+          follower_habbo_name: string
+          follower_user_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          followed_habbo_id?: string
+          followed_habbo_name?: string
+          follower_habbo_name?: string
+          follower_user_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

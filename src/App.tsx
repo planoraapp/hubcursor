@@ -16,6 +16,7 @@ const Catalogo = lazy(() => import('./pages/Catalogo'));
 const Ferramentas = lazy(() => import('./pages/Ferramentas'));
 const ForumPage = lazy(() => import('./pages/ForumPage'));
 const Emblemas = lazy(() => import('./pages/Emblemas'));
+const Console = lazy(() => import('./pages/Console'));
 const Mercado = lazy(() => import('./pages/Mercado'));
 const AdminHub = lazy(() => import('./pages/AdminHub'));
 const ToolsPageNew = lazy(() => import('./pages/ToolsPageNew'));
@@ -54,6 +55,7 @@ function App() {
               <Route path="/mercado" element={<Mercado />} />
               <Route path="/admin-hub" element={<AdminHub />} />
               <Route path="/tools" element={<ToolsPageNew />} />
+              <Route path="/console" element={<Console />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

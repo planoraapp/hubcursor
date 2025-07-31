@@ -1,5 +1,5 @@
 
-import { Newspaper, MessageCircle, Package, Award, Palette, ShoppingCart } from 'lucide-react';
+import { Newspaper, MessageCircle, Package, Award, Palette, ShoppingCart, Monitor } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { UserProfile } from './UserProfile';
 import { useLanguage } from '../hooks/useLanguage';
@@ -19,11 +19,16 @@ export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
     { id: 'emblemas', label: t('emblemas'), icon: Award },
     { id: 'editor', label: t('editor'), icon: Palette },
     { id: 'mercado', label: t('mercado'), icon: ShoppingCart },
+    { id: 'console', label: 'Console', icon: Monitor },
   ];
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
-    window.location.hash = id;
+    if (id === 'console') {
+      window.location.href = '/console';
+    } else {
+      window.location.hash = id;
+    }
   };
 
   return (
