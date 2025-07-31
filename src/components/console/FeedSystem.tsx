@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { RefreshCw, Clock, Users, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { getAvatarUrl } from '../../../services/habboApi';
+import { getAvatarUrl } from '../../services/habboApi';
 
 interface Activity {
   time: string;

@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, Home, Crown, ExternalLink } from 'lucide-react';
-import { getBadgeUrl, getAvatarUrl } from '../../../services/habboApi';
+import { getBadgeUrl, getAvatarUrl } from '../../services/habboApi';
 
 interface BadgeData {
   code: string;
