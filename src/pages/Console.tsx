@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -49,6 +50,10 @@ interface Activity {
   timestamp: string;
 }
 
+// Simple cache to avoid repeated API calls
+const userCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const Console: React.FC = () => {
   const { isLoggedIn, habboAccount } = useAuth();
   const navigate = useNavigate();
@@ -72,6 +77,32 @@ const Console: React.FC = () => {
   const [userGroups, setUserGroups] = useState<any[]>([]);
   const [followedUsers, setFollowedUsers] = useState<string[]>([]);
 
+  // Auto-load current user's profile when logged in
+  useEffect(() => {
+    if (isLoggedIn && habboAccount && !currentUser) {
+      console.log('🔄 Auto-loading current user profile:', habboAccount.habbo_name);
+      loadCurrentUserProfile();
+    }
+  }, [isLoggedIn, habboAccount]);
+
+  const loadCurrentUserProfile = async () => {
+    if (!habboAccount) return;
+    
+    setSearchInput(habboAccount.habbo_name);
+    await searchUserWithCaching(habboAccount.habbo_name);
+  };
+
+  // Debounced search function
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchInput && searchInput !== currentUser?.name) {
+        searchUserWithCaching(searchInput);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
+
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -83,8 +114,43 @@ const Console: React.FC = () => {
     };
   }, []);
 
-  const searchUser = async () => {
-    if (!searchInput.trim()) {
+  const getCachedUser = (username: string) => {
+    const cached = userCache.get(username.toLowerCase());
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log('📦 Using cached data for:', username);
+      return cached.data;
+    }
+    return null;
+  };
+
+  const setCachedUser = (username: string, data: any) => {
+    userCache.set(username.toLowerCase(), {
+      data,
+      timestamp: Date.now()
+    });
+  };
+
+  const searchUserWithCaching = async (username: string) => {
+    if (!username.trim()) return;
+
+    const cachedData = getCachedUser(username);
+    if (cachedData) {
+      setCurrentUser(cachedData.user);
+      setAllBadges(cachedData.badges || []);
+      setUserFriends(cachedData.friends || []);
+      setUserRooms(cachedData.rooms || []);
+      setUserGroups(cachedData.groups || []);
+      await fetchUserPhotos(cachedData.user.uniqueId);
+      return;
+    }
+
+    await searchUser(username);
+  };
+
+  const searchUser = async (username?: string) => {
+    const targetUser = username || searchInput.trim();
+    
+    if (!targetUser) {
       toast({
         title: "Campo obrigatório",
         description: "Digite um nome de usuário para buscar.",
@@ -97,7 +163,8 @@ const Console: React.FC = () => {
     setError(null);
 
     try {
-      const userData = await getUserByName(searchInput.trim());
+      console.log('🔍 Searching for user:', targetUser);
+      const userData = await getUserByName(targetUser);
       
       if (!userData) {
         setError('Usuário não encontrado.');
@@ -107,9 +174,29 @@ const Console: React.FC = () => {
 
       setCurrentUser(userData);
       
+      const [badgesData, friendsData, roomsData, groupsData] = await Promise.all([
+        getUserBadges(userData.uniqueId),
+        getUserFriends(userData.uniqueId),
+        getUserRooms(userData.uniqueId),
+        getUserGroups(userData.uniqueId)
+      ]);
+
+      setAllBadges(badgesData || []);
+      setUserFriends(friendsData || []);
+      setUserRooms(roomsData || []);
+      setUserGroups(groupsData || []);
+
+      // Cache the complete user data
+      setCachedUser(targetUser, {
+        user: userData,
+        badges: badgesData,
+        friends: friendsData,
+        rooms: roomsData,
+        groups: groupsData
+      });
+
       await Promise.all([
         fetchUserPhotos(userData.uniqueId),
-        fetchAllUserData(userData.uniqueId),
         isLoggedIn && habboAccount ? checkFollowingStatus(userData.uniqueId) : null
       ]);
       
@@ -123,24 +210,6 @@ const Console: React.FC = () => {
       setError('Erro ao buscar usuário.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchAllUserData = async (userId: string) => {
-    try {
-      const [badgesData, friendsData, roomsData, groupsData] = await Promise.all([
-        getUserBadges(userId),
-        getUserFriends(userId),
-        getUserRooms(userId),
-        getUserGroups(userId)
-      ]);
-
-      setAllBadges(badgesData || []);
-      setUserFriends(friendsData || []);
-      setUserRooms(roomsData || []);
-      setUserGroups(groupsData || []);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
     }
   };
 
@@ -211,7 +280,7 @@ const Console: React.FC = () => {
       const { data } = await supabase
         .from('user_followers')
         .select('*')
-        .eq('follower_user_id', habboAccount.supabase_user_id) // Now matches interface
+        .eq('follower_user_id', habboAccount.supabase_user_id)
         .eq('followed_habbo_id', habboId)
         .single();
       
@@ -233,11 +302,10 @@ const Console: React.FC = () => {
 
     try {
       if (isFollowing) {
-        // Unfollow
         await supabase
           .from('user_followers')
           .delete()
-          .eq('follower_user_id', habboAccount.supabase_user_id) // Now matches interface
+          .eq('follower_user_id', habboAccount.supabase_user_id)
           .eq('followed_habbo_id', currentUser.uniqueId);
         
         setIsFollowing(false);
@@ -246,11 +314,10 @@ const Console: React.FC = () => {
           description: `Você não segue mais ${currentUser.name}`
         });
       } else {
-        // Follow
         await supabase
           .from('user_followers')
           .insert({
-            follower_user_id: habboAccount.supabase_user_id, // Now matches interface
+            follower_user_id: habboAccount.supabase_user_id,
             follower_habbo_name: habboAccount.habbo_name,
             followed_habbo_id: currentUser.uniqueId,
             followed_habbo_name: currentUser.name
@@ -287,12 +354,11 @@ const Console: React.FC = () => {
       if (!photo) return;
 
       if (photo.isLiked) {
-        // Remove like
         await supabase
           .from('photo_likes')
           .delete()
           .eq('photo_id', photoId)
-          .eq('user_id', habboAccount.supabase_user_id); // Now matches interface
+          .eq('user_id', habboAccount.supabase_user_id);
         
         setUserPhotos(prev => prev.map(p => 
           p.id === photoId 
@@ -300,12 +366,11 @@ const Console: React.FC = () => {
             : p
         ));
       } else {
-        // Add like
         await supabase
           .from('photo_likes')
           .insert({
             photo_id: photoId,
-            user_id: habboAccount.supabase_user_id, // Now matches interface
+            user_id: habboAccount.supabase_user_id,
             habbo_name: habboAccount.habbo_name
           });
         
@@ -322,7 +387,7 @@ const Console: React.FC = () => {
 
   const handleUserClick = (username: string) => {
     setSearchInput(username);
-    searchUser();
+    searchUserWithCaching(username);
   };
 
   useEffect(() => {
@@ -436,7 +501,9 @@ const Console: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Busque um usuário para ver o perfil</p>
+              <p className="text-muted-foreground">
+                {isLoggedIn ? 'Busque um usuário para ver o perfil' : 'Seu perfil será carregado automaticamente quando fizer login'}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -471,35 +538,36 @@ const Console: React.FC = () => {
 
       {renderAuthNotice()}
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <Input
-              placeholder="Digite o nome do usuário Habbo"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && searchUser()}
-              className="flex-1"
-            />
-            <Button onClick={searchUser} disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              Buscar
-            </Button>
-          </div>
-          {error && (
-            <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-lg">
-              <p className="text-destructive">{error}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="feed">Feed Geral</TabsTrigger>
           <TabsTrigger value="friends">Feed de Amigos</TabsTrigger>
         </TabsList>
+        
+        {/* Search bar positioned below tabs */}
+        <Card className="mt-4">
+          <CardContent className="pt-6">
+            <div className="flex gap-4">
+              <Input
+                placeholder="Digite o nome do usuário Habbo"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && searchUser()}
+                className="flex-1"
+              />
+              <Button onClick={() => searchUser()} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                Buscar
+              </Button>
+            </div>
+            {error && (
+              <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-lg">
+                <p className="text-destructive">{error}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
         
         <TabsContent value="profile">{renderProfileTab()}</TabsContent>
         <TabsContent value="feed">{renderFeedTab()}</TabsContent>
