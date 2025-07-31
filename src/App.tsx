@@ -1,60 +1,49 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import ConnectHabbo from "./pages/ConnectHabbo";
-import Profile from "./pages/Profile";
-import ProfileEnhanced from "./pages/ProfileEnhanced";
-import Forum from "./pages/Forum";
-import ForumPage from "./pages/ForumPage";
-import Noticias from "./pages/Noticias";
-import Eventos from "./pages/Eventos";
-import Catalogo from "./pages/Catalogo";
-import BadgesPage from "./pages/BadgesPage";
-import ToolsPage from "./pages/ToolsPage";
-import AdminPanelPage from "./pages/AdminPanelPage";
-import Editor from "./pages/Editor";
-import Mercado from "./pages/Mercado";
-import Ferramentas from "./pages/Ferramentas";
-import AdminHub from "./pages/AdminHub";
-import NotFound from "./pages/NotFound";
+import { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import './App.css';
 
-// Add CSS for volter-font
-import "./App.css";
+// Lazy load pages for better performance
+const Index = lazy(() => import('./pages/Index'));
+const Editor = lazy(() => import('./pages/Editor'));
+const Profile = lazy(() => import('./pages/Profile'));
+const ConnectHabbo = lazy(() => import('./pages/ConnectHabbo'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-const queryClient = new QueryClient();
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      retry: 3,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/connect-habbo" element={<ConnectHabbo />} />
-          <Route path="/profile/:username" element={<ProfileEnhanced />} />
-          <Route path="/forum-old" element={<Forum />} />
-          <Route path="/forum" element={<ForumPage />} />
-          <Route path="/noticias" element={<Noticias />} />
-          <Route path="/eventos" element={<Eventos />} />
-          <Route path="/catalogo" element={<Catalogo />} />
-          <Route path="/emblemas" element={<BadgesPage />} />
-          <Route path="/badges" element={<BadgesPage />} />
-          <Route path="/ferramentas" element={<ToolsPage />} />
-          <Route path="/tools" element={<ToolsPage />} />
-          <Route path="/adminhub" element={<AdminPanelPage />} />
-          <Route path="/admin-panel" element={<AdminPanelPage />} />
-          <Route path="/editor" element={<Editor />} />
-          <Route path="/mercado" element={<Mercado />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="App">
+          <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-amber-50 to-blue-50 flex items-center justify-center">
+            <div className="text-lg text-gray-600">Carregando...</div>
+          </div>}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/editor" element={<Editor />} />
+              <Route path="/profile/:username" element={<Profile />} />
+              <Route path="/connect-habbo" element={<ConnectHabbo />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+          <Toaster />
+        </div>
+      </Router>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

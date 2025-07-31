@@ -12,7 +12,7 @@ const Editor = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    console.log('📍 Editor page loaded - ensuring React component renders');
+    console.log('🔧 Editor page loaded - React component rendering');
     
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);

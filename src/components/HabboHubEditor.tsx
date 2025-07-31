@@ -55,6 +55,8 @@ const HABBO_COLORS = [
 ];
 
 const HabboHubEditor = () => {
+  console.log('🚀 [HabboHubEditor] Component initializing...');
+  
   const { toast } = useToast();
   
   const [currentFigure, setCurrentFigure] = useState<CurrentFigure>(DEFAULT_FIGURE);
@@ -73,25 +75,34 @@ const HabboHubEditor = () => {
 
   // Log do estado da API
   useEffect(() => {
-    console.log('🔍 HabboHubEditor - API Status:', {
+    console.log('🔍 [HabboHubEditor] API Status Update:', {
       loading: apiLoading,
       hasData: !!clothingData,
       dataLength: clothingData?.length,
       error: error?.message
     });
+    
+    if (clothingData) {
+      console.log('📦 [HabboHubEditor] Sample clothing data:', clothingData.slice(0, 3));
+    }
   }, [apiLoading, clothingData, error]);
+
+  // Initial load log
+  useEffect(() => {
+    console.log('🎯 [HabboHubEditor] Component mounted and ready!');
+  }, []);
 
   const generateFigureString = useCallback(() => {
     const parts = Object.entries(currentFigure)
       .filter(([_, part]) => part && part.id !== '0')
       .map(([type, part]) => `${type}-${part.id}-${part.colors.join('.')}`)
       .join('.');
-    console.log('🎨 Generated figure string:', parts);
+    console.log('🎨 [HabboHubEditor] Generated figure string:', parts);
     return parts;
   }, [currentFigure]);
 
   const handlePartSelect = (partId: string) => {
-    console.log('👕 Part selected:', partId, 'in category:', activeCategory);
+    console.log('👕 [HabboHubEditor] Part selected:', partId, 'in category:', activeCategory);
     setSelectedPart(partId);
     
     // Buscar o item nos dados da API
@@ -118,7 +129,7 @@ const HabboHubEditor = () => {
   };
 
   const handleColorSelect = (colorId: string) => {
-    console.log('🎨 Color selected:', colorId, 'for category:', activeCategory);
+    console.log('🎨 [HabboHubEditor] Color selected:', colorId, 'for category:', activeCategory);
     setCurrentFigure(prev => {
       const currentPart = prev[activeCategory as keyof CurrentFigure];
       if (currentPart) {
@@ -144,7 +155,7 @@ const HabboHubEditor = () => {
       return;
     }
     
-    console.log('🎲 Randomizing avatar with API data...');
+    console.log('🎲 [HabboHubEditor] Randomizing avatar with API data...');
     setLoading(true);
     
     setTimeout(() => {
@@ -162,7 +173,7 @@ const HabboHubEditor = () => {
             
             newFigure[category as keyof CurrentFigure] = {
               id: randomItem.id,
-              colors: [randomColor]
+              colors: [randomColor.toString()]
             };
           }
         }
@@ -251,6 +262,7 @@ const HabboHubEditor = () => {
 
   // Se houver erro na API, mostrar botão de retry
   if (error) {
+    console.log('❌ [HabboHubEditor] Rendering error state');
     return (
       <div className="w-full max-w-7xl mx-auto space-y-6">
         <div className="text-center mb-8">
@@ -268,6 +280,7 @@ const HabboHubEditor = () => {
   }
 
   if (loading || apiLoading) {
+    console.log('⏳ [HabboHubEditor] Rendering loading state');
     return (
       <div className="w-full max-w-7xl mx-auto space-y-6">
         <div className="text-center mb-8">
@@ -285,6 +298,8 @@ const HabboHubEditor = () => {
       </div>
     );
   }
+
+  console.log('✅ [HabboHubEditor] Rendering main editor interface');
 
   // Obter item atualmente selecionado e suas cores disponíveis
   const currentItem = clothingData && (() => {
