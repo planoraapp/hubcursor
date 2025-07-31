@@ -52,7 +52,14 @@ const Editor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    <div className="min-h-screen bg-repeat bg-cover" 
+         style={{ 
+           backgroundImage: 'url(/assets/bghabbohub.png)',
+           margin: 0,
+           padding: 0,
+           width: '100vw',
+           height: '100vh'
+         }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection="editor" setActiveSection={() => {}} />
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
