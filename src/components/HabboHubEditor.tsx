@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import AvatarPreview from './HabboEditor/AvatarPreview';
 import ClothingSelector from './HabboEditor/ClothingSelector';
 import ColorPalette from './HabboEditor/ColorPalette';
-import { useHabboEmotionAPI } from '@/hooks/useHabboEmotionAPI';
-import { groupItemsByCategory } from '@/utils/habboClothingMapper';
+import { useFigureData } from '@/hooks/useFigureData';
 
 interface CurrentFigure {
   hd: { id: string; colors: string[] };
@@ -37,25 +36,25 @@ const DEFAULT_FIGURE: CurrentFigure = {
 
 // Cores Habbo oficiais
 const HABBO_COLORS = [
-  { id: '1', hex: 'F5DA88', name: 'Pele Clara' },
-  { id: '2', hex: 'FFDBC1', name: 'Pele Rosa' },
-  { id: '3', hex: 'FFCB98', name: 'Pele Bronzeada' },
-  { id: '4', hex: 'F4AC54', name: 'Pele Dourada' },
-  { id: '5', hex: 'CA8154', name: 'Pele Morena' },
-  { id: '45', hex: 'D4B878', name: 'Loiro' },
-  { id: '61', hex: '000000', name: 'Preto' },
-  { id: '92', hex: 'FFFFFF', name: 'Branco' },
-  { id: '100', hex: 'E3AE7D', name: 'Bege' },
-  { id: '101', hex: 'C99263', name: 'Marrom' },
-  { id: '102', hex: 'A76644', name: 'Marrom Escuro' },
-  { id: '104', hex: 'FFC680', name: 'Laranja' },
-  { id: '105', hex: 'FF8C40', name: 'Laranja Escuro' },
-  { id: '106', hex: 'FF5757', name: 'Vermelho' },
-  { id: '143', hex: '6799CC', name: 'Azul' }
+  { id: '1', hex: '#F5DA88', name: 'Pele Clara' },
+  { id: '2', hex: '#FFDBC1', name: 'Pele Rosa' },
+  { id: '3', hex: '#FFCB98', name: 'Pele Bronzeada' },
+  { id: '4', hex: '#F4AC54', name: 'Pele Dourada' },
+  { id: '5', hex: '#CA8154', name: 'Pele Morena' },
+  { id: '45', hex: '#D4B878', name: 'Loiro' },
+  { id: '61', hex: '#000000', name: 'Preto' },
+  { id: '92', hex: '#FFFFFF', name: 'Branco' },
+  { id: '100', hex: '#E3AE7D', name: 'Bege' },
+  { id: '101', hex: '#C99263', name: 'Marrom' },
+  { id: '102', hex: '#A76644', name: 'Marrom Escuro' },
+  { id: '104', hex: '#FFC680', name: 'Laranja' },
+  { id: '105', hex: '#FF8C40', name: 'Laranja Escuro' },
+  { id: '106', hex: '#FF5757', name: 'Vermelho' },
+  { id: '143', hex: '#6799CC', name: 'Azul' }
 ];
 
 const HabboHubEditor = () => {
-  console.log('🚀 [HabboHubEditor] Component initializing...');
+  console.log('🚀 [HabboHubEditor] Iniciando Editor Dinâmico...');
   
   const { toast } = useToast();
   
@@ -67,29 +66,26 @@ const HabboHubEditor = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Buscar dados da API Habbo Emotion
-  const { data: clothingData, isLoading: apiLoading, error, refetch } = useHabboEmotionAPI({
-    limit: 200,
-    enabled: true
-  });
+  // Carregar dados do figuredata.json
+  const { data: figureData, isLoading: apiLoading, error, refetch } = useFigureData();
 
   // Log do estado da API
   useEffect(() => {
-    console.log('🔍 [HabboHubEditor] API Status Update:', {
+    console.log('🔍 [HabboHubEditor] FigureData Status:', {
       loading: apiLoading,
-      hasData: !!clothingData,
-      dataLength: clothingData?.length,
+      hasData: !!figureData,
+      categories: figureData ? Object.keys(figureData).length : 0,
       error: error?.message
     });
     
-    if (clothingData) {
-      console.log('📦 [HabboHubEditor] Sample clothing data:', clothingData.slice(0, 3));
+    if (figureData) {
+      console.log('📦 [HabboHubEditor] Categorias disponíveis:', Object.keys(figureData));
     }
-  }, [apiLoading, clothingData, error]);
+  }, [apiLoading, figureData, error]);
 
   // Initial load log
   useEffect(() => {
-    console.log('🎯 [HabboHubEditor] Component mounted and ready!');
+    console.log('🎯 [HabboHubEditor] Editor Dinâmico carregado!');
   }, []);
 
   const generateFigureString = useCallback(() => {
@@ -105,24 +101,22 @@ const HabboHubEditor = () => {
     console.log('👕 [HabboHubEditor] Part selected:', partId, 'in category:', activeCategory);
     setSelectedPart(partId);
     
-    // Buscar o item nos dados da API
-    if (clothingData) {
-      const processedData = groupItemsByCategory(clothingData);
-      const categoryItems = processedData[activeCategory] || [];
-      const item = categoryItems.find(item => item && item.id === partId);
+    // Buscar o item nos dados do figuredata
+    if (figureData && figureData[activeCategory]) {
+      const item = figureData[activeCategory].find(item => item.id === partId);
       
       if (item) {
         setCurrentFigure(prev => ({
           ...prev,
           [activeCategory]: {
             id: partId,
-            colors: [item.colors[0]] // Usar primeira cor disponível
+            colors: [item.colors[0] || '1']
           }
         }));
 
         toast({
           title: "Peça Selecionada!",
-          description: `${item.name} foi adicionada ao seu visual.`
+          description: `${activeCategory}-${partId} foi adicionada ao seu visual.`
         });
       }
     }
@@ -146,36 +140,32 @@ const HabboHubEditor = () => {
   };
 
   const handleRandomize = () => {
-    if (!clothingData || clothingData.length === 0) {
+    if (!figureData) {
       toast({
         title: "Erro",
-        description: "Nenhuma roupa disponível para randomização.",
+        description: "Dados de roupas não carregados ainda.",
         variant: "destructive"
       });
       return;
     }
     
-    console.log('🎲 [HabboHubEditor] Randomizing avatar with API data...');
+    console.log('🎲 [HabboHubEditor] Randomizando avatar com figuredata oficial...');
     setLoading(true);
     
     setTimeout(() => {
       const newFigure: CurrentFigure = { ...DEFAULT_FIGURE };
-      const processedData = groupItemsByCategory(clothingData);
       
-      // Para cada categoria, pegar um item aleatório dos dados da API
+      // Para cada categoria, pegar um item aleatório dos dados oficiais
       ['hr', 'ch', 'lg', 'ha', 'ea', 'cc', 'ca', 'wa'].forEach(category => {
-        const categoryItems = processedData[category];
+        const categoryItems = figureData[category];
         if (categoryItems && categoryItems.length > 0) {
-          const validItems = categoryItems.filter(Boolean);
-          if (validItems.length > 0) {
-            const randomItem = validItems[Math.floor(Math.random() * validItems.length)];
-            const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
-            
-            newFigure[category as keyof CurrentFigure] = {
-              id: randomItem.id,
-              colors: [randomColor.toString()]
-            };
-          }
+          const randomItem = categoryItems[Math.floor(Math.random() * categoryItems.length)];
+          const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
+          
+          newFigure[category as keyof CurrentFigure] = {
+            id: randomItem.id,
+            colors: [randomColor]
+          };
         }
       });
       
@@ -184,7 +174,7 @@ const HabboHubEditor = () => {
       
       toast({
         title: "Avatar Randomizado!",
-        description: "Um novo visual foi gerado com roupas da API Habbo Emotion."
+        description: "Um novo visual foi gerado com roupas oficiais do Habbo."
       });
     }, 1000);
   };
@@ -213,26 +203,15 @@ const HabboHubEditor = () => {
     const selectedItems = Object.entries(currentFigure)
       .filter(([_, part]) => part && part.id !== '0')
       .map(([category, part]) => {
-        // Buscar informações do item na API
-        if (clothingData) {
-          const processedData = groupItemsByCategory(clothingData);
-          const categoryItems = processedData[category] || [];
-          const item = categoryItems.find(i => i && i.id === part.id);
-          
-          return {
-            category,
-            id: part.id,
-            name: item?.name || 'Item Desconhecido',
-            swfCode: item?.swfCode || '',
-            colors: part.colors
-          };
-        }
+        const categoryData = figureData?.[category];
+        const item = categoryData?.find(i => i.id === part.id);
         
         return {
           category,
           id: part.id,
-          name: 'Item Desconhecido',
-          swfCode: '',
+          gender: item?.gender || 'U',
+          club: item?.club || '0',
+          colorable: item?.colorable || false,
           colors: part.colors
         };
       });
@@ -243,7 +222,7 @@ const HabboHubEditor = () => {
       hotel: selectedHotel,
       items: selectedItems,
       exportDate: new Date().toISOString(),
-      source: 'Habbo Emotion API'
+      source: 'Habbo Official FigureData'
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -256,7 +235,7 @@ const HabboHubEditor = () => {
     
     toast({
       title: "Figure Exportada!",
-      description: "O arquivo foi baixado com todos os detalhes das peças."
+      description: "O arquivo foi baixado com todos os detalhes das peças oficiais."
     });
   };
 
@@ -268,7 +247,7 @@ const HabboHubEditor = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-red-600 mb-2">Erro no Editor</h2>
           <p className="text-gray-600 mb-4">
-            Não foi possível carregar as roupas da API Habbo Emotion.
+            Não foi possível carregar os dados oficiais do Habbo.
           </p>
           <Button onClick={() => refetch()} variant="outline">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -286,7 +265,7 @@ const HabboHubEditor = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-amber-600 mb-2">Editor de Visuais Habbo</h2>
           <p className="text-gray-600">
-            {apiLoading ? 'Carregando roupas da API...' : 'Gerando visual aleatório...'}
+            {apiLoading ? 'Carregando dados oficiais do Habbo...' : 'Gerando visual aleatório...'}
           </p>
         </div>
         
@@ -302,48 +281,36 @@ const HabboHubEditor = () => {
   console.log('✅ [HabboHubEditor] Rendering main editor interface');
 
   // Obter item atualmente selecionado e suas cores disponíveis
-  const currentItem = clothingData && (() => {
-    const processedData = groupItemsByCategory(clothingData);
-    const categoryItems = processedData[activeCategory] || [];
-    return categoryItems.find(item => item && item.id === selectedPart);
-  })();
-  
+  const currentItem = figureData && figureData[activeCategory]?.find(item => item.id === selectedPart);
   const availableColors = currentItem?.colors || [];
+  const totalItems = figureData ? Object.values(figureData).reduce((acc, items) => acc + items.length, 0) : 0;
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-amber-600 mb-2 volter-font">Editor de Visuais Habbo</h2>
-        <p className="text-gray-600">Crie e personalize seu avatar com roupas reais da API Habbo Emotion!</p>
+        <p className="text-gray-600">Crie e personalize seu avatar com roupas OFICIAIS do Habbo!</p>
         <div className="flex justify-center gap-4 mt-2">
-          {clothingData && (() => {
-            const processedData = groupItemsByCategory(clothingData);
-            const allItems = Object.values(processedData).flat().filter(Boolean);
-            return (
-              <>
-                <Badge className="bg-blue-600 text-white">
-                  Total: {allItems.length} itens
-                </Badge>
-                <Badge className="bg-green-600 text-white">
-                  Categorias: {Object.keys(processedData).length}
-                </Badge>
-                <Badge className="bg-purple-600 text-white">
-                  API: Conectada
-                </Badge>
-              </>
-            );
-          })()}
+          <Badge className="bg-blue-600 text-white">
+            Total: {totalItems} itens
+          </Badge>
+          <Badge className="bg-green-600 text-white">
+            Categorias: {figureData ? Object.keys(figureData).length : 0}
+          </Badge>
+          <Badge className="bg-purple-600 text-white">
+            Sistema: Oficial
+          </Badge>
         </div>
       </div>
 
       {/* Alert */}
-      <Card className="bg-yellow-50 border-yellow-200">
+      <Card className="bg-green-50 border-green-200">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <img src="/assets/2190__-5kz.png" alt="Alerta" className="w-6 h-6" />
-            <p className="text-sm text-yellow-800">
-              <strong>Status:</strong> Editor funcionando com {clothingData?.length || 0} roupas reais da API Habbo Emotion!
+            <img src="/assets/2190__-5kz.png" alt="Sucesso" className="w-6 h-6" />
+            <p className="text-sm text-green-800">
+              <strong>Status:</strong> Editor funcionando com dados OFICIAIS do Habbo ({totalItems} itens disponíveis)!
             </p>
           </div>
         </CardContent>

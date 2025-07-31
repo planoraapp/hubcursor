@@ -10,6 +10,15 @@ const Index = lazy(() => import('./pages/Index'));
 const Editor = lazy(() => import('./pages/Editor'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ConnectHabbo = lazy(() => import('./pages/ConnectHabbo'));
+const Noticias = lazy(() => import('./pages/Noticias'));
+const Eventos = lazy(() => import('./pages/Eventos'));
+const Catalogo = lazy(() => import('./pages/Catalogo'));
+const Ferramentas = lazy(() => import('./pages/Ferramentas'));
+const ForumPage = lazy(() => import('./pages/ForumPage'));
+const Emblemas = lazy(() => import('./pages/Emblemas'));
+const Mercado = lazy(() => import('./pages/Mercado'));
+const AdminHub = lazy(() => import('./pages/AdminHub'));
+const ToolsPageNew = lazy(() => import('./pages/ToolsPageNew'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Create a client
@@ -36,6 +45,15 @@ function App() {
               <Route path="/editor" element={<Editor />} />
               <Route path="/profile/:username" element={<Profile />} />
               <Route path="/connect-habbo" element={<ConnectHabbo />} />
+              <Route path="/noticias" element={<Noticias />} />
+              <Route path="/eventos" element={<Eventos />} />
+              <Route path="/catalogo" element={<Catalogo />} />
+              <Route path="/ferramentas" element={<Ferramentas />} />
+              <Route path="/forum" element={<ForumPage />} />
+              <Route path="/emblemas" element={<Emblemas />} />
+              <Route path="/mercado" element={<Mercado />} />
+              <Route path="/admin-hub" element={<AdminHub />} />
+              <Route path="/tools" element={<ToolsPageNew />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Palette, Shirt, PaintBucket, Crown, Glasses, Footprints, User, AlertCircle, RefreshCw } from 'lucide-react';
-import { useHabboEmotionAPI } from '@/hooks/useHabboEmotionAPI';
-import { groupItemsByCategory, filterItems, groupByRarity, getRarityColor, getRarityText, mapHabboEmotionItem } from '@/utils/habboClothingMapper';
+import { useFigureData } from '@/hooks/useFigureData';
 
 interface ClothingSelectorProps {
   activeCategory: string;
@@ -60,35 +59,42 @@ const ClothingSelector = ({
 }: ClothingSelectorProps) => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   
-  const { data: clothingData, isLoading, error, refetch } = useHabboEmotionAPI({
-    limit: 200,
-    enabled: true
-  });
+  const { data: figureData, isLoading, error, refetch } = useFigureData();
 
-  // Processar dados da API
-  const processedData = useMemo(() => {
-    if (!clothingData) return {};
-    return groupItemsByCategory(clothingData);
-  }, [clothingData]);
-
-  // Filtrar itens da categoria ativa
+  // Processar dados do figuredata
   const categoryItems = useMemo(() => {
-    const items = processedData[activeCategory] || [];
-    return filterItems(items, searchTerm);
-  }, [processedData, activeCategory, searchTerm]);
+    if (!figureData || !figureData[activeCategory]) return [];
+    
+    let items = figureData[activeCategory];
+    
+    // Filtrar por busca
+    if (searchTerm) {
+      items = items.filter(item => 
+        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${activeCategory}-${item.id}`.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return items;
+  }, [figureData, activeCategory, searchTerm]);
 
-  // Agrupar por raridade
+  // Agrupar por raridade baseado no club
   const groupedByRarity = useMemo(() => {
-    return groupByRarity(categoryItems);
+    const groups = {
+      hc: categoryItems.filter(item => item.club === '1'),
+      normal: categoryItems.filter(item => item.club === '0' || !item.club)
+    };
+    
+    return groups;
   }, [categoryItems]);
 
   const handleImageError = (itemId: string) => {
     setImageErrors(prev => new Set([...prev, itemId]));
   };
 
-  const renderClothingItem = (item: ReturnType<typeof mapHabboEmotionItem>) => {
+  const renderClothingItem = (item: any) => {
     const hasError = imageErrors.has(item.id);
-    const thumbnailUrl = item.thumbnail || `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${activeCategory}-${item.id}-${item.colors[0]}&direction=2&head_direction=3&size=s&img_format=png&gesture=std&action=std`;
+    const thumbnailUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${activeCategory}-${item.id}-${item.colors[0] || '1'}&direction=2&head_direction=3&size=s&img_format=png&gesture=std&action=std`;
 
     return (
       <Button
@@ -101,40 +107,41 @@ const ClothingSelector = ({
             : 'habbo-card hover:bg-amber-50'
         }`}
         onClick={() => onPartSelect(item.id)}
-        title={item.name}
+        title={`${activeCategory}-${item.id} ${item.club === '1' ? '(HC)' : ''}`}
       >
         <Badge 
-          className={`absolute top-1 right-1 text-xs px-1 py-0 ${getRarityColor(item.rarity)} text-white`}
+          className={`absolute top-1 right-1 text-xs px-1 py-0 ${
+            item.club === '1' ? 'bg-yellow-500' : 'bg-gray-500'
+          } text-white`}
         >
-          {getRarityText(item.rarity)}
+          {item.club === '1' ? 'HC' : 'FREE'}
         </Badge>
         
         <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center mb-1 overflow-hidden">
           {!hasError ? (
             <img 
               src={thumbnailUrl}
-              alt={item.name}
+              alt={`${activeCategory}-${item.id}`}
               className="w-full h-full object-contain pixelated"
               style={{ imageRendering: 'pixelated' }}
               onError={() => handleImageError(item.id)}
+              loading="lazy"
             />
           ) : (
             <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center">
               <span className="text-xs font-bold text-gray-600">
-                {item.swfCode.substring(0, 2).toUpperCase()}
+                {item.id}
               </span>
             </div>
           )}
         </div>
         
         <div className="truncate w-full text-center text-xs leading-tight">
-          {item.name}
+          {activeCategory}-{item.id}
         </div>
       </Button>
     );
   };
-
-  const rarityOrder = ['nft', 'ltd', 'hc', 'rare', 'sellable', 'normal'];
 
   if (isLoading) {
     return (
@@ -142,7 +149,7 @@ const ClothingSelector = ({
         <CardHeader className="habbo-header">
           <CardTitle className="flex items-center gap-2 text-white">
             <Palette className="w-5 h-5" />
-            Carregando Roupas...
+            Carregando Roupas Oficiais...
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
@@ -172,7 +179,7 @@ const ClothingSelector = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 text-center">
-          <p className="text-red-600 mb-4">Erro ao carregar roupas da API</p>
+          <p className="text-red-600 mb-4">Erro ao carregar dados oficiais do Habbo</p>
           <Button onClick={() => refetch()} variant="outline">
             <RefreshCw className="w-4 h-4 mr-2" />
             Tentar Novamente
@@ -182,12 +189,14 @@ const ClothingSelector = ({
     );
   }
 
+  const totalItems = figureData ? Object.values(figureData).reduce((acc, items) => acc + items.length, 0) : 0;
+
   return (
     <Card className="habbo-panel">
       <CardHeader className="habbo-header">
         <CardTitle className="flex items-center gap-2 text-white">
           <Palette className="w-5 h-5" />
-          Roupas & Acessórios ({clothingData?.length || 0} itens)
+          Roupas Oficiais ({totalItems} itens)
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
@@ -195,7 +204,7 @@ const ClothingSelector = ({
         <div className="grid grid-cols-6 gap-1">
           {Object.entries(PART_CATEGORIES).map(([key, label]) => {
             const IconComponent = CATEGORY_ICONS[key as keyof typeof CATEGORY_ICONS];
-            const categoryCount = processedData[key]?.length || 0;
+            const categoryCount = figureData?.[key]?.length || 0;
             
             return (
               <Button
@@ -221,7 +230,7 @@ const ClothingSelector = ({
 
         {/* Search */}
         <Input
-          placeholder="Buscar peças..."
+          placeholder="Buscar itens..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="habbo-input"
@@ -235,15 +244,15 @@ const ClothingSelector = ({
               <p className="text-xs mt-2">Experimente uma categoria diferente</p>
             </div>
           ) : (
-            rarityOrder.map(rarity => {
-              const rarityItems = groupedByRarity[rarity];
+            ['hc', 'normal'].map(rarity => {
+              const rarityItems = groupedByRarity[rarity as keyof typeof groupedByRarity];
               if (!rarityItems || rarityItems.length === 0) return null;
 
               return (
                 <div key={rarity} className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Badge className={`${getRarityColor(rarity)} text-white`}>
-                      {getRarityText(rarity)}
+                    <Badge className={`${rarity === 'hc' ? 'bg-yellow-500' : 'bg-gray-500'} text-white`}>
+                      {rarity === 'hc' ? 'HABBO CLUB' : 'GRATUITO'}
                     </Badge>
                     <span className="text-sm text-gray-600">
                       {rarityItems.length} {rarityItems.length === 1 ? 'item' : 'itens'}
@@ -260,7 +269,7 @@ const ClothingSelector = ({
 
         {/* Info */}
         <div className="text-xs text-gray-500 border-t pt-2">
-          Total: {categoryItems.length} peças disponíveis em {activeCategory.toUpperCase()}
+          Total: {categoryItems.length} itens em {activeCategory.toUpperCase()}
         </div>
       </CardContent>
     </Card>
