@@ -61,7 +61,12 @@ export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
 };
 
 // Agrupar itens por categoria
-export const groupItemsByCategory = (items: HabboEmotionClothing[]) => {
+export const groupItemsByCategory = (items: HabboEmotionClothing[] | undefined) => {
+  // Verificar se items é um array válido
+  if (!items || !Array.isArray(items)) {
+    return {};
+  }
+
   return items.reduce((acc, item) => {
     const mappedItem = mapHabboEmotionItem(item);
     const category = mappedItem.category;
