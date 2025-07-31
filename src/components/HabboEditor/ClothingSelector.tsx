@@ -1,11 +1,13 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Palette, Shirt, PaintBucket, Crown, Glasses, Footprints, User } from 'lucide-react';
-import { getClothingByCategory, getClothingThumbnailUrl, getRarityColor, getRarityText, HabboClothingItem } from '@/data/habboClothingData';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Palette, Shirt, PaintBucket, Crown, Glasses, Footprints, User, AlertCircle, RefreshCw } from 'lucide-react';
+import { useHabboEmotionAPI } from '@/hooks/useHabboEmotionAPI';
+import { groupItemsByCategory, filterItems, groupByRarity, getRarityColor, getRarityText, mapHabboEmotionItem } from '@/utils/habboClothingMapper';
 
 interface ClothingSelectorProps {
   activeCategory: string;
@@ -57,31 +59,36 @@ const ClothingSelector = ({
   selectedHotel
 }: ClothingSelectorProps) => {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-
-  // Obter itens reais da categoria ativa
-  const categoryItems = getClothingByCategory(activeCategory);
   
-  const filteredParts = categoryItems.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.swfCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { data: clothingData, isLoading, error, refetch } = useHabboEmotionAPI({
+    limit: 200,
+    enabled: true
+  });
+
+  // Processar dados da API
+  const processedData = useMemo(() => {
+    if (!clothingData) return {};
+    return groupItemsByCategory(clothingData);
+  }, [clothingData]);
+
+  // Filtrar itens da categoria ativa
+  const categoryItems = useMemo(() => {
+    const items = processedData[activeCategory] || [];
+    return filterItems(items, searchTerm);
+  }, [processedData, activeCategory, searchTerm]);
 
   // Agrupar por raridade
-  const groupedByRarity = filteredParts.reduce((acc, item) => {
-    if (!acc[item.rarity]) {
-      acc[item.rarity] = [];
-    }
-    acc[item.rarity].push(item);
-    return acc;
-  }, {} as Record<string, HabboClothingItem[]>);
+  const groupedByRarity = useMemo(() => {
+    return groupByRarity(categoryItems);
+  }, [categoryItems]);
 
   const handleImageError = (itemId: string) => {
     setImageErrors(prev => new Set([...prev, itemId]));
   };
 
-  const renderClothingItem = (item: HabboClothingItem) => {
-    const thumbnailUrl = getClothingThumbnailUrl(item, item.colors[0], selectedHotel);
+  const renderClothingItem = (item: ReturnType<typeof mapHabboEmotionItem>) => {
     const hasError = imageErrors.has(item.id);
+    const thumbnailUrl = item.thumbnail || `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${activeCategory}-${item.id}-${item.colors[0]}&direction=2&head_direction=3&size=s&img_format=png&gesture=std&action=std`;
 
     return (
       <Button
@@ -96,14 +103,12 @@ const ClothingSelector = ({
         onClick={() => onPartSelect(item.id)}
         title={item.name}
       >
-        {/* Badge de Raridade */}
         <Badge 
           className={`absolute top-1 right-1 text-xs px-1 py-0 ${getRarityColor(item.rarity)} text-white`}
         >
           {getRarityText(item.rarity)}
         </Badge>
         
-        {/* Miniatura da peça */}
         <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center mb-1 overflow-hidden">
           {!hasError ? (
             <img 
@@ -129,14 +134,60 @@ const ClothingSelector = ({
     );
   };
 
-  const rarityOrder = ['nft', 'ltd', 'hc', 'sellable', 'normal'];
+  const rarityOrder = ['nft', 'ltd', 'hc', 'rare', 'sellable', 'normal'];
+
+  if (isLoading) {
+    return (
+      <Card className="habbo-panel">
+        <CardHeader className="habbo-header">
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Palette className="w-5 h-5" />
+            Carregando Roupas...
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-6 gap-1">
+            {Array.from({ length: 12 }, (_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <div className="grid grid-cols-4 gap-2">
+            {Array.from({ length: 8 }, (_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="habbo-panel">
+        <CardHeader className="habbo-header">
+          <CardTitle className="flex items-center gap-2 text-white">
+            <AlertCircle className="w-5 h-5" />
+            Erro ao Carregar
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 text-center">
+          <p className="text-red-600 mb-4">Erro ao carregar roupas da API</p>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Tentar Novamente
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="habbo-panel">
       <CardHeader className="habbo-header">
         <CardTitle className="flex items-center gap-2 text-white">
           <Palette className="w-5 h-5" />
-          Roupas & Acessórios
+          Roupas & Acessórios ({clothingData?.length || 0} itens)
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
@@ -144,7 +195,7 @@ const ClothingSelector = ({
         <div className="grid grid-cols-6 gap-1">
           {Object.entries(PART_CATEGORIES).map(([key, label]) => {
             const IconComponent = CATEGORY_ICONS[key as keyof typeof CATEGORY_ICONS];
-            const categoryCount = getClothingByCategory(key).length;
+            const categoryCount = processedData[key]?.length || 0;
             
             return (
               <Button
@@ -178,7 +229,7 @@ const ClothingSelector = ({
 
         {/* Parts Grid by Rarity */}
         <div className="max-h-80 overflow-y-auto space-y-4">
-          {filteredParts.length === 0 ? (
+          {categoryItems.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <p>Nenhuma peça encontrada nesta categoria</p>
               <p className="text-xs mt-2">Experimente uma categoria diferente</p>

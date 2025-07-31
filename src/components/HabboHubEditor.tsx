@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import AvatarPreview from './HabboEditor/AvatarPreview';
 import ClothingSelector from './HabboEditor/ClothingSelector';
 import ColorPalette from './HabboEditor/ColorPalette';
-import { getClothingByCategory, HABBO_CLOTHING_DATA } from '@/data/habboClothingData';
+import { useHabboEmotionAPI } from '@/hooks/useHabboEmotionAPI';
+import { groupItemsByCategory } from '@/utils/habboClothingMapper';
 
 interface CurrentFigure {
   hd: { id: string; colors: string[] };
@@ -58,10 +59,16 @@ const HabboHubEditor = () => {
   const [currentFigure, setCurrentFigure] = useState<CurrentFigure>(DEFAULT_FIGURE);
   const [selectedHotel, setSelectedHotel] = useState('com.br');
   const [username, setUsername] = useState('ViaJovem');
-  const [activeCategory, setActiveCategory] = useState('hr'); // Começar com cabelo
+  const [activeCategory, setActiveCategory] = useState('hr');
   const [selectedPart, setSelectedPart] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Buscar dados da API Habbo Emotion
+  const { data: clothingData, isLoading: apiLoading } = useHabboEmotionAPI({
+    limit: 200,
+    enabled: true
+  });
 
   const generateFigureString = useCallback(() => {
     const parts = Object.entries(currentFigure)
@@ -74,21 +81,26 @@ const HabboHubEditor = () => {
   const handlePartSelect = (partId: string) => {
     setSelectedPart(partId);
     
-    // Buscar o item nos dados reais
-    const item = HABBO_CLOTHING_DATA.find(item => item.id === partId);
-    if (item) {
-      setCurrentFigure(prev => ({
-        ...prev,
-        [activeCategory]: {
-          id: partId,
-          colors: [item.colors[0]] // Usar primeira cor disponível
-        }
-      }));
+    // Buscar o item nos dados da API
+    if (clothingData) {
+      const processedData = groupItemsByCategory(clothingData);
+      const categoryItems = processedData[activeCategory] || [];
+      const item = categoryItems.find(item => item.id === partId);
+      
+      if (item) {
+        setCurrentFigure(prev => ({
+          ...prev,
+          [activeCategory]: {
+            id: partId,
+            colors: [item.colors[0]] // Usar primeira cor disponível
+          }
+        }));
 
-      toast({
-        title: "Peça Selecionada!",
-        description: `${item.name} foi adicionada ao seu visual.`
-      });
+        toast({
+          title: "Peça Selecionada!",
+          description: `${item.name} foi adicionada ao seu visual.`
+        });
+      }
     }
   };
 
@@ -109,15 +121,18 @@ const HabboHubEditor = () => {
   };
 
   const handleRandomize = () => {
+    if (!clothingData) return;
+    
     setLoading(true);
     
     setTimeout(() => {
       const newFigure: CurrentFigure = { ...DEFAULT_FIGURE };
+      const processedData = groupItemsByCategory(clothingData);
       
-      // Para cada categoria, pegar um item aleatório dos dados reais
+      // Para cada categoria, pegar um item aleatório dos dados da API
       ['hr', 'ch', 'lg', 'ha', 'ea', 'cc', 'ca', 'wa'].forEach(category => {
-        const categoryItems = getClothingByCategory(category);
-        if (categoryItems.length > 0) {
+        const categoryItems = processedData[category];
+        if (categoryItems && categoryItems.length > 0) {
           const randomItem = categoryItems[Math.floor(Math.random() * categoryItems.length)];
           const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
           
@@ -135,7 +150,7 @@ const HabboHubEditor = () => {
       
       toast({
         title: "Avatar Randomizado!",
-        description: "Um novo visual foi gerado com roupas reais do Habbo."
+        description: "Um novo visual foi gerado com roupas da API Habbo Emotion."
       });
     }, 1000);
   };
@@ -164,12 +179,26 @@ const HabboHubEditor = () => {
     const selectedItems = Object.entries(currentFigure)
       .filter(([_, part]) => part && part.id !== '0')
       .map(([category, part]) => {
-        const item = HABBO_CLOTHING_DATA.find(i => i.id === part.id);
+        // Buscar informações do item na API
+        if (clothingData) {
+          const processedData = groupItemsByCategory(clothingData);
+          const categoryItems = processedData[category] || [];
+          const item = categoryItems.find(i => i.id === part.id);
+          
+          return {
+            category,
+            id: part.id,
+            name: item?.name || 'Item Desconhecido',
+            swfCode: item?.swfCode || '',
+            colors: part.colors
+          };
+        }
+        
         return {
           category,
           id: part.id,
-          name: item?.name || 'Item Desconhecido',
-          swfCode: item?.swfCode || '',
+          name: 'Item Desconhecido',
+          swfCode: '',
           colors: part.colors
         };
       });
@@ -179,7 +208,8 @@ const HabboHubEditor = () => {
       username,
       hotel: selectedHotel,
       items: selectedItems,
-      exportDate: new Date().toISOString()
+      exportDate: new Date().toISOString(),
+      source: 'Habbo Emotion API'
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -196,12 +226,14 @@ const HabboHubEditor = () => {
     });
   };
 
-  if (loading) {
+  if (loading || apiLoading) {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-6">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-amber-600 mb-2">Editor de Visuais Habbo</h2>
-          <p className="text-gray-600">Gerando visual aleatório...</p>
+          <p className="text-gray-600">
+            {apiLoading ? 'Carregando roupas da API...' : 'Gerando visual aleatório...'}
+          </p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -214,7 +246,12 @@ const HabboHubEditor = () => {
   }
 
   // Obter item atualmente selecionado e suas cores disponíveis
-  const currentItem = HABBO_CLOTHING_DATA.find(item => item.id === selectedPart);
+  const currentItem = clothingData && (() => {
+    const processedData = groupItemsByCategory(clothingData);
+    const categoryItems = processedData[activeCategory] || [];
+    return categoryItems.find(item => item.id === selectedPart);
+  })();
+  
   const availableColors = currentItem?.colors || [];
 
   return (
@@ -222,12 +259,28 @@ const HabboHubEditor = () => {
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-amber-600 mb-2 volter-font">Editor de Visuais Habbo</h2>
-        <p className="text-gray-600">Crie e personalize seu avatar com roupas reais do Habbo!</p>
+        <p className="text-gray-600">Crie e personalize seu avatar com roupas reais da API Habbo Emotion!</p>
         <div className="flex justify-center gap-4 mt-2">
-          <Badge className="bg-blue-600 text-white">NFT: {HABBO_CLOTHING_DATA.filter(i => i.rarity === 'nft').length}</Badge>
-          <Badge className="bg-yellow-500 text-white">HC: {HABBO_CLOTHING_DATA.filter(i => i.rarity === 'hc').length}</Badge>
-          <Badge className="bg-green-600 text-white">Raros: {HABBO_CLOTHING_DATA.filter(i => i.rarity === 'sellable').length}</Badge>
-          <Badge className="bg-purple-600 text-white">LTD: {HABBO_CLOTHING_DATA.filter(i => i.rarity === 'ltd').length}</Badge>
+          {clothingData && (() => {
+            const processedData = groupItemsByCategory(clothingData);
+            const allItems = Object.values(processedData).flat();
+            return (
+              <>
+                <Badge className="bg-blue-600 text-white">
+                  NFT: {allItems.filter(i => i.rarity === 'nft').length}
+                </Badge>
+                <Badge className="bg-yellow-500 text-white">
+                  HC: {allItems.filter(i => i.rarity === 'hc').length}
+                </Badge>
+                <Badge className="bg-green-600 text-white">
+                  Raros: {allItems.filter(i => ['rare', 'sellable'].includes(i.rarity)).length}
+                </Badge>
+                <Badge className="bg-purple-600 text-white">
+                  LTD: {allItems.filter(i => i.rarity === 'ltd').length}
+                </Badge>
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -237,7 +290,7 @@ const HabboHubEditor = () => {
           <div className="flex items-center gap-3">
             <img src="/assets/2190__-5kz.png" alt="Alerta" className="w-6 h-6" />
             <p className="text-sm text-yellow-800">
-              <strong>Novo:</strong> Agora usando roupas reais do Habbo! Todas as peças são oficiais e baseadas nos códigos SWF atuais.
+              <strong>Novo:</strong> Agora usando a API Habbo Emotion com {clothingData?.length || 0} roupas reais do Habbo!
             </p>
           </div>
         </CardContent>
