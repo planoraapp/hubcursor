@@ -12,6 +12,8 @@ const Editor = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
+    console.log('📍 Editor page loaded - ensuring React component renders');
+    
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
     };
@@ -32,7 +34,9 @@ const Editor = () => {
             backgroundImage="/assets/1360__-3C7.png"
           />
           <AdSpace type="horizontal" className="mb-6" />
-          <HabboHubEditor />
+          <div className="min-h-screen">
+            <HabboHubEditor />
+          </div>
           <div className="flex justify-center gap-4 mt-6">
             <img 
               src="/assets/1686__-sQ.png" 
@@ -72,7 +76,9 @@ const Editor = () => {
             
             <AdSpace type="horizontal" className="mb-6" />
             
-            <HabboHubEditor />
+            <div className="min-h-screen">
+              <HabboHubEditor />
+            </div>
             
             <div className="flex justify-center gap-4 mt-6">
               <img 

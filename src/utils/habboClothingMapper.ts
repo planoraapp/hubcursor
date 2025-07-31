@@ -43,56 +43,87 @@ export const getRarityText = (rarity: string): string => {
 
 // Converter item da API para formato do editor
 export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
-  // Extrair categoria do nome do SWF
-  const swfCategory = item.swf_name.split('_')[0];
-  const editorCategory = CATEGORY_MAPPING[swfCategory] || 'ch';
-  
-  return {
-    id: item.id.toString(),
-    swfCode: item.swf_name,
-    name: item.name,
-    category: editorCategory,
-    type: item.type,
-    gender: item.gender,
-    rarity: item.rarity?.toLowerCase() || 'normal',
-    colors: item.colors?.map(c => c.toString()) || ['1'],
-    thumbnail: item.thumbnail
-  };
+  if (!item || typeof item !== 'object') {
+    console.error('❌ Invalid item passed to mapHabboEmotionItem:', item);
+    return null;
+  }
+
+  try {
+    // Extrair categoria do nome do SWF
+    const swfCategory = item.swf_name?.split('_')[0] || 'shirt';
+    const editorCategory = CATEGORY_MAPPING[swfCategory] || 'ch';
+    
+    const mappedItem = {
+      id: item.id?.toString() || Math.random().toString(),
+      swfCode: item.swf_name || 'unknown',
+      name: item.name || 'Item Desconhecido',
+      category: editorCategory,
+      type: item.type || 'clothing',
+      gender: item.gender || 'U',
+      rarity: item.rarity?.toLowerCase() || 'normal',
+      colors: item.colors?.map(c => c.toString()) || ['1'],
+      thumbnail: item.thumbnail || ''
+    };
+
+    console.log(`✅ Mapped item: ${mappedItem.name} (${mappedItem.category})`);
+    return mappedItem;
+  } catch (error) {
+    console.error('❌ Error mapping item:', item, error);
+    return null;
+  }
 };
 
 // Agrupar itens por categoria
 export const groupItemsByCategory = (items: HabboEmotionClothing[] | undefined) => {
+  console.log('🔄 Grouping items by category. Input:', items);
+  
   // Verificar se items é um array válido
   if (!items || !Array.isArray(items)) {
+    console.warn('⚠️ Invalid items array provided to groupItemsByCategory:', items);
     return {};
   }
 
-  return items.reduce((acc, item) => {
-    const mappedItem = mapHabboEmotionItem(item);
-    const category = mappedItem.category;
-    
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    
-    acc[category].push(mappedItem);
-    return acc;
-  }, {} as Record<string, ReturnType<typeof mapHabboEmotionItem>[]>);
+  try {
+    const grouped = items.reduce((acc, item) => {
+      const mappedItem = mapHabboEmotionItem(item);
+      
+      if (!mappedItem) {
+        console.warn('⚠️ Skipping invalid item:', item);
+        return acc;
+      }
+      
+      const category = mappedItem.category;
+      
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      
+      acc[category].push(mappedItem);
+      return acc;
+    }, {} as Record<string, ReturnType<typeof mapHabboEmotionItem>[]>);
+
+    console.log('✅ Items grouped successfully:', Object.keys(grouped).map(k => `${k}: ${grouped[k].length}`));
+    return grouped;
+  } catch (error) {
+    console.error('❌ Error grouping items by category:', error);
+    return {};
+  }
 };
 
 // Filtrar itens por busca
 export const filterItems = (items: ReturnType<typeof mapHabboEmotionItem>[], searchTerm: string) => {
   if (!searchTerm) return items;
   
-  return items.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.swfCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  return items.filter(item => {
+    if (!item) return false;
+    return item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           item.swfCode.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 };
 
 // Agrupar por raridade
 export const groupByRarity = (items: ReturnType<typeof mapHabboEmotionItem>[]) => {
-  return items.reduce((acc, item) => {
+  return items.filter(Boolean).reduce((acc, item) => {
     if (!acc[item.rarity]) {
       acc[item.rarity] = [];
     }

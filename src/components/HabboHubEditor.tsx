@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
@@ -65,27 +66,39 @@ const HabboHubEditor = () => {
   const [loading, setLoading] = useState(false);
 
   // Buscar dados da API Habbo Emotion
-  const { data: clothingData, isLoading: apiLoading } = useHabboEmotionAPI({
+  const { data: clothingData, isLoading: apiLoading, error, refetch } = useHabboEmotionAPI({
     limit: 200,
     enabled: true
   });
+
+  // Log do estado da API
+  useEffect(() => {
+    console.log('🔍 HabboHubEditor - API Status:', {
+      loading: apiLoading,
+      hasData: !!clothingData,
+      dataLength: clothingData?.length,
+      error: error?.message
+    });
+  }, [apiLoading, clothingData, error]);
 
   const generateFigureString = useCallback(() => {
     const parts = Object.entries(currentFigure)
       .filter(([_, part]) => part && part.id !== '0')
       .map(([type, part]) => `${type}-${part.id}-${part.colors.join('.')}`)
       .join('.');
+    console.log('🎨 Generated figure string:', parts);
     return parts;
   }, [currentFigure]);
 
   const handlePartSelect = (partId: string) => {
+    console.log('👕 Part selected:', partId, 'in category:', activeCategory);
     setSelectedPart(partId);
     
     // Buscar o item nos dados da API
     if (clothingData) {
       const processedData = groupItemsByCategory(clothingData);
       const categoryItems = processedData[activeCategory] || [];
-      const item = categoryItems.find(item => item.id === partId);
+      const item = categoryItems.find(item => item && item.id === partId);
       
       if (item) {
         setCurrentFigure(prev => ({
@@ -105,6 +118,7 @@ const HabboHubEditor = () => {
   };
 
   const handleColorSelect = (colorId: string) => {
+    console.log('🎨 Color selected:', colorId, 'for category:', activeCategory);
     setCurrentFigure(prev => {
       const currentPart = prev[activeCategory as keyof CurrentFigure];
       if (currentPart) {
@@ -121,8 +135,16 @@ const HabboHubEditor = () => {
   };
 
   const handleRandomize = () => {
-    if (!clothingData) return;
+    if (!clothingData || clothingData.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Nenhuma roupa disponível para randomização.",
+        variant: "destructive"
+      });
+      return;
+    }
     
+    console.log('🎲 Randomizing avatar with API data...');
     setLoading(true);
     
     setTimeout(() => {
@@ -133,10 +155,11 @@ const HabboHubEditor = () => {
       ['hr', 'ch', 'lg', 'ha', 'ea', 'cc', 'ca', 'wa'].forEach(category => {
         const categoryItems = processedData[category];
         if (categoryItems && categoryItems.length > 0) {
-          const randomItem = categoryItems[Math.floor(Math.random() * categoryItems.length)];
-          const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
-          
-          if (randomItem) {
+          const validItems = categoryItems.filter(Boolean);
+          if (validItems.length > 0) {
+            const randomItem = validItems[Math.floor(Math.random() * validItems.length)];
+            const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
+            
             newFigure[category as keyof CurrentFigure] = {
               id: randomItem.id,
               colors: [randomColor]
@@ -183,7 +206,7 @@ const HabboHubEditor = () => {
         if (clothingData) {
           const processedData = groupItemsByCategory(clothingData);
           const categoryItems = processedData[category] || [];
-          const item = categoryItems.find(i => i.id === part.id);
+          const item = categoryItems.find(i => i && i.id === part.id);
           
           return {
             category,
@@ -226,6 +249,24 @@ const HabboHubEditor = () => {
     });
   };
 
+  // Se houver erro na API, mostrar botão de retry
+  if (error) {
+    return (
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-red-600 mb-2">Erro no Editor</h2>
+          <p className="text-gray-600 mb-4">
+            Não foi possível carregar as roupas da API Habbo Emotion.
+          </p>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading || apiLoading) {
     return (
       <div className="w-full max-w-7xl mx-auto space-y-6">
@@ -249,7 +290,7 @@ const HabboHubEditor = () => {
   const currentItem = clothingData && (() => {
     const processedData = groupItemsByCategory(clothingData);
     const categoryItems = processedData[activeCategory] || [];
-    return categoryItems.find(item => item.id === selectedPart);
+    return categoryItems.find(item => item && item.id === selectedPart);
   })();
   
   const availableColors = currentItem?.colors || [];
@@ -263,20 +304,17 @@ const HabboHubEditor = () => {
         <div className="flex justify-center gap-4 mt-2">
           {clothingData && (() => {
             const processedData = groupItemsByCategory(clothingData);
-            const allItems = Object.values(processedData).flat();
+            const allItems = Object.values(processedData).flat().filter(Boolean);
             return (
               <>
                 <Badge className="bg-blue-600 text-white">
-                  NFT: {allItems.filter(i => i.rarity === 'nft').length}
-                </Badge>
-                <Badge className="bg-yellow-500 text-white">
-                  HC: {allItems.filter(i => i.rarity === 'hc').length}
+                  Total: {allItems.length} itens
                 </Badge>
                 <Badge className="bg-green-600 text-white">
-                  Raros: {allItems.filter(i => ['rare', 'sellable'].includes(i.rarity)).length}
+                  Categorias: {Object.keys(processedData).length}
                 </Badge>
                 <Badge className="bg-purple-600 text-white">
-                  LTD: {allItems.filter(i => i.rarity === 'ltd').length}
+                  API: Conectada
                 </Badge>
               </>
             );
@@ -290,7 +328,7 @@ const HabboHubEditor = () => {
           <div className="flex items-center gap-3">
             <img src="/assets/2190__-5kz.png" alt="Alerta" className="w-6 h-6" />
             <p className="text-sm text-yellow-800">
-              <strong>Novo:</strong> Agora usando a API Habbo Emotion com {clothingData?.length || 0} roupas reais do Habbo!
+              <strong>Status:</strong> Editor funcionando com {clothingData?.length || 0} roupas reais da API Habbo Emotion!
             </p>
           </div>
         </CardContent>

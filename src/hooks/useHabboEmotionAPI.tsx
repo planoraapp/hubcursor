@@ -20,11 +20,31 @@ interface UseHabboEmotionAPIProps {
 }
 
 const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClothing[]> => {
-  const response = await fetch(`https://api.habboemotion.com/public/clothings/new/${limit}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch Habbo clothings');
+  console.log(`🌐 Fetching Habbo Emotion API with limit: ${limit}`);
+  
+  try {
+    const response = await fetch(`https://api.habboemotion.com/public/clothings/new/${limit}`);
+    
+    console.log(`📡 API Response Status: ${response.status}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch Habbo clothings: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`✅ API Data received:`, data);
+    console.log(`📊 Total items fetched: ${data?.length || 0}`);
+    
+    if (!Array.isArray(data)) {
+      console.error('❌ API returned invalid data format:', data);
+      throw new Error('API returned invalid data format');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching Habbo Emotion API:', error);
+    throw error;
   }
-  return response.json();
 };
 
 export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmotionAPIProps = {}) => {
@@ -33,6 +53,8 @@ export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmot
     queryFn: () => fetchHabboClothings(limit),
     enabled,
     staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour (renamed from cacheTime in v5)
+    gcTime: 1000 * 60 * 60, // 1 hour
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
