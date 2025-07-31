@@ -33,6 +33,6 @@ export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmot
     queryFn: () => fetchHabboClothings(limit),
     enabled,
     staleTime: 1000 * 60 * 30, // 30 minutes
-    cacheTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60, // 1 hour (renamed from cacheTime in v5)
   });
 };
