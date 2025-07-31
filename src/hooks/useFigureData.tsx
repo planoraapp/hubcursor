@@ -14,7 +14,7 @@ export interface FigureData {
 }
 
 const fetchFigureData = async (): Promise<FigureData> => {
-  console.log('🌐 [FigureData] Carregando figuredata.json...');
+  console.log('🌐 [FigureData] Carregando dados oficiais do Habbo...');
   
   try {
     const response = await fetch('/figuredata.json');
@@ -24,14 +24,28 @@ const fetchFigureData = async (): Promise<FigureData> => {
     }
     
     const data = await response.json();
-    console.log('✅ [FigureData] Dados carregados:', {
-      tipos: Object.keys(data).length,
-      totalItens: Object.values(data).reduce((acc: number, items: any) => acc + items.length, 0)
+    
+    // Remover metadados para retornar apenas os dados de figura
+    const { _metadata, ...figureData } = data;
+    
+    console.log('✅ [FigureData] Dados oficiais carregados:', {
+      fonte: _metadata?.source || 'Desconhecida',
+      tipos: Object.keys(figureData).length,
+      totalItens: Object.values(figureData).reduce((acc: number, items: any) => acc + items.length, 0),
+      ultimaAtualizacao: _metadata?.fetchedAt || 'Desconhecida'
     });
     
-    return data;
+    // Validar dados carregados
+    const requiredTypes = ['hd', 'hr', 'ch', 'lg', 'sh'];
+    const missingTypes = requiredTypes.filter(type => !figureData[type] || figureData[type].length === 0);
+    
+    if (missingTypes.length > 0) {
+      console.warn('⚠️ [FigureData] Tipos obrigatórios ausentes:', missingTypes);
+    }
+    
+    return figureData;
   } catch (error) {
-    console.error('❌ [FigureData] Erro ao carregar figuredata:', error);
+    console.error('❌ [FigureData] Erro ao carregar dados oficiais:', error);
     throw error;
   }
 };
