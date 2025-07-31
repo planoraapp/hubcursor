@@ -1,7 +1,11 @@
+
+import { cn } from '../lib/utils';
+
 interface AdSpaceProps {
   type: 'square' | 'horizontal' | 'vertical' | 'wide' | 'banner' | 'medium' | 'skyscraper';
   className?: string;
 }
+
 export const AdSpace = ({
   type,
   className = ""
@@ -52,6 +56,26 @@ export const AdSpace = ({
         };
     }
   };
+
   const config = getAdConfig();
-  return;
+
+  return (
+    <div 
+      className={cn(
+        "bg-gray-200 border-2 border-dashed border-gray-400 flex items-center justify-center text-gray-500 text-sm font-medium rounded-lg mx-auto",
+        className
+      )}
+      style={{
+        width: config.width,
+        height: config.height,
+        maxWidth: config.maxWidth
+      }}
+    >
+      <div className="text-center">
+        <div className="mb-1">📢</div>
+        <div>Espaço Publicitário</div>
+        <div className="text-xs opacity-75">{type}</div>
+      </div>
+    </div>
+  );
 };

@@ -9,7 +9,7 @@ import MobileLayout from '../layouts/MobileLayout';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Mudado para false por padrão
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -51,9 +51,7 @@ const Index = () => {
                 icon="/assets/eventos.png"
                 backgroundImage="/assets/event_bg_owner.png"
               />
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-                {renderSection()}
-              </div>
+              {renderSection()}
             </>
           ) : (
             <>
@@ -62,9 +60,7 @@ const Index = () => {
                 icon="/assets/home.png"
                 backgroundImage="/assets/1360__-3C7.png"
               />
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-                {renderSection()}
-              </div>
+              {renderSection()}
             </>
           )}
         </main>
