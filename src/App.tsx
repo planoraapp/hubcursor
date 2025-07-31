@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from './hooks/useAuth';
 import './App.css';
 
 // Lazy load pages for better performance
@@ -29,6 +30,8 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 1000 * 60 * 30, // 30 minutes
       retry: 3,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
     },
   },
 });
@@ -36,32 +39,36 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="App">
-          <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-amber-50 to-blue-50 flex items-center justify-center">
-            <div className="text-lg text-gray-600">Carregando...</div>
-          </div>}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/editor" element={<Editor />} />
-              <Route path="/profile/:username" element={<Profile />} />
-              <Route path="/connect-habbo" element={<ConnectHabbo />} />
-              <Route path="/noticias" element={<Noticias />} />
-              <Route path="/eventos" element={<Eventos />} />
-              <Route path="/catalogo" element={<Catalogo />} />
-              <Route path="/ferramentas" element={<Ferramentas />} />
-              <Route path="/forum" element={<ForumPage />} />
-              <Route path="/emblemas" element={<Emblemas />} />
-              <Route path="/mercado" element={<Mercado />} />
-              <Route path="/admin-hub" element={<AdminHub />} />
-              <Route path="/tools" element={<ToolsPageNew />} />
-              <Route path="/console" element={<Console />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-          <Toaster />
-        </div>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <Suspense fallback={
+              <div className="min-h-screen bg-gradient-to-br from-amber-50 to-blue-50 flex items-center justify-center">
+                <div className="text-lg text-gray-600">Carregando...</div>
+              </div>
+            }>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/editor" element={<Editor />} />
+                <Route path="/profile/:username" element={<Profile />} />
+                <Route path="/connect-habbo" element={<ConnectHabbo />} />
+                <Route path="/noticias" element={<Noticias />} />
+                <Route path="/eventos" element={<Eventos />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/ferramentas" element={<Ferramentas />} />
+                <Route path="/forum" element={<ForumPage />} />
+                <Route path="/emblemas" element={<Emblemas />} />
+                <Route path="/mercado" element={<Mercado />} />
+                <Route path="/admin-hub" element={<AdminHub />} />
+                <Route path="/tools" element={<ToolsPageNew />} />
+                <Route path="/console" element={<Console />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+            <Toaster />
+          </div>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

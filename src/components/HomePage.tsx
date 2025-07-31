@@ -10,7 +10,11 @@ import { HabboFontDemo } from './HabboFontDemo';
 export const HomePage: React.FC = () => {
   return (
     <div className="space-y-6">
-      <HabboFontDemo />
+      <div className="habbo-panel">
+        <div className="p-6">
+          <HabboFontDemo />
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
