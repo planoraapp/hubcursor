@@ -2,7 +2,11 @@
 import { serve } from 'https://deno.land/std@0.178.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const HABBO_FIGUREDATA_URL = 'https://www.habbo.com.br/gamedata/figuredata';
+const SOURCES = [
+  'https://raw.githubusercontent.com/higoka/habbo-downloader/main/resource/gamedata/figuredata.xml',
+  'https://www.habboassets.com/gamedata/figuredata.xml',
+  'https://www.habbo.com.br/gamedata/figuredata.xml'
+];
 const CACHE_DURATION_HOURS = 24;
 
 const corsHeaders = {
@@ -99,22 +103,58 @@ async function parseFigureDataXML(xmlText: string) {
   try {
     console.log('Parsing figuredata XML...');
     
-    // Parse basic structure - in real implementation would use proper XML parser
     const figureParts: { [key: string]: any[] } = {};
     
-    const types = ['hd', 'hr', 'ch', 'lg', 'sh', 'ha', 'ea', 'fa', 'cc', 'ca', 'wa'];
+    // Extract settype blocks using regex
+    const settypePattern = /<settype type="([^"]+)"[^>]*>(.*?)<\/settype>/gs;
+    let match;
     
-    types.forEach(type => {
+    while ((match = settypePattern.exec(xmlText)) !== null) {
+      const type = match[1];
+      const settypeContent = match[2];
+      
       figureParts[type] = [];
       
-      // Generate realistic looking items based on the type
-      const baseItems = getBaseItemsForType(type);
-      baseItems.forEach(item => {
-        figureParts[type].push(item);
-      });
-    });
+      // Extract set elements within this settype
+      const setPattern = /<set\s+([^>]+)>(.*?)<\/set>/gs;
+      let setMatch;
+      
+      while ((setMatch = setPattern.exec(settypeContent)) !== null) {
+        const attributes = setMatch[1];
+        const setContent = setMatch[2];
+        
+        // Parse attributes
+        const idMatch = attributes.match(/id="([^"]+)"/);
+        const genderMatch = attributes.match(/gender="([^"]+)"/);
+        const selectableMatch = attributes.match(/selectable="([^"]+)"/);
+        const clubMatch = attributes.match(/club="([^"]+)"/);
+        const colorableMatch = attributes.match(/colorable="([^"]+)"/);
+        
+        if (idMatch && selectableMatch && selectableMatch[1] === '1') {
+          const colors: string[] = [];
+          
+          // Extract color IDs
+          const colorPattern = /<color\s+[^>]*id="([^"]+)"/g;
+          let colorMatch;
+          while ((colorMatch = colorPattern.exec(setContent)) !== null) {
+            colors.push(colorMatch[1]);
+          }
+          
+          const name = getNameForItem(type, idMatch[1]);
+          
+          figureParts[type].push({
+            id: idMatch[1],
+            name,
+            gender: genderMatch ? genderMatch[1] : 'U',
+            colors: colors.length > 0 ? colors : ['1'],
+            category: clubMatch && clubMatch[1] !== '0' ? 'hc' : 'normal',
+            colorable: colorableMatch ? colorableMatch[1] === '1' : true
+          });
+        }
+      }
+    }
     
-    console.log('Successfully parsed figuredata');
+    console.log('Successfully parsed figuredata, found types:', Object.keys(figureParts));
     
     return {
       figureParts,
@@ -124,6 +164,25 @@ async function parseFigureDataXML(xmlText: string) {
     console.error('Error parsing XML:', error);
     return staticFigureData;
   }
+}
+
+function getNameForItem(type: string, id: string): string {
+  const typeNames: { [key: string]: string } = {
+    'hd': 'Rosto',
+    'hr': 'Cabelo',
+    'ch': 'Camiseta',
+    'lg': 'Calça',
+    'sh': 'Sapato',
+    'ha': 'Chapéu',
+    'ea': 'Óculos',
+    'fa': 'Acessório Facial',
+    'cc': 'Casaco',
+    'ca': 'Capa',
+    'wa': 'Cinto',
+    'cp': 'Pet'
+  };
+  
+  return `${typeNames[type] || type.toUpperCase()} ${id}`;
 }
 
 function getBaseItemsForType(type: string) {
@@ -182,29 +241,34 @@ serve(async (req: Request) => {
 
     let responseData = staticFigureData;
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    // Try multiple sources in order
+    for (const source of SOURCES) {
+      try {
+        console.log(`Trying to fetch from: ${source}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(HABBO_FIGUREDATA_URL, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'HabboHub-Editor/1.0',
+        const response = await fetch(source, {
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'HabboHub-Editor/1.0',
+          }
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const xmlText = await response.text();
+          console.log(`Successfully fetched figuredata XML from ${source}, size:`, xmlText.length);
+          responseData = await parseFigureDataXML(xmlText);
+          console.log('Parsed data successfully');
+          break; // Success, exit loop
+        } else {
+          console.warn(`Failed to fetch from ${source}: ${response.status} ${response.statusText}`);
         }
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const xmlText = await response.text();
-        console.log('Successfully fetched figuredata XML, size:', xmlText.length);
-        responseData = await parseFigureDataXML(xmlText);
-        console.log('Parsed data successfully');
-      } else {
-        console.warn(`Failed to fetch from Habbo API: ${response.status} ${response.statusText}`);
+      } catch (apiError) {
+        console.warn(`Error fetching from ${source}:`, apiError);
       }
-    } catch (apiError) {
-      console.warn('API error, using static fallback:', apiError);
     }
 
     // Save to cache
