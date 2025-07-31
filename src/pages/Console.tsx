@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -15,7 +14,7 @@ import { Heart, MessageCircle, Users, Search, Loader2, Info } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import { PanelCard } from '../components/PanelCard';
 import MobileLayout from '../layouts/MobileLayout';
-import { Sidebar } from '../components/Sidebar';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 
 interface HabboUser {
   uniqueId: string;
@@ -630,8 +629,8 @@ const Console: React.FC = () => {
   return (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
-        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-1 overflow-y-auto">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 overflow-y-auto transition-all duration-300`}>
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg m-4 min-h-[calc(100vh-2rem)]">
             {renderContent()}
           </div>
