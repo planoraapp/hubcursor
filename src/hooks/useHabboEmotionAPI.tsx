@@ -37,7 +37,13 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
     }
     
     const data = await response.json();
-    console.log(`✅ [HabboEmotionAPI] Raw API response:`, data);
+    console.log(`✅ [HabboEmotionAPI] Raw API response structure:`, {
+      hasResult: !!data.result,
+      hasData: !!data.data,
+      hasClothings: !!data.data?.clothings,
+      clothingsLength: data.data?.clothings?.length,
+      sampleItem: data.data?.clothings?.[0]
+    });
     
     // The API returns data in this format: { result: 200, data: { count: 200, total: "2601", clothings: [...] } }
     if (data && data.data && data.data.clothings && Array.isArray(data.data.clothings)) {
@@ -46,7 +52,13 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
       
       // Map the clothing items to our expected format
       const mappedClothings = clothings.map((item: any, index: number) => {
-        console.log(`🔄 [HabboEmotionAPI] Processing item ${index + 1}:`, item);
+        console.log(`🔄 [HabboEmotionAPI] Processing item ${index + 1}:`, {
+          id: item.id,
+          code: item.code,
+          part: item.part,
+          gender: item.gender,
+          date: item.date
+        });
         
         return {
           id: item.id || index + 1,
@@ -66,6 +78,7 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
       }).filter(Boolean);
       
       console.log(`✅ [HabboEmotionAPI] Successfully mapped ${mappedClothings.length} items`);
+      console.log(`🎨 [HabboEmotionAPI] Sample mapped items:`, mappedClothings.slice(0, 3));
       return mappedClothings;
     } else {
       console.error('❌ [HabboEmotionAPI] Invalid response format:', data);
@@ -92,7 +105,7 @@ const determineRarity = (code: string): string => {
 export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmotionAPIProps = {}) => {
   console.log(`🔧 [HabboEmotionAPI] Hook called with limit: ${limit}, enabled: ${enabled}`);
   
-  return useQuery({
+  const query = useQuery({
     queryKey: ['habbo-clothings', limit],
     queryFn: () => fetchHabboClothings(limit),
     enabled,
@@ -100,11 +113,16 @@ export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmot
     gcTime: 1000 * 60 * 60, // 1 hour
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    onSuccess: (data) => {
-      console.log(`🎉 [HabboEmotionAPI] Query success! Received ${data?.length || 0} items`);
-    },
-    onError: (error) => {
-      console.error('💥 [HabboEmotionAPI] Query error:', error);
-    }
   });
+
+  // Log success and error states using useEffect pattern instead of deprecated callbacks
+  if (query.isSuccess && query.data) {
+    console.log(`🎉 [HabboEmotionAPI] Query success! Received ${query.data?.length || 0} items`);
+  }
+
+  if (query.isError) {
+    console.error('💥 [HabboEmotionAPI] Query error:', query.error);
+  }
+
+  return query;
 };
