@@ -3,6 +3,7 @@
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import fs from 'fs/promises';
+import path from 'path';
 
 async function buildFigureData() {
   console.log('🚀 Iniciando geração do figuredata.json...');
@@ -11,7 +12,13 @@ async function buildFigureData() {
     console.log('📡 Buscando figuredata.xml do Habbo Brasil...');
     const { data: xml } = await axios.get(
       'https://www.habbo.com.br/gamedata/figuredata.xml',
-      { responseType: 'text' }
+      { 
+        responseType: 'text',
+        timeout: 30000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      }
     );
 
     console.log('🔄 Parseando XML...');
@@ -45,14 +52,17 @@ async function buildFigureData() {
     }
 
     // Criar diretório public se não existir
+    const publicDir = path.join(process.cwd(), 'public');
     try {
-      await fs.access('./public');
+      await fs.access(publicDir);
     } catch {
-      await fs.mkdir('./public', { recursive: true });
+      console.log('📁 Criando diretório public...');
+      await fs.mkdir(publicDir, { recursive: true });
     }
 
+    const outputPath = path.join(publicDir, 'figuredata.json');
     await fs.writeFile(
-      './public/figuredata.json',
+      outputPath,
       JSON.stringify(result, null, 2),
       'utf-8'
     );
@@ -63,8 +73,15 @@ async function buildFigureData() {
       console.log(`   ${type}: ${result[type].length} itens`);
     });
     
+    console.log('🎉 Processo concluído com sucesso!');
+    
   } catch (error) {
-    console.error('❌ Erro ao gerar figuredata:', error);
+    console.error('❌ Erro ao gerar figuredata:', error.message);
+    if (error.code === 'ENOTFOUND') {
+      console.error('   → Problema de conectividade. Verifique sua internet.');
+    } else if (error.code === 'ETIMEDOUT') {
+      console.error('   → Timeout na requisição. Tente novamente.');
+    }
     process.exit(1);
   }
 }
