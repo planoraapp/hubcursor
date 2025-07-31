@@ -1,21 +1,22 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/use-mobile';
 import { useAuth } from '../hooks/useAuth';
-import { getUserByName, getUserProfile, getAvatarUrl, getBadgeUrl } from '../services/habboApi';
+import { getUserByName, getUserProfile, getAvatarUrl, getBadgeUrl, getUserBadges, getUserFriends, getUserRooms, getUserGroups } from '../services/habboApi';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Users, Search, Loader2, Info } from 'lucide-react';
+import { Search, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PanelCard } from '../components/PanelCard';
 import MobileLayout from '../layouts/MobileLayout';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
+import { ProfileNavigation } from '../components/console/ProfileNavigation';
+import { ProfileSections } from '../components/console/ProfileSections';
+import { PhotoGrid } from '../components/console/PhotoGrid';
+import { FeedSystem } from '../components/console/FeedSystem';
 
 interface HabboUser {
   uniqueId: string;
@@ -54,20 +55,23 @@ const Console: React.FC = () => {
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
-  // State management
   const [searchInput, setSearchInput] = useState('');
   const [currentUser, setCurrentUser] = useState<HabboUser | null>(null);
   const [userPhotos, setUserPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('profile');
-  const [friendsActivities, setFriendsActivities] = useState<Activity[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [photoComments, setPhotoComments] = useState<{[key: string]: any[]}>({});
   const [activeSection, setActiveSection] = useState('console');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Listen for sidebar state changes
+  const [profileSection, setProfileSection] = useState('badges');
+  const [allBadges, setAllBadges] = useState<any[]>([]);
+  const [userFriends, setUserFriends] = useState<any[]>([]);
+  const [userRooms, setUserRooms] = useState<any[]>([]);
+  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [followedUsers, setFollowedUsers] = useState<string[]>([]);
+
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -103,13 +107,11 @@ const Console: React.FC = () => {
 
       setCurrentUser(userData);
       
-      // Fetch user photos
-      await fetchUserPhotos(userData.uniqueId);
-      
-      // Check if following (only if logged in)
-      if (isLoggedIn && habboAccount) {
-        await checkFollowingStatus(userData.uniqueId);
-      }
+      await Promise.all([
+        fetchUserPhotos(userData.uniqueId),
+        fetchAllUserData(userData.uniqueId),
+        isLoggedIn && habboAccount ? checkFollowingStatus(userData.uniqueId) : null
+      ]);
       
       toast({
         title: "Usuário encontrado!",
@@ -124,13 +126,45 @@ const Console: React.FC = () => {
     }
   };
 
+  const fetchAllUserData = async (userId: string) => {
+    try {
+      const [badgesData, friendsData, roomsData, groupsData] = await Promise.all([
+        getUserBadges(userId),
+        getUserFriends(userId),
+        getUserRooms(userId),
+        getUserGroups(userId)
+      ]);
+
+      setAllBadges(badgesData || []);
+      setUserFriends(friendsData || []);
+      setUserRooms(roomsData || []);
+      setUserGroups(groupsData || []);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const fetchFollowedUsers = async () => {
+    if (!isLoggedIn || !habboAccount) return;
+
+    try {
+      const { data } = await supabase
+        .from('user_followers')
+        .select('followed_habbo_name')
+        .eq('follower_user_id', habboAccount.supabase_user_id);
+      
+      setFollowedUsers(data?.map(f => f.followed_habbo_name) || []);
+    } catch (error) {
+      console.error('Error fetching followed users:', error);
+    }
+  };
+
   const fetchUserPhotos = async (uniqueId: string) => {
     try {
       const response = await fetch(`https://www.habbo.com.br/api/public/users/${uniqueId}/photos`);
       if (response.ok) {
         const photos = await response.json();
         
-        // Transform photos and get like counts (only if logged in)
         const transformedPhotos = await Promise.all(
           photos.map(async (photo: any) => {
             let likes = [];
@@ -286,43 +320,16 @@ const Console: React.FC = () => {
     }
   };
 
-  const fetchFriendsActivity = async () => {
-    if (!currentUser?.friends) return;
-    if (!isLoggedIn) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para ver atividades de amigos.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Get activities from friends using the proxy
-      const activities: Activity[] = [];
-      
-      for (const friend of currentUser.friends.slice(0, 10)) { // Limit to avoid rate limiting
-        try {
-          const response = await supabase.functions.invoke('habbo-widgets-proxy', {
-            body: { username: friend.name }
-          });
-          
-          if (response.data?.activities) {
-            activities.push(...response.data.activities.map((activity: Activity) => ({
-              ...activity,
-              friendName: friend.name
-            })));
-          }
-        } catch (err) {
-          console.error(`Error fetching activity for ${friend.name}:`, err);
-        }
-      }
-      
-      setFriendsActivities(activities.slice(0, 20)); // Show recent 20 activities
-    } catch (err) {
-      console.error('Error fetching friends activities:', err);
-    }
+  const handleUserClick = (username: string) => {
+    setSearchInput(username);
+    searchUser();
   };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchFollowedUsers();
+    }
+  }, [isLoggedIn, habboAccount]);
 
   const renderAuthNotice = () => {
     if (isLoggedIn) return null;
@@ -350,7 +357,6 @@ const Console: React.FC = () => {
     <div className="space-y-6">
       {currentUser ? (
         <>
-          {/* User Info Card */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
@@ -368,16 +374,6 @@ const Console: React.FC = () => {
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <p>Membro desde: {new Date(currentUser.memberSince).toLocaleDateString('pt-BR')}</p>
                     <p>Status: {currentUser.online ? '🟢 Online' : '🔴 Offline'}</p>
-                    {currentUser.friends && (
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => setActiveTab('friends')}
-                        className="text-primary hover:text-primary/80"
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        {currentUser.friends.length} Amigos
-                      </Button>
-                    )}
                   </div>
                   
                   {isLoggedIn && (
@@ -404,60 +400,34 @@ const Console: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Badges */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Emblemas ({currentUser.selectedBadges?.length || 0})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {currentUser.selectedBadges?.map((badge, index) => (
-                  <div key={index} className="text-center">
-                    <img 
-                      src={getBadgeUrl(badge.code)} 
-                      alt={badge.name}
-                      className="w-12 h-12 mx-auto"
-                      title={badge.description}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">{badge.name}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <ProfileNavigation
+            activeSection={profileSection}
+            setActiveSection={setProfileSection}
+            badgeCount={allBadges.length}
+            friendsCount={userFriends.length}
+            roomsCount={userRooms.length}
+            groupsCount={userGroups.length}
+          />
 
-          {/* Photos */}
+          <ProfileSections
+            activeSection={profileSection}
+            badges={allBadges}
+            friends={userFriends}
+            rooms={userRooms}
+            groups={userGroups}
+            onUserClick={handleUserClick}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle>Fotos Públicas ({userPhotos.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {userPhotos.map((photo) => (
-                  <div key={photo.id} className="relative group">
-                    <img 
-                      src={photo.url} 
-                      alt="User photo"
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center">
-                      <Button
-                        size="sm"
-                        variant={photo.isLiked ? "default" : "secondary"}
-                        onClick={() => togglePhotoLike(photo.id)}
-                        disabled={!isLoggedIn}
-                      >
-                        <Heart className="w-4 h-4 mr-1" />
-                        {photo.likes}
-                      </Button>
-                      <Badge variant="secondary">
-                        <MessageCircle className="w-3 h-3 mr-1" />
-                        {photo.comments}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <PhotoGrid
+                photos={userPhotos}
+                onLikeToggle={togglePhotoLike}
+                isLoggedIn={isLoggedIn}
+              />
             </CardContent>
           </Card>
         </>
@@ -474,170 +444,33 @@ const Console: React.FC = () => {
     </div>
   );
 
-  const renderFeedTab = () => {
-    if (!isLoggedIn) {
-      return (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Feed de Atividades</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  O feed de atividades requer login para funcionar.
-                </p>
-                <Button onClick={() => navigate('/connect-habbo')}>
-                  Fazer Login
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
+  const renderFeedTab = () => (
+    <div className="space-y-6">
+      <FeedSystem
+        feedType="general"
+        followedUsers={followedUsers}
+      />
+    </div>
+  );
 
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Feed de Atividades</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={fetchFriendsActivity} className="mb-4">
-              Atualizar Feed
-            </Button>
-            <div className="space-y-4">
-              {friendsActivities.length > 0 ? (
-                friendsActivities.map((activity, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">{(activity as any).friendName}</span>
-                      <span className="text-sm text-muted-foreground">{activity.time}</span>
-                    </div>
-                    <p className="text-sm">{activity.activity}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma atividade recente encontrada
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
-
-  const renderFriendsTab = () => {
-    if (!currentUser) {
-      return (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Amigos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  Busque um usuário primeiro para ver seus amigos
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Amigos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="activity">
-              <TabsList>
-                <TabsTrigger value="activity">Atividade Recente</TabsTrigger>
-                <TabsTrigger value="list">Lista Completa</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="activity">
-                {!isLoggedIn ? (
-                  <div className="text-center py-8">
-                    <Info className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      Login necessário para ver atividades de amigos
-                    </p>
-                    <Button onClick={() => navigate('/connect-habbo')}>
-                      Fazer Login
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <Button onClick={fetchFriendsActivity}>
-                      Carregar Atividades
-                    </Button>
-                    {friendsActivities.map((activity, index) => (
-                      <div key={index} className="p-4 border rounded-lg">
-                        <p>{activity.activity}</p>
-                        <small className="text-muted-foreground">{activity.time}</small>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="list">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {currentUser?.friends?.map((friend) => (
-                    <div key={friend.uniqueId} className="p-4 border rounded-lg flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={getAvatarUrl(friend.figureString)} />
-                        <AvatarFallback>{friend.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{friend.name}</p>
-                        <p className="text-sm text-muted-foreground">{friend.motto}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSearchInput(friend.name);
-                            searchUser();
-                            setActiveTab('profile');
-                          }}
-                          className="text-xs mt-1"
-                        >
-                          Ver Perfil
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
+  const renderFriendsTab = () => (
+    <div className="space-y-6">
+      <FeedSystem
+        feedType="friends"
+        followedUsers={followedUsers}
+      />
+    </div>
+  );
 
   const renderContent = () => (
     <div className="container mx-auto max-w-6xl p-4 space-y-6">
-      {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-primary">HabboHub Console</h1>
-        <p className="text-muted-foreground">Seu centro de informações do Habbo!</p>
+        <p className="text-muted-foreground">Sua rede social do Habbo!</p>
       </div>
 
-      {/* Auth Notice */}
       {renderAuthNotice()}
 
-      {/* Search */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-4">
@@ -661,12 +494,11 @@ const Console: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="feed">Feed</TabsTrigger>
-          <TabsTrigger value="friends">Amigos</TabsTrigger>
+          <TabsTrigger value="feed">Feed Geral</TabsTrigger>
+          <TabsTrigger value="friends">Feed de Amigos</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">{renderProfileTab()}</TabsContent>
