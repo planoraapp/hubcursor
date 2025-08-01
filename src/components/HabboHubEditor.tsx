@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +67,17 @@ const HabboHubEditor = () => {
   // Use official figure data
   const { data: figureData, isLoading: apiLoading, error, refetch } = useOfficialFigureData();
 
+  // Gerar figure string dinâmicamente
+  const figureString = useMemo(() => {
+    const parts = Object.entries(currentFigure)
+      .filter(([_, part]) => part && part.id !== '0')
+      .map(([type, part]) => `${type}-${part.id}-${part.colors.join('.')}`)
+      .join('.');
+    
+    console.log('🎨 [HabboHubEditor] Generated figure string:', parts);
+    return parts;
+  }, [currentFigure]);
+
   useEffect(() => {
     console.log('🔍 [HabboHubEditor] Official FigureData Status:', {
       loading: apiLoading,
@@ -84,15 +94,6 @@ const HabboHubEditor = () => {
   useEffect(() => {
     console.log('🎯 [HabboHubEditor] Editor com Dados Oficiais carregado!');
   }, []);
-
-  const generateFigureString = useCallback(() => {
-    const parts = Object.entries(currentFigure)
-      .filter(([_, part]) => part && part.id !== '0')
-      .map(([type, part]) => `${type}-${part.id}-${part.colors.join('.')}`)
-      .join('.');
-    console.log('🎨 [HabboHubEditor] Generated figure string:', parts);
-    return parts;
-  }, [currentFigure]);
 
   const handlePartSelect = (partId: string) => {
     console.log('👕 [HabboHubEditor] Part selected:', partId, 'in category:', activeCategory);
@@ -179,7 +180,6 @@ const HabboHubEditor = () => {
   };
 
   const handleCopyUrl = async () => {
-    const figureString = generateFigureString();
     const url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=3&size=l&img_format=png&gesture=std&action=std`;
     
     try {
@@ -198,7 +198,6 @@ const HabboHubEditor = () => {
   };
 
   const handleExportFigure = () => {
-    const figureString = generateFigureString();
     const selectedItems = Object.entries(currentFigure)
       .filter(([_, part]) => part && part.id !== '0')
       .map(([category, part]) => {
@@ -296,7 +295,7 @@ const HabboHubEditor = () => {
             Categorias: {figureData ? Object.keys(figureData).length : 0}
           </Badge>
           <Badge className="bg-purple-600 text-white">
-            Sistema: OFICIAL
+            Thumbnails: MELHORADO
           </Badge>
         </div>
       </div>
@@ -307,7 +306,7 @@ const HabboHubEditor = () => {
           <div className="flex items-center gap-3">
             <img src="/assets/2190__-5kz.png" alt="Sucesso" className="w-6 h-6" />
             <p className="text-sm text-green-800">
-              <strong>✅ Status:</strong> Editor funcionando com dados OFICIAIS do Habbo ({totalItems} itens disponíveis)!
+              <strong>✅ Status:</strong> Editor funcionando com dados OFICIAIS e sistema de thumbnails avançado ({totalItems} itens disponíveis)!
             </p>
           </div>
         </CardContent>
@@ -317,7 +316,7 @@ const HabboHubEditor = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <AvatarPreview
-            figureString={generateFigureString()}
+            figureString={figureString}
             selectedHotel={selectedHotel}
             setSelectedHotel={setSelectedHotel}
             username={username}

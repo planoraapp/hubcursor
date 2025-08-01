@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Palette, Shirt, PaintBucket, Crown, Glasses, Footprints, User, AlertCircle, RefreshCw } from 'lucide-react';
 import { useFigureData } from '@/hooks/useFigureData';
+import ClothingThumbnail from './ClothingThumbnail';
 
 interface ClothingSelectorProps {
   activeCategory: string;
@@ -57,8 +58,6 @@ const ClothingSelector = ({
   setSearchTerm,
   selectedHotel
 }: ClothingSelectorProps) => {
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-  
   const { data: figureData, isLoading, error, refetch } = useFigureData();
 
   // Processar dados do figuredata
@@ -88,15 +87,7 @@ const ClothingSelector = ({
     return groups;
   }, [categoryItems]);
 
-  const handleImageError = (itemId: string) => {
-    setImageErrors(prev => new Set([...prev, itemId]));
-  };
-
   const renderClothingItem = (item: any) => {
-    const hasError = imageErrors.has(item.id);
-    // Use isolated clothing URL for better visualization
-    const thumbnailUrl = `https://images.habbo.com/c_images/clothing/icon_${activeCategory}_${item.id}_${item.colors[0] || '1'}.png`;
-
     return (
       <Button
         key={item.id}
@@ -119,22 +110,14 @@ const ClothingSelector = ({
         </Badge>
         
         <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center mb-1 overflow-hidden">
-          {!hasError ? (
-            <img 
-              src={thumbnailUrl}
-              alt={`${activeCategory}-${item.id}`}
-              className="w-full h-full object-contain pixelated"
-              style={{ imageRendering: 'pixelated' }}
-              onError={() => handleImageError(item.id)}
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-12 h-12 bg-gray-300 rounded flex items-center justify-center">
-              <span className="text-xs font-bold text-gray-600">
-                {item.id}
-              </span>
-            </div>
-          )}
+          <ClothingThumbnail
+            category={activeCategory}
+            itemId={item.id}
+            colorId={item.colors[0] || '1'}
+            hotel={selectedHotel}
+            className="w-full h-full"
+            alt={`${activeCategory}-${item.id}`}
+          />
         </div>
         
         <div className="truncate w-full text-center text-xs leading-tight">
@@ -271,6 +254,8 @@ const ClothingSelector = ({
         {/* Info */}
         <div className="text-xs text-gray-500 border-t pt-2">
           Total: {categoryItems.length} itens em {activeCategory.toUpperCase()}
+          <br />
+          <span className="text-green-600">✅ Sistema de Thumbnails Melhorado Ativo</span>
         </div>
       </CardContent>
     </Card>
