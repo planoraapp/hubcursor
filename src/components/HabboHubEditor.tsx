@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,9 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AvatarPreview from './HabboEditor/AvatarPreview';
-import ClothingSelector from './HabboEditor/ClothingSelector';
+import HabboWidgetsClothingSelector from './HabboEditor/HabboWidgetsClothingSelector';
 import ColorPalette from './HabboEditor/ColorPalette';
-import { useOfficialFigureData } from '@/hooks/useFigureDataOfficial';
+import { useHabboWidgetsClothing, HabboWidgetsItem } from '@/hooks/useHabboWidgetsClothing';
 
 interface CurrentFigure {
   hd: { id: string; colors: string[] };
@@ -51,8 +52,15 @@ const HABBO_COLORS = [
   { id: '143', hex: '#6799CC', name: 'Azul' }
 ];
 
+// Convert HabboWidgets item to figure part ID
+const convertHabboWidgetsToFigureId = (item: HabboWidgetsItem): string => {
+  // Extract numeric ID from swfName or use a mapping system
+  const numericMatch = item.swfName.match(/\d+/);
+  return numericMatch ? numericMatch[0] : item.id;
+};
+
 const HabboHubEditor = () => {
-  console.log('🚀 [HabboHubEditor] Iniciando Editor com Dados Oficiais...');
+  console.log('🚀 [HabboHubEditor] Iniciando Editor com HabboWidgets...');
   
   const { toast } = useToast();
   
@@ -64,10 +72,10 @@ const HabboHubEditor = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Use official figure data
-  const { data: figureData, isLoading: apiLoading, error, refetch } = useOfficialFigureData();
+  // Use HabboWidgets clothing data
+  const { data: clothingData, isLoading: apiLoading, error, refetch } = useHabboWidgetsClothing(selectedHotel);
 
-  // Gerar figure string dinâmicamente
+  // Generate figure string dynamically
   const figureString = useMemo(() => {
     const parts = Object.entries(currentFigure)
       .filter(([_, part]) => part && part.id !== '0')
@@ -79,48 +87,41 @@ const HabboHubEditor = () => {
   }, [currentFigure]);
 
   useEffect(() => {
-    console.log('🔍 [HabboHubEditor] Official FigureData Status:', {
+    console.log('🔍 [HabboHubEditor] HabboWidgets Status:', {
       loading: apiLoading,
-      hasData: !!figureData,
-      categories: figureData ? Object.keys(figureData).length : 0,
+      hasData: !!clothingData,
+      totalItems: clothingData?.length || 0,
       error: error?.message
     });
     
-    if (figureData) {
-      console.log('📦 [HabboHubEditor] Categorias oficiais disponíveis:', Object.keys(figureData));
+    if (clothingData) {
+      console.log('📦 [HabboHubEditor] HabboWidgets data loaded:', clothingData.length, 'items');
     }
-  }, [apiLoading, figureData, error]);
+  }, [apiLoading, clothingData, error]);
 
-  useEffect(() => {
-    console.log('🎯 [HabboHubEditor] Editor com Dados Oficiais carregado!');
-  }, []);
-
-  const handlePartSelect = (partId: string) => {
-    console.log('👕 [HabboHubEditor] Part selected:', partId, 'in category:', activeCategory);
-    setSelectedPart(partId);
+  const handlePartSelect = (item: HabboWidgetsItem) => {
+    console.log('👕 [HabboHubEditor] HabboWidgets item selected:', item);
+    setSelectedPart(item.id);
     
-    if (figureData && figureData[activeCategory]) {
-      const item = figureData[activeCategory].find(item => item.id === partId);
-      
-      if (item) {
-        setCurrentFigure(prev => {
-          const newFigure = {
-            ...prev,
-            [activeCategory]: {
-              id: partId,
-              colors: [item.colors[0] || '1']
-            }
-          };
-          console.log('🔄 [HabboHubEditor] Updated figure:', newFigure);
-          return newFigure;
-        });
+    // Convert HabboWidgets item to figure format
+    const figureId = convertHabboWidgetsToFigureId(item);
+    
+    setCurrentFigure(prev => {
+      const newFigure = {
+        ...prev,
+        [activeCategory]: {
+          id: figureId,
+          colors: [item.colors[0] || '1']
+        }
+      };
+      console.log('🔄 [HabboHubEditor] Updated figure with HabboWidgets item:', newFigure);
+      return newFigure;
+    });
 
-        toast({
-          title: "Peça Oficial Selecionada!",
-          description: `${activeCategory}-${partId} foi adicionada ao seu visual com dados oficiais do Habbo.`
-        });
-      }
-    }
+    toast({
+      title: "Roupa HabboWidgets Selecionada!",
+      description: `${item.name} foi aplicada ao seu visual.`
+    });
   };
 
   const handleColorSelect = (colorId: string) => {
@@ -128,42 +129,45 @@ const HabboHubEditor = () => {
     setCurrentFigure(prev => {
       const currentPart = prev[activeCategory as keyof CurrentFigure];
       if (currentPart) {
-        return {
+        const newFigure = {
           ...prev,
           [activeCategory]: {
             ...currentPart,
             colors: [colorId]
           }
         };
+        console.log('🔄 [HabboHubEditor] Updated figure with new color:', newFigure);
+        return newFigure;
       }
       return prev;
     });
   };
 
   const handleRandomize = () => {
-    if (!figureData) {
+    if (!clothingData) {
       toast({
         title: "Erro",
-        description: "Dados oficiais não carregados ainda.",
+        description: "Dados do HabboWidgets não carregados ainda.",
         variant: "destructive"
       });
       return;
     }
     
-    console.log('🎲 [HabboHubEditor] Randomizando avatar com dados OFICIAIS do Habbo...');
+    console.log('🎲 [HabboHubEditor] Randomizando avatar com HabboWidgets...');
     setLoading(true);
     
     setTimeout(() => {
       const newFigure: CurrentFigure = { ...DEFAULT_FIGURE };
       
-      ['hr', 'ch', 'lg', 'ha', 'ea', 'cc', 'ca', 'wa'].forEach(category => {
-        const categoryItems = figureData[category];
+      ['hr', 'ch', 'lg', 'sh', 'ha', 'ea', 'cc'].forEach(category => {
+        const categoryItems = clothingData.filter(item => item.category === category);
         if (categoryItems && categoryItems.length > 0) {
           const randomItem = categoryItems[Math.floor(Math.random() * categoryItems.length)];
+          const figureId = convertHabboWidgetsToFigureId(randomItem);
           const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
           
           newFigure[category as keyof CurrentFigure] = {
-            id: randomItem.id,
+            id: figureId,
             colors: [randomColor]
           };
         }
@@ -174,7 +178,7 @@ const HabboHubEditor = () => {
       
       toast({
         title: "Avatar Randomizado!",
-        description: "Um novo visual foi gerado com roupas OFICIAIS do Habbo Hotel."
+        description: "Um novo visual foi gerado com roupas do HabboWidgets."
       });
     }, 1000);
   };
@@ -198,42 +202,25 @@ const HabboHubEditor = () => {
   };
 
   const handleExportFigure = () => {
-    const selectedItems = Object.entries(currentFigure)
-      .filter(([_, part]) => part && part.id !== '0')
-      .map(([category, part]) => {
-        const categoryData = figureData?.[category];
-        const item = categoryData?.find(i => i.id === part.id);
-        
-        return {
-          category,
-          id: part.id,
-          gender: item?.gender || 'U',
-          club: item?.club || '0',
-          colorable: item?.colorable || false,
-          colors: part.colors
-        };
-      });
-
     const data = {
       figure: figureString,
       username,
       hotel: selectedHotel,
-      items: selectedItems,
       exportDate: new Date().toISOString(),
-      source: 'Habbo Official Data'
+      source: 'HabboWidgets Integration'
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `habbo-figure-official-${username}-${Date.now()}.json`;
+    a.download = `habbo-figure-habbowidgets-${username}-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     
     toast({
       title: "Figure Exportada!",
-      description: "O arquivo foi baixado com todos os detalhes das peças OFICIAIS do Habbo."
+      description: "O arquivo foi baixado com dados do HabboWidgets."
     });
   };
 
@@ -244,7 +231,7 @@ const HabboHubEditor = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-red-600 mb-2">Erro no Editor</h2>
           <p className="text-gray-600 mb-4">
-            Não foi possível carregar os dados oficiais do Habbo.
+            Não foi possível carregar os dados do HabboWidgets.
           </p>
           <Button onClick={() => refetch()} variant="outline">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -262,7 +249,7 @@ const HabboHubEditor = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-amber-600 mb-2">Editor de Visuais Habbo</h2>
           <p className="text-gray-600">
-            {apiLoading ? 'Carregando dados OFICIAIS do Habbo...' : 'Gerando visual aleatório...'}
+            {apiLoading ? 'Carregando dados do HabboWidgets...' : 'Gerando visual aleatório...'}
           </p>
         </div>
         
@@ -275,27 +262,27 @@ const HabboHubEditor = () => {
     );
   }
 
-  console.log('✅ [HabboHubEditor] Rendering main editor interface with OFFICIAL data');
+  console.log('✅ [HabboHubEditor] Rendering main editor interface with HabboWidgets data');
 
-  const currentItem = figureData && figureData[activeCategory]?.find(item => item.id === selectedPart);
+  const currentItem = clothingData?.find(item => item.id === selectedPart);
   const availableColors = currentItem?.colors || [];
-  const totalItems = figureData ? Object.values(figureData).reduce((acc, items) => acc + items.length, 0) : 0;
+  const totalItems = clothingData?.length || 0;
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-amber-600 mb-2 volter-font">Editor de Visuais Habbo</h2>
-        <p className="text-gray-600">Crie e personalize seu avatar com roupas OFICIAIS do Habbo Hotel!</p>
+        <p className="text-gray-600">Crie e personalize seu avatar com roupas do HabboWidgets!</p>
         <div className="flex justify-center gap-4 mt-2">
           <Badge className="bg-blue-600 text-white">
-            Total: {totalItems} itens oficiais
+            Total: {totalItems} itens HabboWidgets
           </Badge>
           <Badge className="bg-green-600 text-white">
-            Categorias: {figureData ? Object.keys(figureData).length : 0}
+            Hotel: {selectedHotel}
           </Badge>
           <Badge className="bg-purple-600 text-white">
-            Thumbnails: MELHORADO
+            Preview: SINCRONIZADO
           </Badge>
         </div>
       </div>
@@ -306,7 +293,8 @@ const HabboHubEditor = () => {
           <div className="flex items-center gap-3">
             <img src="/assets/2190__-5kz.png" alt="Sucesso" className="w-6 h-6" />
             <p className="text-sm text-green-800">
-              <strong>✅ Status:</strong> Editor funcionando com dados OFICIAIS e sistema de thumbnails avançado ({totalItems} itens disponíveis)!
+              <strong>✅ Status:</strong> Editor funcionando com dados do HabboWidgets ({totalItems} itens disponíveis)!
+              Preview atualiza em tempo real.
             </p>
           </div>
         </CardContent>
@@ -328,7 +316,7 @@ const HabboHubEditor = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <ClothingSelector
+          <HabboWidgetsClothingSelector
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
             selectedPart={selectedPart}
