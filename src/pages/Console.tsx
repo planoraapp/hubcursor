@@ -1,18 +1,19 @@
+
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProfileSections } from '@/components/console/ProfileSections';
+import { ActivityFeed } from '@/components/console/ActivityFeed';
+import { UserProfileCard } from '@/components/console/UserProfileCard';
 import { FeedSystemEnhanced } from '@/components/console/FeedSystemEnhanced';
 import { AdSpace } from '@/components/AdSpace';
 import { PageHeader } from '@/components/PageHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileLayout from '@/layouts/MobileLayout';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
-import { getUserByName, getAvatarUrl } from '@/services/habboApi';
+import { getUserByName } from '@/services/habboApi';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -41,6 +42,18 @@ const Console = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('perfil');
   const [followedUsers, setFollowedUsers] = useState<string[]>([]);
+
+  // Listen to sidebar state changes
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   // Debounce search term
   useEffect(() => {
@@ -197,33 +210,11 @@ const Console = () => {
             </div>
             
             <TabsContent value="perfil" className="mt-6">
-              {selectedUser ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Perfil de {selectedUser.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Motto: {selectedUser.motto}</p>
-                    <p>Online: {selectedUser.online ? 'Sim' : 'Não'}</p>
-                  </CardContent>
-                </Card>
-              ) : loading ? (
-                <Card>
-                  <CardContent className="p-6">
-                    <p>Carregando...</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="p-6">
-                    <p>Nenhum usuário selecionado</p>
-                  </CardContent>
-                </Card>
-              )}
+              <UserProfileCard user={selectedUser} loading={loading} />
             </TabsContent>
             
             <TabsContent value="feed-geral" className="mt-6">
-              <FeedSystemEnhanced feedType="general" followedUsers={followedUsers} />
+              <ActivityFeed followedUsers={followedUsers} />
             </TabsContent>
             
             <TabsContent value="feed-amigos" className="mt-6">
@@ -289,36 +280,14 @@ const Console = () => {
                   </div>
                   
                   <TabsContent value="perfil" className="mt-6">
-                    {selectedUser ? (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Perfil de {selectedUser.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p>Motto: {selectedUser.motto}</p>
-                          <p>Online: {selectedUser.online ? 'Sim' : 'Não'}</p>
-                        </CardContent>
-                      </Card>
-                    ) : loading ? (
-                      <Card>
-                        <CardContent className="p-6">
-                          <p>Carregando...</p>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <Card>
-                        <CardContent className="p-6">
-                          <p>Nenhum usuário selecionado</p>
-                        </CardContent>
-                      </Card>
-                    )}
+                    <UserProfileCard user={selectedUser} loading={loading} />
                   </TabsContent>
                 </Tabs>
               </div>
               
               {/* Right Column - Feeds */}
               <div className="lg:col-span-2 space-y-6">
-                <FeedSystemEnhanced feedType="general" followedUsers={followedUsers} />
+                <ActivityFeed followedUsers={followedUsers} />
                 <FeedSystemEnhanced feedType="friends" followedUsers={followedUsers} />
               </div>
             </div>
