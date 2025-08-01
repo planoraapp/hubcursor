@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -124,8 +123,8 @@ const Console = () => {
       
       if (userData) {
         const processedUser: UserData = {
-          uniqueId: userData.uniqueId || userData.id,
-          id: userData.uniqueId || userData.id,
+          uniqueId: userData.uniqueId,
+          id: userData.uniqueId,
           name: userData.name,
           motto: userData.motto || '',
           online: userData.online || false,
@@ -198,11 +197,29 @@ const Console = () => {
             </div>
             
             <TabsContent value="perfil" className="mt-6">
-              <ProfileSections 
-                user={selectedUser} 
-                loading={loading} 
-                currentUserId={user?.id}
-              />
+              {selectedUser ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Perfil de {selectedUser.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>Motto: {selectedUser.motto}</p>
+                    <p>Online: {selectedUser.online ? 'Sim' : 'Não'}</p>
+                  </CardContent>
+                </Card>
+              ) : loading ? (
+                <Card>
+                  <CardContent className="p-6">
+                    <p>Carregando...</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-6">
+                    <p>Nenhum usuário selecionado</p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
             
             <TabsContent value="feed-geral" className="mt-6">
@@ -272,11 +289,29 @@ const Console = () => {
                   </div>
                   
                   <TabsContent value="perfil" className="mt-6">
-                    <ProfileSections 
-                      user={selectedUser} 
-                      loading={loading} 
-                      currentUserId={user?.id}
-                    />
+                    {selectedUser ? (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Perfil de {selectedUser.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p>Motto: {selectedUser.motto}</p>
+                          <p>Online: {selectedUser.online ? 'Sim' : 'Não'}</p>
+                        </CardContent>
+                      </Card>
+                    ) : loading ? (
+                      <Card>
+                        <CardContent className="p-6">
+                          <p>Carregando...</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Card>
+                        <CardContent className="p-6">
+                          <p>Nenhum usuário selecionado</p>
+                        </CardContent>
+                      </Card>
+                    )}
                   </TabsContent>
                 </Tabs>
               </div>
