@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { RefreshCw, Clock, Users, Globe, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Clock, Users, Globe, AlertTriangle, Activity as ActivityIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getAvatarUrl } from '../../services/habboApi';
 
@@ -205,10 +204,10 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
 
   const getStatusIcon = () => {
     switch (serviceStatus) {
-      case 'online': return <Activity className="w-4 h-4 text-green-600" />;
+      case 'online': return <ActivityIcon className="w-4 h-4 text-green-600" />;
       case 'limited': return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
       case 'offline': return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      default: return <Activity className="w-4 h-4 text-gray-600" />;
+      default: return <ActivityIcon className="w-4 h-4 text-gray-600" />;
     }
   };
 

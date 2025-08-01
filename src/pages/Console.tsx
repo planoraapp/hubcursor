@@ -18,6 +18,7 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UserData {
+  uniqueId?: string;
   id: string;
   name: string;
   motto: string;
@@ -123,6 +124,7 @@ const Console = () => {
       
       if (userData) {
         const processedUser: UserData = {
+          uniqueId: userData.uniqueId || userData.id,
           id: userData.uniqueId || userData.id,
           name: userData.name,
           motto: userData.motto || '',
@@ -197,7 +199,7 @@ const Console = () => {
             
             <TabsContent value="perfil" className="mt-6">
               <ProfileSections 
-                selectedUser={selectedUser} 
+                user={selectedUser} 
                 loading={loading} 
                 currentUserId={user?.id}
               />
@@ -271,7 +273,7 @@ const Console = () => {
                   
                   <TabsContent value="perfil" className="mt-6">
                     <ProfileSections 
-                      selectedUser={selectedUser} 
+                      user={selectedUser} 
                       loading={loading} 
                       currentUserId={user?.id}
                     />
