@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import AvatarPreview from './HabboEditor/AvatarPreview';
 import ClothingSelector from './HabboEditor/ClothingSelector';
 import ColorPalette from './HabboEditor/ColorPalette';
-import { useFigureData } from '@/hooks/useFigureData';
+import { useOfficialFigureData } from '@/hooks/useFigureDataOfficial';
 
 interface CurrentFigure {
   hd: { id: string; colors: string[] };
@@ -34,7 +34,6 @@ const DEFAULT_FIGURE: CurrentFigure = {
   sh: { id: '705', colors: ['1'] }
 };
 
-// Cores Habbo oficiais
 const HABBO_COLORS = [
   { id: '1', hex: '#F5DA88', name: 'Pele Clara' },
   { id: '2', hex: '#FFDBC1', name: 'Pele Rosa' },
@@ -54,7 +53,7 @@ const HABBO_COLORS = [
 ];
 
 const HabboHubEditor = () => {
-  console.log('🚀 [HabboHubEditor] Iniciando Editor Dinâmico...');
+  console.log('🚀 [HabboHubEditor] Iniciando Editor com Dados Oficiais...');
   
   const { toast } = useToast();
   
@@ -66,12 +65,11 @@ const HabboHubEditor = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Carregar dados do figuredata.json
-  const { data: figureData, isLoading: apiLoading, error, refetch } = useFigureData();
+  // Use official figure data
+  const { data: figureData, isLoading: apiLoading, error, refetch } = useOfficialFigureData();
 
-  // Log do estado da API
   useEffect(() => {
-    console.log('🔍 [HabboHubEditor] FigureData Status:', {
+    console.log('🔍 [HabboHubEditor] Official FigureData Status:', {
       loading: apiLoading,
       hasData: !!figureData,
       categories: figureData ? Object.keys(figureData).length : 0,
@@ -79,13 +77,12 @@ const HabboHubEditor = () => {
     });
     
     if (figureData) {
-      console.log('📦 [HabboHubEditor] Categorias disponíveis:', Object.keys(figureData));
+      console.log('📦 [HabboHubEditor] Categorias oficiais disponíveis:', Object.keys(figureData));
     }
   }, [apiLoading, figureData, error]);
 
-  // Initial load log
   useEffect(() => {
-    console.log('🎯 [HabboHubEditor] Editor Dinâmico carregado!');
+    console.log('🎯 [HabboHubEditor] Editor com Dados Oficiais carregado!');
   }, []);
 
   const generateFigureString = useCallback(() => {
@@ -101,7 +98,6 @@ const HabboHubEditor = () => {
     console.log('👕 [HabboHubEditor] Part selected:', partId, 'in category:', activeCategory);
     setSelectedPart(partId);
     
-    // Buscar o item nos dados do figuredata
     if (figureData && figureData[activeCategory]) {
       const item = figureData[activeCategory].find(item => item.id === partId);
       
@@ -115,8 +111,8 @@ const HabboHubEditor = () => {
         }));
 
         toast({
-          title: "Peça Selecionada!",
-          description: `${activeCategory}-${partId} foi adicionada ao seu visual.`
+          title: "Peça Oficial Selecionada!",
+          description: `${activeCategory}-${partId} foi adicionada ao seu visual com dados oficiais do Habbo.`
         });
       }
     }
@@ -143,19 +139,18 @@ const HabboHubEditor = () => {
     if (!figureData) {
       toast({
         title: "Erro",
-        description: "Dados de roupas não carregados ainda.",
+        description: "Dados oficiais não carregados ainda.",
         variant: "destructive"
       });
       return;
     }
     
-    console.log('🎲 [HabboHubEditor] Randomizando avatar com figuredata oficial...');
+    console.log('🎲 [HabboHubEditor] Randomizando avatar com dados OFICIAIS do Habbo...');
     setLoading(true);
     
     setTimeout(() => {
       const newFigure: CurrentFigure = { ...DEFAULT_FIGURE };
       
-      // Para cada categoria, pegar um item aleatório dos dados oficiais
       ['hr', 'ch', 'lg', 'ha', 'ea', 'cc', 'ca', 'wa'].forEach(category => {
         const categoryItems = figureData[category];
         if (categoryItems && categoryItems.length > 0) {
@@ -174,7 +169,7 @@ const HabboHubEditor = () => {
       
       toast({
         title: "Avatar Randomizado!",
-        description: "Um novo visual foi gerado com roupas oficiais do Habbo."
+        description: "Um novo visual foi gerado com roupas OFICIAIS do Habbo Hotel."
       });
     }, 1000);
   };
@@ -222,24 +217,23 @@ const HabboHubEditor = () => {
       hotel: selectedHotel,
       items: selectedItems,
       exportDate: new Date().toISOString(),
-      source: 'Habbo Official FigureData'
+      source: 'Habbo Official Data'
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `habbo-figure-${username}-${Date.now()}.json`;
+    a.download = `habbo-figure-official-${username}-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     
     toast({
       title: "Figure Exportada!",
-      description: "O arquivo foi baixado com todos os detalhes das peças oficiais."
+      description: "O arquivo foi baixado com todos os detalhes das peças OFICIAIS do Habbo."
     });
   };
 
-  // Se houver erro na API, mostrar botão de retry
   if (error) {
     console.log('❌ [HabboHubEditor] Rendering error state');
     return (
@@ -265,7 +259,7 @@ const HabboHubEditor = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-amber-600 mb-2">Editor de Visuais Habbo</h2>
           <p className="text-gray-600">
-            {apiLoading ? 'Carregando dados oficiais do Habbo...' : 'Gerando visual aleatório...'}
+            {apiLoading ? 'Carregando dados OFICIAIS do Habbo...' : 'Gerando visual aleatório...'}
           </p>
         </div>
         
@@ -278,9 +272,8 @@ const HabboHubEditor = () => {
     );
   }
 
-  console.log('✅ [HabboHubEditor] Rendering main editor interface');
+  console.log('✅ [HabboHubEditor] Rendering main editor interface with OFFICIAL data');
 
-  // Obter item atualmente selecionado e suas cores disponíveis
   const currentItem = figureData && figureData[activeCategory]?.find(item => item.id === selectedPart);
   const availableColors = currentItem?.colors || [];
   const totalItems = figureData ? Object.values(figureData).reduce((acc, items) => acc + items.length, 0) : 0;
@@ -290,27 +283,27 @@ const HabboHubEditor = () => {
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-amber-600 mb-2 volter-font">Editor de Visuais Habbo</h2>
-        <p className="text-gray-600">Crie e personalize seu avatar com roupas OFICIAIS do Habbo!</p>
+        <p className="text-gray-600">Crie e personalize seu avatar com roupas OFICIAIS do Habbo Hotel!</p>
         <div className="flex justify-center gap-4 mt-2">
           <Badge className="bg-blue-600 text-white">
-            Total: {totalItems} itens
+            Total: {totalItems} itens oficiais
           </Badge>
           <Badge className="bg-green-600 text-white">
             Categorias: {figureData ? Object.keys(figureData).length : 0}
           </Badge>
           <Badge className="bg-purple-600 text-white">
-            Sistema: Oficial
+            Sistema: OFICIAL
           </Badge>
         </div>
       </div>
 
-      {/* Alert */}
+      {/* Success Alert */}
       <Card className="bg-green-50 border-green-200">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <img src="/assets/2190__-5kz.png" alt="Sucesso" className="w-6 h-6" />
             <p className="text-sm text-green-800">
-              <strong>Status:</strong> Editor funcionando com dados OFICIAIS do Habbo ({totalItems} itens disponíveis)!
+              <strong>✅ Status:</strong> Editor funcionando com dados OFICIAIS do Habbo ({totalItems} itens disponíveis)!
             </p>
           </div>
         </CardContent>
@@ -318,7 +311,6 @@ const HabboHubEditor = () => {
 
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Avatar Preview */}
         <div className="lg:col-span-1">
           <AvatarPreview
             figureString={generateFigureString()}
@@ -332,7 +324,6 @@ const HabboHubEditor = () => {
           />
         </div>
 
-        {/* Clothing Selector */}
         <div className="lg:col-span-1">
           <ClothingSelector
             activeCategory={activeCategory}
@@ -345,7 +336,6 @@ const HabboHubEditor = () => {
           />
         </div>
 
-        {/* Color Palette */}
         <div className="lg:col-span-1">
           <ColorPalette
             colors={HABBO_COLORS}

@@ -1,592 +1,292 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useIsMobile } from '../hooks/use-mobile';
-import { useAuth } from '../hooks/useAuth';
-import { getUserByName, getUserProfile, getAvatarUrl, getBadgeUrl, getUserBadges, getUserFriends, getUserRooms, getUserGroups } from '../services/habboApi';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Loader2, Info } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import MobileLayout from '../layouts/MobileLayout';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
-import { ProfileNavigation } from '../components/console/ProfileNavigation';
-import { ProfileSections } from '../components/console/ProfileSections';
-import { PhotoGrid } from '../components/console/PhotoGrid';
-import { FeedSystem } from '../components/console/FeedSystem';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProfileSections } from '@/components/console/ProfileSections';
+import { FeedSystemEnhanced } from '@/components/console/FeedSystemEnhanced';
+import { AdSpace } from '@/components/AdSpace';
+import { PageHeader } from '@/components/PageHeader';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileLayout from '@/layouts/MobileLayout';
+import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
+import { getUserByName, getAvatarUrl } from '@/services/habboApi';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from '@/integrations/supabase/client';
 
-interface HabboUser {
-  uniqueId: string;
+interface UserData {
+  id: string;
   name: string;
-  figureString: string;
   motto: string;
   online: boolean;
-  lastAccessTime: string;
   memberSince: string;
-  profileVisible: boolean;
-  selectedBadges: Array<{
-    code: string;
-    name: string;
-    description: string;
-  }>;
-  friends?: HabboUser[];
+  selectedBadges: any[];
+  figureString: string;
 }
 
-interface Photo {
-  id: string;
-  url: string;
-  likes: number;
-  comments: number;
-  isLiked?: boolean;
-}
-
-interface Activity {
-  time: string;
-  activity: string;
-  timestamp: string;
-}
-
-// Simple cache to avoid repeated API calls
-const userCache = new Map();
+// Local cache for API calls
+const userCache = new Map<string, { data: UserData; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-const Console: React.FC = () => {
-  const { isLoggedIn, habboAccount } = useAuth();
-  const navigate = useNavigate();
+const Console = () => {
   const isMobile = useIsMobile();
-  const { toast } = useToast();
-
-  const [searchInput, setSearchInput] = useState('');
-  const [currentUser, setCurrentUser] = useState<HabboUser | null>(null);
-  const [userPhotos, setUserPhotos] = useState<Photo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('profile');
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [activeSection, setActiveSection] = useState('console');
+  const { user, habboAccount } = useSupabaseAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const [profileSection, setProfileSection] = useState('badges');
-  const [allBadges, setAllBadges] = useState<any[]>([]);
-  const [userFriends, setUserFriends] = useState<any[]>([]);
-  const [userRooms, setUserRooms] = useState<any[]>([]);
-  const [userGroups, setUserGroups] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('perfil');
   const [followedUsers, setFollowedUsers] = useState<string[]>([]);
+
+  // Debounce search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  // Load followed users
+  useEffect(() => {
+    const loadFollowedUsers = async () => {
+      if (!user) return;
+
+      try {
+        const { data: following } = await supabase
+          .from('user_followers')
+          .select('followed_habbo_name')
+          .eq('follower_user_id', user.id);
+
+        if (following) {
+          setFollowedUsers(following.map(f => f.followed_habbo_name));
+        }
+      } catch (error) {
+        console.error('Error loading followed users:', error);
+      }
+    };
+
+    loadFollowedUsers();
+  }, [user]);
 
   // Auto-load current user's profile when logged in
   useEffect(() => {
-    if (isLoggedIn && habboAccount && !currentUser) {
-      console.log('🔄 Auto-loading current user profile:', habboAccount.habbo_name);
-      loadCurrentUserProfile();
-    }
-  }, [isLoggedIn, habboAccount]);
-
-  const loadCurrentUserProfile = async () => {
-    if (!habboAccount) return;
-    
-    setSearchInput(habboAccount.habbo_name);
-    await searchUserWithCaching(habboAccount.habbo_name);
-  };
-
-  // Debounced search function
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchInput && searchInput !== currentUser?.name) {
-        searchUserWithCaching(searchInput);
+    const loadCurrentUserProfile = async () => {
+      if (habboAccount?.habbo_name && !selectedUser) {
+        console.log(`🔄 [Console] Auto-loading profile for logged user: ${habboAccount.habbo_name}`);
+        await searchUser(habboAccount.habbo_name);
       }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchInput]);
-
-  useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
     };
 
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
+    loadCurrentUserProfile();
+  }, [habboAccount]);
 
-  const getCachedUser = (username: string) => {
+  const getCachedUser = (username: string): UserData | null => {
     const cached = userCache.get(username.toLowerCase());
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log('📦 Using cached data for:', username);
+    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+      console.log(`💾 [Console] Using cached data for: ${username}`);
       return cached.data;
     }
     return null;
   };
 
-  const setCachedUser = (username: string, data: any) => {
+  const setCachedUser = (username: string, data: UserData) => {
     userCache.set(username.toLowerCase(), {
       data,
       timestamp: Date.now()
     });
   };
 
-  const searchUserWithCaching = async (username: string) => {
-    if (!username.trim()) return;
-
-    const cachedData = getCachedUser(username);
-    if (cachedData) {
-      setCurrentUser(cachedData.user);
-      setAllBadges(cachedData.badges || []);
-      setUserFriends(cachedData.friends || []);
-      setUserRooms(cachedData.rooms || []);
-      setUserGroups(cachedData.groups || []);
-      await fetchUserPhotos(cachedData.user.uniqueId);
+  const searchUser = async (username: string) => {
+    if (!username.trim()) {
+      setSelectedUser(null);
       return;
     }
 
-    await searchUser(username);
-  };
-
-  const searchUser = async (username?: string) => {
-    const targetUser = username || searchInput.trim();
-    
-    if (!targetUser) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Digite um nome de usuário para buscar.",
-        variant: "destructive"
-      });
+    // Check cache first
+    const cachedUser = getCachedUser(username);
+    if (cachedUser) {
+      setSelectedUser(cachedUser);
       return;
     }
 
     setLoading(true);
-    setError(null);
-
     try {
-      console.log('🔍 Searching for user:', targetUser);
-      const userData = await getUserByName(targetUser);
+      console.log(`🔍 [Console] Searching for user: ${username}`);
+      const userData = await getUserByName(username);
       
-      if (!userData) {
-        setError('Usuário não encontrado.');
-        setCurrentUser(null);
-        return;
+      if (userData) {
+        const processedUser: UserData = {
+          id: userData.uniqueId || userData.id,
+          name: userData.name,
+          motto: userData.motto || '',
+          online: userData.online || false,
+          memberSince: userData.memberSince || '',
+          selectedBadges: userData.selectedBadges || [],
+          figureString: userData.figureString || ''
+        };
+        
+        setCachedUser(username, processedUser);
+        setSelectedUser(processedUser);
+        console.log(`✅ [Console] User found: ${processedUser.name}`);
+      } else {
+        setSelectedUser(null);
+        console.log(`❌ [Console] User not found: ${username}`);
       }
-
-      setCurrentUser(userData);
-      
-      const [badgesData, friendsData, roomsData, groupsData] = await Promise.all([
-        getUserBadges(userData.uniqueId),
-        getUserFriends(userData.uniqueId),
-        getUserRooms(userData.uniqueId),
-        getUserGroups(userData.uniqueId)
-      ]);
-
-      setAllBadges(badgesData || []);
-      setUserFriends(friendsData || []);
-      setUserRooms(roomsData || []);
-      setUserGroups(groupsData || []);
-
-      // Cache the complete user data
-      setCachedUser(targetUser, {
-        user: userData,
-        badges: badgesData,
-        friends: friendsData,
-        rooms: roomsData,
-        groups: groupsData
-      });
-
-      await Promise.all([
-        fetchUserPhotos(userData.uniqueId),
-        isLoggedIn && habboAccount ? checkFollowingStatus(userData.uniqueId) : null
-      ]);
-      
-      toast({
-        title: "Usuário encontrado!",
-        description: `Perfil de ${userData.name} carregado com sucesso.`
-      });
-
-    } catch (err) {
-      console.error('Error searching user:', err);
-      setError('Erro ao buscar usuário.');
+    } catch (error) {
+      console.error('❌ [Console] Error searching user:', error);
+      setSelectedUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchFollowedUsers = async () => {
-    if (!isLoggedIn || !habboAccount) return;
-
-    try {
-      const { data } = await supabase
-        .from('user_followers')
-        .select('followed_habbo_name')
-        .eq('follower_user_id', habboAccount.supabase_user_id);
-      
-      setFollowedUsers(data?.map(f => f.followed_habbo_name) || []);
-    } catch (error) {
-      console.error('Error fetching followed users:', error);
-    }
-  };
-
-  const fetchUserPhotos = async (uniqueId: string) => {
-    try {
-      const response = await fetch(`https://www.habbo.com.br/api/public/users/${uniqueId}/photos`);
-      if (response.ok) {
-        const photos = await response.json();
-        
-        const transformedPhotos = await Promise.all(
-          photos.map(async (photo: any) => {
-            let likes = [];
-            let comments = [];
-            let isLiked = false;
-
-            if (isLoggedIn) {
-              const { data: likesData } = await supabase
-                .from('photo_likes')
-                .select('*')
-                .eq('photo_id', photo.id);
-              
-              const { data: commentsData } = await supabase
-                .from('photo_comments')
-                .select('*')
-                .eq('photo_id', photo.id);
-
-              likes = likesData || [];
-              comments = commentsData || [];
-              isLiked = likes?.some(like => like.user_id === habboAccount?.supabase_user_id) || false;
-            }
-
-            return {
-              id: photo.id,
-              url: photo.url,
-              likes: likes.length,
-              comments: comments.length,
-              isLiked
-            };
-          })
-        );
-        
-        setUserPhotos(transformedPhotos);
-      }
-    } catch (err) {
-      console.error('Error fetching user photos:', err);
-    }
-  };
-
-  const checkFollowingStatus = async (habboId: string) => {
-    if (!habboAccount) return;
-    
-    try {
-      const { data } = await supabase
-        .from('user_followers')
-        .select('*')
-        .eq('follower_user_id', habboAccount.supabase_user_id)
-        .eq('followed_habbo_id', habboId)
-        .single();
-      
-      setIsFollowing(!!data);
-    } catch (err) {
-      console.error('Error checking follow status:', err);
-    }
-  };
-
-  const toggleFollow = async () => {
-    if (!currentUser || !habboAccount || !isLoggedIn) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para seguir usuários.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      if (isFollowing) {
-        await supabase
-          .from('user_followers')
-          .delete()
-          .eq('follower_user_id', habboAccount.supabase_user_id)
-          .eq('followed_habbo_id', currentUser.uniqueId);
-        
-        setIsFollowing(false);
-        toast({
-          title: "Deixou de seguir",
-          description: `Você não segue mais ${currentUser.name}`
-        });
-      } else {
-        await supabase
-          .from('user_followers')
-          .insert({
-            follower_user_id: habboAccount.supabase_user_id,
-            follower_habbo_name: habboAccount.habbo_name,
-            followed_habbo_id: currentUser.uniqueId,
-            followed_habbo_name: currentUser.name
-          });
-        
-        setIsFollowing(true);
-        toast({
-          title: "Seguindo!",
-          description: `Agora você segue ${currentUser.name}`
-        });
-      }
-    } catch (err) {
-      console.error('Error toggling follow:', err);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar status de seguidor",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const togglePhotoLike = async (photoId: string) => {
-    if (!habboAccount || !isLoggedIn) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para curtir fotos.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const photo = userPhotos.find(p => p.id === photoId);
-      if (!photo) return;
-
-      if (photo.isLiked) {
-        await supabase
-          .from('photo_likes')
-          .delete()
-          .eq('photo_id', photoId)
-          .eq('user_id', habboAccount.supabase_user_id);
-        
-        setUserPhotos(prev => prev.map(p => 
-          p.id === photoId 
-            ? { ...p, likes: p.likes - 1, isLiked: false }
-            : p
-        ));
-      } else {
-        await supabase
-          .from('photo_likes')
-          .insert({
-            photo_id: photoId,
-            user_id: habboAccount.supabase_user_id,
-            habbo_name: habboAccount.habbo_name
-          });
-        
-        setUserPhotos(prev => prev.map(p => 
-          p.id === photoId 
-            ? { ...p, likes: p.likes + 1, isLiked: true }
-            : p
-        ));
-      }
-    } catch (err) {
-      console.error('Error toggling like:', err);
-    }
-  };
-
-  const handleUserClick = (username: string) => {
-    setSearchInput(username);
-    searchUserWithCaching(username);
-  };
-
+  // Search when debounced term changes
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchFollowedUsers();
+    if (debouncedSearchTerm) {
+      searchUser(debouncedSearchTerm);
     }
-  }, [isLoggedIn, habboAccount]);
+  }, [debouncedSearchTerm]);
 
-  const renderAuthNotice = () => {
-    if (isLoggedIn) return null;
-    
-    return (
-      <Card className="mb-6 border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-blue-100">
-              <Info className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <CardTitle className="text-lg text-blue-800 mb-2">Console Público</CardTitle>
-              <p className="text-sm text-blue-700">
-                Você pode buscar usuários sem estar logado, mas funcionalidades como seguir, curtir e ver feed de amigos requerem login.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      searchUser(searchTerm);
+    }
   };
-
-  const renderProfileTab = () => (
-    <div className="space-y-6">
-      {currentUser ? (
-        <>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                <Avatar className="w-32 h-32">
-                  <AvatarImage 
-                    src={getAvatarUrl(currentUser.figureString, 'l')} 
-                    alt={currentUser.name}
-                  />
-                  <AvatarFallback>{currentUser.name[0]}</AvatarFallback>
-                </Avatar>
-                
-                <div className="text-center md:text-left flex-1">
-                  <CardTitle className="text-3xl text-primary mb-2">{currentUser.name}</CardTitle>
-                  <p className="text-lg text-muted-foreground mb-4">{currentUser.motto}</p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>Membro desde: {new Date(currentUser.memberSince).toLocaleDateString('pt-BR')}</p>
-                    <p>Status: {currentUser.online ? '🟢 Online' : '🔴 Offline'}</p>
-                  </div>
-                  
-                  {isLoggedIn && (
-                    <Button 
-                      onClick={toggleFollow}
-                      variant={isFollowing ? "outline" : "default"}
-                      className="mt-4"
-                    >
-                      {isFollowing ? 'Deixar de Seguir' : 'Seguir'}
-                    </Button>
-                  )}
-                  
-                  {!isLoggedIn && (
-                    <Button 
-                      variant="outline"
-                      className="mt-4"
-                      onClick={() => navigate('/connect-habbo')}
-                    >
-                      Fazer Login para Seguir
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <ProfileNavigation
-            activeSection={profileSection}
-            setActiveSection={setProfileSection}
-            badgeCount={allBadges.length}
-            friendsCount={userFriends.length}
-            roomsCount={userRooms.length}
-            groupsCount={userGroups.length}
-          />
-
-          <ProfileSections
-            activeSection={profileSection}
-            badges={allBadges}
-            friends={userFriends}
-            rooms={userRooms}
-            groups={userGroups}
-            onUserClick={handleUserClick}
-          />
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Fotos Públicas ({userPhotos.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PhotoGrid
-                photos={userPhotos}
-                onLikeToggle={togglePhotoLike}
-                isLoggedIn={isLoggedIn}
-              />
-            </CardContent>
-          </Card>
-        </>
-      ) : (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <Search className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">
-                {isLoggedIn ? 'Busque um usuário para ver o perfil' : 'Seu perfil será carregado automaticamente quando fizer login'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-
-  const renderFeedTab = () => (
-    <div className="space-y-6">
-      <FeedSystem
-        feedType="general"
-        followedUsers={followedUsers}
-      />
-    </div>
-  );
-
-  const renderFriendsTab = () => (
-    <div className="space-y-6">
-      <FeedSystem
-        feedType="friends"
-        followedUsers={followedUsers}
-      />
-    </div>
-  );
-
-  const renderContent = () => (
-    <div className="container mx-auto max-w-6xl p-4 space-y-6">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-primary">HabboHub Console</h1>
-        <p className="text-muted-foreground">Sua rede social do Habbo!</p>
-      </div>
-
-      {renderAuthNotice()}
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="feed">Feed Geral</TabsTrigger>
-          <TabsTrigger value="friends">Feed de Amigos</TabsTrigger>
-        </TabsList>
-        
-        {/* Search bar positioned below tabs */}
-        <Card className="mt-4">
-          <CardContent className="pt-6">
-            <div className="flex gap-4">
-              <Input
-                placeholder="Digite o nome do usuário Habbo"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && searchUser()}
-                className="flex-1"
-              />
-              <Button onClick={() => searchUser()} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                Buscar
-              </Button>
-            </div>
-            {error && (
-              <div className="mt-4 p-4 bg-destructive/10 border border-destructive rounded-lg">
-                <p className="text-destructive">{error}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <TabsContent value="profile">{renderProfileTab()}</TabsContent>
-        <TabsContent value="feed">{renderFeedTab()}</TabsContent>
-        <TabsContent value="friends">{renderFriendsTab()}</TabsContent>
-      </Tabs>
-    </div>
-  );
 
   if (isMobile) {
-    return <MobileLayout>{renderContent()}</MobileLayout>;
+    return (
+      <MobileLayout>
+        <div className="p-4">
+          <PageHeader 
+            title="Console"
+            icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          <AdSpace type="horizontal" className="mb-6" />
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="perfil">Perfil</TabsTrigger>
+              <TabsTrigger value="feed-geral">Feed Geral</TabsTrigger>
+              <TabsTrigger value="feed-amigos">Amigos</TabsTrigger>
+            </TabsList>
+            
+            {/* Search bar below tabs */}
+            <div className="mt-4">
+              <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Buscar usuário Habbo..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={loading}>
+                  <Search className="w-4 h-4" />
+                </Button>
+              </form>
+            </div>
+            
+            <TabsContent value="perfil" className="mt-6">
+              <ProfileSections 
+                selectedUser={selectedUser} 
+                loading={loading} 
+                currentUserId={user?.id}
+              />
+            </TabsContent>
+            
+            <TabsContent value="feed-geral" className="mt-6">
+              <FeedSystemEnhanced feedType="general" followedUsers={followedUsers} />
+            </TabsContent>
+            
+            <TabsContent value="feed-amigos" className="mt-6">
+              <FeedSystemEnhanced feedType="friends" followedUsers={followedUsers} />
+            </TabsContent>
+          </Tabs>
+          
+          <AdSpace type="wide" className="mt-6" />
+        </div>
+      </MobileLayout>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    <div className="min-h-screen bg-repeat bg-cover" 
+         style={{ 
+           backgroundImage: 'url(/assets/bghabbohub.png)',
+           margin: 0,
+           padding: 0,
+           width: '100vw',
+           height: '100vh'
+         }}>
       <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <CollapsibleSidebar activeSection="console" setActiveSection={() => {}} />
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg m-4 min-h-[calc(100vh-2rem)]">
-            {renderContent()}
+          <div className="p-4 md:p-8">
+            <PageHeader 
+              title="Console"
+              icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
+              backgroundImage="/assets/1360__-3C7.png"
+            />
+            
+            <AdSpace type="horizontal" className="mb-6" />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Profile */}
+              <div className="lg:col-span-1">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-1">
+                    <TabsTrigger value="perfil">Perfil do Usuário</TabsTrigger>
+                  </TabsList>
+                  
+                  {/* Search bar below tabs */}
+                  <div className="mt-4">
+                    <form onSubmit={handleSearchSubmit} className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Buscar usuário Habbo..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button type="submit" disabled={loading}>
+                        <Search className="w-4 h-4" />
+                      </Button>
+                    </form>
+                    
+                    {user && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        Logado como: <Badge variant="outline">{habboAccount?.habbo_name}</Badge>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <TabsContent value="perfil" className="mt-6">
+                    <ProfileSections 
+                      selectedUser={selectedUser} 
+                      loading={loading} 
+                      currentUserId={user?.id}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+              
+              {/* Right Column - Feeds */}
+              <div className="lg:col-span-2 space-y-6">
+                <FeedSystemEnhanced feedType="general" followedUsers={followedUsers} />
+                <FeedSystemEnhanced feedType="friends" followedUsers={followedUsers} />
+              </div>
+            </div>
+            
+            <AdSpace type="wide" className="mt-6" />
           </div>
         </main>
       </div>
