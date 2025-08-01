@@ -94,14 +94,15 @@ const ClothingSelector = ({
 
   const renderClothingItem = (item: any) => {
     const hasError = imageErrors.has(item.id);
-    const thumbnailUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${activeCategory}-${item.id}-${item.colors[0] || '1'}&direction=2&head_direction=3&size=s&img_format=png&gesture=std&action=std`;
+    // Use isolated clothing URL for better visualization
+    const thumbnailUrl = `https://images.habbo.com/c_images/clothing/icon_${activeCategory}_${item.id}_${item.colors[0] || '1'}.png`;
 
     return (
       <Button
         key={item.id}
         variant={selectedPart === item.id ? "default" : "outline"}
         size="sm"
-        className={`h-24 p-2 flex flex-col items-center gap-1 text-xs relative ${
+        className={`h-28 p-2 flex flex-col items-center gap-1 text-xs relative ${
           selectedPart === item.id 
             ? 'bg-amber-500 text-white border-2 border-amber-600' 
             : 'habbo-card hover:bg-amber-50'
@@ -117,7 +118,7 @@ const ClothingSelector = ({
           {item.club === '1' ? 'HC' : 'FREE'}
         </Badge>
         
-        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center mb-1 overflow-hidden">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center mb-1 overflow-hidden">
           {!hasError ? (
             <img 
               src={thumbnailUrl}
@@ -128,7 +129,7 @@ const ClothingSelector = ({
               loading="lazy"
             />
           ) : (
-            <div className="w-8 h-8 bg-gray-300 rounded flex items-center justify-center">
+            <div className="w-12 h-12 bg-gray-300 rounded flex items-center justify-center">
               <span className="text-xs font-bold text-gray-600">
                 {item.id}
               </span>
@@ -161,7 +162,7 @@ const ClothingSelector = ({
           <Skeleton className="h-10 w-full" />
           <div className="grid grid-cols-4 gap-2">
             {Array.from({ length: 8 }, (_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
+              <Skeleton key={i} className="h-28 w-full" />
             ))}
           </div>
         </CardContent>

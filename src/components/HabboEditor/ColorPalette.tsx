@@ -17,7 +17,9 @@ interface ColorPaletteProps {
 }
 
 const ColorPalette = ({ colors, availableColors, selectedColor, onColorSelect }: ColorPaletteProps) => {
-  const filteredColors = colors.filter(color => availableColors.includes(color.id));
+  const filteredColors = availableColors.length > 0 
+    ? colors.filter(color => availableColors.includes(color.id))
+    : colors;
 
   return (
     <Card className="habbo-panel">

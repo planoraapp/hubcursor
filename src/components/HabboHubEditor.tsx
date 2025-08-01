@@ -102,13 +102,17 @@ const HabboHubEditor = () => {
       const item = figureData[activeCategory].find(item => item.id === partId);
       
       if (item) {
-        setCurrentFigure(prev => ({
-          ...prev,
-          [activeCategory]: {
-            id: partId,
-            colors: [item.colors[0] || '1']
-          }
-        }));
+        setCurrentFigure(prev => {
+          const newFigure = {
+            ...prev,
+            [activeCategory]: {
+              id: partId,
+              colors: [item.colors[0] || '1']
+            }
+          };
+          console.log('🔄 [HabboHubEditor] Updated figure:', newFigure);
+          return newFigure;
+        });
 
         toast({
           title: "Peça Oficial Selecionada!",
