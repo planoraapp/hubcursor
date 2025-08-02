@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
@@ -11,7 +12,7 @@ const Editor = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    console.log('🎨 Editor HabboHub carregado - Sistema oficial Habbo');
+    console.log('🎨 Editor HabboHub carregado - Sistema simplificado ativo');
     
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -33,9 +34,17 @@ const Editor = () => {
             backgroundImage="/assets/1360__-3C7.png"
           />
           <AdSpace type="horizontal" className="mb-6" />
-          <div className="min-h-screen">
+          
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-screen">
+            <div className="mb-4 text-center">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                ✅ Sistema Simplificado Ativo
+                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">Dados Oficiais</span>
+              </div>
+            </div>
             <HabboHubEditor />
           </div>
+          
           <div className="flex justify-center gap-4 mt-6">
             <img 
               src="/assets/1686__-sQ.png" 
@@ -72,6 +81,19 @@ const Editor = () => {
             <AdSpace type="horizontal" className="mb-6" />
             
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6">
+              <div className="mb-6 text-center">
+                <div className="inline-flex items-center gap-3 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium shadow-sm">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  ✅ Sistema Oficial Habbo Ativo
+                  <span className="bg-green-200 px-3 py-1 rounded-full text-sm font-bold">
+                    Dados Oficiais + Cache Local
+                  </span>
+                </div>
+                <p className="text-gray-600 mt-2 text-sm">
+                  Editor usando dados oficiais do Habbo com sistema de cache inteligente
+                </p>
+              </div>
+              
               <HabboHubEditor />
             </div>
             

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import BadgesCategoryGrid from '../components/BadgesCategoryGrid';
+import SimplifiedBadgesGrid from '../components/SimplifiedBadgesGrid';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -12,6 +12,8 @@ export default function Emblemas() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    console.log('🏆 Emblemas HabboHub carregados - Sistema simplificado ativo');
+    
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
     };
@@ -34,11 +36,11 @@ export default function Emblemas() {
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
             <div className="mb-4 text-center">
               <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                ✅ Sistema de Categorias Ativo
-                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">25.151+ Emblemas</span>
+                ✅ Sistema Simplificado Ativo
+                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">Dados Oficiais</span>
               </div>
             </div>
-            <BadgesCategoryGrid />
+            <SimplifiedBadgesGrid />
           </div>
         </div>
       </MobileLayout>
@@ -59,16 +61,16 @@ export default function Emblemas() {
             <div className="mb-6 text-center">
               <div className="inline-flex items-center gap-3 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium shadow-sm">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                ✅ Sistema de Categorização Automática Ativo
+                ✅ Sistema Oficial Habbo Ativo
                 <span className="bg-green-200 px-3 py-1 rounded-full text-sm font-bold">
-                  25.151+ Emblemas Organizados
+                  Dados Oficiais com Cache
                 </span>
               </div>
               <p className="text-gray-600 mt-2 text-sm">
-                Emblemas organizados automaticamente por categoria para melhor navegação
+                Emblemas carregados diretamente do Habbo oficial com cache local
               </p>
             </div>
-            <BadgesCategoryGrid />
+            <SimplifiedBadgesGrid />
           </div>
         </main>
       </div>
