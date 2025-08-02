@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import ExpandedClothingSelector from './ViaJovemEditor/ExpandedClothingSelector';
-import OfficialColorPalette from './ViaJovemEditor/OfficialColorPalette';
+import ViaJovemClothingGrid from './ViaJovemEditor/ViaJovemClothingGrid';
+import ViaJovemColorPalette from './ViaJovemEditor/ViaJovemColorPalette';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RotateCcw, Copy, Shuffle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RotateCcw, Copy, Shuffle, Search, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -14,48 +14,49 @@ interface ViaJovemEditorProps {
 }
 
 export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
-  const [currentFigure, setCurrentFigure] = useState('hd-190-7.hr-100-61.ch-210-66.lg-270-82.sh-305-62');
+  const [currentFigure, setCurrentFigure] = useState('hd-190-1.hr-828-45.ch-665-92.lg-270-82.sh-305-62');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
   const [selectedHotel, setSelectedHotel] = useState('com');
   const [currentDirection, setCurrentDirection] = useState('2');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [username, setUsername] = useState('');
-  const [selectedColor, setSelectedColor] = useState('7');
+  const [selectedColor, setSelectedColor] = useState('1');
   const [selectedItem, setSelectedItem] = useState('190');
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Expanded categories with all Habbo clothing types
+  // Categorias ViaJovem com ícones e cores
   const categories = [
-    { id: 'hd', name: 'Rostos', icon: '👤', color: 'bg-pink-100' },
-    { id: 'hr', name: 'Cabelos', icon: '💇', color: 'bg-purple-100' },
-    { id: 'ch', name: 'Camisetas', icon: '👕', color: 'bg-blue-100' },
-    { id: 'lg', name: 'Calças/Saias', icon: '👖', color: 'bg-green-100' },
-    { id: 'sh', name: 'Sapatos', icon: '👟', color: 'bg-yellow-100' },
-    { id: 'ha', name: 'Chapéus', icon: '🎩', color: 'bg-red-100' },
-    { id: 'ea', name: 'Óculos', icon: '👓', color: 'bg-indigo-100' },
-    { id: 'fa', name: 'Acessórios Faciais', icon: '😷', color: 'bg-teal-100' },
-    { id: 'cc', name: 'Casacos', icon: '🧥', color: 'bg-orange-100' },
-    { id: 'ca', name: 'Acessórios Peito', icon: '🎖️', color: 'bg-cyan-100' },
-    { id: 'wa', name: 'Cintura', icon: '👔', color: 'bg-lime-100' },
-    { id: 'cp', name: 'Estampas', icon: '🎨', color: 'bg-rose-100' }
+    { id: 'hd', name: 'Rostos', icon: '👤', color: 'bg-pink-50 hover:bg-pink-100' },
+    { id: 'hr', name: 'Cabelos', icon: '💇', color: 'bg-purple-50 hover:bg-purple-100' },
+    { id: 'ch', name: 'Camisetas', icon: '👕', color: 'bg-blue-50 hover:bg-blue-100' },
+    { id: 'lg', name: 'Calças/Saias', icon: '👖', color: 'bg-green-50 hover:bg-green-100' },
+    { id: 'sh', name: 'Sapatos', icon: '👟', color: 'bg-yellow-50 hover:bg-yellow-100' },
+    { id: 'ha', name: 'Chapéus', icon: '🎩', color: 'bg-red-50 hover:bg-red-100' },
+    { id: 'ea', name: 'Óculos', icon: '👓', color: 'bg-indigo-50 hover:bg-indigo-100' },
+    { id: 'fa', name: 'Acessórios Faciais', icon: '😷', color: 'bg-teal-50 hover:bg-teal-100' },
+    { id: 'cc', name: 'Casacos', icon: '🧥', color: 'bg-orange-50 hover:bg-orange-100' },
+    { id: 'ca', name: 'Acessórios Peito', icon: '🎖️', color: 'bg-cyan-50 hover:bg-cyan-100' },
+    { id: 'wa', name: 'Cintura', icon: '👔', color: 'bg-lime-50 hover:bg-lime-100' },
+    { id: 'cp', name: 'Estampas', icon: '🎨', color: 'bg-rose-50 hover:bg-rose-100' }
   ];
 
-  // Hotel options with flags
+  // Hotéis ViaJovem com flags
   const hotels = [
-    { code: 'com', name: 'Hotel Global', flag: '🌍' },
-    { code: 'com.br', name: 'Hotel Brasil', flag: '🇧🇷' },
-    { code: 'es', name: 'Hotel España', flag: '🇪🇸' },
-    { code: 'de', name: 'Hotel Deutschland', flag: '🇩🇪' },
-    { code: 'fr', name: 'Hotel France', flag: '🇫🇷' },
-    { code: 'it', name: 'Hotel Italia', flag: '🇮🇹' },
-    { code: 'nl', name: 'Hotel Nederland', flag: '🇳🇱' },
-    { code: 'fi', name: 'Hotel Suomi', flag: '🇫🇮' },
-    { code: 'tr', name: 'Hotel Türkiye', flag: '🇹🇷' }
+    { code: 'com', name: 'Global', flag: '🌍', url: 'habbo.com' },
+    { code: 'com.br', name: 'Brasil', flag: '🇧🇷', url: 'habbo.com.br' },
+    { code: 'es', name: 'España', flag: '🇪🇸', url: 'habbo.es' },
+    { code: 'de', name: 'Deutschland', flag: '🇩🇪', url: 'habbo.de' },
+    { code: 'fr', name: 'France', flag: '🇫🇷', url: 'habbo.fr' },
+    { code: 'it', name: 'Italia', flag: '🇮🇹', url: 'habbo.it' },
+    { code: 'nl', name: 'Nederland', flag: '🇳🇱', url: 'habbo.nl' },
+    { code: 'fi', name: 'Suomi', flag: '🇫🇮', url: 'habbo.fi' },
+    { code: 'tr', name: 'Türkiye', flag: '🇹🇷', url: 'habbo.com.tr' }
   ];
 
-  const getAvatarUrl = () => {
-    return `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=${currentDirection}&head_direction=${currentDirection}&action=std&gesture=std`;
+  const getAvatarUrl = (size: 'l' | 'm' | 's' = 'l') => {
+    const hotel = hotels.find(h => h.code === selectedHotel);
+    return `https://www.${hotel?.url || 'habbo.com'}/habbo-imaging/avatarimage?figure=${currentFigure}&size=${size}&direction=${currentDirection}&head_direction=${currentDirection}&action=std&gesture=std`;
   };
 
   const handleSearchUser = async () => {
@@ -69,7 +70,8 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
     }
 
     try {
-      const response = await fetch(`https://www.habbo.${selectedHotel}/api/public/users?name=${username}`);
+      const hotel = hotels.find(h => h.code === selectedHotel);
+      const response = await fetch(`https://www.${hotel?.url || 'habbo.com'}/api/public/users?name=${username}`);
       
       if (!response.ok) throw new Error('Usuário não encontrado');
       
@@ -77,13 +79,13 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
       if (data.figureString) {
         setCurrentFigure(data.figureString);
         toast({
-          title: "Sucesso",
+          title: "✅ Sucesso",
           description: `Visual de ${data.name} carregado!`,
         });
       }
     } catch (error) {
       toast({
-        title: "Erro",
+        title: "❌ Erro",
         description: "Usuário não encontrado neste hotel",
         variant: "destructive"
       });
@@ -101,14 +103,14 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
   const handleItemSelect = (itemId: string) => {
     setSelectedItem(itemId);
     
-    // Update figure string
+    // Atualizar figure string ViaJovem style
     const figureParts = currentFigure.split('.');
     const categoryPattern = new RegExp(`^${selectedCategory}-`);
     
-    // Remove existing category part
+    // Remove categoria existente
     const filteredParts = figureParts.filter(part => !categoryPattern.test(part));
     
-    // Add new category part
+    // Adiciona nova parte
     const newPart = `${selectedCategory}-${itemId}-${selectedColor}`;
     filteredParts.push(newPart);
     
@@ -118,11 +120,10 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
   const handleColorSelect = (colorId: string) => {
     setSelectedColor(colorId);
     
-    // Update figure with new color
+    // Atualizar cor na figure atual
     const figureParts = currentFigure.split('.');
     const categoryPattern = new RegExp(`^${selectedCategory}-`);
     
-    // Update existing category part with new color
     const updatedParts = figureParts.map(part => {
       if (categoryPattern.test(part)) {
         const [cat, item] = part.split('-');
@@ -137,16 +138,27 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
   const copyFigure = () => {
     navigator.clipboard.writeText(currentFigure);
     toast({
-      title: "Copiado!",
-      description: "String do visual copiada para a área de transferência",
+      title: "📋 Copiado!",
+      description: "Figure string copiada",
     });
   };
 
   const copyUrl = () => {
     navigator.clipboard.writeText(getAvatarUrl());
     toast({
-      title: "Copiado!",
-      description: "URL do avatar copiada para a área de transferência",
+      title: "📋 Copiado!",
+      description: "URL do avatar copiada",
+    });
+  };
+
+  const downloadAvatar = () => {
+    const link = document.createElement('a');
+    link.href = getAvatarUrl();
+    link.download = `avatar-${currentFigure.substring(0, 10)}.png`;
+    link.click();
+    toast({
+      title: "⬇️ Download iniciado",
+      description: "Avatar sendo baixado",
     });
   };
 
@@ -155,56 +167,68 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
     const newFigureParts = [];
 
     basicCategories.forEach(category => {
-      const randomItem = Math.floor(Math.random() * 50) + 1;
+      const randomItem = Math.floor(Math.random() * 50) + 100;
       const randomColor = Math.floor(Math.random() * 15) + 1;
       newFigureParts.push(`${category}-${randomItem}-${randomColor}`);
     });
 
     setCurrentFigure(newFigureParts.join('.'));
     toast({
-      title: "Avatar Randomizado!",
-      description: "Novo visual gerado aleatoriamente",
+      title: "🎲 Avatar Randomizado!",
+      description: "Novo visual gerado",
     });
   };
 
   return (
-    <div className={`max-w-7xl mx-auto p-6 space-y-6 ${className}`} ref={containerRef}>
-      {/* Avatar Preview */}
-      <Card>
+    <div className={`max-w-7xl mx-auto p-4 space-y-6 ${className}`} ref={containerRef}>
+      {/* Header ViaJovem Style */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          Editor ViaJovem
+        </h1>
+        <p className="text-gray-600">Crie e edite seus visuais Habbo com estilo ViaJovem</p>
+      </div>
+
+      {/* Avatar Preview - Estilo ViaJovem */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50">
         <CardContent className="p-6">
           <div className="text-center space-y-4">
             <div className="inline-block relative">
               <img 
                 src={getAvatarUrl()} 
                 alt="Avatar Preview" 
-                className="w-32 h-32 mx-auto cursor-pointer hover:scale-105 transition-transform"
+                className="w-32 h-32 mx-auto cursor-pointer hover:scale-105 transition-transform border-4 border-white rounded-lg shadow-lg"
                 onClick={handleRotateAvatar}
-                title="Clique para girar o avatar"
+                title="Clique para girar"
                 style={{ imageRendering: 'pixelated' }}
               />
-              <Badge className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+              <Badge className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-600">
                 {hotels.find(h => h.code === selectedHotel)?.flag} {hotels.find(h => h.code === selectedHotel)?.name}
               </Badge>
             </div>
             
-            <div className="bg-gray-100 p-3 rounded-lg font-mono text-sm break-all max-w-md mx-auto">
+            <div className="bg-gray-100 p-3 rounded-lg font-mono text-sm break-all max-w-md mx-auto border">
               {currentFigure}
             </div>
             
             <div className="flex justify-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={copyFigure}>
+              <Button variant="outline" size="sm" onClick={copyFigure} className="bg-white">
                 <Copy className="w-4 h-4 mr-1" />
-                Copiar Figure
+                Figure
               </Button>
-              <Button variant="outline" size="sm" onClick={copyUrl}>
+              <Button variant="outline" size="sm" onClick={copyUrl} className="bg-white">
                 <Copy className="w-4 h-4 mr-1" />
-                Copiar URL
+                URL
               </Button>
-              <Button variant="outline" size="sm" onClick={handleRotateAvatar}>
+              <Button variant="outline" size="sm" onClick={downloadAvatar} className="bg-white">
+                <Download className="w-4 h-4 mr-1" />
+                Download
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleRotateAvatar} className="bg-white">
                 <RotateCcw className="w-4 h-4 mr-1" />
                 Girar
               </Button>
-              <Button variant="outline" size="sm" onClick={randomizeAvatar}>
+              <Button variant="outline" size="sm" onClick={randomizeAvatar} className="bg-white">
                 <Shuffle className="w-4 h-4 mr-1" />
                 Aleatório
               </Button>
@@ -213,24 +237,25 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
         </CardContent>
       </Card>
 
-      {/* User Search & Hotel Selection */}
+      {/* Busca de usuário e seleção de hotel */}
       <Card>
         <CardContent className="p-4">
           <div className="flex gap-3 items-end flex-wrap">
             <div className="flex-1 min-w-48">
-              <label className="block text-sm font-medium mb-1">Buscar Usuário</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700">👤 Buscar Usuário</label>
               <Input 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Digite o nome do usuário"
                 onKeyPress={(e) => e.key === 'Enter' && handleSearchUser()}
+                className="border-gray-300"
               />
             </div>
             
             <div className="min-w-48">
-              <label className="block text-sm font-medium mb-1">Hotel</label>
+              <label className="block text-sm font-medium mb-1 text-gray-700">🌍 Hotel</label>
               <Select value={selectedHotel} onValueChange={setSelectedHotel}>
-                <SelectTrigger>
+                <SelectTrigger className="border-gray-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -243,7 +268,7 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
               </Select>
             </div>
             
-            <Button onClick={handleSearchUser}>
+            <Button onClick={handleSearchUser} className="bg-blue-600 hover:bg-blue-700">
               <Search className="w-4 h-4 mr-1" />
               Buscar
             </Button>
@@ -251,7 +276,7 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
         </CardContent>
       </Card>
 
-      {/* Gender Selection */}
+      {/* Seleção de gênero */}
       <Card>
         <CardContent className="p-4">
           <div className="flex gap-2 justify-center">
@@ -259,6 +284,7 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
               variant={selectedGender === 'M' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedGender('M')}
+              className={selectedGender === 'M' ? 'bg-blue-600 hover:bg-blue-700' : ''}
             >
               👨 Masculino
             </Button>
@@ -266,6 +292,7 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
               variant={selectedGender === 'F' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedGender('F')}
+              className={selectedGender === 'F' ? 'bg-pink-600 hover:bg-pink-700' : ''}
             >
               👩 Feminino
             </Button>
@@ -273,7 +300,7 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
         </CardContent>
       </Card>
 
-      {/* Category Navigation */}
+      {/* Navegação de categorias - Estilo ViaJovem */}
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
@@ -282,22 +309,26 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
                 key={category.id}
                 variant={selectedCategory === category.id ? 'default' : 'outline'}
                 size="sm"
-                className={`h-16 flex flex-col gap-1 ${selectedCategory === category.id ? '' : category.color}`}
+                className={`h-16 flex flex-col gap-1 transition-all duration-200 ${
+                  selectedCategory === category.id 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg scale-105' 
+                    : `${category.color} border-gray-200`
+                }`}
                 onClick={() => setSelectedCategory(category.id)}
               >
                 <span className="text-lg">{category.icon}</span>
-                <span className="text-xs">{category.name}</span>
+                <span className="text-xs font-medium">{category.name}</span>
               </Button>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Main Editor Area */}
+      {/* Área principal do editor */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Clothing Selector */}
+        {/* Grid de roupas */}
         <div className="lg:col-span-2">
-          <ExpandedClothingSelector
+          <ViaJovemClothingGrid
             selectedCategory={selectedCategory}
             selectedGender={selectedGender}
             selectedColor={selectedColor}
@@ -306,9 +337,9 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
           />
         </div>
 
-        {/* Color Palette */}
+        {/* Paleta de cores */}
         <div>
-          <OfficialColorPalette
+          <ViaJovemColorPalette
             selectedColor={selectedColor}
             onColorSelect={handleColorSelect}
           />
