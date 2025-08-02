@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHabboBadgesStorage, HabboBadgeItem } from '@/hooks/useHabboBadgesStorage';
-import IntelligentBadgeImageV2 from './IntelligentBadgeImageV2';
+import SimpleBadgeImage from './SimpleBadgeImage';
 
 const CATEGORY_NAMES = {
   'all': 'Todos',
@@ -39,10 +39,9 @@ const BadgeModal = ({ badge, onClose }: BadgeModalProps) => (
       
       <div className="text-center mb-4">
         <div className="inline-block p-4 rounded-lg bg-gray-50">
-          <IntelligentBadgeImageV2
+          <SimpleBadgeImage
             code={badge.code}
-            name={badge.name}
-            size="lg"
+            className="w-16 h-16"
           />
         </div>
       </div>
@@ -134,10 +133,8 @@ export const BadgesGrid3DStorage = () => {
                 className="aspect-square p-0.5 rounded-sm transition-transform duration-150 hover:scale-110 hover:z-10 hover:shadow-md bg-gray-50 hover:bg-gray-100"
                 title={`${badge.name} (${badge.code})`}
               >
-                <IntelligentBadgeImageV2
+                <SimpleBadgeImage
                   code={badge.code}
-                  name={badge.name}
-                  size="sm"
                   className="w-full h-full"
                 />
               </button>
