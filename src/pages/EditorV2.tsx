@@ -56,13 +56,9 @@ const EditorV2 = () => {
   }
 
   return (
-    <div className="min-h-screen bg-repeat bg-cover" 
+    <div className="min-h-screen bg-repeat" 
          style={{ 
-           backgroundImage: 'url(/assets/bghabbohub.png)',
-           margin: 0,
-           padding: 0,
-           width: '100vw',
-           height: '100vh'
+           backgroundImage: 'url(/assets/bghabbohub.png)'
          }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection="editor" setActiveSection={() => {}} />
