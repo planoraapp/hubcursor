@@ -50,10 +50,23 @@ const fetchValidatedBadges = async ({
 
     console.log(`✅ [ValidatedBadges] Successfully fetched ${data?.length || 0} validated badges`);
     
+    // Transform database results to match ValidatedBadgeItem interface
+    const transformedBadges: ValidatedBadgeItem[] = (data || []).map(badge => ({
+      id: badge.id,
+      badge_code: badge.badge_code,
+      badge_name: badge.badge_name || `Badge ${badge.badge_code}`,
+      source: badge.source as 'HabboWidgets' | 'HabboAssets' | 'SupabaseBucket',
+      image_url: badge.image_url || '',
+      created_at: badge.created_at,
+      last_validated_at: badge.last_validated_at,
+      validation_count: badge.validation_count,
+      is_active: badge.is_active
+    }));
+    
     return {
-      badges: data || [],
+      badges: transformedBadges,
       metadata: {
-        total: count || data?.length || 0,
+        total: count || transformedBadges.length,
         source: 'validated-database',
         timestamp: new Date().toISOString()
       }
