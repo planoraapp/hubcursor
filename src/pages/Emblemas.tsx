@@ -1,21 +1,22 @@
 
 import React from 'react';
-import { ValidatedBadgesGrid } from '../components/ValidatedBadgesGrid';
+import { HybridUnifiedBadgesGrid } from '../components/HybridUnifiedBadgesGrid';
 
 const Emblemas = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Emblemas do Habbo
-        </h1>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Sistema de emblemas 100% validado e verificado. Todos os badges são testados em tempo real
-          através da nossa Edge Function de validação, garantindo que apenas emblemas reais sejam exibidos.
-        </p>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Sistema de Emblemas Híbrido
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Base de dados unificada com descoberta automática e categorização inteligente
+          </p>
+        </div>
+        
+        <HybridUnifiedBadgesGrid />
       </div>
-      
-      <ValidatedBadgesGrid />
     </div>
   );
 };
