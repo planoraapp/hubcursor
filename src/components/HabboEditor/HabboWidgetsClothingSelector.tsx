@@ -15,7 +15,6 @@ interface HabboWidgetsClothingSelectorProps {
   onPartSelect: (item: HabboWidgetsItem) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  selectedHotel: string;
 }
 
 const CATEGORY_ICONS = {
@@ -54,22 +53,21 @@ const HabboWidgetsClothingSelector = ({
   selectedPart,
   onPartSelect,
   searchTerm,
-  setSearchTerm,
-  selectedHotel
+  setSearchTerm
 }: HabboWidgetsClothingSelectorProps) => {
-  const { data: clothingData, isLoading, error, refetch } = useHabboWidgetsClothing(selectedHotel);
+  const { data: clothingData, isLoading, error, refetch } = useHabboWidgetsClothing();
 
   // Filter and group clothing items
   const categoryItems = useMemo(() => {
-    if (!clothingData) return [];
+    if (!clothingData || !clothingData[activeCategory]) return [];
     
-    let items = clothingData.filter(item => item.category === activeCategory);
+    let items = clothingData[activeCategory];
     
     // Apply search filter
     if (searchTerm) {
       items = items.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.swfName.toLowerCase().includes(searchTerm.toLowerCase())
+        item.figureId.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -79,8 +77,8 @@ const HabboWidgetsClothingSelector = ({
   // Group by club status
   const groupedByClub = useMemo(() => {
     const groups = {
-      HC: categoryItems.filter(item => item.club === 'HC'),
-      FREE: categoryItems.filter(item => item.club === 'FREE')
+      HC: categoryItems.filter(item => item.club === true),
+      FREE: categoryItems.filter(item => item.club === false)
     };
     
     return groups;
@@ -98,19 +96,19 @@ const HabboWidgetsClothingSelector = ({
             : 'habbo-card hover:bg-amber-50'
         }`}
         onClick={() => onPartSelect(item)}
-        title={`${item.name} (${item.swfName})`}
+        title={`${item.name} (${item.figureId})`}
       >
         <Badge 
           className={`absolute top-1 right-1 text-xs px-1 py-0 ${
-            item.club === 'HC' ? 'bg-yellow-500' : 'bg-gray-500'
+            item.club ? 'bg-yellow-500' : 'bg-gray-500'
           } text-white`}
         >
-          {item.club}
+          {item.club ? 'HC' : 'FREE'}
         </Badge>
         
         <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center mb-1 overflow-hidden">
           <img 
-            src={item.imageUrl}
+            src={item.thumbnailUrl}
             alt={item.name}
             className="w-full h-full object-contain pixelated"
             style={{ imageRendering: 'pixelated' }}
@@ -120,7 +118,7 @@ const HabboWidgetsClothingSelector = ({
               target.style.display = 'none';
               const parent = target.parentElement;
               if (parent) {
-                parent.innerHTML = `<div class="text-xs font-bold text-center">${item.swfName}</div>`;
+                parent.innerHTML = `<div class="text-xs font-bold text-center">${item.figureId}</div>`;
               }
             }}
           />
@@ -179,7 +177,7 @@ const HabboWidgetsClothingSelector = ({
     );
   }
 
-  const totalItems = clothingData?.length || 0;
+  const totalItems = clothingData ? Object.values(clothingData).flat().length : 0;
   const categoryCount = categoryItems.length;
 
   return (
@@ -195,7 +193,7 @@ const HabboWidgetsClothingSelector = ({
         <div className="grid grid-cols-6 gap-1">
           {Object.entries(PART_CATEGORIES).map(([key, label]) => {
             const IconComponent = CATEGORY_ICONS[key as keyof typeof CATEGORY_ICONS];
-            const categoryItemCount = clothingData?.filter(item => item.category === key).length || 0;
+            const categoryItemCount = clothingData?.[key]?.length || 0;
             
             return (
               <Button
