@@ -41,7 +41,9 @@ const fetchUnifiedClothing = async ({
 
     if (!data || !data.items || !Array.isArray(data.items)) {
       console.error('❌ [UnifiedHabboClothing] Invalid response format:', data);
-      throw new Error('Invalid response format from unified clothing data');
+      
+      // Se não temos dados, retornar fallback
+      return generateFallbackClothing(category);
     }
 
     console.log(`✅ [UnifiedHabboClothing] Successfully fetched ${data.items.length} items`);
@@ -62,7 +64,7 @@ const generateFallbackClothing = (category: string): UnifiedClothingItem[] => {
   const fallbackItems: UnifiedClothingItem[] = [];
   
   categories.forEach(cat => {
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 30; i++) {
       fallbackItems.push({
         id: `fallback_${cat}_${i}`,
         category: cat,
@@ -78,6 +80,7 @@ const generateFallbackClothing = (category: string): UnifiedClothingItem[] => {
     }
   });
   
+  console.log(`🔄 [UnifiedHabboClothing] Generated ${fallbackItems.length} fallback items for category: ${category}`);
   return fallbackItems;
 };
 
@@ -100,9 +103,9 @@ const getCategoryName = (category: string): string => {
 };
 
 export const useUnifiedHabboClothing = ({
-  category = 'all',
+  category = 'hd', // Default to 'hd' instead of 'all' for better loading
   gender = 'U',
-  limit = 500,
+  limit = 100, // Reduced limit for better performance
   enabled = true
 }: UseUnifiedHabboClothingProps = {}) => {
   console.log(`🔧 [UnifiedHabboClothing] Hook called with category: ${category}, gender: ${gender}, limit: ${limit}, enabled: ${enabled}`);
@@ -111,9 +114,10 @@ export const useUnifiedHabboClothing = ({
     queryKey: ['unified-habbo-clothing', category, gender, limit],
     queryFn: () => fetchUnifiedClothing({ category, gender, limit }),
     enabled,
-    staleTime: 1000 * 60 * 60 * 2, // 2 hours
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    gcTime: 1000 * 60 * 60 * 2, // 2 hours
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    refetchOnWindowFocus: false
   });
 };
