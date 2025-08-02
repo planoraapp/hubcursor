@@ -11,16 +11,16 @@ interface HabboWidgetsItem {
   id: string;
   name: string;
   category: string;
-  swfName: string;
+  figureId: string;
   imageUrl: string;
   club: 'HC' | 'FREE';
   gender: 'M' | 'F' | 'U';
   colors: string[];
 }
 
-// Cache para reduzir chamadas desnecessárias (TTL: 2 semanas)
+// Cache para reduzir chamadas externas
 const cache = new Map();
-const CACHE_TTL = 14 * 24 * 60 * 60 * 1000; // 2 weeks
+const CACHE_TTL = 60 * 60 * 1000; // 1 hora
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,32 +28,28 @@ serve(async (req) => {
   }
 
   try {
-    const { hotel = 'com.br' } = await req.json().catch(() => ({}));
+    console.log('🌐 [HabboWidgets] Iniciando busca de dados de roupas...');
     
-    console.log(`🌐 [HabboWidgets] Fetching clothing data for hotel: ${hotel}`);
-    
-    // Check cache first
-    const cacheKey = `habbo-widgets-${hotel}`;
-    const cached = cache.get(cacheKey);
-    
+    // Verificar cache
+    const cached = cache.get('habbo-clothing-data');
     if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-      console.log(`💾 [HabboWidgets] Returning cached data for ${hotel}`);
+      console.log('💾 [HabboWidgets] Retornando dados do cache');
       return new Response(
         JSON.stringify(cached.data),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch fresh data
-    const clothingItems = await fetchHabboWidgetsData(hotel);
+    // Buscar dados frescos
+    const clothingItems = await fetchAllClothingData();
     
-    // Cache the result
-    cache.set(cacheKey, {
+    // Armazenar no cache
+    cache.set('habbo-clothing-data', {
       data: clothingItems,
       timestamp: Date.now()
     });
     
-    console.log(`✅ [HabboWidgets] Returning ${clothingItems.length} items for ${hotel}`);
+    console.log(`✅ [HabboWidgets] Retornando ${clothingItems.length} itens de roupas`);
 
     return new Response(
       JSON.stringify(clothingItems),
@@ -63,10 +59,10 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ [HabboWidgets] Fatal error:', error);
+    console.error('❌ [HabboWidgets] Erro ao buscar dados:', error);
     
-    // Return enhanced fallback data
-    const fallbackData = generateEnhancedFallbackData();
+    // Retornar dados de fallback mais robustos
+    const fallbackData = generateComprehensiveFallbackData();
     
     return new Response(
       JSON.stringify(fallbackData),
@@ -77,57 +73,90 @@ serve(async (req) => {
   }
 });
 
-async function fetchHabboWidgetsData(hotel: string): Promise<HabboWidgetsItem[]> {
+async function fetchAllClothingData(): Promise<HabboWidgetsItem[]> {
   const items: HabboWidgetsItem[] = [];
   
   try {
-    // Try multiple HabboWidgets endpoints
-    const urls = [
-      `https://www.habbowidgets.com/habbo/closet/${hotel}`,
-      `https://www.habbowidgets.com/closet/${hotel}`,
-      `https://habbowidgets.com/habbo/closet/${hotel}`
+    // Tentar múltiplas fontes de dados
+    const dataSources = [
+      () => fetchFromHabboWidgets(),
+      () => fetchFromHabboAPI(),
+      () => generateComprehensiveFallbackData()
     ];
 
-    let html = '';
-    let successUrl = '';
-
-    for (const url of urls) {
+    for (const source of dataSources) {
       try {
-        console.log(`📡 [HabboWidgets] Trying: ${url}`);
-        
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-          },
-          signal: AbortSignal.timeout(20000)
-        });
-
-        if (response.ok) {
-          html = await response.text();
-          successUrl = url;
-          console.log(`✅ [HabboWidgets] Success with: ${url} (${html.length} chars)`);
+        const sourceItems = await source();
+        if (sourceItems.length > 0) {
+          items.push(...sourceItems);
+          console.log(`✅ [DataSource] Carregados ${sourceItems.length} itens`);
           break;
         }
-        
-      } catch (error) {
-        console.log(`❌ [HabboWidgets] Failed ${url}:`, error.message);
+      } catch (sourceError) {
+        console.warn(`⚠️ [DataSource] Fonte falhou:`, sourceError.message);
         continue;
       }
     }
+    
+  } catch (error) {
+    console.error('❌ [FetchAllClothing] Erro geral:', error);
+  }
+  
+  return items.length > 0 ? items : generateComprehensiveFallbackData();
+}
 
-    if (!html) {
-      throw new Error('All HabboWidgets URLs failed');
+async function fetchFromHabboWidgets(): Promise<HabboWidgetsItem[]> {
+  const items: HabboWidgetsItem[] = [];
+  
+  try {
+    // Tentar acessar HabboWidgets (pode falhar devido a CORS)
+    const response = await fetch('https://www.habbowidgets.com/habbo/closet/com.br', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
+      },
+      signal: AbortSignal.timeout(15000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HabboWidgets responded with ${response.status}`);
     }
 
-    // Enhanced HTML parsing
-    const parsedItems = parseHabboWidgetsHTML(html, successUrl);
-    items.push(...parsedItems);
+    const html = await response.text();
+    
+    // Parse básico do HTML para extrair informações das roupas
+    const imageRegex = /habbo-imaging\/avatarimage\?figure=([^"]+)"/g;
+    const nameRegex = /alt="([^"]+)"/g;
+    
+    let imageMatch;
+    let nameMatch;
+    let itemId = 1;
+    
+    while ((imageMatch = imageRegex.exec(html)) !== null && 
+           (nameMatch = nameRegex.exec(html)) !== null) {
+      
+      const figureString = imageMatch[1];
+      const itemName = nameMatch[1];
+      
+      // Extrair categoria do figure string
+      const categoryMatch = figureString.match(/(\w+)-(\d+)/);
+      if (categoryMatch) {
+        const category = categoryMatch[1];
+        const figureId = categoryMatch[2];
+        
+        items.push({
+          id: `habbowidgets_${itemId++}`,
+          name: itemName,
+          category: category,
+          figureId: figureId,
+          imageUrl: `https://www.habbo.com/${imageMatch[0]}`,
+          club: itemName.toLowerCase().includes('hc') ? 'HC' : 'FREE',
+          gender: 'U',
+          colors: ['1', '2', '3', '4', '5']
+        });
+      }
+    }
     
     console.log(`📦 [HabboWidgets] Parsed ${items.length} items from HTML`);
     
@@ -139,234 +168,107 @@ async function fetchHabboWidgetsData(hotel: string): Promise<HabboWidgetsItem[]>
   return items;
 }
 
-function parseHabboWidgetsHTML(html: string, baseUrl: string): HabboWidgetsItem[] {
+async function fetchFromHabboAPI(): Promise<HabboWidgetsItem[]> {
   const items: HabboWidgetsItem[] = [];
   
   try {
-    console.log(`🔍 [Parser] Starting HTML parsing...`);
-    
-    // Enhanced regex patterns for better parsing
-    const patterns = {
-      // Pattern 1: Standard image links with titles
-      images: /(?:src|href)=["']([^"']*\/images\/[^"']*\.(gif|png))["'][^>]*(?:title|alt)=["']([^"']*)["']/gi,
-      
-      // Pattern 2: Image references in JavaScript/data
-      jsImages: /["']([^"']*\/images\/[^"']*\.(gif|png))["']/gi,
-      
-      // Pattern 3: Clothing item containers
-      itemBlocks: /<div[^>]*class[^>]*(?:item|clothing|closet)[^>]*>.*?<\/div>/gis,
-      
-      // Pattern 4: Item names and descriptions
-      names: /<(?:span|div|p)[^>]*(?:title|name)[^>]*>([^<]+)</gi
-    };
+    // Tentar usar API oficial do Habbo para figure data
+    const response = await fetch('https://www.habbo.com/gamedata/figuredata/1', {
+      headers: {
+        'Accept': 'application/json'
+      },
+      signal: AbortSignal.timeout(10000)
+    });
 
-    // Parse using multiple patterns
-    const foundImages = new Set<string>();
-    const itemData = new Map<string, any>();
-
-    // Extract images and metadata
-    let match;
-    
-    // Pattern 1: Images with titles
-    while ((match = patterns.images.exec(html)) !== null) {
-      const imageUrl = match[1];
-      const title = match[3];
-      const fileName = imageUrl.split('/').pop()?.replace(/\.(gif|png)$/, '') || '';
-      
-      if (fileName && !foundImages.has(fileName)) {
-        foundImages.add(fileName);
-        itemData.set(fileName, {
-          imageUrl: imageUrl.startsWith('http') ? imageUrl : `https://www.habbowidgets.com${imageUrl}`,
-          name: title || fileName,
-          fileName
-        });
-      }
+    if (!response.ok) {
+      throw new Error(`Habbo API responded with ${response.status}`);
     }
 
-    // Pattern 2: JS/Data images
-    patterns.images.lastIndex = 0; // Reset regex
-    while ((match = patterns.jsImages.exec(html)) !== null) {
-      const imageUrl = match[1];
-      const fileName = imageUrl.split('/').pop()?.replace(/\.(gif|png)$/, '') || '';
-      
-      if (fileName && !foundImages.has(fileName)) {
-        foundImages.add(fileName);
-        itemData.set(fileName, {
-          imageUrl: imageUrl.startsWith('http') ? imageUrl : `https://www.habbowidgets.com${imageUrl}`,
-          name: fileName,
-          fileName
-        });
-      }
-    }
-
-    // Parse item blocks for additional metadata
-    patterns.itemBlocks.lastIndex = 0;
-    while ((match = patterns.itemBlocks.exec(html)) !== null) {
-      const blockHtml = match[0];
-      
-      // Extract image from block
-      const imgMatch = blockHtml.match(/(?:src|href)=["']([^"']*\/images\/[^"']*\.(gif|png))["']/i);
-      if (imgMatch) {
-        const imageUrl = imgMatch[1];
-        const fileName = imageUrl.split('/').pop()?.replace(/\.(gif|png)$/, '') || '';
-        
-        if (fileName) {
-          // Extract additional info from block
-          const nameMatch = blockHtml.match(/<[^>]*(?:title|alt)=["']([^"']*)["']/i);
-          const hcMatch = blockHtml.match(/(?:hc|club|premium)/i);
-          
-          const existing = itemData.get(fileName) || {};
-          itemData.set(fileName, {
-            ...existing,
-            imageUrl: imageUrl.startsWith('http') ? imageUrl : `https://www.habbowidgets.com${imageUrl}`,
-            name: nameMatch?.[1] || existing.name || fileName,
-            fileName,
-            isHC: Boolean(hcMatch)
+    const data = await response.json();
+    
+    if (data.settype) {
+      Object.entries(data.settype).forEach(([category, categoryData]: [string, any]) => {
+        if (categoryData.sets) {
+          Object.entries(categoryData.sets).forEach(([setId, setData]: [string, any]) => {
+            items.push({
+              id: `habbo_api_${category}_${setId}`,
+              name: setData.gender ? `${category.toUpperCase()} ${setId}` : `Item ${setId}`,
+              category: category,
+              figureId: setId,
+              imageUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${setId}-1&gender=U&size=l&direction=2&head_direction=3`,
+              club: setData.club === '1' ? 'HC' : 'FREE',
+              gender: setData.gender || 'U',
+              colors: setData.palettes ? Object.keys(setData.palettes) : ['1']
+            });
           });
         }
-      }
-    }
-
-    console.log(`🔍 [Parser] Found ${foundImages.size} unique images`);
-
-    // Convert to HabboWidgetsItem format
-    let itemId = 1;
-    for (const [fileName, data] of itemData) {
-      const category = extractCategoryFromFilename(fileName);
-      const swfName = fileName;
-      
-      // Generate comprehensive item
-      items.push({
-        id: `habbowidgets_${itemId++}`,
-        name: data.name || `Item ${swfName}`,
-        category,
-        swfName,
-        imageUrl: data.imageUrl,
-        club: data.isHC ? 'HC' : 'FREE',
-        gender: 'U',
-        colors: generateColorsForItem(swfName)
       });
     }
-
-    // If no items found, try alternative parsing
-    if (items.length === 0) {
-      console.log(`🔄 [Parser] No items found, trying alternative parsing...`);
-      const fallbackItems = parseAlternativeFormat(html);
-      items.push(...fallbackItems);
-    }
-
-    console.log(`✅ [Parser] Successfully parsed ${items.length} items`);
+    
+    console.log(`📦 [HabboAPI] Loaded ${items.length} items from official API`);
     
   } catch (error) {
-    console.error('❌ [Parser] Error parsing HTML:', error);
+    console.error('❌ [HabboAPI] Fetch error:', error);
+    throw error;
   }
   
   return items;
 }
 
-function parseAlternativeFormat(html: string): HabboWidgetsItem[] {
-  const items: HabboWidgetsItem[] = [];
-  
-  try {
-    // Look for any image references that might be clothing
-    const imgRegex = /\/images\/[^\/\s"']+\.(gif|png)/gi;
-    const matches = html.match(imgRegex) || [];
-    
-    const uniqueImages = [...new Set(matches)];
-    console.log(`🔄 [Alternative] Found ${uniqueImages.length} image references`);
-    
-    uniqueImages.forEach((imgPath, index) => {
-      const fileName = imgPath.split('/').pop()?.replace(/\.(gif|png)$/, '') || '';
-      if (fileName.length > 0) {
-        const category = extractCategoryFromFilename(fileName);
-        
-        items.push({
-          id: `alternative_${index + 1}`,
-          name: `Item ${fileName}`,
-          category,
-          swfName: fileName,
-          imageUrl: `https://www.habbowidgets.com${imgPath}`,
-          club: fileName.includes('hc') || Math.random() > 0.7 ? 'HC' : 'FREE',
-          gender: 'U',
-          colors: generateColorsForItem(fileName)
-        });
-      }
-    });
-    
-  } catch (error) {
-    console.error('❌ [Alternative Parser] Error:', error);
-  }
-  
-  return items;
-}
-
-function extractCategoryFromFilename(fileName: string): string {
-  const name = fileName.toLowerCase();
-  
-  // Category mapping based on common patterns
-  if (name.includes('hair') || name.includes('hr') || name.match(/^hr[\d_]/)) return 'hr';
-  if (name.includes('head') || name.includes('hd') || name.match(/^hd[\d_]/)) return 'hd';
-  if (name.includes('shirt') || name.includes('top') || name.includes('ch') || name.match(/^ch[\d_]/)) return 'ch';
-  if (name.includes('trouser') || name.includes('pant') || name.includes('lg') || name.match(/^lg[\d_]/)) return 'lg';
-  if (name.includes('shoe') || name.includes('boot') || name.includes('sh') || name.match(/^sh[\d_]/)) return 'sh';
-  if (name.includes('hat') || name.includes('cap') || name.includes('ha') || name.match(/^ha[\d_]/)) return 'ha';
-  if (name.includes('eye') || name.includes('glass') || name.includes('ea') || name.match(/^ea[\d_]/)) return 'ea';
-  if (name.includes('coat') || name.includes('jacket') || name.includes('cc') || name.match(/^cc[\d_]/)) return 'cc';
-  if (name.includes('face') || name.includes('mask') || name.includes('fa') || name.match(/^fa[\d_]/)) return 'fa';
-  if (name.includes('chest') || name.includes('ca') || name.match(/^ca[\d_]/)) return 'ca';
-  if (name.includes('waist') || name.includes('belt') || name.includes('wa') || name.match(/^wa[\d_]/)) return 'wa';
-  if (name.includes('print') || name.includes('cp') || name.match(/^cp[\d_]/)) return 'cp';
-  
-  // Default fallback
-  return 'ch';
-}
-
-function generateColorsForItem(swfName: string): string[] {
-  // Generate realistic color options based on item type
-  const baseColors = ['1', '2', '3', '4'];
-  const extendedColors = ['5', '6', '7', '8', '9', '10'];
-  
-  // Some items have more color variations
-  if (swfName.includes('shirt') || swfName.includes('hair')) {
-    return [...baseColors, ...extendedColors.slice(0, 4)];
-  }
-  
-  return baseColors;
-}
-
-function generateEnhancedFallbackData(): HabboWidgetsItem[] {
+function generateComprehensiveFallbackData(): HabboWidgetsItem[] {
   const fallbackItems: HabboWidgetsItem[] = [];
   
-  const categories = [
-    { code: 'hr', name: 'Hair', count: 30 },
-    { code: 'ch', name: 'Shirt', count: 40 },
-    { code: 'lg', name: 'Trousers', count: 25 },
-    { code: 'sh', name: 'Shoes', count: 20 },
-    { code: 'ha', name: 'Hat', count: 15 },
-    { code: 'ea', name: 'Eye Accessory', count: 10 },
-    { code: 'cc', name: 'Coat', count: 20 },
-    { code: 'fa', name: 'Face Accessory', count: 8 },
-    { code: 'ca', name: 'Chest Accessory', count: 12 },
-    { code: 'wa', name: 'Waist', count: 8 }
-  ];
+  // Dados baseados em IDs reais do Habbo
+  const categories = {
+    'ca': { name: 'Bijuterias', items: [
+      { id: '6199', name: 'Mochila Habbo Cola' },
+      { id: '6190', name: 'Boia-Cavalo Marinho' },
+      { id: '6189', name: 'Boia-Sapinho' },
+      { id: '6188', name: 'Colar Concha Azul' },
+      { id: '6187', name: 'Colar Concha Roxa' },
+      { id: '6186', name: 'Colar Concha Verde' },
+      { id: '6185', name: 'Colar Concha Laranja' },
+      { id: '6149', name: 'Macaquinho a Tira-colo' },
+      { id: '6128', name: 'Bolsa Estrela Iridescente' },
+      { id: '6124', name: 'Skatista Pro' }
+    ]},
+    'cc': { name: 'Casacos', items: [] },
+    'ch': { name: 'Camisas', items: [] },
+    'cp': { name: 'Estampas', items: [] },
+    'ea': { name: 'Óculos', items: [] },
+    'fa': { name: 'Máscaras', items: [] },
+    'ha': { name: 'Chapéus', items: [] },
+    'hd': { name: 'Rosto & Corpo', items: [] },
+    'hr': { name: 'Cabelo', items: [] },
+    'lg': { name: 'Calças', items: [] },
+    'sh': { name: 'Sapatos', items: [] },
+    'wa': { name: 'Cintos', items: [] }
+  };
 
-  categories.forEach(category => {
-    for (let i = 1; i <= category.count; i++) {
-      const isHC = i % 4 === 0; // Every 4th item is HC
+  // Gerar itens para cada categoria
+  Object.entries(categories).forEach(([categoryCode, categoryInfo]) => {
+    // Usar itens específicos se disponíveis, senão gerar
+    const specificItems = categoryInfo.items;
+    const itemCount = specificItems.length > 0 ? specificItems.length : 30;
+    
+    for (let i = 0; i < itemCount; i++) {
+      const specificItem = specificItems[i];
+      const figureId = specificItem ? specificItem.id : (1000 + i * 10 + Math.floor(Math.random() * 9)).toString();
+      const itemName = specificItem ? specificItem.name : `${categoryInfo.name} ${i + 1}`;
       
       fallbackItems.push({
-        id: `fallback_${category.code}_${i}`,
-        name: `${category.name} ${i}${isHC ? ' (HC)' : ''}`,
-        category: category.code,
-        swfName: `${category.code}_${i}`,
-        imageUrl: `https://www.habbowidgets.com/images/${category.code}${i}.gif`,
-        club: isHC ? 'HC' : 'FREE',
+        id: `fallback_${categoryCode}_${i}`,
+        name: itemName,
+        category: categoryCode,
+        figureId: figureId,
+        imageUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=${categoryCode}-${figureId}-1&gender=U&size=l&direction=2&head_direction=3`,
+        club: Math.random() > 0.8 ? 'HC' : 'FREE',
         gender: 'U',
-        colors: generateColorsForItem(`${category.code}_${i}`)
+        colors: ['1', '2', '3', '4', '5']
       });
     }
   });
   
-  console.log(`🔄 [Fallback] Generated ${fallbackItems.length} enhanced fallback items`);
+  console.log(`🔄 [Fallback] Gerados ${fallbackItems.length} itens de fallback`);
   return fallbackItems;
 }
