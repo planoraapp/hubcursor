@@ -4,14 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shirt, Palette } from 'lucide-react';
 import { OptimizedClothingGrid } from '../OptimizedClothingGrid';
-import { FlashAssetItem } from '@/hooks/useFlashAssetsClothing';
+import { HybridClothingItemV2 } from '@/hooks/useHybridClothingDataV2';
 
 interface HybridClothingSelectorV3Props {
-  onItemSelect: (item: FlashAssetItem) => void;
+  onItemSelect: (item: HybridClothingItemV2) => void;
 }
 
 export const HybridClothingSelectorV3 = ({ onItemSelect }: HybridClothingSelectorV3Props) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const handleItemSelect = (item: HybridClothingItemV2) => {
+    onItemSelect(item);
+  };
 
   return (
     <Card className="habbo-panel">
@@ -36,7 +40,7 @@ export const HybridClothingSelectorV3 = ({ onItemSelect }: HybridClothingSelecto
           
           <TabsContent value="clothing" className="mt-4">
             <OptimizedClothingGrid
-              onItemSelect={onItemSelect}
+              onItemSelect={handleItemSelect}
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
             />

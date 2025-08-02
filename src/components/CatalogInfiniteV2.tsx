@@ -195,7 +195,9 @@ export const CatalogInfiniteV2 = () => {
                   title={furni.name}
                 >
                   <IntelligentFurniImage
-                    furni={furni}
+                    swfName={furni.name}
+                    name={furni.name}
+                    originalUrl={furni.imageUrl}
                     className="w-full h-full object-contain pixelated"
                   />
                 </div>
