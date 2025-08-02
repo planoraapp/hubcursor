@@ -1,5 +1,6 @@
 
 import { X, Calendar, Tag, Award, ExternalLink } from 'lucide-react';
+import { DialogDescription } from '@/components/ui/dialog';
 import EnhancedBadgeImage from './EnhancedBadgeImage';
 
 interface BadgeItem {
@@ -54,6 +55,11 @@ export const BadgeDetailsModal = ({ badge, onClose }: BadgeDetailsModalProps) =>
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        {/* Hidden DialogDescription for accessibility */}
+        <DialogDescription className="sr-only">
+          Detalhes do badge {badge.name} ({badge.code}) da categoria {categoryInfo.name}
+        </DialogDescription>
+        
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center gap-3">
@@ -80,6 +86,7 @@ export const BadgeDetailsModal = ({ badge, onClose }: BadgeDetailsModalProps) =>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Fechar modal"
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>

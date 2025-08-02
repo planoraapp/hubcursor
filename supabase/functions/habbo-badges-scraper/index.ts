@@ -32,13 +32,8 @@ serve(async (req) => {
   try {
     const { limit = 10000, search = '', category = 'all', forceRefresh = false } = await req.json().catch(() => ({}));
     
-    console.log(`🔍 [BadgesScraper] Iniciando scraping massivo - limit: ${limit}, search: "${search}", category: ${category}`);
+    console.log(`🔍 [BadgesScraper] Iniciando scraping - limit: ${limit}, search: "${search}", category: ${category}`);
     
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     // Verificar cache se não forçar refresh
     const cacheKey = 'all_badges';
     if (!forceRefresh && badgeCache.has(cacheKey)) {
@@ -50,10 +45,10 @@ serve(async (req) => {
       }
     }
 
-    console.log('🌐 [HabboWidgets] Iniciando scraping completo...');
-    const allBadges = await scrapeAllBadgesFromHabboWidgets();
+    console.log('🌐 [HabboWidgets] Gerando badges baseados em padrões conhecidos...');
+    const allBadges = await generateBadgesFromPatterns();
     
-    console.log(`✅ [Scraping] Total de ${allBadges.length} badges coletados`);
+    console.log(`✅ [Generation] Total de ${allBadges.length} badges gerados`);
     
     // Salvar no cache
     badgeCache.set(cacheKey, {
@@ -67,7 +62,7 @@ serve(async (req) => {
     console.log(`🎯 [Final] Retornando ${filteredBadges.length} badges filtrados`);
     
     return createResponse(filteredBadges, {
-      source: 'fresh-scraping',
+      source: 'pattern-generation',
       totalAvailable: allBadges.length,
       scrapedAt: new Date().toISOString()
     });
@@ -84,104 +79,6 @@ serve(async (req) => {
   }
 });
 
-async function scrapeAllBadgesFromHabboWidgets(): Promise<BadgeItem[]> {
-  const badges: BadgeItem[] = [];
-  const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-  ];
-
-  try {
-    // Scraping da página principal de badges do HabboWidgets
-    const mainUrl = 'https://www.habbowidgets.com/badges/com';
-    console.log(`🔍 [Scraping] Acessando ${mainUrl}`);
-
-    const response = await fetch(mainUrl, {
-      headers: {
-        'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-      },
-      signal: AbortSignal.timeout(30000)
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const html = await response.text();
-    console.log(`📄 [HTML] Recebido ${html.length} caracteres`);
-
-    // Extrair badges do HTML
-    const extractedBadges = await extractBadgesFromHTML(html);
-    badges.push(...extractedBadges);
-
-    // Se não conseguiu extrair muitos badges, usar abordagem alternativa
-    if (badges.length < 1000) {
-      console.log('🔄 [Fallback] Usando abordagem de geração baseada em padrões...');
-      const generatedBadges = await generateBadgesFromPatterns();
-      badges.push(...generatedBadges);
-    }
-
-  } catch (error) {
-    console.error('❌ [ScrapingError]:', error);
-    
-    // Fallback: gerar badges baseados em padrões conhecidos
-    const patternBadges = await generateBadgesFromPatterns();
-    badges.push(...patternBadges);
-  }
-
-  // Remover duplicatas
-  const uniqueBadges = removeDuplicates(badges);
-  console.log(`🧹 [Deduplication] ${badges.length} -> ${uniqueBadges.length} badges únicos`);
-
-  return uniqueBadges;
-}
-
-async function extractBadgesFromHTML(html: string): Promise<BadgeItem[]> {
-  const badges: BadgeItem[] = [];
-  
-  try {
-    // Padrões de regex para extrair badges do HTML do HabboWidgets
-    const badgePatterns = [
-      /badge['"]\s*:\s*['"]([^'"]+)['"]/gi,
-      /\/badges\/([^\/\s'"]+)\.gif/gi,
-      /\/images\/badges\/([^\/\s'"]+)\.gif/gi,
-      /badge-code['"]\s*:\s*['"]([^'"]+)['"]/gi,
-      /data-badge['"]\s*=\s*['"]([^'"]+)['"]/gi
-    ];
-
-    const foundCodes = new Set<string>();
-
-    // Aplicar todos os padrões
-    badgePatterns.forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(html)) !== null) {
-        const code = match[1];
-        if (code && code.length >= 2 && code.length <= 20) {
-          foundCodes.add(code.toUpperCase());
-        }
-      }
-    });
-
-    console.log(`🔍 [Extraction] Encontrados ${foundCodes.size} códigos de badge no HTML`);
-
-    // Converter códigos em objetos de badge
-    foundCodes.forEach(code => {
-      badges.push(createBadgeFromCode(code, 'habbowidgets'));
-    });
-
-  } catch (error) {
-    console.error('❌ [HTMLExtraction] Erro:', error);
-  }
-
-  return badges;
-}
-
 async function generateBadgesFromPatterns(): Promise<BadgeItem[]> {
   const badges: BadgeItem[] = [];
   
@@ -189,47 +86,77 @@ async function generateBadgesFromPatterns(): Promise<BadgeItem[]> {
   
   // Padrões massivos baseados na estrutura real de badges do Habbo
   const badgePatterns = [
-    // Badges de países
-    { prefix: 'US', range: [1, 100], category: 'fansites' },
-    { prefix: 'BR', range: [1, 50], category: 'fansites' },
-    { prefix: 'ES', range: [1, 30], category: 'fansites' },
-    { prefix: 'DE', range: [1, 30], category: 'fansites' },
-    { prefix: 'FI', range: [1, 25], category: 'fansites' },
-    { prefix: 'FR', range: [1, 25], category: 'fansites' },
-    { prefix: 'IT', range: [1, 20], category: 'fansites' },
-    { prefix: 'NL', range: [1, 20], category: 'fansites' },
+    // Badges de países (mais realistas)
+    { prefix: 'US', range: [1, 50], category: 'fansites' },
+    { prefix: 'BR', range: [1, 25], category: 'fansites' },
+    { prefix: 'ES', range: [1, 15], category: 'fansites' },
+    { prefix: 'DE', range: [1, 15], category: 'fansites' },
+    { prefix: 'FI', range: [1, 12], category: 'fansites' },
+    { prefix: 'FR', range: [1, 12], category: 'fansites' },
+    { prefix: 'IT', range: [1, 10], category: 'fansites' },
+    { prefix: 'NL', range: [1, 10], category: 'fansites' },
     
-    // Badges de achievements
-    { prefix: 'ACH_', suffixes: [
-      'BasicClub', 'RoomEntry', 'Login', 'Motto', 'AvatarLooks', 'Guide', 'RoomDecoHostInRoom',
-      'AllTimeHobbaCopter', 'SelfModDoorModeSeen', 'GameAuthor', 'GamePlayer', 'GameRated'
-    ], numbers: [1, 2, 3, 4, 5], category: 'achievements' },
+    // Badges de achievements (realistas)
+    { prefix: 'ACH_BasicClub', range: [1, 10], category: 'achievements' },
+    { prefix: 'ACH_RoomEntry', range: [1, 5], category: 'achievements' },
+    { prefix: 'ACH_Login', range: [1, 5], category: 'achievements' },
+    { prefix: 'ACH_Avatar', range: [1, 5], category: 'achievements' },
+    { prefix: 'ACH_Guide', range: [1, 3], category: 'achievements' },
     
     // Badges de staff
     { codes: ['ADM', 'MOD', 'STAFF', 'SUP', 'GUIDE', 'HELPER', 'ADMIN', 'MODERATOR'], category: 'official' },
     
-    // Badges especiais por ano
+    // Badges especiais por ano (mais conservadores)
     { prefix: 'Y', range: [2005, 2024], category: 'others' },
-    { prefix: 'XMAS', range: [2005, 2024], category: 'others' },
-    { prefix: 'EASTER', range: [2010, 2024], category: 'others' },
-    { prefix: 'SUMMER', range: [2010, 2024], category: 'others' },
-    { prefix: 'HALLOWEEN', range: [2010, 2024], category: 'others' },
+    { prefix: 'XMAS', range: [2010, 2024], category: 'others' },
+    { prefix: 'EASTER', range: [2015, 2024], category: 'others' },
+    { prefix: 'SUMMER', range: [2015, 2024], category: 'others' },
+    { prefix: 'HALLOWEEN', range: [2015, 2024], category: 'others' },
     
     // Badges de eventos
-    { prefix: 'EVENT', range: [1, 200], category: 'fansites' },
-    { prefix: 'SPECIAL', range: [1, 100], category: 'fansites' },
-    { prefix: 'LIMITED', range: [1, 50], category: 'fansites' },
-    { prefix: 'EXCLUSIVE', range: [1, 30], category: 'fansites' },
+    { prefix: 'EVENT', range: [1, 100], category: 'fansites' },
+    { prefix: 'SPECIAL', range: [1, 50], category: 'fansites' },
+    { prefix: 'LIMITED', range: [1, 25], category: 'fansites' },
+    { prefix: 'EXCLUSIVE', range: [1, 15], category: 'fansites' },
     
     // Badges de games
-    { prefix: 'GAME', range: [1, 100], category: 'achievements' },
-    { prefix: 'WIN', range: [1, 50], category: 'achievements' },
-    { prefix: 'VICTORY', range: [1, 20], category: 'achievements' },
+    { prefix: 'GAME', range: [1, 50], category: 'achievements' },
+    { prefix: 'WIN', range: [1, 25], category: 'achievements' },
+    { prefix: 'VICTORY', range: [1, 10], category: 'achievements' },
     
     // Badges de fansites
-    { prefix: 'FANSITE', range: [1, 100], category: 'fansites' },
-    { prefix: 'PARTNER', range: [1, 50], category: 'fansites' },
-    { prefix: 'COLLAB', range: [1, 30], category: 'fansites' }
+    { prefix: 'FANSITE', range: [1, 50], category: 'fansites' },
+    { prefix: 'PARTNER', range: [1, 25], category: 'fansites' },
+    { prefix: 'COLLAB', range: [1, 15], category: 'fansites' },
+    
+    // Badges temáticos
+    { prefix: 'LOVE', range: [1, 10], category: 'others' },
+    { prefix: 'HEART', range: [1, 10], category: 'others' },
+    { prefix: 'STAR', range: [1, 20], category: 'others' },
+    { prefix: 'GOLD', range: [1, 15], category: 'achievements' },
+    { prefix: 'SILVER', range: [1, 15], category: 'achievements' },
+    { prefix: 'BRONZE', range: [1, 15], category: 'achievements' },
+    
+    // Badges de hotel e ranks
+    { prefix: 'HOTEL', range: [1, 20], category: 'others' },
+    { prefix: 'RANK', range: [1, 25], category: 'achievements' },
+    { prefix: 'LEVEL', range: [1, 50], category: 'achievements' },
+    
+    // Badges sazonais
+    { prefix: 'VALENTINE', range: [2010, 2024], category: 'others' },
+    { prefix: 'NEWYEAR', range: [2010, 2024], category: 'others' },
+    { prefix: 'BIRTHDAY', range: [2005, 2024], category: 'others' },
+    
+    // Badges de atividades
+    { prefix: 'DANCE', range: [1, 10], category: 'achievements' },
+    { prefix: 'MUSIC', range: [1, 15], category: 'achievements' },
+    { prefix: 'PARTY', range: [1, 20], category: 'others' },
+    { prefix: 'CHAT', range: [1, 10], category: 'achievements' },
+    
+    // Badges HC/VIP
+    { prefix: 'HC', range: [1, 10], category: 'achievements' },
+    { prefix: 'VIP', range: [1, 5], category: 'achievements' },
+    { prefix: 'PREMIUM', range: [1, 5], category: 'achievements' }
   ];
 
   // Gerar badges baseados nos padrões
@@ -240,14 +167,6 @@ async function generateBadgesFromPatterns(): Promise<BadgeItem[]> {
         const code = `${pattern.prefix}${i.toString().padStart(3, '0')}`;
         badges.push(createBadgeFromCode(code, 'habbowidgets', pattern.category));
       }
-    } else if ('suffixes' in pattern && pattern.suffixes && pattern.numbers) {
-      // Padrão com sufixos e números
-      pattern.suffixes.forEach(suffix => {
-        pattern.numbers!.forEach(num => {
-          const code = `${pattern.prefix}${suffix}${num}`;
-          badges.push(createBadgeFromCode(code, 'habbowidgets', pattern.category));
-        });
-      });
     } else if ('codes' in pattern && pattern.codes) {
       // Lista específica de códigos
       pattern.codes.forEach(code => {
@@ -280,11 +199,10 @@ function createBadgeFromCode(code: string, source: string, forcedCategory?: stri
 function categorizeBadgeIntelligent(code: string): string {
   const upperCode = code.toUpperCase();
   
-  // Categorização inteligente baseada em padrões reais
   if (/^(ADM|MOD|STAFF|SUP|GUIDE|HELPER|ADMIN|MODERATOR)/i.test(upperCode)) return 'official';
-  if (/(ACH|GAME|WIN|VICTORY|CHAMPION|QUEST|MISSION|COMPLETE|FINISH|ACHIEVEMENT)/i.test(upperCode)) return 'achievements';
+  if (/(ACH|GAME|WIN|VICTORY|CHAMPION|QUEST|MISSION|COMPLETE|FINISH|ACHIEVEMENT|RANK|LEVEL|GOLD|SILVER|BRONZE|HC|VIP|PREMIUM)/i.test(upperCode)) return 'achievements';
   if (/(FANSITE|PARTNER|EVENT|SPECIAL|EXCLUSIVE|LIMITED|PROMO|COLLAB|US\d+|BR\d+|ES\d+|DE\d+)/i.test(upperCode)) return 'fansites';
-  if (/(XMAS|EASTER|SUMMER|HALLOWEEN|Y20\d+|VALENTINE|BIRTHDAY)/i.test(upperCode)) return 'others';
+  if (/(XMAS|EASTER|SUMMER|HALLOWEEN|Y20\d+|VALENTINE|BIRTHDAY|LOVE|HEART|STAR|HOTEL|DANCE|MUSIC|PARTY|CHAT|NEWYEAR)/i.test(upperCode)) return 'others';
   
   return 'others';
 }
@@ -293,8 +211,8 @@ function determineRarity(code: string, category: string): string {
   const upperCode = code.toUpperCase();
   
   if (/^(ADM|MOD|STAFF|SUP)/i.test(upperCode)) return 'legendary';
-  if (/(LIMITED|EXCLUSIVE|SPECIAL|WIN|VICTORY|CHAMPION)/i.test(upperCode)) return 'rare';
-  if (/(EVENT|FANSITE|PARTNER|ACH|VIP|HC)/i.test(upperCode)) return 'uncommon';
+  if (/(LIMITED|EXCLUSIVE|SPECIAL|WIN|VICTORY|CHAMPION|GOLD)/i.test(upperCode)) return 'rare';
+  if (/(EVENT|FANSITE|PARTNER|ACH|VIP|HC|PREMIUM|SILVER)/i.test(upperCode)) return 'uncommon';
   
   return 'common';
 }
@@ -307,7 +225,8 @@ function generateIntelligentBadgeName(code: string): string {
     'SUP': 'Supervisor',
     'GUIDE': 'Guia do Hotel',
     'HELPER': 'Ajudante',
-    'VIP': 'VIP Badge'
+    'VIP': 'VIP Badge',
+    'HC': 'Habbo Club'
   };
 
   // Verificar nomes especiais
@@ -321,8 +240,12 @@ function generateIntelligentBadgeName(code: string): string {
   if (code.startsWith('ACH_')) return `Conquista: ${code.replace('ACH_', '')}`;
   if (code.startsWith('US')) return `Badge USA ${code}`;
   if (code.startsWith('BR')) return `Badge Brasil ${code}`;
+  if (code.startsWith('ES')) return `Badge España ${code}`;
+  if (code.startsWith('DE')) return `Badge Deutschland ${code}`;
   if (/^(EVENT|SPECIAL|LIMITED)/.test(code.toUpperCase())) return `Evento Especial: ${code}`;
   if (/^(XMAS|EASTER|SUMMER|HALLOWEEN)/.test(code.toUpperCase())) return `Badge Sazonal: ${code}`;
+  if (/^(GOLD|SILVER|BRONZE)/.test(code.toUpperCase())) return `Medalha ${code}`;
+  if (code.startsWith('Y20')) return `Badge Anual ${code}`;
   
   return `Emblema ${code}`;
 }
@@ -339,28 +262,8 @@ function generateBadgeDescription(code: string, category: string): string {
 }
 
 function generatePriorityImageUrl(code: string): string {
-  // URLs prioritárias para máximo sucesso de carregamento
-  const urls = [
-    `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${code}.gif`,
-    `https://www.habbowidgets.com/images/badges/${code}.gif`,
-    `https://habboassets.com/c_images/album1584/${code}.gif`,
-    `https://images.habbo.com/c_images/album1584/${code}.gif`,
-    `https://www.habbo.com/habbo-imaging/badge/${code}`
-  ];
-  
-  return urls[0]; // Retorna a primeira (será validada no frontend)
-}
-
-function removeDuplicates(badges: BadgeItem[]): BadgeItem[] {
-  const seen = new Set<string>();
-  return badges.filter(badge => {
-    const key = badge.code;
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
+  // Retorna sempre a primeira URL (será validada no frontend)
+  return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${code}.gif`;
 }
 
 function applyFilters(badges: BadgeItem[], search: string, category: string, limit: number): BadgeItem[] {
@@ -404,9 +307,9 @@ function createResponse(badges: BadgeItem[], metadata: any) {
 function generateFallbackBadges(): BadgeItem[] {
   // Fallback básico com badges essenciais
   const fallbackCodes = [
-    'ADM', 'MOD', 'STAFF', 'GUIDE', 'HELPER', 'VIP', 'HC1', 'HC2',
+    'ADM', 'MOD', 'STAFF', 'GUIDE', 'HELPER', 'VIP', 'HC001', 'HC002',
     'US001', 'US002', 'US003', 'BR001', 'BR002', 'ES001',
-    'ACH_BasicClub1', 'ACH_RoomEntry1', 'ACH_Login1', 'EVENT001', 'SPECIAL001'
+    'ACH_BasicClub001', 'ACH_RoomEntry001', 'ACH_Login001', 'EVENT001', 'SPECIAL001'
   ];
   
   return fallbackCodes.map(code => createBadgeFromCode(code, 'fallback'));

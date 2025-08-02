@@ -1,6 +1,6 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { AlertCircle, ImageOff } from 'lucide-react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { ImageOff } from 'lucide-react';
 
 interface EnhancedBadgeImageProps {
   code: string;
@@ -22,37 +22,35 @@ const EnhancedBadgeImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // URLs prioritárias com máximo de fontes
-  const generateBadgeUrls = useCallback((badgeCode: string) => [
+  // Memoizar URLs para evitar re-criação
+  const badgeUrls = useMemo(() => [
     // 1. Storage Supabase (mais confiável se disponível)
-    `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${badgeCode}.gif`,
+    `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${code}.gif`,
     
     // 2. HabboWidgets (fonte principal)
-    `https://www.habbowidgets.com/images/badges/${badgeCode}.gif`,
-    `https://habbowidgets.com/images/badges/${badgeCode}.gif`,
+    `https://www.habbowidgets.com/images/badges/${code}.gif`,
+    `https://habbowidgets.com/images/badges/${code}.gif`,
     
     // 3. HabboAssets (muito confiável)
-    `https://habboassets.com/c_images/album1584/${badgeCode}.gif`,
-    `https://www.habboassets.com/c_images/album1584/${badgeCode}.gif`,
+    `https://habboassets.com/c_images/album1584/${code}.gif`,
+    `https://www.habboassets.com/c_images/album1584/${code}.gif`,
     
     // 4. Habbo Oficial (múltiplas versões)
-    `https://images.habbo.com/c_images/album1584/${badgeCode}.gif`,
-    `https://www.habbo.com/habbo-imaging/badge/${badgeCode}`,
-    `https://www.habbo.com.br/habbo-imaging/badge/${badgeCode}`,
-    `https://habbo.es/habbo-imaging/badge/${badgeCode}`,
-    `https://habbo.de/habbo-imaging/badge/${badgeCode}`,
+    `https://images.habbo.com/c_images/album1584/${code}.gif`,
+    `https://www.habbo.com/habbo-imaging/badge/${code}`,
+    `https://www.habbo.com.br/habbo-imaging/badge/${code}`,
+    `https://habbo.es/habbo-imaging/badge/${code}`,
+    `https://habbo.de/habbo-imaging/badge/${code}`,
     
     // 5. Outras fontes conhecidas
-    `https://habboemotion.com/images/badges/${badgeCode}.gif`,
-    `https://cdn.habboemotion.com/badges/${badgeCode}.gif`,
-    `https://habbo-stories.com/images/badges/${badgeCode}.gif`,
+    `https://habboemotion.com/images/badges/${code}.gif`,
+    `https://cdn.habboemotion.com/badges/${code}.gif`,
+    `https://habbo-stories.com/images/badges/${code}.gif`,
     
     // 6. Variações de extensão
-    `https://www.habbowidgets.com/images/badges/${badgeCode}.png`,
-    `https://habboassets.com/c_images/album1584/${badgeCode}.png`,
-  ], []);
-
-  const badgeUrls = generateBadgeUrls(code);
+    `https://www.habbowidgets.com/images/badges/${code}.png`,
+    `https://habboassets.com/c_images/album1584/${code}.png`,
+  ], [code]);
 
   const sizeClasses = {
     xs: 'w-4 h-4',
@@ -63,6 +61,8 @@ const EnhancedBadgeImage = ({
   };
 
   const handleImageError = useCallback(() => {
+    console.log(`❌ Failed to load badge ${code} from URL ${currentUrlIndex + 1}/${badgeUrls.length}`);
+    
     if (currentUrlIndex < badgeUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
@@ -70,10 +70,12 @@ const EnhancedBadgeImage = ({
     } else {
       setHasError(true);
       setIsLoading(false);
+      console.log(`❌ All URLs failed for badge ${code}`);
     }
-  }, [currentUrlIndex, badgeUrls.length]);
+  }, [currentUrlIndex, badgeUrls.length, code]);
 
   const handleImageLoad = useCallback(() => {
+    console.log(`✅ Successfully loaded badge ${code} from URL ${currentUrlIndex + 1}`);
     setIsLoading(false);
     setHasError(false);
     setImageLoaded(true);
@@ -82,39 +84,46 @@ const EnhancedBadgeImage = ({
     if (typeof window !== 'undefined') {
       const cacheKey = `badge_url_${code}`;
       const validUrl = badgeUrls[currentUrlIndex];
-      localStorage.setItem(cacheKey, JSON.stringify({
-        url: validUrl,
-        timestamp: Date.now(),
-        urlIndex: currentUrlIndex
-      }));
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          url: validUrl,
+          timestamp: Date.now(),
+          urlIndex: currentUrlIndex
+        }));
+      } catch (e) {
+        // Ignorar erros de localStorage
+        console.warn('Failed to cache badge URL:', e);
+      }
     }
   }, [code, badgeUrls, currentUrlIndex]);
 
-  // Verificar cache ao inicializar
+  // Reset state quando code muda
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const cacheKey = `badge_url_${code}`;
-      const cached = localStorage.getItem(cacheKey);
-      
-      if (cached) {
-        try {
-          const { url, timestamp, urlIndex } = JSON.parse(cached);
-          const isExpired = Date.now() - timestamp > 24 * 60 * 60 * 1000; // 24h
-          
-          if (!isExpired && urlIndex < badgeUrls.length) {
-            setCurrentUrlIndex(urlIndex);
-          }
-        } catch (e) {
-          // Cache inválido, continuar normalmente
-        }
-      }
-    }
-    
     setCurrentUrlIndex(0);
     setHasError(false);
     setIsLoading(true);
     setImageLoaded(false);
-  }, [code, badgeUrls]);
+
+    // Verificar cache ao inicializar
+    if (typeof window !== 'undefined') {
+      const cacheKey = `badge_url_${code}`;
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const { timestamp, urlIndex } = JSON.parse(cached);
+          const isExpired = Date.now() - timestamp > 24 * 60 * 60 * 1000; // 24h
+          
+          if (!isExpired && urlIndex < badgeUrls.length) {
+            setCurrentUrlIndex(urlIndex);
+            console.log(`💾 Using cached URL for badge ${code}: index ${urlIndex}`);
+          }
+        }
+      } catch (e) {
+        // Cache inválido, continuar normalmente
+        console.warn('Invalid cache for badge', code, e);
+      }
+    }
+  }, [code, badgeUrls.length]);
 
   if (hasError && !showFallback) {
     return null;
@@ -133,6 +142,8 @@ const EnhancedBadgeImage = ({
     );
   }
 
+  const currentUrl = badgeUrls[currentUrlIndex];
+  
   return (
     <div className={`${sizeClasses[size]} ${className} relative rounded overflow-hidden`}>
       {isLoading && (
@@ -142,8 +153,8 @@ const EnhancedBadgeImage = ({
       )}
       
       <img
-        key={`${code}_${currentUrlIndex}`}
-        src={badgeUrls[currentUrlIndex]}
+        key={`${code}_${currentUrlIndex}`} // Key único para forçar re-render
+        src={currentUrl}
         alt={name || code}
         className={`w-full h-full object-contain transition-opacity duration-300 ${
           imageLoaded ? 'opacity-100' : 'opacity-0'
