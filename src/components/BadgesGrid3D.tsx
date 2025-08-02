@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Award } from 'lucide-react';
+import { Search, Filter, Award, Smartphone, Monitor } from 'lucide-react';
 import { PanelCard } from './PanelCard';
 import { supabase } from '@/integrations/supabase/client';
 import IntelligentBadgeImage from './IntelligentBadgeImage';
+import { MobileBadgesViewer } from './MobileBadgesViewer';
+import { MobileBadgeModal } from './MobileBadgeModal';
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface BadgeItem {
   id: string;
@@ -14,73 +17,6 @@ interface BadgeItem {
   rarity: string;
 }
 
-interface BadgeModalProps {
-  badge: BadgeItem;
-  onClose: () => void;
-}
-
-const BadgeModal = ({ badge, onClose }: BadgeModalProps) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-lg max-w-md w-full p-6">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold text-gray-800">{badge.name}</h3>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-xl font-bold"
-        >
-          ×
-        </button>
-      </div>
-      
-      <div className="text-center mb-4">
-        <div className="inline-block p-4 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full shadow-lg">
-          <IntelligentBadgeImage
-            code={badge.code}
-            name={badge.name}
-            size="lg"
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-3">
-        <div className="text-center">
-          <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-mono">
-            {badge.code}
-          </span>
-        </div>
-        
-        <div>
-          <span className="font-semibold">Categoria:</span> 
-          <span className="ml-2 capitalize">{badge.category}</span>
-        </div>
-        
-        <div>
-          <span className="font-semibold">Raridade:</span> 
-          <span className={`ml-2 capitalize font-semibold ${
-            badge.rarity === 'legendary' ? 'text-yellow-600' :
-            badge.rarity === 'rare' ? 'text-purple-600' :
-            badge.rarity === 'uncommon' ? 'text-blue-600' : 'text-gray-600'
-          }`}>
-            {badge.rarity === 'legendary' ? 'Lendário' :
-             badge.rarity === 'rare' ? 'Raro' :
-             badge.rarity === 'uncommon' ? 'Incomum' : 'Comum'}
-          </span>
-        </div>
-        
-        <div>
-          <span className="font-semibold">Descrição:</span>
-          <p className="mt-1 text-gray-600">{badge.description}</p>
-        </div>
-      </div>
-      
-      <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-        <Award className="w-5 h-5 text-yellow-600 mx-auto" />
-        <p className="text-xs text-gray-500 mt-1">Emblema Oficial do Habbo</p>
-      </div>
-    </div>
-  </div>
-);
-
 export const BadgesGrid3D = () => {
   const [badges, setBadges] = useState<BadgeItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -90,16 +26,20 @@ export const BadgesGrid3D = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [showMobileViewer, setShowMobileViewer] = useState(false);
+  
+  const isMobile = useIsMobile();
 
   const fetchBadges = useCallback(async (pageNum: number, category: string, reset = false) => {
     if (loading) return;
     
     try {
       setLoading(true);
-      console.log(`🔄 Fetching enhanced badges page ${pageNum}, category: ${category}`);
+      console.log(`🔄 Fetching mega badges page ${pageNum}, category: ${category}`);
       
       const { data, error } = await supabase.functions.invoke('habbo-emotion-badges', {
-        body: { page: pageNum, limit: 120, category }
+        body: { page: pageNum, limit: 200, category }
       });
       
       if (error) {
@@ -114,10 +54,10 @@ export const BadgesGrid3D = () => {
           setCategories(['all', ...data.metadata.categories]);
         }
         
-        console.log(`✅ Loaded ${data.badges.length} enhanced badges`);
+        console.log(`✅ Loaded ${data.badges.length} mega badges`);
       }
     } catch (error) {
-      console.error('❌ Error fetching enhanced badges:', error);
+      console.error('❌ Error fetching mega badges:', error);
     } finally {
       setLoading(false);
     }
@@ -128,6 +68,11 @@ export const BadgesGrid3D = () => {
     setPage(1);
     fetchBadges(1, selectedCategory, true);
   }, [selectedCategory]);
+
+  // Auto-detectar modo mobile
+  useEffect(() => {
+    setViewMode(isMobile ? 'mobile' : 'desktop');
+  }, [isMobile]);
 
   const loadMore = () => {
     if (hasMore && !loading) {
@@ -141,6 +86,10 @@ export const BadgesGrid3D = () => {
     badge.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     badge.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleBadgeSelect = (badge: BadgeItem) => {
+    setSelectedBadge(badge);
+  };
 
   const getRarityClass = (rarity: string) => {
     switch (rarity) {
@@ -164,9 +113,33 @@ export const BadgesGrid3D = () => {
     return names[category] || category;
   };
 
+  // Renderizar viewer mobile em tela cheia
+  if (showMobileViewer) {
+    return (
+      <>
+        <MobileBadgesViewer 
+          badges={filteredBadges} 
+          onBadgeSelect={handleBadgeSelect}
+        />
+        {selectedBadge && (
+          <MobileBadgeModal
+            badge={selectedBadge}
+            onClose={() => setSelectedBadge(null)}
+          />
+        )}
+        <button
+          onClick={() => setShowMobileViewer(false)}
+          className="fixed top-4 right-4 z-50 p-3 bg-black/80 text-white rounded-full"
+        >
+          <Monitor size={20} />
+        </button>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <PanelCard title="Emblemas do Habbo - Edição Aprimorada">
+      <PanelCard title="Emblemas do Habbo - Mega Collection">
         <div className="space-y-4">
           {/* Search and Filter */}
           <div className="flex flex-col md:flex-row gap-4">
@@ -194,20 +167,35 @@ export const BadgesGrid3D = () => {
                   </option>
                 ))}
               </select>
+              
+              {/* Botão do Mobile Viewer */}
+              {isMobile && (
+                <button
+                  onClick={() => setShowMobileViewer(true)}
+                  className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  title="Abrir visualizador com gestos"
+                >
+                  <Smartphone size={20} />
+                </button>
+              )}
             </div>
           </div>
 
           {/* Enhanced Badges Grid with 3D Effect */}
           <div className="bg-white border-2 border-gray-300 rounded-lg h-[650px] overflow-y-auto p-6">
-            <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-14 gap-3">
+            <div className={`grid gap-3 ${
+              isMobile 
+                ? 'grid-cols-4 md:grid-cols-6' 
+                : 'grid-cols-8 md:grid-cols-10 lg:grid-cols-12 xl:grid-cols-16'
+            }`}>
               {filteredBadges.map((badge) => (
                 <button
                   key={badge.id}
-                  onClick={() => setSelectedBadge(badge)}
+                  onClick={() => handleBadgeSelect(badge)}
                   className={`group relative aspect-square bg-gradient-to-br ${getRarityClass(badge.rarity)} 
                     border-2 rounded-lg p-2 transition-all duration-300 
                     hover:scale-110 hover:shadow-2xl hover:-translate-y-3 hover:rotate-2
-                    transform-gpu perspective-1000 hover:z-10`}
+                    transform-gpu perspective-1000 hover:z-10 active:scale-95`}
                   style={{
                     boxShadow: '0 12px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.9)'
                   }}
@@ -216,7 +204,7 @@ export const BadgesGrid3D = () => {
                   {/* 3D depth effect background */}
                   <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
                   
-                  {/* Badge image with intelligent loading */}
+                  {/* Badge image */}
                   <div className="relative z-10 w-full h-full flex items-center justify-center">
                     <IntelligentBadgeImage
                       code={badge.code}
@@ -226,7 +214,7 @@ export const BadgesGrid3D = () => {
                     />
                   </div>
                   
-                  {/* Floating tooltip with badge code */}
+                  {/* Floating tooltip */}
                   <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 
                     opacity-0 group-hover:opacity-100 transition-all duration-300 
                     bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-20 
@@ -249,7 +237,7 @@ export const BadgesGrid3D = () => {
               ))}
             </div>
 
-            {/* Enhanced Load More Button */}
+            {/* Load More Button */}
             {hasMore && filteredBadges.length > 0 && (
               <div className="text-center mt-8">
                 <button
@@ -260,7 +248,7 @@ export const BadgesGrid3D = () => {
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Carregando Emblemas...
+                      Carregando Mega Emblemas...
                     </span>
                   ) : (
                     'Carregar Mais Emblemas'
@@ -269,18 +257,18 @@ export const BadgesGrid3D = () => {
               </div>
             )}
 
-            {/* Enhanced Loading State */}
+            {/* Loading State */}
             {loading && filteredBadges.length === 0 && (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
-                  <p className="text-gray-600 text-lg font-semibold">Carregando Emblemas Aprimorados...</p>
+                  <p className="text-gray-600 text-lg font-semibold">Carregando Mega Collection...</p>
                   <p className="text-gray-500 text-sm mt-2">Buscando nas melhores fontes disponíveis</p>
                 </div>
               </div>
             )}
 
-            {/* Enhanced Empty State */}
+            {/* Empty State */}
             {!loading && filteredBadges.length === 0 && (
               <div className="text-center py-20">
                 <Award className="w-20 h-20 text-gray-400 mx-auto mb-6" />
@@ -292,7 +280,7 @@ export const BadgesGrid3D = () => {
 
           {/* Enhanced Statistics */}
           <div className="text-sm text-gray-500 text-center bg-gray-50 rounded-lg p-3">
-            <div className="flex justify-center items-center gap-6">
+            <div className="flex justify-center items-center gap-6 flex-wrap">
               <span className="flex items-center gap-1">
                 📊 <strong>Total:</strong> {badges.length} emblemas
               </span>
@@ -302,14 +290,82 @@ export const BadgesGrid3D = () => {
               <span className="flex items-center gap-1">
                 ⭐ <strong>Raros:</strong> {badges.filter(b => b.rarity !== 'common').length}
               </span>
+              {isMobile && (
+                <span className="flex items-center gap-1">
+                  📱 <strong>Modo:</strong> Mobile com gestos
+                </span>
+              )}
             </div>
           </div>
         </div>
       </PanelCard>
 
-      {/* Enhanced Modal */}
-      {selectedBadge && (
-        <BadgeModal
+      {/* Desktop Modal */}
+      {selectedBadge && !showMobileViewer && !isMobile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-gray-800">{selectedBadge.name}</h3>
+              <button
+                onClick={() => setSelectedBadge(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="text-center mb-4">
+              <div className="inline-block p-4 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full shadow-lg">
+                <IntelligentBadgeImage
+                  code={selectedBadge.code}
+                  name={selectedBadge.name}
+                  size="lg"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="text-center">
+                <span className="inline-block px-3 py-1 bg-gray-100 rounded-full text-sm font-mono">
+                  {selectedBadge.code}
+                </span>
+              </div>
+              
+              <div>
+                <span className="font-semibold">Categoria:</span> 
+                <span className="ml-2 capitalize">{getCategoryName(selectedBadge.category)}</span>
+              </div>
+              
+              <div>
+                <span className="font-semibold">Raridade:</span> 
+                <span className={`ml-2 capitalize font-semibold ${
+                  selectedBadge.rarity === 'legendary' ? 'text-yellow-600' :
+                  selectedBadge.rarity === 'rare' ? 'text-purple-600' :
+                  selectedBadge.rarity === 'uncommon' ? 'text-blue-600' : 'text-gray-600'
+                }`}>
+                  {selectedBadge.rarity === 'legendary' ? 'Lendário' :
+                   selectedBadge.rarity === 'rare' ? 'Raro' :
+                   selectedBadge.rarity === 'uncommon' ? 'Incomum' : 'Comum'}
+                </span>
+              </div>
+              
+              <div>
+                <span className="font-semibold">Descrição:</span>
+                <p className="mt-1 text-gray-600">{selectedBadge.description}</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+              <Award className="w-5 h-5 text-yellow-600 mx-auto" />
+              <p className="text-xs text-gray-500 mt-1">Emblema Oficial do Habbo</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Modal */}
+      {selectedBadge && (isMobile || showMobileViewer) && (
+        <MobileBadgeModal
           badge={selectedBadge}
           onClose={() => setSelectedBadge(null)}
         />
