@@ -5,9 +5,10 @@ import { ValidatedBadgeItem } from '../hooks/useValidatedBadges';
 import { EnhancedBadgeItem } from '../hooks/useEnhancedBadges';
 import { HabboApiBadgeItem } from '../hooks/useHabboApiBadges';
 import { RealBadgeItem } from '../hooks/useRealBadges';
+import { HybridUnifiedBadgeItem } from '../hooks/useHybridUnifiedBadges';
 
-// Type union for all badge types
-type AnyBadgeItem = ValidatedBadgeItem | EnhancedBadgeItem | HabboApiBadgeItem | RealBadgeItem;
+// Type union for all badge types including the new hybrid type
+type AnyBadgeItem = ValidatedBadgeItem | EnhancedBadgeItem | HabboApiBadgeItem | RealBadgeItem | HybridUnifiedBadgeItem;
 
 interface BadgeDetailsModalProps {
   badge: AnyBadgeItem;
@@ -35,6 +36,8 @@ export const BadgeDetailsModal = ({ badge, onClose }: BadgeDetailsModalProps) =>
       'HabboWidgets': { name: 'HabboWidgets', color: 'bg-blue-100 text-blue-800', icon: '🌐' },
       'HabboAssets': { name: 'HabboAssets', color: 'bg-purple-100 text-purple-800', icon: '🏛️' },
       'SupabaseBucket': { name: 'Storage', color: 'bg-orange-100 text-orange-800', icon: '📦' },
+      'HabboOfficial': { name: 'HabboOfficial', color: 'bg-green-100 text-green-800', icon: '🏢' },
+      'HybridFallback': { name: 'Fallback', color: 'bg-gray-100 text-gray-800', icon: '🔄' },
       'habbo-api': { name: 'HabboAPI', color: 'bg-green-100 text-green-800', icon: '🌍' },
       'cache': { name: 'Cache', color: 'bg-gray-100 text-gray-800', icon: '⚡' }
     };
@@ -179,7 +182,7 @@ export const BadgeDetailsModal = ({ badge, onClose }: BadgeDetailsModalProps) =>
             </div>
           )}
 
-          {/* Validation Info for ValidatedBadgeItem */}
+          {/* Validation Info for ValidatedBadgeItem or HybridUnifiedBadgeItem */}
           {'validation_count' in badge && (
             <div className="bg-green-50 rounded-lg p-4">
               <h4 className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
@@ -190,7 +193,7 @@ export const BadgeDetailsModal = ({ badge, onClose }: BadgeDetailsModalProps) =>
                 <p className="text-sm text-green-700">
                   <strong>Validações:</strong> {badge.validation_count}x
                 </p>
-                {'last_validated_at' in badge && (
+                {'last_validated_at' in badge && badge.last_validated_at && (
                   <p className="text-sm text-green-700">
                     <strong>Última validação:</strong> {new Date(badge.last_validated_at).toLocaleDateString('pt-BR', {
                       year: 'numeric',
