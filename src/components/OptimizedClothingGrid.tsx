@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Search, Filter, Shirt } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -7,12 +6,31 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFlashAssetsClothing, FlashAssetItem } from '@/hooks/useFlashAssetsClothing';
 import IntelligentClothingThumbnail from './HabboEditor/IntelligentClothingThumbnail';
+import { HybridClothingItemV2 } from '@/hooks/useHybridClothingDataV2';
 
 interface OptimizedClothingGridProps {
-  onItemSelect: (item: FlashAssetItem) => void;
+  onItemSelect: (item: HybridClothingItemV2) => void;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
 }
+
+// Convert FlashAssetItem to HybridClothingItemV2 format
+const convertFlashAssetToHybrid = (item: FlashAssetItem): HybridClothingItemV2 => {
+  return {
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    figureId: item.figureId,
+    colors: item.colors,
+    imageUrl: item.imageUrl,
+    club: item.club,
+    gender: item.gender,
+    source: 'official', // Convert "official-assets" to "official"
+    metadata: {
+      code: item.swfName
+    }
+  };
+};
 
 const CATEGORY_NAMES = {
   'all': 'Todas as Roupas',
@@ -70,14 +88,17 @@ export const OptimizedClothingGrid = ({
       const category = item.category;
       if (!acc[category]) acc[category] = { hc: [], free: [] };
       
+      // Convert to HybridClothingItemV2 format
+      const hybridItem = convertFlashAssetToHybrid(item);
+      
       if (item.club === 'HC') {
-        acc[category].hc.push(item);
+        acc[category].hc.push(hybridItem);
       } else {
-        acc[category].free.push(item);
+        acc[category].free.push(hybridItem);
       }
       
       return acc;
-    }, {} as Record<string, { hc: FlashAssetItem[]; free: FlashAssetItem[] }>);
+    }, {} as Record<string, { hc: HybridClothingItemV2[]; free: HybridClothingItemV2[] }>);
 
     return grouped;
   }, [clothing, search, clubFilter]);

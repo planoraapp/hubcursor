@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Package } from 'lucide-react';
 import { PanelCard } from './PanelCard';
-import { IntelligentFurniImage } from './IntelligentFurniImage';
+import IntelligentFurniImage from './IntelligentFurniImage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
