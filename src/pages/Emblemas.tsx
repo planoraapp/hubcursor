@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import { BadgesGrid3D } from '../components/BadgesGrid3D';
+import { BadgesGrid3DStorage } from '../components/BadgesGrid3DStorage';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -32,7 +32,13 @@ export default function Emblemas() {
             backgroundImage="/assets/1360__-3C7.png"
           />
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
-            <BadgesGrid3D />
+            <div className="mb-4 text-center">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                ✅ Sistema Oficial Ativo
+                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">7.950+ Emblemas</span>
+              </div>
+            </div>
+            <BadgesGrid3DStorage />
           </div>
         </div>
       </MobileLayout>
@@ -50,7 +56,19 @@ export default function Emblemas() {
             backgroundImage="/assets/1360__-3C7.png"
           />
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-            <BadgesGrid3D />
+            <div className="mb-6 text-center">
+              <div className="inline-flex items-center gap-3 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium shadow-sm">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                ✅ Sistema de Emblemas Oficial Ativo
+                <span className="bg-green-200 px-3 py-1 rounded-full text-sm font-bold">
+                  7.950+ Emblemas Reais
+                </span>
+              </div>
+              <p className="text-gray-600 mt-2 text-sm">
+                Emblemas oficiais carregados diretamente do Storage do Habbo
+              </p>
+            </div>
+            <BadgesGrid3DStorage />
           </div>
         </main>
       </div>
