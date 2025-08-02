@@ -36,8 +36,8 @@ export const MobileBadgesViewer = ({ badges, onBadgeSelect }: MobileBadgesViewer
     }
   }, [scale]);
 
-  // Calcular distância entre dois pontos de toque
-  const getDistance = (touches: TouchList) => {
+  // Calcular distância entre dois pontos de toque - Fix for React.TouchList
+  const getDistance = (touches: React.TouchList) => {
     if (touches.length < 2) return 0;
     const touch1 = touches[0];
     const touch2 = touches[1];
