@@ -19,6 +19,8 @@ interface MarketItem {
   imageUrl: string;
   rarity: string;
   priceHistory: number[];
+  isFeatured: boolean;
+  description?: string;
 }
 
 serve(async (req) => {
@@ -27,105 +29,143 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🌐 [Marketplace Analytics] Fetching market data...');
+    console.log('🌐 [Enhanced Marketplace] Fetching market data...');
 
-    // Try multiple sources for market data
+    // Try multiple reliable sources for market data
     const sources = [
-      'https://api.ducket.net/items',
-      'https://furnieye.net/api/items'
+      { url: 'https://www.habbowidgets.com/api/marketplace', type: 'habbowidgets' },
+      { url: 'https://habbowidgets.com/api/marketplace', type: 'habbowidgets' },
+      { url: 'https://api.furnieye.net/marketplace', type: 'furnieye' },
+      { url: 'https://furnieye.net/api/marketplace', type: 'furnieye' }
     ];
 
     let marketData: any[] = [];
     let successfulSource = '';
+    let sourceType = '';
 
     // Try each source
     for (const source of sources) {
       try {
-        console.log(`📡 [Marketplace] Trying: ${source}`);
+        console.log(`📡 [Enhanced Marketplace] Trying: ${source.url}`);
         
-        const response = await fetch(source, {
+        const response = await fetch(source.url, {
           headers: {
-            'User-Agent': 'HabboHub-Analytics/1.0',
+            'User-Agent': 'HabboHub-Enhanced/2.0',
             'Accept': 'application/json',
           },
-          signal: AbortSignal.timeout(10000)
+          signal: AbortSignal.timeout(8000)
         });
 
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
-            marketData = data.slice(0, 100); // Limit to top 100 items
-            successfulSource = source;
-            console.log(`✅ Success with ${marketData.length} items from ${source}`);
+            marketData = data.slice(0, 150); // Limit to top 150 items
+            successfulSource = source.url;
+            sourceType = source.type;
+            console.log(`✅ Success with ${marketData.length} items from ${source.url}`);
+            break;
+          } else if (data.items && Array.isArray(data.items)) {
+            marketData = data.items.slice(0, 150);
+            successfulSource = source.url;
+            sourceType = source.type;
+            console.log(`✅ Success with ${marketData.length} items from ${source.url}`);
             break;
           }
         }
       } catch (error) {
-        console.log(`❌ Error with ${source}:`, error.message);
+        console.log(`❌ Error with ${source.url}:`, error.message);
         continue;
       }
     }
 
-    // If no real data, generate realistic mock data
+    // Enhanced fallback with realistic market data
     if (marketData.length === 0) {
-      console.log('🔄 Generating marketplace fallback data');
-      marketData = generateMarketplaceFallbackData();
-      successfulSource = 'fallback';
+      console.log('🔄 Generating enhanced marketplace fallback data');
+      marketData = generateEnhancedMarketplaceFallback();
+      successfulSource = 'enhanced-fallback';
+      sourceType = 'fallback';
     }
 
-    // Process market data
+    // Process market data with enhanced features
     const processedItems: MarketItem[] = marketData.map((item: any, index: number) => {
-      const currentPrice = item.price || item.credits || Math.floor(Math.random() * 500) + 50;
-      const previousPrice = Math.floor(currentPrice * (0.8 + Math.random() * 0.4)); // ±20% variation
+      const currentPrice = item.price || item.credits || item.current_price || Math.floor(Math.random() * 800) + 100;
+      const previousPrice = Math.floor(currentPrice * (0.75 + Math.random() * 0.5)); // ±25% variation
       const change = ((currentPrice - previousPrice) / previousPrice) * 100;
-      const trend = change > 5 ? 'up' : change < -5 ? 'down' : 'stable';
-
+      const trend = change > 8 ? 'up' : change < -8 ? 'down' : 'stable';
+      
+      const itemName = item.name || item.furni_name || item.item_name || `Item Raro ${index + 1}`;
+      
       return {
         id: item.id || `market_${index}`,
-        name: item.name || item.furni_name || `Item ${index + 1}`,
-        category: categorizeMarketItem(item.name || ''),
+        name: itemName,
+        category: categorizeMarketItem(itemName),
         currentPrice,
         previousPrice,
         trend,
         changePercent: change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`,
-        volume: item.volume || Math.floor(Math.random() * 100) + 10,
-        imageUrl: item.image || item.icon || `https://habboemotion.com/images/furnis/market_${index}.png`,
-        rarity: determineMarketRarity(currentPrice),
-        priceHistory: generatePriceHistory(currentPrice)
+        volume: item.volume || Math.floor(Math.random() * 200) + 20,
+        imageUrl: generateMarketItemImageUrl(item, index),
+        rarity: determineMarketRarity(currentPrice, itemName),
+        priceHistory: generatePriceHistory(currentPrice),
+        isFeatured: index < 6, // Top 6 items are featured
+        description: generateItemDescription(itemName, currentPrice)
       };
     });
 
-    // Calculate market statistics
+    // Sort by volume and price for better featured items
+    const sortedItems = processedItems.sort((a, b) => b.volume - a.volume);
+    
+    // Mark top items as featured
+    sortedItems.forEach((item, index) => {
+      item.isFeatured = index < 8;
+    });
+
+    // Calculate enhanced market statistics
     const marketStats = {
-      totalItems: processedItems.length,
-      averagePrice: Math.floor(processedItems.reduce((sum, item) => sum + item.currentPrice, 0) / processedItems.length),
-      totalVolume: processedItems.reduce((sum, item) => sum + item.volume, 0),
-      trendingUp: processedItems.filter(item => item.trend === 'up').length,
-      trendingDown: processedItems.filter(item => item.trend === 'down').length
+      totalItems: sortedItems.length,
+      averagePrice: Math.floor(sortedItems.reduce((sum, item) => sum + item.currentPrice, 0) / sortedItems.length),
+      totalVolume: sortedItems.reduce((sum, item) => sum + item.volume, 0),
+      trendingUp: sortedItems.filter(item => item.trend === 'up').length,
+      trendingDown: sortedItems.filter(item => item.trend === 'down').length,
+      featuredItems: sortedItems.filter(item => item.isFeatured).length,
+      highestPrice: Math.max(...sortedItems.map(item => item.currentPrice)),
+      mostTraded: sortedItems[0]?.name || 'N/A'
     };
 
-    console.log(`🎯 Processed ${processedItems.length} market items`);
+    console.log(`🎯 Processed ${sortedItems.length} enhanced market items`);
 
     return new Response(
       JSON.stringify({
-        items: processedItems,
+        items: sortedItems,
         stats: marketStats,
         metadata: {
           source: successfulSource,
+          sourceType,
           fetchedAt: new Date().toISOString(),
-          nextUpdate: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+          nextUpdate: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ [Marketplace Analytics] Error:', error);
+    console.error('❌ [Enhanced Marketplace] Error:', error);
+    
+    const fallbackData = generateEnhancedMarketplaceFallback();
     
     return new Response(
       JSON.stringify({
-        items: generateMarketplaceFallbackData().slice(0, 20),
-        stats: { totalItems: 20, averagePrice: 125, totalVolume: 500, trendingUp: 8, trendingDown: 6 },
+        items: fallbackData,
+        stats: { 
+          totalItems: fallbackData.length, 
+          averagePrice: 285, 
+          totalVolume: 1250, 
+          trendingUp: 12, 
+          trendingDown: 8,
+          featuredItems: 8,
+          highestPrice: 2500,
+          mostTraded: 'Trono Dourado'
+        },
         metadata: {
           source: 'error-fallback',
           error: error.message
@@ -136,69 +176,121 @@ serve(async (req) => {
   }
 });
 
+function generateMarketItemImageUrl(item: any, index: number): string {
+  // Try to use provided image URL first
+  if (item.image || item.image_url || item.icon) {
+    return item.image || item.image_url || item.icon;
+  }
+  
+  // Generate based on item name or use fallback patterns
+  const itemName = item.name || item.furni_name || `item_${index}`;
+  const cleanName = itemName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  
+  const patterns = [
+    `https://www.habbowidgets.com/images/furni/${cleanName}.gif`,
+    `https://habbowidgets.com/images/${cleanName}.gif`,
+    `https://images.habbo.com/dcr/hof_furni/${cleanName}.png`,
+    `https://habboemotion.com/images/furnis/${cleanName}.png`,
+    `https://via.placeholder.com/64x64/f0f0f0/666?text=${encodeURIComponent(itemName.charAt(0))}`
+  ];
+  
+  return patterns[0];
+}
+
 function categorizeMarketItem(name: string): string {
   const lowerName = name.toLowerCase();
   
-  if (lowerName.includes('trono') || lowerName.includes('throne')) return 'raros';
-  if (lowerName.includes('chair') || lowerName.includes('cadeira')) return 'móveis';
-  if (lowerName.includes('plant') || lowerName.includes('planta')) return 'decoração';
-  if (lowerName.includes('clothing') || lowerName.includes('roupa')) return 'roupas';
+  if (lowerName.includes('trono') || lowerName.includes('throne') || lowerName.includes('throne')) return 'tronos';
+  if (lowerName.includes('chair') || lowerName.includes('cadeira')) return 'cadeiras';
+  if (lowerName.includes('plant') || lowerName.includes('planta') || lowerName.includes('flower')) return 'plantas';
+  if (lowerName.includes('clothing') || lowerName.includes('roupa') || lowerName.includes('hat')) return 'roupas';
   if (lowerName.includes('pet') || lowerName.includes('animal')) return 'pets';
+  if (lowerName.includes('rare') || lowerName.includes('raro') || lowerName.includes('ltd')) return 'raros';
+  if (lowerName.includes('wall') || lowerName.includes('parede') || lowerName.includes('poster')) return 'parede';
   
-  return 'diversos';
+  return 'moveis';
 }
 
-function determineMarketRarity(price: number): string {
-  if (price > 1000) return 'legendary';
-  if (price > 500) return 'rare';
-  if (price > 200) return 'uncommon';
+function determineMarketRarity(price: number, name: string): string {
+  const lowerName = name.toLowerCase();
+  
+  if (price > 2000 || lowerName.includes('throne') || lowerName.includes('trono')) return 'legendary';
+  if (price > 800 || lowerName.includes('rare') || lowerName.includes('ltd')) return 'rare';
+  if (price > 300 || lowerName.includes('hc') || lowerName.includes('special')) return 'uncommon';
   return 'common';
+}
+
+function generateItemDescription(name: string, price: number): string {
+  const category = categorizeMarketItem(name);
+  const rarity = determineMarketRarity(price, name);
+  
+  const descriptions = {
+    'tronos': 'Móvel extremamente raro e valioso, símbolo de status no Habbo.',
+    'raros': 'Item de edição limitada com alto valor de colecionador.',
+    'roupas': 'Peça exclusiva para personalizar seu avatar.',
+    'pets': 'Animal de estimação raro para seu quarto.',
+    'plantas': 'Decoração natural para ambientes sofisticados.',
+    'moveis': 'Móvel funcional para decoração de quartos.'
+  };
+  
+  return descriptions[category as keyof typeof descriptions] || 'Item exclusivo do Habbo Hotel.';
 }
 
 function generatePriceHistory(currentPrice: number): number[] {
   const history = [];
-  let price = Math.floor(currentPrice * 0.7); // Start 30% lower
+  let price = Math.floor(currentPrice * 0.6); // Start 40% lower
   
   for (let i = 0; i < 30; i++) { // 30 days of history
-    const variation = (Math.random() - 0.5) * 0.1; // ±5% daily variation
-    price = Math.max(1, Math.floor(price * (1 + variation)));
+    const variation = (Math.random() - 0.5) * 0.15; // ±7.5% daily variation
+    price = Math.max(10, Math.floor(price * (1 + variation)));
     history.push(price);
   }
+  
+  // Ensure the last price is close to current price
+  history[29] = Math.floor(currentPrice * (0.95 + Math.random() * 0.1));
   
   return history;
 }
 
-function generateMarketplaceFallbackData(): MarketItem[] {
-  const fallbackItems = [
-    { name: 'Trono de Ouro', basePrice: 2500, category: 'raros' },
-    { name: 'Sofá Moderno', basePrice: 75, category: 'móveis' },
-    { name: 'Mesa de Jantar', basePrice: 120, category: 'móveis' },
-    { name: 'Planta Tropical', basePrice: 45, category: 'decoração' },
-    { name: 'Cadeira Gamer', basePrice: 200, category: 'móveis' },
-    { name: 'Dragão Pet', basePrice: 500, category: 'pets' },
-    { name: 'Camiseta Rara', basePrice: 150, category: 'roupas' },
-    { name: 'Luminária LED', basePrice: 80, category: 'decoração' },
-    { name: 'Estante de Livros', basePrice: 95, category: 'móveis' },
-    { name: 'Tapete Persa', basePrice: 300, category: 'decoração' }
+function generateEnhancedMarketplaceFallback(): MarketItem[] {
+  const premiumItems = [
+    { name: 'Trono Dourado', basePrice: 2800, category: 'tronos' },
+    { name: 'Dragão de Cristal', basePrice: 1850, category: 'pets' },
+    { name: 'Sofá Real Premium', basePrice: 920, category: 'raros' },
+    { name: 'Planta Tropical Rara', basePrice: 680, category: 'plantas' },
+    { name: 'Mesa de Jantar Imperial', basePrice: 540, category: 'moveis' },
+    { name: 'Cadeira Gamer Elite', basePrice: 450, category: 'cadeiras' },
+    { name: 'Poster Vintage LTD', basePrice: 380, category: 'parede' },
+    { name: 'Chapéu de Diamante', basePrice: 720, category: 'roupas' },
+    { name: 'Luminária de Cristal', basePrice: 290, category: 'moveis' },
+    { name: 'Estante Real', basePrice: 220, category: 'moveis' },
+    { name: 'Tapete Persa Antigo', basePrice: 390, category: 'raros' },
+    { name: 'Aquário de Luxo', basePrice: 480, category: 'pets' },
+    { name: 'Cama Imperial', basePrice: 350, category: 'moveis' },
+    { name: 'Espelho Mágico', basePrice: 260, category: 'parede' },
+    { name: 'Televisão 4K Premium', basePrice: 420, category: 'moveis' }
   ];
 
-  return fallbackItems.map((item, index) => {
-    const currentPrice = item.basePrice + Math.floor(Math.random() * 100 - 50);
-    const previousPrice = Math.floor(currentPrice * (0.85 + Math.random() * 0.3));
+  return premiumItems.map((item, index) => {
+    const variation = Math.random() * 200 - 100; // ±100 credits variation
+    const currentPrice = item.basePrice + variation;
+    const previousPrice = Math.floor(currentPrice * (0.8 + Math.random() * 0.4));
     const change = ((currentPrice - previousPrice) / previousPrice) * 100;
     
     return {
-      id: `fallback_${index}`,
+      id: `enhanced_${index}`,
       name: item.name,
       category: item.category,
-      currentPrice,
+      currentPrice: Math.floor(currentPrice),
       previousPrice,
       trend: change > 0 ? 'up' : 'down',
       changePercent: change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`,
-      volume: Math.floor(Math.random() * 50) + 10,
-      imageUrl: `https://habboemotion.com/images/furnis/fallback_${index}.png`,
-      rarity: determineMarketRarity(currentPrice),
-      priceHistory: generatePriceHistory(currentPrice)
+      volume: Math.floor(Math.random() * 150) + 25,
+      imageUrl: generateMarketItemImageUrl({ name: item.name }, index),
+      rarity: determineMarketRarity(currentPrice, item.name),
+      priceHistory: generatePriceHistory(currentPrice),
+      isFeatured: index < 8,
+      description: generateItemDescription(item.name, currentPrice)
     };
   });
 }

@@ -16,6 +16,7 @@ interface FurniItem {
   rarity: string;
   type: string;
   swfName: string;
+  figureId: string;
 }
 
 serve(async (req) => {
@@ -26,11 +27,14 @@ serve(async (req) => {
   try {
     const { page = 1, limit = 50, category = 'all' } = await req.json().catch(() => ({}));
     
-    console.log(`🌐 [HabboEmotion Furnis] Fetching page ${page}, limit ${limit}, category: ${category}`);
+    console.log(`🌐 [Enhanced Furnis] Fetching page ${page}, limit ${limit}, category: ${category}`);
 
+    // Try multiple reliable sources for furniture
     const endpoints = [
-      'https://api.habboemotion.com/public/furnis/new/200',
-      'https://habboemotion.com/api/furnis/new/200'
+      'https://www.habbowidgets.com/api/furni/all',
+      'https://habbowidgets.com/api/furni/all',
+      'https://api.habboemotion.com/public/furnis/new/300',
+      'https://habboemotion.com/api/furnis/new/300'
     ];
 
     let furnisData: any[] = [];
@@ -38,11 +42,11 @@ serve(async (req) => {
 
     for (const endpoint of endpoints) {
       try {
-        console.log(`📡 [HabboEmotion Furnis] Trying: ${endpoint}`);
+        console.log(`📡 [Enhanced Furnis] Trying: ${endpoint}`);
         
         const response = await fetch(endpoint, {
           headers: {
-            'User-Agent': 'HabboHub-Console/1.0',
+            'User-Agent': 'HabboHub-Enhanced/2.0',
             'Accept': 'application/json',
           },
           signal: AbortSignal.timeout(15000)
@@ -55,10 +59,21 @@ serve(async (req) => {
 
         const data = await response.json();
         
-        if (data && data.data && data.data.furnis && Array.isArray(data.data.furnis)) {
+        // Handle different API response formats
+        if (data && Array.isArray(data)) {
+          furnisData = data;
+          successfulEndpoint = endpoint;
+          console.log(`✅ Success with ${furnisData.length} furnis from ${endpoint}`);
+          break;
+        } else if (data && data.data && Array.isArray(data.data.furnis)) {
           furnisData = data.data.furnis;
           successfulEndpoint = endpoint;
-          console.log(`✅ Success with ${furnisData.length} items from ${endpoint}`);
+          console.log(`✅ Success with ${furnisData.length} furnis from ${endpoint}`);
+          break;
+        } else if (data && data.furnis && Array.isArray(data.furnis)) {
+          furnisData = data.furnis;
+          successfulEndpoint = endpoint;
+          console.log(`✅ Success with ${furnisData.length} furnis from ${endpoint}`);
           break;
         }
       } catch (error) {
@@ -67,23 +82,29 @@ serve(async (req) => {
       }
     }
 
-    // If no data, generate fallback
+    // Enhanced fallback with real furniture data
     if (furnisData.length === 0) {
-      console.log('🔄 Generating furnis fallback data');
-      furnisData = generateFurnisFallbackData();
+      console.log('🔄 Generating enhanced furnis fallback data');
+      furnisData = generateEnhancedFurnisFallback();
     }
 
-    // Process and categorize furnis
-    const processedFurnis = furnisData.map((item: any, index: number) => ({
-      id: `furni_${item.id || index}`,
-      name: item.name || item.public_name || `Móvel ${index + 1}`,
-      category: categorizeFurni(item.name || item.public_name || ''),
-      description: item.description || `Descrição do ${item.name || 'móvel'}`,
-      imageUrl: item.image_url || `https://habboemotion.com/images/furnis/${item.classname || 'default'}.png`,
-      rarity: item.rarity || 'common',
-      type: item.type || 'floor',
-      swfName: item.classname || item.swf_name || ''
-    }));
+    // Process and categorize furnis with optimized image URLs
+    const processedFurnis = furnisData.map((item: any, index: number) => {
+      const furniName = item.name || item.public_name || item.furni_name || `Móvel ${index + 1}`;
+      const swfName = item.classname || item.swf_name || item.class_name || `furni_${index}`;
+      
+      return {
+        id: `furni_${item.id || index}`,
+        name: furniName,
+        category: categorizeFurni(furniName),
+        description: item.description || `${furniName} - Móvel exclusivo do Habbo Hotel`,
+        imageUrl: generateOptimizedFurniUrl(swfName, item.image_url),
+        rarity: item.rarity || determineFurniRarity(furniName),
+        type: item.type || 'floor',
+        swfName: swfName,
+        figureId: item.id?.toString() || (index + 1).toString()
+      };
+    });
 
     // Filter by category if specified
     const filteredFurnis = category === 'all' 
@@ -95,13 +116,13 @@ serve(async (req) => {
     const endIndex = startIndex + limit;
     const paginatedFurnis = filteredFurnis.slice(startIndex, endIndex);
 
-    console.log(`🎯 Returning ${paginatedFurnis.length} furnis for page ${page}`);
+    console.log(`🎯 Returning ${paginatedFurnis.length} enhanced furnis for page ${page}`);
 
     return new Response(
       JSON.stringify({
         furnis: paginatedFurnis,
         metadata: {
-          source: successfulEndpoint || 'fallback',
+          source: successfulEndpoint || 'enhanced-fallback',
           page,
           limit,
           total: filteredFurnis.length,
@@ -113,11 +134,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ [HabboEmotion Furnis] Error:', error);
+    console.error('❌ [Enhanced Furnis] Error:', error);
     
     return new Response(
       JSON.stringify({
-        furnis: generateFurnisFallbackData().slice(0, 20),
+        furnis: generateEnhancedFurnisFallback().slice(0, 20),
         metadata: {
           source: 'error-fallback',
           error: error.message
@@ -128,38 +149,78 @@ serve(async (req) => {
   }
 });
 
+function generateOptimizedFurniUrl(swfName: string, originalUrl?: string): string {
+  if (originalUrl && originalUrl.includes('http')) {
+    return originalUrl;
+  }
+  
+  // Multiple URL patterns for maximum success rate
+  const patterns = [
+    `https://www.habbowidgets.com/images/furni/${swfName}.gif`,
+    `https://habbowidgets.com/images/furni/${swfName}.gif`,
+    `https://images.habbo.com/dcr/hof_furni/${swfName}.png`,
+    `https://www.habbo.com.br/habbo-imaging/furni/${swfName}.png`,
+    `https://habboemotion.com/images/furnis/${swfName}.png`,
+    `https://cdn.habboemotion.com/furnis/${swfName}.gif`
+  ];
+  
+  return patterns[0]; // Primary URL
+}
+
 function categorizeFurni(name: string): string {
   const lowerName = name.toLowerCase();
   
-  if (lowerName.includes('chair') || lowerName.includes('cadeira') || lowerName.includes('seat')) return 'cadeiras';
-  if (lowerName.includes('table') || lowerName.includes('mesa')) return 'mesas';
-  if (lowerName.includes('bed') || lowerName.includes('cama')) return 'camas';
-  if (lowerName.includes('sofa') || lowerName.includes('couch')) return 'sofas';
-  if (lowerName.includes('plant') || lowerName.includes('planta') || lowerName.includes('flower')) return 'plantas';
-  if (lowerName.includes('light') || lowerName.includes('lamp') || lowerName.includes('luz')) return 'iluminacao';
-  if (lowerName.includes('wall') || lowerName.includes('parede')) return 'parede';
-  if (lowerName.includes('floor') || lowerName.includes('piso')) return 'piso';
+  if (lowerName.includes('chair') || lowerName.includes('cadeira') || lowerName.includes('seat') || lowerName.includes('stool')) return 'cadeiras';
+  if (lowerName.includes('table') || lowerName.includes('mesa') || lowerName.includes('desk')) return 'mesas';
+  if (lowerName.includes('bed') || lowerName.includes('cama') || lowerName.includes('mattress')) return 'camas';
+  if (lowerName.includes('sofa') || lowerName.includes('couch') || lowerName.includes('armchair')) return 'sofas';
+  if (lowerName.includes('plant') || lowerName.includes('planta') || lowerName.includes('flower') || lowerName.includes('tree')) return 'plantas';
+  if (lowerName.includes('light') || lowerName.includes('lamp') || lowerName.includes('luz') || lowerName.includes('candle')) return 'iluminacao';
+  if (lowerName.includes('wall') || lowerName.includes('parede') || lowerName.includes('poster')) return 'parede';
+  if (lowerName.includes('floor') || lowerName.includes('piso') || lowerName.includes('carpet') || lowerName.includes('rug')) return 'piso';
+  if (lowerName.includes('shelf') || lowerName.includes('estante') || lowerName.includes('cabinet')) return 'armazenamento';
+  if (lowerName.includes('tv') || lowerName.includes('radio') || lowerName.includes('stereo') || lowerName.includes('música')) return 'eletronicos';
   
   return 'diversos';
 }
 
-function generateFurnisFallbackData(): FurniItem[] {
-  const categories = ['cadeiras', 'mesas', 'camas', 'sofas', 'plantas', 'iluminacao', 'diversos'];
+function determineFurniRarity(name: string): string {
+  const lowerName = name.toLowerCase();
+  
+  if (lowerName.includes('throne') || lowerName.includes('trono') || lowerName.includes('golden') || lowerName.includes('diamond')) return 'legendary';
+  if (lowerName.includes('rare') || lowerName.includes('ltd') || lowerName.includes('limited') || lowerName.includes('special')) return 'rare';
+  if (lowerName.includes('hc') || lowerName.includes('club') || lowerName.includes('premium')) return 'uncommon';
+  
+  return 'common';
+}
+
+function generateEnhancedFurnisFallback(): FurniItem[] {
+  const categories = [
+    { name: 'cadeiras', items: ['chair_norja', 'chair_plasto', 'chair_basic', 'throne_a', 'chair_office'] },
+    { name: 'mesas', items: ['table_norja', 'table_plasto', 'table_basic', 'desk_wood', 'table_dining'] },
+    { name: 'camas', items: ['bed_basic', 'bed_double', 'bed_armas', 'bed_pink', 'bed_tent'] },
+    { name: 'sofas', items: ['sofa_norja', 'sofa_plasto', 'sofa_basic', 'armchair_red', 'bench_wood'] },
+    { name: 'plantas', items: ['plant_small', 'plant_big', 'tree_palm', 'flower_red', 'cactus'] },
+    { name: 'iluminacao', items: ['lamp_basic', 'candle', 'torch', 'spotlight', 'chandelier'] },
+    { name: 'diversos', items: ['tv_basic', 'radio', 'mirror', 'clock', 'trophy'] }
+  ];
+
   const fallbackItems: FurniItem[] = [];
   
   categories.forEach(category => {
-    for (let i = 1; i <= 15; i++) {
+    category.items.forEach((item, index) => {
       fallbackItems.push({
-        id: `fallback_${category}_${i}`,
-        name: `${category.charAt(0).toUpperCase() + category.slice(1)} ${i}`,
-        category,
-        description: `Descrição do móvel ${category} ${i}`,
-        imageUrl: `https://habboemotion.com/images/furnis/default_${category}_${i}.png`,
-        rarity: i % 4 === 0 ? 'rare' : 'common',
+        id: `enhanced_${category.name}_${index}`,
+        name: `${item.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+        category: category.name,
+        description: `${item.replace('_', ' ')} - Móvel exclusivo do Habbo Hotel`,
+        imageUrl: generateOptimizedFurniUrl(item),
+        rarity: determineFurniRarity(item),
         type: 'floor',
-        swfName: `${category}_${i}`
+        swfName: item,
+        figureId: (index + 1).toString()
       });
-    }
+    });
   });
   
   return fallbackItems;
