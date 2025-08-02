@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import ViaJovemEditor from '../components/HabboEditor/ViaJovemEditor';
+import { ViaJovemEditorExact } from '../components/HabboEditor/ViaJovemEditorExact';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -35,7 +35,7 @@ const EditorV2 = () => {
           />
           <AdSpace type="horizontal" className="mb-6" />
           <div className="min-h-screen">
-            <ViaJovemEditor />
+            <ViaJovemEditorExact />
           </div>
           <div className="flex justify-center gap-4 mt-6">
             <img 
@@ -73,7 +73,7 @@ const EditorV2 = () => {
             <AdSpace type="horizontal" className="mb-6" />
             
             <div className="min-h-screen">
-              <ViaJovemEditor />
+              <ViaJovemEditorExact />
             </div>
             
             <div className="flex justify-center gap-4 mt-6">

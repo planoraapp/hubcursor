@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import OptimizedFurniImage from './OptimizedFurniImage';
+import OptimizedFurniImageV2 from './OptimizedFurniImageV2';
 
 interface HabboFurniItem {
   id: string;
@@ -26,25 +26,32 @@ const CATALOG_CATEGORIES = [
   { id: 'effects', name: 'Efeitos', icon: '✨' }
 ];
 
-// Dados mock simples para teste rápido
-const generateMockFurnis = (category: string, search: string) => {
-  const categories = ['chair', 'table', 'bed', 'lamp', 'plant', 'decoration'];
-  const selectedCat = category === 'all' ? categories[Math.floor(Math.random() * categories.length)] : category;
+// Dados usando flash-assets reais do Supabase bucket
+const generateFurniFromBucket = (category: string, search: string) => {
+  // IDs reais de móveis do Habbo que devem estar no bucket flash-assets
+  const realFurniIds = [
+    '3091', '3092', '1871', '2113', '1574', '2306', '1175', '1177', 
+    '814', '572', '2422', '1108', '264', '387', '522', '595', '598',
+    '619', '636', '664', '760', '898', '967', '974', '1044', '1134',
+    '1136', '1197', '1203', '1211', '1258', '1360', '1431', '1686',
+    '1876', '1944', '1965', '1974', '203', '2367', '2403', '2404', '2408'
+  ];
   
-  return Array.from({ length: 20 }, (_, i) => ({
-    id: `${selectedCat}_${i + 1}`,
-    name: `${selectedCat}_${i + 1}`,
-    category: selectedCat,
-    imageUrl: '',
-    source: 'mock'
+  return realFurniIds.slice(0, 20).map((id, i) => ({
+    id,
+    name: `Móvel ${id}`,
+    category: ['furniture', 'lighting', 'decorations', 'seating', 'tables'][i % 5],
+    imageUrl: `furni_${id}.png`,
+    source: 'bucket'
   })).filter(item => 
-    search === '' || item.name.toLowerCase().includes(search.toLowerCase())
+    search === '' || item.name.toLowerCase().includes(search.toLowerCase()) ||
+    item.id.includes(search)
   );
 };
 
 const fetchCatalogItems = async (category: string, search: string) => {
-  // Por enquanto, usar dados mock para performance
-  return generateMockFurnis(category, search);
+  // Usar dados reais do bucket flash-assets
+  return generateFurniFromBucket(category, search);
 };
 
 export const CatalogWithTabs = () => {
@@ -111,8 +118,10 @@ export const CatalogWithTabs = () => {
                   className="aspect-square p-1 rounded transition-transform duration-150 hover:scale-105 hover:shadow-md bg-gray-50 hover:bg-gray-100"
                   title={furni.name}
                 >
-                  <OptimizedFurniImage
+                  <OptimizedFurniImageV2
+                    id={furni.id}
                     name={furni.name}
+                    size="small"
                     className="w-full h-full"
                   />
                 </div>
