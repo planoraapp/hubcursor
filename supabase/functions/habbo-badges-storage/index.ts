@@ -32,11 +32,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Listar arquivos do bucket habbo-badges
+    // Listar arquivos do bucket habbo-badges, incluindo subpastas
     const { data: files, error } = await supabase.storage
       .from('habbo-badges')
       .list('', {
-        limit: 3000,
+        limit: 5000,
         sortBy: { column: 'name', order: 'asc' }
       });
 
@@ -45,7 +45,7 @@ serve(async (req) => {
       throw new Error(`Storage error: ${error.message}`);
     }
 
-    console.log(`📁 [BadgesStorage] Encontrados ${files?.length || 0} arquivos no storage`);
+    console.log(`📁 [BadgesStorage] Encontrados ${files?.length || 0} arquivos/pastas no storage`);
 
     if (!files || files.length === 0) {
       console.warn('⚠️ [BadgesStorage] Nenhum arquivo encontrado');
@@ -62,21 +62,51 @@ serve(async (req) => {
       );
     }
 
-    // Processar arquivos em badges
-    let badges: BadgeItem[] = files
-      .filter(file => {
-        // Aceitar mais tipos de arquivos e ignorar diretórios
-        const validExtensions = ['.gif', '.png', '.jpg', '.jpeg'];
-        const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-        const isNotDirectory = !file.name.endsWith('/') && file.name.includes('.');
+    // Buscar arquivos dentro das subpastas
+    let allFiles: any[] = [];
+    
+    for (const item of files) {
+      if (item.name.endsWith('/')) {
+        // É uma pasta, buscar arquivos dentro dela
+        console.log(`📂 [BadgesStorage] Explorando pasta: ${item.name}`);
+        const { data: subFiles, error: subError } = await supabase.storage
+          .from('habbo-badges')
+          .list(item.name, {
+            limit: 2000,
+            sortBy: { column: 'name', order: 'asc' }
+          });
         
-        const isValid = hasValidExtension && isNotDirectory;
-        
-        if (!isValid) {
-          console.log(`⚠️ [BadgesStorage] Arquivo ignorado: ${file.name} (não é imagem válida)`);
+        if (subFiles && !subError) {
+          // Adicionar o caminho da pasta ao nome do arquivo
+          const filesWithPath = subFiles.map(file => ({
+            ...file,
+            name: `${item.name}${file.name}`,
+            fullPath: `${item.name}${file.name}`
+          }));
+          allFiles.push(...filesWithPath);
+          console.log(`📁 [BadgesStorage] Encontrados ${subFiles.length} arquivos na pasta ${item.name}`);
         }
+      } else {
+        // É um arquivo na raiz
+        allFiles.push({
+          ...item,
+          fullPath: item.name
+        });
+      }
+    }
+
+    console.log(`📊 [BadgesStorage] Total de arquivos processados: ${allFiles.length}`);
+
+    // Processar arquivos em badges
+    let badges: BadgeItem[] = allFiles
+      .filter(file => {
+        const validExtensions = ['.gif', '.png', '.jpg', '.jpeg'];
+        const hasValidExtension = validExtensions.some(ext => 
+          file.name.toLowerCase().endsWith(ext)
+        );
+        const isNotDirectory = !file.name.endsWith('/');
         
-        return isValid;
+        return hasValidExtension && isNotDirectory && file.name.length > 0;
       })
       .map(file => {
         const code = extractBadgeCode(file.name);
@@ -88,7 +118,7 @@ serve(async (req) => {
           id: code,
           code,
           name: generateBadgeName(code),
-          imageUrl: `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/habbo-badges/${file.name}`,
+          imageUrl: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${file.fullPath || file.name}`,
           category,
           source: 'storage' as const
         };
@@ -119,7 +149,7 @@ serve(async (req) => {
       badges,
       metadata: {
         source: 'storage',
-        totalFiles: files.length,
+        totalFiles: allFiles.length,
         processedBadges: badges.length,
         categories: getUniqueCategories(badges),
         fetchedAt: new Date().toISOString()
@@ -155,17 +185,20 @@ serve(async (req) => {
 });
 
 function extractBadgeCode(filename: string): string {
+  // Extrair apenas o nome do arquivo sem a pasta
+  const baseFilename = filename.split('/').pop() || filename;
+  
   // Remover extensão
-  let code = filename.replace(/\.(gif|png|jpg|jpeg)$/i, '');
+  let code = baseFilename.replace(/\.(gif|png|jpg|jpeg)$/i, '');
   
-  // Limpar padrões comuns
-  code = code.replace(/^badge_/i, '');
-  code = code.replace(/^[0-9]+__-/, '');
-  code = code.replace(/[-_]+$/, '');
+  // Padrões de limpeza mais inteligentes
+  code = code.replace(/^badge[_-]?/i, ''); // Remove prefixo badge
+  code = code.replace(/^[0-9]+[_-]+/g, ''); // Remove números iniciais
+  code = code.replace(/[_-]+$/g, ''); // Remove traços/underscores finais
   
-  // Se ainda estiver vazio ou muito longo, usar o nome original
-  if (!code || code.length < 2 || code.length > 50) {
-    code = filename.replace(/\.(gif|png|jpg|jpeg)$/i, '');
+  // Se ainda estiver vazio ou muito curto/longo, usar nome original
+  if (!code || code.length < 1 || code.length > 50) {
+    code = baseFilename.replace(/\.(gif|png|jpg|jpeg)$/i, '');
   }
   
   return code.toUpperCase();
@@ -175,22 +208,31 @@ function categorizeBadge(code: string, filename: string): string {
   const lowerCode = code.toLowerCase();
   const lowerFile = filename.toLowerCase();
   
-  // Categorias por padrões
-  if (/^(adm|mod|staff|guide|helper|sup)/i.test(lowerCode)) return 'official';
-  if (/^(ach|game|win|victory|champion|quest|mission|complete|finish)/i.test(lowerCode)) return 'achievements';
-  if (/(fansite|partner|event|special|exclusive|limited|promo|collab|20\d{2})/i.test(lowerCode)) return 'fansites';
+  // Categorias por padrões mais específicos
+  if (/^(adm|mod|staff|guide|helper|sup|admin|moderator)/i.test(lowerCode)) return 'official';
+  if (/(ach|game|win|victory|champion|quest|mission|complete|finish|achievement)/i.test(lowerCode)) return 'achievements';
+  if (/(fansite|partner|event|special|exclusive|limited|promo|collab|20\d{2}|fan)/i.test(lowerCode)) return 'fansites';
+  
+  // Verificar por pasta também
+  if (lowerFile.includes('/official/') || lowerFile.includes('/staff/')) return 'official';
+  if (lowerFile.includes('/achievement/') || lowerFile.includes('/game/')) return 'achievements';
+  if (lowerFile.includes('/fansite/') || lowerFile.includes('/event/')) return 'fansites';
   
   return 'others';
 }
 
 function generateBadgeName(code: string): string {
-  // Nomes especiais
+  // Nomes especiais mais elaborados
   const specialNames: Record<string, string> = {
     'ADM': 'Administrador',
     'MOD': 'Moderador', 
     'STAFF': 'Funcionário',
     'HC': 'Habbo Club',
-    'VIP': 'VIP Badge'
+    'VIP': 'VIP Badge',
+    'GUIDE': 'Guia do Hotel',
+    'HELPER': 'Ajudante',
+    'WINNER': 'Vencedor',
+    'ACH': 'Achievement'
   };
 
   // Verificar nomes especiais
@@ -200,7 +242,8 @@ function generateBadgeName(code: string): string {
     }
   }
 
-  return `Badge ${code}`;
+  // Nome padrão mais descritivo
+  return `Emblema ${code}`;
 }
 
 function getUniqueCategories(badges: BadgeItem[]): string[] {

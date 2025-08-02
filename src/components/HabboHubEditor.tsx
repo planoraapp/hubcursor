@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Palette, User, Crown, Shirt, PaintBucket, Footprints, Glasses } from 'lucide-react';
-import { useOfficialHabboData } from '@/hooks/useOfficialHabboData';
+import { useUnifiedHabboClothing } from '@/hooks/useUnifiedHabboClothing';
 
 const CATEGORY_CONFIG = {
   hd: { name: 'Rosto', icon: User },
@@ -22,14 +22,15 @@ const CATEGORY_CONFIG = {
 };
 
 const HabboHubEditor = () => {
-  const { data, isLoading, error } = useOfficialHabboData();
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedItems, setSelectedItems] = useState<Record<string, string>>({});
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('U');
 
-  const generateThumbnailUrl = (category: string, itemId: string, colorId: string = '1') => {
-    const headOnly = ['hd', 'hr', 'ha', 'ea', 'fa'].includes(category) ? '&headonly=1' : '';
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${itemId}-${colorId}&gender=M&size=l&direction=2&head_direction=3${headOnly}`;
-  };
+  const { data: clothingItems, isLoading, error } = useUnifiedHabboClothing({
+    category: selectedCategory,
+    gender: selectedGender,
+    limit: 100
+  });
 
   const generateAvatarUrl = () => {
     const parts = Object.entries(selectedItems)
@@ -40,14 +41,14 @@ const HabboHubEditor = () => {
       parts.push('hd-1-1', 'hr-1-1', 'ch-1-1', 'lg-1-1', 'sh-1-1');
     }
     
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${parts.join('.')}&gender=M&size=l&direction=2&head_direction=3`;
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${parts.join('.')}&gender=${selectedGender}&size=l&direction=2&head_direction=3`;
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-habbo-yellow" />
-        <span className="ml-2 text-white">Carregando dados oficiais...</span>
+        <span className="ml-2 text-white">Carregando dados unificados...</span>
       </div>
     );
   }
@@ -55,7 +56,7 @@ const HabboHubEditor = () => {
   if (error) {
     return (
       <div className="text-center text-red-400 p-8">
-        <p>Erro ao carregar dados do Habbo</p>
+        <p>Erro ao carregar dados unificados</p>
         <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
           Tentar Novamente
         </Button>
@@ -63,15 +64,14 @@ const HabboHubEditor = () => {
     );
   }
 
-  const figureData = data?.figureData || {};
-  const currentItems = figureData[selectedCategory] || [];
+  const currentItems = clothingItems || [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Preview do Avatar */}
       <Card className="habbo-panel">
         <CardHeader className="habbo-header">
-          <CardTitle className="text-white">Preview</CardTitle>
+          <CardTitle className="text-white">Preview Unificado</CardTitle>
         </CardHeader>
         <CardContent className="p-6 text-center">
           <div className="bg-habbo-blue/20 rounded-lg p-4 mb-4">
@@ -82,9 +82,37 @@ const HabboHubEditor = () => {
               style={{ imageRendering: 'pixelated' }}
             />
           </div>
-          <Badge variant="secondary" className="text-xs">
-            {Object.keys(selectedItems).length} itens selecionados
-          </Badge>
+          <div className="space-y-2">
+            <Badge variant="secondary" className="text-xs">
+              {Object.keys(selectedItems).length} itens selecionados
+            </Badge>
+            <div className="flex gap-2 justify-center">
+              <Button
+                variant={selectedGender === 'M' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGender('M')}
+                className={selectedGender === 'M' ? 'bg-habbo-yellow text-black' : 'habbo-card'}
+              >
+                👨 M
+              </Button>
+              <Button
+                variant={selectedGender === 'F' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGender('F')}
+                className={selectedGender === 'F' ? 'bg-habbo-yellow text-black' : 'habbo-card'}
+              >
+                👩 F
+              </Button>
+              <Button
+                variant={selectedGender === 'U' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedGender('U')}
+                className={selectedGender === 'U' ? 'bg-habbo-yellow text-black' : 'habbo-card'}
+              >
+                👤 U
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -97,7 +125,6 @@ const HabboHubEditor = () => {
           <div className="grid grid-cols-3 gap-2">
             {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
               const IconComponent = config.icon;
-              const itemCount = figureData[key]?.length || 0;
               
               return (
                 <Button
@@ -111,9 +138,6 @@ const HabboHubEditor = () => {
                 >
                   <IconComponent className="w-4 h-4 mb-1" />
                   <span className="text-xs">{config.name}</span>
-                  <Badge className="text-xs mt-1" variant="secondary">
-                    {itemCount}
-                  </Badge>
                 </Button>
               );
             })}
@@ -127,6 +151,9 @@ const HabboHubEditor = () => {
           <CardTitle className="text-white">
             {CATEGORY_CONFIG[selectedCategory as keyof typeof CATEGORY_CONFIG]?.name || selectedCategory}
           </CardTitle>
+          <Badge variant="secondary" className="w-fit">
+            {currentItems.length} itens
+          </Badge>
         </CardHeader>
         <CardContent className="p-4">
           <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto">
@@ -147,18 +174,19 @@ const HabboHubEditor = () => {
             {currentItems.map((item) => (
               <Button
                 key={item.id}
-                variant={selectedItems[selectedCategory] === item.id ? "default" : "outline"}
+                variant={selectedItems[selectedCategory] === item.figureId ? "default" : "outline"}
                 size="sm"
-                className={`aspect-square p-1 ${
-                  selectedItems[selectedCategory] === item.id 
+                className={`aspect-square p-1 relative ${
+                  selectedItems[selectedCategory] === item.figureId 
                     ? 'bg-habbo-yellow text-black border-2 border-habbo-yellow' 
                     : 'habbo-card hover:bg-habbo-blue/20'
                 }`}
-                onClick={() => setSelectedItems(prev => ({ ...prev, [selectedCategory]: item.id }))}
+                onClick={() => setSelectedItems(prev => ({ ...prev, [selectedCategory]: item.figureId }))}
+                title={item.name}
               >
                 <img
-                  src={generateThumbnailUrl(selectedCategory, item.id)}
-                  alt={`${selectedCategory}-${item.id}`}
+                  src={item.thumbnailUrl}
+                  alt={item.name}
                   className="w-full h-full object-contain"
                   style={{ imageRendering: 'pixelated' }}
                   onError={(e) => {
@@ -166,17 +194,36 @@ const HabboHubEditor = () => {
                     target.src = '/assets/placeholder-item.png';
                   }}
                 />
-                {item.club === '1' && (
+                {item.club && (
                   <Badge className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs px-1">
                     HC
+                  </Badge>
+                )}
+                {item.source === 'flash-assets' && (
+                  <Badge className="absolute -bottom-1 -right-1 bg-blue-500 text-white text-xs px-1">
+                    FA
                   </Badge>
                 )}
               </Button>
             ))}
           </div>
           
-          <div className="mt-4 text-xs text-gray-400 text-center">
-            {currentItems.length} itens disponíveis
+          <div className="mt-4 text-xs text-gray-400 text-center space-y-1">
+            <div>{currentItems.length} itens disponíveis</div>
+            <div className="flex justify-center gap-2 text-xs">
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-yellow-500 rounded"></div>
+                HC: {currentItems.filter(i => i.club).length}
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-500 rounded"></div>
+                FA: {currentItems.filter(i => i.source === 'flash-assets').length}
+              </span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded"></div>
+                OF: {currentItems.filter(i => i.source === 'official').length}
+              </span>
+            </div>
           </div>
         </CardContent>
       </Card>

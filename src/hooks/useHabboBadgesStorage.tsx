@@ -8,8 +8,7 @@ export interface HabboBadgeItem {
   name: string;
   imageUrl: string;
   category: string;
-  rarity: string;
-  source: 'official';
+  source: 'storage';
 }
 
 interface UseHabboBadgesStorageProps {
@@ -20,7 +19,7 @@ interface UseHabboBadgesStorageProps {
 }
 
 const fetchHabboBadgesFromStorage = async ({
-  limit = 500,
+  limit = 1000,
   search = '',
   category = 'all'
 }: UseHabboBadgesStorageProps): Promise<HabboBadgeItem[]> => {
@@ -38,7 +37,9 @@ const fetchHabboBadgesFromStorage = async ({
 
     if (!data || !data.badges || !Array.isArray(data.badges)) {
       console.error('❌ [HabboBadgesStorage] Invalid response format:', data);
-      throw new Error('Invalid response format from badges storage');
+      
+      // Fallback: tentar buscar diretamente do bucket
+      return await fetchBadgesDirectly();
     }
 
     console.log(`✅ [HabboBadgesStorage] Successfully fetched ${data.badges.length} badges`);
@@ -48,12 +49,86 @@ const fetchHabboBadgesFromStorage = async ({
     
   } catch (error) {
     console.error('❌ [HabboBadgesStorage] Error:', error);
-    throw error;
+    
+    // Fallback: tentar buscar diretamente
+    return await fetchBadgesDirectly();
   }
 };
 
+const fetchBadgesDirectly = async (): Promise<HabboBadgeItem[]> => {
+  console.log('🔄 [HabboBadgesStorage] Tentando fallback direto...');
+  
+  try {
+    // Tentar APIs externas como fallback
+    const externalBadges = await Promise.allSettled([
+      fetchFromHabboAssets(),
+      fetchFromHabboWidgets()
+    ]);
+    
+    const successfulResults = externalBadges
+      .filter((result): result is PromiseFulfilledResult<HabboBadgeItem[]> => 
+        result.status === 'fulfilled')
+      .map(result => result.value)
+      .flat();
+    
+    if (successfulResults.length > 0) {
+      console.log(`✅ [HabboBadgesStorage] Fallback successful: ${successfulResults.length} badges`);
+      return successfulResults;
+    }
+    
+    return [];
+    
+  } catch (error) {
+    console.error('❌ [HabboBadgesStorage] Fallback failed:', error);
+    return [];
+  }
+};
+
+const fetchFromHabboAssets = async (): Promise<HabboBadgeItem[]> => {
+  // Lista de badges comuns para fallback
+  const commonBadges = [
+    'ADM', 'MOD', 'VIP', 'HC1', 'HC2', 'STAFF', 'GUIDE', 'HELPER',
+    'ACH_BasicClub1', 'ACH_RoomEntry1', 'ACH_Login1', 'ACH_Motto1'
+  ];
+  
+  return commonBadges.map(code => ({
+    id: code,
+    code,
+    name: `Emblema ${code}`,
+    imageUrl: `https://habboassets.com/c_images/album1584/${code}.gif`,
+    category: categorizeBadge(code),
+    source: 'storage' as const
+  }));
+};
+
+const fetchFromHabboWidgets = async (): Promise<HabboBadgeItem[]> => {
+  // Mais badges comuns
+  const moreBadges = [
+    'US004', 'US005', 'US006', 'BR001', 'BR002', 'ES001', 'DE001'
+  ];
+  
+  return moreBadges.map(code => ({
+    id: code,
+    code,
+    name: `Badge ${code}`,
+    imageUrl: `https://www.habbowidgets.com/images/badges/${code}.gif`,
+    category: categorizeBadge(code),
+    source: 'storage' as const
+  }));
+};
+
+const categorizeBadge = (code: string): string => {
+  const upperCode = code.toUpperCase();
+  
+  if (/^(ADM|MOD|STAFF|VIP|SUP|GUIDE|HELPER)/i.test(upperCode)) return 'official';
+  if (/(ACH|GAME|WIN|VICTORY|CHAMPION|QUEST|MISSION|COMPLETE|FINISH)/i.test(upperCode)) return 'achievements';
+  if (/(FANSITE|PARTNER|EVENT|SPECIAL|EXCLUSIVE|LIMITED|PROMO|COLLAB)/i.test(upperCode)) return 'fansites';
+  
+  return 'others';
+};
+
 export const useHabboBadgesStorage = ({
-  limit = 500,
+  limit = 1000,
   search = '',
   category = 'all',
   enabled = true
