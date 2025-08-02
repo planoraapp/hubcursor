@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import IntelligentBadgeImage from './IntelligentBadgeImage';
 
 interface BadgeItem {
@@ -36,7 +36,7 @@ export const MobileBadgesViewer = ({ badges, onBadgeSelect }: MobileBadgesViewer
     }
   }, [scale]);
 
-  // Calcular distância entre dois pontos de toque - Fix for React.TouchList
+  // Calcular distância entre dois pontos de toque
   const getDistance = (touches: React.TouchList) => {
     if (touches.length < 2) return 0;
     const touch1 = touches[0];
@@ -125,48 +125,39 @@ export const MobileBadgesViewer = ({ badges, onBadgeSelect }: MobileBadgesViewer
     setPosition({ x: 0, y: 0 });
   };
 
-  const getRarityClass = (rarity: string) => {
-    switch (rarity) {
-      case 'legendary': return 'ring-2 ring-yellow-400 shadow-yellow-200';
-      case 'rare': return 'ring-2 ring-purple-400 shadow-purple-200';
-      case 'uncommon': return 'ring-2 ring-blue-400 shadow-blue-200';
-      default: return 'ring-1 ring-gray-300 shadow-gray-200';
-    }
-  };
-
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Header com controles */}
-      <div className="flex justify-between items-center p-4 bg-black/80 backdrop-blur-sm">
-        <div className="text-white font-semibold">
+    <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
+      {/* Header com controles - minimalista */}
+      <div className="flex justify-between items-center p-3 bg-black/80">
+        <div className="text-white text-sm font-medium">
           {badges.length} Emblemas
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={zoomOut}
-            className="p-2 bg-white/20 rounded-full text-white"
+            className="p-1.5 bg-white/20 rounded-md text-white"
           >
-            <ZoomOut size={20} />
+            <ZoomOut size={16} />
           </button>
           <button
             onClick={resetZoom}
-            className="px-3 py-2 bg-white/20 rounded-lg text-white text-sm font-medium"
+            className="px-2 py-1.5 bg-white/20 rounded-md text-white text-xs font-medium"
           >
             {Math.round(scale * 100)}%
           </button>
           <button
             onClick={zoomIn}
-            className="p-2 bg-white/20 rounded-full text-white"
+            className="p-1.5 bg-white/20 rounded-md text-white"
           >
-            <ZoomIn size={20} />
+            <ZoomIn size={16} />
           </button>
         </div>
       </div>
 
-      {/* Container scrollável e com zoom */}
+      {/* Container - interface limpa */}
       <div 
         ref={containerRef}
-        className="flex-1 overflow-hidden relative bg-transparent"
+        className="flex-1 overflow-hidden relative"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -174,24 +165,19 @@ export const MobileBadgesViewer = ({ badges, onBadgeSelect }: MobileBadgesViewer
       >
         <div
           ref={contentRef}
-          className="p-4 transition-transform duration-200 ease-out"
+          className="p-2 transition-transform duration-200 ease-out"
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: 'center center',
           }}
         >
-          {/* Grid de emblemas */}
-          <div className="grid grid-cols-6 gap-3 max-w-sm mx-auto">
+          {/* Grid otimizado - mais denso */}
+          <div className="grid grid-cols-10 gap-1 max-w-full mx-auto">
             {badges.map((badge) => (
               <button
                 key={badge.id}
                 data-badge-code={badge.code}
-                className={`aspect-square bg-transparent rounded-lg p-2 
-                  transition-all duration-300 active:scale-95
-                  ${getRarityClass(badge.rarity)}`}
-                style={{
-                  boxShadow: '0 8px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
-                }}
+                className="aspect-square bg-transparent p-0.5 transition-all duration-200 active:scale-95"
               >
                 <IntelligentBadgeImage
                   code={badge.code}
@@ -201,12 +187,12 @@ export const MobileBadgesViewer = ({ badges, onBadgeSelect }: MobileBadgesViewer
                   className="w-full h-full"
                 />
                 
-                {/* Indicador de raridade */}
+                {/* Indicador de raridade - sutil */}
                 {badge.rarity !== 'common' && (
-                  <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${
+                  <div className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${
                     badge.rarity === 'legendary' ? 'bg-yellow-400' :
                     badge.rarity === 'rare' ? 'bg-purple-400' : 'bg-blue-400'
-                  } shadow-lg`} />
+                  }`} />
                 )}
               </button>
             ))}
@@ -214,10 +200,10 @@ export const MobileBadgesViewer = ({ badges, onBadgeSelect }: MobileBadgesViewer
         </div>
       </div>
 
-      {/* Footer com instruções */}
-      <div className="p-4 bg-black/80 backdrop-blur-sm text-center">
-        <p className="text-white text-sm opacity-80">
-          Arraste para navegar • Pinça para zoom • Toque para detalhes
+      {/* Footer - minimalista */}
+      <div className="p-2 bg-black/80 text-center">
+        <p className="text-white text-xs opacity-75">
+          Arraste • Pinça para zoom • Toque para detalhes
         </p>
       </div>
     </div>

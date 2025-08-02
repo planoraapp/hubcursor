@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Package } from 'lucide-react';
 import { PanelCard } from './PanelCard';
@@ -35,7 +36,7 @@ const FurniModal = ({ furni, onClose }: FurniModalProps) => (
       </div>
       
       <div className="text-center mb-4">
-        <div className="inline-block p-4 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-lg">
+        <div className="inline-block p-4 bg-gray-50 rounded-lg">
           <IntelligentFurniImage
             swfName={furni.swfName}
             name={furni.name}
@@ -94,10 +95,10 @@ export const CatalogInfinite = () => {
     
     try {
       setLoading(true);
-      console.log(`🔄 Fetching enhanced furnis page ${pageNum}, category: ${category}`);
+      console.log(`🔄 Fetching enhanced furnis V2 page ${pageNum}, category: ${category}`);
       
       const { data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
-        body: { page: pageNum, limit: 60, category }
+        body: { page: pageNum, limit: 200, category }
       });
       
       if (error) {
@@ -112,14 +113,15 @@ export const CatalogInfinite = () => {
           setCategories(['all', ...data.metadata.categories]);
         }
         
-        console.log(`✅ Loaded ${data.furnis.length} enhanced furnis`);
+        console.log(`✅ Loaded ${data.furnis.length} enhanced furnis V2`);
+        console.log(`📊 Total furnis loaded: ${reset ? data.furnis.length : furnis.length + data.furnis.length}`);
       }
     } catch (error) {
-      console.error('❌ Error fetching enhanced furnis:', error);
+      console.error('❌ Error fetching enhanced furnis V2:', error);
     } finally {
       setLoading(false);
     }
-  }, [loading]);
+  }, [loading, furnis.length]);
 
   useEffect(() => {
     setFurnis([]);
@@ -134,6 +136,23 @@ export const CatalogInfinite = () => {
       fetchFurnis(nextPage, selectedCategory);
     }
   };
+
+  // Auto-load more when scrolling near bottom
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollContainer = document.querySelector('.furnis-scroll-container');
+      if (!scrollContainer || loading || !hasMore) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      if (scrollTop + clientHeight >= scrollHeight - 200) {
+        loadMore();
+      }
+    };
+
+    const scrollContainer = document.querySelector('.furnis-scroll-container');
+    scrollContainer?.addEventListener('scroll', handleScroll);
+    return () => scrollContainer?.removeEventListener('scroll', handleScroll);
+  }, [loading, hasMore, page]);
 
   const filteredFurnis = furnis.filter(furni =>
     furni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,9 +179,9 @@ export const CatalogInfinite = () => {
 
   return (
     <div className="space-y-6">
-      <PanelCard title="Catálogo de Móveis - Edição Aprimorada">
+      <PanelCard title="Catálogo de Móveis - Mega Collection V2">
         <div className="space-y-4">
-          {/* Enhanced Search and Filter */}
+          {/* Search and Filter */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -191,62 +210,48 @@ export const CatalogInfinite = () => {
             </div>
           </div>
 
-          {/* Enhanced Furnis Grid */}
-          <div className="bg-white border-2 border-gray-300 rounded-lg h-[700px] overflow-y-auto p-6">
-            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 gap-4">
+          {/* Interface Limpa - Grid Otimizado */}
+          <div className="bg-white border-2 border-gray-300 rounded-lg h-[700px] overflow-y-auto p-4 furnis-scroll-container">
+            <div className="grid grid-cols-12 md:grid-cols-16 lg:grid-cols-20 xl:grid-cols-24 gap-1">
               {filteredFurnis.map((furni) => (
                 <button
                   key={furni.id}
                   onClick={() => setSelectedFurni(furni)}
-                  className={`group relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 
-                    hover:from-blue-50 hover:to-indigo-100 border-2 border-gray-200 
-                    hover:border-blue-300 rounded-lg p-3 transition-all duration-300 
-                    hover:scale-105 hover:shadow-xl hover:-translate-y-1 transform-gpu`}
+                  className="group relative w-8 h-8 md:w-10 md:h-10 hover:bg-gray-100 rounded transition-colors duration-200 p-0.5"
                   title={furni.name}
                 >
-                  {/* Rarity indicator */}
+                  {/* Rarity indicator - sutil */}
                   {furni.rarity !== 'common' && (
-                    <div className={`absolute top-1 right-1 w-3 h-3 rounded-full shadow-lg ${
+                    <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full shadow-sm ${
                       furni.rarity === 'legendary' ? 'bg-yellow-500' :
                       furni.rarity === 'rare' ? 'bg-purple-500' : 'bg-blue-500'
-                    }`}>
-                    </div>
+                    }`} />
                   )}
                   
-                  {/* Furni image with intelligent loading */}
-                  <div className="w-full h-full flex items-center justify-center">
-                    <IntelligentFurniImage
-                      swfName={furni.swfName}
-                      name={furni.name}
-                      originalUrl={furni.imageUrl}
-                      size="md"
-                      className="filter drop-shadow-sm group-hover:drop-shadow-lg transition-all duration-300"
-                    />
-                  </div>
-                  
-                  {/* Floating tooltip */}
-                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 
-                    opacity-0 group-hover:opacity-100 transition-all duration-300 delay-300
-                    bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap z-20 
-                    shadow-lg max-w-32 truncate">
-                    {furni.name}
-                  </div>
+                  {/* Furni image - tamanho original, sem bordas */}
+                  <IntelligentFurniImage
+                    swfName={furni.swfName}
+                    name={furni.name}
+                    originalUrl={furni.imageUrl}
+                    size="md"
+                    className="w-full h-full"
+                  />
                 </button>
               ))}
             </div>
 
-            {/* Enhanced Load More Button */}
+            {/* Load More Button */}
             {hasMore && filteredFurnis.length > 0 && (
-              <div className="text-center mt-8">
+              <div className="text-center mt-6">
                 <button
                   onClick={loadMore}
                   disabled={loading}
-                  className="habbo-button-blue px-8 py-3 transform transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                  className="habbo-button-blue px-6 py-2 text-sm"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Carregando Móveis...
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Carregando...
                     </span>
                   ) : (
                     'Carregar Mais Móveis'
@@ -255,30 +260,30 @@ export const CatalogInfinite = () => {
               </div>
             )}
 
-            {/* Enhanced Loading State */}
+            {/* Loading State */}
             {loading && filteredFurnis.length === 0 && (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mx-auto mb-6"></div>
-                  <p className="text-gray-600 text-lg font-semibold">Carregando Catálogo Aprimorado...</p>
-                  <p className="text-gray-500 text-sm mt-2">Buscando móveis nas melhores fontes</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600 font-semibold">Carregando Mega Collection V2...</p>
+                  <p className="text-gray-500 text-sm mt-1">Buscando 2000+ móveis</p>
                 </div>
               </div>
             )}
 
-            {/* Enhanced Empty State */}
+            {/* Empty State */}
             {!loading && filteredFurnis.length === 0 && (
               <div className="text-center py-20">
-                <Package className="w-20 h-20 text-gray-400 mx-auto mb-6" />
-                <p className="text-gray-600 text-xl font-semibold mb-2">Nenhum móvel encontrado</p>
+                <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg font-semibold mb-2">Nenhum móvel encontrado</p>
                 <p className="text-gray-500">Tente ajustar os filtros ou termos de busca</p>
               </div>
             )}
           </div>
 
-          {/* Enhanced Statistics */}
+          {/* Estatísticas */}
           <div className="text-sm text-gray-500 text-center bg-gray-50 rounded-lg p-3">
-            <div className="flex justify-center items-center gap-6">
+            <div className="flex justify-center items-center gap-6 flex-wrap">
               <span className="flex items-center gap-1">
                 📊 <strong>Total:</strong> {furnis.length} móveis
               </span>
@@ -288,12 +293,20 @@ export const CatalogInfinite = () => {
               <span className="flex items-center gap-1">
                 🏆 <strong>Raros:</strong> {furnis.filter(f => f.rarity !== 'common').length}
               </span>
+              <span className="flex items-center gap-1">
+                🎯 <strong>Página:</strong> {page}
+              </span>
+              {hasMore && (
+                <span className="flex items-center gap-1">
+                  📈 <strong>Mais disponíveis</strong>
+                </span>
+              )}
             </div>
           </div>
         </div>
       </PanelCard>
 
-      {/* Enhanced Modal */}
+      {/* Modal limpo */}
       {selectedFurni && (
         <FurniModal
           furni={selectedFurni}
