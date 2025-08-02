@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { BadgeTabsGrid } from './BadgeTabsGrid';
+import { HybridBadgeTabsGrid } from './HybridBadgeTabsGrid';
 
 export const MassiveBadgesGrid: React.FC = () => {
-  return <BadgeTabsGrid />;
+  return <HybridBadgeTabsGrid />;
 };
