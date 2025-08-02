@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, User, Shuffle, Copy, Download, Search, Palette, RefreshCw, Zap } from 'lucide-react';
+import { Loader2, User, Shuffle, Copy, Download, Search, Palette, RefreshCw, Zap, AlertCircle } from 'lucide-react';
 import { useHabboWidgetsClothing } from '@/hooks/useHabboWidgetsClothing';
 import { useToast } from '@/hooks/use-toast';
 import OptimizedItemThumbnail from './OptimizedItemThumbnail';
