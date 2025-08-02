@@ -19,17 +19,30 @@ const sizeClasses = {
   xl: 'w-20 h-20'
 };
 
-// URLs prioritárias para badges
+// URLs prioritárias para badges - organizadas por confiabilidade
 const getBadgeUrls = (code: string): string[] => [
-  `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${code}.gif`,
+  // HabboAssets (mais confiável para badges existentes)
   `https://habboassets.com/c_images/album1584/${code}.gif`,
+  // Habbo Oficial
   `https://images.habbo.com/c_images/album1584/${code}.gif`,
-  `https://habboo-a.akamaihd.net/c_images/album1584/${code}.gif`,
+  // Storage do Supabase (nosso backup)
+  `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${code}.gif`,
+  // Habbo Widgets
+  `https://www.habbowidgets.com/images/badges/${code}.gif`,
+  // Habbo oficial alternativo
   `https://www.habbo.com/habbo-imaging/badge/${code}.gif`
 ];
 
-// Cache de imagens carregadas
-const imageCache = new Map<string, { url: string; loaded: boolean; error: boolean }>();
+// Cache global mais inteligente
+const imageCache = new Map<string, { 
+  url: string | null; 
+  loaded: boolean; 
+  error: boolean; 
+  timestamp: number;
+}>();
+
+// Cache TTL de 1 hora
+const CACHE_TTL = 60 * 60 * 1000;
 
 export const OptimizedBadgeImage: React.FC<OptimizedBadgeImageProps> = ({
   code,
@@ -50,56 +63,80 @@ export const OptimizedBadgeImage: React.FC<OptimizedBadgeImageProps> = ({
   // Verificar cache primeiro
   useEffect(() => {
     const cached = imageCache.get(cacheKey);
-    if (cached?.loaded && !cached.error) {
-      setCurrentUrl(cached.url);
-      setIsLoading(false);
-      setHasError(false);
-      return;
+    const now = Date.now();
+    
+    // Verificar se o cache é válido
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+      if (cached.loaded && !cached.error && cached.url) {
+        setCurrentUrl(cached.url);
+        setIsLoading(false);
+        setHasError(false);
+        return;
+      } else if (cached.error) {
+        setHasError(true);
+        setIsLoading(false);
+        return;
+      }
     }
 
-    // Se não está no cache ou teve erro, começar o carregamento
+    // Iniciar carregamento
     loadNextUrl();
   }, [code]);
 
-  const loadNextUrl = useCallback(() => {
+  const testImageUrl = useCallback(async (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const timeout = setTimeout(() => {
+        img.onload = null;
+        img.onerror = null;
+        resolve(false);
+      }, 3000); // 3 segundos timeout
+
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+
+      img.src = url;
+    });
+  }, []);
+
+  const loadNextUrl = useCallback(async () => {
     if (urlIndex >= urls.length) {
       // Todos os URLs falharam
       setHasError(true);
       setIsLoading(false);
-      imageCache.set(cacheKey, { url: '', loaded: false, error: true });
-      console.warn(`❌ Failed to load badge ${code} from all ${urls.length} URLs`);
+      imageCache.set(cacheKey, { 
+        url: null, 
+        loaded: false, 
+        error: true, 
+        timestamp: Date.now() 
+      });
       return;
     }
 
     const url = urls[urlIndex];
-    const img = new Image();
+    const success = await testImageUrl(url);
 
-    const handleLoad = () => {
+    if (success) {
       setCurrentUrl(url);
       setIsLoading(false);
       setHasError(false);
-      imageCache.set(cacheKey, { url, loaded: true, error: false });
-      console.log(`✅ Successfully loaded badge ${code} from URL ${urlIndex + 1}/${urls.length}`);
-    };
-
-    const handleError = () => {
-      console.warn(`❌ Failed to load badge ${code} from URL ${urlIndex + 1}/${urls.length}`);
+      imageCache.set(cacheKey, { 
+        url, 
+        loaded: true, 
+        error: false, 
+        timestamp: Date.now() 
+      });
+    } else {
       setUrlIndex(prev => prev + 1);
-    };
-
-    img.onload = handleLoad;
-    img.onerror = handleError;
-    img.src = url;
-
-    // Timeout para URLs lentos
-    setTimeout(() => {
-      if (!img.complete) {
-        img.onload = null;
-        img.onerror = null;
-        handleError();
-      }
-    }, 5000);
-  }, [urlIndex, urls, code, cacheKey]);
+    }
+  }, [urlIndex, urls, code, cacheKey, testImageUrl]);
 
   // Tentar próximo URL quando urlIndex muda
   useEffect(() => {
@@ -113,7 +150,7 @@ export const OptimizedBadgeImage: React.FC<OptimizedBadgeImageProps> = ({
   if (isLoading) {
     return (
       <div className={`${sizeClass} ${className} bg-gray-200 animate-pulse rounded flex items-center justify-center`}>
-        <div className="w-1/2 h-1/2 bg-gray-300 rounded"></div>
+        <div className="w-1/2 h-1/2 bg-gray-300 rounded animate-pulse"></div>
       </div>
     );
   }
@@ -123,13 +160,18 @@ export const OptimizedBadgeImage: React.FC<OptimizedBadgeImageProps> = ({
     
     return (
       <div 
-        className={`${sizeClass} ${className} bg-gradient-to-br from-gray-100 to-gray-200 rounded border-2 border-gray-300 flex items-center justify-center`}
-        title={`${code} - Imagem não disponível`}
+        className={`${sizeClass} ${className} bg-gradient-to-br from-gray-100 to-gray-200 rounded border border-gray-300 flex items-center justify-center`}
+        title={`${code} - Badge não disponível`}
       >
-        <Award 
-          className="w-1/2 h-1/2 text-gray-400"
-          strokeWidth={1.5}
-        />
+        <div className="text-center">
+          <Award 
+            className="w-1/3 h-1/3 text-gray-400 mx-auto mb-1"
+            strokeWidth={1.5}
+          />
+          <span className="text-xs font-bold text-gray-600 block">
+            {code.slice(0, 4)}
+          </span>
+        </div>
       </div>
     );
   }
@@ -139,11 +181,11 @@ export const OptimizedBadgeImage: React.FC<OptimizedBadgeImageProps> = ({
       src={currentUrl}
       alt={`Badge ${code} - ${name}`}
       title={`${code} - ${name}`}
-      className={`${sizeClass} ${className} object-contain`}
+      className={`${sizeClass} ${className} object-contain rounded`}
       loading={priority ? 'eager' : 'lazy'}
+      style={{ imageRendering: 'pixelated' }}
       onError={() => {
         // Se a imagem falhar após ser carregada, tentar próxima
-        console.warn(`❌ Image error after load for badge ${code}`);
         setUrlIndex(prev => prev + 1);
         setCurrentUrl(null);
       }}
