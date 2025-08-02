@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import ViaJovemClothingGrid from './ViaJovemEditor/ViaJovemClothingGrid';
+import ViaJovemClothingGridExpanded from './ViaJovemEditor/ViaJovemClothingGridExpanded';
+import ViaJovemCategoryNavigation from './ViaJovemEditor/ViaJovemCategoryNavigation';
 import ViaJovemColorPalette from './ViaJovemEditor/ViaJovemColorPalette';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -184,9 +185,9 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
       {/* Header ViaJovem Style */}
       <div className="text-center">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-          Editor ViaJovem
+          Editor ViaJovem Expandido
         </h1>
-        <p className="text-gray-600">Crie e edite seus visuais Habbo com estilo ViaJovem</p>
+        <p className="text-gray-600">Mais de 2.800 roupas do Flash Assets + Interface ViaJovem Original</p>
       </div>
 
       {/* Avatar Preview - Estilo ViaJovem */}
@@ -300,35 +301,17 @@ export const ViaJovemEditor = ({ className = '' }: ViaJovemEditorProps) => {
         </CardContent>
       </Card>
 
-      {/* Navegação de categorias - Estilo ViaJovem */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                size="sm"
-                className={`h-16 flex flex-col gap-1 transition-all duration-200 ${
-                  selectedCategory === category.id 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg scale-105' 
-                    : `${category.color} border-gray-200`
-                }`}
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                <span className="text-lg">{category.icon}</span>
-                <span className="text-xs font-medium">{category.name}</span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Navegação de categorias ViaJovem - NOVO COMPONENTE */}
+      <ViaJovemCategoryNavigation
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
+      />
 
       {/* Área principal do editor */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Grid de roupas */}
+        {/* Grid de roupas expandido */}
         <div className="lg:col-span-2">
-          <ViaJovemClothingGrid
+          <ViaJovemClothingGridExpanded
             selectedCategory={selectedCategory}
             selectedGender={selectedGender}
             selectedColor={selectedColor}
