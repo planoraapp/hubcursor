@@ -1,6 +1,6 @@
 
 import { useState, useMemo, useCallback } from 'react';
-import { Search, Filter, Package, Star, Award, Users, Calendar, GameController2, Sparkles, Crown } from 'lucide-react';
+import { Search, Filter, Package, Star, Award, Users, Calendar, Gamepad2, Sparkles, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +13,7 @@ const CATEGORY_ICONS = {
   'staff': Crown,
   'club': Star,
   'events': Calendar,
-  'games': GameController2,
+  'games': Gamepad2,
   'rare': Sparkles,
   'achievements': Award,
   'seasonal': Calendar,

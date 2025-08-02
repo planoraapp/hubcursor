@@ -125,8 +125,8 @@ export const CatalogInfiniteV2 = () => {
         setFurnis(prev => reset ? data.furnis : [...prev, ...data.furnis]);
         setHasMore(data.metadata?.hasMore || false);
         
-        // Extract unique categories
-        const uniqueCategories = [...new Set(data.furnis.map((f: HabboFurniItem) => f.category))];
+        // Extract unique categories with proper type casting
+        const uniqueCategories = [...new Set(data.furnis.map((f: HabboFurniItem) => f.category as string))];
         setCategories(['all', ...uniqueCategories]);
         
         console.log(`✅ Loaded ${data.furnis.length} furnis from HabboFurni.com API`);
