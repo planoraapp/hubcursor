@@ -42,8 +42,8 @@ serve(async (req) => {
       );
     }
 
-    // Buscar dados de MÚLTIPLAS fontes
-    const allClothingData = await fetchMassiveClothingData();
+    // Buscar dados com sistema robusto
+    const allClothingData = await fetchRobustClothingData();
     
     // Cache os dados
     cache.set('massive-clothing-data', {
@@ -75,7 +75,7 @@ serve(async (req) => {
   }
 });
 
-async function fetchMassiveClothingData(): Promise<HabboWidgetsItem[]> {
+async function fetchRobustClothingData(): Promise<HabboWidgetsItem[]> {
   const allItems: HabboWidgetsItem[] = [];
   
   try {
@@ -86,36 +86,35 @@ async function fetchMassiveClothingData(): Promise<HabboWidgetsItem[]> {
       console.log(`✅ [Oficial] ${officialItems.length} itens oficiais carregados`);
     }
 
-    console.log('🕸️ [FONTE 2] Tentando scraping HabboWidgets com múltiplas estratégias...');
-    const widgetItems = await fetchHabboWidgetsWithMultipleStrategies();
+    console.log('🕸️ [FONTE 2] Scraping robusto HabboWidgets...');
+    const widgetItems = await fetchHabboWidgetsRobust();
     if (widgetItems.length > 0) {
-      // Filtrar duplicatas
       const uniqueWidgetItems = widgetItems.filter(widget => 
         !allItems.some(existing => 
           existing.category === widget.category && existing.figureId === widget.figureId
         )
       );
       allItems.push(...uniqueWidgetItems);
-      console.log(`✅ [Widgets] ${uniqueWidgetItems.length} itens únicos do HabboWidgets`);
+      console.log(`✅ [Widgets] ${uniqueWidgetItems.length} itens únicos extraídos`);
     }
 
-    console.log('💎 [FONTE 3] Adicionando base massiva conhecida...');
-    const knownItems = generateMassiveKnownDatabase();
+    console.log('💎 [FONTE 3] Base de dados conhecida...');
+    const knownItems = generateRobustFallbackDatabase();
     const uniqueKnownItems = knownItems.filter(known => 
       !allItems.some(existing => 
         existing.category === known.category && existing.figureId === known.figureId
       )
     );
     allItems.push(...uniqueKnownItems);
-    console.log(`✅ [Conhecidos] ${uniqueKnownItems.length} itens da base conhecida`);
+    console.log(`✅ [Conhecidos] ${uniqueKnownItems.length} itens da base`);
 
   } catch (error) {
-    console.error('❌ [FetchMassive] Erro na busca:', error);
+    console.error('❌ [FetchRobust] Erro na busca:', error);
   }
   
-  // Se ainda assim não temos dados suficientes, usar fallback massivo
+  // Fallback se necessário
   if (allItems.length < 1000) {
-    console.log('🔄 [Fallback] Complementando com fallback massivo...');
+    console.log('🔄 [Fallback] Complementando...');
     const fallbackItems = generateMassiveFallbackDatabase();
     const uniqueFallbackItems = fallbackItems.filter(fallback => 
       !allItems.some(existing => 
@@ -123,10 +122,10 @@ async function fetchMassiveClothingData(): Promise<HabboWidgetsItem[]> {
       )
     );
     allItems.push(...uniqueFallbackItems);
-    console.log(`✅ [Fallback] ${uniqueFallbackItems.length} itens de fallback adicionados`);
+    console.log(`✅ [Fallback] ${uniqueFallbackItems.length} itens adicionados`);
   }
   
-  console.log(`🎯 [TOTAL] ${allItems.length} itens processados no total`);
+  console.log(`🎯 [TOTAL] ${allItems.length} itens processados`);
   return allItems;
 }
 
@@ -169,82 +168,85 @@ async function fetchOfficialHabboClothingData(): Promise<HabboWidgetsItem[]> {
   return items;
 }
 
-async function fetchHabboWidgetsWithMultipleStrategies(): Promise<HabboWidgetsItem[]> {
+async function fetchHabboWidgetsRobust(): Promise<HabboWidgetsItem[]> {
   const items: HabboWidgetsItem[] = [];
   const categories = ['ca', 'cc', 'ch', 'cp', 'ea', 'fa', 'ha', 'hd', 'hr', 'lg', 'sh', 'wa'];
   
-  // Múltiplas estratégias de User-Agent
-  const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+  // Estratégias anti-bloqueio melhoradas
+  const strategies = [
+    {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      delay: 300,
+      referer: 'https://www.google.com/'
+    },
+    {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      delay: 500,
+      referer: 'https://www.habbo.com/'
+    },
+    {
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      delay: 200,
+      referer: 'https://github.com/'
+    }
   ];
   
   for (const category of categories) {
     try {
-      console.log(`🔍 [Category] Processando ${category} com múltiplas estratégias...`);
+      console.log(`🔍 [Category] Processando ${category}...`);
       
-      let successCount = 0;
+      let categorySuccess = false;
       
-      // Tentar com diferentes User-Agents
-      for (let agentIndex = 0; agentIndex < userAgents.length && successCount === 0; agentIndex++) {
-        const userAgent = userAgents[agentIndex];
+      for (const strategy of strategies) {
+        if (categorySuccess) break;
         
-        // Tentar múltiplas páginas
-        for (let page = 1; page <= 10; page++) {
-          try {
-            await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
-            
-            const url = `https://www.habbowidgets.com/habbo/closet/com.br?page=${page}#${category}`;
-            console.log(`📄 [Tentativa] ${category} página ${page} com UA ${agentIndex + 1}`);
-            
-            const response = await fetch(url, {
-              headers: {
-                'User-Agent': userAgent,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'DNT': '1',
-                'Connection': 'keep-alive',
-                'Upgrade-Insecure-Requests': '1'
-              },
-              signal: AbortSignal.timeout(20000)
-            });
+        try {
+          await new Promise(resolve => setTimeout(resolve, strategy.delay));
+          
+          const url = `https://www.habbowidgets.com/habbo/closet/com.br#${category}`;
+          console.log(`📡 [Estratégia] ${category} com delay ${strategy.delay}ms`);
+          
+          const response = await fetch(url, {
+            headers: {
+              'User-Agent': strategy.userAgent,
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
+              'Referer': strategy.referer,
+              'Sec-Fetch-Dest': 'document',
+              'Sec-Fetch-Mode': 'navigate',
+              'Sec-Fetch-Site': 'cross-site',
+              'Upgrade-Insecure-Requests': '1'
+            },
+            signal: AbortSignal.timeout(15000)
+          });
 
-            if (response.ok) {
-              const html = await response.text();
-              const pageItems = parseHabboWidgetsPageAdvanced(html, category);
-              
-              if (pageItems.length > 0) {
-                items.push(...pageItems);
-                successCount += pageItems.length;
-                console.log(`✅ [Sucesso] ${category} página ${page}: ${pageItems.length} itens`);
-              } else {
-                console.log(`🏁 [Fim] ${category} página ${page}: sem mais itens`);
-                break;
-              }
-            } else {
-              console.log(`❌ [Erro] ${category} página ${page}: ${response.status}`);
-              if (response.status === 403) {
-                break; // Tentar próximo User-Agent
-              }
-            }
+          if (response.ok) {
+            const html = await response.text();
+            const categoryItems = parseHabboWidgetsAdvanced(html, category);
             
-          } catch (pageError) {
-            console.log(`⚠️ [PageError] ${category} página ${page}:`, pageError.message);
-            break;
+            if (categoryItems.length > 0) {
+              items.push(...categoryItems);
+              categorySuccess = true;
+              console.log(`✅ [Sucesso] ${category}: ${categoryItems.length} itens`);
+            }
+          } else {
+            console.log(`⚠️ [Status] ${category}: ${response.status}`);
           }
-        }
-        
-        if (successCount > 0) {
-          console.log(`🎯 [Categoria] ${category}: ${successCount} itens com UA ${agentIndex + 1}`);
-          break; // Sucesso com este User-Agent
+          
+        } catch (strategyError) {
+          console.log(`⚠️ [Strategy] ${category}:`, strategyError.message);
         }
       }
       
+      if (!categorySuccess) {
+        console.log(`❌ [Failed] ${category}: todas estratégias falharam`);
+      }
+      
     } catch (categoryError) {
-      console.log(`⚠️ [CategoryError] ${category}:`, categoryError.message);
+      console.log(`❌ [CategoryError] ${category}:`, categoryError.message);
     }
   }
   
@@ -297,7 +299,7 @@ function parseOfficialFigureData(data: string): HabboWidgetsItem[] {
   return items;
 }
 
-function parseHabboWidgetsPageAdvanced(html: string, category: string): HabboWidgetsItem[] {
+function parseHabboWidgetsAdvanced(html: string, category: string): HabboWidgetsItem[] {
   const items: HabboWidgetsItem[] = [];
   
   try {

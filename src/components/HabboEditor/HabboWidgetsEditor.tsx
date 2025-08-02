@@ -56,7 +56,7 @@ const HabboWidgetsEditor = () => {
   // URL do avatar otimizada
   const getAvatarUrl = useCallback(() => {
     const figureString = generateFigureString();
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&size=l&direction=2&head_direction=3`;
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&size=l&direction=2&head_direction=3&gesture=nor&headonly=0`;
   }, [generateFigureString, selectedGender]);
 
   // Handlers otimizados com feedback
@@ -177,13 +177,8 @@ const HabboWidgetsEditor = () => {
             <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
             <Zap className="w-4 h-4 text-yellow-500 absolute top-0 right-0 animate-pulse" />
           </div>
-          <h3 className="text-xl font-bold text-blue-800 mb-2">Carregando Sistema MASSIVO</h3>
-          <p className="text-blue-600 mb-2">Buscando milhares de roupas do HabboWidgets...</p>
-          <div className="text-sm text-blue-500 space-y-1">
-            <div>🔄 Conectando com APIs oficiais</div>
-            <div>🕸️ Fazendo scraping inteligente</div>
-            <div>💎 Carregando base de dados massiva</div>
-          </div>
+          <h3 className="text-xl font-bold text-blue-800 mb-2">Carregando Editor</h3>
+          <p className="text-blue-600 mb-2">Buscando roupas...</p>
         </div>
       </div>
     );
@@ -195,12 +190,12 @@ const HabboWidgetsEditor = () => {
       <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
         <div className="text-red-600 mb-4">
           <AlertCircle className="w-12 h-12 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold">Erro no Sistema de Roupas</h3>
-          <p className="text-sm mt-2">Problema na comunicação com as APIs de roupas</p>
+          <h3 className="text-lg font-semibold">Erro no Carregamento</h3>
+          <p className="text-sm mt-2">Problema ao carregar itens</p>
         </div>
         <Button onClick={() => refetch()} variant="outline" className="border-red-300 text-red-600">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Recarregar Sistema
+          Recarregar
         </Button>
       </div>
     );
@@ -213,14 +208,11 @@ const HabboWidgetsEditor = () => {
         <CardHeader className="text-center pb-4">
           <CardTitle className="text-blue-800 flex items-center justify-center gap-2 text-lg">
             <User className="w-6 h-6" />
-            Preview Avatar
+            Preview
           </CardTitle>
           <div className="flex flex-col gap-2">
             <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
-              ✨ {totalItems.toLocaleString()} roupas carregadas
-            </Badge>
-            <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">
-              📊 Sistema MASSIVO Ativo
+              {totalItems.toLocaleString()} roupas
             </Badge>
           </div>
         </CardHeader>
@@ -231,16 +223,19 @@ const HabboWidgetsEditor = () => {
             <img
               src={getAvatarUrl()}
               alt="Avatar Preview"
-              className="w-44 h-44 mx-auto transition-all duration-500 hover:scale-105"
-              style={{ imageRendering: 'pixelated' }}
+              className="w-48 h-48 mx-auto transition-all duration-500 hover:scale-105"
+              style={{ 
+                imageRendering: 'pixelated',
+                aspectRatio: '1/1.2',
+                objectFit: 'contain'
+              }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&gender=U&size=l&direction=2&head_direction=3';
               }}
             />
-            <div className="text-xs text-gray-600 mt-2 space-y-1">
+            <div className="text-xs text-gray-600 mt-2">
               <div>{Object.keys(selectedItems).length} peças ativas</div>
-              <div className="text-green-600">✅ Preview em tempo real</div>
             </div>
           </div>
           
@@ -291,7 +286,7 @@ const HabboWidgetsEditor = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
               <Palette className="w-6 h-6" />
-              Catálogo HabboWidgets MASSIVO
+              Itens
             </CardTitle>
             
             {/* Search Bar Melhorado */}
@@ -346,18 +341,18 @@ const HabboWidgetsEditor = () => {
                       </h3>
                       <div className="flex gap-2 mt-2">
                         <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          📦 {filteredItems.length} itens
+                          {filteredItems.length} itens
                         </Badge>
                         <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                          👑 {hcItemsCount} HC
+                          {hcItemsCount} HC
                         </Badge>
                         <Badge variant="outline" className="bg-green-50 text-green-700">
-                          🆓 {freeItemsCount} Gratuitos
+                          {freeItemsCount} Gratuitos
                         </Badge>
                       </div>
                     </div>
                     
-                    {/* Color Selector Melhorado */}
+                    {/* Color Selector */}
                     {selectedItems[category] && (
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">Cores:</span>
@@ -458,22 +453,6 @@ const HabboWidgetsEditor = () => {
               ))}
             </Tabs>
 
-            {/* Footer com Stats */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-              <div className="text-center space-y-2">
-                <div className="text-lg font-bold text-gray-800">
-                  🎨 Sistema HabboWidgets MASSIVO Ativo
-                </div>
-                <div className="flex justify-center gap-4 text-sm text-gray-600">
-                  <span>📦 {totalItems.toLocaleString()} roupas disponíveis</span>
-                  <span>🎯 {availableCategories.length} categorias</span>
-                  <span>⚡ Cache inteligente ativo</span>
-                </div>
-                <div className="text-xs text-green-600 font-medium">
-                  ✅ Dados oficiais + Scraping + Base massiva + Fallback garantido
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

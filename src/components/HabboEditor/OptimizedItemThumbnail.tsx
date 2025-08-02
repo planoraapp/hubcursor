@@ -24,39 +24,39 @@ const OptimizedItemThumbnail: React.FC<OptimizedItemThumbnailProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const generateThumbnailUrl = useCallback(() => {
-    // Base figures otimizadas para cada categoria
-    const baseFigures: Record<string, string> = {
-      'hd': 'hd-180-1', 
-      'hr': 'hd-180-1.hr-828-45', 
-      'ha': 'hd-180-1.hr-828-45', 
-      'ea': 'hd-180-1.hr-828-45', 
-      'fa': 'hd-180-1.hr-828-45', 
-      'ch': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1', 
-      'cc': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1', 
-      'lg': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1', 
-      'sh': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1', 
-      'ca': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1', 
-      'wa': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1', 
-      'cp': 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1'  
+    // Figuras base mínimas e específicas por categoria
+    const categoryConfigs: Record<string, { base: string; headOnly: boolean; focus: string }> = {
+      'hd': { base: 'hd-180-1', headOnly: true, focus: 'head' },
+      'hr': { base: 'hd-180-1', headOnly: true, focus: 'head' },
+      'ha': { base: 'hd-180-1', headOnly: true, focus: 'head' },
+      'ea': { base: 'hd-180-1', headOnly: true, focus: 'head' },
+      'fa': { base: 'hd-180-1', headOnly: true, focus: 'head' },
+      'ch': { base: 'hd-180-1.lg-700-1', headOnly: false, focus: 'torso' },
+      'cc': { base: 'hd-180-1.ch-665-1.lg-700-1', headOnly: false, focus: 'torso' },
+      'lg': { base: 'hd-180-1.ch-665-1', headOnly: false, focus: 'legs' },
+      'sh': { base: 'hd-180-1.ch-665-1.lg-700-1', headOnly: false, focus: 'feet' },
+      'ca': { base: 'hd-180-1.ch-665-1.lg-700-1', headOnly: false, focus: 'torso' },
+      'wa': { base: 'hd-180-1.ch-665-1.lg-700-1', headOnly: false, focus: 'waist' },
+      'cp': { base: 'hd-180-1.ch-665-1.lg-700-1', headOnly: false, focus: 'torso' }
     };
     
-    const baseFigure = baseFigures[category] || baseFigures['ch'];
+    const config = categoryConfigs[category] || categoryConfigs['ch'];
     
-    // Construir figura com o item específico
-    let modifiedFigure: string;
+    // Construir figura limpa
+    let figure: string;
     const categoryRegex = new RegExp(`${category}-\\d+-\\d+`);
     
-    if (baseFigure.match(categoryRegex)) {
-      modifiedFigure = baseFigure.replace(categoryRegex, `${category}-${figureId}-${colorId}`);
+    if (config.base.match(categoryRegex)) {
+      figure = config.base.replace(categoryRegex, `${category}-${figureId}-${colorId}`);
     } else {
-      modifiedFigure = `${baseFigure}.${category}-${figureId}-${colorId}`;
+      figure = `${config.base}.${category}-${figureId}-${colorId}`;
     }
     
-    // Parâmetros específicos para thumbnails
-    const headOnlyCategories = ['hd', 'hr', 'ha', 'ea', 'fa'];
-    const headOnly = headOnlyCategories.includes(category) ? '&headonly=1' : '';
+    // Parâmetros otimizados para visualização
+    const headOnly = config.headOnly ? '&headonly=1' : '';
+    const direction = config.focus === 'feet' ? '&direction=4' : '&direction=2';
     
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${modifiedFigure}&gender=U&size=l&direction=2&head_direction=3${headOnly}`;
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figure}&gender=U&size=l${direction}&head_direction=3${headOnly}`;
   }, [category, figureId, colorId]);
 
   const handleImageError = useCallback(() => {
@@ -87,19 +87,23 @@ const OptimizedItemThumbnail: React.FC<OptimizedItemThumbnailProps> = ({
   }
 
   return (
-    <div className={`${sizeClasses[size]} ${className} relative`}>
+    <div className={`${sizeClasses[size]} ${className} relative overflow-hidden rounded-lg`}>
       {!imageLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded animate-pulse">
-          <div className="w-4 h-4 bg-gray-300 rounded"></div>
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 animate-pulse">
+          <div className="w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full animate-spin"></div>
         </div>
       )}
       <img
         src={generateThumbnailUrl()}
         alt={itemName}
-        className={`w-full h-full object-contain rounded transition-opacity duration-200 ${
-          imageLoaded ? 'opacity-100' : 'opacity-0'
+        className={`w-full h-full object-cover transition-all duration-300 ${
+          imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
-        style={{ imageRendering: 'pixelated' }}
+        style={{ 
+          imageRendering: 'pixelated',
+          filter: 'contrast(1.1) saturate(1.1)',
+          background: 'transparent'
+        }}
         onLoad={handleImageLoad}
         onError={handleImageError}
         loading="lazy"
