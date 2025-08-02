@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { CategoryIcon, CATEGORY_NAMES } from './CategoryIcons';
 
 interface HabboHubCategoryNavigationProps {
   selectedCategory: string;
@@ -12,18 +12,20 @@ const HabboHubCategoryNavigation = ({
   onCategorySelect
 }: HabboHubCategoryNavigationProps) => {
   const categories = [
-    { id: 'hd', name: 'Rostos', icon: '👤' },
-    { id: 'hr', name: 'Cabelos', icon: '💇' },
-    { id: 'ch', name: 'Camisetas', icon: '👕' },
-    { id: 'lg', name: 'Calças', icon: '👖' },
-    { id: 'sh', name: 'Sapatos', icon: '👟' },
-    { id: 'ha', name: 'Chapéus', icon: '🎩' },
-    { id: 'ea', name: 'Óculos', icon: '👓' },
-    { id: 'fa', name: 'Acessórios Faciais', icon: '😷' },
-    { id: 'cc', name: 'Casacos', icon: '🧥' },
-    { id: 'ca', name: 'Acessórios Peito', icon: '🎖️' },
-    { id: 'wa', name: 'Cintura', icon: '👔' },
-    { id: 'cp', name: 'Estampas', icon: '🎨' }
+    { id: 'hr', name: 'Cabelo' },
+    { id: 'hd', name: 'Chapéu' },
+    { id: 'ch', name: 'Peito' },
+    { id: 'cc', name: 'Camisa' },
+    { id: 'cp', name: 'Calça' },
+    { id: 'ca', name: 'Acessório' },
+    { id: 'wa', name: 'Cintura' },
+    { id: 'sh', name: 'Sapatos' },
+    { id: 'lg', name: 'Pernas' },
+    { id: 'ha', name: 'Mãos' },
+    { id: 'he', name: 'Cabeça' },
+    { id: 'ea', name: 'Orelhas' },
+    { id: 'fa', name: 'Rosto' },
+    { id: 'ey', name: 'Olhos' }
   ];
 
   return (
@@ -40,7 +42,11 @@ const HabboHubCategoryNavigation = ({
           }`}
           onClick={() => onCategorySelect(category.id)}
         >
-          <span className="text-2xl">{category.icon}</span>
+          <CategoryIcon 
+            category={category.id} 
+            isActive={selectedCategory === category.id}
+            className="w-6 h-6" 
+          />
           <span className="text-xs font-medium text-center leading-tight">
             {category.name}
           </span>
