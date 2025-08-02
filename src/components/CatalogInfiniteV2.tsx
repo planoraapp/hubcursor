@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Package } from 'lucide-react';
 import { PanelCard } from './PanelCard';
@@ -122,15 +121,16 @@ export const CatalogInfiniteV2 = () => {
       }
       
       if (data?.furnis && Array.isArray(data.furnis)) {
-        setFurnis(prev => reset ? data.furnis : [...prev, ...data.furnis]);
+        const typedFurnis = data.furnis as HabboFurniItem[];
+        setFurnis(prev => reset ? typedFurnis : [...prev, ...typedFurnis]);
         setHasMore(data.metadata?.hasMore || false);
         
-        // Extract unique categories with proper type casting
-        const uniqueCategories = [...new Set(data.furnis.map((f: HabboFurniItem) => f.category as string))];
+        // Extract unique categories with proper typing
+        const uniqueCategories = [...new Set(typedFurnis.map(f => f.category))];
         setCategories(['all', ...uniqueCategories]);
         
-        console.log(`✅ Loaded ${data.furnis.length} furnis from HabboFurni.com API`);
-        console.log(`📊 Total furnis loaded: ${reset ? data.furnis.length : furnis.length + data.furnis.length}`);
+        console.log(`✅ Loaded ${typedFurnis.length} furnis from HabboFurni.com API`);
+        console.log(`📊 Total furnis loaded: ${reset ? typedFurnis.length : furnis.length + typedFurnis.length}`);
       }
     } catch (error) {
       console.error('❌ Error fetching HabboFurni.com data:', error);
