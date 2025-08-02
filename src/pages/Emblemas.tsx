@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import SimplifiedBadgesGrid from '../components/SimplifiedBadgesGrid';
+import { MassiveBadgesGrid } from '../components/MassiveBadgesGrid';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -12,7 +12,7 @@ export default function Emblemas() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    console.log('🏆 Sistema de Emblemas Estabilizado - Sem Flickering');
+    console.log('🏆 Sistema Massivo de Emblemas Iniciado - HabboWidgets Scraper Ativo');
     
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -29,18 +29,18 @@ export default function Emblemas() {
       <MobileLayout>
         <div className="p-4">
           <PageHeader 
-            title="Emblemas HabboHub"
+            title="Sistema Massivo de Emblemas"
             icon="/assets/emblemas.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
             <div className="mb-4 text-center">
               <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                ✅ Sistema Estabilizado
-                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">Sem Flickering</span>
+                🚀 Sistema Massivo Ativo
+                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">10.000+ Badges</span>
               </div>
             </div>
-            <SimplifiedBadgesGrid />
+            <MassiveBadgesGrid />
           </div>
         </div>
       </MobileLayout>
@@ -53,24 +53,24 @@ export default function Emblemas() {
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
-            title="Emblemas HabboHub"
+            title="Sistema Massivo de Emblemas HabboHub"
             icon="/assets/emblemas.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
             <div className="mb-6 text-center">
-              <div className="inline-flex items-center gap-3 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium shadow-sm">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                ✅ Sistema Estabilizado - Sem Flickering
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-green-100 to-blue-100 text-green-800 px-6 py-3 rounded-xl font-medium shadow-md">
+                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                🚀 Sistema Massivo Ativo - Scraping HabboWidgets
                 <span className="bg-green-200 px-3 py-1 rounded-full text-sm font-bold">
-                  Cache Inteligente Ativo
+                  10.000+ Badges Oficiais
                 </span>
               </div>
-              <p className="text-gray-600 mt-2 text-sm">
-                Emblemas carregados com sistema de cache robusto para evitar flickering
+              <p className="text-gray-600 mt-3 text-sm">
+                Sistema robusto de scraping coletando todos os badges disponíveis do HabboWidgets
               </p>
             </div>
-            <SimplifiedBadgesGrid />
+            <MassiveBadgesGrid />
           </div>
         </main>
       </div>
