@@ -34,16 +34,16 @@ const fetchEnhancedBadges = async ({
   console.log(`🚀 [EnhancedBadges] Fetching with limit: ${limit}, search: "${search}", category: ${category}`);
   
   try {
-    // Timeout para evitar requests longos
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const { data, error } = await supabase.functions.invoke('habbo-badges-scraper', {
-      body: { limit, search, category, forceRefresh },
-      signal: controller.signal
+    // Criar promise com timeout
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 30000);
     });
 
-    clearTimeout(timeoutId);
+    const fetchPromise = supabase.functions.invoke('habbo-badges-scraper', {
+      body: { limit, search, category, forceRefresh }
+    });
+
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
     if (error) {
       console.error('❌ [EnhancedBadges] Supabase function error:', error);
@@ -126,8 +126,8 @@ export const useEnhancedBadges = ({
     staleTime: 1000 * 60 * 10, // 10 minutos
     gcTime: 1000 * 60 * 30, // 30 minutos
     retry: (failureCount, error) => {
-      // Retry apenas até 2 vezes e não em caso de abort
-      return failureCount < 2 && error?.name !== 'AbortError';
+      // Retry apenas até 2 vezes e não em caso de timeout
+      return failureCount < 2 && error?.message !== 'Request timeout';
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
