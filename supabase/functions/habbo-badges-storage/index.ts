@@ -63,11 +63,19 @@ serve(async (req) => {
 
     // Convert storage files to badge items
     let badges: BadgeItem[] = files
-      .filter(file => file.name.endsWith('.gif') || file.name.endsWith('.png'))
+      .filter(file => {
+        // Accept more file types and skip directories
+        const hasValidExtension = file.name.endsWith('.gif') || file.name.endsWith('.png') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg');
+        const isNotDirectory = !file.name.endsWith('/');
+        console.log(`📁 [HabboBadges] Processing file: ${file.name}, valid: ${hasValidExtension && isNotDirectory}`);
+        return hasValidExtension && isNotDirectory;
+      })
       .map(file => {
         const code = extractBadgeCode(file.name);
         const category = determineBadgeCategory(code, file.name);
         const rarity = determineBadgeRarity(code, file.name);
+        
+        console.log(`🏷️ [HabboBadges] Badge: ${file.name} -> Code: ${code}, Category: ${category}, Rarity: ${rarity}`);
         
         return {
           id: code,
@@ -78,7 +86,8 @@ serve(async (req) => {
           rarity,
           source: 'official' as const
         };
-      });
+      })
+      .filter(badge => badge.code && badge.code.length > 0); // Remove invalid badges
 
     // Apply search filter
     if (search) {
@@ -136,24 +145,42 @@ serve(async (req) => {
 });
 
 function extractBadgeCode(filename: string): string {
-  // Extract badge code from filename
-  // Examples: "ADM001.gif" -> "ADM001", "1234__-ABC.png" -> "1234__-ABC"
-  return filename.replace(/\.(gif|png)$/i, '');
+  // Extract badge code from filename - handle various formats
+  // Examples: "ADM001.gif" -> "ADM001", "1234__-ABC.png" -> "1234__-ABC", "badge_ACH_123.png" -> "ACH_123"
+  
+  // Remove file extension first
+  let code = filename.replace(/\.(gif|png|jpg|jpeg)$/i, '');
+  
+  // Handle different naming patterns
+  if (code.includes('badge_')) {
+    code = code.replace(/^badge_/, '');
+  }
+  
+  // Clean up common patterns
+  code = code.replace(/^[0-9]+__-/, ''); // Remove numeric prefixes like "1234__-"
+  
+  return code || filename; // Fallback to original filename if processing fails
 }
 
 function determineBadgeCategory(code: string, filename: string): string {
   const lowerCode = code.toLowerCase();
   const lowerFile = filename.toLowerCase();
   
-  if (lowerCode.includes('adm') || lowerCode.includes('mod') || lowerCode.includes('staff')) return 'staff';
-  if (lowerCode.includes('vip') || lowerCode.includes('hc') || lowerCode.includes('club')) return 'club';
-  if (lowerCode.includes('event') || lowerCode.includes('competition') || lowerCode.includes('comp')) return 'events';
-  if (lowerCode.includes('game') || lowerCode.includes('sport') || lowerCode.includes('winner')) return 'games';
-  if (lowerCode.includes('rare') || lowerCode.includes('ltd') || lowerCode.includes('special')) return 'rare';
-  if (lowerCode.includes('achievement') || lowerCode.includes('level') || lowerCode.includes('skill')) return 'achievements';
-  if (lowerCode.includes('seasonal') || lowerCode.includes('xmas') || lowerCode.includes('easter')) return 'seasonal';
+  // Official/Staff badges
+  if (lowerCode.includes('adm') || lowerCode.includes('mod') || lowerCode.includes('staff') || 
+      lowerCode.includes('guide') || lowerCode.includes('helper') || lowerCode.includes('sup')) return 'official';
   
-  return 'general';
+  // Achievements
+  if (lowerCode.includes('ach') || lowerCode.includes('game') || lowerCode.includes('win') || 
+      lowerCode.includes('victory') || lowerCode.includes('champion') || lowerCode.includes('quest') ||
+      lowerCode.includes('mission') || lowerCode.includes('complete') || lowerCode.includes('finish')) return 'achievements';
+  
+  // Fansites/Events
+  if (lowerCode.includes('fansite') || lowerCode.includes('partner') || lowerCode.includes('event') || 
+      lowerCode.includes('special') || lowerCode.includes('exclusive') || lowerCode.includes('limited') ||
+      lowerCode.includes('promo') || lowerCode.includes('collab') || /20\d{2}/.test(lowerCode)) return 'fansites';
+  
+  return 'others';
 }
 
 function determineBadgeRarity(code: string, filename: string): string {

@@ -86,13 +86,25 @@ const fetchHybridClothingData = async (): Promise<Record<string, HybridClothingI
     const officialResponse = await supabase.functions.invoke('get-habbo-figuredata');
     let officialData: Record<string, any> = {};
     
+    console.log('📡 [HybridSystem] Official response:', {
+      error: officialResponse.error,
+      dataKeys: officialResponse.data ? Object.keys(officialResponse.data) : 'no data'
+    });
+    
     if (officialResponse.data?.figureParts) {
       officialData = officialResponse.data.figureParts;
+    } else if (officialResponse.data && typeof officialResponse.data === 'object') {
+      // Try different response structures
+      officialData = officialResponse.data;
     }
     
     // Get Supabase assets
+    console.log('📦 [HybridSystem] Fetching Supabase assets...');
     const supabaseAssets = await fetchSupabaseAssets();
+    console.log(`📦 [HybridSystem] Found ${supabaseAssets.length} SWF files`);
+    
     const supabaseItems = mapSupabaseToHybrid(supabaseAssets);
+    console.log(`📦 [HybridSystem] Mapped ${supabaseItems.length} SWF items`);
     
     // Combine and organize by category
     const result: Record<string, HybridClothingItem[]> = {};
@@ -101,24 +113,26 @@ const fetchHybridClothingData = async (): Promise<Record<string, HybridClothingI
     Object.entries(officialData).forEach(([category, items]: [string, any]) => {
       if (!result[category]) result[category] = [];
       
-      items.forEach((item: any) => {
-        const hybridItem: HybridClothingItem = {
-          id: `${category}-${item.id}`,
-          category,
-          figureId: item.id,
-          name: `${category.toUpperCase()} ${item.id}`,
-          gender: item.gender || 'U',
-          club: item.club || '0',
-          colorable: item.colorable || false,
-          colors: item.colors || ['1'],
-          rarity: item.club === '1' ? 'HC' : 'NORMAL',
-          thumbnailUrl: '',
-          source: 'OFFICIAL'
-        };
-        
-        hybridItem.thumbnailUrl = generateThumbnailUrl(hybridItem);
-        result[category].push(hybridItem);
-      });
+      if (Array.isArray(items)) {
+        items.forEach((item: any) => {
+          const hybridItem: HybridClothingItem = {
+            id: `${category}-${item.id || item.figureId || Math.random()}`,
+            category,
+            figureId: item.id || item.figureId || 'unknown',
+            name: `${category.toUpperCase()} ${item.id || item.figureId}`,
+            gender: item.gender || 'U',
+            club: item.club || '0',
+            colorable: item.colorable !== false,
+            colors: item.colors || ['1', '2', '3', '4', '5'],
+            rarity: item.club === '1' ? 'HC' : 'NORMAL',
+            thumbnailUrl: '',
+            source: 'OFFICIAL'
+          };
+          
+          hybridItem.thumbnailUrl = generateThumbnailUrl(hybridItem);
+          result[category].push(hybridItem);
+        });
+      }
     });
     
     // Add Supabase items (avoiding duplicates)
@@ -133,14 +147,30 @@ const fetchHybridClothingData = async (): Promise<Record<string, HybridClothingI
     
     console.log('✅ [HybridSystem] Data loaded:', {
       categories: Object.keys(result).length,
-      totalItems: Object.values(result).reduce((sum, items) => sum + items.length, 0)
+      totalItems: Object.values(result).reduce((sum, items) => sum + items.length, 0),
+      categoriesBreakdown: Object.fromEntries(Object.entries(result).map(([k, v]) => [k, v.length]))
     });
     
     return result;
     
   } catch (error) {
     console.error('❌ [HybridSystem] Error:', error);
-    throw error;
+    // Return fallback data structure
+    return {
+      hr: [],
+      hd: [],
+      ch: [],
+      lg: [],
+      sh: [],
+      cc: [],
+      ca: [],
+      wa: [],
+      fa: [],
+      ey: [],
+      ea: [],
+      ha: [],
+      he: []
+    };
   }
 };
 

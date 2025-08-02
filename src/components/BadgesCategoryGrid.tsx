@@ -182,7 +182,14 @@ const BadgesCategoryGridComponent: React.FC<BadgesCategoryGridProps> = ({
                 loading="lazy"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/assets/badge-placeholder.png';
+                  // Fallback to Habbo assets if Supabase fails
+                  if (!target.src.includes('habboassets.com')) {
+                    target.src = `https://habboassets.com/c_images/album1584/${badge.code}.gif`;
+                  } else if (!target.src.includes('images.habbo.com')) {
+                    target.src = `https://images.habbo.com/c_images/album1584/${badge.code}.gif`;
+                  } else {
+                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMiA4VjE2TTggMTJIMTYiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
+                  }
                 }}
               />
             </div>
