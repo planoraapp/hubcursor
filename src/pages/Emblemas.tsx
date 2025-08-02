@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import { BadgesEnhanced } from '../components/BadgesEnhanced';
+import { BadgesGrid3D } from '../components/BadgesGrid3D';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -31,7 +31,9 @@ export default function Emblemas() {
             icon="/assets/emblemas.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <BadgesEnhanced />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
+            <BadgesGrid3D />
+          </div>
         </div>
       </MobileLayout>
     );
@@ -47,7 +49,9 @@ export default function Emblemas() {
             icon="/assets/emblemas.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <BadgesEnhanced />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
+            <BadgesGrid3D />
+          </div>
         </main>
       </div>
     </div>

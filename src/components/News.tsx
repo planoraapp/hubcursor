@@ -1,104 +1,145 @@
 
-import { useLanguage } from '../hooks/useLanguage';
+import { useState, useEffect } from 'react';
+import { Calendar, ExternalLink, Clock } from 'lucide-react';
 import { PanelCard } from './PanelCard';
-import { Calendar, User, ArrowRight } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  image: string;
+  date: string;
+  link: string;
+}
 
 export const News = () => {
-  const { t } = useLanguage();
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const mockNews = [
-    {
-      id: 1,
-      title: 'Novo Evento de Verão 2024',
-      excerpt: 'Participe do maior evento de verão do Habbo! Ganhe moedas, móveis exclusivos e muito mais.',
-      date: '2024-01-15',
-      author: 'Equipe Habbo',
-      image: '/assets/event_bg_owner.png',
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Novos Móveis na Loja',
-      excerpt: 'Confira os novos móveis disponíveis na loja oficial do Habbo.',
-      date: '2024-01-12',
-      author: 'Equipe Habbo',
-      image: '/assets/gcreate_1_0.png',
-      featured: false
-    },
-    {
-      id: 3,
-      title: 'Competição de Quartos',
-      excerpt: 'Mostre sua criatividade na competição de quartos mais inovadores.',
-      date: '2024-01-10',
-      author: 'Moderação',
-      image: '/assets/gcreate_2_0.png',
-      featured: false
-    },
-    {
-      id: 4,
-      title: 'Atualizações de Segurança',
-      excerpt: 'Melhorias na segurança e novas funcionalidades para proteger sua conta.',
-      date: '2024-01-08',
-      author: 'Equipe Técnica',
-      image: '/assets/quest_tracker_with_bar.png',
-      featured: false
-    },
-    {
-      id: 5,
-      title: 'Habbo Hub Lançado!',
-      excerpt: 'Bem-vindos ao novo hub oficial do Habbo com todas as ferramentas que você precisa.',
-      date: '2024-01-05',
-      author: 'Habbo Hub Team',
-      image: '/assets/habbohub.gif',
-      featured: true
-    },
-    {
-      id: 6,
-      title: 'Novos Emblemas Disponíveis',
-      excerpt: 'Coleção especial de emblemas chegou! Confira como obter cada um.',
-      date: '2024-01-03',
-      author: 'Equipe Habbo',
-      image: '/assets/promo_star.gif',
-      featured: false
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Fetching Habbo news...');
+      
+      const { data, error } = await supabase.functions.invoke('habbo-news-scraper');
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data?.news && Array.isArray(data.news)) {
+        setNews(data.news);
+        console.log('✅ News loaded:', data.news.length, 'items');
+      } else {
+        throw new Error('Invalid news data format');
+      }
+    } catch (err) {
+      console.error('❌ Error fetching news:', err);
+      setError('Erro ao carregar notícias');
+      // Set fallback news
+      setNews([
+        {
+          id: 'fallback_1',
+          title: 'Habbo Hotel Brasil',
+          summary: 'Confira as últimas novidades do Habbo Hotel Brasil no site oficial.',
+          image: 'https://www.habbo.com.br/habbo-imaging/badge/b05114s36135s99999.gif',
+          date: new Date().toISOString().split('T')[0],
+          link: 'https://www.habbo.com.br'
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <PanelCard title="Notícias do Habbo">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando notícias do Habbo.com.br...</p>
+            </div>
+          </div>
+        </PanelCard>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <PanelCard title={t('newsTitle')}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {mockNews.map((news) => (
-            <div key={news.id} className="habbo-card">
-              <div className="relative">
-                <img
-                  src={news.image}
-                  alt={news.title}
-                  className="w-full h-48 object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/assets/LogoHabbo.png';
-                  }}
-                />
-                {news.featured && (
-                  <span className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
-                    DESTAQUE
-                  </span>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-gray-800 mb-2 text-lg">{news.title}</h3>
-                <p className="text-gray-600 mb-3 text-sm">{news.excerpt}</p>
-                <div className="flex items-center text-xs text-gray-500 mb-3">
-                  <Calendar size={14} className="mr-1" />
-                  <span className="mr-4">{news.date}</span>
-                  <User size={14} className="mr-1" />
-                  <span>{news.author}</span>
+      <PanelCard title="Notícias do Habbo">
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-gray-600">
+            📰 Últimas notícias do Habbo Hotel Brasil
+          </p>
+          <button 
+            onClick={fetchNews}
+            className="habbo-button-blue text-sm px-3 py-1"
+            disabled={loading}
+          >
+            <Clock className="w-4 h-4 mr-1 inline" />
+            Atualizar
+          </button>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-300 rounded-lg p-4 mb-4">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {news.map((item) => (
+            <PanelCard key={item.id}>
+              <div className="space-y-4">
+                <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://www.habbo.com.br/habbo-imaging/badge/b05114s36135s99999.gif';
+                    }}
+                  />
                 </div>
-                <button className="habbo-button-green w-full flex items-center justify-center">
-                  <span>Ler Mais</span>
-                  <ArrowRight size={16} className="ml-2" />
-                </button>
+                
+                <div className="space-y-3">
+                  <h3 className="font-bold text-gray-800 leading-tight">
+                    {item.title}
+                  </h3>
+                  
+                  <p className="text-sm text-gray-600 line-clamp-3">
+                    {item.summary}
+                  </p>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {new Date(item.date).toLocaleDateString('pt-BR')}
+                    </div>
+                    
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center text-blue-600 hover:text-blue-800 text-xs font-medium"
+                    >
+                      Ver mais
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </div>
+                </div>
               </div>
-            </div>
+            </PanelCard>
           ))}
         </div>
       </PanelCard>
