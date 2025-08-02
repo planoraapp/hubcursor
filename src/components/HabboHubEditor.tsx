@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import HabboHubClothingGrid from './HabboHub/HabboHubClothingGrid';
+import { HabboHubClothingGrid } from './HabboHub/HabboHubClothingGrid';
 import HabboHubCategoryNavigation from './HabboHub/HabboHubCategoryNavigation';
 import OfficialHabboColorPalette from './HabboHub/OfficialHabboColorPalette';
 import { Button } from '@/components/ui/button';
