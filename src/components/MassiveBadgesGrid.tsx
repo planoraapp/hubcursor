@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { MassiveScrollBadgeGrid } from './MassiveScrollBadgeGrid';
+import { RealBadgesGrid } from './RealBadgesGrid';
 
 export const MassiveBadgesGrid: React.FC = () => {
-  return <MassiveScrollBadgeGrid />;
+  return <RealBadgesGrid />;
 };
