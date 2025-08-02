@@ -10,7 +10,7 @@ export interface HabboApiBadgeItem {
   imageUrl: string;
   category: string;
   rarity: string;
-  source: 'habbo-api';
+  source: string;
   scrapedAt: string;
 }
 
@@ -22,8 +22,8 @@ interface UseHabboApiBadgesProps {
   enabled?: boolean;
 }
 
-const fetchHabboApiBadges = async ({
-  limit = 5000,
+const fetchMassiveBadges = async ({
+  limit = 10000,
   search = '',
   category = 'all',
   forceRefresh = false
@@ -31,11 +31,11 @@ const fetchHabboApiBadges = async ({
   badges: HabboApiBadgeItem[];
   metadata: any;
 }> => {
-  console.log(`🔥 [HabboApiBadges] Buscando badges da HabboAPI - limit: ${limit}, search: "${search}", category: ${category}`);
+  console.log(`🚀 [MassiveBadges] Iniciando busca massiva - limit: ${limit}, search: "${search}", category: ${category}`);
   
   try {
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Timeout na busca HabboAPI')), 20000);
+      setTimeout(() => reject(new Error('Timeout na busca massiva de badges')), 30000); // 30 segundos
     });
 
     const fetchPromise = supabase.functions.invoke('habbo-api-badges', {
@@ -45,45 +45,67 @@ const fetchHabboApiBadges = async ({
     const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
     if (error) {
-      console.error('❌ [HabboApiBadges] Erro na função:', error);
-      throw new Error(`HabboAPI Error: ${error.message}`);
+      console.error('❌ [MassiveBadges] Erro na função:', error);
+      throw new Error(`Sistema Massivo Error: ${error.message}`);
     }
 
     if (!data || !data.badges || !Array.isArray(data.badges)) {
-      console.error('❌ [HabboApiBadges] Formato inválido:', data);
-      throw new Error('Dados da HabboAPI inválidos');
+      console.error('❌ [MassiveBadges] Formato inválido:', data);
+      throw new Error('Dados do sistema massivo inválidos');
     }
 
-    console.log(`✅ [HabboApiBadges] Recebidos ${data.badges.length} badges da HabboAPI`);
-    console.log(`📊 [HabboApiBadges] Metadata:`, data.metadata);
+    console.log(`✅ [MassiveBadges] Recebidos ${data.badges.length} badges do sistema massivo`);
+    console.log(`📊 [MassiveBadges] Metadata:`, data.metadata);
+    
+    // Garantir que todos os badges tenham as propriedades necessárias
+    const processedBadges = data.badges.map((badge: any) => ({
+      id: badge.id || `badge_${badge.code}`,
+      code: badge.code || 'UNKNOWN',
+      name: badge.name || `Badge ${badge.code}`,
+      description: badge.description || `Emblema ${badge.code}`,
+      imageUrl: badge.imageUrl || `https://habboassets.com/c_images/album1584/${badge.code}.gif`,
+      category: badge.category || 'others',
+      rarity: badge.rarity || 'common',
+      source: badge.source || 'massive-system',
+      scrapedAt: badge.scrapedAt || new Date().toISOString()
+    }));
     
     return {
-      badges: data.badges,
-      metadata: data.metadata || { hasMore: false, source: 'habbo-api' }
+      badges: processedBadges,
+      metadata: {
+        ...data.metadata,
+        hasMore: false,
+        source: data.metadata?.source || 'massive-collection',
+        totalProcessed: processedBadges.length
+      }
     };
     
   } catch (error) {
-    console.error('❌ [HabboApiBadges] Erro:', error);
+    console.error('❌ [MassiveBadges] Erro:', error);
     throw error;
   }
 };
 
 export const useHabboApiBadges = ({
-  limit = 5000,
+  limit = 10000,
   search = '',
   category = 'all',
   forceRefresh = false,
   enabled = true
 }: UseHabboApiBadgesProps = {}) => {
-  console.log(`🔧 [useHabboApiBadges] Configuração: limit: ${limit}, search: "${search}", category: ${category}, enabled: ${enabled}`);
+  console.log(`🔧 [useMassiveBadges] Configuração: limit: ${limit}, search: "${search}", category: ${category}, enabled: ${enabled}`);
   
   return useQuery({
-    queryKey: ['habbo-api-badges', limit, search, category, forceRefresh],
-    queryFn: () => fetchHabboApiBadges({ limit, search, category, forceRefresh }),
+    queryKey: ['massive-badges-system', limit, search, category, forceRefresh],
+    queryFn: () => fetchMassiveBadges({ limit, search, category, forceRefresh }),
     enabled,
-    staleTime: 1000 * 60 * 60 * 3, // 3 horas
-    gcTime: 1000 * 60 * 60 * 6, // 6 horas
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    staleTime: 1000 * 60 * 60 * 2, // 2 horas para dados massivos
+    gcTime: 1000 * 60 * 60 * 8, // 8 horas
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
+    // Configurações para dados massivos
+    refetchOnWindowFocus: false, // Não refetch automaticamente
+    refetchOnReconnect: false,   // Economizar recursos
+    refetchInterval: false,      // Sem refresh automático
   });
 };
