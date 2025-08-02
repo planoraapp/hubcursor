@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +9,7 @@ import { Loader2, User, Shuffle, Copy, Download, Search, Palette, RefreshCw, Zap
 import { useHabboWidgetsClothing } from '@/hooks/useHabboWidgetsClothing';
 import { useToast } from '@/hooks/use-toast';
 import OptimizedItemThumbnail from './OptimizedItemThumbnail';
+import HabboColorPalette from '../HabboColorPalette';
 
 const CATEGORY_LABELS = {
   'ca': 'Bijuterias',
@@ -59,7 +61,7 @@ const HabboWidgetsEditor = () => {
     return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&size=l&direction=2&head_direction=3&gesture=nor&headonly=0`;
   }, [generateFigureString, selectedGender]);
 
-  // Handlers otimizados com feedback
+  // Handlers otimizados
   const handleItemSelect = useCallback((category: string, figureId: string) => {
     setSelectedItems(prev => ({
       ...prev,
@@ -119,7 +121,7 @@ const HabboWidgetsEditor = () => {
     navigator.clipboard.writeText(url);
     toast({
       title: "📋 URL Copiada!",
-      description: "Link da imagem do avatar copiado para a área de transferência",
+      description: "Link da imagem do avatar copiado",
       duration: 1500
     });
   }, [getAvatarUrl, toast]);
@@ -129,12 +131,12 @@ const HabboWidgetsEditor = () => {
     navigator.clipboard.writeText(figureString);
     toast({
       title: "💾 Figure Copiada!",
-      description: "Código figure do avatar copiado para a área de transferência",
+      description: "Código figure do avatar copiado",
       duration: 1500
     });
   }, [generateFigureString, toast]);
 
-  // Filtro otimizado de itens com cache
+  // Filtro otimizado de itens
   const getFilteredItems = useMemo(() => {
     return (category: string) => {
       if (!clothingData?.[category]) return [];
@@ -149,13 +151,9 @@ const HabboWidgetsEditor = () => {
         );
       }
       
-      // Ordenar por rarity e figureId
       return items.sort((a, b) => {
-        // Primeiro por club status (HC primeiro)
         if (a.club && !b.club) return -1;
         if (!a.club && b.club) return 1;
-        
-        // Depois por figureId numérico
         return parseInt(a.figureId) - parseInt(b.figureId);
       });
     };
@@ -165,10 +163,8 @@ const HabboWidgetsEditor = () => {
   const totalItems = clothingData ? Object.values(clothingData).reduce((sum, items) => sum + items.length, 0) : 0;
   const filteredItems = getFilteredItems(activeCategory);
   const availableCategories = clothingData ? Object.keys(clothingData).sort() : [];
-  const hcItemsCount = filteredItems.filter(item => item.club).length;
-  const freeItemsCount = filteredItems.filter(item => !item.club).length;
 
-  // Loading state melhorado
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
@@ -184,7 +180,7 @@ const HabboWidgetsEditor = () => {
     );
   }
 
-  // Error state melhorado
+  // Error state
   if (error) {
     return (
       <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
@@ -202,44 +198,38 @@ const HabboWidgetsEditor = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-      {/* Preview do Avatar Melhorado */}
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* Preview do Avatar */}
       <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 shadow-xl">
         <CardHeader className="text-center pb-4">
           <CardTitle className="text-blue-800 flex items-center justify-center gap-2 text-lg">
             <User className="w-6 h-6" />
             Preview
           </CardTitle>
-          <div className="flex flex-col gap-2">
-            <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
-              {totalItems.toLocaleString()} roupas
-            </Badge>
-          </div>
+          <Badge variant="outline" className="text-xs bg-green-100 text-green-800 mx-auto">
+            {totalItems.toLocaleString()} roupas
+          </Badge>
         </CardHeader>
         
         <CardContent className="p-4 text-center">
-          {/* Avatar Image com loading */}
+          {/* Avatar Image */}
           <div className="bg-white/80 rounded-lg p-6 mb-4 shadow-inner relative">
             <img
               src={getAvatarUrl()}
               alt="Avatar Preview"
-              className="w-48 h-48 mx-auto transition-all duration-500 hover:scale-105"
+              className="w-full h-48 mx-auto transition-all duration-500 hover:scale-105 object-contain"
               style={{ 
                 imageRendering: 'pixelated',
-                aspectRatio: '1/1.2',
-                objectFit: 'contain'
+                aspectRatio: '1/1.2'
               }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&gender=U&size=l&direction=2&head_direction=3';
               }}
             />
-            <div className="text-xs text-gray-600 mt-2">
-              <div>{Object.keys(selectedItems).length} peças ativas</div>
-            </div>
           </div>
           
-          {/* Gender Selector Melhorado */}
+          {/* Gender Selector */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[
               { key: 'M', label: '👨 Masc.', color: 'bg-blue-600 hover:bg-blue-700' },
@@ -258,7 +248,7 @@ const HabboWidgetsEditor = () => {
             ))}
           </div>
           
-          {/* Action Buttons Melhorados */}
+          {/* Action Buttons */}
           <div className="grid grid-cols-3 gap-2 mb-4">
             <Button onClick={handleRandomize} variant="outline" size="sm" className="hover:bg-purple-50" title="Randomizar Avatar">
               <Shuffle className="w-4 h-4" />
@@ -271,7 +261,7 @@ const HabboWidgetsEditor = () => {
             </Button>
           </div>
           
-          {/* Figure Code com copy */}
+          {/* Figure Code */}
           <div className="bg-gray-100 rounded p-2 text-xs font-mono text-gray-700 break-all cursor-pointer hover:bg-gray-200 transition-colors"
                onClick={handleExportFigure}
                title="Clique para copiar">
@@ -280,181 +270,157 @@ const HabboWidgetsEditor = () => {
         </CardContent>
       </Card>
 
-      {/* Seletor de Roupas MASSIVO */}
-      <div className="xl:col-span-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Palette className="w-6 h-6" />
-              Itens
-            </CardTitle>
+      {/* Editor Principal - 2 colunas */}
+      <div className="xl:col-span-2 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        {/* Seletor de Roupas - 2/3 da largura */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Palette className="w-6 h-6" />
+                Roupas
+              </CardTitle>
+              
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Pesquisar roupas..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white border-2 border-gray-200 focus:border-blue-400"
+                />
+              </div>
+            </CardHeader>
             
-            {/* Search Bar Melhorado */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Pesquisar entre milhares de roupas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white border-2 border-gray-200 focus:border-blue-400"
-              />
-              {searchTerm && (
-                <Badge className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white text-xs">
-                  {filteredItems.length} encontrados
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-          
-          <CardContent>
-            <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-              {/* Category Tabs Melhorados */}
-              <TabsList className="grid grid-cols-6 lg:grid-cols-12 gap-1 mb-6 bg-gray-100 p-1">
-                {availableCategories.map(category => {
-                  const count = clothingData?.[category]?.length || 0;
-                  return (
-                    <TabsTrigger 
-                      key={category} 
-                      value={category}
-                      className="text-xs px-2 py-2 relative data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all"
-                    >
-                      <div className="text-center">
-                        <div className="font-medium">
-                          {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category.toUpperCase()}
+            <CardContent>
+              <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+                {/* Category Tabs */}
+                <TabsList className="grid grid-cols-4 lg:grid-cols-6 gap-1 mb-6 bg-gray-100 p-1">
+                  {availableCategories.map(category => {
+                    const count = clothingData?.[category]?.length || 0;
+                    return (
+                      <TabsTrigger 
+                        key={category} 
+                        value={category}
+                        className="text-xs px-2 py-2 relative data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all"
+                      >
+                        <div className="text-center">
+                          <div className="font-medium">
+                            {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS]?.split(' ')[0] || category.toUpperCase()}
+                          </div>
+                          <div className="text-[10px] opacity-75">{count}</div>
                         </div>
-                        <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[20px] h-5 flex items-center justify-center p-0">
-                          {count}
-                        </Badge>
-                      </div>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
 
-              {/* Category Content Melhorado */}
-              {availableCategories.map(category => (
-                <TabsContent key={category} value={category} className="mt-4">
-                  <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                      <h3 className="font-bold text-xl text-gray-800">
+                {/* Category Content */}
+                {availableCategories.map(category => (
+                  <TabsContent key={category} value={category} className="mt-4">
+                    <div className="mb-4">
+                      <h3 className="font-bold text-xl text-gray-800 mb-2">
                         {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS]} 
                       </h3>
-                      <div className="flex gap-2 mt-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                          {filteredItems.length} itens
-                        </Badge>
-                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
-                          {hcItemsCount} HC
-                        </Badge>
-                        <Badge variant="outline" className="bg-green-50 text-green-700">
-                          {freeItemsCount} Gratuitos
-                        </Badge>
-                      </div>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                        {filteredItems.length} itens
+                      </Badge>
                     </div>
                     
-                    {/* Color Selector */}
-                    {selectedItems[category] && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Cores:</span>
-                        <div className="flex gap-1">
-                          {['1', '2', '3', '4', '5', '6', '7', '8'].map(colorId => (
-                            <Button
-                              key={colorId}
-                              variant={selectedColors[category] === colorId ? "default" : "outline"}
-                              size="sm"
-                              className={`w-8 h-8 p-0 ${
-                                selectedColors[category] === colorId 
-                                  ? 'bg-blue-600 text-white' 
-                                  : 'hover:bg-blue-50'
-                              }`}
-                              onClick={() => handleColorSelect(category, colorId)}
-                            >
-                              {colorId}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Items Grid Otimizada */}
-                  <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
-                    <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                      {/* Remove Option */}
-                      <Button
-                        variant={selectedItems[category] === 'none' ? "default" : "outline"}
-                        className={`aspect-square p-2 relative ${
-                          selectedItems[category] === 'none' 
-                            ? 'bg-red-500 text-white hover:bg-red-600' 
-                            : 'hover:bg-red-50 border-dashed'
-                        }`}
-                        onClick={() => handleItemSelect(category, 'none')}
-                      >
-                        <div className="text-xs font-bold text-center">
-                          <div>❌</div>
-                          <div>Remover</div>
-                        </div>
-                      </Button>
-                      
-                      {/* Items com Thumbnail Otimizada */}
-                      {filteredItems.map((item) => (
+                    {/* Items Grid - 5 colunas */}
+                    <div className="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
+                      <div className="grid grid-cols-5 gap-2">
+                        {/* Remove Option */}
                         <Button
-                          key={item.id}
-                          variant={selectedItems[category] === item.figureId ? "default" : "outline"}
-                          className={`aspect-square p-1 relative group transition-all duration-200 ${
-                            selectedItems[category] === item.figureId 
-                              ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-lg scale-105' 
-                              : 'hover:bg-blue-50 hover:scale-105 hover:shadow-md'
+                          variant={selectedItems[category] === 'none' ? "default" : "outline"}
+                          className={`aspect-square p-2 relative ${
+                            selectedItems[category] === 'none' 
+                              ? 'bg-red-500 text-white hover:bg-red-600' 
+                              : 'hover:bg-red-50 border-dashed'
                           }`}
-                          onClick={() => handleItemSelect(category, item.figureId)}
-                          title={`${item.name} - ID: ${item.figureId}${item.club ? ' (HC)' : ''}`}
+                          onClick={() => handleItemSelect(category, 'none')}
                         >
-                          <OptimizedItemThumbnail
-                            category={category}
-                            figureId={item.figureId}
-                            colorId={selectedColors[category] || '1'}
-                            itemName={item.name}
-                            className="w-full h-full"
-                            size="md"
-                          />
-                          
-                          {/* Badges */}
-                          {item.club && (
-                            <Badge className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs px-1 py-0">
-                              HC
-                            </Badge>
-                          )}
-                          
-                          {/* Selected Indicator */}
-                          {selectedItems[category] === item.figureId && (
-                            <div className="absolute inset-0 bg-blue-600/20 rounded flex items-center justify-center">
-                              <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
-                                ✓
+                          <div className="text-xs font-bold text-center">
+                            <div>❌</div>
+                            <div>Remover</div>
+                          </div>
+                        </Button>
+                        
+                        {/* Items */}
+                        {filteredItems.map((item) => (
+                          <Button
+                            key={item.id}
+                            variant={selectedItems[category] === item.figureId ? "default" : "outline"}
+                            className={`aspect-square p-1 relative group transition-all duration-200 ${
+                              selectedItems[category] === item.figureId 
+                                ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-lg scale-105' 
+                                : 'hover:bg-blue-50 hover:scale-105 hover:shadow-md'
+                            }`}
+                            onClick={() => handleItemSelect(category, item.figureId)}
+                            title={`${item.name} - ID: ${item.figureId}${item.club ? ' (HC)' : ''}`}
+                          >
+                            <OptimizedItemThumbnail
+                              category={category}
+                              figureId={item.figureId}
+                              colorId={selectedColors[category] || '1'}
+                              itemName={item.name}
+                              className="w-full h-full"
+                              size="md"
+                            />
+                            
+                            {/* Badges */}
+                            {item.club && (
+                              <Badge className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs px-1 py-0">
+                                HC
+                              </Badge>
+                            )}
+                            
+                            {/* Selected Indicator */}
+                            {selectedItems[category] === item.figureId && (
+                              <div className="absolute inset-0 bg-blue-600/20 rounded flex items-center justify-center">
+                                <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                                  ✓
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </Button>
-                      ))}
-                    </div>
-                    
-                    {/* No Results */}
-                    {filteredItems.length === 0 && (
-                      <div className="text-center py-12">
-                        <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhuma roupa encontrada</h3>
-                        <p className="text-gray-500 mb-4">Tente ajustar o termo de busca ou escolher outra categoria</p>
-                        <Button onClick={() => setSearchTerm('')} variant="outline">
-                          Limpar Busca
-                        </Button>
+                            )}
+                          </Button>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
 
-          </CardContent>
-        </Card>
+        {/* Seletor de Cores - 1/3 da largura */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Palette className="w-5 h-5" />
+                Cores
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedItems[activeCategory] && selectedItems[activeCategory] !== 'none' ? (
+                <HabboColorPalette
+                  selectedColor={selectedColors[activeCategory] || '1'}
+                  onColorSelect={(colorId) => handleColorSelect(activeCategory, colorId)}
+                  compact={true}
+                />
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <Palette className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Selecione um item para escolher cores</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export default function Emblemas() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    console.log('🏆 Emblemas HabboHub carregados - Sistema simplificado ativo');
+    console.log('🏆 Sistema de Emblemas Estabilizado - Sem Flickering');
     
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -36,8 +36,8 @@ export default function Emblemas() {
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
             <div className="mb-4 text-center">
               <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                ✅ Sistema Simplificado Ativo
-                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">Dados Oficiais</span>
+                ✅ Sistema Estabilizado
+                <span className="bg-green-200 px-2 py-0.5 rounded text-xs">Sem Flickering</span>
               </div>
             </div>
             <SimplifiedBadgesGrid />
@@ -61,13 +61,13 @@ export default function Emblemas() {
             <div className="mb-6 text-center">
               <div className="inline-flex items-center gap-3 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium shadow-sm">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                ✅ Sistema Oficial Habbo Ativo
+                ✅ Sistema Estabilizado - Sem Flickering
                 <span className="bg-green-200 px-3 py-1 rounded-full text-sm font-bold">
-                  Dados Oficiais com Cache
+                  Cache Inteligente Ativo
                 </span>
               </div>
               <p className="text-gray-600 mt-2 text-sm">
-                Emblemas carregados diretamente do Habbo oficial com cache local
+                Emblemas carregados com sistema de cache robusto para evitar flickering
               </p>
             </div>
             <SimplifiedBadgesGrid />

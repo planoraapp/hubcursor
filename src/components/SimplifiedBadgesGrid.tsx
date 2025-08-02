@@ -1,165 +1,231 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Package } from 'lucide-react';
-import { useOfficialHabboData } from '@/hooks/useOfficialHabboData';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Shield, Trophy, Star, Palette, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import StableBadgeImage from './StableBadgeImage';
+
+interface BadgeItem {
+  id: string;
+  code: string;
+  name: string;
+  category: 'official' | 'achievements' | 'fansites' | 'others';
+  rarity: string;
+}
 
 const CATEGORY_CONFIG = {
-  official: { name: 'Oficiais', icon: '🛡️', color: 'bg-blue-500' },
-  achievements: { name: 'Conquistas', icon: '🏆', color: 'bg-yellow-500' },
-  fansites: { name: 'Fã-sites', icon: '🌟', color: 'bg-purple-500' },
-  others: { name: 'Outros', icon: '🎨', color: 'bg-gray-500' }
+  official: {
+    name: 'Oficiais',
+    icon: Shield,
+    color: 'bg-blue-100 border-blue-300 text-blue-800'
+  },
+  achievements: {
+    name: 'Conquistas',
+    icon: Trophy,
+    color: 'bg-yellow-100 border-yellow-300 text-yellow-800'
+  },
+  fansites: {
+    name: 'Fã-sites',
+    icon: Star,
+    color: 'bg-purple-100 border-purple-300 text-purple-800'
+  },
+  others: {
+    name: 'Outros',
+    icon: Palette,
+    color: 'bg-gray-100 border-gray-300 text-gray-800'
+  }
+};
+
+const fetchBadges = async (): Promise<BadgeItem[]> => {
+  const response = await supabase.functions.invoke('habbo-badges-storage', {
+    body: { limit: 2000, search: '', category: 'all' }
+  });
+  
+  if (response.error) {
+    throw new Error(response.error.message);
+  }
+  
+  return response.data?.badges || [];
 };
 
 const SimplifiedBadgesGrid = () => {
-  const { data, isLoading, error } = useOfficialHabboData();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+  
+  const { data: badges = [], isLoading, error } = useQuery({
+    queryKey: ['simplified-badges'],
+    queryFn: fetchBadges,
+    staleTime: 1000 * 60 * 30, // 30 minutos
+    gcTime: 1000 * 60 * 60, // 1 hora
+  });
+
+  const filteredBadges = useMemo(() => {
+    let filtered = badges;
+    
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter(badge => badge.category === activeCategory);
+    }
+    
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(badge => 
+        badge.name.toLowerCase().includes(searchLower) ||
+        badge.code.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }, [badges, activeCategory, searchTerm]);
+
+  const badgesByCategory = useMemo(() => {
+    return badges.reduce((acc, badge) => {
+      if (!acc[badge.category]) {
+        acc[badge.category] = [];
+      }
+      acc[badge.category].push(badge);
+      return acc;
+    }, {} as Record<string, BadgeItem[]>);
+  }, [badges]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-habbo-yellow" />
-        <span className="ml-2">Carregando emblemas...</span>
-      </div>
+      <Card>
+        <CardContent className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Carregando Emblemas</h3>
+            <p className="text-gray-600">Buscando emblemas do sistema oficial...</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-500 p-8">
-        <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-        <p>Erro ao carregar emblemas</p>
-        <Button variant="outline" onClick={() => window.location.reload()} className="mt-4">
-          Tentar Novamente
-        </Button>
-      </div>
-    );
-  }
-
-  const badges = data?.badges || [];
-  
-  // Agrupar por categoria
-  const groupedBadges = badges.reduce((acc, badge) => {
-    const category = badge.category || 'others';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(badge);
-    return acc;
-  }, {} as Record<string, typeof badges>);
-
-  // Filtrar badges por categoria e busca
-  const filteredBadges = selectedCategory 
-    ? (groupedBadges[selectedCategory] || []).filter(badge => 
-        badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        badge.code.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
-
-  if (!selectedCategory) {
-    return (
-      <div className="space-y-4">
-        <div className="text-center mb-6">
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {badges.length.toLocaleString()} emblemas disponíveis
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
-            const categoryCount = groupedBadges[key]?.length || 0;
-            
-            return (
-              <Card
-                key={key}
-                className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-habbo-yellow"
-                onClick={() => setSelectedCategory(key)}
-              >
-                <CardHeader className="text-center">
-                  <div className={`w-16 h-16 ${config.color} rounded-full flex items-center justify-center mx-auto mb-2 text-2xl`}>
-                    {config.icon}
-                  </div>
-                  <CardTitle>{config.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <Badge variant="secondary" className="mb-2">
-                    {categoryCount.toLocaleString()} emblemas
-                  </Badge>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
+      <Card>
+        <CardContent className="text-center py-12">
+          <div className="text-red-600 mb-4">
+            <Shield className="w-12 h-12 mx-auto mb-3" />
+            <h3 className="text-lg font-semibold">Erro ao Carregar Emblemas</h3>
+            <p className="text-sm mt-2">Não foi possível carregar os emblemas</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header com busca */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={() => setSelectedCategory(null)}
-        >
-          ← Voltar às Categorias
-        </Button>
-        
-        <div className="flex items-center gap-2">
+    <div className="space-y-6">
+      {/* Busca Global */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            Buscar Emblemas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Buscar emblemas..."
+              placeholder="Pesquisar por nome ou código..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10"
             />
           </div>
-          <Badge variant="secondary">
-            {filteredBadges.length} emblemas
-          </Badge>
-        </div>
-      </div>
+          <div className="flex gap-2 mt-4 flex-wrap">
+            <Badge variant="outline" className="bg-green-100 text-green-800">
+              {badges.length} emblemas total
+            </Badge>
+            <Badge variant="outline" className="bg-blue-100 text-blue-800">
+              {filteredBadges.length} encontrados
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Grid de emblemas */}
-      {filteredBadges.length === 0 ? (
-        <div className="text-center text-gray-500 p-12">
-          <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>Nenhum emblema encontrado</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 xl:grid-cols-20 gap-2">
-          {filteredBadges.map((badge, index) => (
-            <div
-              key={`${badge.code}-${index}`}
-              className="aspect-square bg-white/5 rounded border border-gray-200 hover:border-habbo-yellow hover:shadow-md transition-all p-1 group cursor-pointer"
-              title={`${badge.name} (${badge.code})`}
-            >
-              <img
-                src={badge.imageUrl}
-                alt={badge.name}
-                className="w-full h-full object-contain group-hover:scale-110 transition-transform"
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  // Fallback para múltiplas fontes
-                  if (!target.src.includes('habboassets.com')) {
-                    target.src = `https://habboassets.com/c_images/album1584/${badge.code}.gif`;
-                  } else if (!target.src.includes('images.habbo.com')) {
-                    target.src = `https://images.habbo.com/c_images/album1584/${badge.code}.gif`;
-                  } else {
-                    // Placeholder final
-                    target.style.background = '#f0f0f0';
-                    target.alt = badge.code;
-                  }
-                }}
-              />
-            </div>
+      {/* Tabs por Categoria */}
+      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+        <TabsList className="grid grid-cols-5 mb-6">
+          <TabsTrigger value="all">
+            Todos ({badges.length})
+          </TabsTrigger>
+          {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+            <TabsTrigger key={key} value={key}>
+              <config.icon className="w-4 h-4 mr-2" />
+              {config.name} ({badgesByCategory[key]?.length || 0})
+            </TabsTrigger>
           ))}
-        </div>
-      )}
+        </TabsList>
+
+        <TabsContent value="all">
+          <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 gap-2">
+            {filteredBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className="group relative"
+                title={`${badge.name} (${badge.code})`}
+              >
+                <StableBadgeImage
+                  code={badge.code}
+                  name={badge.name}
+                  size="md"
+                  className="hover:scale-110 transition-transform duration-200"
+                />
+                <div className="absolute -top-1 -right-1">
+                  <div className={`w-3 h-3 rounded-full ${
+                    CATEGORY_CONFIG[badge.category as keyof typeof CATEGORY_CONFIG]?.color || 'bg-gray-300'
+                  }`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+
+        {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+          <TabsContent key={key} value={key}>
+            <Card>
+              <CardHeader>
+                <CardTitle className={`flex items-center gap-2 ${config.color} px-3 py-1 rounded-full inline-flex w-fit`}>
+                  <config.icon className="w-5 h-5" />
+                  {config.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 gap-2">
+                  {(badgesByCategory[key] || [])
+                    .filter(badge => 
+                      !searchTerm || 
+                      badge.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      badge.code.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((badge) => (
+                      <div
+                        key={badge.id}
+                        className="group relative"
+                        title={`${badge.name} (${badge.code})`}
+                      >
+                        <StableBadgeImage
+                          code={badge.code}
+                          name={badge.name}
+                          size="md"
+                          className="hover:scale-110 transition-transform duration-200"
+                        />
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 };
