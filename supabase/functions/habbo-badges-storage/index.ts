@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -14,6 +13,7 @@ interface BadgeItem {
   name: string;
   imageUrl: string;
   category: string;
+  rarity: string;
   source: 'storage';
 }
 
@@ -111,8 +111,9 @@ serve(async (req) => {
       .map(file => {
         const code = extractBadgeCode(file.name);
         const category = categorizeBadge(code, file.name);
+        const rarity = getRarity(code);
         
-        console.log(`🏷️ [BadgesStorage] Processando: ${file.name} -> ${code} (${category})`);
+        console.log(`🏷️ [BadgesStorage] Processando: ${file.name} -> ${code} (${category}) [${rarity}]`);
         
         return {
           id: code,
@@ -120,6 +121,7 @@ serve(async (req) => {
           name: generateBadgeName(code),
           imageUrl: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${file.fullPath || file.name}`,
           category,
+          rarity,
           source: 'storage' as const
         };
       })
@@ -244,6 +246,21 @@ function generateBadgeName(code: string): string {
 
   // Nome padrão mais descritivo
   return `Emblema ${code}`;
+}
+
+function getRarity(code: string): string {
+  const upperCode = code.toUpperCase();
+  
+  // Badges de staff são legendários
+  if (/^(ADM|MOD|STAFF|SUP|GUIDE|HELPER)/i.test(upperCode)) return 'legendary';
+  
+  // Badges de achievements e eventos são raros
+  if (/(ACH|WIN|VICTORY|CHAMPION|EVENT|SPECIAL|EXCLUSIVE|LIMITED)/i.test(upperCode)) return 'rare';
+  
+  // VIP, Club e fansites são incomuns
+  if (/(VIP|HC|CLUB|FANSITE|PARTNER|PROMO)/i.test(upperCode)) return 'uncommon';
+  
+  return 'common';
 }
 
 function getUniqueCategories(badges: BadgeItem[]): string[] {

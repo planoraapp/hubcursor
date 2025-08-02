@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,6 +7,7 @@ export interface HabboBadgeItem {
   name: string;
   imageUrl: string;
   category: string;
+  rarity: string;
   source: 'storage';
 }
 
@@ -97,6 +97,7 @@ const fetchFromHabboAssets = async (): Promise<HabboBadgeItem[]> => {
     name: `Emblema ${code}`,
     imageUrl: `https://habboassets.com/c_images/album1584/${code}.gif`,
     category: categorizeBadge(code),
+    rarity: getRarity(code),
     source: 'storage' as const
   }));
 };
@@ -113,6 +114,7 @@ const fetchFromHabboWidgets = async (): Promise<HabboBadgeItem[]> => {
     name: `Badge ${code}`,
     imageUrl: `https://www.habbowidgets.com/images/badges/${code}.gif`,
     category: categorizeBadge(code),
+    rarity: getRarity(code),
     source: 'storage' as const
   }));
 };
@@ -125,6 +127,21 @@ const categorizeBadge = (code: string): string => {
   if (/(FANSITE|PARTNER|EVENT|SPECIAL|EXCLUSIVE|LIMITED|PROMO|COLLAB)/i.test(upperCode)) return 'fansites';
   
   return 'others';
+};
+
+const getRarity = (code: string): string => {
+  const upperCode = code.toUpperCase();
+  
+  // Badges de staff são legendários
+  if (/^(ADM|MOD|STAFF|SUP)/i.test(upperCode)) return 'legendary';
+  
+  // Badges de achievements são raros
+  if (/(ACH|WIN|VICTORY|CHAMPION)/i.test(upperCode)) return 'rare';
+  
+  // VIP e Club são incomuns
+  if (/(VIP|HC|CLUB)/i.test(upperCode)) return 'uncommon';
+  
+  return 'common';
 };
 
 export const useHabboBadgesStorage = ({
