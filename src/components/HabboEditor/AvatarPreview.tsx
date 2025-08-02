@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -35,24 +34,35 @@ const AvatarPreview = ({
   const [avatarGesture, setAvatarGesture] = useState('std');
   const [avatarSize, setAvatarSize] = useState('l');
   const [isSearchingUser, setIsSearchingUser] = useState(false);
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState('');
 
-  const getAvatarUrl = () => {
-    // Se temos um figureString personalizado, use-o; senão, busque por usuário
+  const getAvatarUrl = useCallback(() => {
+    let url = '';
+    
     if (figureString && figureString !== '') {
-      return `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
+      // Usar figura personalizada
+      url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
     } else if (username && username.trim() !== '') {
-      return `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?user=${username}&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
+      // Buscar por usuário
+      url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?user=${username}&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
+    } else {
+      // Avatar padrão
+      url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
     }
-    // Fallback para avatar padrão
-    return `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
-  };
+    
+    return url;
+  }, [figureString, username, selectedHotel, avatarDirection, avatarSize, avatarGesture, avatarAction]);
+
+  // Atualizar URL quando parâmetros mudarem
+  useEffect(() => {
+    setCurrentAvatarUrl(getAvatarUrl());
+  }, [getAvatarUrl]);
 
   const handleSearchUser = async () => {
     if (!username.trim()) {
       toast({
         title: "Digite um nome de usuário",
-        description: "Por favor, insira um nome de usuário válido.",
-        variant: "destructive"
+        description: "Por favor, insira um nome de usuário válido."
       });
       return;
     }
@@ -60,27 +70,29 @@ const AvatarPreview = ({
     setIsSearchingUser(true);
     
     try {
-      // Teste se o usuário existe fazendo uma requisição para a URL do avatar
-      const testUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?user=${username}&direction=2&head_direction=3&size=m&img_format=png`;
-      const response = await fetch(testUrl);
+      const testUrl = getAvatarUrl();
+      setCurrentAvatarUrl(testUrl);
       
-      if (response.ok) {
+      // Simular teste de carregamento
+      const img = new Image();
+      img.onload = () => {
         toast({
-          title: "Usuário encontrado!",
-          description: `Avatar de ${username} carregado com sucesso.`
+          title: "Usuário carregado!",
+          description: `Avatar de ${username} atualizado com sucesso.`
         });
-      } else {
+      };
+      img.onerror = () => {
         toast({
           title: "Usuário não encontrado",
-          description: `Verifique se ${username} existe no Habbo.${selectedHotel}`,
-          variant: "destructive"
+          description: `Verifique se ${username} existe no Habbo.${selectedHotel}`
         });
-      }
+      };
+      img.src = testUrl;
+      
     } catch (error) {
       toast({
         title: "Erro na busca",
-        description: "Não foi possível verificar o usuário. Tente novamente.",
-        variant: "destructive"
+        description: "Não foi possível verificar o usuário."
       });
     } finally {
       setIsSearchingUser(false);
@@ -123,13 +135,17 @@ const AvatarPreview = ({
 
         {/* Avatar Display */}
         <div className="flex justify-center">
-          <div className="bg-gradient-to-br from-blue-100 to-purple-100 p-8 rounded-lg border-2 border-dashed border-amber-400 relative">
+          <div className="bg-gradient-to-br from-blue-100 to-purple-100 p-6 rounded-lg border-2 border-dashed border-amber-400 relative">
             <img 
-              src={getAvatarUrl()}
+              src={currentAvatarUrl}
               alt="Preview do Avatar"
-              className="max-w-full h-auto pixelated"
-              style={{ imageRendering: 'pixelated', minHeight: '120px', minWidth: '64px' }}
+              className="pixelated min-h-[120px] min-w-[64px]"
+              style={{ imageRendering: 'pixelated' }}
               loading="lazy"
+              onError={(e) => {
+                // Fallback para avatar padrão se falhar
+                e.currentTarget.src = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&direction=${avatarDirection}&head_direction=3&size=${avatarSize}&img_format=png&gesture=${avatarGesture}&action=${avatarAction}`;
+              }}
             />
             <Button
               variant="outline"
@@ -151,8 +167,13 @@ const AvatarPreview = ({
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Digite o nome do usuário"
+              placeholder="Digite o nome do usuário (ex: Beebop)"
               className="habbo-input flex-1"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchUser();
+                }
+              }}
             />
             <Button 
               onClick={handleSearchUser} 
