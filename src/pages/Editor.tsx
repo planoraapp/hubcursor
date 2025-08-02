@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import ViaJovemEditor from '../components/ViaJovemEditor';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
+import HabboHubEditor from '@/components/HabboHubEditor';
 
 const Editor = () => {
   const isMobile = useIsMobile();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    console.log('🎨 Editor ViaJovem carregado - Sistema completo');
+    console.log('🎨 Editor HabboHub carregado - Sistema oficial Habbo');
     
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -28,13 +28,13 @@ const Editor = () => {
       <MobileLayout>
         <div className="p-4">
           <PageHeader 
-            title="Editor de Visuais Habbo"
+            title="Editor de Visuais HabboHub"
             icon="/assets/editorvisuais.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
           <AdSpace type="horizontal" className="mb-6" />
           <div className="min-h-screen">
-            <ViaJovemEditor />
+            <HabboHubEditor />
           </div>
           <div className="flex justify-center gap-4 mt-6">
             <img 
@@ -64,7 +64,7 @@ const Editor = () => {
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <div className="p-4 md:p-8">
             <PageHeader 
-              title="Editor de Visuais Habbo"
+              title="Editor de Visuais HabboHub"
               icon="/assets/editorvisuais.png"
               backgroundImage="/assets/1360__-3C7.png"
             />
@@ -72,7 +72,7 @@ const Editor = () => {
             <AdSpace type="horizontal" className="mb-6" />
             
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6">
-              <ViaJovemEditor />
+              <HabboHubEditor />
             </div>
             
             <div className="flex justify-center gap-4 mt-6">
