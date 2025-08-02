@@ -112,6 +112,42 @@ export type Database = {
         }
         Relationships: []
       }
+      habbo_badges: {
+        Row: {
+          badge_code: string
+          badge_name: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          last_validated_at: string | null
+          source: string | null
+          validation_count: number | null
+        }
+        Insert: {
+          badge_code: string
+          badge_name?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          last_validated_at?: string | null
+          source?: string | null
+          validation_count?: number | null
+        }
+        Update: {
+          badge_code?: string
+          badge_name?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          last_validated_at?: string | null
+          source?: string | null
+          validation_count?: number | null
+        }
+        Relationships: []
+      }
       habbo_figures_cache: {
         Row: {
           created_at: string
