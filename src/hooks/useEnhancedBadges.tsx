@@ -23,7 +23,7 @@ interface UseEnhancedBadgesProps {
 }
 
 const fetchEnhancedBadges = async ({
-  limit = 10000,
+  limit = 1000,
   search = '',
   category = 'all',
   forceRefresh = false
@@ -34,36 +34,84 @@ const fetchEnhancedBadges = async ({
   console.log(`🚀 [EnhancedBadges] Fetching with limit: ${limit}, search: "${search}", category: ${category}`);
   
   try {
+    // Timeout para evitar requests longos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const { data, error } = await supabase.functions.invoke('habbo-badges-scraper', {
-      body: { limit, search, category, forceRefresh }
+      body: { limit, search, category, forceRefresh },
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (error) {
       console.error('❌ [EnhancedBadges] Supabase function error:', error);
-      throw error;
+      
+      // Fallback para badges estáticos em caso de erro
+      return {
+        badges: generateFallbackBadges(category, search),
+        metadata: { hasMore: false, error: true }
+      };
     }
 
     if (!data || !data.badges || !Array.isArray(data.badges)) {
       console.error('❌ [EnhancedBadges] Invalid response format:', data);
-      throw new Error('Invalid response format from badges scraper');
+      return {
+        badges: generateFallbackBadges(category, search),
+        metadata: { hasMore: false, error: true }
+      };
     }
 
     console.log(`✅ [EnhancedBadges] Successfully fetched ${data.badges.length} badges`);
-    console.log(`📊 [EnhancedBadges] Metadata:`, data.metadata);
     
     return {
       badges: data.badges,
-      metadata: data.metadata
+      metadata: data.metadata || { hasMore: false }
     };
     
   } catch (error) {
-    console.error('❌ [EnhancedBadges] Error:', error);
-    throw error;
+    console.error('❌ [EnhancedBadges] Network error:', error);
+    return {
+      badges: generateFallbackBadges(category, search),
+      metadata: { hasMore: false, error: true }
+    };
   }
 };
 
+// Fallback badges para casos de erro
+const generateFallbackBadges = (category: string, search: string): EnhancedBadgeItem[] => {
+  const commonBadges = [
+    { code: 'ADM', name: 'Administrador', category: 'official', rarity: 'legendary' },
+    { code: 'MOD', name: 'Moderador', category: 'official', rarity: 'rare' },
+    { code: 'VIP', name: 'VIP', category: 'official', rarity: 'uncommon' },
+    { code: 'HC1', name: 'Habbo Club', category: 'achievements', rarity: 'common' },
+    { code: 'STAFF', name: 'Staff', category: 'official', rarity: 'legendary' },
+    { code: 'GUIDE', name: 'Guia', category: 'official', rarity: 'rare' },
+    { code: 'ACH_RoomEntry1', name: 'Primeira Visita', category: 'achievements', rarity: 'common' },
+    { code: 'ACH_Login1', name: 'Primeiro Login', category: 'achievements', rarity: 'common' }
+  ];
+
+  return commonBadges
+    .filter(badge => category === 'all' || badge.category === category)
+    .filter(badge => !search || 
+      badge.code.toLowerCase().includes(search.toLowerCase()) ||
+      badge.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .map(badge => ({
+      id: badge.code,
+      code: badge.code,
+      name: badge.name,
+      description: `Emblema ${badge.name}`,
+      imageUrl: `https://habboassets.com/c_images/album1584/${badge.code}.gif`,
+      category: badge.category,
+      rarity: badge.rarity,
+      source: 'fallback'
+    }));
+};
+
 export const useEnhancedBadges = ({
-  limit = 10000,
+  limit = 1000,
   search = '',
   category = 'all',
   forceRefresh = false,
@@ -75,9 +123,12 @@ export const useEnhancedBadges = ({
     queryKey: ['enhanced-badges', limit, search, category, forceRefresh],
     queryFn: () => fetchEnhancedBadges({ limit, search, category, forceRefresh }),
     enabled,
-    staleTime: 1000 * 60 * 60 * 4, // 4 hours
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    retry: 2,
+    staleTime: 1000 * 60 * 10, // 10 minutos
+    gcTime: 1000 * 60 * 30, // 30 minutos
+    retry: (failureCount, error) => {
+      // Retry apenas até 2 vezes e não em caso de abort
+      return failureCount < 2 && error?.name !== 'AbortError';
+    },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 };
