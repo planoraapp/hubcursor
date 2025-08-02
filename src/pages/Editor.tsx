@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import HabboHubEditor from '../components/HabboHubEditor';
+import ViaJovemEditor from '../components/ViaJovemEditor';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -12,7 +11,7 @@ const Editor = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    console.log('🔧 Editor page loaded - React component rendering');
+    console.log('🎨 Editor ViaJovem carregado - Sistema completo');
     
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -29,13 +28,13 @@ const Editor = () => {
       <MobileLayout>
         <div className="p-4">
           <PageHeader 
-            title="Editor de Visuais"
+            title="Editor de Visuais Habbo"
             icon="/assets/editorvisuais.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
           <AdSpace type="horizontal" className="mb-6" />
           <div className="min-h-screen">
-            <HabboHubEditor />
+            <ViaJovemEditor />
           </div>
           <div className="flex justify-center gap-4 mt-6">
             <img 
@@ -65,15 +64,15 @@ const Editor = () => {
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <div className="p-4 md:p-8">
             <PageHeader 
-              title="Editor de Visuais"
+              title="Editor de Visuais Habbo"
               icon="/assets/editorvisuais.png"
               backgroundImage="/assets/1360__-3C7.png"
             />
             
             <AdSpace type="horizontal" className="mb-6" />
             
-            <div className="min-h-screen">
-              <HabboHubEditor />
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6">
+              <ViaJovemEditor />
             </div>
             
             <div className="flex justify-center gap-4 mt-6">
