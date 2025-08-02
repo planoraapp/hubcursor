@@ -381,7 +381,7 @@ function parseHabboWidgetsPageAdvanced(html: string, category: string): HabboWid
   }
 }
 
-function generateMassiveKnownDatabase(): HabboWidgetsItem[] {
+function generateRobustFallbackDatabase(): HabboWidgetsItem[] {
   const items: HabboWidgetsItem[] = [];
   
   // Base MASSIVA de itens reais conhecidos do Habbo
