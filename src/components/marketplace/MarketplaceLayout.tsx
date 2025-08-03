@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceItemsList } from './MarketplaceItemsList';
@@ -156,7 +155,7 @@ export const MarketplaceLayout = () => {
     return (
       <div className="text-center p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Dados Reais</h3>
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Dados</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button 
             onClick={fetchMarketData}
@@ -171,7 +170,7 @@ export const MarketplaceLayout = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hotel Selection Tabs - Centralizados como solicitado */}
+      {/* Hotel Selection Tabs */}
       <div className="flex justify-center">
         <Tabs value={selectedHotel} onValueChange={setSelectedHotel} className="w-full max-w-4xl">
           <div className="flex justify-center mb-6">
@@ -187,7 +186,6 @@ export const MarketplaceLayout = () => {
           
           {hotels.map(hotel => (
             <TabsContent key={hotel.id} value={hotel.id}>
-              {/* Error message if items loaded but with issues */}
               {error && items.length > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                   <p className="text-yellow-800 text-sm">{error}</p>
@@ -195,7 +193,7 @@ export const MarketplaceLayout = () => {
               )}
               
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left Column - Marketplace Items List (5/12 width) */}
+                {/* Left Column - Marketplace Items List */}
                 <div className="lg:col-span-5">
                   <MarketplaceItemsList
                     items={items}
@@ -207,10 +205,11 @@ export const MarketplaceLayout = () => {
                     sortBy={sortBy}
                     setSortBy={setSortBy}
                     hotel={hotel}
+                    stats={stats}
                   />
                 </div>
                 
-                {/* Right Column - Category Boxes sem gráficos (7/12 width) */}
+                {/* Right Column - Category Boxes */}
                 <div className="lg:col-span-7">
                   <MarketplaceCategoryBoxes
                     topSellers={maioresOfertas}
@@ -223,6 +222,11 @@ export const MarketplaceLayout = () => {
                     hotel={hotel}
                   />
                 </div>
+              </div>
+              
+              {/* Assets Reference Footer */}
+              <div className="text-center text-xs text-gray-400 mt-8 pt-4 border-t border-gray-200">
+                <p>Assets: HabboAPI.site • Imagens: Habbo.com • Interface: HabboHub</p>
               </div>
             </TabsContent>
           ))}

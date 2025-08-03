@@ -1,4 +1,3 @@
-
 import { MarketCategoryBox } from './MarketCategoryBox';
 import { MarketDashboard } from './MarketDashboard';
 
@@ -68,37 +67,7 @@ export const MarketplaceCategoryBoxes = ({
 
   return (
     <div className="space-y-6">
-      {/* Dashboard Stats Compacto - sem gráficos como solicitado */}
-      <div className="habbo-card p-6">
-        <div className="text-center border-b pb-4 mb-4">
-          <div className="text-4xl mb-3">{hotel.flag}</div>
-          <h3 className="font-bold text-gray-800 mb-2">{hotel.name} - Dados em Tempo Real</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
-              <div className="text-gray-600">Itens Ativos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.averagePrice.toLocaleString()}</div>
-              <div className="text-gray-600">Preço Médio</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{stats.totalVolume}</div>
-              <div className="text-gray-600">Vendas Hoje</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.highestPrice.toLocaleString()}</div>
-              <div className="text-gray-600">Mais Caro</div>
-            </div>
-          </div>
-        </div>
-        <div className="text-center text-sm text-gray-600">
-          <p>🕒 Última atualização: {new Date().toLocaleTimeString('pt-BR')}</p>
-          <p className="text-xs text-green-600 font-medium mt-1">✅ Dados reais da HabboAPI.site</p>
-        </div>
-      </div>
-
-      {/* Category Boxes Grid Redesenhada - Foco em "Maiores Ofertas do Dia" */}
+      {/* Category Boxes Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MarketCategoryBox 
           title="🔥 Maiores Ofertas do Dia" 

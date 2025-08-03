@@ -1,11 +1,11 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { Search, Filter, SortAsc, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MarketItemCard } from './MarketItemCard';
 import { MarketItemModal } from './MarketItemModal';
 import { PanelCard } from '../PanelCard';
-import { CreditIcon } from './CreditIcon';
+import { PremiumItemsDisplay } from './PremiumItemsDisplay';
+import { MarketStatsFooter } from './MarketStatsFooter';
 
 interface MarketItem {
   id: string;
@@ -37,6 +37,7 @@ interface MarketplaceItemsListProps {
   sortBy: 'price' | 'recent' | 'quantity';
   setSortBy: (sort: 'price' | 'recent' | 'quantity') => void;
   hotel: { id: string; name: string; flag: string };
+  stats: any;
 }
 
 export const MarketplaceItemsList = ({
@@ -48,7 +49,8 @@ export const MarketplaceItemsList = ({
   setSelectedCategory,
   sortBy,
   setSortBy,
-  hotel
+  hotel,
+  stats
 }: MarketplaceItemsListProps) => {
   const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,8 +94,11 @@ export const MarketplaceItemsList = ({
     <>
       <PanelCard title={`🏪 Feira Livre - ${hotel.flag} ${hotel.name}`}>
         <div className="space-y-4">
+          {/* Premium Items Display */}
+          <PremiumItemsDisplay hotel={hotel.id} />
+
           {/* Search and Filters */}
-          <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-3">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -108,13 +113,13 @@ export const MarketplaceItemsList = ({
               )}
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center space-x-2">
-                <Filter size={16} className="text-gray-600" />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <Filter size={16} className="text-gray-600 flex-shrink-0" />
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="habbo-input px-3 py-1 flex-1 text-sm"
+                  className="habbo-input px-2 py-1 flex-1 text-sm min-w-0"
                 >
                   {categories.map(category => (
                     <option key={category.id} value={category.id}>{category.name}</option>
@@ -122,12 +127,12 @@ export const MarketplaceItemsList = ({
                 </select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <SortAsc size={16} className="text-gray-600" />
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                <SortAsc size={16} className="text-gray-600 flex-shrink-0" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as 'price' | 'recent' | 'quantity')}
-                  className="habbo-input px-3 py-1 flex-1 text-sm"
+                  className="habbo-input px-2 py-1 flex-1 text-sm min-w-0"
                 >
                   {sortOptions.map(option => (
                     <option key={option.id} value={option.id}>
@@ -140,7 +145,7 @@ export const MarketplaceItemsList = ({
           </div>
 
           {/* Items Grid */}
-          <ScrollArea className="h-[600px]" ref={scrollAreaRef}>
+          <ScrollArea className="h-[500px]" ref={scrollAreaRef}>
             <div className="grid grid-cols-2 gap-3 p-1">
               {filteredItems.map((item) => (
                 <MarketItemCard
@@ -165,14 +170,12 @@ export const MarketplaceItemsList = ({
             )}
           </ScrollArea>
 
-          {/* Footer Info */}
-          <div className="text-center text-xs text-gray-500 bg-gray-50 rounded-lg p-2">
-            <p className="flex items-center justify-center gap-2">
-              Mostrando {Math.min(displayedItems, filteredItems.length)} de {items.length} itens • 
-              <CreditIcon size="sm" />
-              Atualizado automaticamente • {hotel.flag} {hotel.name}
-            </p>
-          </div>
+          {/* Market Stats Footer */}
+          <MarketStatsFooter 
+            stats={stats}
+            totalItems={items.length}
+            hotel={hotel}
+          />
         </div>
       </PanelCard>
 
