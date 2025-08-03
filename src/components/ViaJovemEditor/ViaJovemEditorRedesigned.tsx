@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -5,80 +6,63 @@ import { useToast } from '@/hooks/use-toast';
 import { useFlashAssetsViaJovem } from '@/hooks/useFlashAssetsViaJovem';
 import { ViaJovemAvatarSection } from './ViaJovemAvatarSection';
 import { ViaJovemClothingGridClean } from './ViaJovemClothingGridClean';
+
 interface ViaJovemEditorRedesignedProps {
   className?: string;
 }
+
+// Grouped sections with their categories
+const categoryGroups = [
+  {
+    id: 'head',
+    name: 'Cabeça e Acessórios',
+    icon: '👤',
+    categories: [
+      { id: 'hd', name: 'Rostos', icon: '👤' },
+      { id: 'hr', name: 'Cabelos', icon: '💇' },
+      { id: 'ea', name: 'Óculos', icon: '👓' },
+      { id: 'ha', name: 'Chapéus', icon: '🎩' }
+    ]
+  },
+  {
+    id: 'body',
+    name: 'Corpo e Costas',
+    icon: '👕',
+    categories: [
+      { id: 'ch', name: 'Camisetas', icon: '👕' },
+      { id: 'cc', name: 'Casacos', icon: '🧥' },
+      { id: 'ca', name: 'Acessórios Peito', icon: '🎖️' },
+      { id: 'cp', name: 'Estampas', icon: '🎨' }
+    ]
+  },
+  {
+    id: 'legs',
+    name: 'Calças e Pés',
+    icon: '👖',
+    categories: [
+      { id: 'lg', name: 'Calças', icon: '👖' },
+      { id: 'sh', name: 'Sapatos', icon: '👟' },
+      { id: 'wa', name: 'Cintura', icon: '👔' }
+    ]
+  }
+];
+
 export const ViaJovemEditorRedesigned = ({
   className = ''
 }: ViaJovemEditorRedesignedProps) => {
   const [currentFigure, setCurrentFigure] = useState('hd-190-1.hr-828-45.ch-665-92.lg-270-82.sh-305-62');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
   const [selectedHotel, setSelectedHotel] = useState('com');
-  const [selectedCategory, setSelectedCategory] = useState('ch');
+  const [selectedSection, setSelectedSection] = useState('head');
+  const [selectedCategory, setSelectedCategory] = useState('hd');
   const [username, setUsername] = useState('');
   const [selectedColor, setSelectedColor] = useState('1');
   const [selectedItem, setSelectedItem] = useState('665');
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Hook para dados Flash Assets
-  const {
-    items,
-    isLoading,
-    error
-  } = useFlashAssetsViaJovem();
+  const { items, isLoading, error } = useFlashAssetsViaJovem();
 
-  // Categorias ViaJovem
-  const categories = [{
-    id: 'hd',
-    name: 'Rostos',
-    icon: '👤'
-  }, {
-    id: 'hr',
-    name: 'Cabelos',
-    icon: '💇'
-  }, {
-    id: 'ch',
-    name: 'Camisetas',
-    icon: '👕'
-  }, {
-    id: 'lg',
-    name: 'Calças',
-    icon: '👖'
-  }, {
-    id: 'sh',
-    name: 'Sapatos',
-    icon: '👟'
-  }, {
-    id: 'ha',
-    name: 'Chapéus',
-    icon: '🎩'
-  }, {
-    id: 'ea',
-    name: 'Óculos',
-    icon: '👓'
-  }, {
-    id: 'fa',
-    name: 'Acessórios Faciais',
-    icon: '😷'
-  }, {
-    id: 'cc',
-    name: 'Casacos',
-    icon: '🧥'
-  }, {
-    id: 'ca',
-    name: 'Acessórios Peito',
-    icon: '🎖️'
-  }, {
-    id: 'wa',
-    name: 'Cintura',
-    icon: '👔'
-  }, {
-    id: 'cp',
-    name: 'Estampas',
-    icon: '🎨'
-  }];
   const handleSearchUser = async () => {
     if (!username.trim()) {
       toast({
@@ -108,25 +92,19 @@ export const ViaJovemEditorRedesigned = ({
       });
     }
   };
+
   const handleItemSelect = (itemId: string) => {
     setSelectedItem(itemId);
-
-    // Atualizar figure string
     const figureParts = currentFigure.split('.');
     const categoryPattern = new RegExp(`^${selectedCategory}-`);
-
-    // Remove categoria existente
     const filteredParts = figureParts.filter(part => !categoryPattern.test(part));
-
-    // Adiciona nova parte
     const newPart = `${selectedCategory}-${itemId}-${selectedColor}`;
     filteredParts.push(newPart);
     setCurrentFigure(filteredParts.join('.'));
   };
+
   const handleColorSelect = (colorId: string) => {
     setSelectedColor(colorId);
-
-    // Atualizar cor na figure atual
     const figureParts = currentFigure.split('.');
     const categoryPattern = new RegExp(`^${selectedCategory}-`);
     const updatedParts = figureParts.map(part => {
@@ -138,6 +116,7 @@ export const ViaJovemEditorRedesigned = ({
     });
     setCurrentFigure(updatedParts.join('.'));
   };
+
   const handleCopyUrl = () => {
     const hotelUrl = selectedHotel === 'com' ? 'habbo.com' : `habbo.${selectedHotel}`;
     const url = `https://www.${hotelUrl}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
@@ -147,6 +126,7 @@ export const ViaJovemEditorRedesigned = ({
       description: "URL do avatar copiada"
     });
   };
+
   const handleDownload = () => {
     const hotelUrl = selectedHotel === 'com' ? 'habbo.com' : `habbo.${selectedHotel}`;
     const url = `https://www.${hotelUrl}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
@@ -159,11 +139,14 @@ export const ViaJovemEditorRedesigned = ({
       description: "Avatar sendo baixado"
     });
   };
+
   const handleRandomize = () => {
     const basicCategories = ['hd', 'hr', 'ch', 'lg', 'sh'];
     const newFigureParts = [];
     basicCategories.forEach(category => {
-      const categoryItems = items.filter(item => item.category === category && (item.gender === selectedGender || item.gender === 'U'));
+      const categoryItems = items.filter(item => 
+        item.category === category && (item.gender === selectedGender || item.gender === 'U')
+      );
       if (categoryItems.length > 0) {
         const randomItem = categoryItems[Math.floor(Math.random() * categoryItems.length)];
         const randomColor = Math.floor(Math.random() * 20) + 1;
@@ -176,29 +159,36 @@ export const ViaJovemEditorRedesigned = ({
       description: "Novo visual gerado"
     });
   };
-  return <div className={`max-w-7xl mx-auto p-4 space-y-6 ${className}`}>
-      {/* Header */}
-      <div className="text-center">
-        
-      </div>
 
-      {/* Seleção de Gênero */}
-      <div className="flex justify-center gap-2">
-        <button className={`px-4 py-2 rounded ${selectedGender === 'M' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedGender('M')}>
-          👨 Masculino
-        </button>
-        <button className={`px-4 py-2 rounded ${selectedGender === 'F' ? 'bg-pink-500 text-white' : 'bg-gray-200'}`} onClick={() => setSelectedGender('F')}>
-          👩 Feminino
-        </button>
-      </div>
+  // Update selected category when section changes
+  useEffect(() => {
+    const currentGroup = categoryGroups.find(group => group.id === selectedSection);
+    if (currentGroup && currentGroup.categories.length > 0) {
+      setSelectedCategory(currentGroup.categories[0].id);
+    }
+  }, [selectedSection]);
 
+  return (
+    <div className={`max-w-7xl mx-auto p-4 space-y-6 ${className}`}>
       {/* Layout Principal */}
       <div className="flex gap-6">
-        {/* Seção do Avatar (Esquerda) */}
-        <div className="w-40">
+        {/* Seção do Avatar (Esquerda) - Aumentada */}
+        <div className="w-56">
           <Card>
             <CardContent className="p-4">
-              <ViaJovemAvatarSection currentFigure={currentFigure} selectedHotel={selectedHotel} username={username} onHotelChange={setSelectedHotel} onUsernameChange={setUsername} onSearchUser={handleSearchUser} onCopyUrl={handleCopyUrl} onDownload={handleDownload} onRandomize={handleRandomize} />
+              <ViaJovemAvatarSection 
+                currentFigure={currentFigure} 
+                selectedHotel={selectedHotel} 
+                username={username} 
+                selectedGender={selectedGender}
+                onGenderChange={setSelectedGender}
+                onHotelChange={setSelectedHotel} 
+                onUsernameChange={setUsername} 
+                onSearchUser={handleSearchUser} 
+                onCopyUrl={handleCopyUrl} 
+                onDownload={handleDownload} 
+                onRandomize={handleRandomize} 
+              />
             </CardContent>
           </Card>
         </div>
@@ -207,32 +197,78 @@ export const ViaJovemEditorRedesigned = ({
         <div className="flex-1">
           <Card>
             <CardContent className="p-6">
-              <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-                <TabsList className="grid grid-cols-6 lg:grid-cols-12 gap-1 mb-6">
-                  {categories.map(category => <TabsTrigger key={category.id} value={category.id} className="text-xs px-2 py-2" title={category.name}>
+              <Tabs value={selectedSection} onValueChange={setSelectedSection}>
+                <TabsList className="grid grid-cols-3 gap-1 mb-6">
+                  {categoryGroups.map(group => (
+                    <TabsTrigger 
+                      key={group.id} 
+                      value={group.id} 
+                      className="text-sm px-4 py-3"
+                    >
                       <div className="text-center">
-                        <div>{category.icon}</div>
-                        <div className="text-[10px]">{category.name.split(' ')[0]}</div>
+                        <div className="text-lg">{group.icon}</div>
+                        <div className="text-xs mt-1">{group.name}</div>
                       </div>
-                    </TabsTrigger>)}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
 
-                {categories.map(category => <TabsContent key={category.id} value={category.id}>
+                {categoryGroups.map(group => (
+                  <TabsContent key={group.id} value={group.id}>
                     <div className="mb-4">
-                      <h3 className="font-bold text-lg">{category.name}</h3>
+                      <h3 className="font-bold text-lg">{group.name}</h3>
                     </div>
                     
-                    {isLoading ? <div className="text-center py-8">
-                        <div className="text-gray-500">Carregando roupas...</div>
-                      </div> : error ? <div className="text-center py-8">
-                        <div className="text-red-500">Erro ao carregar roupas</div>
-                      </div> : <ViaJovemClothingGridClean items={items} selectedCategory={category.id} selectedGender={selectedGender} onItemSelect={handleItemSelect} onColorSelect={handleColorSelect} selectedItem={selectedItem} selectedColor={selectedColor} />}
-                  </TabsContent>)}
+                    {/* Sub-categorias */}
+                    <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <TabsList className="grid gap-1 mb-4" style={{ gridTemplateColumns: `repeat(${group.categories.length}, 1fr)` }}>
+                        {group.categories.map(category => (
+                          <TabsTrigger 
+                            key={category.id} 
+                            value={category.id} 
+                            className="text-xs px-2 py-2"
+                          >
+                            <div className="text-center">
+                              <div>{category.icon}</div>
+                              <div className="text-[10px] mt-1">{category.name}</div>
+                            </div>
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+
+                      {group.categories.map(category => (
+                        <TabsContent key={category.id} value={category.id}>
+                          {isLoading ? (
+                            <div className="text-center py-8">
+                              <div className="text-gray-500">Carregando roupas...</div>
+                            </div>
+                          ) : error ? (
+                            <div className="text-center py-8">
+                              <div className="text-red-500">Erro ao carregar roupas</div>
+                            </div>
+                          ) : (
+                            <ViaJovemClothingGridClean 
+                              items={items}
+                              selectedCategory={category.id}
+                              selectedGender={selectedGender}
+                              onItemSelect={handleItemSelect}
+                              onColorSelect={handleColorSelect}
+                              selectedItem={selectedItem}
+                              selectedColor={selectedColor}
+                            />
+                          )}
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  </TabsContent>
+                ))}
               </Tabs>
             </CardContent>
           </Card>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default ViaJovemEditorRedesigned;

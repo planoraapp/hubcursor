@@ -18,6 +18,8 @@ interface ViaJovemAvatarSectionProps {
   currentFigure: string;
   selectedHotel: string;
   username: string;
+  selectedGender: 'M' | 'F';
+  onGenderChange: (gender: 'M' | 'F') => void;
   onHotelChange: (hotel: string) => void;
   onUsernameChange: (username: string) => void;
   onSearchUser: () => void;
@@ -42,6 +44,8 @@ export const ViaJovemAvatarSection = ({
   currentFigure,
   selectedHotel,
   username,
+  selectedGender,
+  onGenderChange,
   onHotelChange,
   onUsernameChange,
   onSearchUser,
@@ -64,9 +68,9 @@ export const ViaJovemAvatarSection = ({
     <div className="flex flex-col space-y-4">
       {/* Avatar e Botões */}
       <div className="flex gap-4">
-        {/* Avatar */}
+        {/* Avatar - Aumentado */}
         <div className="relative">
-          <div className="w-24 h-32 bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg border-2 border-gray-200 flex items-end justify-center p-2">
+          <div className="w-32 h-40 bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg border-2 border-gray-200 flex items-end justify-center p-2">
             <img
               src={getAvatarUrl()}
               alt="Avatar Preview"
@@ -112,51 +116,71 @@ export const ViaJovemAvatarSection = ({
         </div>
       </div>
 
-      {/* Busca de Usuário */}
-      <div className="flex gap-2" style={{ width: '140px' }}>
-        <div className="flex-1">
-          <Input
-            value={username}
-            onChange={(e) => onUsernameChange(e.target.value)}
-            placeholder="Usuário Habbo"
-            className="text-sm"
-            onKeyPress={(e) => e.key === 'Enter' && onSearchUser()}
-          />
-        </div>
-        
-        {/* Seletor de Hotel com Popover */}
-        <Popover open={hotelPopoverOpen} onOpenChange={setHotelPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="px-2">
-              {selectedHotelData?.flag || '🌍'}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-48 p-2">
-            <div className="space-y-1">
-              {hotels.map((hotel) => (
-                <button
-                  key={hotel.code}
-                  className={`w-full text-left px-2 py-1 rounded text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                    selectedHotel === hotel.code ? 'bg-blue-50' : ''
-                  }`}
-                  onClick={() => {
-                    onHotelChange(hotel.code);
-                    setHotelPopoverOpen(false);
-                  }}
-                >
-                  <span>{hotel.flag}</span>
-                  <span>{hotel.name}</span>
-                </button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+      {/* Seleção de Gênero - Apenas ícones */}
+      <div className="flex justify-center gap-2">
+        <button 
+          className={`p-2 rounded text-2xl ${selectedGender === 'M' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          onClick={() => onGenderChange('M')}
+          title="Masculino"
+        >
+          ♂️
+        </button>
+        <button 
+          className={`p-2 rounded text-2xl ${selectedGender === 'F' ? 'bg-pink-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          onClick={() => onGenderChange('F')}
+          title="Feminino"
+        >
+          ♀️
+        </button>
       </div>
 
-      {/* Botão de Busca */}
-      <Button onClick={onSearchUser} size="sm" className="w-full">
-        Buscar Usuário
-      </Button>
+      {/* Busca de Usuário */}
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input
+              value={username}
+              onChange={(e) => onUsernameChange(e.target.value)}
+              placeholder="Usuário Habbo"
+              className="text-sm"
+              onKeyPress={(e) => e.key === 'Enter' && onSearchUser()}
+            />
+          </div>
+          
+          {/* Seletor de Hotel com Popover */}
+          <Popover open={hotelPopoverOpen} onOpenChange={setHotelPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="px-2">
+                {selectedHotelData?.flag || '🌍'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2">
+              <div className="space-y-1">
+                {hotels.map((hotel) => (
+                  <button
+                    key={hotel.code}
+                    className={`w-full text-left px-2 py-1 rounded text-sm hover:bg-gray-100 flex items-center gap-2 ${
+                      selectedHotel === hotel.code ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => {
+                      onHotelChange(hotel.code);
+                      setHotelPopoverOpen(false);
+                    }}
+                  >
+                    <span>{hotel.flag}</span>
+                    <span>{hotel.name}</span>
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Botão de Busca */}
+        <Button onClick={onSearchUser} size="sm" className="w-full">
+          Buscar Usuário
+        </Button>
+      </div>
     </div>
   );
 };
