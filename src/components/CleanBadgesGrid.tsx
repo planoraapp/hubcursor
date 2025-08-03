@@ -1,347 +1,234 @@
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useHabboAssetsBadges } from '../hooks/useHabboAssetsBadges';
-import { useLanguage } from '../hooks/useLanguage';
-import { Search, Grid, List, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Badge } from './ui/badge';
+import React, { useState, useMemo } from 'react';
+import { Search, RefreshCw, Database } from 'lucide-react';
+import { useHybridUnifiedBadges } from '../hooks/useHybridUnifiedBadges';
+import { PanelCard } from './PanelCard';
 import { BadgeDetailsModal } from './BadgeDetailsModal';
-import { BadgeCategoryTabs } from './BadgeCategoryTabs';
+import HybridBadgeImage from './HybridBadgeImage';
+import { toast } from 'sonner';
 
-interface BadgeItem {
-  code: string;
-  name: string;
-  image_url: string;
-  category: 'official' | 'achievements' | 'fansites' | 'others';
-  metadata?: {
-    year?: number;
-    event?: string;
-    source_info?: string;
-  };
-}
+const CATEGORIES = [
+  { value: 'all', label: 'Todos', icon: '🌟' },
+  { value: 'official', label: 'Oficiais', icon: '🛡️' },
+  { value: 'achievements', label: 'Conquistas', icon: '🏆' },
+  { value: 'fansites', label: 'Fã-sites', icon: '⭐' },
+  { value: 'others', label: 'Outros', icon: '🎨' }
+];
 
 export const CleanBadgesGrid: React.FC = () => {
-  const { t } = useLanguage();
+  const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
-  const [forceRefresh, setForceRefresh] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
 
-  // Debounce search para melhor performance
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  console.log('🔍 [CleanBadgesGrid] Component state:', {
-    activeCategory,
-    searchTerm: debouncedSearch,
-    forceRefresh
-  });
-
-  // Fetch badges data - carregar todos os emblemas com debounced search
-  const { 
-    data: badgeData, 
-    isLoading, 
-    isError,
-    error,
-    isFetching,
-    refetch 
-  } = useHabboAssetsBadges({
-    search: debouncedSearch,
+  // Usar o hook de badges unificados
+  const { data, isLoading, error, refetch } = useHybridUnifiedBadges({
+    limit: 1000,
+    search: searchTerm,
     category: activeCategory,
-    page: 1,
-    limit: 5000, // Limite alto para carregar mais emblemas
-    enabled: true,
-    loadAll: true,
-    forceRefresh
+    enabled: true
   });
 
-  // Process and filter badges
-  const badges = useMemo(() => {
-    if (!badgeData?.badges) {
-      console.log('📦 [CleanBadgesGrid] No badge data available');
-      return [];
+  // Filtrar badges por categoria e busca
+  const filteredBadges = useMemo(() => {
+    if (!data?.badges) return [];
+    
+    let filtered = data.badges;
+    
+    // Filtrar por categoria
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter(badge => badge.category === activeCategory);
     }
+    
+    // Filtrar por busca
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(badge => 
+        badge.badge_code.toLowerCase().includes(searchLower) ||
+        badge.badge_name.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return filtered;
+  }, [data?.badges, activeCategory, searchTerm]);
 
-    console.log(`📦 [CleanBadgesGrid] Received ${badgeData.badges.length} badges`);
-    return badgeData.badges;
-  }, [badgeData]);
-
-  // Category options with translations and icons
-  const categoryOptions = useMemo(() => [
-    { 
-      value: 'all', 
-      label: t('allCategories') || 'Todas as Categorias', 
-      icon: '🌟',
-      count: badgeData?.metadata?.categories?.all || 0,
-      color: 'bg-blue-100 border-blue-300 text-blue-800'
-    },
-    { 
-      value: 'official', 
-      label: t('official') || 'Oficiais', 
-      icon: '🛡️',
-      count: badgeData?.metadata?.categories?.official || 0,
-      color: 'bg-yellow-100 border-yellow-300 text-yellow-800'
-    },
-    { 
-      value: 'achievements', 
-      label: t('achievements') || 'Conquistas', 
-      icon: '🏆',
-      count: badgeData?.metadata?.categories?.achievements || 0,
-      color: 'bg-green-100 border-green-300 text-green-800'
-    },
-    { 
-      value: 'fansites', 
-      label: t('fansites') || 'Fã-sites', 
-      icon: '⭐',
-      count: badgeData?.metadata?.categories?.fansites || 0,
-      color: 'bg-purple-100 border-purple-300 text-purple-800'
-    },
-    { 
-      value: 'others', 
-      label: t('others') || 'Outros', 
-      icon: '🎨',
-      count: badgeData?.metadata?.categories?.others || 0,
-      color: 'bg-gray-100 border-gray-300 text-gray-800'
-    },
-  ], [badgeData, t]);
-
-  // Handle badge click
-  const handleBadgeClick = useCallback((badge: BadgeItem) => {
+  const handleBadgeClick = (badge: any) => {
     setSelectedBadge(badge);
-  }, []);
+  };
 
-  // Handle refresh
-  const handleRefresh = useCallback(() => {
-    setForceRefresh(prev => !prev);
+  const handleRefresh = () => {
+    toast.info('Atualizando emblemas...');
     refetch();
-  }, [refetch]);
+  };
 
-  // Handle category change
-  const handleCategoryChange = useCallback((category: string) => {
-    setActiveCategory(category);
-  }, []);
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="p-6 border-b bg-white">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
-            <div className="text-center">
-              <p className="text-lg font-semibold text-gray-700">{t('loadingBadges') || 'Carregando emblemas...'}</p>
-              <p className="text-sm text-gray-500 mt-1">Coletando e categorizando emblemas</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (isError) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="p-6 border-b bg-white">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500" />
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2">{t('errorLoadingBadges') || 'Erro ao carregar emblemas'}</h3>
-              <p className="text-gray-600 mb-4">{error?.message || 'Tente novamente mais tarde'}</p>
-              <Button onClick={handleRefresh} variant="outline">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                {t('tryAgain') || 'Tentar Novamente'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  console.log('🎯 [CleanBadgesGrid] Estado:', {
+    isLoading,
+    error,
+    badgeCount: data?.badges?.length || 0,
+    filteredCount: filteredBadges.length,
+    activeCategory,
+    searchTerm
+  });
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header fixo */}
-      <div className="p-6 border-b bg-white">
+    <div className="h-full flex flex-col">
+      {/* Header com controles */}
+      <div className="p-4 border-b bg-white/95">
         <div className="flex flex-col gap-4">
+          {/* Título e status */}
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              Emblemas do Habbo
+            </h2>
             <div className="flex items-center gap-2">
-              <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isFetching}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
+              <Database className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-gray-600">
+                {data?.badges?.length || 0} emblemas
+              </span>
             </div>
           </div>
 
-          {/* Barra de busca com debounce */}
+          {/* Busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder={t('searchBadges') || 'Buscar emblemas...'}
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar emblemas por código ou nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
             />
-            {searchTerm !== debouncedSearch && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
           </div>
 
-          {/* Abas de navegação com ícones */}
-          <BadgeCategoryTabs
-            activeCategory={activeCategory}
-            onCategoryChange={handleCategoryChange}
-            categories={categoryOptions}
-          />
+          {/* Categorias */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map(category => (
+              <button
+                key={category.value}
+                onClick={() => setActiveCategory(category.value)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeCategory === category.value
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span>{category.icon}</span>
+                <span>{category.label}</span>
+                <span className="bg-white/20 text-xs px-1.5 py-0.5 rounded-full">
+                  {category.value === 'all' 
+                    ? (data?.badges?.length || 0)
+                    : data?.badges?.filter(b => b.category === category.value).length || 0
+                  }
+                </span>
+              </button>
+            ))}
+          </div>
 
-          {/* Stats aprimoradas */}
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center gap-4">
-              <span className="font-medium">
-                {t('showingBadges') || 'Mostrando'} {badges.length.toLocaleString()} {t('badges') || 'emblemas'}
-              </span>
-              {badgeData?.metadata?.cached && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  ⚡ Cache
-                </Badge>
-              )}
-              {debouncedSearch && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  🔍 "{debouncedSearch}"
-                </Badge>
-              )}
-            </div>
-            {badgeData?.metadata?.source && (
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                {badgeData.metadata.source}
-              </span>
-            )}
+          {/* Botão de atualizar */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+              {isLoading ? 'Carregando...' : 'Atualizar'}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Content scrollable */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6">
-          {badges.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="text-gray-400 mb-4">
-                <Search className="h-12 w-12" />
+      {/* Conteúdo principal */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">Carregando emblemas...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && !isLoading && (
+          <div className="text-center py-8">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <p className="text-red-700 font-medium mb-2">Erro ao carregar emblemas</p>
+              <p className="text-red-600 text-sm mb-4">{error.message}</p>
+              <button
+                onClick={handleRefresh}
+                className="text-red-600 hover:text-red-700 underline font-medium"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Grid de badges */}
+        {!isLoading && !error && filteredBadges.length > 0 && (
+          <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 xl:grid-cols-20 gap-2">
+            {filteredBadges.map((badge) => (
+              <div
+                key={badge.id}
+                className="group relative aspect-square cursor-pointer hover:scale-110 transition-transform duration-200 bg-gray-50 rounded border hover:border-blue-300"
+                onClick={() => handleBadgeClick(badge)}
+                title={`${badge.badge_code} - ${badge.badge_name}`}
+              >
+                <HybridBadgeImage
+                  code={badge.badge_code}
+                  name={badge.badge_name}
+                  size="md"
+                  className="w-full h-full p-1"
+                />
+                
+                {/* Indicador de validação */}
+                {badge.validation_count > 1 && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {badge.validation_count > 9 ? '9+' : badge.validation_count}
+                  </div>
+                )}
               </div>
+            ))}
+          </div>
+        )}
+
+        {/* Nenhum resultado */}
+        {!isLoading && !error && filteredBadges.length === 0 && (
+          <div className="text-center py-12">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-8">
+              <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                {t('noBadgesFound') || 'Nenhum emblema encontrado'}
+                Nenhum emblema encontrado
               </h3>
-              <p className="text-gray-500 text-center max-w-md">
-                {debouncedSearch 
-                  ? (t('tryDifferentSearch') || 'Tente uma busca diferente ou altere os filtros')
-                  : (t('noBadgesAvailable') || 'Nenhum emblema disponível nesta categoria')
-                }
+              <p className="text-gray-500 mb-4">
+                Tente ajustar os filtros ou fazer uma busca diferente
               </p>
-            </div>
-          ) : (
-            <>
-              {/* Grid de emblemas */}
-              <div className={
-                viewMode === 'grid'
-                  ? "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-16 gap-2"
-                  : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
-              }>
-                {badges.map((badge, index) => (
-                  <div
-                    key={`${badge.code}_${index}`}
-                    onClick={() => handleBadgeClick(badge)}
-                    className={
-                      viewMode === 'grid'
-                        ? "group relative bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300 hover:scale-105"
-                        : "flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300"
-                    }
-                    title={`${badge.name} (${badge.code})`}
-                  >
-                    <div className={viewMode === 'grid' ? "w-full aspect-square flex items-center justify-center mb-2" : "flex-shrink-0"}>
-                      <img
-                        src={badge.image_url}
-                        alt={badge.name}
-                        className="w-8 h-8 object-contain pixel-art"
-                        style={{ imageRendering: 'pixelated' }}
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.src = '/assets/emblemas.png';
-                        }}
-                      />
-                    </div>
-                    <div className={viewMode === 'grid' ? "text-center" : "flex-1 min-w-0"}>
-                      <p className="text-xs font-medium text-gray-800 truncate">{badge.code}</p>
-                      {viewMode === 'list' && (
-                        <p className="text-xs text-gray-500 truncate">{badge.name}</p>
-                      )}
-                      {badge.metadata?.year && (
-                        <p className="text-xs text-blue-600">{badge.metadata.year}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Loading indicator se ainda estiver buscando */}
-              {isFetching && (
-                <div className="flex justify-center py-8">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">{t('loadingMore') || 'Atualizando...'}</span>
-                  </div>
-                </div>
+              {data?.badges?.length === 0 && (
+                <button
+                  onClick={handleRefresh}
+                  className="text-blue-600 hover:text-blue-700 underline font-medium"
+                >
+                  Carregar emblemas
+                </button>
               )}
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal de Badge */}
+      {/* Modal de detalhes */}
       {selectedBadge && (
         <BadgeDetailsModal
           badge={{
-            id: `habbo_assets_${selectedBadge.code}`,
-            code: selectedBadge.code,
-            name: selectedBadge.name,
-            description: `Emblema oficial do Habbo Hotel. Este é o badge ${selectedBadge.code} - ${selectedBadge.name}.`,
+            id: selectedBadge.id,
+            code: selectedBadge.badge_code,
+            name: selectedBadge.badge_name,
+            description: `Emblema ${selectedBadge.badge_code} - ${selectedBadge.badge_name}`,
             category: selectedBadge.category,
             imageUrl: selectedBadge.image_url,
             rarity: 'common',
-            source: selectedBadge.metadata?.source_info || 'HabboAssets',
-            scrapedAt: new Date().toISOString(),
-            metadata: selectedBadge.metadata
+            source: selectedBadge.source
           }}
           onClose={() => setSelectedBadge(null)}
         />
