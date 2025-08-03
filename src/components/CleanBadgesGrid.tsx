@@ -1,172 +1,55 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Search, Globe } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useHabboAssetsBadges, HabboAssetsBadge } from '../hooks/useHabboAssetsBadges';
-import { useLanguage, Language } from '../hooks/useLanguage';
 
-const CATEGORIES = [
-  { value: 'all', label: 'all', icon: '📦' },
-  { value: 'official', label: 'official', icon: '🛡️' },
-  { value: 'achievements', label: 'achievements', icon: '🏆' },
-  { value: 'fansites', label: 'fansites', icon: '⭐' },
-  { value: 'others', label: 'others', icon: '🎨' }
-];
+import React, { useState, useEffect, useMemo } from 'react';
+import { useHabboAssetsBadges } from '../hooks/useHabboAssetsBadges';
+import { useLanguage } from '../hooks/useLanguage';
+import { Search, Filter, Grid, List, AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import { Badge } from './ui/badge';
 
-const TRANSLATIONS = {
-  pt: {
-    all: 'Todos',
-    official: 'Oficiais', 
-    achievements: 'Conquistas',
-    fansites: 'Fã-sites',
-    others: 'Outros',
-    searchPlaceholder: 'Pesquisar por nome ou código...',
-    foundBadges: 'encontrados',
-    source: 'Fonte: HabboAssets',
-    loading: 'Carregando...',
-    loadingBadges: 'Carregando Emblemas...',
-    fetchingData: 'Buscando dados do HabboAssets',
-    loadingMore: 'Carregando mais emblemas...',
-    allLoaded: 'Todos os emblemas foram carregados!',
-    total: 'total',
-    noResults: 'Nenhum emblema encontrado',
-    tryDifferent: 'Tente ajustar os filtros ou fazer uma busca diferente',
-    errorTitle: 'Erro ao Carregar Emblemas',
-    errorDesc: 'Não foi possível carregar os emblemas do HabboAssets'
-  },
-  es: {
-    all: 'Todos',
-    official: 'Oficiales',
-    achievements: 'Logros', 
-    fansites: 'Fan-sites',
-    others: 'Otros',
-    searchPlaceholder: 'Buscar por nombre o código...',
-    foundBadges: 'encontradas',
-    source: 'Fuente: HabboAssets',
-    loading: 'Cargando...',
-    loadingBadges: 'Cargando Placas...',
-    fetchingData: 'Obteniendo datos de HabboAssets',
-    loadingMore: 'Cargando más placas...',
-    allLoaded: '¡Todas las placas han sido cargadas!',
-    total: 'total',
-    noResults: 'No se encontraron placas',
-    tryDifferent: 'Intenta ajustar los filtros o hacer una búsqueda diferente',
-    errorTitle: 'Error al Cargar Placas',
-    errorDesc: 'No fue posible cargar las placas de HabboAssets'
-  },
-  en: {
-    all: 'All',
-    official: 'Official',
-    achievements: 'Achievements',
-    fansites: 'Fan-sites', 
-    others: 'Others',
-    searchPlaceholder: 'Search by name or code...',
-    foundBadges: 'found',
-    source: 'Source: HabboAssets',
-    loading: 'Loading...',
-    loadingBadges: 'Loading Badges...',
-    fetchingData: 'Fetching data from HabboAssets',
-    loadingMore: 'Loading more badges...',
-    allLoaded: 'All badges have been loaded!',
-    total: 'total',
-    noResults: 'No badges found',
-    tryDifferent: 'Try adjusting the filters or search differently',
-    errorTitle: 'Error Loading Badges',
-    errorDesc: 'Could not load badges from HabboAssets'
-  }
-};
-
-const LanguageSelector: React.FC = () => {
-  const { currentLanguage, changeLanguage } = useLanguage();
-
-  const languages = [
-    { code: 'pt', name: 'Português', flag: '/assets/flagbrazil.png' },
-    { code: 'en', name: 'English', flag: '/assets/flagcom.png' },
-    { code: 'es', name: 'Español', flag: '/assets/flagspain.png' },
-  ];
-
-  return (
-    <div className="flex items-center gap-2">
-      <Globe className="w-4 h-4 text-gray-600" />
-      <div className="flex gap-1">
-        {languages.map((lang) => (
-          <button
-            key={lang.code}
-            onClick={() => changeLanguage(lang.code as Language)}
-            className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
-              currentLanguage === lang.code 
-                ? 'bg-blue-100 text-blue-800' 
-                : 'hover:bg-gray-100'
-            }`}
-          >
-            <img src={lang.flag} alt={lang.name} className="w-3 h-3" />
-            {lang.code.toUpperCase()}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const BadgeImage: React.FC<{ badge: HabboAssetsBadge }> = ({ badge }) => {
-  const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const handleImageLoad = () => {
-    setIsLoading(false);
-    setImageError(false);
-  };
-
-  const handleImageError = () => {
-    setIsLoading(false);
-    setImageError(true);
-  };
-
-  if (imageError) {
-    return (
-      <div className="w-8 h-8 flex items-center justify-center bg-gray-100 border border-gray-300 rounded">
-        <span className="text-xs font-bold text-gray-600">
-          {badge.code.slice(0, 3)}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-8 h-8 relative">
-      {isLoading && (
-        <div className="absolute inset-0 bg-gray-100 animate-pulse rounded"></div>
-      )}
-      <img
-        src={badge.image_url}
-        alt={badge.name}
-        className={`w-full h-full object-contain rounded transition-opacity duration-300 ${
-          isLoading ? 'opacity-0' : 'opacity-100'
-        }`}
-        style={{ imageRendering: 'pixelated' }}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-        loading="lazy"
-      />
-    </div>
-  );
-};
+interface BadgeItem {
+  code: string;
+  name: string;
+  image_url: string;
+  category: 'official' | 'achievements' | 'fansites' | 'others';
+}
 
 export const CleanBadgesGrid: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState('all');
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
-  const [allBadges, setAllBadges] = useState<HabboAssetsBadge[]>([]);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [displayedBadges, setDisplayedBadges] = useState<BadgeItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const { currentLanguage } = useLanguage();
+  const [hasMoreData, setHasMoreData] = useState(true);
 
-  const t = (key: keyof typeof TRANSLATIONS.pt) => {
-    return TRANSLATIONS[currentLanguage][key] || TRANSLATIONS.pt[key];
-  };
+  console.log('🔍 [CleanBadgesGrid] Component state:', {
+    activeCategory,
+    searchTerm,
+    currentPage,
+    isLoading: false,
+    isFetching: false,
+    error: null,
+    badgesCount: displayedBadges.length,
+    dataReceived: displayedBadges.length
+  });
 
-  const { data, isLoading, error, isFetching } = useHabboAssetsBadges({
+  // Fetch badges data
+  const { 
+    data: badgeData, 
+    isLoading, 
+    isError,
+    error,
+    isFetching,
+    refetch 
+  } = useHabboAssetsBadges({
     search: searchTerm,
     category: activeCategory,
     page: currentPage,
@@ -174,197 +57,251 @@ export const CleanBadgesGrid: React.FC = () => {
     enabled: true
   });
 
-  useEffect(() => {
-    console.log('🔍 [CleanBadgesGrid] Component state:', {
-      activeCategory,
-      searchTerm,
-      currentPage,
-      isLoading,
-      isFetching,
-      error,
-      badgesCount: allBadges.length,
-      dataReceived: data?.badges?.length || 0
-    });
-  }, [activeCategory, searchTerm, currentPage, isLoading, isFetching, error, allBadges.length, data]);
-
-  // Agregar badges conforme novas páginas são carregadas
-  useEffect(() => {
-    if (data?.badges) {
-      console.log(`📦 [CleanBadgesGrid] Received ${data.badges.length} badges for page ${currentPage}`);
-      if (currentPage === 1) {
-        setAllBadges(data.badges);
-      } else {
-        setAllBadges(prev => [...prev, ...data.badges]);
-      }
-      setIsLoadingMore(false);
+  // Process and filter badges
+  const badges = useMemo(() => {
+    if (!badgeData?.badges) {
+      console.log('📦 [CleanBadgesGrid] No badge data available');
+      return [];
     }
-  }, [data, currentPage]);
 
-  // Reset quando categoria ou busca mudam
-  useEffect(() => {
-    console.log(`🔄 [CleanBadgesGrid] Resetting for category: ${activeCategory}, search: "${searchTerm}"`);
-    setCurrentPage(1);
-    setAllBadges([]);
-  }, [activeCategory, searchTerm]);
+    console.log(`📦 [CleanBadgesGrid] Received ${badgeData.badges.length} badges for page ${currentPage}`);
+    return badgeData.badges;
+  }, [badgeData, currentPage]);
 
-  // Scroll infinito
+  // Update displayed badges when data changes
   useEffect(() => {
-    const handleScroll = (e: Event) => {
-      const container = e.target as HTMLElement;
-      if (
-        container.scrollTop + container.clientHeight >= container.scrollHeight - 100 &&
-        data?.metadata?.hasMore &&
-        !isLoading &&
-        !isLoadingMore &&
-        !isFetching
-      ) {
-        setIsLoadingMore(true);
-        setCurrentPage(prev => prev + 1);
+    if (badges.length > 0) {
+      if (currentPage === 1) {
+        console.log('🔄 [CleanBadgesGrid] Resetting for category:', activeCategory, 'search:', searchTerm);
+        setDisplayedBadges(badges);
+      } else {
+        console.log('📄 [CleanBadgesGrid] Appending page', currentPage, 'badges');
+        setDisplayedBadges(prev => [...prev, ...badges]);
       }
-    };
+      
+      // Check if we have more data
+      setHasMoreData(badgeData?.metadata?.hasMore || false);
+    }
+  }, [badges, currentPage, activeCategory, searchTerm, badgeData]);
 
-    const scrollContainer = document.getElementById('badges-scroll-container');
-    scrollContainer?.addEventListener('scroll', handleScroll);
-    
-    return () => scrollContainer?.removeEventListener('scroll', handleScroll);
-  }, [data?.metadata?.hasMore, isLoading, isLoadingMore, isFetching]);
+  // Reset pagination when search or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setDisplayedBadges([]);
+    setHasMoreData(true);
+  }, [searchTerm, activeCategory]);
 
-  const handleCategoryChange = useCallback((category: string) => {
-    console.log(`🏷️ [CleanBadgesGrid] Category changed to: ${category}`);
-    setActiveCategory(category);
-  }, []);
+  // Category options with translations
+  const categoryOptions = [
+    { value: 'all', label: t('allCategories') || 'Todas as Categorias', count: badgeData?.metadata?.categories?.all || 0 },
+    { value: 'official', label: t('official') || 'Oficiais', count: badgeData?.metadata?.categories?.official || 0 },
+    { value: 'achievements', label: t('achievements') || 'Conquistas', count: badgeData?.metadata?.categories?.achievements || 0 },
+    { value: 'fansites', label: t('fansites') || 'Fã-sites', count: badgeData?.metadata?.categories?.fansites || 0 },
+    { value: 'others', label: t('others') || 'Outros', count: badgeData?.metadata?.categories?.others || 0 },
+  ];
 
-  const categoryStats = data?.metadata?.categories || {
-    all: 0,
-    official: 0,
-    achievements: 0,
-    fansites: 0,
-    others: 0
+  // Handle infinite scroll
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
+
+    if (isNearBottom && !isFetching && hasMoreData && displayedBadges.length > 0) {
+      console.log('🔄 [CleanBadgesGrid] Loading more badges, page:', currentPage + 1);
+      setCurrentPage(prev => prev + 1);
+    }
   };
 
-  if (error) {
+  // Loading state
+  if (isLoading && currentPage === 1) {
     return (
-      <Card>
-        <CardContent className="text-center py-12">
-          <div className="text-red-600 mb-4">
-            <h3 className="text-lg font-semibold">{t('errorTitle')}</h3>
-            <p className="text-sm mt-2">{t('errorDesc')}</p>
-            <p className="text-xs mt-1 text-gray-500">{error.message}</p>
+      <div className="flex flex-col h-full">
+        <div className="p-6 border-b bg-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <p className="text-gray-600">{t('loadingBadges') || 'Carregando emblemas...'}</p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-6 border-b bg-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500" />
+            <div>
+              <h3 className="font-semibold text-gray-800 mb-2">{t('errorLoadingBadges') || 'Erro ao carregar emblemas'}</h3>
+              <p className="text-gray-600 mb-4">{error?.message || 'Tente novamente mais tarde'}</p>
+              <Button onClick={() => refetch()} variant="outline">
+                {t('tryAgain') || 'Tentar Novamente'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Header fixo */}
       <div className="p-6 border-b bg-white">
-        {/* Busca */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Search className="w-5 h-5" />
-              {currentLanguage === 'pt' ? 'Buscar Emblemas' : 
-               currentLanguage === 'es' ? 'Buscar Placas' : 'Search Badges'}
-            </h2>
-            <LanguageSelector />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder={t('searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+
+          {/* Filtros */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder={t('searchBadges') || 'Buscar emblemas...'}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="sm:w-48">
+              <Select value={activeCategory} onValueChange={setActiveCategory}>
+                <SelectTrigger>
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{option.label}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {option.count}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          
-          <div className="flex gap-2 mt-4 flex-wrap">
-            <Badge variant="outline" className="bg-green-100 text-green-800">
-              {data?.metadata?.total || 0} {t('foundBadges')}
-            </Badge>
-            <Badge variant="outline" className="bg-blue-100 text-blue-800">
-              {t('source')}
-            </Badge>
-            {isLoading && (
-              <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
-                {t('loading')}
-              </Badge>
+
+          {/* Stats */}
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>{t('showingBadges') || 'Mostrando'} {displayedBadges.length} {t('badges') || 'emblemas'}</span>
+            {badgeData?.metadata?.source && (
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                {badgeData.metadata.source}
+              </span>
             )}
           </div>
         </div>
-
-        {/* Tabs das Categorias */}
-        <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
-          <TabsList className="grid grid-cols-5 mb-4">
-            {CATEGORIES.map(category => (
-              <TabsTrigger key={category.value} value={category.value} className="text-xs sm:text-sm">
-                <span className="mr-1">{category.icon}</span>
-                <span className="hidden sm:inline">{t(category.label as keyof typeof TRANSLATIONS.pt)}</span>
-                <span className="ml-1">({categoryStats[category.value as keyof typeof categoryStats]})</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
       </div>
 
-      {/* Container com scroll interno */}
-      <div 
-        id="badges-scroll-container"
-        className="flex-1 overflow-y-auto p-6"
-        style={{ height: 'calc(100vh - 280px)' }}
-      >
-        <Tabs value={activeCategory}>
-          {CATEGORIES.map(category => (
-            <TabsContent key={category.value} value={category.value}>
-              {isLoading && currentPage === 1 ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                  <p className="text-gray-700 font-bold text-lg">{t('loadingBadges')}</p>
-                  <p className="text-gray-500 text-sm mt-1">{t('fetchingData')}</p>
-                </div>
-              ) : allBadges.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-12 md:grid-cols-16 lg:grid-cols-20 xl:grid-cols-24 2xl:grid-cols-32 gap-1">
-                    {allBadges.map((badge, index) => (
-                      <div
-                        key={`${badge.code}_${index}`}
-                        className="group relative hover:scale-110 transition-transform duration-200 bg-gray-100 rounded p-1"
-                        title={`${badge.code} - ${badge.name}`}
-                      >
-                        <BadgeImage badge={badge} />
-                      </div>
-                    ))}
+      {/* Content scrollable */}
+      <div className="flex-1 overflow-auto" onScroll={handleScroll}>
+        <div className="p-6">
+          {displayedBadges.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="text-gray-400 mb-4">
+                <Search className="h-12 w-12" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                {t('noBadgesFound') || 'Nenhum emblema encontrado'}
+              </h3>
+              <p className="text-gray-500 text-center max-w-md">
+                {searchTerm 
+                  ? (t('tryDifferentSearch') || 'Tente uma busca diferente ou altere os filtros')
+                  : (t('noBadgesAvailable') || 'Nenhum emblema disponível nesta categoria')
+                }
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Grid de emblemas */}
+              <div className={
+                viewMode === 'grid'
+                  ? "grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3"
+                  : "space-y-2"
+              }>
+                {displayedBadges.map((badge) => (
+                  <div
+                    key={badge.code}
+                    className={
+                      viewMode === 'grid'
+                        ? "group relative bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300"
+                        : "flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300"
+                    }
+                    title={`${badge.name} (${badge.code})`}
+                  >
+                    <div className={viewMode === 'grid' ? "w-full aspect-square flex items-center justify-center mb-2" : "flex-shrink-0"}>
+                      <img
+                        src={badge.image_url}
+                        alt={badge.name}
+                        className="w-8 h-8 object-contain pixel-art"
+                        style={{ imageRendering: 'pixelated' }}
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = '/assets/emblemas.png';
+                        }}
+                      />
+                    </div>
+                    <div className={viewMode === 'grid' ? "text-center" : "flex-1 min-w-0"}>
+                      <p className="text-xs font-medium text-gray-800 truncate">{badge.code}</p>
+                      {viewMode === 'list' && (
+                        <p className="text-xs text-gray-500 truncate">{badge.name}</p>
+                      )}
+                    </div>
                   </div>
+                ))}
+              </div>
 
-                  {/* Loading indicator para scroll infinito */}
-                  {(isLoadingMore || (isFetching && currentPage > 1)) && (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
-                      <p className="text-sm text-gray-600">{t('loadingMore')}</p>
-                    </div>
-                  )}
+              {/* Loading more indicator */}
+              {isFetching && currentPage > 1 && (
+                <div className="flex justify-center py-8">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">{t('loadingMore') || 'Carregando mais...'}</span>
+                  </div>
+                </div>
+              )}
 
-                  {/* Fim dos resultados */}
-                  {data?.metadata && !data.metadata.hasMore && allBadges.length > 0 && (
-                    <div className="text-center py-8 text-gray-500 text-sm">
-                      🎉 {t('allLoaded')} ({allBadges.length} {t('total')})
-                    </div>
-                  )}
-                </>
-              ) : (
+              {/* End of results */}
+              {!hasMoreData && displayedBadges.length > 0 && (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">{t('noResults')}</p>
-                  <p className="text-gray-500 text-sm mt-1">
-                    {isLoading ? t('loading') : t('tryDifferent')}
+                  <p className="text-gray-500 text-sm">
+                    {t('allBadgesLoaded') || 'Todos os emblemas foram carregados'}
                   </p>
                 </div>
               )}
-            </TabsContent>
-          ))}
-        </Tabs>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
