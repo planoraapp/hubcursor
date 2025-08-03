@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
@@ -29,16 +28,43 @@ interface MarketItem {
   openOffers?: number;
 }
 
-interface MarketplaceItemsListProps {
-  items: MarketItem[];
-  hotel: { id: string; name: string; flag: string };
-  onItemClick: (item: MarketItem) => void;
+interface MarketStats {
+  totalItems: number;
+  averagePrice: number;
+  totalVolume: number;
+  trendingUp: number;
+  trendingDown: number;
+  featuredItems: number;
+  highestPrice: number;
+  mostTraded: string;
 }
 
-export const MarketplaceItemsList = ({ items, hotel, onItemClick }: MarketplaceItemsListProps) => {
-  const [sortBy, setSortBy] = useState<'price' | 'recent' | 'quantity' | 'ltd'>('price');
+interface MarketplaceItemsListProps {
+  items: MarketItem[];
+  loading: boolean;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  sortBy: 'price' | 'recent' | 'quantity' | 'ltd';
+  setSortBy: (sort: 'price' | 'recent' | 'quantity' | 'ltd') => void;
+  hotel: { id: string; name: string; flag: string };
+  stats: MarketStats;
+}
 
-  // Filtrar e ordenar itens baseado na seleção
+export const MarketplaceItemsList = ({ 
+  items, 
+  loading, 
+  searchTerm, 
+  setSearchTerm, 
+  selectedCategory, 
+  setSelectedCategory, 
+  sortBy, 
+  setSortBy, 
+  hotel, 
+  stats 
+}: MarketplaceItemsListProps) => {
+
   const filteredItems = [...items]
     .filter(item => {
       if (sortBy === 'ltd') {
@@ -55,12 +81,12 @@ export const MarketplaceItemsList = ({ items, hotel, onItemClick }: MarketplaceI
         case 'recent':
           return new Date(b.lastUpdated || '').getTime() - new Date(a.lastUpdated || '').getTime();
         case 'ltd':
-          return b.currentPrice - a.currentPrice; // LTDs ordenados por preço
+          return b.currentPrice - a.currentPrice;
         default:
           return 0;
       }
     })
-    .slice(0, 20); // Limitar exibição
+    .slice(0, 20);
 
   return (
     <div className="bg-white border-2 border-black rounded-lg shadow-lg">
@@ -78,14 +104,11 @@ export const MarketplaceItemsList = ({ items, hotel, onItemClick }: MarketplaceI
           🏪 Feira Livre de {hotel.name}
         </h3>
         
-        {/* Layout reorganizado: Filtros à esquerda, HC/CA à direita */}
         <div className="flex gap-4">
-          {/* Filtros à esquerda */}
           <div className="flex-shrink-0">
             <MarketFiltersIconOnly sortBy={sortBy} setSortBy={setSortBy} />
           </div>
           
-          {/* HC/CA à direita */}
           <div className="flex-1 flex justify-end">
             <div className="bg-transparent">
               <VerticalClubItems hotel={hotel.id} />
@@ -96,14 +119,18 @@ export const MarketplaceItemsList = ({ items, hotel, onItemClick }: MarketplaceI
 
       <ScrollArea className="h-96">
         <div className="p-4 space-y-3">
-          {filteredItems.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+              <p>Carregando itens...</p>
+            </div>
+          ) : filteredItems.length > 0 ? (
             filteredItems.map((item, index) => {
               const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
               
               return (
                 <div
                   key={item.id}
-                  onClick={() => onItemClick(item)}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
                 >
                   <RealFurniImageHybrid
