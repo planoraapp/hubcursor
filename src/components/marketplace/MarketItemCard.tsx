@@ -1,7 +1,7 @@
 
 import { TrendingUp, TrendingDown, Clock, Package2 } from 'lucide-react';
 import { CreditIcon } from './CreditIcon';
-import RealFurniImage from './RealFurniImage';
+import RealFurniImageHybrid from './RealFurniImageHybrid';
 
 interface MarketItem {
   id: string;
@@ -49,7 +49,7 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       >
         <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-center">
-            <RealFurniImage
+            <RealFurniImageHybrid
               className={item.className}
               name={item.name}
               type={itemType}
@@ -122,7 +122,7 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       className="habbo-card p-4 hover:shadow-lg transition-all cursor-pointer bg-white border hover:border-blue-200"
     >
       <div className="flex items-center space-x-4">
-        <RealFurniImage
+        <RealFurniImageHybrid
           className={item.className}
           name={item.name}
           type={itemType}

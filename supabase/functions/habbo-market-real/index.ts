@@ -26,9 +26,10 @@ interface MarketItem {
   listedAt?: string;
 }
 
-// Cache para evitar requests desnecessários
+// Cache para otimizar performance
 const cache = new Map<string, { data: MarketItem[], timestamp: number }>();
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutos
+const MARKETPLACE_CACHE_DURATION = 5 * 60 * 1000; // 5 minutos para dados de marketplace
+const METADATA_CACHE_DURATION = 30 * 60 * 1000; // 30 minutos para metadados
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -44,13 +45,13 @@ serve(async (req) => {
       includeMarketplace = false 
     } = await req.json().catch(() => ({}));
     
-    console.log(`🔍 [HabboMarketReal] Starting data fetch for hotel: ${hotel}`);
+    console.log(`🔍 [HybridMarketReal] Starting hybrid data fetch for hotel: ${hotel}`);
 
     // Verificar cache primeiro
-    const cacheKey = `${hotel}-${category}-${searchTerm}`;
+    const cacheKey = `hybrid-${hotel}-${category}-${searchTerm}`;
     const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log(`💾 [Cache] Using cached data for ${cacheKey}`);
+    if (cached && Date.now() - cached.timestamp < MARKETPLACE_CACHE_DURATION) {
+      console.log(`💾 [Cache] Using cached hybrid data for ${cacheKey}`);
       return new Response(
         JSON.stringify({
           items: cached.data.slice(0, 200),
@@ -58,7 +59,7 @@ serve(async (req) => {
           metadata: {
             searchTerm, category, hotel, days,
             fetchedAt: new Date().toISOString(),
-            source: 'cache',
+            source: 'cache-hybrid',
             totalItems: cached.data.length
           }
         }),
@@ -68,45 +69,60 @@ serve(async (req) => {
 
     let marketItems: MarketItem[] = [];
 
-    // Fase 1: Usar HabboFurni.com como fonte primária (com correções)
+    // Fase 1: Tentar HabboAPI.site primeiro (dados de marketplace + imagens)
     try {
-      const habboFurniApiKey = Deno.env.get('HABBOHUB_FURNIAPI');
-      if (habboFurniApiKey) {
-        console.log('📡 [HabboFurni.com] API key found, fetching with corrected implementation...');
-        const furniItems = await fetchHabboFurniDataCorrected(hotel, habboFurniApiKey, category, searchTerm);
-        if (furniItems.length > 0) {
-          marketItems = [...marketItems, ...furniItems];
-          console.log(`✅ [HabboFurni.com] Loaded ${furniItems.length} items with corrected API`);
-        }
-      } else {
-        console.log(`⚠️ [HabboFurni.com] API key not found in environment`);
+      console.log('📡 [HabboAPI.site] Fetching marketplace data...');
+      const habboApiData = await fetchHabboApiSiteData(hotel, category, searchTerm);
+      if (habboApiData.length > 0) {
+        marketItems = [...marketItems, ...habboApiData];
+        console.log(`✅ [HabboAPI.site] Loaded ${habboApiData.length} items with marketplace data`);
       }
     } catch (error) {
-      console.log(`❌ [HabboFurni.com] Failed: ${error.message}`);
+      console.log(`❌ [HabboAPI.site] Failed: ${error.message}`);
     }
 
-    // Fase 2: Fallback para dados oficiais do Habbo
-    if (marketItems.length < 10) {
+    // Fase 2: Complementar com HabboFurni.com (metadados adicionais)
+    if (marketItems.length < 50) {
+      try {
+        const habboFurniApiKey = Deno.env.get('HABBOHUB_FURNIAPI');
+        if (habboFurniApiKey) {
+          console.log('📡 [HabboFurni.com] Complementing with metadata...');
+          const furniItems = await fetchHabboFurniMetadata(hotel, habboFurniApiKey, category, searchTerm);
+          if (furniItems.length > 0) {
+            const newItems = furniItems
+              .filter(item => !marketItems.some(existing => existing.className === item.className))
+              .slice(0, 50 - marketItems.length);
+            marketItems = [...marketItems, ...newItems];
+            console.log(`✅ [HabboFurni.com] Added ${newItems.length} metadata items`);
+          }
+        }
+      } catch (error) {
+        console.log(`❌ [HabboFurni.com] Failed: ${error.message}`);
+      }
+    }
+
+    // Fase 3: Fallback para dados oficiais se necessário
+    if (marketItems.length < 20) {
       try {
         const officialData = await fetchOfficialHabboData(hotel);
         if (officialData.length > 0) {
           const newOfficialItems = officialData
             .filter(item => !marketItems.some(existing => existing.className === item.classname))
             .slice(0, 30)
-            .map(item => mapOfficialItem(item, hotel));
+            .map(item => mapOfficialItemWithHabboApiImages(item, hotel));
           
           marketItems = [...marketItems, ...newOfficialItems];
-          console.log(`✅ [Official] Added ${newOfficialItems.length} official items as fallback`);
+          console.log(`✅ [Official] Added ${newOfficialItems.length} official items with HabboAPI images`);
         }
       } catch (error) {
         console.log(`❌ [Official] Failed: ${error.message}`);
       }
     }
 
-    // Fase 3: Fallback final com dados curados
+    // Fase 4: Fallback final com dados curados + imagens HabboAPI
     if (marketItems.length === 0) {
-      console.log('🔄 [Fallback] Using curated fallback data');
-      marketItems = await getEnhancedFallbackData(hotel);
+      console.log('🔄 [Fallback] Using curated data with HabboAPI.site images');
+      marketItems = await getCuratedDataWithHabboApiImages(hotel);
     }
 
     // Aplicar filtros
@@ -126,7 +142,7 @@ serve(async (req) => {
 
     const stats = calculateRealStats(filteredItems);
 
-    console.log(`🎯 [HabboMarketReal] Returning ${filteredItems.length} items total`);
+    console.log(`🎯 [HybridMarketReal] Returning ${filteredItems.length} hybrid items total`);
 
     return new Response(
       JSON.stringify({
@@ -135,7 +151,7 @@ serve(async (req) => {
         metadata: {
           searchTerm, category, hotel, days, includeMarketplace,
           fetchedAt: new Date().toISOString(),
-          source: marketItems.length > 0 ? 'hybrid-corrected' : 'fallback',
+          source: marketItems.length > 0 ? 'hybrid-habboapi' : 'fallback',
           totalItems: filteredItems.length
         }
       }),
@@ -143,11 +159,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ [HabboMarketReal] Fatal error:', error);
+    console.error('❌ [HybridMarketReal] Fatal error:', error);
     
     return new Response(
       JSON.stringify({
-        items: await getEnhancedFallbackData('br'),
+        items: await getCuratedDataWithHabboApiImages('br'),
         stats: calculateRealStats([]),
         error: error.message
       }),
@@ -156,40 +172,145 @@ serve(async (req) => {
   }
 });
 
-// Fase 2: Implementar mapeamento correto de hotéis para IDs
-function getHotelId(hotel: string): number {
-  const hotelMap: Record<string, number> = {
-    'com': 1,      // Habbo.com
-    'br': 2,       // Habbo Brasil
-    'es': 3,       // Habbo España
-    'fi': 5,       // Habbo Finland
-    'fr': 6,       // Habbo France
-    'de': 7,       // Habbo Germany
-    'it': 8,       // Habbo Italia
-    'nl': 9,       // Habbo Nederland
-    'tr': 10       // Habbo Türkiye
-  };
+// Função para buscar dados da HabboAPI.site
+async function fetchHabboApiSiteData(hotel: string, category: string, searchTerm: string): Promise<MarketItem[]> {
+  const items: MarketItem[] = [];
   
-  return hotelMap[hotel] || 2; // Default para Brasil
+  try {
+    // HabboAPI.site tem diferentes endpoints para diferentes tipos de dados
+    const endpoints = [
+      `https://www.habboapi.site/api/marketplace/${hotel}/recent`,
+      `https://www.habboapi.site/api/marketplace/${hotel}/popular`,
+      `https://www.habboapi.site/api/furniture/${hotel}/catalog`
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`📡 [HabboAPI.site] Fetching: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'HabboHub-MarketReal/2.0',
+          },
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) {
+          console.log(`⚠️ [HabboAPI.site] ${endpoint} returned ${response.status}`);
+          continue;
+        }
+
+        const data = await response.json();
+        console.log(`📊 [HabboAPI.site] Response from ${endpoint}:`, { 
+          hasData: !!data, 
+          type: Array.isArray(data) ? 'array' : typeof data,
+          length: Array.isArray(data) ? data.length : 'N/A'
+        });
+        
+        if (Array.isArray(data) && data.length > 0) {
+          for (const item of data.slice(0, 30)) {
+            const marketItem = mapHabboApiSiteItem(item, hotel, endpoint);
+            if (marketItem) {
+              items.push(marketItem);
+            }
+          }
+          
+          if (items.length >= 50) break; // Limite por endpoint
+        } else if (data && typeof data === 'object' && data.items) {
+          // Alguns endpoints podem retornar { items: [...] }
+          for (const item of (data.items || []).slice(0, 30)) {
+            const marketItem = mapHabboApiSiteItem(item, hotel, endpoint);
+            if (marketItem) {
+              items.push(marketItem);
+            }
+          }
+        }
+      } catch (endpointError) {
+        console.log(`❌ [HabboAPI.site] Endpoint ${endpoint} failed: ${endpointError.message}`);
+      }
+    }
+  } catch (error) {
+    console.error(`❌ [HabboAPI.site] General error: ${error.message}`);
+    throw error;
+  }
+
+  return items;
 }
 
-// Fase 1: Implementação corrigida da API HabboFurni.com
-async function fetchHabboFurniDataCorrected(hotel: string, apiKey: string, category: string, searchTerm: string): Promise<MarketItem[]> {
+// Mapear dados da HabboAPI.site para MarketItem
+function mapHabboApiSiteItem(item: any, hotel: string, source: string): MarketItem | null {
+  try {
+    const classname = item.classname || item.class_name || item.furni_classname || `furni_${Date.now()}`;
+    const name = item.name || item.furni_name || item.public_name || `Móvel ${classname}`;
+    
+    // HabboAPI.site geralmente tem dados de marketplace reais
+    const basePrice = item.current_price || item.price || item.marketplace_price || estimateRealisticPrice(item);
+    const currentPrice = Math.max(basePrice, 15);
+    const previousPrice = item.previous_price || Math.floor(currentPrice * (0.95 + Math.random() * 0.1));
+    const change = ((currentPrice - previousPrice) / previousPrice) * 100;
+    
+    // Volume baseado em dados reais se disponível
+    const volume = item.volume || item.sales_volume || item.marketplace_volume || estimateRealisticVolume(item);
+    
+    return {
+      id: `habboapi_${classname}_${hotel}`,
+      name,
+      category: mapCategoryToStandard(item.category || item.furni_category || item.type || 'furniture'),
+      currentPrice,
+      previousPrice,
+      trend: change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable',
+      changePercent: change > 0 ? `+${Math.abs(change).toFixed(1)}%` : `-${Math.abs(change).toFixed(1)}%`,
+      volume,
+      imageUrl: generateHabboApiImageUrl(classname, item.type || 'roomitem', hotel, item),
+      rarity: determineRarity(item),
+      description: item.description || `${name} - HabboAPI.site ${hotel.toUpperCase()}`,
+      className: classname,
+      hotel,
+      priceHistory: item.price_history || generateRealisticPriceHistory(currentPrice, 30),
+      lastUpdated: new Date().toISOString(),
+      quantity: item.quantity || item.marketplace_quantity,
+      listedAt: item.listed_at || item.created_at
+    };
+  } catch (error) {
+    console.error('Error mapping HabboAPI.site item:', error);
+    return null;
+  }
+}
+
+// Gerar URLs de imagem priorizando HabboAPI.site
+function generateHabboApiImageUrl(classname: string, type: string, hotel: string, item?: any): string {
+  // Prioritário: URLs diretas da HabboAPI.site se disponíveis
+  if (item?.image_url) return item.image_url;
+  if (item?.icon_url) return item.icon_url;
+  if (item?.furni_image) return item.furni_image;
+  
+  // URLs padrão da HabboAPI.site
+  const habboApiUrls = [
+    `https://www.habboapi.site/images/furni/${classname}.png`,
+    `https://www.habboapi.site/images/furni/${classname}.gif`,
+    `https://habboapi.site/images/furni/${classname}.png`,
+    `https://api.habboapi.site/furni/image/${classname}`,
+  ];
+  
+  // Retornar a primeira URL da HabboAPI.site (fallbacks serão tratados no componente)
+  return habboApiUrls[0];
+}
+
+// Buscar metadados complementares do HabboFurni.com
+async function fetchHabboFurniMetadata(hotel: string, apiKey: string, category: string, searchTerm: string): Promise<MarketItem[]> {
   const items: MarketItem[] = [];
   
   try {
     const hotelId = getHotelId(hotel);
-    let url = `https://habbofurni.com/api/v1/furniture?per_page=100`;
+    let url = `https://habbofurni.com/api/v1/furniture?per_page=50`;
     
-    // Adicionar filtros opcionais
     if (category && category !== 'all') {
       url += `&category=${encodeURIComponent(category)}`;
     }
     if (searchTerm) {
       url += `&search=${encodeURIComponent(searchTerm)}`;
     }
-    
-    console.log(`📡 [HabboFurni.com] Fetching: ${url} for hotel ID: ${hotelId}`);
     
     const response = await fetch(url, {
       headers: {
@@ -198,52 +319,42 @@ async function fetchHabboFurniDataCorrected(hotel: string, apiKey: string, categ
         'Accept': 'application/json',
         'User-Agent': 'HabboHub-MarketReal/2.0',
       },
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {
-      throw new Error(`HabboFurni API returned ${response.status}: ${response.statusText}`);
+      throw new Error(`HabboFurni API returned ${response.status}`);
     }
 
     const apiResponse = await response.json();
-    console.log(`📊 [HabboFurni.com] Response structure:`, {
-      hasData: !!apiResponse.data,
-      dataLength: apiResponse.data?.length || 0,
-      hasHotel: !!apiResponse.hotel,
-      hasMeta: !!apiResponse.meta
-    });
-    
-    // Fase 3: Parsing correto da resposta
     const rawItems = apiResponse.data || [];
     
     if (Array.isArray(rawItems) && rawItems.length > 0) {
       for (const item of rawItems) {
-        const marketItem = mapHabboFurniItemCorrected(item, hotel);
+        const marketItem = mapHabboFurniItemWithHabboApiImages(item, hotel);
         if (marketItem) {
           items.push(marketItem);
         }
       }
-      console.log(`✅ [HabboFurni.com] Successfully processed ${rawItems.length} items`);
     }
   } catch (error) {
-    console.error(`❌ [HabboFurni.com] Error: ${error.message}`);
+    console.error(`❌ [HabboFurni.com] Metadata error: ${error.message}`);
     throw error;
   }
 
   return items;
 }
 
-// Fase 3: Mapeamento correto dos dados HabboFurni.com
-function mapHabboFurniItemCorrected(item: any, hotel: string): MarketItem | null {
+// Mapear dados do HabboFurni.com mas com imagens da HabboAPI.site
+function mapHabboFurniItemWithHabboApiImages(item: any, hotel: string): MarketItem | null {
   try {
-    // Usar dados corretos da estrutura hotelData
     const hotelData = item.hotelData || item;
     const classname = hotelData.classname || item.classname || `furni_${Date.now()}`;
     const name = hotelData.name || item.name || `Móvel ${classname}`;
     
-    const basePrice = estimateRealPrice(hotelData);
+    const basePrice = estimateRealisticPrice(hotelData);
     const currentPrice = basePrice;
-    const previousPrice = Math.floor(basePrice * (0.95 + Math.random() * 0.1));
+    const previousPrice = Math.floor(basePrice * (0.96 + Math.random() * 0.08));
     const change = ((currentPrice - previousPrice) / previousPrice) * 100;
     
     return {
@@ -254,10 +365,10 @@ function mapHabboFurniItemCorrected(item: any, hotel: string): MarketItem | null
       previousPrice,
       trend: change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable',
       changePercent: change > 0 ? `+${Math.abs(change).toFixed(1)}%` : `-${Math.abs(change).toFixed(1)}%`,
-      volume: estimateVolume(hotelData),
-      imageUrl: generateOptimalImageUrl(classname, hotelData.type || 'room', hotel, hotelData.icon?.url),
+      volume: estimateRealisticVolume(hotelData),
+      imageUrl: generateHabboApiImageUrl(classname, hotelData.type || 'roomitem', hotel),
       rarity: hotelData.rare ? 'rare' : 'common',
-      description: hotelData.description || `${name} - HabboFurni.com ${hotel.toUpperCase()}`,
+      description: hotelData.description || `${name} - HabboFurni.com + HabboAPI.site`,
       className: classname,
       hotel,
       priceHistory: generateRealisticPriceHistory(currentPrice, 30),
@@ -269,22 +380,97 @@ function mapHabboFurniItemCorrected(item: any, hotel: string): MarketItem | null
   }
 }
 
-// Melhorar geração de URLs de imagem
-function generateOptimalImageUrl(classname: string, type: string, hotel: string, habbofurniUrl?: string): string {
-  // Priorizar URL do HabboFurni se disponível
-  if (habbofurniUrl) {
-    return habbofurniUrl;
+// Atualizar dados oficiais para usar imagens da HabboAPI.site
+function mapOfficialItemWithHabboApiImages(item: any, hotel: string): MarketItem {
+  const classname = item.classname || item.id;
+  const name = item.name || `Item ${classname}`;
+  const basePrice = estimateRealisticPrice(item);
+  const currentPrice = basePrice;
+  const previousPrice = Math.floor(basePrice * (0.96 + Math.random() * 0.08));
+  const change = ((currentPrice - previousPrice) / previousPrice) * 100;
+  
+  return {
+    id: `official_${classname}_${hotel}`,
+    name,
+    category: mapCategoryToStandard(item.category || 'furniture'),
+    currentPrice,
+    previousPrice,
+    trend: change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable',
+    changePercent: change > 0 ? `+${Math.abs(change).toFixed(1)}%` : `-${Math.abs(change).toFixed(1)}%`,
+    volume: estimateRealisticVolume(item),
+    imageUrl: generateHabboApiImageUrl(classname, item.type || 'roomitem', hotel),
+    rarity: item.rare ? 'rare' : 'common',
+    description: item.description || `${name} - Oficial + HabboAPI.site`,
+    className: classname,
+    hotel,
+    priceHistory: generateRealisticPriceHistory(currentPrice, 30),
+    lastUpdated: new Date().toISOString()
+  };
+}
+
+// Dados curados com imagens da HabboAPI.site
+async function getCuratedDataWithHabboApiImages(hotel: string): Promise<MarketItem[]> {
+  const curatedItems = [
+    { classname: 'throne', name: 'Trono Real', category: 'chair', price: 450, volume: 15, rare: true },
+    { classname: 'rare_dragonlamp', name: 'Lâmpada Dragão', category: 'lamp', price: 400, volume: 12, rare: true },
+    { classname: 'chair_norja', name: 'Cadeira Norja', category: 'chair', price: 180, volume: 25 },
+    { classname: 'table_norja_med', name: 'Mesa Norja Média', category: 'table', price: 200, volume: 18 },
+    { classname: 'bed_armas_two', name: 'Cama Armas Dupla', category: 'bed', price: 250, volume: 12 },
+    { classname: 'plant_big_cactus', name: 'Cacto Grande', category: 'plant', price: 65, volume: 30 },
+    { classname: 'chair_basic', name: 'Cadeira Básica', category: 'chair', price: 25, volume: 45 },
+    { classname: 'table_basic', name: 'Mesa Básica', category: 'table', price: 40, volume: 35 },
+    { classname: 'sofa_norja', name: 'Sofá Norja', category: 'chair', price: 320, volume: 14 },
+    { classname: 'lamp_basic', name: 'Lâmpada Básica', category: 'lamp', price: 55, volume: 22 },
+  ];
+  
+  const items: MarketItem[] = [];
+  
+  for (const item of curatedItems) {
+    const currentPrice = item.price + Math.floor(Math.random() * 20) - 10;
+    const previousPrice = Math.floor(currentPrice * (0.95 + Math.random() * 0.1));
+    const change = ((currentPrice - previousPrice) / previousPrice) * 100;
+    
+    items.push({
+      id: `curated_${item.classname}_${hotel}`,
+      name: item.name,
+      category: item.category,
+      currentPrice,
+      previousPrice,
+      trend: change > 1 ? 'up' : change < -1 ? 'down' : 'stable',
+      changePercent: change > 0 ? `+${Math.abs(change).toFixed(1)}%` : `-${Math.abs(change).toFixed(1)}%`,
+      volume: item.volume + Math.floor(Math.random() * 10) - 5,
+      imageUrl: generateHabboApiImageUrl(item.classname, 'roomitem', hotel),
+      rarity: item.rare ? 'legendary' : 'common',
+      description: `${item.name} - Curated + HabboAPI.site`,
+      className: item.classname,
+      hotel,
+      priceHistory: generateRealisticPriceHistory(currentPrice, 30),
+      lastUpdated: new Date().toISOString()
+    });
   }
   
-  // Fallback para URLs padrão
-  const itemType = type === 'wall' ? 'wallitem' : 'roomitem';
-  return `https://images.habbo.com/dcr/hof_furni/${itemType}/${classname}.png`;
+  return items;
+}
+
+function getHotelId(hotel: string): number {
+  const hotelMap: Record<string, number> = {
+    'com': 1,
+    'br': 2,
+    'es': 3,
+    'fi': 5,
+    'fr': 6,
+    'de': 7,
+    'it': 8,
+    'nl': 9,
+    'tr': 10
+  };
+  
+  return hotelMap[hotel] || 2;
 }
 
 async function fetchOfficialHabboData(hotel: string): Promise<any[]> {
   try {
     const furniUrl = `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/gamedata/furnidata_json/1`;
-    console.log(`📡 [Official] Fetching: ${furniUrl}`);
     
     const response = await fetch(furniUrl, {
       headers: {
@@ -314,7 +500,6 @@ async function fetchOfficialHabboData(hotel: string): Promise<any[]> {
         });
       }
       
-      console.log(`✅ [Official] Loaded ${items.length} official items`);
       return items.slice(0, 50);
     }
   } catch (error) {
@@ -322,33 +507,6 @@ async function fetchOfficialHabboData(hotel: string): Promise<any[]> {
   }
   
   return [];
-}
-
-function mapOfficialItem(item: any, hotel: string): MarketItem {
-  const classname = item.classname || item.id;
-  const name = item.name || `Item ${classname}`;
-  const basePrice = estimateRealPrice(item);
-  const currentPrice = basePrice;
-  const previousPrice = Math.floor(basePrice * (0.96 + Math.random() * 0.08));
-  const change = ((currentPrice - previousPrice) / previousPrice) * 100;
-  
-  return {
-    id: `official_${classname}_${hotel}`,
-    name,
-    category: mapCategoryToStandard(item.category || 'furniture'),
-    currentPrice,
-    previousPrice,
-    trend: change > 0.5 ? 'up' : change < -0.5 ? 'down' : 'stable',
-    changePercent: change > 0 ? `+${Math.abs(change).toFixed(1)}%` : `-${Math.abs(change).toFixed(1)}%`,
-    volume: estimateVolume(item),
-    imageUrl: generateOptimalImageUrl(classname, item.type || 'roomitem', hotel),
-    rarity: item.rare ? 'rare' : 'common',
-    description: item.description || `${name} - Dados oficiais do Habbo`,
-    className: classname,
-    hotel,
-    priceHistory: generateRealisticPriceHistory(currentPrice, 30),
-    lastUpdated: new Date().toISOString()
-  };
 }
 
 function mapCategoryToStandard(category: string): string {
@@ -373,7 +531,7 @@ function mapCategoryToStandard(category: string): string {
   return mapping[lowerCategory] || lowerCategory;
 }
 
-function estimateRealPrice(item: any): number {
+function estimateRealisticPrice(item: any): number {
   let basePrice = 25;
   
   if (item.hc_required || item.club || item.rare) basePrice += 100;
@@ -388,13 +546,20 @@ function estimateRealPrice(item: any): number {
   return Math.max(basePrice + Math.floor(Math.random() * 20), 15);
 }
 
-function estimateVolume(item: any): number {
+function estimateRealisticVolume(item: any): number {
   let volume = Math.floor(Math.random() * 15) + 5;
   
   if (item.rare || item.rarity === 'rare') volume += 15;
   if (item.hc_required) volume += 8;
   
   return Math.max(volume, 2);
+}
+
+function determineRarity(item: any): string {
+  if (item.rare || item.is_rare) return 'legendary';
+  if (item.hc_required || item.club_required) return 'rare';
+  if (item.limited || item.is_limited) return 'rare';
+  return 'common';
 }
 
 function generateRealisticPriceHistory(basePrice: number, days: number): number[] {
@@ -414,56 +579,6 @@ function generateRealisticPriceHistory(basePrice: number, days: number): number[
   }
   
   return history;
-}
-
-// Fase 4: Sistema de fallback aprimorado
-async function getEnhancedFallbackData(hotel: string): Promise<MarketItem[]> {
-  const curatedItems = [
-    { classname: 'throne', name: 'Trono Real', category: 'chair', price: 450, volume: 15, rare: true },
-    { classname: 'rare_dragonlamp', name: 'Lâmpada Dragão', category: 'lamp', price: 400, volume: 12, rare: true },
-    { classname: 'chair_norja', name: 'Cadeira Norja', category: 'chair', price: 180, volume: 25 },
-    { classname: 'table_norja_med', name: 'Mesa Norja Média', category: 'table', price: 200, volume: 18 },
-    { classname: 'bed_armas_two', name: 'Cama Armas Dupla', category: 'bed', price: 250, volume: 12 },
-    { classname: 'plant_big_cactus', name: 'Cacto Grande', category: 'plant', price: 65, volume: 30 },
-    { classname: 'chair_basic', name: 'Cadeira Básica', category: 'chair', price: 25, volume: 45 },
-    { classname: 'table_basic', name: 'Mesa Básica', category: 'table', price: 40, volume: 35 },
-    { classname: 'sofa_norja', name: 'Sofá Norja', category: 'chair', price: 320, volume: 14 },
-    { classname: 'lamp_basic', name: 'Lâmpada Básica', category: 'lamp', price: 55, volume: 22 },
-    { classname: 'bookshelf_polyfon', name: 'Estante Polyfon', category: 'table', price: 145, volume: 16 },
-    { classname: 'chair_polyfon', name: 'Cadeira Polyfon', category: 'chair', price: 125, volume: 28 },
-    { classname: 'table_polyfon_small', name: 'Mesa Polyfon Pequena', category: 'table', price: 95, volume: 32 },
-    { classname: 'shelves_norja', name: 'Estante Norja', category: 'table', price: 175, volume: 20 },
-    { classname: 'couch_norja', name: 'Sofá Norja Corner', category: 'chair', price: 290, volume: 16 }
-  ];
-  
-  const items: MarketItem[] = [];
-  
-  for (const item of curatedItems) {
-    const currentPrice = item.price + Math.floor(Math.random() * 20) - 10;
-    const previousPrice = Math.floor(currentPrice * (0.95 + Math.random() * 0.1));
-    const change = ((currentPrice - previousPrice) / previousPrice) * 100;
-    
-    items.push({
-      id: `fallback_${item.classname}_${hotel}`,
-      name: item.name,
-      category: item.category,
-      currentPrice,
-      previousPrice,
-      trend: change > 1 ? 'up' : change < -1 ? 'down' : 'stable',
-      changePercent: change > 0 ? `+${Math.abs(change).toFixed(1)}%` : `-${Math.abs(change).toFixed(1)}%`,
-      volume: item.volume + Math.floor(Math.random() * 10) - 5,
-      imageUrl: generateOptimalImageUrl(item.classname, 'roomitem', hotel),
-      rarity: item.rare ? 'legendary' : 'common',
-      description: `${item.name} - Dados curatoriais HabboHub ${hotel.toUpperCase()}`,
-      className: item.classname,
-      hotel,
-      priceHistory: generateRealisticPriceHistory(currentPrice, 30),
-      lastUpdated: new Date().toISOString()
-    });
-  }
-  
-  console.log(`🔄 [Fallback] Generated ${items.length} enhanced fallback items`);
-  return items;
 }
 
 function calculateRealStats(items: MarketItem[]) {

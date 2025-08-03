@@ -2,7 +2,7 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2 } from 'lucide-react';
-import RealFurniImage from './RealFurniImage';
+import RealFurniImageHybrid from './RealFurniImageHybrid';
 
 interface MarketItem {
   id: string;
@@ -44,7 +44,7 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
     <div className="habbo-card">
       <div className="p-4 border-b">
         <h3 className="font-bold text-gray-800">{title}</h3>
-        <p className="text-sm text-gray-600">{items.length} itens reais</p>
+        <p className="text-sm text-gray-600">{items.length} itens • HabboAPI.site + HabboFurni.com</p>
       </div>
       
       <ScrollArea className="h-96">
@@ -58,7 +58,7 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
                 onClick={() => onItemClick(item)}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100 hover:border-blue-200"
               >
-                <RealFurniImage
+                <RealFurniImageHybrid
                   className={item.className}
                   name={item.name}
                   type={itemType}
