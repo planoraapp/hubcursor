@@ -39,6 +39,15 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
     volume: Math.floor(Math.random() * 50) + 10 // Mock volume data
   }));
 
+  const chartConfig = {
+    price: {
+      label: "Preço",
+    },
+    volume: {
+      label: "Volume",
+    },
+  };
+
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
       case 'common': return 'bg-gray-100 text-gray-800';
@@ -127,7 +136,7 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
                 Histórico de Preços (30 dias)
               </h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer config={chartConfig} className="w-full h-full">
                   <LineChart data={priceData}>
                     <XAxis dataKey="day" />
                     <YAxis />
@@ -149,7 +158,7 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
                       dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
                     />
                   </LineChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </div>
 
@@ -160,7 +169,7 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
                 Volume de Vendas
               </h3>
               <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer config={chartConfig} className="w-full h-full">
                   <BarChart data={priceData}>
                     <XAxis dataKey="day" />
                     <YAxis />
@@ -170,7 +179,7 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
                     />
                     <Bar dataKey="volume" fill="#3b82f6" />
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </div>
 

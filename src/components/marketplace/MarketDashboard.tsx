@@ -59,6 +59,18 @@ export const MarketDashboard = ({ stats, items }: MarketDashboardProps) => {
     }
   }
 
+  const chartConfig = {
+    value: {
+      label: "Quantidade",
+    },
+    volume: {
+      label: "Volume",
+    },
+    price: {
+      label: "Preço",
+    },
+  };
+
   return (
     <div className="space-y-6">
       {/* Overview Stats */}
@@ -112,7 +124,7 @@ export const MarketDashboard = ({ stats, items }: MarketDashboardProps) => {
             Distribuição por Raridade
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig} className="w-full h-full">
               <PieChart>
                 <Pie
                   data={rarityChartData}
@@ -128,7 +140,7 @@ export const MarketDashboard = ({ stats, items }: MarketDashboardProps) => {
                 </Pie>
                 <ChartTooltip content={<ChartTooltipContent />} />
               </PieChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </div>
 
@@ -139,14 +151,14 @@ export const MarketDashboard = ({ stats, items }: MarketDashboardProps) => {
             Volume por Categoria
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig} className="w-full h-full">
               <BarChart data={categoryChartData}>
                 <XAxis dataKey="name" />
                 <YAxis />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="volume" fill="#3b82f6" />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </div>
 
@@ -157,7 +169,7 @@ export const MarketDashboard = ({ stats, items }: MarketDashboardProps) => {
             Top 10 - Preços Mais Altos
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer config={chartConfig} className="w-full h-full">
               <BarChart data={priceData}>
                 <XAxis dataKey="name" />
                 <YAxis />
@@ -173,7 +185,7 @@ export const MarketDashboard = ({ stats, items }: MarketDashboardProps) => {
                 />
                 <Bar dataKey="price" fill="#10b981" />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </div>
       </div>
