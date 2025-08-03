@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from './ui/select';
 import { Badge } from './ui/badge';
+import { BadgeDetailsModal } from './BadgeDetailsModal';
 
 interface BadgeItem {
   code: string;
@@ -29,6 +30,7 @@ export const CleanBadgesGrid: React.FC = () => {
   const [displayedBadges, setDisplayedBadges] = useState<BadgeItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreData, setHasMoreData] = useState(true);
+  const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
 
   console.log('🔍 [CleanBadgesGrid] Component state:', {
     activeCategory,
@@ -109,6 +111,11 @@ export const CleanBadgesGrid: React.FC = () => {
       console.log('🔄 [CleanBadgesGrid] Loading more badges, page:', currentPage + 1);
       setCurrentPage(prev => prev + 1);
     }
+  };
+
+  // Handle badge click
+  const handleBadgeClick = (badge: BadgeItem) => {
+    setSelectedBadge(badge);
   };
 
   // Loading state
@@ -247,11 +254,12 @@ export const CleanBadgesGrid: React.FC = () => {
               <div className={
                 viewMode === 'grid'
                   ? "grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3"
-                  : "space-y-2"
+                  : "grid grid-cols-3 gap-4"
               }>
                 {displayedBadges.map((badge) => (
                   <div
                     key={badge.code}
+                    onClick={() => handleBadgeClick(badge)}
                     className={
                       viewMode === 'grid'
                         ? "group relative bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300"
@@ -303,6 +311,22 @@ export const CleanBadgesGrid: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de Badge */}
+      {selectedBadge && (
+        <BadgeDetailsModal
+          badge={{
+            id: selectedBadge.code,
+            code: selectedBadge.code,
+            name: selectedBadge.name,
+            description: `Emblema oficial do Habbo Hotel. Este é o badge ${selectedBadge.code} - ${selectedBadge.name}.`,
+            category: selectedBadge.category,
+            imageUrl: selectedBadge.image_url,
+            rarity: 'common'
+          }}
+          onClose={() => setSelectedBadge(null)}
+        />
+      )}
     </div>
   );
 };

@@ -23,22 +23,24 @@ const Emblemas = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div 
+      className="flex min-h-screen w-full"
+      style={{ 
+        backgroundImage: "url('/assets/bghabbohub.png')",
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto'
+      }}
+    >
       <CollapsibleSidebar activeSection="emblemas" setActiveSection={() => {}} />
       
       <main 
         className={`flex-1 transition-all duration-300 ${
           sidebarCollapsed ? 'ml-20' : 'ml-64'
         }`}
-        style={{ 
-          backgroundImage: "url('/assets/bghabbohub.png')",
-          backgroundRepeat: 'repeat',
-          backgroundSize: 'auto'
-        }}
       >
         <div className="flex flex-col min-h-screen">
           <PageHeader 
-            title={t('badgesEnhancedTitle')}
+            title={t('badgesTitle')}
             icon="/assets/emblemas.png"
           />
           
