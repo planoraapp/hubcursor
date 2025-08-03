@@ -30,9 +30,24 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
   if (items.length === 0) {
     return (
       <div className="bg-white border-2 border-black rounded-lg shadow-lg">
-        <div className="p-4 border-b-2 border-black" style={{ backgroundColor: '#f5f5dc' }}>
-          <h3 className="font-bold text-gray-800">{title}</h3>
-          <p className="text-sm text-gray-600">Carregando...</p>
+        <div 
+          className="p-4 border-b-2 border-black rounded-t-lg"
+          style={{ 
+            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+            backgroundImage: 'url(/assets/bghabbohub.png)',
+            backgroundSize: 'cover'
+          }}
+        >
+          <h3 className="font-bold text-white volter-font" style={{
+            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+          }}>
+            {title}
+          </h3>
+          <p className="text-sm text-white volter-font" style={{
+            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+          }}>
+            Carregando...
+          </p>
         </div>
         <div className="p-4 text-center text-gray-500">
           <Package2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -44,9 +59,24 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
 
   return (
     <div className="bg-white border-2 border-black rounded-lg shadow-lg">
-      <div className="p-4 border-b-2 border-black" style={{ backgroundColor: '#f5f5dc' }}>
-        <h3 className="font-bold text-gray-800 flex items-center gap-2">{title}</h3>
-        <p className="text-sm text-gray-600">{items.length} itens disponíveis</p>
+      <div 
+        className="p-4 border-b-2 border-black rounded-t-lg"
+        style={{ 
+          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+          backgroundImage: 'url(/assets/bghabbohub.png)',
+          backgroundSize: 'cover'
+        }}
+      >
+        <h3 className="font-bold text-white volter-font flex items-center gap-2" style={{
+          textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+        }}>
+          {title}
+        </h3>
+        <p className="text-sm text-white volter-font" style={{
+          textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+        }}>
+          {items.length} itens disponíveis
+        </p>
       </div>
       
       <ScrollArea className="h-96">
@@ -99,11 +129,13 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
                     </div>
                   </div>
                   
-                  {(item.soldItems || item.quantity) && (
+                  {(item.soldItems || item.quantity || item.openOffers) && (
                     <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                       <Package2 size={10} />
                       <span>
-                        {item.soldItems ? `${item.soldItems} vendidos` : `${item.quantity} disponível`}
+                        {item.soldItems ? `${item.soldItems} vendidos` : 
+                         item.openOffers ? `${item.openOffers} ofertas` :
+                         `${item.quantity} disponível`}
                       </span>
                     </div>
                   )}

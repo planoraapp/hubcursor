@@ -1,3 +1,4 @@
+
 import { MarketCategoryBox } from './MarketCategoryBox';
 import { MarketItemModal } from './MarketItemModal';
 import { useState } from 'react';
@@ -65,23 +66,23 @@ export const MarketplaceCategoryBoxes = ({
   };
 
   // Melhorar lógica de filtragem com dados reais
-  const maioresOfertas = [...topSellers]
-    .filter(item => item.soldItems && item.soldItems > 0)
-    .sort((a, b) => (b.soldItems || 0) - (a.soldItems || 0))
+  const maioresOfertas = [...topSellers, ...biggestGainers, ...mostExpensive]
+    .filter(item => item.openOffers && item.openOffers > 0)
+    .sort((a, b) => (b.openOffers || 0) - (a.openOffers || 0))
     .slice(0, 8);
     
-  const maisVendidosHoje = [...biggestGainers]
-    .filter(item => item.trend === 'up' && item.volume > 5)
+  const maisVendidosHoje = [...topSellers, ...biggestGainers]
+    .filter(item => item.volume > 0 && item.currentPrice > 0)
     .sort((a, b) => b.volume - a.volume)
     .slice(0, 8);
     
-  const melhoresNegocios = [...opportunities, ...mostExpensive]
-    .filter(item => item.currentPrice < 300 && item.currentPrice > 50)
+  const melhoresNegocios = [...opportunities, ...topSellers]
+    .filter(item => item.currentPrice > 0 && item.currentPrice < 1000)
     .sort((a, b) => a.currentPrice - b.currentPrice)
     .slice(0, 8);
     
   const altasDeHoje = [...biggestGainers]
-    .filter(item => item.trend === 'up')
+    .filter(item => item.trend === 'up' && parseFloat(item.changePercent.replace('%', '')) > 0)
     .sort((a, b) => {
       const aChange = parseFloat(a.changePercent.replace('%', ''));
       const bChange = parseFloat(b.changePercent.replace('%', ''));

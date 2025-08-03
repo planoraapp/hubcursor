@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface AnimatedConsoleProps {
   isActive: boolean;
@@ -12,6 +13,7 @@ export const AnimatedConsole = ({
 }: AnimatedConsoleProps) => {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const location = useLocation();
 
   const frames = [
     '/assets/consoleoff.gif',
@@ -21,7 +23,10 @@ export const AnimatedConsole = ({
   ];
 
   useEffect(() => {
-    if (isActive && !isAnimating) {
+    // Só animar se estiver ativo E na página do console
+    const isOnConsolePage = location.pathname === '/console';
+    
+    if (isActive && isOnConsolePage && !isAnimating) {
       setIsAnimating(true);
       let frameIndex = 0;
       
@@ -36,11 +41,11 @@ export const AnimatedConsole = ({
       };
       
       setTimeout(animateConsole, 300);
-    } else if (!isActive) {
+    } else if (!isActive || !isOnConsolePage) {
       setCurrentFrame(0);
       setIsAnimating(false);
     }
-  }, [isActive, isAnimating]);
+  }, [isActive, isAnimating, location.pathname]);
 
   return (
     <div className={`${className}`}>

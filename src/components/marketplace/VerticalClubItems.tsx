@@ -24,77 +24,81 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
     try {
       setLoading(true);
       
+      // Buscar especificamente por "31 Dias HC" e "31 Dias CA"
       const hcPromise = supabase.functions.invoke('habbo-market-real', {
         body: { 
-          searchTerm: 'hc_', 
+          searchTerm: '31 Dias HC', 
           category: '',
           hotel: hotel,
           days: 7
         }
       });
 
-      const bcPromise = supabase.functions.invoke('habbo-market-real', {
+      const caPromise = supabase.functions.invoke('habbo-market-real', {
         body: { 
-          searchTerm: 'bc_', 
+          searchTerm: '31 Dias CA', 
           category: '',
           hotel: hotel,
           days: 7
         }
       });
 
-      const [hcResponse, bcResponse] = await Promise.all([hcPromise, bcPromise]);
+      const [hcResponse, caResponse] = await Promise.all([hcPromise, caPromise]);
 
       let hcItem = null;
-      let bcItem = null;
+      let caItem = null;
 
+      // Processar HC
       if (!hcResponse.error && hcResponse.data?.items) {
         hcItem = hcResponse.data.items.find((item: any) => 
-          item.className.toLowerCase().includes('hc') && 
-          (item.name.toLowerCase().includes('31') || item.name.toLowerCase().includes('habbo club'))
+          item.name.toLowerCase().includes('31 dias hc') || 
+          item.name.toLowerCase().includes('habbo club')
         );
       }
 
-      if (!bcResponse.error && bcResponse.data?.items) {
-        bcItem = bcResponse.data.items.find((item: any) => 
-          item.className.toLowerCase().includes('bc') && 
-          (item.name.toLowerCase().includes('31') || item.name.toLowerCase().includes('builders'))
+      // Processar CA
+      if (!caResponse.error && caResponse.data?.items) {
+        caItem = caResponse.data.items.find((item: any) => 
+          item.name.toLowerCase().includes('31 dias ca') || 
+          item.name.toLowerCase().includes('builders')
         );
       }
 
       const realItems: ClubItem[] = [
         {
           id: 'hc_premium_31',
-          name: 'HC 31 Dias',
+          name: '31 Dias HC',
           price: hcItem?.currentPrice || 0,
           available: hcItem?.openOffers || 0,
           icon: '/assets/hc31.png',
           className: hcItem?.className || 'hc_premium'
         },
         {
-          id: 'bc_premium_31', 
-          name: 'CA 31 Dias',
-          price: bcItem?.currentPrice || 0,
-          available: bcItem?.openOffers || 0,
+          id: 'ca_premium_31', 
+          name: '31 Dias CA',
+          price: caItem?.currentPrice || 0,
+          available: caItem?.openOffers || 0,
           icon: '/assets/bc31.png',
-          className: bcItem?.className || 'bc_premium'
+          className: caItem?.className || 'bc_premium'
         }
       ];
 
       setClubItems(realItems);
     } catch (error) {
       console.error('Erro ao buscar preços de clube:', error);
+      // Fallback com zero disponível
       setClubItems([
         {
           id: 'hc_premium_31',
-          name: 'HC 31 Dias',
+          name: '31 Dias HC',
           price: 0,
           available: 0,
           icon: '/assets/hc31.png',
           className: 'hc_premium'
         },
         {
-          id: 'bc_premium_31',
-          name: 'CA 31 Dias', 
+          id: 'ca_premium_31',
+          name: '31 Dias CA', 
           price: 0,
           available: 0,
           icon: '/assets/bc31.png',
@@ -111,38 +115,35 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
   }, [hotel]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {clubItems.map((item) => (
-        <div key={item.id} className="bg-white rounded-lg border-2 border-black p-4 text-center shadow-md">
-          <div className="flex justify-center mb-3">
+        <div key={item.id} className="bg-transparent p-2">
+          {/* Layout Horizontal: Ícone - Nome - Moeda - Preço */}
+          <div className="flex items-center gap-3">
             <img 
               src={item.icon} 
               alt={item.name}
-              className="w-12 h-12"
+              className="w-8 h-8 flex-shrink-0"
               style={{ imageRendering: 'pixelated' }}
             />
+            <span className="font-bold text-sm text-gray-800 min-w-0 flex-shrink-0">
+              {item.name}
+            </span>
+            <div className="flex items-center gap-1">
+              <CreditIcon size="sm" />
+              <span className={`font-bold text-sm ${loading ? 'animate-pulse text-gray-400' : 'text-green-600'}`}>
+                {loading ? '...' : (item.available > 0 ? item.price.toLocaleString() : '-')}
+              </span>
+            </div>
           </div>
-          <p className="font-bold text-sm text-gray-800 mb-2">{item.name}</p>
-          {item.available > 0 ? (
-            <>
-              <div className="flex items-center justify-center gap-1 mb-2">
-                <CreditIcon size="md" />
-                <span className={`font-bold text-lg ${loading ? 'animate-pulse text-gray-400' : 'text-green-600'}`}>
-                  {loading ? '...' : item.price.toLocaleString()}
-                </span>
+          
+          {/* Linha de baixo para aviso de zero disponíveis */}
+          {item.available === 0 && (
+            <div className="mt-1 ml-11">
+              <div className="bg-red-100 border border-red-300 rounded px-2 py-1 inline-block">
+                <span className="text-xs text-red-600 font-medium">0 disponíveis</span>
               </div>
-              <p className="text-sm text-gray-600">{item.available} disponível</p>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-center gap-1 mb-2">
-                <CreditIcon size="md" />
-                <span className="font-bold text-lg text-gray-400">-</span>
-              </div>
-              <div className="bg-red-100 border border-red-300 rounded px-3 py-1">
-                <p className="text-sm text-red-600 font-medium">0 disponíveis</p>
-              </div>
-            </>
+            </div>
           )}
         </div>
       ))}

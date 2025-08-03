@@ -1,11 +1,11 @@
 
-import { useState, useCallback } from 'react';
-import { Package } from 'lucide-react';
+import { useState, useCallback, useMemo } from 'react';
+import { Package2 } from 'lucide-react';
 
 interface RealFurniImageHybridProps {
   className: string;
   name: string;
-  type?: 'roomitem' | 'wallitem';
+  type?: 'wallitem' | 'roomitem';
   hotel?: string;
   size?: 'sm' | 'md' | 'lg';
 }
@@ -13,121 +13,106 @@ interface RealFurniImageHybridProps {
 const RealFurniImageHybrid = ({ 
   className, 
   name, 
-  type = 'roomitem', 
+  type = 'roomitem',
   hotel = 'br',
-  size = 'md' 
+  size = 'md'
 }: RealFurniImageHybridProps) => {
-  const [imageError, setImageError] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const getOptimizedImageUrls = useCallback((className: string, type: string, hotel: string) => {
-    const cachedUrl = localStorage.getItem(`furni-success-${className}`);
-    const urls = [];
-
-    if (cachedUrl) {
-      urls.push(cachedUrl);
-    }
-
-    const isLTD = className.toLowerCase().includes('ltd');
-    const isHC = className.toLowerCase().includes('hc');
-    const isRare = className.toLowerCase().includes('rare') || className.toLowerCase().includes('throne');
-    const isDragon = className.toLowerCase().includes('dragon') || className.toLowerCase().includes('drago');
-
-    // URLs especiais por tipo
-    if (isLTD) {
-      urls.push(
-        `https://www.habboapi.site/images/furni/${className}.png`,
-        `https://images.habbo.com/dcr/hof_furni/LTD/${className}.png`,
-        `https://habboapi.site/images/furni/${className}.gif`
-      );
-    }
-
-    if (isHC) {
-      urls.push(
-        `https://www.habboapi.site/images/furni/${className}.png`,
-        `https://habboapi.site/images/furni/${className}.gif`,
-        `https://images.habbo.com/dcr/hof_furni/hc/${className}.png`
-      );
-    }
-
-    if (isDragon) {
-      urls.push(
-        `https://www.habboapi.site/images/furni/${className}.png`,
-        `https://habboapi.site/images/furni/${className}.gif`,
-        `https://images.habbo.com/dcr/hof_furni/rare/${className}.png`,
-        `https://habbowidgets.com/images/furni/${className}.png`
-      );
-    }
-
-    // URLs principais otimizadas
-    urls.push(
-      `https://www.habboapi.site/images/furni/${className}.png`,
-      `https://www.habboapi.site/images/furni/${className}.gif`,
-      `https://habboapi.site/images/furni/${className}.png`,
-      `https://api.habboapi.site/furni/image/${className}`
-    );
-    
-    const assetVersions = ['61856', '56746', '49500', '48082', '45508'];
-    assetVersions.forEach(version => {
-      urls.push(`https://habbofurni.com/furni_assets/${version}/${className}_icon.png`);
-    });
-    
-    urls.push(
-      `https://images.habbo.com/dcr/hof_furni/${type}/${className}.png`,
-      `https://www.habbo.com/dcr/hof_furni/${type}/${className}.png`,
-      `https://habbowidgets.com/images/furni/${className}.png`,
-      `https://habbowidgets.com/images/furni/${className}.gif`,
-      `https://www.habbowidgets.com/images/furni/${className}.png`,
-      `https://habboemotion.com/images/furnis/${className}.png`,
-      `https://cdn.habboemotion.com/furnis/${className}.gif`,
-      `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`
-    );
-
-    return [...new Set(urls)];
-  }, []);
-
-  const imageUrls = getOptimizedImageUrls(className, type, hotel);
-  const currentUrl = imageUrls[currentImageIndex];
-
-  const handleImageError = useCallback(() => {
-    if (currentImageIndex < imageUrls.length - 1) {
-      setCurrentImageIndex(prev => prev + 1);
-    } else {
-      setImageError(true);
-    }
-  }, [currentImageIndex, imageUrls.length]);
-
-  const handleImageLoad = useCallback(() => {
-    localStorage.setItem(`furni-success-${className}`, currentUrl);
-  }, [currentUrl, className]);
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
+  const [hasError, setHasError] = useState(false);
 
   const sizeClasses = {
-    sm: 'w-8 h-8',
-    md: 'w-12 h-12',
-    lg: 'w-16 h-16'
+    sm: 'w-12 h-12',
+    md: 'w-16 h-16', 
+    lg: 'w-24 h-24'
   };
 
-  if (imageError) {
+  // URLs otimizadas com foco em tipos específicos
+  const imageUrls = useMemo(() => {
+    const baseUrls = [];
+    
+    // Priorizar URLs baseadas no tipo e características do item
+    const isLTD = name.toLowerCase().includes('ltd') || className.toLowerCase().includes('ltd');
+    const isHC = name.toLowerCase().includes('hc') || className.toLowerCase().includes('hc_');
+    const isRare = name.toLowerCase().includes('rare') || name.toLowerCase().includes('throne') || name.toLowerCase().includes('dragon');
+    
+    // URLs específicas para itens especiais
+    if (isLTD) {
+      baseUrls.push(
+        `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
+        `https://www.habbo.${hotel}/dcr/hof_furni/${className}.png`
+      );
+    }
+    
+    if (isHC) {
+      baseUrls.push(
+        `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
+        `https://www.habbo.${hotel}/dcr/hof_furni/${className}.png`
+      );
+    }
+    
+    if (isRare) {
+      baseUrls.push(
+        `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
+        `https://www.habbo.${hotel}/dcr/hof_furni/${className}.png`,
+        `https://images.habbo.com/dcr/hof_furni/${className}.png`
+      );
+    }
+
+    // URLs padrão do Habbo
+    const hotelMapping: Record<string, string> = {
+      'br': 'com.br',
+      'com': 'com',
+      'es': 'es',
+      'fr': 'fr',
+      'de': 'de',
+      'it': 'it',
+      'nl': 'nl',
+      'fi': 'fi',
+      'tr': 'com.tr'
+    };
+
+    const mappedHotel = hotelMapping[hotel] || hotel;
+
+    baseUrls.push(
+      `https://images.habbo.com/dcr/hof_furni/${mappedHotel}/${className}.png`,
+      `https://www.habbo.${mappedHotel}/dcr/hof_furni/${className}.png`,
+      `https://images.habbo.com/dcr/hof_furni/${className}.png`,
+      `https://habbo-stories.s3.amazonaws.com/web_promo/lpromo_${className}.png`,
+      `https://www.habbo.com/dcr/hof_furni/${className}.png`
+    );
+
+    return baseUrls;
+  }, [className, hotel, name]);
+
+  const handleImageError = useCallback(() => {
+    if (currentUrlIndex < imageUrls.length - 1) {
+      setCurrentUrlIndex(prev => prev + 1);
+    } else {
+      setHasError(true);
+    }
+  }, [currentUrlIndex, imageUrls.length]);
+
+  const handleImageLoad = useCallback(() => {
+    setHasError(false);
+  }, []);
+
+  if (hasError || imageUrls.length === 0) {
     return (
-      <div className={`bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center rounded ${sizeClasses[size]} border border-gray-200 shadow-sm`}>
-        <Package className="w-4 h-4 text-gray-400" />
+      <div className={`${sizeClasses[size]} bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center`}>
+        <Package2 size={size === 'sm' ? 16 : size === 'md' ? 20 : 24} className="text-gray-400" />
       </div>
     );
   }
 
   return (
-    <div className={`${sizeClasses[size]} flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded border border-gray-100 shadow-sm overflow-hidden`}>
+    <div className={`${sizeClasses[size]} bg-gray-50 border-2 border-gray-300 rounded overflow-hidden flex items-center justify-center`}>
       <img
-        src={currentUrl}
+        src={imageUrls[currentUrlIndex]}
         alt={name}
-        className="object-contain max-w-full max-h-full transition-opacity duration-200"
-        style={{ 
-          imageRendering: 'pixelated'
-        }}
+        className="max-w-full max-h-full object-contain"
         onError={handleImageError}
         onLoad={handleImageLoad}
-        loading="lazy"
-        title={`${name} (${className}) - HabboHub Optimized`}
+        style={{ imageRendering: 'pixelated' }}
       />
     </div>
   );

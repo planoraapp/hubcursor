@@ -28,10 +28,21 @@ const Mercado = () => {
     return (
       <MobileLayout>
         <div className="p-4">
-          <PageHeader 
-            title="Mercado Habbo"
-            icon="/assets/Diamante.png"
-          />
+          <div 
+            className="mb-6 p-4 rounded-lg border-2 border-black"
+            style={{
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundSize: 'cover'
+            }}
+          >
+            <h1 className="text-xl font-bold text-white volter-font flex items-center gap-2" style={{
+              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+            }}>
+              <img src="/assets/Diamante.png" alt="Mercado" className="w-6 h-6" />
+              Mercado Habbo
+            </h1>
+          </div>
           <Tabs defaultValue="marketplace" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="marketplace">Feira</TabsTrigger>
@@ -54,10 +65,21 @@ const Mercado = () => {
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <PageHeader 
-            title="Mercado Habbo"
-            icon="/assets/Diamante.png"
-          />
+          <div 
+            className="mb-8 p-6 rounded-lg border-2 border-black"
+            style={{
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundSize: 'cover'
+            }}
+          >
+            <h1 className="text-2xl font-bold text-white volter-font flex items-center gap-3" style={{
+              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+            }}>
+              <img src="/assets/Diamante.png" alt="Mercado" className="w-8 h-8" />
+              Mercado Habbo
+            </h1>
+          </div>
           
           <Tabs defaultValue="marketplace" className="w-full">
             <div className="flex justify-center mb-6">

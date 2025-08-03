@@ -71,17 +71,22 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
   return (
     <div className={`fixed left-0 top-0 h-full transition-all duration-300 z-40 ${
       isCollapsed ? 'w-20' : 'w-64'
-    }`} style={{ backgroundColor: '#f5f5dc' }}>
-      {/* Header */}
-      <div className="relative" style={{ backgroundColor: '#f5f5dc' }}>
-        {!isCollapsed && (
-          <div className="p-4">
-            <img src="/assets/habbohub.gif" alt="HABBO HUB" className="w-full h-auto" />
+    }`} style={{ backgroundColor: '#ffefd5' }}>
+      {/* Header com Logo */}
+      <div className="relative p-4" style={{ backgroundColor: '#ffefd5' }}>
+        {isCollapsed ? (
+          <div className="flex justify-center">
+            <img src="/assets/hub.gif" alt="HUB" className="w-12 h-12" />
           </div>
+        ) : (
+          <img src="/assets/habbohub.gif" alt="HABBO HUB" className="w-full h-auto" />
         )}
-        
-        {/* Collapse button positioned below logo */}
-        <div className="absolute right-2" style={{ top: isCollapsed ? '16px' : '80px' }}>
+      </div>
+
+      {/* Botão de colapso posicionado na linha divisória */}
+      <div className="relative">
+        <div className="border-b-2 border-black mx-4"></div>
+        <div className="absolute right-2 top-0 transform -translate-y-1/2">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="w-8 h-8 bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-bold shadow-md transition-colors border-2 border-black"
@@ -90,9 +95,6 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
           </button>
         </div>
       </div>
-
-      {/* Divider */}
-      <div className="border-b-2 border-black mx-4"></div>
 
       {/* Menu Items */}
       <nav className="p-4">
@@ -106,8 +108,8 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
                 onClick={() => handleItemClick(item)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
-                    : 'hover:bg-white/50 text-gray-700'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 shadow-md'
+                    : 'hover:bg-white/50'
                 }`}
               >
                 <div className={`flex items-center justify-center ${isCollapsed ? 'w-8 h-8' : 'w-8 h-8'}`}>
@@ -120,13 +122,19 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
                     <img 
                       src={item.icon} 
                       alt={item.name}
-                      className="w-full h-full object-contain"
+                      className="w-8 h-8 object-contain"
                       style={{ imageRendering: 'pixelated' }}
                     />
                   )}
                 </div>
                 {!isCollapsed && (
-                  <span className="font-medium">{item.name}</span>
+                  <span className={`font-medium text-sm volter-font ${
+                    isActive ? 'text-white' : 'text-gray-800'
+                  }`} style={{
+                    textShadow: isActive ? 'none' : '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                  }}>
+                    {item.name}
+                  </span>
                 )}
               </button>
             );
@@ -138,7 +146,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
       {!isCollapsed && (
         <div className="absolute bottom-4 left-4 right-4 text-center">
           <img src="/assets/LogoSulake1.png" alt="Sulake" className="h-6 mx-auto opacity-50" />
-          <p className="text-xs text-gray-500 mt-1">Habbo Hub v3.0</p>
+          <p className="text-xs text-gray-500 mt-1 volter-font">Habbo Hub v3.0</p>
         </div>
       )}
     </div>

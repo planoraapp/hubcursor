@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Home, MessageCircle, Menu, Calendar, Newspaper, X, Cog } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -165,18 +166,16 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
           ref={dropdownRef}
           className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-72 p-4 rounded-t-xl shadow-2xl flex flex-col space-y-2 max-h-[60vh] overflow-y-auto"
           style={{
-            backgroundColor: '#f5f5dc',
-            border: '3px solid #000',
-            borderBottom: 'none',
+            backgroundColor: '#ffefd5',
             boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)'
           }}
         >
           {/* Header do dropdown */}
           <div className="text-center pb-2 border-b border-black/30">
             <span 
-              className="font-bold text-lg text-black volter-font"
+              className="font-bold text-lg text-white volter-font"
               style={{ 
-                textShadow: '1px 1px 2px rgba(255, 255, 255, 0.5)'
+                textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
               }}
             >
               {t('more')}
@@ -193,7 +192,6 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                     backgroundColor: activeItemId === item.id 
                       ? 'rgba(0, 0, 0, 0.2)' 
                       : 'rgba(0, 0, 0, 0.1)',
-                    border: `2px solid ${activeItemId === item.id ? '#000' : '#666'}`,
                     boxShadow: activeItemId === item.id 
                       ? '0 0 10px rgba(0, 0, 0, 0.5)' 
                       : '0 2px 5px rgba(0, 0, 0, 0.2)'
@@ -205,7 +203,9 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                   ) : (
                     <item.icon className="w-6 h-6 text-black" />
                   )}
-                  <span className="text-xs font-medium text-center leading-tight text-black">
+                  <span className="text-xs font-medium text-center leading-tight text-white volter-font" style={{
+                    textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                  }}>
                     {item.label}
                   </span>
                 </button>
@@ -219,16 +219,13 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
         </div>
       )}
 
-      {/* Main Dock - Aplicando cor bege com borda superior preta */}
+      {/* Main Dock - Aplicando cor bege sem borda preta */}
       <nav 
-        className="w-full max-w-sm flex justify-around items-center p-3 rounded-xl shadow-2xl border-t-4"
+        className="w-full max-w-sm flex justify-around items-center p-3 rounded-xl shadow-2xl"
         style={{
-          backgroundColor: '#f5f5dc',
-          borderTopColor: '#000',
-          border: '3px solid #000',
-          borderTop: '4px solid #000',
+          backgroundColor: '#ffefd5',
           boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)',
-          background: 'linear-gradient(135deg, #f5f5dc 0%, #f0f0dc 50%, #f5f5dc 100%)'
+          background: 'linear-gradient(135deg, #ffefd5 0%, #f0e6d2 50%, #ffefd5 100%)'
         }}
       >
         {mainDockItems.map((item) => {
@@ -292,7 +289,6 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                 backgroundColor: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
                   ? 'rgba(0, 0, 0, 0.2)' 
                   : 'transparent',
-                border: `2px solid ${isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? '#000' : 'transparent'}`,
                 boxShadow: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
                   ? '0 0 15px rgba(0, 0, 0, 0.4)' 
                   : 'none',
@@ -318,12 +314,13 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               </div>
               
               <span 
-                className={`text-xs font-medium text-center leading-tight ${
-                  isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? 'text-black' : 'text-gray-700'
+                className={`text-xs font-medium text-center leading-tight volter-font ${
+                  isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? 'text-white' : 'text-gray-700'
                 }`}
                 style={{ 
-                  fontFamily: "'Arial', sans-serif",
-                  textShadow: '1px 1px 2px rgba(255, 255, 255, 0.3)'
+                  textShadow: (isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)) 
+                    ? '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                    : '1px 1px 2px rgba(255, 255, 255, 0.3)'
                 }}
               >
                 {item.label}
