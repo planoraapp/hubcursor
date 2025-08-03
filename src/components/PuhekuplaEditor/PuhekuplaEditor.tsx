@@ -1,254 +1,202 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Copy, 
-  Download, 
-  Shuffle, 
-  Search, 
-  RotateCcw,
-  Shirt,
-  Home,
-  Award,
-  Palette,
-  User
-} from 'lucide-react';
+import { Search, Package, Shirt, Award, Sparkles } from 'lucide-react';
 import PuhekuplaAvatarPreview from './PuhekuplaAvatarPreview';
 import PuhekuplaFurniGrid from './PuhekuplaFurniGrid';
 import PuhekuplaClothingGrid from './PuhekuplaClothingGrid';
 import PuhekuplaBadgesGrid from './PuhekuplaBadgesGrid';
+import { usePuhekuplaCategories } from '@/hooks/usePuhekuplaData';
+import type { PuhekuplaFurni, PuhekuplaClothing, PuhekuplaBadge } from '@/hooks/usePuhekuplaData';
 
 const PuhekuplaEditor = () => {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('clothing');
-  const [currentFigure, setCurrentFigure] = useState('hd-190-1.hr-828-45.ch-665-92.lg-270-82.sh-305-62');
-  const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
-  const [selectedHotel, setSelectedHotel] = useState('com');
-  const [currentDirection, setCurrentDirection] = useState('2');
+  const [activeTab, setActiveTab] = useState('avatar');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  
-  // Hotels configuration
-  const hotels = [
-    { code: 'com', name: 'Global', flag: '🌍' },
-    { code: 'com.br', name: 'Brasil', flag: '🇧🇷' },
-    { code: 'es', name: 'España', flag: '🇪🇸' },
-    { code: 'de', name: 'Deutschland', flag: '🇩🇪' },
-    { code: 'fr', name: 'France', flag: '🇫🇷' },
-    { code: 'it', name: 'Italia', flag: '🇮🇹' },
-    { code: 'nl', name: 'Nederland', flag: '🇳🇱' },
-    { code: 'fi', name: 'Suomi', flag: '🇫🇮' },
-    { code: 'tr', name: 'Türkiye', flag: '🇹🇷' }
-  ];
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [avatarData, setAvatarData] = useState({
+    figure: 'hr-893-45.hd-180-2.ch-210-66.lg-270-82.sh-305-62',
+    direction: '2',
+    head_direction: '2'
+  });
 
-  const getAvatarUrl = (size: 'l' | 'm' | 's' = 'l') => {
-    const hotel = hotels.find(h => h.code === selectedHotel);
-    return `https://www.${hotel?.code === 'com' ? 'habbo.com' : `habbo.${hotel?.code}`}/habbo-imaging/avatarimage?figure=${currentFigure}&size=${size}&direction=${currentDirection}&head_direction=${currentDirection}&action=std&gesture=std`;
-  };
+  const { data: categoriesData } = usePuhekuplaCategories();
+  const categories = categoriesData?.result?.categories || [];
 
-  const handleRotateAvatar = () => {
-    setCurrentDirection(prev => {
-      const directions = ['0', '1', '2', '3', '4', '5', '6', '7'];
-      const currentIndex = directions.indexOf(prev);
-      return directions[(currentIndex + 1) % directions.length];
-    });
-  };
-
-  const copyFigure = () => {
-    navigator.clipboard.writeText(currentFigure);
-    toast({
-      title: "📋 Figure Copiada!",
-      description: "Código figure copiado para área de transferência",
-    });
-  };
-
-  const copyUrl = () => {
-    navigator.clipboard.writeText(getAvatarUrl());
-    toast({
-      title: "📋 URL Copiada!",
-      description: "URL do avatar copiada para área de transferência",
-    });
-  };
-
-  const downloadAvatar = () => {
-    const link = document.createElement('a');
-    link.href = getAvatarUrl();
-    link.download = `avatar-puhekupla-${Date.now()}.png`;
-    link.click();
-    toast({
-      title: "⬇️ Download Iniciado",
-      description: "Avatar sendo baixado em alta resolução",
-    });
-  };
-
-  const randomizeAvatar = () => {
-    const basicCategories = ['hd', 'hr', 'ch', 'lg', 'sh'];
-    const newFigureParts = [];
-
-    basicCategories.forEach(category => {
-      const randomItem = Math.floor(Math.random() * 50) + 100;
-      const randomColor = Math.floor(Math.random() * 15) + 1;
-      newFigureParts.push(`${category}-${randomItem}-${randomColor}`);
-    });
-
-    setCurrentFigure(newFigureParts.join('.'));
-    toast({
-      title: "🎲 Avatar Randomizado!",
-      description: "Novo visual gerado aleatoriamente",
-    });
+  const handleItemSelect = (item: PuhekuplaFurni | PuhekuplaClothing | PuhekuplaBadge) => {
+    console.log('Item selecionado:', item);
+    // TODO: Implementar lógica de aplicação do item no avatar
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 space-y-6 bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
-      {/* Header */}
-      <div className="text-center py-6">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-3">
-          🌟 Editor Puhekupla
-        </h1>
-        <p className="text-lg text-gray-600 mb-2">
-          Nova Geração - Catálogo Expandido de Roupas, Móveis e Emblemas
-        </p>
-        <Badge className="bg-purple-100 text-purple-800 border-purple-200">
-          Powered by Puhekupla API
-        </Badge>
+    <div className="w-full h-full flex flex-col lg:flex-row gap-6 p-4">
+      {/* Avatar Preview */}
+      <div className="lg:w-1/3">
+        <Card className="h-full bg-gradient-to-br from-purple-100 to-blue-100 border-2 border-purple-200">
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-6 h-6" />
+              Preview do Avatar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <PuhekuplaAvatarPreview avatarData={avatarData} />
+            
+            {/* Avatar Controls */}
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-purple-800 mb-2">
+                  Figura:
+                </label>
+                <Input
+                  value={avatarData.figure}
+                  onChange={(e) => setAvatarData(prev => ({ ...prev, figure: e.target.value }))}
+                  className="text-sm font-mono"
+                  placeholder="ex: hr-893-45.hd-180-2..."
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-purple-800 mb-2">
+                    Direção:
+                  </label>
+                  <Select 
+                    value={avatarData.direction} 
+                    onValueChange={(value) => setAvatarData(prev => ({ ...prev, direction: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Norte</SelectItem>
+                      <SelectItem value="1">Nordeste</SelectItem>
+                      <SelectItem value="2">Leste</SelectItem>
+                      <SelectItem value="3">Sudeste</SelectItem>
+                      <SelectItem value="4">Sul</SelectItem>
+                      <SelectItem value="5">Sudoeste</SelectItem>
+                      <SelectItem value="6">Oeste</SelectItem>
+                      <SelectItem value="7">Noroeste</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-purple-800 mb-2">
+                    Dir. Cabeça:
+                  </label>
+                  <Select 
+                    value={avatarData.head_direction} 
+                    onValueChange={(value) => setAvatarData(prev => ({ ...prev, head_direction: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Norte</SelectItem>
+                      <SelectItem value="1">Nordeste</SelectItem>
+                      <SelectItem value="2">Leste</SelectItem>
+                      <SelectItem value="3">Sudeste</SelectItem>
+                      <SelectItem value="4">Sul</SelectItem>
+                      <SelectItem value="5">Sudoeste</SelectItem>
+                      <SelectItem value="6">Oeste</SelectItem>
+                      <SelectItem value="7">Noroeste</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Avatar Preview Section */}
-      <PuhekuplaAvatarPreview
-        currentFigure={currentFigure}
-        selectedGender={selectedGender}
-        selectedHotel={selectedHotel}
-        currentDirection={currentDirection}
-        hotels={hotels}
-        onRotateAvatar={handleRotateAvatar}
-        onCopyFigure={copyFigure}
-        onCopyUrl={copyUrl}
-        onDownloadAvatar={downloadAvatar}
-        onRandomizeAvatar={randomizeAvatar}
-        onGenderChange={setSelectedGender}
-        onHotelChange={setSelectedHotel}
-      />
+      {/* Editor Tabs */}
+      <div className="lg:w-2/3">
+        <Card className="h-full">
+          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-6 h-6" />
+              Editor Puhekupla
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="furni" className="flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Móveis
+                </TabsTrigger>
+                <TabsTrigger value="clothing" className="flex items-center gap-2">
+                  <Shirt className="w-4 h-4" />
+                  Roupas
+                </TabsTrigger>
+                <TabsTrigger value="badges" className="flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  Emblemas
+                </TabsTrigger>
+              </TabsList>
 
-      {/* Search and Filters */}
-      <Card className="bg-white/80 backdrop-blur-sm border-2 border-purple-200">
-        <CardContent className="p-4">
-          <div className="flex gap-4 items-end flex-wrap">
-            <div className="flex-1 min-w-64">
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                <Search className="inline w-4 h-4 mr-1" />
-                Buscar Items
-              </label>
-              <Input
-                placeholder="Digite o nome do item..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="border-purple-200 focus:border-purple-400"
-              />
-            </div>
-            
-            <div className="min-w-48">
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                🏷️ Categoria
-              </label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="border-purple-200 focus:border-purple-400">
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
-                  <SelectItem value="xmas">Christmas</SelectItem>
-                  <SelectItem value="rare">Rare/LTD</SelectItem>
-                  <SelectItem value="hc">Habbo Club</SelectItem>
-                  <SelectItem value="seasonal">Seasonal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Search and Filter Controls */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar itens..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                {(activeTab === 'furni' || activeTab === 'clothing') && (
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as Categorias</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.guid} value={category.slug}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
 
-      {/* Main Content - Tabs */}
-      <Card className="bg-white/90 backdrop-blur-sm border-2 border-purple-200 shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center text-purple-800">
-            🎨 Catálogo Puhekupla
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6 bg-purple-100">
-              <TabsTrigger 
-                value="clothing" 
-                className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                <Shirt className="w-4 h-4" />
-                Roupas
-              </TabsTrigger>
-              <TabsTrigger 
-                value="furni" 
-                className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-              >
-                <Home className="w-4 h-4" />
-                Móveis
-              </TabsTrigger>
-              <TabsTrigger 
-                value="badges" 
-                className="flex items-center gap-2 data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
-              >
-                <Award className="w-4 h-4" />
-                Emblemas
-              </TabsTrigger>
-            </TabsList>
+              {/* Content Tabs */}
+              <div className="h-96 overflow-hidden">
+                <TabsContent value="furni" className="h-full">
+                  <PuhekuplaFurniGrid
+                    searchTerm={searchTerm}
+                    selectedCategory={selectedCategory}
+                    onItemSelect={handleItemSelect}
+                  />
+                </TabsContent>
 
-            <TabsContent value="clothing" className="mt-6">
-              <PuhekuplaClothingGrid 
-                searchTerm={searchTerm}
-                selectedCategory={selectedCategory}
-                onItemSelect={(item) => {
-                  console.log('Clothing item selected:', item);
-                  toast({
-                    title: "👕 Roupa Selecionada",
-                    description: `${item.name} adicionado ao avatar`,
-                  });
-                }}
-              />
-            </TabsContent>
+                <TabsContent value="clothing" className="h-full">
+                  <PuhekuplaClothingGrid
+                    searchTerm={searchTerm}
+                    selectedCategory={selectedCategory}
+                    onItemSelect={handleItemSelect}
+                  />
+                </TabsContent>
 
-            <TabsContent value="furni" className="mt-6">
-              <PuhekuplaFurniGrid 
-                searchTerm={searchTerm}
-                selectedCategory={selectedCategory}
-                onItemSelect={(item) => {
-                  console.log('Furni item selected:', item);
-                  toast({
-                    title: "🏠 Móvel Selecionado",
-                    description: `${item.name} adicionado à coleção`,
-                  });
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="badges" className="mt-6">
-              <PuhekuplaBadgesGrid 
-                searchTerm={searchTerm}
-                onItemSelect={(item) => {
-                  console.log('Badge item selected:', item);
-                  toast({
-                    title: "🏆 Emblema Selecionado",
-                    description: `${item.name} adicionado à coleção`,
-                  });
-                }}
-              />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                <TabsContent value="badges" className="h-full">
+                  <PuhekuplaBadgesGrid
+                    searchTerm={searchTerm}
+                    onItemSelect={handleItemSelect}
+                  />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
