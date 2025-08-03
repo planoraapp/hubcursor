@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 
 export type Language = 'pt' | 'es' | 'en';
@@ -49,7 +50,6 @@ export const translations = {
     marketplaceTitle: 'Mercado Habbo',
     marketplaceSubtitle: 'Estatísticas e detalhes do marketplace de itens.',
     badgesTitle: 'Emblemas do Habbo',
-    badgesEnhancedTitle: 'Emblemas do Habbo',
     allCategories: 'Todas as Categorias',
     official: 'Oficiais',
     achievements: 'Conquistas',
@@ -66,6 +66,9 @@ export const translations = {
     tryAgain: 'Tentar Novamente',
     loadingMore: 'Carregando mais...',
     allBadgesLoaded: 'Todos os emblemas foram carregados',
+    loadingBadgeSystem: 'Carregando sistema de emblemas...',
+    badgeSystemError: 'Erro no sistema de emblemas',
+    badgeSystemRetry: 'Tentar Novamente',
   },
   es: {
     appTitle: 'HABBO HUB',
@@ -113,7 +116,6 @@ export const translations = {
     marketplaceTitle: 'Mercado Habbo',
     marketplaceSubtitle: 'Estadísticas y detalles del marketplace de artículos.',
     badgesTitle: 'Placas del Habbo',
-    badgesEnhancedTitle: 'Placas del Habbo',
     allCategories: 'Todas las Categorías',
     official: 'Oficiales',
     achievements: 'Logros',
@@ -130,6 +132,9 @@ export const translations = {
     tryAgain: 'Intentar de Nuevo',
     loadingMore: 'Cargando más...',
     allBadgesLoaded: 'Todas las placas han sido cargadas',
+    loadingBadgeSystem: 'Cargando sistema de placas...',
+    badgeSystemError: 'Error en el sistema de placas',
+    badgeSystemRetry: 'Intentar de Nuevo',
   },
   en: {
     appTitle: 'HABBO HUB',
@@ -177,7 +182,6 @@ export const translations = {
     marketplaceTitle: 'Habbo Marketplace',
     marketplaceSubtitle: 'Statistics and details of the item marketplace.',
     badgesTitle: 'Habbo Badges',
-    badgesEnhancedTitle: 'Habbo Badges',
     allCategories: 'All Categories',
     official: 'Official',
     achievements: 'Achievements',
@@ -194,6 +198,9 @@ export const translations = {
     tryAgain: 'Try Again',
     loadingMore: 'Loading more...',
     allBadgesLoaded: 'All badges have been loaded',
+    loadingBadgeSystem: 'Loading badge system...',
+    badgeSystemError: 'Badge system error',
+    badgeSystemRetry: 'Try Again',
   }
 };
 
