@@ -6,7 +6,7 @@ import { News } from '../components/News';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
-export default function Noticias() {
+export default function NoticiasPage() {
   const [activeSection, setActiveSection] = useState('noticias');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();

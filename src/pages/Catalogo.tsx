@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
+import { CatalogEnhanced } from '../components/CatalogEnhanced';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
-import { CatalogWithTabs } from '../components/CatalogWithTabs';
 
-export default function Catalogo() {
+const Catalogo = () => {
   const [activeSection, setActiveSection] = useState('catalogo');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
@@ -21,6 +22,12 @@ export default function Catalogo() {
     };
   }, []);
 
+  const renderContent = () => (
+    <div className="h-full flex flex-col overflow-hidden">
+      <CatalogEnhanced />
+    </div>
+  );
+
   if (isMobile) {
     return (
       <MobileLayout>
@@ -28,10 +35,9 @@ export default function Catalogo() {
           <PageHeader 
             title="Catálogo Habbo"
             icon="/assets/Carrinho.png"
-            backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg min-h-[500px]">
-            <CatalogWithTabs />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+            {renderContent()}
           </div>
         </div>
       </MobileLayout>
@@ -46,13 +52,14 @@ export default function Catalogo() {
           <PageHeader 
             title="Catálogo Habbo"
             icon="/assets/Carrinho.png"
-            backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg min-h-[600px]">
-            <CatalogWithTabs />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 h-full overflow-hidden">
+            {renderContent()}
           </div>
         </main>
       </div>
     </div>
   );
-}
+};
+
+export default Catalogo;

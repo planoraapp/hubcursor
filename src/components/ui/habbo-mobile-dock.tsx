@@ -37,25 +37,25 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Define os 5 itens principais da dock
+  // Define os 5 itens principais da dock usando os ícones da sidebar
   const mainDockItems: DockItem[] = useMemo(() => {
     const homeItem: DockItem = { 
       id: 'home', 
       label: t('home'), 
-      icon: Home, 
+      icon: '/assets/home.png',
       order: 1 
     };
     
     const forumItem: DockItem = { 
       id: 'forum', 
       label: t('forum'), 
-      icon: MessageCircle, 
+      icon: '/assets/BatePapo1.png',
       order: 2 
     };
     
-    // Avatar central
+    // Avatar central - usando API do Habbo para cabeça diagonal
     const avatarUrl = isLoggedIn 
-      ? userAvatarUrl || 'https://www.habbo.com/habbo-imaging/avatarimage?user=Habbo&action=std&direction=2&head_direction=2&gesture=sml&size=s&frame=1'
+      ? userAvatarUrl || 'https://www.habbo.com/habbo-imaging/avatarimage?user=Habbo&action=std&direction=4&head_direction=4&gesture=sml&size=s&frame=1&headonly=1'
       : '/assets/frank.png';
     
     const avatarItem: DockItem = { 
@@ -69,7 +69,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     const toolsItem: DockItem = { 
       id: 'tools', 
       label: t('tools'), 
-      icon: Cog, 
+      icon: '/assets/ferramentas.png',
       order: 4 
     };
     
@@ -90,8 +90,8 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     
     // Adicionar itens padrão se não existirem
     const defaultItems: DockItem[] = [
-      { id: 'noticias', label: t('noticias'), icon: Newspaper, order: 6 },
-      { id: 'eventos', label: 'Eventos', icon: Calendar, order: 7 },
+      { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', order: 6 },
+      { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', order: 7 },
     ];
 
     const combined = [...filtered];
@@ -158,24 +158,24 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
         currentPath={currentPath}
       />
 
-      {/* Dropdown Menu "Mais" */}
+      {/* Dropdown Menu "Mais" - Ajustado para aparecer acima da dock */}
       {isDropdownOpen && (
         <div 
           ref={dropdownRef}
-          className="mb-2 p-4 rounded-t-xl shadow-2xl flex flex-col space-y-2 max-h-[60vh] overflow-y-auto"
+          className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-72 p-4 rounded-t-xl shadow-2xl flex flex-col space-y-2 max-h-[60vh] overflow-y-auto"
           style={{
-            backgroundColor: '#2a2a2a',
-            border: '3px solid #d4af37',
+            backgroundColor: '#f5f5dc',
+            border: '3px solid #000',
             borderBottom: 'none',
-            boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.3)'
+            boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)'
           }}
         >
           {/* Header do dropdown */}
-          <div className="text-center pb-2 border-b border-amber-600/30">
+          <div className="text-center pb-2 border-b border-black/30">
             <span 
-              className="font-bold text-lg text-yellow-300 volter-font"
+              className="font-bold text-lg text-black volter-font"
               style={{ 
-                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)'
+                textShadow: '1px 1px 2px rgba(255, 255, 255, 0.5)'
               }}
             >
               {t('more')}
@@ -190,11 +190,11 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                   className="flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-105"
                   style={{
                     backgroundColor: activeItemId === item.id 
-                      ? 'rgba(212, 175, 55, 0.3)' 
-                      : 'rgba(212, 175, 55, 0.1)',
-                    border: `2px solid ${activeItemId === item.id ? '#f4d03f' : '#d4af37'}`,
+                      ? 'rgba(0, 0, 0, 0.2)' 
+                      : 'rgba(0, 0, 0, 0.1)',
+                    border: `2px solid ${activeItemId === item.id ? '#000' : '#666'}`,
                     boxShadow: activeItemId === item.id 
-                      ? '0 0 10px rgba(244, 208, 63, 0.5)' 
+                      ? '0 0 10px rgba(0, 0, 0, 0.5)' 
                       : '0 2px 5px rgba(0, 0, 0, 0.2)'
                   }}
                   onClick={() => handleDropdownItemClick(item.id)}
@@ -202,30 +202,32 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                   {typeof item.icon === 'string' ? (
                     <img src={item.icon} alt={item.label} className="w-6 h-6 object-contain" />
                   ) : (
-                    <item.icon className="w-6 h-6 text-yellow-300" />
+                    <item.icon className="w-6 h-6 text-black" />
                   )}
-                  <span className="text-xs font-medium text-center leading-tight text-gray-200">
+                  <span className="text-xs font-medium text-center leading-tight text-black">
                     {item.label}
                   </span>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-center py-4 text-gray-400">
+            <p className="text-center py-4 text-gray-600">
               Nenhuma página adicional.
             </p>
           )}
         </div>
       )}
 
-      {/* Main Dock */}
+      {/* Main Dock - Aplicando cor bege com borda superior preta */}
       <nav 
-        className="w-full max-w-sm flex justify-around items-center p-3 rounded-xl shadow-2xl"
+        className="w-full max-w-sm flex justify-around items-center p-3 rounded-xl shadow-2xl border-t-4"
         style={{
-          backgroundColor: '#2a2a2a',
-          border: '3px solid #d4af37',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.3)',
-          background: 'linear-gradient(135deg, #2a2a2a 0%, #333 50%, #2a2a2a 100%)'
+          backgroundColor: '#f5f5dc',
+          borderTopColor: '#000',
+          border: '3px solid #000',
+          borderTop: '4px solid #000',
+          boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)',
+          background: 'linear-gradient(135deg, #f5f5dc 0%, #f0f0dc 50%, #f5f5dc 100%)'
         }}
       >
         {mainDockItems.map((item) => {
@@ -240,7 +242,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                 <div 
                   className="absolute inset-0 rounded-full"
                   style={{
-                    background: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',
+                    background: 'linear-gradient(135deg, #000 0%, #333 100%)',
                     padding: '3px'
                   }}
                 >
@@ -269,7 +271,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
           } else {
             IconDisplay = (
               <item.icon 
-                className={`w-6 h-6 ${isActive ? 'text-yellow-300' : 'text-gray-200'}`}
+                className={`w-6 h-6 ${isActive ? 'text-black' : 'text-gray-700'}`}
               />
             );
           }
@@ -282,11 +284,11 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               } ${isTools ? 'dock-tools-button' : ''}`}
               style={{
                 backgroundColor: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
-                  ? 'rgba(212, 175, 55, 0.3)' 
+                  ? 'rgba(0, 0, 0, 0.2)' 
                   : 'transparent',
-                border: `2px solid ${isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? '#f4d03f' : 'transparent'}`,
+                border: `2px solid ${isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? '#000' : 'transparent'}`,
                 boxShadow: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
-                  ? '0 0 15px rgba(244, 208, 63, 0.4)' 
+                  ? '0 0 15px rgba(0, 0, 0, 0.4)' 
                   : 'none',
                 minWidth: '60px'
               }}
@@ -294,7 +296,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
             >
               <div className={item.isAvatar ? '' : 'relative'}>
                 {isMore && isDropdownOpen ? (
-                  <X className="w-6 h-6 text-yellow-300" />
+                  <X className="w-6 h-6 text-black" />
                 ) : (
                   IconDisplay
                 )}
@@ -302,7 +304,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                   <div 
                     className="absolute inset-0 rounded-full opacity-50"
                     style={{
-                      background: 'radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%)',
+                      background: 'radial-gradient(circle, rgba(0, 0, 0, 0.3) 0%, transparent 70%)',
                       filter: 'blur(8px)'
                     }}
                   />
@@ -311,11 +313,11 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               
               <span 
                 className={`text-xs font-medium text-center leading-tight ${
-                  isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? 'text-yellow-300' : 'text-gray-200'
+                  isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? 'text-black' : 'text-gray-700'
                 }`}
                 style={{ 
                   fontFamily: "'Arial', sans-serif",
-                  textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)'
+                  textShadow: '1px 1px 2px rgba(255, 255, 255, 0.3)'
                 }}
               >
                 {item.label}

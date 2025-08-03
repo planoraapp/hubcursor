@@ -27,7 +27,7 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
   const allDockItems: DockItem[] = [
     { id: 'home', label: t('home'), icon: '/assets/home.png', order: 1 },
     { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', order: 2 },
-    { id: 'console', label: t('console'), icon: '/assets/ferramentas.png', order: 3 },
+    { id: 'console', label: t('console'), icon: '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png', order: 3 },
     { id: 'tools', label: t('tools'), icon: '/assets/ferramentas.png', order: 4 },
     { id: 'more', label: t('more'), icon: '/assets/ferramentas.png', order: 5 },
     // Ferramentas (irão para o popover)
@@ -88,14 +88,26 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
     return routeToItemMap[path] || 'home';
   };
 
+  // Avatar para mobile - só cabeça com direção diagonal
   const userAvatarUrl = isLoggedIn && habboData ? 
-    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=4&head_direction=4&gesture=sml&size=s&frame=1&headonly=1` 
+    : '/assets/frank.png';
+
+  // Avatar para header mobile - também só cabeça diagonal
+  const headerAvatarUrl = isLoggedIn && habboData ? 
+    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=4&head_direction=4&gesture=sml&size=s&frame=1&headonly=1` 
     : '/assets/frank.png';
 
   return (
     <div className="min-h-screen bg-repeat pb-20" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      {/* Header with logo and avatar */}
-      <div className="bg-amber-50 shadow-lg p-4 flex items-center justify-between">
+      {/* Header with logo and avatar - aplicando cor bege */}
+      <div 
+        className="shadow-lg p-4 flex items-center justify-between border-b-4"
+        style={{ 
+          backgroundColor: '#f5f5dc',
+          borderBottomColor: '#000'
+        }}
+      >
         <div className="flex items-center">
           <img 
             src="/assets/habbohub.gif" 
@@ -105,11 +117,11 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
         <div className="flex items-center space-x-4">
           <UserProfilePopover side="bottom" align="end">
-            <div className="flex items-center cursor-pointer hover:bg-amber-100 rounded-lg p-2 transition-colors">
+            <div className="flex items-center cursor-pointer hover:bg-black/10 rounded-lg p-2 transition-colors">
               <div className="relative">
-                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-black shadow-lg">
                   <img
-                    src={userAvatarUrl}
+                    src={headerAvatarUrl}
                     alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
                     className="w-full h-full object-cover object-center"
                   />
