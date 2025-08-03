@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Home, MessageCircle, Menu, Calendar, Newspaper, X, Cog } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -22,6 +21,7 @@ export interface HabboMobileDockProps {
   activeItemId?: string;
   isLoggedIn?: boolean;
   currentPath?: string;
+  customCenterElement?: React.ReactElement;
 }
 
 const HabboMobileDock: React.FC<HabboMobileDockProps> = ({ 
@@ -30,7 +30,8 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   onItemClick, 
   activeItemId,
   isLoggedIn = false,
-  currentPath = '/'
+  currentPath = '/',
+  customCenterElement
 }) => {
   const { t } = useLanguage();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -237,29 +238,34 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
           
           let IconDisplay;
           if (item.isAvatar) {
-            IconDisplay = (
-              <div className="relative">
-                <div 
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: 'linear-gradient(135deg, #000 0%, #333 100%)',
-                    padding: '3px'
-                  }}
-                >
+            // Use custom center element if provided, otherwise use avatar
+            if (customCenterElement) {
+              IconDisplay = customCenterElement;
+            } else {
+              IconDisplay = (
+                <div className="relative">
                   <div 
-                    className="w-full h-full rounded-full overflow-hidden"
-                    style={{ backgroundColor: '#1a1a1a' }}
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: 'linear-gradient(135deg, #000 0%, #333 100%)',
+                      padding: '3px'
+                    }}
                   >
-                    <img 
-                      src={item.icon as string} 
-                      alt={item.label} 
-                      className="w-full h-full object-cover"
-                    />
+                    <div 
+                      className="w-full h-full rounded-full overflow-hidden"
+                      style={{ backgroundColor: '#1a1a1a' }}
+                    >
+                      <img 
+                        src={item.icon as string} 
+                        alt={item.label} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
+                  <div className="w-10 h-10" />
                 </div>
-                <div className="w-10 h-10" />
-              </div>
-            );
+              );
+            }
           } else if (typeof item.icon === 'string') {
             IconDisplay = (
               <img 
@@ -300,7 +306,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                 ) : (
                   IconDisplay
                 )}
-                {item.isAvatar && (
+                {item.isAvatar && !customCenterElement && (
                   <div 
                     className="absolute inset-0 rounded-full opacity-50"
                     style={{
