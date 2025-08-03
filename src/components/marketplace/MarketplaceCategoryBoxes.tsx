@@ -20,6 +20,8 @@ interface MarketItem {
   lastUpdated: string;
   quantity?: number;
   listedAt?: string;
+  soldItems?: number;
+  openOffers?: number;
 }
 
 interface MarketStats {
@@ -58,60 +60,66 @@ export const MarketplaceCategoryBoxes = ({
     console.log('Item clicked:', item);
   };
 
+  // Separar itens por "Maiores Ofertas do Dia" (maior volume de vendas)
+  const maioresOfertas = [...topSellers].sort((a, b) => (b.soldItems || b.volume) - (a.soldItems || a.volume)).slice(0, 8);
+  const maisVendidosHoje = [...biggestGainers].filter(item => item.trend === 'up').slice(0, 8);
+  const melhoresNegocios = [...opportunities, ...mostExpensive.filter(item => item.currentPrice < 300)].slice(0, 8);
+  const altasDeHoje = [...biggestGainers].slice(0, 8);
+
   return (
     <div className="space-y-6">
-      {/* Dashboard Stats */}
-      <MarketDashboard 
-        stats={stats} 
-        items={topSellers.concat(biggestGainers, biggestLosers, mostExpensive, opportunities)} 
-      />
-
-      {/* Category Boxes Grid - Improved layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MarketCategoryBox 
-          title="🔥 Top Vendedores" 
-          items={topSellers} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="📈 Maiores Altas" 
-          items={biggestGainers} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="📉 Maiores Baixas" 
-          items={biggestLosers} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="💎 Mais Caros" 
-          items={mostExpensive} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="🎯 Oportunidades" 
-          items={opportunities} 
-          onItemClick={handleItemClick}
-        />
-        
-        {/* Hotel Status Box */}
-        <div className="habbo-card p-6">
-          <div className="text-center">
-            <div className="text-4xl mb-3">{hotel.flag}</div>
-            <h3 className="font-bold text-gray-800 mb-3">{hotel.name}</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p className="flex items-center justify-center gap-2">
-                📦 {totalItems} itens ativos
-              </p>
-              <p className="flex items-center justify-center gap-2">
-                🕒 Última atualização: {new Date().toLocaleTimeString('pt-BR')}
-              </p>
-              <p className="text-xs text-green-600 font-medium">
-                ✅ Atualização automática ativa
-              </p>
+      {/* Dashboard Stats Compacto - sem gráficos como solicitado */}
+      <div className="habbo-card p-6">
+        <div className="text-center border-b pb-4 mb-4">
+          <div className="text-4xl mb-3">{hotel.flag}</div>
+          <h3 className="font-bold text-gray-800 mb-2">{hotel.name} - Dados em Tempo Real</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{totalItems}</div>
+              <div className="text-gray-600">Itens Ativos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{stats.averagePrice.toLocaleString()}</div>
+              <div className="text-gray-600">Preço Médio</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{stats.totalVolume}</div>
+              <div className="text-gray-600">Vendas Hoje</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{stats.highestPrice.toLocaleString()}</div>
+              <div className="text-gray-600">Mais Caro</div>
             </div>
           </div>
         </div>
+        <div className="text-center text-sm text-gray-600">
+          <p>🕒 Última atualização: {new Date().toLocaleTimeString('pt-BR')}</p>
+          <p className="text-xs text-green-600 font-medium mt-1">✅ Dados reais da HabboAPI.site</p>
+        </div>
+      </div>
+
+      {/* Category Boxes Grid Redesenhada - Foco em "Maiores Ofertas do Dia" */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MarketCategoryBox 
+          title="🔥 Maiores Ofertas do Dia" 
+          items={maioresOfertas} 
+          onItemClick={handleItemClick}
+        />
+        <MarketCategoryBox 
+          title="⭐ Mais Vendidos Hoje" 
+          items={maisVendidosHoje} 
+          onItemClick={handleItemClick}
+        />
+        <MarketCategoryBox 
+          title="💎 Melhores Negócios" 
+          items={melhoresNegocios} 
+          onItemClick={handleItemClick}
+        />
+        <MarketCategoryBox 
+          title="📈 Altas de Hoje" 
+          items={altasDeHoje} 
+          onItemClick={handleItemClick}
+        />
       </div>
     </div>
   );

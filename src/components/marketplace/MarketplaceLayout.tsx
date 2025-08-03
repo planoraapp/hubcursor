@@ -1,10 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceItemsList } from './MarketplaceItemsList';
 import { MarketplaceCategoryBoxes } from './MarketplaceCategoryBoxes';
-import { MarketplaceCharts } from '../MarketplaceCharts';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MarketItem {
@@ -25,6 +23,8 @@ interface MarketItem {
   lastUpdated: string;
   quantity?: number;
   listedAt?: string;
+  soldItems?: number;
+  openOffers?: number;
 }
 
 interface MarketStats {
@@ -73,15 +73,14 @@ export const MarketplaceLayout = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔄 Fetching marketplace data for hotel:', selectedHotel);
+      console.log('🔄 Fetching real marketplace data for hotel:', selectedHotel);
       
       const { data, error: functionError } = await supabase.functions.invoke('habbo-market-real', {
         body: { 
           searchTerm, 
           category: selectedCategory === 'all' ? '' : selectedCategory,
           hotel: selectedHotel,
-          days: 30,
-          includeMarketplace: true
+          days: 30
         }
       });
       
@@ -91,18 +90,18 @@ export const MarketplaceLayout = () => {
         return;
       }
       
-      console.log('📊 Function response:', data);
+      console.log('📊 Real market response:', data);
       
       if (data?.items && Array.isArray(data.items)) {
-        // Sort items based on selected sort option
+        // Sort items baseado em dados reais
         const sortedItems = [...data.items].sort((a, b) => {
           switch (sortBy) {
             case 'price':
               return b.currentPrice - a.currentPrice;
             case 'recent':
-              return new Date(b.listedAt || b.lastUpdated).getTime() - new Date(a.listedAt || a.lastUpdated).getTime();
+              return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
             case 'quantity':
-              return (a.quantity || 999) - (b.quantity || 999);
+              return (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0);
             default:
               return 0;
           }
@@ -110,7 +109,7 @@ export const MarketplaceLayout = () => {
         
         setItems(sortedItems);
         setStats(data.stats || stats);
-        console.log(`✅ Loaded ${sortedItems.length} marketplace items from ${selectedHotel}`);
+        console.log(`✅ Loaded ${sortedItems.length} real marketplace items from ${selectedHotel}`);
         
         if (sortedItems.length === 0) {
           setError('Nenhum item encontrado. Verifique os filtros ou tente outro hotel.');
@@ -121,8 +120,8 @@ export const MarketplaceLayout = () => {
         setItems([]);
       }
     } catch (error) {
-      console.error('❌ Error fetching marketplace data:', error);
-      setError(`Erro ao buscar dados: ${error.message}`);
+      console.error('❌ Error fetching real marketplace data:', error);
+      setError(`Erro ao buscar dados reais: ${error.message}`);
       setItems([]);
     } finally {
       setLoading(false);
@@ -134,32 +133,30 @@ export const MarketplaceLayout = () => {
     fetchMarketData();
   }, [selectedHotel, searchTerm, selectedCategory, sortBy]);
 
-  // Auto-refresh every 60 seconds when not loading
+  // Auto-refresh every 10 minutes para dados reais
   useEffect(() => {
     const interval = setInterval(() => {
       if (!loading) {
         fetchMarketData();
       }
-    }, 60000);
+    }, 10 * 60 * 1000); // 10 minutos
     return () => clearInterval(interval);
   }, [loading, selectedHotel, searchTerm, selectedCategory, sortBy]);
 
-  // Filter items for different categories
-  const topSellers = [...items].sort((a, b) => b.volume - a.volume).slice(0, 10);
-  const biggestGainers = [...items].filter(item => item.trend === 'up').sort((a, b) => 
+  // Organizar por "Maiores Ofertas do Dia" com dados reais
+  const maioresOfertas = [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
+  const maisVendidosHoje = [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
+  const melhoresNegocios = [...items].filter(item => item.currentPrice < 300 && item.rarity !== 'common').slice(0, 10);
+  const altasDeHoje = [...items].filter(item => item.trend === 'up').sort((a, b) => 
     parseFloat(b.changePercent) - parseFloat(a.changePercent)
   ).slice(0, 10);
-  const biggestLosers = [...items].filter(item => item.trend === 'down').sort((a, b) => 
-    parseFloat(a.changePercent) - parseFloat(b.changePercent)
-  ).slice(0, 10);
   const mostExpensive = [...items].sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
-  const opportunities = [...items].filter(item => item.rarity === 'rare' && item.currentPrice < 200).slice(0, 10);
 
   if (error && items.length === 0) {
     return (
       <div className="text-center p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Marketplace</h3>
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Dados Reais</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button 
             onClick={fetchMarketData}
@@ -174,64 +171,63 @@ export const MarketplaceLayout = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hotel Selection Tabs */}
-      <Tabs value={selectedHotel} onValueChange={setSelectedHotel} className="w-full">
-        <TabsList className="grid grid-cols-9 mb-6 max-w-4xl">
+      {/* Hotel Selection Tabs - Centralizados como solicitado */}
+      <div className="flex justify-center">
+        <Tabs value={selectedHotel} onValueChange={setSelectedHotel} className="w-full max-w-4xl">
+          <div className="flex justify-center mb-6">
+            <TabsList className="grid grid-cols-9 w-full max-w-3xl">
+              {hotels.map(hotel => (
+                <TabsTrigger key={hotel.id} value={hotel.id} className="text-xs px-2">
+                  <span className="mr-1">{hotel.flag}</span>
+                  <span className="hidden sm:inline">{hotel.id.toUpperCase()}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          
           {hotels.map(hotel => (
-            <TabsTrigger key={hotel.id} value={hotel.id} className="text-xs px-2">
-              <span className="mr-1">{hotel.flag}</span>
-              <span className="hidden sm:inline">{hotel.id.toUpperCase()}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        {hotels.map(hotel => (
-          <TabsContent key={hotel.id} value={hotel.id}>
-            {/* Error message if items loaded but with issues */}
-            {error && items.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-yellow-800 text-sm">{error}</p>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left Column - Marketplace Items List (5/12 width) */}
-              <div className="lg:col-span-5">
-                <MarketplaceItemsList
-                  items={items}
-                  loading={loading}
-                  searchTerm={searchTerm}
-                  setSearchTerm={setSearchTerm}
-                  selectedCategory={selectedCategory}
-                  setSelectedCategory={setSelectedCategory}
-                  sortBy={sortBy}
-                  setSortBy={setSortBy}
-                  hotel={hotel}
-                />
+            <TabsContent key={hotel.id} value={hotel.id}>
+              {/* Error message if items loaded but with issues */}
+              {error && items.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <p className="text-yellow-800 text-sm">{error}</p>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Left Column - Marketplace Items List (5/12 width) */}
+                <div className="lg:col-span-5">
+                  <MarketplaceItemsList
+                    items={items}
+                    loading={loading}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    selectedCategory={selectedCategory}
+                    setSelectedCategory={setSelectedCategory}
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                    hotel={hotel}
+                  />
+                </div>
                 
-                {/* Charts at bottom of left column */}
-                <div className="mt-6">
-                  <MarketplaceCharts />
+                {/* Right Column - Category Boxes sem gráficos (7/12 width) */}
+                <div className="lg:col-span-7">
+                  <MarketplaceCategoryBoxes
+                    topSellers={maioresOfertas}
+                    biggestGainers={maisVendidosHoje}
+                    biggestLosers={melhoresNegocios}
+                    mostExpensive={altasDeHoje}
+                    opportunities={mostExpensive}
+                    stats={stats}
+                    totalItems={items.length}
+                    hotel={hotel}
+                  />
                 </div>
               </div>
-              
-              {/* Right Column - Category Boxes (7/12 width) */}
-              <div className="lg:col-span-7">
-                <MarketplaceCategoryBoxes
-                  topSellers={topSellers}
-                  biggestGainers={biggestGainers}
-                  biggestLosers={biggestLosers}
-                  mostExpensive={mostExpensive}
-                  opportunities={opportunities}
-                  stats={stats}
-                  totalItems={items.length}
-                  hotel={hotel}
-                />
-              </div>
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
     </div>
   );
 };
