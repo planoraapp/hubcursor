@@ -2,18 +2,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHabboAssetsBadges } from '../hooks/useHabboAssetsBadges';
 import { useLanguage } from '../hooks/useLanguage';
-import { Search, Filter, Grid, List, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Grid, List, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select';
 import { Badge } from './ui/badge';
 import { BadgeDetailsModal } from './BadgeDetailsModal';
+import { BadgeCategoryTabs } from './BadgeCategoryTabs';
 
 interface BadgeItem {
   code: string;
@@ -27,23 +21,19 @@ export const CleanBadgesGrid: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [displayedBadges, setDisplayedBadges] = useState<BadgeItem[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hasMoreData, setHasMoreData] = useState(true);
   const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
+  const [loadAll, setLoadAll] = useState(true); // Carregar todos por padrão
 
   console.log('🔍 [CleanBadgesGrid] Component state:', {
     activeCategory,
     searchTerm,
-    currentPage,
+    loadAll,
     isLoading: false,
     isFetching: false,
-    error: null,
-    badgesCount: displayedBadges.length,
-    dataReceived: displayedBadges.length
+    error: null
   });
 
-  // Fetch badges data
+  // Fetch badges data - carregar todos os emblemas
   const { 
     data: badgeData, 
     isLoading, 
@@ -54,9 +44,10 @@ export const CleanBadgesGrid: React.FC = () => {
   } = useHabboAssetsBadges({
     search: searchTerm,
     category: activeCategory,
-    page: currentPage,
-    limit: 100,
-    enabled: true
+    page: 1,
+    limit: 10000, // Limite alto
+    enabled: true,
+    loadAll: loadAll
   });
 
   // Process and filter badges
@@ -66,60 +57,61 @@ export const CleanBadgesGrid: React.FC = () => {
       return [];
     }
 
-    console.log(`📦 [CleanBadgesGrid] Received ${badgeData.badges.length} badges for page ${currentPage}`);
+    console.log(`📦 [CleanBadgesGrid] Received ${badgeData.badges.length} badges`);
     return badgeData.badges;
-  }, [badgeData, currentPage]);
+  }, [badgeData]);
 
-  // Update displayed badges when data changes
-  useEffect(() => {
-    if (badges.length > 0) {
-      if (currentPage === 1) {
-        console.log('🔄 [CleanBadgesGrid] Resetting for category:', activeCategory, 'search:', searchTerm);
-        setDisplayedBadges(badges);
-      } else {
-        console.log('📄 [CleanBadgesGrid] Appending page', currentPage, 'badges');
-        setDisplayedBadges(prev => [...prev, ...badges]);
-      }
-      
-      // Check if we have more data
-      setHasMoreData(badgeData?.metadata?.hasMore || false);
-    }
-  }, [badges, currentPage, activeCategory, searchTerm, badgeData]);
-
-  // Reset pagination when search or category changes
-  useEffect(() => {
-    setCurrentPage(1);
-    setDisplayedBadges([]);
-    setHasMoreData(true);
-  }, [searchTerm, activeCategory]);
-
-  // Category options with translations
-  const categoryOptions = [
-    { value: 'all', label: t('allCategories') || 'Todas as Categorias', count: badgeData?.metadata?.categories?.all || 0 },
-    { value: 'official', label: t('official') || 'Oficiais', count: badgeData?.metadata?.categories?.official || 0 },
-    { value: 'achievements', label: t('achievements') || 'Conquistas', count: badgeData?.metadata?.categories?.achievements || 0 },
-    { value: 'fansites', label: t('fansites') || 'Fã-sites', count: badgeData?.metadata?.categories?.fansites || 0 },
-    { value: 'others', label: t('others') || 'Outros', count: badgeData?.metadata?.categories?.others || 0 },
-  ];
-
-  // Handle infinite scroll
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100;
-
-    if (isNearBottom && !isFetching && hasMoreData && displayedBadges.length > 0) {
-      console.log('🔄 [CleanBadgesGrid] Loading more badges, page:', currentPage + 1);
-      setCurrentPage(prev => prev + 1);
-    }
-  };
+  // Category options with translations and icons
+  const categoryOptions = useMemo(() => [
+    { 
+      value: 'all', 
+      label: t('allCategories') || 'Todas as Categorias', 
+      icon: '🌟',
+      count: badgeData?.metadata?.categories?.all || 0,
+      color: 'bg-blue-100 border-blue-300 text-blue-800'
+    },
+    { 
+      value: 'official', 
+      label: t('official') || 'Oficiais', 
+      icon: '🛡️',
+      count: badgeData?.metadata?.categories?.official || 0,
+      color: 'bg-yellow-100 border-yellow-300 text-yellow-800'
+    },
+    { 
+      value: 'achievements', 
+      label: t('achievements') || 'Conquistas', 
+      icon: '🏆',
+      count: badgeData?.metadata?.categories?.achievements || 0,
+      color: 'bg-green-100 border-green-300 text-green-800'
+    },
+    { 
+      value: 'fansites', 
+      label: t('fansites') || 'Fã-sites', 
+      icon: '⭐',
+      count: badgeData?.metadata?.categories?.fansites || 0,
+      color: 'bg-purple-100 border-purple-300 text-purple-800'
+    },
+    { 
+      value: 'others', 
+      label: t('others') || 'Outros', 
+      icon: '🎨',
+      count: badgeData?.metadata?.categories?.others || 0,
+      color: 'bg-gray-100 border-gray-300 text-gray-800'
+    },
+  ], [badgeData, t]);
 
   // Handle badge click
   const handleBadgeClick = (badge: BadgeItem) => {
     setSelectedBadge(badge);
   };
 
+  // Handle refresh
+  const handleRefresh = () => {
+    refetch();
+  };
+
   // Loading state
-  if (isLoading && currentPage === 1) {
+  if (isLoading) {
     return (
       <div className="flex flex-col h-full">
         <div className="p-6 border-b bg-white">
@@ -127,8 +119,11 @@ export const CleanBadgesGrid: React.FC = () => {
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="text-gray-600">{t('loadingBadges') || 'Carregando emblemas...'}</p>
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+            <div className="text-center">
+              <p className="text-lg font-semibold text-gray-700">{t('loadingBadges') || 'Carregando emblemas...'}</p>
+              <p className="text-sm text-gray-500 mt-1">Coletando todos os emblemas disponíveis</p>
+            </div>
           </div>
         </div>
       </div>
@@ -148,7 +143,8 @@ export const CleanBadgesGrid: React.FC = () => {
             <div>
               <h3 className="font-semibold text-gray-800 mb-2">{t('errorLoadingBadges') || 'Erro ao carregar emblemas'}</h3>
               <p className="text-gray-600 mb-4">{error?.message || 'Tente novamente mais tarde'}</p>
-              <Button onClick={() => refetch()} variant="outline">
+              <Button onClick={handleRefresh} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
                 {t('tryAgain') || 'Tentar Novamente'}
               </Button>
             </div>
@@ -166,6 +162,10 @@ export const CleanBadgesGrid: React.FC = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-800">{t('badgesTitle') || 'Emblemas do Habbo'}</h2>
             <div className="flex items-center gap-2">
+              <Button onClick={handleRefresh} variant="outline" size="sm" disabled={isFetching}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'outline'}
                 size="sm"
@@ -183,43 +183,36 @@ export const CleanBadgesGrid: React.FC = () => {
             </div>
           </div>
 
-          {/* Filtros */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder={t('searchBadges') || 'Buscar emblemas...'}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="sm:w-48">
-              <Select value={activeCategory} onValueChange={setActiveCategory}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{option.label}</span>
-                        <Badge variant="secondary" className="ml-2">
-                          {option.count}
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Barra de busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder={t('searchBadges') || 'Buscar emblemas...'}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
+
+          {/* Abas de navegação com ícones */}
+          <BadgeCategoryTabs
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            categories={categoryOptions}
+          />
 
           {/* Stats */}
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>{t('showingBadges') || 'Mostrando'} {displayedBadges.length} {t('badges') || 'emblemas'}</span>
+            <div className="flex items-center gap-4">
+              <span className="font-medium">
+                {t('showingBadges') || 'Mostrando'} {badges.length.toLocaleString()} {t('badges') || 'emblemas'}
+              </span>
+              {loadAll && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  ✅ Todos carregados
+                </Badge>
+              )}
+            </div>
             {badgeData?.metadata?.source && (
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -231,9 +224,9 @@ export const CleanBadgesGrid: React.FC = () => {
       </div>
 
       {/* Content scrollable */}
-      <div className="flex-1 overflow-auto" onScroll={handleScroll}>
+      <div className="flex-1 overflow-auto">
         <div className="p-6">
-          {displayedBadges.length === 0 ? (
+          {badges.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="text-gray-400 mb-4">
                 <Search className="h-12 w-12" />
@@ -253,16 +246,16 @@ export const CleanBadgesGrid: React.FC = () => {
               {/* Grid de emblemas */}
               <div className={
                 viewMode === 'grid'
-                  ? "grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3"
-                  : "grid grid-cols-3 gap-4"
+                  ? "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-16 gap-2"
+                  : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
               }>
-                {displayedBadges.map((badge) => (
+                {badges.map((badge, index) => (
                   <div
-                    key={badge.code}
+                    key={`${badge.code}_${index}`}
                     onClick={() => handleBadgeClick(badge)}
                     className={
                       viewMode === 'grid'
-                        ? "group relative bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300"
+                        ? "group relative bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300 hover:scale-105"
                         : "flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border hover:border-blue-300"
                     }
                     title={`${badge.name} (${badge.code})`}
@@ -289,22 +282,13 @@ export const CleanBadgesGrid: React.FC = () => {
                 ))}
               </div>
 
-              {/* Loading more indicator */}
-              {isFetching && currentPage > 1 && (
+              {/* Loading indicator se ainda estiver buscando */}
+              {isFetching && (
                 <div className="flex justify-center py-8">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">{t('loadingMore') || 'Carregando mais...'}</span>
+                    <span className="text-sm">{t('loadingMore') || 'Atualizando...'}</span>
                   </div>
-                </div>
-              )}
-
-              {/* End of results */}
-              {!hasMoreData && displayedBadges.length > 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 text-sm">
-                    {t('allBadgesLoaded') || 'Todos os emblemas foram carregados'}
-                  </p>
                 </div>
               )}
             </>

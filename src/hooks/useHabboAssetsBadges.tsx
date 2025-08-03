@@ -15,6 +15,7 @@ interface UseHabboAssetsBadgesProps {
   page?: number;
   limit?: number;
   enabled?: boolean;
+  loadAll?: boolean;
 }
 
 interface HabboAssetsBadgesResponse {
@@ -39,13 +40,17 @@ const fetchHabboAssetsBadges = async ({
   search = '',
   category = 'all',
   page = 1,
-  limit = 100
+  limit = 100,
+  loadAll = false
 }: UseHabboAssetsBadgesProps): Promise<HabboAssetsBadgesResponse> => {
-  console.log(`🎯 [HabboAssetsBadges] Fetching: search="${search}", category=${category}, page=${page}, limit=${limit}`);
+  console.log(`🎯 [HabboAssetsBadges] Fetching: search="${search}", category=${category}, page=${page}, limit=${limit}, loadAll=${loadAll}`);
+  
+  // Se loadAll for true, usar um limite muito alto
+  const actualLimit = loadAll ? 10000 : limit;
   
   try {
     const { data, error } = await supabase.functions.invoke('habbo-assets-badges', {
-      body: { search, category, page, limit }
+      body: { search, category, page, limit: actualLimit }
     });
 
     if (error) {
@@ -66,7 +71,7 @@ const fetchHabboAssetsBadges = async ({
       metadata: data.metadata || {
         total: data.badges.length,
         page,
-        limit,
+        limit: actualLimit,
         hasMore: false,
         source: 'HabboAssets',
         categories: { all: 0, official: 0, achievements: 0, fansites: 0, others: 0 }
@@ -84,13 +89,14 @@ export const useHabboAssetsBadges = ({
   category = 'all',
   page = 1,
   limit = 100,
-  enabled = true
+  enabled = true,
+  loadAll = false
 }: UseHabboAssetsBadgesProps = {}) => {
-  console.log(`🔧 [useHabboAssetsBadges] Hook: search="${search}", category=${category}, page=${page}, limit=${limit}, enabled=${enabled}`);
+  console.log(`🔧 [useHabboAssetsBadges] Hook: search="${search}", category=${category}, page=${page}, limit=${limit}, enabled=${enabled}, loadAll=${loadAll}`);
   
   return useQuery({
-    queryKey: ['habbo-assets-badges', search, category, page, limit],
-    queryFn: () => fetchHabboAssetsBadges({ search, category, page, limit }),
+    queryKey: ['habbo-assets-badges', search, category, page, limit, loadAll],
+    queryFn: () => fetchHabboAssetsBadges({ search, category, page, limit, loadAll }),
     enabled,
     staleTime: 1000 * 60 * 15, // 15 minutos
     gcTime: 1000 * 60 * 60, // 1 hora
