@@ -50,7 +50,8 @@ export const MarketplaceLayout = () => {
     highestPrice: 0,
     mostTraded: 'N/A'
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedHotel, setSelectedHotel] = useState('br');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -71,21 +72,26 @@ export const MarketplaceLayout = () => {
   const fetchMarketData = async () => {
     try {
       setLoading(true);
+      setError(null);
       console.log('🔄 Fetching marketplace data for hotel:', selectedHotel);
       
-      const { data, error } = await supabase.functions.invoke('habbo-market-real', {
+      const { data, error: functionError } = await supabase.functions.invoke('habbo-market-real', {
         body: { 
           searchTerm, 
           category: selectedCategory === 'all' ? '' : selectedCategory,
           hotel: selectedHotel,
           days: 30,
-          includeMarketplace: true // Flag to include live marketplace data
+          includeMarketplace: true
         }
       });
       
-      if (error) {
-        throw error;
+      if (functionError) {
+        console.error('❌ Function error:', functionError);
+        setError(`Erro na função: ${functionError.message}`);
+        return;
       }
+      
+      console.log('📊 Function response:', data);
       
       if (data?.items && Array.isArray(data.items)) {
         // Sort items based on selected sort option
@@ -105,20 +111,38 @@ export const MarketplaceLayout = () => {
         setItems(sortedItems);
         setStats(data.stats || stats);
         console.log(`✅ Loaded ${sortedItems.length} marketplace items from ${selectedHotel}`);
+        
+        if (sortedItems.length === 0) {
+          setError('Nenhum item encontrado. Verifique os filtros ou tente outro hotel.');
+        }
+      } else {
+        console.warn('⚠️ No items array in response:', data);
+        setError('Nenhum item retornado pela API');
+        setItems([]);
       }
     } catch (error) {
       console.error('❌ Error fetching marketplace data:', error);
+      setError(`Erro ao buscar dados: ${error.message}`);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-refresh every 30 seconds
+  // Fetch data on component mount and when dependencies change
   useEffect(() => {
     fetchMarketData();
-    const interval = setInterval(fetchMarketData, 30000);
-    return () => clearInterval(interval);
   }, [selectedHotel, searchTerm, selectedCategory, sortBy]);
+
+  // Auto-refresh every 60 seconds when not loading
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading) {
+        fetchMarketData();
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [loading, selectedHotel, searchTerm, selectedCategory, sortBy]);
 
   // Filter items for different categories
   const topSellers = [...items].sort((a, b) => b.volume - a.volume).slice(0, 10);
@@ -129,7 +153,24 @@ export const MarketplaceLayout = () => {
     parseFloat(a.changePercent) - parseFloat(b.changePercent)
   ).slice(0, 10);
   const mostExpensive = [...items].sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
-  const opportunities = [...items].filter(item => item.rarity === 'rare' && item.currentPrice < 100).slice(0, 10);
+  const opportunities = [...items].filter(item => item.rarity === 'rare' && item.currentPrice < 200).slice(0, 10);
+
+  if (error && items.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Marketplace</h3>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchMarketData}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -146,6 +187,13 @@ export const MarketplaceLayout = () => {
         
         {hotels.map(hotel => (
           <TabsContent key={hotel.id} value={hotel.id}>
+            {/* Error message if items loaded but with issues */}
+            {error && items.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <p className="text-yellow-800 text-sm">{error}</p>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Left Column - Marketplace Items List (5/12 width) */}
               <div className="lg:col-span-5">

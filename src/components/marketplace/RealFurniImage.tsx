@@ -22,32 +22,30 @@ const RealFurniImage = ({
 
   // Optimized image URLs with priority order
   const getImageUrls = (className: string, type: string, hotel: string) => [
-    // Unity 2025 Asset Bundles (primary source)
-    `https://images.habbo.com/habbo-asset-bundles/production/2020.3.15f2/0.0.44/WebGL/Furni/66732/72612/${className}.png`,
-    `https://images.habbo.com/habbo-asset-bundles/production/2020.3.15f2/0.0.44/WebGL/Furni/66732/72612/${className}.gif`,
-    
-    // Official Habbo HOF Furni (most reliable fallback)
+    // Official Habbo HOF Furni (most reliable)
     `https://images.habbo.com/dcr/hof_furni/${type}/${className}.png`,
     `https://www.habbo.com/dcr/hof_furni/${type}/${className}.png`,
-    
-    // Hotel-specific imaging
-    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`,
-    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/badge/${className}.gif`,
     
     // HabboWidgets (reliable third-party)
     `https://habbowidgets.com/images/furni/${className}.png`,
     `https://habbowidgets.com/images/furni/${className}.gif`,
     `https://www.habbowidgets.com/images/furni/${className}.png`,
     
+    // Unity Asset Bundles
+    `https://images.habbo.com/habbo-asset-bundles/production/2020.3.15f2/0.0.44/WebGL/Furni/66732/72612/${className}.png`,
+    
+    // Hotel-specific imaging
+    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`,
+    
     // HabboEmotion
     `https://habboemotion.com/images/furnis/${className}.png`,
     `https://cdn.habboemotion.com/furnis/${className}.gif`,
     
-    // Alternative Unity paths
+    // Alternative paths
     `https://images.habbo.com/c_images/catalogue/${className}.png`,
     `https://images.habbo.com/c_images/furni/${className}.png`,
     
-    // Supabase storage as final fallback
+    // Supabase storage as fallback
     `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${className}.png`,
     `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/${className}.png`
   ];
@@ -56,19 +54,15 @@ const RealFurniImage = ({
   const currentUrl = imageUrls[currentImageIndex];
 
   const handleImageError = () => {
-    console.log(`❌ [RealFurniImage] Failed to load: ${currentUrl} for ${className}`);
-    
     if (currentImageIndex < imageUrls.length - 1) {
-      console.log(`🔄 [RealFurniImage] Trying next URL (${currentImageIndex + 1}/${imageUrls.length}) for ${className}`);
       setCurrentImageIndex(prev => prev + 1);
     } else {
-      console.log(`❌ [RealFurniImage] All URLs failed for ${className}, showing fallback icon`);
       setImageError(true);
     }
   };
 
   const handleImageLoad = () => {
-    console.log(`✅ [RealFurniImage] Successfully loaded: ${currentUrl} for ${className}`);
+    // Image loaded successfully
   };
 
   const sizeClasses = {
@@ -90,7 +84,7 @@ const RealFurniImage = ({
       <img
         src={currentUrl}
         alt={name}
-        className="object-contain max-w-full max-h-full pixelated transition-opacity duration-200"
+        className="object-contain max-w-full max-h-full transition-opacity duration-200"
         style={{ 
           imageRendering: 'pixelated'
         }}
