@@ -1,10 +1,11 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, RefreshCw, Database, CheckCircle, TrendingUp, Zap, Download } from 'lucide-react';
+import { Search, RefreshCw, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { PanelCard } from './PanelCard';
 import { BadgeDetailsModal } from './BadgeDetailsModal';
+import { HybridSystemStatus } from './HybridSystemStatus';
 import { useHybridUnifiedBadges, usePopulateInitialBadges, HybridUnifiedBadgeItem } from '../hooks/useHybridUnifiedBadges';
 import ValidatedBadgeImage from './ValidatedBadgeImage';
 import { toast } from 'sonner';
@@ -64,15 +65,16 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
   }, []);
 
   const handleRefresh = useCallback(() => {
+    toast.info('Atualizando sistema híbrido...');
     refetch();
   }, [refetch]);
 
   const handlePopulateInitial = useCallback(async () => {
-    toast.info('Iniciando população da base de dados...');
+    toast.info('Iniciando população melhorada da base de dados...');
     
     try {
-      await populateMutation.mutateAsync();
-      toast.success('Base de dados populada com sucesso!');
+      const result = await populateMutation.mutateAsync();
+      toast.success(`População concluída! ${result.populated || 0} emblemas adicionados.`);
       refetch(); // Atualizar dados após população
     } catch (error) {
       toast.error('Erro ao popular base de dados');
@@ -86,43 +88,26 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
 
   // Verificar se precisa de população inicial
   const needsPopulation = (data?.badges?.length || 0) < 10;
-  const isDiscoveryMode = data?.metadata?.discoveryMode;
 
   return (
     <div className="space-y-4">
-      <PanelCard title="Sistema Híbrido Unificado de Emblemas">
+      <PanelCard title="Sistema Híbrido Unificado de Emblemas - Versão Melhorada">
         <div className="space-y-4">
-          {/* Status do Sistema */}
-          <div className="flex items-center justify-center gap-4 bg-gradient-to-r from-blue-50 via-purple-50 to-green-50 rounded-lg p-4 border-2 border-blue-200">
-            <div className="flex items-center gap-2 text-sm">
-              <Database className="w-4 h-4 text-blue-600" />
-              <span className="font-bold text-blue-800">
-                Sistema: HÍBRIDO UNIFICADO
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="font-bold text-green-800">
-                {data?.badges?.length || 0} Badges Validados
-              </span>
-            </div>
-            {isDiscoveryMode && (
-              <div className="flex items-center gap-2 text-sm">
-                <Zap className="w-4 h-4 text-orange-600" />
-                <span className="font-bold text-orange-800">
-                  Modo Descoberta Ativo
-                </span>
-              </div>
-            )}
-          </div>
+          {/* Status do Sistema Melhorado */}
+          <HybridSystemStatus
+            metadata={data?.metadata}
+            isLoading={isLoading}
+            error={error}
+            badgeCount={data?.badges?.length || 0}
+          />
 
-          {/* Controles */}
+          {/* Controles Aprimorados */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar emblemas híbridos..."
+                placeholder="Buscar emblemas no sistema híbrido..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
@@ -137,7 +122,7 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                   className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center gap-2"
                 >
                   <Download size={20} className={populateMutation.isPending ? 'animate-spin' : ''} />
-                  Popular Base
+                  {populateMutation.isPending ? 'Populando...' : 'Popular Base'}
                 </Button>
               )}
               
@@ -178,17 +163,17 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
             {CATEGORIES.map(category => (
               <TabsContent key={category.value} value={category.value} className="mt-6">
                 <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
-                  {/* Header da categoria */}
+                  {/* Header melhorado da categoria */}
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{category.icon}</span>
                         <span className="font-bold text-gray-800">
-                          {filteredBadges.length} Badges - {category.label}
+                          {filteredBadges.length} Emblemas - {category.label}
                         </span>
                       </div>
                       <div className="text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded">
-                        Sistema Híbrido Unificado
+                        Sistema Híbrido Melhorado
                       </div>
                     </div>
                   </div>
@@ -196,12 +181,12 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                   {isLoading && (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                      <p className="text-gray-700 font-bold text-lg">Carregando Sistema Híbrido...</p>
-                      <p className="text-gray-500 text-sm mt-1">Descobrindo e validando badges</p>
+                      <p className="text-gray-700 font-bold text-lg">Carregando Sistema Melhorado...</p>
+                      <p className="text-gray-500 text-sm mt-1">Descobrindo e validando emblemas</p>
                     </div>
                   )}
 
-                  {error && (
+                  {error && !data && (
                     <div className="text-center py-8">
                       <p className="text-red-600 mb-2 font-medium">Erro no Sistema Híbrido</p>
                       <p className="text-gray-500 text-sm mb-4">{error.message}</p>
@@ -211,7 +196,7 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                     </div>
                   )}
 
-                  {!isLoading && !error && filteredBadges.length > 0 && (
+                  {!isLoading && filteredBadges.length > 0 && (
                     <div className="p-4">
                       <div className="grid grid-cols-8 md:grid-cols-12 lg:grid-cols-16 xl:grid-cols-20 gap-2">
                         {filteredBadges.map((badge) => (
@@ -228,7 +213,7 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                               className="w-full h-full"
                             />
                             
-                            {/* Indicador de fonte */}
+                            {/* Indicador de fonte melhorado */}
                             <div className="absolute -bottom-1 -right-1 text-xs bg-black bg-opacity-75 text-white px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                               {badge.source}
                             </div>
@@ -247,12 +232,12 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
 
                   {!isLoading && !error && filteredBadges.length === 0 && (
                     <div className="text-center py-8">
-                      <p className="text-gray-600">Nenhum badge encontrado nesta categoria</p>
+                      <p className="text-gray-600">Nenhum emblema encontrado nesta categoria</p>
                       {needsPopulation && (
                         <div className="mt-4">
                           <Button onClick={handlePopulateInitial} disabled={populateMutation.isPending}>
                             <Download className="w-4 h-4 mr-2" />
-                            Popular Base de Dados
+                            {populateMutation.isPending ? 'Populando...' : 'Popular Base de Dados'}
                           </Button>
                         </div>
                       )}
@@ -263,7 +248,7 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
             ))}
           </Tabs>
 
-          {/* Estatísticas do Sistema */}
+          {/* Estatísticas do Sistema Melhoradas */}
           <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-green-50 rounded-lg p-4 border-2 border-gray-200">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
               <div className="space-y-1">
@@ -295,20 +280,6 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                   {categorizedBadges.others?.length || 0}
                 </div>
                 <div className="text-xs text-gray-600 font-medium">Outros</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Informações do Sistema */}
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-            <div className="flex items-center">
-              <Database className="w-5 h-5 text-blue-600 mr-2" />
-              <div>
-                <h4 className="text-blue-800 font-bold">Sistema Híbrido Unificado Implementado</h4>
-                <p className="text-blue-700 text-sm mt-1">
-                  Base de dados unificada com descoberta automática, fallbacks transparentes e categorização semântica. 
-                  {isDiscoveryMode && ' Modo descoberta ativo para expandir a base automaticamente.'}
-                </p>
               </div>
             </div>
           </div>

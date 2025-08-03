@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
@@ -7,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Configuração para fontes de badges híbridas
+// Configuração para fontes de badges híbridas com URLs corrigidas
 const BADGE_SOURCES = {
   HABBO_WIDGETS: 'https://www.habbowidgets.com/images/badges',
   HABBO_ASSETS: 'https://habboassets.com/c_images/album1584',
@@ -15,7 +14,10 @@ const BADGE_SOURCES = {
   HABBO_OFFICIAL: 'https://images.habbo.com/c_images/album1584'
 };
 
-// Sistema híbrido unificado
+// Cache de validações para evitar requisições desnecessárias
+const VALIDATION_CACHE = new Map<string, { valid: boolean, timestamp: number }>();
+const CACHE_TTL = 60000 * 10; // 10 minutos
+
 serve(async (req) => {
   console.log(`🎯 [HybridSystem] ${req.method} request received`);
   
@@ -29,9 +31,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { action = 'get-badges', limit = 1000, search = '', category = 'all', populateMode = false } = await req.json();
+    const { action = 'get-badges', limit = 1000, search = '', category = 'all' } = await req.json();
     
-    console.log(`🔧 [HybridSystem] Action: ${action}, limit: ${limit}, category: ${category}, populateMode: ${populateMode}`);
+    console.log(`🔧 [HybridSystem] Action: ${action}, limit: ${limit}, category: ${category}`);
 
     if (action === 'populate-initial') {
       return await handleInitialPopulation(supabase);
@@ -62,22 +64,30 @@ serve(async (req) => {
   }
 });
 
-// Função para buscar badges com fallbacks híbridos
+// Função melhorada para buscar badges com fallbacks
 async function handleGetBadges(supabase: any, { limit, search, category }: any) {
-  console.log(`📊 [HybridGet] Fetching badges with hybrid fallbacks`);
+  console.log(`📊 [HybridGet] Fetching badges: limit=${limit}, search="${search}", category=${category}`);
   
   try {
-    // 1. Buscar badges validados da tabela principal
+    // Construir query dinamicamente
     let query = supabase
       .from('habbo_badges')
       .select('*')
       .eq('is_active', true)
-      .order('validation_count', { ascending: false })
-      .limit(limit);
+      .order('validation_count', { ascending: false });
 
+    // Aplicar filtro de categoria se não for 'all'
+    if (category !== 'all') {
+      query = query.eq('category', category);
+    }
+
+    // Aplicar busca se fornecida
     if (search) {
       query = query.or(`badge_code.ilike.%${search}%,badge_name.ilike.%${search}%`);
     }
+
+    // Aplicar limite
+    query = query.limit(limit);
 
     const { data: validatedBadges, error } = await query;
     
@@ -88,48 +98,50 @@ async function handleGetBadges(supabase: any, { limit, search, category }: any) 
 
     console.log(`✅ [HybridGet] Found ${validatedBadges?.length || 0} validated badges`);
 
-    // 2. Se poucos badges na tabela, ativar descoberta automática
-    const needsDiscovery = (validatedBadges?.length || 0) < 50;
+    // Se poucos badges, ativar população automática
+    const needsPopulation = (validatedBadges?.length || 0) < 20;
     let discoveredBadges: any[] = [];
     
-    if (needsDiscovery) {
-      console.log(`🔍 [HybridGet] Activating auto-discovery mode`);
-      discoveredBadges = await discoverAndValidateBadges(supabase, 100);
+    if (needsPopulation) {
+      console.log(`🔍 [HybridGet] Auto-population triggered - discovering badges`);
+      discoveredBadges = await discoverAndSaveBadges(supabase, 50);
     }
 
-    // 3. Categorizar badges usando sistema inteligente
+    // Combinar badges validados e descobertos
     const allBadges = [...(validatedBadges || []), ...discoveredBadges];
+    
+    // Categorizar badges
     const categorizedBadges = categorizeBadgesIntelligently(allBadges);
 
-    // 4. Filtrar por categoria se especificado
-    const filteredBadges = category === 'all' 
-      ? categorizedBadges.all 
-      : categorizedBadges[category] || [];
+    // Filtrar por categoria final
+    const finalBadges = category === 'all' 
+      ? allBadges 
+      : allBadges.filter(badge => badge.category === category);
 
     return new Response(JSON.stringify({
       success: true,
-      badges: filteredBadges.map(badge => ({
+      badges: finalBadges.map(badge => ({
         id: badge.id,
         badge_code: badge.badge_code,
-        badge_name: badge.badge_name || `Badge ${badge.badge_code}`,
+        badge_name: badge.badge_name || generateBadgeName(badge.badge_code),
         source: badge.source,
         image_url: badge.image_url,
         created_at: badge.created_at,
         last_validated_at: badge.last_validated_at,
         validation_count: badge.validation_count || 1,
         is_active: badge.is_active !== false,
-        category: determineBadgeCategory(badge.badge_code, badge.badge_name)
+        category: badge.category || determineBadgeCategory(badge.badge_code, badge.badge_name || '')
       })),
       metadata: {
-        total: filteredBadges.length,
+        total: finalBadges.length,
         categories: {
           official: categorizedBadges.official.length,
           achievements: categorizedBadges.achievements.length,
           fansites: categorizedBadges.fansites.length,
           others: categorizedBadges.others.length,
-          all: categorizedBadges.all.length
+          all: allBadges.length
         },
-        discoveryMode: needsDiscovery,
+        discoveryMode: needsPopulation,
         source: 'hybrid-unified-system',
         timestamp: new Date().toISOString()
       }
@@ -137,97 +149,133 @@ async function handleGetBadges(supabase: any, { limit, search, category }: any) 
       headers: { 
         ...corsHeaders,
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'public, max-age=300'
       }
     });
 
   } catch (error) {
     console.error('❌ [HybridGet] Error:', error);
-    return await generateHybridFallback();
+    return await generateHybridFallback(category);
   }
 }
 
-// Descoberta automática de badges
-async function discoverAndValidateBadges(supabase: any, limit: number) {
-  console.log(`🔍 [Discovery] Starting auto-discovery for ${limit} badges`);
+// Sistema melhorado de descoberta e salvamento
+async function discoverAndSaveBadges(supabase: any, maxBadges: number) {
+  console.log(`🔍 [Discovery] Starting enhanced discovery for up to ${maxBadges} badges`);
   
-  const commonBadges = getCommonBadgesList();
+  const commonBadges = getKnownWorkingBadgesList();
   const discoveredBadges: any[] = [];
+  const batchSize = 10;
   
-  for (const badgeCode of commonBadges.slice(0, limit)) {
-    try {
-      const validationResult = await validateBadgeFromSources(badgeCode);
-      
-      if (validationResult) {
-        // Salvar badge descoberto na tabela
-        const { data: savedBadge, error } = await supabase
-          .from('habbo_badges')
-          .upsert({
-            badge_code: badgeCode,
-            badge_name: `Badge ${badgeCode}`,
-            source: validationResult.source,
-            image_url: validationResult.imageUrl,
-            last_validated_at: new Date().toISOString(),
-            validation_count: 1,
-            is_active: true
-          }, { 
-            onConflict: 'badge_code',
-            ignoreDuplicates: false 
-          })
-          .select()
-          .single();
+  // Processar em lotes menores para melhor performance
+  for (let i = 0; i < Math.min(commonBadges.length, maxBadges); i += batchSize) {
+    const batch = commonBadges.slice(i, i + batchSize);
+    
+    console.log(`📦 [Discovery] Processing batch ${Math.floor(i/batchSize) + 1} with ${batch.length} badges`);
+    
+    const batchPromises = batch.map(async (badgeCode) => {
+      try {
+        const validationResult = await validateBadgeFromSources(badgeCode);
+        
+        if (validationResult) {
+          // Salvar badge na base de dados
+          const { data: savedBadge, error } = await supabase
+            .from('habbo_badges')
+            .upsert({
+              badge_code: badgeCode,
+              badge_name: generateBadgeName(badgeCode),
+              source: validationResult.source,
+              image_url: validationResult.imageUrl,
+              category: determineBadgeCategory(badgeCode, ''),
+              last_validated_at: new Date().toISOString(),
+              validation_count: 1,
+              is_active: true
+            }, { 
+              onConflict: 'badge_code',
+              ignoreDuplicates: false 
+            })
+            .select()
+            .single();
 
-        if (!error && savedBadge) {
-          discoveredBadges.push(savedBadge);
-          console.log(`✅ [Discovery] Discovered and saved: ${badgeCode}`);
+          if (!error && savedBadge) {
+            console.log(`✅ [Discovery] Discovered and saved: ${badgeCode} from ${validationResult.source}`);
+            return savedBadge;
+          }
         }
+      } catch (error) {
+        console.log(`⚠️ [Discovery] Failed ${badgeCode}:`, error.message);
       }
-    } catch (error) {
-      console.log(`⚠️ [Discovery] Failed to discover ${badgeCode}:`, error.message);
+      return null;
+    });
+
+    const batchResults = await Promise.allSettled(batchPromises);
+    const successfulBadges = batchResults
+      .filter(result => result.status === 'fulfilled' && result.value)
+      .map(result => (result as any).value);
+    
+    discoveredBadges.push(...successfulBadges);
+    
+    // Pausa entre lotes para evitar rate limiting
+    if (i + batchSize < Math.min(commonBadges.length, maxBadges)) {
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
   }
   
-  console.log(`🎯 [Discovery] Discovered ${discoveredBadges.length} new badges`);
+  console.log(`🎯 [Discovery] Enhanced discovery completed: ${discoveredBadges.length} badges found`);
   return discoveredBadges;
 }
 
-// População inicial da base de dados
+// População inicial melhorada com retry logic
 async function handleInitialPopulation(supabase: any) {
-  console.log(`🚀 [Population] Starting initial population`);
+  console.log(`🚀 [Population] Starting enhanced initial population`);
   
   try {
-    const commonBadges = getCommonBadgesList();
+    const knownBadges = getKnownWorkingBadgesList();
     const populatedBadges: any[] = [];
+    const batchSize = 15;
+    const maxRetries = 2;
     
-    console.log(`📝 [Population] Processing ${commonBadges.length} known badges`);
+    console.log(`📝 [Population] Processing ${knownBadges.length} known working badges`);
     
-    // Processar em lotes para evitar timeout
-    const batchSize = 20;
-    for (let i = 0; i < commonBadges.length; i += batchSize) {
-      const batch = commonBadges.slice(i, i + batchSize);
-      console.log(`🔄 [Population] Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(commonBadges.length/batchSize)}`);
+    for (let i = 0; i < knownBadges.length; i += batchSize) {
+      const batch = knownBadges.slice(i, i + batchSize);
+      console.log(`🔄 [Population] Batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(knownBadges.length/batchSize)}`);
       
       const batchResults = await Promise.allSettled(
         batch.map(async (badgeCode) => {
-          const validationResult = await validateBadgeFromSources(badgeCode);
-          
-          if (validationResult) {
-            const { data: savedBadge, error } = await supabase
-              .from('habbo_badges')
-              .upsert({
-                badge_code: badgeCode,
-                badge_name: generateBadgeName(badgeCode),
-                source: validationResult.source,
-                image_url: validationResult.imageUrl,
-                last_validated_at: new Date().toISOString(),
-                validation_count: 1,
-                is_active: true
-              }, { onConflict: 'badge_code' })
-              .select()
-              .single();
+          let attempts = 0;
+          while (attempts < maxRetries) {
+            try {
+              const validationResult = await validateBadgeFromSources(badgeCode);
+              
+              if (validationResult) {
+                const { data: savedBadge, error } = await supabase
+                  .from('habbo_badges')
+                  .upsert({
+                    badge_code: badgeCode,
+                    badge_name: generateBadgeName(badgeCode),
+                    source: validationResult.source,
+                    image_url: validationResult.imageUrl,
+                    category: determineBadgeCategory(badgeCode, ''),
+                    last_validated_at: new Date().toISOString(),
+                    validation_count: 1,
+                    is_active: true
+                  }, { onConflict: 'badge_code' })
+                  .select()
+                  .single();
 
-            if (!error && savedBadge) {
-              return savedBadge;
+                if (!error && savedBadge) {
+                  return savedBadge;
+                }
+              }
+              break;
+            } catch (error) {
+              attempts++;
+              if (attempts >= maxRetries) {
+                console.log(`❌ [Population] Failed ${badgeCode} after ${maxRetries} attempts`);
+              } else {
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+              }
             }
           }
           return null;
@@ -240,17 +288,19 @@ async function handleInitialPopulation(supabase: any) {
         
       populatedBadges.push(...successfulBadges);
       
-      // Pequena pausa entre lotes
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Pausa entre lotes
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    console.log(`✅ [Population] Successfully populated ${populatedBadges.length} badges`);
+    console.log(`✅ [Population] Enhanced population completed: ${populatedBadges.length} badges`);
     
     return new Response(JSON.stringify({
       success: true,
-      message: 'Base de dados populada com sucesso',
+      message: 'Base de dados populada com sistema melhorado',
       populated: populatedBadges.length,
-      badges: populatedBadges.slice(0, 20) // Retornar apenas os primeiros 20 como amostra
+      total_processed: knownBadges.length,
+      categories: categorizeBadgesIntelligently(populatedBadges),
+      badges: populatedBadges.slice(0, 10) // Amostra dos primeiros 10
     }), {
       headers: { 
         ...corsHeaders,
@@ -259,10 +309,10 @@ async function handleInitialPopulation(supabase: any) {
     });
 
   } catch (error) {
-    console.error('❌ [Population] Error:', error);
+    console.error('❌ [Population] Enhanced population failed:', error);
     
     return new Response(JSON.stringify({ 
-      error: 'Erro na população inicial', 
+      error: 'Erro na população melhorada', 
       details: error.message 
     }), { 
       status: 500,
@@ -271,108 +321,125 @@ async function handleInitialPopulation(supabase: any) {
   }
 }
 
-// Validar badge em todas as fontes (hierárquica)
+// Validação melhorada com cache e timeout otimizado
 async function validateBadgeFromSources(badgeCode: string) {
+  const cacheKey = badgeCode;
+  const cached = VALIDATION_CACHE.get(cacheKey);
+  
+  // Verificar cache primeiro
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+    return cached.valid ? { source: 'Cache', imageUrl: `${BADGE_SOURCES.HABBO_WIDGETS}/${badgeCode}.gif`, badgeCode } : null;
+  }
+
   const sources = [
     { name: 'HabboWidgets', url: `${BADGE_SOURCES.HABBO_WIDGETS}/${badgeCode}.gif` },
     { name: 'HabboAssets', url: `${BADGE_SOURCES.HABBO_ASSETS}/${badgeCode}.gif` },
-    { name: 'SupabaseBucket', url: `${BADGE_SOURCES.SUPABASE_BUCKET}/${badgeCode}.gif` },
-    { name: 'HabboOfficial', url: `${BADGE_SOURCES.HABBO_OFFICIAL}/${badgeCode}.gif` }
+    { name: 'HabboOfficial', url: `${BADGE_SOURCES.HABBO_OFFICIAL}/${badgeCode}.gif` },
+    { name: 'SupabaseBucket', url: `${BADGE_SOURCES.SUPABASE_BUCKET}/${badgeCode}.gif` }
   ];
 
   for (const source of sources) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+      
       const response = await fetch(source.url, { 
         method: 'HEAD',
-        signal: AbortSignal.timeout(3000)
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; HabboHubBot/1.0)'
+        }
       });
       
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
-        return { 
+        const result = { 
           source: source.name, 
           imageUrl: source.url,
           badgeCode
         };
+        
+        // Cachear resultado positivo
+        VALIDATION_CACHE.set(cacheKey, { valid: true, timestamp: Date.now() });
+        return result;
       }
     } catch (error) {
+      // Continuar para próxima fonte
       continue;
     }
   }
 
+  // Cachear resultado negativo
+  VALIDATION_CACHE.set(cacheKey, { valid: false, timestamp: Date.now() });
   return null;
 }
 
-// Lista de badges conhecidos/comuns para descoberta
-function getCommonBadgesList(): string[] {
+// Lista otimizada de badges conhecidos e funcionais
+function getKnownWorkingBadgesList(): string[] {
   return [
-    // Badges oficiais
-    'ADM', 'MOD', 'STAFF', 'VIP', 'SUP', 'GUIDE', 'HELPER', 'AMBASSADOR',
-    'HC1', 'HC2', 'HC3', 'HC4', 'HC5', 'CLUB1', 'CLUB2', 'CLUB3',
+    // Staff e Oficiais
+    'ADM', 'MOD', 'VIP', 'STAFF', 'GUIDE', 'HELPER',
     
-    // Achievements comuns
+    // Achievements básicos
     'ACH_BasicClub1', 'ACH_RoomEntry1', 'ACH_Login1', 'ACH_Motto1',
     'ACH_AvatarLooks1', 'ACH_FriendListSize1', 'ACH_GiftGiver1',
-    'ACH_RespectGiven1', 'ACH_RespectEarned1', 'ACH_HappyHour1',
     
-    // Conquistas de jogos
-    'GAM_MAHJONG1', 'GAM_POOLL1', 'GAM_CHESS1', 'GAM_CHECKERS1',
-    'GAM_POKER1', 'GAM_REVERSI1', 'GAM_TICTAC1', 'GAM_WOBBLE1',
+    // Jogos
+    'GAM_MAHJONG1', 'GAM_POOL1', 'GAM_CHESS1', 'GAM_POKER1',
     
-    // Badges nacionais
-    'BR001', 'BR002', 'BR003', 'US001', 'US002', 'US003',
-    'ES001', 'ES002', 'DE001', 'FR001', 'IT001', 'NL001',
+    // Habbo Club
+    'HC1', 'HC2', 'HC3', 'CLUB1', 'CLUB2',
     
-    // Eventos especiais
-    'XMAS2023', 'SUMMER2023', 'HALLOWEEN2023', 'EASTER2023',
-    'VALENTINE2023', 'NEWYEAR2023', 'PARTY2023', 'CARNIVAL2023',
+    // Nacionais
+    'BR001', 'BR002', 'US001', 'ES001', 'DE001',
     
-    // Fansites conhecidos
-    'FANSITE_HABBO', 'FANSITE_HABBOCITY', 'FANSITE_HABBOON',
-    'PARTNER1', 'PARTNER2', 'EXCLUSIVE1', 'LIMITED1', 'PROMO1',
+    // Eventos
+    'XMAS2023', 'SUMMER2023', 'HALLOWEEN2023',
     
-    // Conquistas extras
-    'WIN001', 'WIN002', 'WIN003', 'VICTORY1', 'CHAMPION1',
-    'QUEST001', 'MISSION001', 'COMPLETE1', 'SUCCESS1', 'FINISH1'
+    // Conquistas comuns
+    'WIN001', 'VICTORY1', 'CHAMPION1', 'SUCCESS1'
   ];
 }
 
-// Categorização inteligente de badges
 function categorizeBadgesIntelligently(badges: any[]) {
   const categorized = {
     official: [] as any[],
     achievements: [] as any[],
     fansites: [] as any[],
-    others: [] as any[],
-    all: badges
+    others: [] as any[]
   };
   
   badges.forEach(badge => {
-    const category = determineBadgeCategory(badge.badge_code, badge.badge_name || '');
-    categorized[category as keyof typeof categorized].push(badge);
+    const category = badge.category || determineBadgeCategory(badge.badge_code, badge.badge_name || '');
+    if (categorized[category as keyof typeof categorized]) {
+      categorized[category as keyof typeof categorized].push(badge);
+    } else {
+      categorized.others.push(badge);
+    }
   });
   
   return categorized;
 }
 
-// Determinar categoria do badge baseado em padrões
 function determineBadgeCategory(code: string, name: string): string {
   const upperCode = code.toUpperCase();
   const upperName = name.toUpperCase();
   
-  // Badges oficiais
-  const officialPatterns = ['ADM', 'MOD', 'STAFF', 'VIP', 'SUP', 'GUIDE', 'HELPER', 'AMBASSADOR'];
+  // Oficiais
+  const officialPatterns = ['ADM', 'MOD', 'STAFF', 'VIP', 'GUIDE', 'HELPER'];
   if (officialPatterns.some(pattern => upperCode.includes(pattern) || upperName.includes(pattern))) {
     return 'official';
   }
   
   // Achievements
-  const achievementPatterns = ['ACH', 'GAM', 'WIN', 'VICTORY', 'CHAMPION', 'QUEST', 'MISSION', 'COMPLETE', 'SUCCESS'];
+  const achievementPatterns = ['ACH', 'GAM', 'WIN', 'VICTORY', 'CHAMPION', 'SUCCESS'];
   if (achievementPatterns.some(pattern => upperCode.includes(pattern) || upperName.includes(pattern))) {
     return 'achievements';
   }
   
   // Fansites
-  const fansitePatterns = ['FANSITE', 'PARTNER', 'EXCLUSIVE', 'LIMITED', 'PROMO', 'EVENT', 'SPECIAL'];
+  const fansitePatterns = ['FANSITE', 'PARTNER', 'EVENT', 'SPECIAL', 'EXCLUSIVE', 'XMAS', 'SUMMER', 'HALLOWEEN'];
   if (fansitePatterns.some(pattern => upperCode.includes(pattern) || upperName.includes(pattern))) {
     return 'fansites';
   }
@@ -380,7 +447,6 @@ function determineBadgeCategory(code: string, name: string): string {
   return 'others';
 }
 
-// Gerar nome inteligente para badge
 function generateBadgeName(code: string): string {
   const category = determineBadgeCategory(code, '');
   
@@ -397,18 +463,17 @@ function generateBadgeName(code: string): string {
       if (code.includes('WIN')) return `Vitória ${code}`;
       break;
     case 'fansites':
-      if (code.includes('FANSITE')) return `Fã-site ${code.replace('FANSITE_', '')}`;
-      if (code.includes('PARTNER')) return `Parceiro ${code}`;
+      if (code.includes('XMAS')) return `Natal ${code}`;
+      if (code.includes('SUMMER')) return `Verão ${code}`;
       if (code.includes('EVENT')) return `Evento ${code}`;
       break;
   }
   
-  return `Badge ${code}`;
+  return `Emblema ${code}`;
 }
 
-// Fallback híbrido em caso de erro total
-async function generateHybridFallback() {
-  const fallbackBadges = getCommonBadgesList().slice(0, 50).map(code => ({
+async function generateHybridFallback(category: string = 'all') {
+  const fallbackBadges = getKnownWorkingBadgesList().slice(0, 30).map(code => ({
     id: `fallback_${code}`,
     badge_code: code,
     badge_name: generateBadgeName(code),
@@ -420,14 +485,19 @@ async function generateHybridFallback() {
     is_active: true,
     category: determineBadgeCategory(code, '')
   }));
+
+  const filteredBadges = category === 'all' 
+    ? fallbackBadges 
+    : fallbackBadges.filter(badge => badge.category === category);
   
   return new Response(JSON.stringify({
     success: true,
-    badges: fallbackBadges,
+    badges: filteredBadges,
     metadata: {
-      total: fallbackBadges.length,
+      total: filteredBadges.length,
       source: 'hybrid-fallback-system',
-      fallbackMode: true
+      fallbackMode: true,
+      category: category
     }
   }), {
     headers: { 

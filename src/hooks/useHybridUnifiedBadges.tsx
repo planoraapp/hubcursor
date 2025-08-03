@@ -47,9 +47,9 @@ const fetchHybridUnifiedBadges = async ({
       throw error;
     }
 
-    if (!data || !data.badges || !Array.isArray(data.badges)) {
+    if (!data || !data.success || !data.badges || !Array.isArray(data.badges)) {
       console.error('❌ [HybridUnified] Invalid response format:', data);
-      throw new Error('Dados inválidos do sistema híbrido');
+      throw new Error('Resposta inválida do sistema híbrido unificado');
     }
 
     console.log(`✅ [HybridUnified] Successfully fetched ${data.badges.length} badges`);
@@ -62,12 +62,48 @@ const fetchHybridUnifiedBadges = async ({
     
   } catch (error) {
     console.error('❌ [HybridUnified] Error:', error);
-    throw error;
+    
+    // Fallback local em caso de erro total
+    const fallbackBadges: HybridUnifiedBadgeItem[] = [
+      {
+        id: 'fallback_ADM',
+        badge_code: 'ADM',
+        badge_name: 'Administrador',
+        source: 'HybridFallback',
+        image_url: 'https://www.habbowidgets.com/images/badges/ADM.gif',
+        created_at: new Date().toISOString(),
+        last_validated_at: new Date().toISOString(),
+        validation_count: 1,
+        is_active: true,
+        category: 'official'
+      },
+      {
+        id: 'fallback_MOD',
+        badge_code: 'MOD',
+        badge_name: 'Moderador',
+        source: 'HybridFallback',
+        image_url: 'https://www.habbowidgets.com/images/badges/MOD.gif',
+        created_at: new Date().toISOString(),
+        last_validated_at: new Date().toISOString(),
+        validation_count: 1,
+        is_active: true,
+        category: 'official'
+      }
+    ];
+    
+    return {
+      badges: category === 'all' ? fallbackBadges : fallbackBadges.filter(b => b.category === category),
+      metadata: {
+        total: fallbackBadges.length,
+        fallbackMode: true,
+        error: error.message
+      }
+    };
   }
 };
 
 const populateInitialBadges = async (): Promise<any> => {
-  console.log(`🚀 [HybridUnified] Starting initial population`);
+  console.log(`🚀 [HybridUnified] Starting enhanced initial population`);
   
   try {
     const { data, error } = await supabase.functions.invoke('habbo-badges-validator', {
@@ -79,7 +115,7 @@ const populateInitialBadges = async (): Promise<any> => {
       throw error;
     }
 
-    console.log(`✅ [HybridUnified] Population completed:`, data);
+    console.log(`✅ [HybridUnified] Enhanced population completed:`, data);
     return data;
     
   } catch (error) {
@@ -100,12 +136,12 @@ export const useHybridUnifiedBadges = ({
     queryKey: ['hybrid-unified-badges', limit, search, category],
     queryFn: () => fetchHybridUnifiedBadges({ limit, search, category }),
     enabled,
-    staleTime: 1000 * 60 * 60, // 1 hora
-    gcTime: 1000 * 60 * 60 * 4, // 4 horas
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 1000 * 60 * 30, // 30 minutos
+    gcTime: 1000 * 60 * 60 * 2, // 2 horas
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
     refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnReconnect: true,
   });
 };
 
@@ -113,10 +149,10 @@ export const usePopulateInitialBadges = () => {
   return useMutation({
     mutationFn: populateInitialBadges,
     onSuccess: (data) => {
-      console.log('✅ [PopulateMutation] Success:', data);
+      console.log('✅ [PopulateMutation] Enhanced success:', data);
     },
     onError: (error) => {
-      console.error('❌ [PopulateMutation] Error:', error);
+      console.error('❌ [PopulateMutation] Enhanced error:', error);
     }
   });
 };
