@@ -20,17 +20,28 @@ const RealFurniImage = ({
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Real Habbo image sources in priority order - more reliable sources first
+  // Unity 2025 asset bundles and reliable fallbacks
   const getImageUrls = (className: string, type: string, hotel: string) => [
+    // Unity 2025 Asset Bundles (primary)
+    `https://images.habbo.com/habbo-asset-bundles/production/2020.3.15f2/0.0.44/WebGL/Furni/66732/72612/${className}.png`,
+    `https://images.habbo.com/habbo-asset-bundles/production/2020.3.15f2/0.0.44/WebGL/Furni/66732/72612/${className}.gif`,
+    
     // Official Habbo imaging (most reliable)
     `https://images.habbo.com/dcr/hof_furni/${type}/${className}.png`,
-    // Alternative official source
     `https://www.habbo.com/dcr/hof_furni/${type}/${className}.png`,
+    
     // Hotel-specific imaging
     `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`,
+    
     // Additional reliable sources
     `https://habbowidgets.com/images/furni/${className}.png`,
     `https://habbowidgets.com/images/furni/${className}.gif`,
+    `https://www.habbowidgets.com/images/furni/${className}.png`,
+    
+    // HabboEmotion
+    `https://habboemotion.com/images/furnis/${className}.png`,
+    `https://cdn.habboemotion.com/furnis/${className}.gif`,
+    
     // Supabase storage as final fallback
     `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${className}.png`
   ];
@@ -73,7 +84,8 @@ const RealFurniImage = ({
       <img
         src={currentUrl}
         alt={name}
-        className={`object-contain max-w-full max-h-full`}
+        className="object-contain max-w-full max-h-full pixelated"
+        style={{ imageRendering: 'pixelated' }}
         onError={handleImageError}
         onLoad={handleImageLoad}
         loading="lazy"

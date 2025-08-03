@@ -44,7 +44,7 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
     <div className="habbo-card">
       <div className="p-4 border-b">
         <h3 className="font-bold text-gray-800">{title}</h3>
-        <p className="text-sm text-gray-600">{items.length} itens</p>
+        <p className="text-sm text-gray-600">{items.length} itens reais</p>
       </div>
       
       <ScrollArea className="h-96">
@@ -92,9 +92,12 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
                   {item.quantity && (
                     <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                       <Package2 size={10} />
-                      <span>{item.quantity} disponíveis</span>
+                      <span>{item.quantity} disponíveis na feira</span>
                     </div>
                   )}
+                  <div className="text-xs text-gray-400 mt-1">
+                    Real: {item.className}
+                  </div>
                 </div>
               </div>
             );

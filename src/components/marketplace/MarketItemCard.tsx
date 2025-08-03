@@ -84,7 +84,6 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
               </span>
             </div>
 
-            {/* Additional info for compact cards */}
             <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-gray-100">
               {item.quantity && (
                 <div className="flex items-center gap-1">
@@ -105,6 +104,10 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
                   <span>Vol: {item.volume}</span>
                 </div>
               )}
+            </div>
+            
+            <div className="text-xs text-gray-400 truncate" title={item.className}>
+              {item.className}
             </div>
           </div>
         </div>
@@ -154,14 +157,14 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
             {item.quantity && (
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Package2 size={12} />
-                <span>{item.quantity} disponíveis</span>
+                <span>{item.quantity} na feira</span>
               </div>
             )}
           </div>
           
           <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
             <span className="text-xs">
-              Atualizado: {new Date(item.lastUpdated).toLocaleTimeString('pt-BR')}
+              Real: {item.className}
             </span>
             {item.volume > 0 && (
               <span className="text-xs">
