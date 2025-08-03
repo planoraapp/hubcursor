@@ -155,10 +155,8 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
           {/* Header do dropdown */}
           <div className="text-center pb-2 border-b border-amber-600/30">
             <span 
-              className="font-bold text-lg"
+              className="font-bold text-lg text-yellow-300 volter-font"
               style={{ 
-                color: '#f4d03f',
-                fontFamily: "'Volter', monospace",
                 textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)'
               }}
             >
@@ -186,22 +184,16 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                   {typeof item.icon === 'string' ? (
                     <img src={item.icon} alt={item.label} className="w-6 h-6 object-contain" />
                   ) : (
-                    <item.icon className="w-6 h-6" style={{ color: '#f4d03f' }} />
+                    <item.icon className="w-6 h-6 text-yellow-300" />
                   )}
-                  <span 
-                    className="text-xs font-medium text-center leading-tight"
-                    style={{ 
-                      color: '#e8e8e8',
-                      fontFamily: "'Arial', sans-serif" 
-                    }}
-                  >
+                  <span className="text-xs font-medium text-center leading-tight text-gray-200">
                     {item.label}
                   </span>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-center py-4" style={{ color: '#888' }}>
+            <p className="text-center py-4 text-gray-400">
               Nenhuma página adicional.
             </p>
           )}
@@ -259,8 +251,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
           } else {
             IconDisplay = (
               <item.icon 
-                className="w-6 h-6" 
-                style={{ color: isActive ? '#f4d03f' : '#e8e8e8' }} 
+                className={`w-6 h-6 ${isActive ? 'text-yellow-300' : 'text-gray-200'}`}
               />
             );
           }
@@ -286,7 +277,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               {/* Ícone com efeito especial para "Mais" */}
               <div className={item.isAvatar ? '' : 'relative'}>
                 {isMore && isDropdownOpen ? (
-                  <X className="w-6 h-6" style={{ color: '#f4d03f' }} />
+                  <X className="w-6 h-6 text-yellow-300" />
                 ) : (
                   IconDisplay
                 )}
@@ -304,9 +295,10 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               
               {/* Label com fonte do site */}
               <span 
-                className="text-xs font-medium text-center leading-tight"
+                className={`text-xs font-medium text-center leading-tight ${
+                  isActive ? 'text-yellow-300' : 'text-gray-200'
+                }`}
                 style={{ 
-                  color: isActive ? '#f4d03f' : '#e8e8e8',
                   fontFamily: "'Arial', sans-serif",
                   textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)'
                 }}

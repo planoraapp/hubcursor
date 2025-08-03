@@ -11,6 +11,26 @@ interface Translations {
   tools: string;
   more: string;
   
+  // Páginas principais
+  noticias: string;
+  catalogo: string;
+  emblemas: string;
+  editor: string;
+  mercado: string;
+  
+  // Títulos de páginas
+  badgesEnhancedTitle: string;
+  catalogEnhancedTitle: string;
+  exploreRoomsTitle: string;
+  exploreRoomsSubtitle: string;
+  topRoomsByVisitors: string;
+  marketplaceTitle: string;
+  
+  // Premium
+  habboPremiumTitle: string;
+  habboPremiumDesc: string;
+  subscribeNow: string;
+  
   // Emblemas
   badgesTitle: string;
   loadingBadges: string;
@@ -59,6 +79,26 @@ const translations: Record<Language, Translations> = {
     tools: 'Ferramentas',
     more: 'Mais',
     
+    // Páginas principais
+    noticias: 'Notícias',
+    catalogo: 'Catálogo',
+    emblemas: 'Emblemas',
+    editor: 'Editor',
+    mercado: 'Mercado',
+    
+    // Títulos de páginas
+    badgesEnhancedTitle: 'Emblemas do Habbo',
+    catalogEnhancedTitle: 'Catálogo do Habbo',
+    exploreRoomsTitle: 'Explorar Quartos',
+    exploreRoomsSubtitle: 'Descubra os quartos mais populares do Habbo',
+    topRoomsByVisitors: 'Top Quartos por Visitantes',
+    marketplaceTitle: 'Mercado do Habbo',
+    
+    // Premium
+    habboPremiumTitle: 'Habbo Premium',
+    habboPremiumDesc: 'Tenha acesso a recursos exclusivos',
+    subscribeNow: 'Assinar Agora',
+    
     // Emblemas
     badgesTitle: 'Emblemas do Habbo',
     loadingBadges: 'Carregando emblemas...',
@@ -106,6 +146,26 @@ const translations: Record<Language, Translations> = {
     tools: 'Tools',
     more: 'More',
     
+    // Páginas principais
+    noticias: 'News',
+    catalogo: 'Catalog',
+    emblemas: 'Badges',
+    editor: 'Editor',
+    mercado: 'Marketplace',
+    
+    // Títulos de páginas
+    badgesEnhancedTitle: 'Habbo Badges',
+    catalogEnhancedTitle: 'Habbo Catalog',
+    exploreRoomsTitle: 'Explore Rooms',
+    exploreRoomsSubtitle: 'Discover the most popular rooms in Habbo',
+    topRoomsByVisitors: 'Top Rooms by Visitors',
+    marketplaceTitle: 'Habbo Marketplace',
+    
+    // Premium
+    habboPremiumTitle: 'Habbo Premium',
+    habboPremiumDesc: 'Get access to exclusive features',
+    subscribeNow: 'Subscribe Now',
+    
     // Emblemas
     badgesTitle: 'Habbo Badges',
     loadingBadges: 'Loading badges...',
@@ -152,6 +212,26 @@ const translations: Record<Language, Translations> = {
     console: 'Consola',
     tools: 'Herramientas',
     more: 'Más',
+    
+    // Páginas principais
+    noticias: 'Noticias',
+    catalogo: 'Catálogo',
+    emblemas: 'Placas',
+    editor: 'Editor',
+    mercado: 'Mercado',
+    
+    // Títulos de páginas
+    badgesEnhancedTitle: 'Placas de Habbo',
+    catalogEnhancedTitle: 'Catálogo de Habbo',
+    exploreRoomsTitle: 'Explorar Salas',
+    exploreRoomsSubtitle: 'Descubre las salas más populares de Habbo',
+    topRoomsByVisitors: 'Top Salas por Visitantes',
+    marketplaceTitle: 'Mercado de Habbo',
+    
+    // Premium
+    habboPremiumTitle: 'Habbo Premium',
+    habboPremiumDesc: 'Obtén acceso a funciones exclusivas',
+    subscribeNow: 'Suscribirse Ahora',
     
     // Emblemas
     badgesTitle: 'Placas de Habbo',
