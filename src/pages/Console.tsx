@@ -11,7 +11,7 @@ import MobileLayout from '../layouts/MobileLayout';
 const Console = () => {
   const [activeSection, setActiveSection] = useState('console');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeProfileSection, setActiveProfileSection] = useState('feed');
+  const [activeProfileSection, setActiveProfileSection] = useState('badges');
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -25,14 +25,46 @@ const Console = () => {
     };
   }, []);
 
+  // Mock user data for now
+  const mockUser = {
+    id: '1',
+    name: 'Usuário',
+    motto: 'Bem-vindo ao Habbo!',
+    online: false,
+    memberSince: '2024',
+    selectedBadges: [],
+    figureString: ''
+  };
+
+  // Mock data for sections
+  const mockBadges = [];
+  const mockFriends = [];
+  const mockRooms = [];
+  const mockGroups = [];
+
+  const handleUserClick = (username: string) => {
+    console.log('User clicked:', username);
+  };
+
   const renderContent = () => (
     <div className="space-y-6">
-      <UserProfileCard />
+      <UserProfileCard user={mockUser} loading={false} />
       <ProfileNavigation 
         activeSection={activeProfileSection} 
-        setActiveSection={setActiveProfileSection} 
+        setActiveSection={setActiveProfileSection}
+        badgeCount={0}
+        friendsCount={0}
+        roomsCount={0}
+        groupsCount={0}
       />
-      <ProfileSections activeSection={activeProfileSection} />
+      <ProfileSections 
+        activeSection={activeProfileSection}
+        badges={mockBadges}
+        friends={mockFriends}
+        rooms={mockRooms}
+        groups={mockGroups}
+        onUserClick={handleUserClick}
+      />
     </div>
   );
 
@@ -45,7 +77,7 @@ const Console = () => {
             icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full border-2 border-black">
             {renderContent()}
           </div>
         </div>
@@ -63,7 +95,7 @@ const Console = () => {
             icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full border-2 border-black">
             {renderContent()}
           </div>
         </main>
