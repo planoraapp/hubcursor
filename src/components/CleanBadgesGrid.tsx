@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useHabboAssetsBadges } from '../hooks/useHabboAssetsBadges';
 import { useLanguage } from '../hooks/useLanguage';
@@ -319,7 +320,7 @@ export const CleanBadgesGrid: React.FC = () => {
             name: selectedBadge.name,
             description: `Emblema oficial do Habbo Hotel. Este é o badge ${selectedBadge.code} - ${selectedBadge.name}.`,
             category: selectedBadge.category,
-            image_url: selectedBadge.image_url,
+            imageUrl: selectedBadge.image_url,
             rarity: 'common'
           }}
           onClose={() => setSelectedBadge(null)}
