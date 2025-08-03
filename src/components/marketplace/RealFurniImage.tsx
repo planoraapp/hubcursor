@@ -92,8 +92,7 @@ const RealFurniImage = ({
         alt={name}
         className="object-contain max-w-full max-h-full pixelated transition-opacity duration-200"
         style={{ 
-          imageRendering: 'pixelated',
-          WebkitImageRendering: '-webkit-optimize-contrast' 
+          imageRendering: 'pixelated'
         }}
         onError={handleImageError}
         onLoad={handleImageLoad}
