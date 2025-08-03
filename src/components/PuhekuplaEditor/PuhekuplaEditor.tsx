@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Package, Shirt, Award, Sparkles } from 'lucide-react';
+import { Search, Package, Shirt, Award, Sparkles, Download, Copy } from 'lucide-react';
 import PuhekuplaAvatarPreview from './PuhekuplaAvatarPreview';
 import PuhekuplaFurniGrid from './PuhekuplaFurniGrid';
 import PuhekuplaClothingGrid from './PuhekuplaClothingGrid';
@@ -17,100 +17,93 @@ const PuhekuplaEditor = () => {
   const [activeTab, setActiveTab] = useState('avatar');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [avatarData, setAvatarData] = useState({
-    figure: 'hr-893-45.hd-180-2.ch-210-66.lg-270-82.sh-305-62',
-    direction: '2',
-    head_direction: '2'
-  });
+  const [currentFigure, setCurrentFigure] = useState('hr-893-45.hd-180-2.ch-210-66.lg-270-82.sh-305-62');
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
+  const [selectedHotel, setSelectedHotel] = useState('com');
+  const [currentDirection, setCurrentDirection] = useState('2');
 
   const { data: categoriesData } = usePuhekuplaCategories();
   const categories = categoriesData?.result?.categories || [];
+
+  const hotels = [
+    { code: 'com', name: 'Habbo.com', flag: '🌍' },
+    { code: 'br', name: 'Habbo.com.br', flag: '🇧🇷' },
+    { code: 'es', name: 'Habbo.es', flag: '🇪🇸' },
+    { code: 'fr', name: 'Habbo.fr', flag: '🇫🇷' },
+    { code: 'de', name: 'Habbo.de', flag: '🇩🇪' },
+  ];
 
   const handleItemSelect = (item: PuhekuplaFurni | PuhekuplaClothing | PuhekuplaBadge) => {
     console.log('Item selecionado:', item);
     // TODO: Implementar lógica de aplicação do item no avatar
   };
 
+  const handleRotateAvatar = () => {
+    const directions = ['0', '1', '2', '3', '4', '5', '6', '7'];
+    const currentIndex = directions.indexOf(currentDirection);
+    const nextIndex = (currentIndex + 1) % directions.length;
+    setCurrentDirection(directions[nextIndex]);
+  };
+
+  const handleCopyFigure = async () => {
+    try {
+      await navigator.clipboard.writeText(currentFigure);
+      console.log('Figure copiada para a área de transferência');
+    } catch (err) {
+      console.error('Erro ao copiar figure:', err);
+    }
+  };
+
+  const handleCopyUrl = async () => {
+    const hotel = hotels.find(h => h.code === selectedHotel);
+    const baseUrl = hotel?.code === 'com' ? 'habbo.com' : `habbo.${hotel?.code}`;
+    const url = `https://www.${baseUrl}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=${currentDirection}&head_direction=${currentDirection}&action=std&gesture=std`;
+    
+    try {
+      await navigator.clipboard.writeText(url);
+      console.log('URL copiada para a área de transferência');
+    } catch (err) {
+      console.error('Erro ao copiar URL:', err);
+    }
+  };
+
+  const handleDownloadAvatar = () => {
+    const hotel = hotels.find(h => h.code === selectedHotel);
+    const baseUrl = hotel?.code === 'com' ? 'habbo.com' : `habbo.${hotel?.code}`;
+    const url = `https://www.${baseUrl}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=${currentDirection}&head_direction=${currentDirection}&action=std&gesture=std`;
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `avatar-${currentFigure}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleRandomizeAvatar = () => {
+    // Generate a random figure string (basic implementation)
+    const randomFigure = `hr-${Math.floor(Math.random() * 1000)}-${Math.floor(Math.random() * 50)}.hd-${Math.floor(Math.random() * 200)}-${Math.floor(Math.random() * 10)}.ch-${Math.floor(Math.random() * 300)}-${Math.floor(Math.random() * 100)}.lg-${Math.floor(Math.random() * 300)}-${Math.floor(Math.random() * 100)}.sh-${Math.floor(Math.random() * 400)}-${Math.floor(Math.random() * 100)}`;
+    setCurrentFigure(randomFigure);
+  };
+
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-6 p-4">
       {/* Avatar Preview */}
       <div className="lg:w-1/3">
-        <Card className="h-full bg-gradient-to-br from-purple-100 to-blue-100 border-2 border-purple-200">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
-              Preview do Avatar
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <PuhekuplaAvatarPreview avatarData={avatarData} />
-            
-            {/* Avatar Controls */}
-            <div className="mt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-purple-800 mb-2">
-                  Figura:
-                </label>
-                <Input
-                  value={avatarData.figure}
-                  onChange={(e) => setAvatarData(prev => ({ ...prev, figure: e.target.value }))}
-                  className="text-sm font-mono"
-                  placeholder="ex: hr-893-45.hd-180-2..."
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-purple-800 mb-2">
-                    Direção:
-                  </label>
-                  <Select 
-                    value={avatarData.direction} 
-                    onValueChange={(value) => setAvatarData(prev => ({ ...prev, direction: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">Norte</SelectItem>
-                      <SelectItem value="1">Nordeste</SelectItem>
-                      <SelectItem value="2">Leste</SelectItem>
-                      <SelectItem value="3">Sudeste</SelectItem>
-                      <SelectItem value="4">Sul</SelectItem>
-                      <SelectItem value="5">Sudoeste</SelectItem>
-                      <SelectItem value="6">Oeste</SelectItem>
-                      <SelectItem value="7">Noroeste</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-purple-800 mb-2">
-                    Dir. Cabeça:
-                  </label>
-                  <Select 
-                    value={avatarData.head_direction} 
-                    onValueChange={(value) => setAvatarData(prev => ({ ...prev, head_direction: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">Norte</SelectItem>
-                      <SelectItem value="1">Nordeste</SelectItem>
-                      <SelectItem value="2">Leste</SelectItem>
-                      <SelectItem value="3">Sudeste</SelectItem>
-                      <SelectItem value="4">Sul</SelectItem>
-                      <SelectItem value="5">Sudoeste</SelectItem>
-                      <SelectItem value="6">Oeste</SelectItem>
-                      <SelectItem value="7">Noroeste</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <PuhekuplaAvatarPreview
+          currentFigure={currentFigure}
+          selectedGender={selectedGender}
+          selectedHotel={selectedHotel}
+          currentDirection={currentDirection}
+          hotels={hotels}
+          onRotateAvatar={handleRotateAvatar}
+          onCopyFigure={handleCopyFigure}
+          onCopyUrl={handleCopyUrl}
+          onDownloadAvatar={handleDownloadAvatar}
+          onRandomizeAvatar={handleRandomizeAvatar}
+          onGenderChange={setSelectedGender}
+          onHotelChange={setSelectedHotel}
+        />
       </div>
 
       {/* Editor Tabs */}
@@ -158,11 +151,13 @@ const PuhekuplaEditor = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as Categorias</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.guid} value={category.slug}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter(category => category.guid && category.guid.trim() !== '')
+                        .map((category) => (
+                          <SelectItem key={category.guid} value={category.slug || category.guid}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 )}
