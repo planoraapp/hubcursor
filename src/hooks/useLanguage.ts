@@ -1,231 +1,233 @@
 
 import { useState, useEffect } from 'react';
 
-export type Language = 'pt' | 'es' | 'en';
+export type Language = 'pt' | 'en' | 'es';
 
-export const translations = {
+interface Translations {
+  // Navegação
+  home: string;
+  forum: string;
+  console: string;
+  tools: string;
+  more: string;
+  
+  // Emblemas
+  badgesTitle: string;
+  loadingBadges: string;
+  errorLoadingBadges: string;
+  tryAgain: string;
+  searchBadges: string;
+  showingBadges: string;
+  badges: string;
+  noBadgesFound: string;
+  tryDifferentSearch: string;
+  noBadgesAvailable: string;
+  loadingMore: string;
+  
+  // Categorias
+  allCategories: string;
+  official: string;
+  achievements: string;
+  fansites: string;
+  others: string;
+  
+  // Modal de emblemas
+  badgeCode: string;
+  category: string;
+  rarity: string;
+  description: string;
+  year: string;
+  source: string;
+  validations: string;
+  lastValidation: string;
+  closeModal: string;
+  officialHabboBadge: string;
+  
+  // Raridade
+  common: string;
+  uncommon: string;
+  rare: string;
+  legendary: string;
+}
+
+const translations: Record<Language, Translations> = {
   pt: {
-    appTitle: 'HABBO HUB',
-    homeTitle: 'Bem-vindo ao Habbo Hub',
-    homeSubtitle: 'Sua central de ferramentas e informações para o Habbo Hotel. Explore os dados públicos mais recentes e otimize sua experiência no jogo.',
-    latestNews: 'Últimas Notícias',
-    featuredRooms: 'Quartos em Destaque',
-    exploreRoomsTitle: 'Explorador de Quartos',
-    exploreRoomsSubtitle: 'Pesquise e filtre os quartos públicos mais populares do Habbo Hotel.',
-    catalogTitle: 'Catálogo de Items',
-    catalogSubtitle: 'Explore todos os emblemas disponíveis no Habbo Hotel BR através da nossa API oficial.',
-    badgeGuideTitle: 'Guia de Emblemas',
-    badgeGuideSubtitle: 'Explore a vasta coleção de emblemas do Habbo. Descubra como obtê-los e os mais raros!',
-    badgesEnhancedTitle: 'Emblemas do Habbo',
-    badgesEnhancedSubtitle: 'Coleção completa de emblemas do HabboAssets com busca e categorização',
-    rankingsTitle: 'Classificação Habbo',
-    rankingsSubtitle: 'Veja os Habbos e quartos em destaque nos rankings.',
-    profileCheckerTitle: 'Verificador de Perfil Habbo',
-    profileCheckerSubtitle: 'Pesquise por qualquer Habbo e veja seu perfil público, emblemas, grupos e quartos!',
-    toolsTitle: 'Ferramentas Habbo',
-    toolsSubtitle: 'Utilitários para otimizar sua experiência e estratégia no Habbo.',
-    languageLabel: 'Idioma:',
-    userNameGuest: 'Convidado Habbo',
-    offlineStatus: 'Offline',
-    onlineStatus: 'Online',
-    loginButton: 'Entrar',
-    logoutButton: 'Sair',
-    habboPremiumTitle: 'Habbo Hub Premium',
-    habboPremiumDesc: 'Desbloqueie filtros avançados e alertas personalizados!',
-    subscribeNow: 'Assine Já!',
-    noticias: 'Notícias',
+    // Navegação
+    home: 'Início',
     forum: 'Fórum',
-    catalogo: 'Catálogo',
-    emblemas: 'Emblemas',
-    editor: 'Editor de Visuais',
-    mercado: 'Mercado',
-    newsTitle: 'Notícias do Habbo',
-    newsSubtitle: 'Mantenha-se atualizado com as últimas novidades dos hotéis Habbo ao redor do mundo.',
-    forumTitle: 'Fórum da Comunidade',
-    forumSubtitle: 'Participe das discussões e conecte-se com outros Habbos.',
-    catalogEnhancedTitle: 'Catálogo Completo',
-    catalogEnhancedSubtitle: 'Explore todos os mobis e raros com detalhes completos.',
-    avatarEditorTitle: 'Editor de Visuais',
-    avatarEditorSubtitle: 'Crie e personalize seu avatar Habbo com nossa ferramenta interativa.',
-    marketplaceTitle: 'Mercado Habbo',
-    marketplaceSubtitle: 'Estatísticas e detalhes do marketplace de itens.',
+    console: 'Console',
+    tools: 'Ferramentas',
+    more: 'Mais',
+    
+    // Emblemas
     badgesTitle: 'Emblemas do Habbo',
-    allCategories: 'Todas as Categorias',
-    official: 'Oficiais',
-    achievements: 'Conquistas',
-    fansites: 'Fã-sites',
-    others: 'Outros',
+    loadingBadges: 'Carregando emblemas...',
+    errorLoadingBadges: 'Erro ao carregar emblemas',
+    tryAgain: 'Tentar Novamente',
     searchBadges: 'Buscar emblemas...',
     showingBadges: 'Mostrando',
     badges: 'emblemas',
     noBadgesFound: 'Nenhum emblema encontrado',
     tryDifferentSearch: 'Tente uma busca diferente ou altere os filtros',
     noBadgesAvailable: 'Nenhum emblema disponível nesta categoria',
-    loadingBadges: 'Carregando emblemas...',
-    errorLoadingBadges: 'Erro ao carregar emblemas',
-    tryAgain: 'Tentar Novamente',
     loadingMore: 'Carregando mais...',
-    allBadgesLoaded: 'Todos os emblemas foram carregados',
-    loadingBadgeSystem: 'Carregando sistema de emblemas...',
-    badgeSystemError: 'Erro no sistema de emblemas',
-    badgeSystemRetry: 'Tentar Novamente',
+    
+    // Categorias
+    allCategories: 'Todas as Categorias',
+    official: 'Oficiais',
+    achievements: 'Conquistas',
+    fansites: 'Fã-sites',
+    others: 'Outros',
+    
+    // Modal de emblemas
+    badgeCode: 'Código',
+    category: 'Categoria',
+    rarity: 'Raridade',
+    description: 'Descrição',
+    year: 'Ano',
+    source: 'Fonte',
+    validations: 'Validações',
+    lastValidation: 'Última Validação',
+    closeModal: 'Fechar',
+    officialHabboBadge: 'Emblema Oficial do Habbo',
+    
+    // Raridade
+    common: 'Comum',
+    uncommon: 'Incomum',
+    rare: 'Raro',
+    legendary: 'Lendário',
   },
-  es: {
-    appTitle: 'HABBO HUB',
-    homeTitle: 'Bienvenido a Habbo Hub',
-    homeSubtitle: 'Tu centro de herramientas e información para Habbo Hotel. Explora los datos públicos más recientes y optimiza tu experiencia de juego.',
-    latestNews: 'Últimas Noticias',
-    featuredRooms: 'Salas Destacadas',
-    exploreRoomsTitle: 'Explorador de Salas',
-    exploreRoomsSubtitle: 'Busca y filtra las salas públicas más populares de Habbo Hotel.',
-    catalogTitle: 'Catálogo de Artículos',
-    catalogSubtitle: 'Explora todas las placas disponibles en Habbo Hotel ES a través de nuestra API oficial.',
-    badgeGuideTitle: 'Guía de Placas',
-    badgeGuideSubtitle: 'Explora la vasta colección de placas de Habbo. ¡Descubre cómo conseguirlas y las más raras!',
-    badgesEnhancedTitle: 'Placas del Habbo',
-    badgesEnhancedSubtitle: 'Colección completa de placas de HabboAssets con búsqueda y categorización',
-    rankingsTitle: 'Clasificación Habbo',
-    rankingsSubtitle: 'Mira a los Habbos y salas destacadas en los rankings.',
-    profileCheckerTitle: 'Verificador de Perfil Habbo',
-    profileCheckerSubtitle: 'Busca cualquier Habbo y ve su perfil público, placas, grupos y salas!',
-    toolsTitle: 'Herramientas Habbo',
-    toolsSubtitle: 'Utilidades para optimizar tu experiencia y estrategia en Habbo.',
-    languageLabel: 'Idioma:',
-    userNameGuest: 'Invitado Habbo',
-    offlineStatus: 'Fuera de Línea',
-    onlineStatus: 'En Línea',
-    loginButton: 'Entrar',
-    logoutButton: 'Salir',
-    habboPremiumTitle: 'Habbo Hub Premium',
-    habboPremiumDesc: '¡Desbloquea filtros avanzados y alertas personalizadas!',
-    subscribeNow: '¡Suscríbete Ahora!',
-    noticias: 'Noticias',
-    forum: 'Foro',
-    catalogo: 'Catálogo',
-    emblemas: 'Placas',
-    editor: 'Editor de Looks',
-    mercado: 'Mercado',
-    newsTitle: 'Noticias de Habbo',
-    newsSubtitle: 'Mantente actualizado con las últimas novedades de los hoteles Habbo en todo el mundo.',
-    forumTitle: 'Foro de la Comunidad',
-    forumSubtitle: 'Participa en las discusiones y conéctate con otros Habbos.',
-    catalogEnhancedTitle: 'Catálogo Completo',
-    catalogEnhancedSubtitle: 'Explora todos los muebles y raros con detalles completos.',
-    avatarEditorTitle: 'Editor de Looks',
-    avatarEditorSubtitle: 'Crea y personaliza tu avatar Habbo con nuestra herramienta interactiva.',
-    marketplaceTitle: 'Mercado Habbo',
-    marketplaceSubtitle: 'Estadísticas y detalles del marketplace de artículos.',
-    badgesTitle: 'Placas del Habbo',
-    allCategories: 'Todas las Categorías',
-    official: 'Oficiales',
-    achievements: 'Logros',
-    fansites: 'Sitios de Fans',
-    others: 'Otros',
-    searchBadges: 'Buscar placas...',
-    showingBadges: 'Mostrando',
-    badges: 'placas',
-    noBadgesFound: 'No se encontraron placas',
-    tryDifferentSearch: 'Intenta una búsqueda diferente o cambia los filtros',
-    noBadgesAvailable: 'No hay placas disponibles en esta categoría',
-    loadingBadges: 'Cargando placas...',
-    errorLoadingBadges: 'Error al cargar placas',
-    tryAgain: 'Intentar de Nuevo',
-    loadingMore: 'Cargando más...',
-    allBadgesLoaded: 'Todas las placas han sido cargadas',
-    loadingBadgeSystem: 'Cargando sistema de placas...',
-    badgeSystemError: 'Error en el sistema de placas',
-    badgeSystemRetry: 'Intentar de Nuevo',
-  },
+  
   en: {
-    appTitle: 'HABBO HUB',
-    homeTitle: 'Welcome to Habbo Hub',
-    homeSubtitle: 'Your central hub for tools and information about Habbo Hotel. Explore the latest public data and optimize your in-game experience.',
-    latestNews: 'Latest News',
-    featuredRooms: 'Featured Rooms',
-    exploreRoomsTitle: 'Room Explorer',
-    exploreRoomsSubtitle: 'Search and filter the most popular public rooms in Habbo Hotel.',
-    catalogTitle: 'Item Catalog',
-    catalogSubtitle: 'Explore all badges available in Habbo Hotel through our official API.',
-    badgeGuideTitle: 'Badge Guide',
-    badgeGuideSubtitle: 'Explore the vast collection of Habbo badges. Discover how to get them and the rarest ones!',
-    badgesEnhancedTitle: 'Habbo Badges',
-    badgesEnhancedSubtitle: 'Complete collection of HabboAssets badges with search and categorization',
-    rankingsTitle: 'Habbo Rankings',
-    rankingsSubtitle: 'See top Habbos and rooms on the leaderboards.',
-    profileCheckerTitle: 'Habbo Profile Checker',
-    profileCheckerSubtitle: 'Search for any Habbo and view their public profile, badges, groups, and rooms!',
-    toolsTitle: 'Habbo Tools',
-    toolsSubtitle: 'Utilities to optimize your Habbo experience and strategy.',
-    languageLabel: 'Language:',
-    userNameGuest: 'Guest Habbo',
-    offlineStatus: 'Offline',
-    onlineStatus: 'Online',
-    loginButton: 'Login',
-    logoutButton: 'Logout',
-    habboPremiumTitle: 'Habbo Hub Premium',
-    habboPremiumDesc: 'Unlock advanced filters and custom alerts!',
-    subscribeNow: 'Subscribe Now!',
-    noticias: 'News',
+    // Navegação
+    home: 'Home',
     forum: 'Forum',
-    catalogo: 'Catalog',
-    emblemas: 'Badges',
-    editor: 'Avatar Editor',
-    mercado: 'Marketplace',
-    newsTitle: 'Habbo News',
-    newsSubtitle: 'Stay updated with the latest news from Habbo hotels around the world.',
-    forumTitle: 'Community Forum',
-    forumSubtitle: 'Join discussions and connect with other Habbos.',
-    catalogEnhancedTitle: 'Complete Catalog',
-    catalogEnhancedSubtitle: 'Explore all furniture and rares with complete details.',
-    avatarEditorTitle: 'Avatar Editor',
-    avatarEditorSubtitle: 'Create and customize your Habbo avatar with our interactive tool.',
-    marketplaceTitle: 'Habbo Marketplace',
-    marketplaceSubtitle: 'Statistics and details of the item marketplace.',
+    console: 'Console',
+    tools: 'Tools',
+    more: 'More',
+    
+    // Emblemas
     badgesTitle: 'Habbo Badges',
-    allCategories: 'All Categories',
-    official: 'Official',
-    achievements: 'Achievements',
-    fansites: 'Fansites',
-    others: 'Others',
+    loadingBadges: 'Loading badges...',
+    errorLoadingBadges: 'Error loading badges',
+    tryAgain: 'Try Again',
     searchBadges: 'Search badges...',
     showingBadges: 'Showing',
     badges: 'badges',
     noBadgesFound: 'No badges found',
     tryDifferentSearch: 'Try a different search or change filters',
     noBadgesAvailable: 'No badges available in this category',
-    loadingBadges: 'Loading badges...',
-    errorLoadingBadges: 'Error loading badges',
-    tryAgain: 'Try Again',
     loadingMore: 'Loading more...',
-    allBadgesLoaded: 'All badges have been loaded',
-    loadingBadgeSystem: 'Loading badge system...',
-    badgeSystemError: 'Badge system error',
-    badgeSystemRetry: 'Try Again',
+    
+    // Categorias
+    allCategories: 'All Categories',
+    official: 'Official',
+    achievements: 'Achievements',
+    fansites: 'Fansites',
+    others: 'Others',
+    
+    // Modal de emblemas
+    badgeCode: 'Code',
+    category: 'Category',
+    rarity: 'Rarity',
+    description: 'Description',
+    year: 'Year',
+    source: 'Source',
+    validations: 'Validations',
+    lastValidation: 'Last Validation',
+    closeModal: 'Close',
+    officialHabboBadge: 'Official Habbo Badge',
+    
+    // Raridade
+    common: 'Common',
+    uncommon: 'Uncommon',
+    rare: 'Rare',
+    legendary: 'Legendary',
+  },
+  
+  es: {
+    // Navegação
+    home: 'Inicio',
+    forum: 'Foro',
+    console: 'Consola',
+    tools: 'Herramientas',
+    more: 'Más',
+    
+    // Emblemas
+    badgesTitle: 'Placas de Habbo',
+    loadingBadges: 'Cargando placas...',
+    errorLoadingBadges: 'Error al cargar placas',
+    tryAgain: 'Intentar de Nuevo',
+    searchBadges: 'Buscar placas...',
+    showingBadges: 'Mostrando',
+    badges: 'placas',
+    noBadgesFound: 'No se encontraron placas',
+    tryDifferentSearch: 'Prueba una búsqueda diferente o cambia los filtros',
+    noBadgesAvailable: 'No hay placas disponibles en esta categoría',
+    loadingMore: 'Cargando más...',
+    
+    // Categorias
+    allCategories: 'Todas las Categorías',
+    official: 'Oficiales',
+    achievements: 'Logros',
+    fansites: 'Fansites',
+    others: 'Otros',
+    
+    // Modal de emblemas
+    badgeCode: 'Código',
+    category: 'Categoría',
+    rarity: 'Rareza',
+    description: 'Descripción',
+    year: 'Año',
+    source: 'Fuente',
+    validations: 'Validaciones',
+    lastValidation: 'Última Validación',
+    closeModal: 'Cerrar',
+    officialHabboBadge: 'Placa Oficial de Habbo',
+    
+    // Raridade
+    common: 'Común',
+    uncommon: 'Poco común',
+    rare: 'Raro',
+    legendary: 'Legendario',
   }
 };
 
 export const useLanguage = () => {
-  const [currentLanguage, setCurrentLanguage] = useState<Language>('pt');
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('habboHubLang') as Language;
-    if (savedLanguage && translations[savedLanguage]) {
-      setCurrentLanguage(savedLanguage);
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
+    // Tentar recuperar do localStorage ou usar português como padrão
+    try {
+      const saved = localStorage.getItem('habbohub-language');
+      return (saved as Language) || 'pt';
+    } catch {
+      return 'pt';
     }
-  }, []);
+  });
 
   const changeLanguage = (language: Language) => {
     setCurrentLanguage(language);
-    localStorage.setItem('habboHubLang', language);
+    localStorage.setItem('habbohub-language', language);
+    console.log(`🌐 [useLanguage] Language changed to: ${language}`);
   };
 
-  const t = (key: string) => {
-    return translations[currentLanguage][key as keyof typeof translations[Language]] || key;
+  const t = (key: keyof Translations): string => {
+    return translations[currentLanguage][key] || key;
+  };
+
+  const getCurrentFlag = (): string => {
+    const flags = {
+      pt: '/assets/flagbrazil.png',
+      en: '/assets/flagcom.png',
+      es: '/assets/flagspain.png'
+    };
+    return flags[currentLanguage];
   };
 
   return {
     currentLanguage,
     changeLanguage,
-    t
+    t,
+    getCurrentFlag,
+    translations: translations[currentLanguage]
   };
 };

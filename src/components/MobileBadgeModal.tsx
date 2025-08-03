@@ -1,7 +1,9 @@
 
 import { useEffect } from 'react';
-import { X, Award, Star } from 'lucide-react';
+import { X, Star } from 'lucide-react';
 import IntelligentBadgeImage from './IntelligentBadgeImage';
+import { useBadgeTranslation } from '../hooks/useBadgeTranslations';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface BadgeItem {
   id: string;
@@ -19,6 +21,19 @@ interface MobileBadgeModalProps {
 }
 
 export const MobileBadgeModal = ({ badge, onClose }: MobileBadgeModalProps) => {
+  const { t } = useLanguage();
+  
+  // Buscar tradução do emblema
+  const { data: translationData, isLoading: translationLoading } = useBadgeTranslation({ 
+    badgeCode: badge.code 
+  });
+
+  // Usar tradução se disponível
+  const displayName = translationData?.success ? translationData.translation.name : badge.name;
+  const displayDescription = translationData?.success 
+    ? translationData.translation.description || `Badge ${badge.code}` 
+    : badge.description;
+
   // Bloquear scroll do body
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -35,7 +50,6 @@ export const MobileBadgeModal = ({ badge, onClose }: MobileBadgeModalProps) => {
       const endY = endEvent.changedTouches[0].clientY;
       const deltaY = endY - startY;
       
-      // Se arrastou para baixo mais de 100px, fechar
       if (deltaY > 100) {
         onClose();
       }
@@ -57,59 +71,100 @@ export const MobileBadgeModal = ({ badge, onClose }: MobileBadgeModalProps) => {
 
   const getRarityText = (rarity: string) => {
     switch (rarity) {
-      case 'legendary': return 'Lendário';
-      case 'rare': return 'Raro';
-      case 'uncommon': return 'Incomum';
-      default: return 'Comum';
+      case 'legendary': return t('legendary');
+      case 'rare': return t('rare');
+      case 'uncommon': return t('uncommon');
+      default: return t('common');
     }
   };
 
   const getCategoryName = (category: string) => {
     const names: Record<string, string> = {
-      'staff': 'Equipe',
-      'conquistas': 'Conquistas',
-      'eventos': 'Eventos',
-      'especiais': 'Especiais',
-      'jogos': 'Jogos',
-      'gerais': 'Gerais'
+      'official': t('official'),
+      'achievements': t('achievements'),
+      'fansites': t('fansites'),
+      'others': t('others')
     };
     return names[category] || category;
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-end z-50">
-      {/* Modal content */}
+    <div 
+      className="fixed inset-0 flex items-end z-50" 
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}
+    >
+      {/* Modal content com design HabboHub */}
       <div 
-        className="bg-white rounded-t-3xl w-full max-h-[85vh] overflow-y-auto"
+        className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl"
+        style={{
+          backgroundColor: '#2a2a2a',
+          border: '3px solid #d4af37',
+          borderBottom: 'none',
+          boxShadow: '0 -20px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(212, 175, 55, 0.3)'
+        }}
         onTouchStart={handleTouchStart}
       >
-        {/* Handle bar para indicar que pode arrastar */}
+        {/* Handle bar dourado */}
         <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1 bg-gray-300 rounded-full" />
+          <div 
+            className="w-12 h-1 rounded-full"
+            style={{ backgroundColor: '#d4af37' }}
+          />
         </div>
 
-        {/* Header */}
-        <div className="flex justify-between items-start p-6 pb-4">
-          <h3 className="text-2xl font-bold text-gray-800 flex-1 pr-4">
-            {badge.name}
+        {/* Header com gradiente HabboHub */}
+        <div 
+          className="flex justify-between items-start p-6 pb-4"
+          style={{
+            background: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%)',
+            borderBottom: '2px solid #b8860b'
+          }}
+        >
+          <h3 
+            className="text-2xl font-bold flex-1 pr-4"
+            style={{
+              color: '#1a1a1a',
+              textShadow: '1px 1px 2px rgba(255, 255, 255, 0.3)',
+              fontFamily: "'Volter', monospace"
+            }}
+          >
+            {translationLoading ? badge.code : displayName}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 bg-gray-100 rounded-full text-gray-600 hover:bg-gray-200 transition-colors"
+            className="p-2 rounded-full transition-colors"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+              color: '#1a1a1a'
+            }}
           >
             <X size={24} />
           </button>
         </div>
         
         {/* Badge Display */}
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6" style={{ backgroundColor: '#2a2a2a' }}>
           <div className="text-center mb-6">
-            <div className={`inline-block p-6 bg-gradient-to-br ${getRarityColor(badge.rarity)} rounded-2xl shadow-2xl`}>
+            <div 
+              className={`inline-block p-6 rounded-2xl shadow-2xl relative`}
+              style={{
+                background: 'linear-gradient(135deg, #1a1a1a 0%, #333 50%, #1a1a1a 100%)',
+                border: '2px solid #d4af37'
+              }}
+            >
               <IntelligentBadgeImage
                 code={badge.code}
-                name={badge.name}
+                name={displayName}
                 size="lg"
                 className="w-20 h-20"
+              />
+              {/* Glow effect */}
+              <div 
+                className="absolute inset-0 w-20 h-20 rounded-full opacity-30"
+                style={{
+                  background: 'radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%)',
+                  filter: 'blur(10px)'
+                }}
               />
             </div>
           </div>
@@ -117,47 +172,88 @@ export const MobileBadgeModal = ({ badge, onClose }: MobileBadgeModalProps) => {
           {/* Badge Info */}
           <div className="space-y-4">
             <div className="text-center">
-              <span className="inline-block px-4 py-2 bg-gray-100 rounded-full text-lg font-mono font-semibold">
+              <span 
+                className="inline-block px-4 py-2 rounded-full text-lg font-mono font-semibold"
+                style={{
+                  backgroundColor: 'rgba(212, 175, 55, 0.2)',
+                  border: '2px solid #d4af37',
+                  color: '#f4d03f'
+                }}
+              >
                 {badge.code}
               </span>
             </div>
             
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl">
+            <div 
+              className="flex justify-between items-center p-4 rounded-xl"
+              style={{
+                backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                border: '2px solid #d4af37'
+              }}
+            >
               <div>
-                <span className="text-gray-600 text-sm">Categoria</span>
-                <div className="font-semibold text-gray-800 capitalize">
+                <span className="text-sm" style={{ color: '#f4d03f' }}>
+                  {t('category')}
+                </span>
+                <div className="font-semibold capitalize" style={{ color: '#e8e8e8' }}>
                   {getCategoryName(badge.category)}
                 </div>
               </div>
               
               <div className="text-right">
-                <span className="text-gray-600 text-sm">Raridade</span>
-                <div className={`font-semibold capitalize flex items-center gap-2 ${
-                  badge.rarity === 'legendary' ? 'text-yellow-600' :
-                  badge.rarity === 'rare' ? 'text-purple-600' :
-                  badge.rarity === 'uncommon' ? 'text-blue-600' : 'text-gray-600'
-                }`}>
+                <span className="text-sm" style={{ color: '#f4d03f' }}>
+                  {t('rarity')}
+                </span>
+                <div className="font-semibold capitalize flex items-center gap-2" style={{ color: '#f4d03f' }}>
                   <Star size={16} className="fill-current" />
                   {getRarityText(badge.rarity)}
                 </div>
               </div>
             </div>
             
-            <div className="p-4 bg-blue-50 rounded-xl">
-              <span className="text-blue-800 font-semibold text-sm block mb-2">Descrição</span>
-              <p className="text-gray-700 leading-relaxed">
-                {badge.description}
+            <div 
+              className="p-4 rounded-xl"
+              style={{
+                backgroundColor: 'rgba(212, 175, 55, 0.15)',
+                border: '2px solid #d4af37'
+              }}
+            >
+              <span 
+                className="font-semibold text-sm block mb-2"
+                style={{ 
+                  color: '#f4d03f',
+                  fontFamily: "'Volter', monospace" 
+                }}
+              >
+                {t('description')}
+              </span>
+              <p className="leading-relaxed" style={{ color: '#e8e8e8' }}>
+                {translationLoading ? 'Carregando descrição...' : displayDescription}
               </p>
             </div>
           </div>
           
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <div className="flex items-center justify-center gap-2 text-yellow-600">
-              <Award size={20} />
-              <span className="font-semibold">Emblema Oficial do Habbo</span>
+          <div className="mt-8 pt-6 text-center" style={{ borderTop: '1px solid #d4af37' }}>
+            <div 
+              className="flex items-center justify-center gap-2 p-3 rounded-lg"
+              style={{
+                backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                border: '1px solid #d4af37'
+              }}
+            >
+              <span className="text-xl">🏆</span>
+              <span 
+                className="font-semibold"
+                style={{ 
+                  color: '#f4d03f',
+                  fontFamily: "'Volter', monospace" 
+                }}
+              >
+                HabboHub - Emblemas Oficiais
+              </span>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs mt-2" style={{ color: '#888' }}>
               Arraste para baixo para fechar
             </p>
           </div>
