@@ -1,7 +1,7 @@
 
 import { TrendingUp, TrendingDown, Clock, Package2 } from 'lucide-react';
 import { CreditIcon } from './CreditIcon';
-import { useState } from 'react';
+import RealFurniImage from './RealFurniImage';
 
 interface MarketItem {
   id: string;
@@ -30,29 +30,6 @@ interface MarketItemCardProps {
 }
 
 export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCardProps) => {
-  const [imageError, setImageError] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // Generate multiple fallback URLs for images
-  const getImageUrls = (className: string, hotel: string) => [
-    `https://www.habbowidgets.com/images/furni/${className}.gif`,
-    `https://habbowidgets.com/images/furni/${className}.gif`,
-    `https://images.habbo.com/dcr/hof_furni/${className}.png`,
-    `https://habboemotion.com/images/furnis/${className}.png`,
-    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`,
-    '/assets/package.png' // Final fallback
-  ];
-
-  const imageUrls = getImageUrls(item.className, item.hotel);
-
-  const handleImageError = () => {
-    if (currentImageIndex < imageUrls.length - 1) {
-      setCurrentImageIndex(prev => prev + 1);
-    } else {
-      setImageError(true);
-    }
-  };
-
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('pt-BR', { 
@@ -60,6 +37,9 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       minute: '2-digit' 
     });
   };
+
+  // Determine item type based on ID
+  const itemType = item.id.includes('wallitem') ? 'wallitem' : 'roomitem';
 
   if (compact) {
     return (
@@ -69,19 +49,13 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       >
         <div className="flex flex-col space-y-2">
           <div className="flex items-center justify-center">
-            {!imageError ? (
-              <img
-                src={imageUrls[currentImageIndex]}
-                alt={item.name}
-                className="w-12 h-12 object-contain"
-                onError={handleImageError}
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-12 h-12 bg-gray-100 flex items-center justify-center rounded">
-                <Package2 size={20} className="text-gray-400" />
-              </div>
-            )}
+            <RealFurniImage
+              className={item.className}
+              name={item.name}
+              type={itemType}
+              hotel={item.hotel}
+              size="md"
+            />
           </div>
           
           <div className="text-center">
@@ -137,19 +111,13 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       className="habbo-card p-4 hover:shadow-lg transition-all cursor-pointer"
     >
       <div className="flex items-center space-x-4">
-        {!imageError ? (
-          <img
-            src={imageUrls[currentImageIndex]}
-            alt={item.name}
-            className="w-16 h-16 object-contain"
-            onError={handleImageError}
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded">
-            <Package2 size={24} className="text-gray-400" />
-          </div>
-        )}
+        <RealFurniImage
+          className={item.className}
+          name={item.name}
+          type={itemType}
+          hotel={item.hotel}
+          size="lg"
+        />
         
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-800 truncate">{item.name}</h3>
