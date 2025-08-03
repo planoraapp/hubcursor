@@ -18,6 +18,8 @@ interface BadgeItem {
     year?: number;
     event?: string;
     source_info?: string;
+    validation_count?: number;
+    last_validated_at?: string;
   };
 }
 
@@ -104,7 +106,7 @@ export const BadgeDetailsModal: React.FC<BadgeDetailsModalProps> = ({ badge, onC
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
       onClick={onClose}
     >
-      {/* Backdrop com blur */}
+      {/* Backdrop with blur */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       
       {/* Modal centralizado */}
@@ -207,6 +209,28 @@ export const BadgeDetailsModal: React.FC<BadgeDetailsModalProps> = ({ badge, onC
                     <div>
                       <span className="text-sm text-gray-600">Fonte:</span>
                       <span className="ml-2 font-semibold text-gray-900">{badge.metadata.source_info}</span>
+                    </div>
+                  </div>
+                )}
+
+                {badge.metadata.validation_count && badge.metadata.validation_count > 1 && (
+                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                    <div>
+                      <span className="text-sm text-gray-600">Validações:</span>
+                      <span className="ml-2 font-semibold text-green-900">{badge.metadata.validation_count}</span>
+                    </div>
+                  </div>
+                )}
+
+                {badge.metadata.last_validated_at && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Calendar className="w-4 h-4 text-gray-600" />
+                    <div>
+                      <span className="text-sm text-gray-600">Última Validação:</span>
+                      <span className="ml-2 font-semibold text-gray-900">
+                        {new Date(badge.metadata.last_validated_at).toLocaleDateString('pt-BR')}
+                      </span>
                     </div>
                   </div>
                 )}
