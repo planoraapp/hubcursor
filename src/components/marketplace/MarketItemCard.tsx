@@ -1,5 +1,7 @@
+
 import { TrendingUp, TrendingDown, Clock, Package2 } from 'lucide-react';
 import { CreditIcon } from './CreditIcon';
+import { useState } from 'react';
 
 interface MarketItem {
   id: string;
@@ -28,13 +30,26 @@ interface MarketItemCardProps {
 }
 
 export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCardProps) => {
-  const getRarityColor = (rarity: string) => {
-    switch (rarity) {
-      case 'common': return 'bg-gray-100 text-gray-800';
-      case 'uncommon': return 'bg-blue-100 text-blue-800';
-      case 'rare': return 'bg-purple-100 text-purple-800';
-      case 'legendary': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const [imageError, setImageError] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Generate multiple fallback URLs for images
+  const getImageUrls = (className: string, hotel: string) => [
+    `https://www.habbowidgets.com/images/furni/${className}.gif`,
+    `https://habbowidgets.com/images/furni/${className}.gif`,
+    `https://images.habbo.com/dcr/hof_furni/${className}.png`,
+    `https://habboemotion.com/images/furnis/${className}.png`,
+    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`,
+    '/assets/package.png' // Final fallback
+  ];
+
+  const imageUrls = getImageUrls(item.className, item.hotel);
+
+  const handleImageError = () => {
+    if (currentImageIndex < imageUrls.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
+    } else {
+      setImageError(true);
     }
   };
 
@@ -54,14 +69,19 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       >
         <div className="flex flex-col space-y-2">
           <div className="flex items-center justify-center">
-            <img
-              src={item.imageUrl}
-              alt={item.name}
-              className="w-12 h-12 object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/assets/package.png';
-              }}
-            />
+            {!imageError ? (
+              <img
+                src={imageUrls[currentImageIndex]}
+                alt={item.name}
+                className="w-12 h-12 object-contain"
+                onError={handleImageError}
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-gray-100 flex items-center justify-center rounded">
+                <Package2 size={20} className="text-gray-400" />
+              </div>
+            )}
           </div>
           
           <div className="text-center">
@@ -104,10 +124,6 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
                 </div>
               )}
             </div>
-            
-            <span className={`inline-block px-2 py-1 rounded-full text-xs mt-2 ${getRarityColor(item.rarity)}`}>
-              {item.rarity}
-            </span>
           </div>
         </div>
       </div>
@@ -121,14 +137,19 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       className="habbo-card p-4 hover:shadow-lg transition-all cursor-pointer"
     >
       <div className="flex items-center space-x-4">
-        <img
-          src={item.imageUrl}
-          alt={item.name}
-          className="w-16 h-16 object-contain"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/assets/package.png';
-          }}
-        />
+        {!imageError ? (
+          <img
+            src={imageUrls[currentImageIndex]}
+            alt={item.name}
+            className="w-16 h-16 object-contain"
+            onError={handleImageError}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded">
+            <Package2 size={24} className="text-gray-400" />
+          </div>
+        )}
         
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-800 truncate">{item.name}</h3>
@@ -156,10 +177,6 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
           </div>
           
           <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
-            <span className={`inline-block px-2 py-1 rounded-full ${getRarityColor(item.rarity)}`}>
-              {item.rarity}
-            </span>
-            
             <span className="text-xs">
               Atualizado: {new Date(item.lastUpdated).toLocaleTimeString()}
             </span>

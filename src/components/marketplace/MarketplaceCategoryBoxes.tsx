@@ -55,7 +55,6 @@ export const MarketplaceCategoryBoxes = ({
   hotel
 }: MarketplaceCategoryBoxesProps) => {
   const handleItemClick = (item: MarketItem) => {
-    // This could open a modal or navigate to item details
     console.log('Item clicked:', item);
   };
 
@@ -67,8 +66,8 @@ export const MarketplaceCategoryBoxes = ({
         items={topSellers.concat(biggestGainers, biggestLosers, mostExpensive, opportunities)} 
       />
 
-      {/* Category Boxes Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {/* Category Boxes Grid - Improved layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MarketCategoryBox 
           title="🔥 Top Vendedores" 
           items={topSellers} 
@@ -96,14 +95,20 @@ export const MarketplaceCategoryBoxes = ({
         />
         
         {/* Hotel Status Box */}
-        <div className="habbo-card p-4">
+        <div className="habbo-card p-6">
           <div className="text-center">
-            <div className="text-4xl mb-2">{hotel.flag}</div>
-            <h3 className="font-bold text-gray-800 mb-2">{hotel.name}</h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <p>{totalItems} itens ativos</p>
-              <p>Última atualização: {new Date().toLocaleTimeString('pt-BR')}</p>
-              <p className="text-xs">Atualização automática ativa</p>
+            <div className="text-4xl mb-3">{hotel.flag}</div>
+            <h3 className="font-bold text-gray-800 mb-3">{hotel.name}</h3>
+            <div className="space-y-2 text-sm text-gray-600">
+              <p className="flex items-center justify-center gap-2">
+                📦 {totalItems} itens ativos
+              </p>
+              <p className="flex items-center justify-center gap-2">
+                🕒 Última atualização: {new Date().toLocaleTimeString('pt-BR')}
+              </p>
+              <p className="text-xs text-green-600 font-medium">
+                ✅ Atualização automática ativa
+              </p>
             </div>
           </div>
         </div>

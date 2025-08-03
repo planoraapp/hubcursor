@@ -89,7 +89,7 @@ serve(async (req) => {
       'https://api.furnieye.net/marketplace',
       ...(includeMarketplace ? [
         `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/shopapi/public/inventory/${hotel}`,
-        'https://habboapi.site/api/market/current' // Current marketplace listings
+        'https://habboapi.site/api/market/current'
       ] : [])
     ];
 
@@ -99,10 +99,8 @@ serve(async (req) => {
           let url: string;
           
           if (source.includes('shopapi')) {
-            // Shopapi for current marketplace data
             url = source;
           } else if (source.includes('market/current')) {
-            // Current marketplace API
             url = `${source}?hotel=${hotel}&search=${encodeURIComponent(searchTerm)}`;
           } else if (source.includes('habboapi.site')) {
             url = `${source}?${query}&hotel=${hotel}&days=${days}`;
@@ -125,7 +123,6 @@ serve(async (req) => {
             let items = [];
             
             if (source.includes('shopapi')) {
-              // Parse shopapi format for marketplace items
               items = parseShopApiData(data, hotel);
             } else {
               items = Array.isArray(data) ? data : data.items || [];
@@ -140,7 +137,6 @@ serve(async (req) => {
               }
             });
             
-            // Break after successful fetch to avoid rate limits
             if (items.length > 0) break;
           }
         } catch (error) {
@@ -168,7 +164,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        items: uniqueItems.slice(0, 200), // Increased limit for marketplace
+        items: uniqueItems.slice(0, 200),
         stats,
         metadata: {
           searchTerm,
@@ -206,7 +202,6 @@ serve(async (req) => {
   }
 });
 
-// Helper function to parse ShopAPI data format
 function parseShopApiData(data: any, hotel: string): any[] {
   try {
     if (data.inventory && Array.isArray(data.inventory)) {
@@ -249,14 +244,13 @@ function processMarketItem(item: any, furniData: OfficialFurniData | null, hotel
       trend: change > 5 ? 'up' : change < -5 ? 'down' : 'stable',
       changePercent: change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`,
       volume: item.volume || item.sold_count || Math.floor(Math.random() * 100) + 10,
-      imageUrl: generateImageUrl(className, hotel),
+      imageUrl: generateMultipleImageUrls(className, hotel)[0],
       rarity: determineRarity(currentPrice, className, officialData?.furniline),
       description: officialData?.description || `Móvel exclusivo do Habbo Hotel ${hotel.toUpperCase()}`,
       className,
       hotel,
       priceHistory: generatePriceHistory(currentPrice, 30),
       lastUpdated: new Date().toISOString(),
-      // Marketplace-specific fields
       ...(isMarketplace && {
         quantity: item.quantity || Math.floor(Math.random() * 10) + 1,
         listedAt: item.listedAt || new Date(Date.now() - Math.random() * 86400000).toISOString()
@@ -266,6 +260,21 @@ function processMarketItem(item: any, furniData: OfficialFurniData | null, hotel
     console.error('Error processing market item:', error);
     return null;
   }
+}
+
+function generateMultipleImageUrls(className: string, hotel: string): string[] {
+  const urls = [];
+  
+  // Primary sources with better URLs
+  urls.push(
+    `https://www.habbowidgets.com/images/furni/${className}.gif`,
+    `https://habbowidgets.com/images/furni/${className}.gif`,
+    `https://images.habbo.com/dcr/hof_furni/${className}.png`,
+    `https://habboemotion.com/images/furnis/${className}.png`,
+    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`
+  );
+  
+  return urls;
 }
 
 function categorizeItem(category?: string): string {
@@ -283,12 +292,6 @@ function categorizeItem(category?: string): string {
   return 'moveis';
 }
 
-function generateImageUrl(className: string, hotel: string): string {
-  const hotelDomain = hotel === 'br' ? 'com.br' : hotel === 'com' ? 'com' : hotel;
-  
-  return `https://images.habbo.com/dcr/hof_furni/${className}.png`;
-}
-
 function determineRarity(price: number, className: string, furniline?: string): string {
   if (price > 1000 || className.includes('throne') || className.includes('dragon')) return 'legendary';
   if (price > 500 || furniline?.includes('rare') || className.includes('ltd')) return 'rare';
@@ -301,12 +304,11 @@ function generatePriceHistory(currentPrice: number, days: number): number[] {
   let price = Math.floor(currentPrice * (0.7 + Math.random() * 0.3));
   
   for (let i = 0; i < days; i++) {
-    const variation = (Math.random() - 0.5) * 0.2; // ±10% daily variation
+    const variation = (Math.random() - 0.5) * 0.2;
     price = Math.max(10, Math.floor(price * (1 + variation)));
     history.push(price);
   }
   
-  // Ensure the last price is close to current price
   history[days - 1] = Math.floor(currentPrice * (0.95 + Math.random() * 0.1));
   
   return history;

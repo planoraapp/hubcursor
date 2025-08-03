@@ -146,9 +146,9 @@ export const MarketplaceLayout = () => {
         
         {hotels.map(hotel => (
           <TabsContent key={hotel.id} value={hotel.id}>
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Left Column - Marketplace Items List (2/5 width) */}
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Left Column - Marketplace Items List (5/12 width) */}
+              <div className="lg:col-span-5">
                 <MarketplaceItemsList
                   items={items}
                   loading={loading}
@@ -167,8 +167,8 @@ export const MarketplaceLayout = () => {
                 </div>
               </div>
               
-              {/* Right Column - Category Boxes (3/5 width) */}
-              <div className="lg:col-span-3">
+              {/* Right Column - Category Boxes (7/12 width) */}
+              <div className="lg:col-span-7">
                 <MarketplaceCategoryBoxes
                   topSellers={topSellers}
                   biggestGainers={biggestGainers}
