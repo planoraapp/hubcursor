@@ -1,7 +1,7 @@
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package2 } from 'lucide-react';
 import RealFurniImage from './RealFurniImage';
 
 interface MarketItem {
@@ -15,6 +15,7 @@ interface MarketItem {
   rarity: string;
   className: string;
   hotel: string;
+  quantity?: number;
 }
 
 interface MarketCategoryBoxProps {
@@ -24,6 +25,21 @@ interface MarketCategoryBoxProps {
 }
 
 export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryBoxProps) => {
+  if (items.length === 0) {
+    return (
+      <div className="habbo-card">
+        <div className="p-4 border-b">
+          <h3 className="font-bold text-gray-800">{title}</h3>
+          <p className="text-sm text-gray-600">Carregando itens...</p>
+        </div>
+        <div className="p-4 text-center text-gray-500">
+          <Package2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Nenhum item disponível</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="habbo-card">
       <div className="p-4 border-b">
@@ -40,7 +56,7 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
               <div
                 key={item.id}
                 onClick={() => onItemClick(item)}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100 hover:border-blue-200"
               >
                 <RealFurniImage
                   className={item.className}
@@ -51,9 +67,11 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
                 />
                 
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{item.name}</p>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="flex items-center gap-1">
+                  <p className="font-medium text-sm truncate" title={item.name}>
+                    {item.name}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs mt-1">
+                    <span className="flex items-center gap-1 text-blue-600 font-semibold">
                       <CreditIcon size="sm" />
                       {item.currentPrice.toLocaleString()}
                     </span>
@@ -71,6 +89,12 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
                       </span>
                     </div>
                   </div>
+                  {item.quantity && (
+                    <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                      <Package2 size={10} />
+                      <span>{item.quantity} disponíveis</span>
+                    </div>
+                  )}
                 </div>
               </div>
             );

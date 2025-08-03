@@ -45,9 +45,9 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
     return (
       <div
         onClick={onClick}
-        className="habbo-card p-3 hover:shadow-md transition-all cursor-pointer border hover:border-blue-200"
+        className="habbo-card p-3 hover:shadow-md transition-all cursor-pointer border hover:border-blue-200 bg-white"
       >
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-center">
             <RealFurniImage
               className={item.className}
@@ -58,17 +58,19 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
             />
           </div>
           
-          <div className="text-center">
-            <p className="font-medium text-xs truncate" title={item.name}>
+          <div className="text-center space-y-2">
+            <p className="font-medium text-xs truncate leading-tight" title={item.name}>
               {item.name}
             </p>
             
-            <div className="flex items-center justify-center gap-1 mt-1">
+            <div className="flex items-center justify-center gap-1">
               <CreditIcon size="sm" />
-              <span className="font-bold text-sm">{item.currentPrice.toLocaleString()}</span>
+              <span className="font-bold text-sm text-blue-600">
+                {item.currentPrice.toLocaleString()}
+              </span>
             </div>
             
-            <div className="flex items-center justify-center gap-1 mt-1">
+            <div className="flex items-center justify-center gap-1">
               {item.trend === 'up' ? (
                 <TrendingUp size={10} className="text-green-500" />
               ) : item.trend === 'down' ? (
@@ -83,7 +85,7 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
             </div>
 
             {/* Additional info for compact cards */}
-            <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+            <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-gray-100">
               {item.quantity && (
                 <div className="flex items-center gap-1">
                   <Package2 size={10} />
@@ -97,6 +99,12 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
                   <span>{formatTime(item.listedAt)}</span>
                 </div>
               )}
+              
+              {!item.quantity && !item.listedAt && (
+                <div className="flex items-center gap-1">
+                  <span>Vol: {item.volume}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -108,7 +116,7 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
   return (
     <div
       onClick={onClick}
-      className="habbo-card p-4 hover:shadow-lg transition-all cursor-pointer"
+      className="habbo-card p-4 hover:shadow-lg transition-all cursor-pointer bg-white border hover:border-blue-200"
     >
       <div className="flex items-center space-x-4">
         <RealFurniImage
@@ -126,7 +134,7 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
           <div className="flex items-center space-x-3 mt-2">
             <div className="flex items-center gap-1">
               <CreditIcon size="sm" />
-              <span className="font-bold">{item.currentPrice.toLocaleString()}</span>
+              <span className="font-bold text-blue-600">{item.currentPrice.toLocaleString()}</span>
             </div>
             
             <div className="flex items-center gap-1">
@@ -142,12 +150,24 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
                 {item.changePercent}
               </span>
             </div>
+
+            {item.quantity && (
+              <div className="flex items-center gap-1 text-sm text-gray-600">
+                <Package2 size={12} />
+                <span>{item.quantity} disponíveis</span>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
             <span className="text-xs">
-              Atualizado: {new Date(item.lastUpdated).toLocaleTimeString()}
+              Atualizado: {new Date(item.lastUpdated).toLocaleTimeString('pt-BR')}
             </span>
+            {item.volume > 0 && (
+              <span className="text-xs">
+                Volume: {item.volume}
+              </span>
+            )}
           </div>
         </div>
       </div>

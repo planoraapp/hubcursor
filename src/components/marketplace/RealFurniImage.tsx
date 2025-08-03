@@ -20,16 +20,18 @@ const RealFurniImage = ({
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Real Habbo image sources in priority order
+  // Real Habbo image sources in priority order - more reliable sources first
   const getImageUrls = (className: string, type: string, hotel: string) => [
-    // Official DCR images (most reliable)
+    // Official Habbo imaging (most reliable)
     `https://images.habbo.com/dcr/hof_furni/${type}/${className}.png`,
+    // Alternative official source
+    `https://www.habbo.com/dcr/hof_furni/${type}/${className}.png`,
     // Hotel-specific imaging
     `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`,
-    // Alternative sources
+    // Additional reliable sources
+    `https://habbowidgets.com/images/furni/${className}.png`,
     `https://habbowidgets.com/images/furni/${className}.gif`,
-    `https://habboemotion.com/images/furnis/${className}.png`,
-    // Supabase storage as fallback
+    // Supabase storage as final fallback
     `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${className}.png`
   ];
 
@@ -37,19 +39,19 @@ const RealFurniImage = ({
   const currentUrl = imageUrls[currentImageIndex];
 
   const handleImageError = () => {
-    console.log(`❌ [RealFurniImage] Failed to load: ${currentUrl}`);
+    console.log(`❌ [RealFurniImage] Failed to load: ${currentUrl} for ${className}`);
     
     if (currentImageIndex < imageUrls.length - 1) {
-      console.log(`🔄 [RealFurniImage] Trying next URL for ${className}`);
+      console.log(`🔄 [RealFurniImage] Trying next URL (${currentImageIndex + 1}/${imageUrls.length}) for ${className}`);
       setCurrentImageIndex(prev => prev + 1);
     } else {
-      console.log(`❌ [RealFurniImage] All URLs failed for ${className}`);
+      console.log(`❌ [RealFurniImage] All URLs failed for ${className}, showing fallback`);
       setImageError(true);
     }
   };
 
   const handleImageLoad = () => {
-    console.log(`✅ [RealFurniImage] Successfully loaded: ${currentUrl}`);
+    console.log(`✅ [RealFurniImage] Successfully loaded: ${currentUrl} for ${className}`);
   };
 
   const sizeClasses = {
@@ -60,22 +62,24 @@ const RealFurniImage = ({
 
   if (imageError) {
     return (
-      <div className={`bg-gray-100 flex items-center justify-center rounded ${sizeClasses[size]}`}>
+      <div className={`bg-gray-100 flex items-center justify-center rounded ${sizeClasses[size]} border border-gray-200`}>
         <Package className="w-4 h-4 text-gray-400" />
       </div>
     );
   }
 
   return (
-    <img
-      src={currentUrl}
-      alt={name}
-      className={`object-contain ${sizeClasses[size]}`}
-      onError={handleImageError}
-      onLoad={handleImageLoad}
-      loading="lazy"
-      title={`${name} (${className})`}
-    />
+    <div className={`${sizeClasses[size]} flex items-center justify-center bg-gray-50 rounded border border-gray-100`}>
+      <img
+        src={currentUrl}
+        alt={name}
+        className={`object-contain max-w-full max-h-full`}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        loading="lazy"
+        title={`${name} (${className})`}
+      />
+    </div>
   );
 };
 

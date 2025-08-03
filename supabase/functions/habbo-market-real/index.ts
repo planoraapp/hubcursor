@@ -90,7 +90,7 @@ serve(async (req) => {
     
     console.log(`🔍 [HabboMarketReal] Searching: "${searchTerm}", Category: "${category}", Hotel: ${hotel}, Days: ${days}, Marketplace: ${includeMarketplace}`);
 
-    // Fetch official furnidata first
+    // Fetch official furnidata with better error handling
     let furniData: OfficialFurniData | null = null;
     const furniUrl = `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/gamedata/furnidata_json/1`;
     
@@ -101,20 +101,29 @@ serve(async (req) => {
           'User-Agent': 'HabboHub-MarketReal/1.0',
           'Accept': 'application/json',
         },
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(15000)
       });
       
       if (furniResponse.ok) {
-        furniData = await furniResponse.json();
-        console.log(`✅ [FurniData] Loaded ${Object.keys(furniData?.roomitems || {}).length} room items, ${Object.keys(furniData?.wallitems || {}).length} wall items`);
+        const responseData = await furniResponse.json();
+        const roomItemsCount = Object.keys(responseData?.roomitems || {}).length;
+        const wallItemsCount = Object.keys(responseData?.wallitems || {}).length;
+        
+        if (roomItemsCount > 0 || wallItemsCount > 0) {
+          furniData = responseData;
+          console.log(`✅ [FurniData] Loaded ${roomItemsCount} room items, ${wallItemsCount} wall items`);
+        } else {
+          console.log(`⚠️ [FurniData] API returned empty data, using fallback`);
+        }
       }
     } catch (error) {
       console.log(`❌ [FurniData] Error loading furnidata:`, error.message);
     }
 
-    if (!furniData) {
-      console.log('🔄 [FurniData] Using fallback furniture list');
-      furniData = generateKnownFurniData();
+    // Use comprehensive fallback when official API fails or returns empty data
+    if (!furniData || (Object.keys(furniData.roomitems || {}).length === 0 && Object.keys(furniData.wallitems || {}).length === 0)) {
+      console.log('🔄 [FurniData] Using comprehensive fallback furniture list');
+      furniData = generateComprehensiveFurniData();
     }
 
     // Generate market items based on real furniture data
@@ -157,7 +166,7 @@ serve(async (req) => {
           days,
           includeMarketplace,
           fetchedAt: new Date().toISOString(),
-          source: 'official-furnidata',
+          source: furniData ? 'official-furnidata' : 'comprehensive-fallback',
           totalRealItems: uniqueItems.length
         }
       }),
@@ -213,11 +222,10 @@ function createMarketItemFromFurni(item: any, type: 'roomitem' | 'wallitem', hot
     const classname = item.classname || item.id;
     const name = item.name || `Item ${classname}`;
     
-    // Generate realistic price based on item properties
-    const basePrice = calculateRealPrice(item);
-    const priceVariation = 0.8 + (Math.random() * 0.4); // ±20% variation
-    const currentPrice = Math.floor(basePrice * priceVariation);
-    const previousPrice = Math.floor(basePrice * (0.9 + Math.random() * 0.2));
+    // Generate realistic price based on item properties - NO RANDOM VALUES
+    const basePrice = calculateRealisticPrice(item);
+    const currentPrice = basePrice;
+    const previousPrice = Math.floor(basePrice * 0.95); // 5% lower previous price
     
     const change = ((currentPrice - previousPrice) / previousPrice) * 100;
     
@@ -227,9 +235,9 @@ function createMarketItemFromFurni(item: any, type: 'roomitem' | 'wallitem', hot
       category: categorizeRealItem(item),
       currentPrice,
       previousPrice,
-      trend: change > 2 ? 'up' : change < -2 ? 'down' : 'stable',
+      trend: change > 1 ? 'up' : change < -1 ? 'down' : 'stable',
       changePercent: change > 0 ? `+${change.toFixed(1)}%` : `${change.toFixed(1)}%`,
-      volume: calculateRealVolume(item),
+      volume: calculateRealisticVolume(item),
       imageUrl: generateRealImageUrl(classname, type, hotel),
       rarity: determineRealRarity(item),
       description: item.description || `${name} - Móvel oficial do Habbo Hotel ${hotel.toUpperCase()}`,
@@ -237,9 +245,10 @@ function createMarketItemFromFurni(item: any, type: 'roomitem' | 'wallitem', hot
       hotel,
       priceHistory: generateRealisticPriceHistory(basePrice, 30),
       lastUpdated: new Date().toISOString(),
-      ...(Math.random() > 0.7 && {
-        quantity: Math.floor(Math.random() * 5) + 1,
-        listedAt: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString()
+      // Add quantity and listing time for some items to simulate marketplace
+      ...(shouldHaveMarketplaceData(item) && {
+        quantity: getRealisticQuantity(item),
+        listedAt: getRealisticListingTime()
       })
     };
   } catch (error) {
@@ -248,45 +257,49 @@ function createMarketItemFromFurni(item: any, type: 'roomitem' | 'wallitem', hot
   }
 }
 
-function calculateRealPrice(item: any): number {
-  let basePrice = 50; // Base price
+function calculateRealisticPrice(item: any): number {
+  let basePrice = 25; // More realistic base price
   
-  // Price based on rarity
-  if (item.rare) basePrice += 500;
-  if (item.bc) basePrice += 200; // HC items are more expensive
+  // Price based on rarity - realistic values
+  if (item.rare) basePrice += 300;
+  if (item.bc) basePrice += 150; // HC items are more expensive
   
   // Price based on special types
-  if (item.specialtype > 0) basePrice += 150;
+  if (item.specialtype > 0) basePrice += 75;
   
-  // Price based on category
+  // Price based on category - more realistic pricing
   const category = item.category?.toLowerCase() || '';
-  if (category.includes('throne') || category.includes('rare')) basePrice += 800;
-  if (category.includes('dragon') || category.includes('throne')) basePrice += 600;
-  if (category.includes('plant') || category.includes('pet')) basePrice += 100;
+  if (category.includes('throne') || category.includes('rare')) basePrice += 500;
+  if (category.includes('dragon') || category.includes('throne')) basePrice += 350;
+  if (category.includes('plant') || category.includes('pet')) basePrice += 50;
+  if (category.includes('chair') || category.includes('seat')) basePrice += 30;
+  if (category.includes('bed')) basePrice += 80;
+  if (category.includes('table')) basePrice += 40;
   
   // Price based on furniline (collections are more valuable)
-  if (item.furniline && item.furniline !== '') basePrice += 75;
+  if (item.furniline && item.furniline !== '') basePrice += 60;
   
-  return Math.max(basePrice, 10); // Minimum 10 credits
+  return Math.max(basePrice, 15); // Minimum 15 credits
 }
 
-function calculateRealVolume(item: any): number {
-  let baseVolume = 10;
+function calculateRealisticVolume(item: any): number {
+  let baseVolume = 5; // More realistic base volume
   
   // More popular categories have higher volume
-  if (item.rare) baseVolume += 50;
-  if (item.bc) baseVolume += 30;
-  if (item.category?.toLowerCase().includes('chair')) baseVolume += 20;
-  if (item.category?.toLowerCase().includes('bed')) baseVolume += 15;
+  if (item.rare) baseVolume += 25;
+  if (item.bc) baseVolume += 15;
+  if (item.category?.toLowerCase().includes('chair')) baseVolume += 12;
+  if (item.category?.toLowerCase().includes('bed')) baseVolume += 8;
+  if (item.category?.toLowerCase().includes('plant')) baseVolume += 20; // Plants are popular
   
-  return baseVolume + Math.floor(Math.random() * 40);
+  return baseVolume;
 }
 
 function categorizeRealItem(item: any): string {
   const category = item.category?.toLowerCase() || '';
   const name = item.name?.toLowerCase() || '';
   
-  if (category.includes('chair') || name.includes('cadeira') || name.includes('chair')) return 'cadeiras';
+  if (category.includes('chair') || name.includes('cadeira') || name.includes('chair') || category.includes('seat')) return 'cadeiras';
   if (category.includes('table') || name.includes('mesa') || name.includes('table')) return 'mesas';
   if (category.includes('bed') || name.includes('cama') || name.includes('bed')) return 'camas';
   if (category.includes('plant') || name.includes('planta') || name.includes('plant')) return 'plantas';
@@ -304,29 +317,42 @@ function determineRealRarity(item: any): string {
 }
 
 function generateRealImageUrl(classname: string, type: string, hotel: string): string {
-  // Priority order for image sources - using most reliable first
-  const baseUrls = [
-    `https://images.habbo.com/dcr/hof_furni/${type}/${classname}.png`,
-    `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${classname}.png`,
-    `https://habbowidgets.com/images/furni/${classname}.gif`,
-    `https://habboemotion.com/images/furnis/${classname}.png`
-  ];
-  
-  return baseUrls[0]; // Return the most reliable URL
+  return `https://images.habbo.com/dcr/hof_furni/${type}/${classname}.png`;
 }
 
 function generateRealisticPriceHistory(basePrice: number, days: number): number[] {
   const history = [];
   let currentPrice = basePrice;
   
+  // Generate more realistic price history without excessive randomness
   for (let i = 0; i < days; i++) {
-    // Realistic price fluctuation (±10% max change per day)
-    const change = (Math.random() - 0.5) * 0.2;
-    currentPrice = Math.max(Math.floor(currentPrice * (1 + change)), 10);
+    // Small realistic fluctuations (±5% max change per day)
+    const change = (Math.sin(i * 0.1) + Math.cos(i * 0.15)) * 0.02; // Sine wave pattern for realism
+    currentPrice = Math.max(Math.floor(currentPrice * (1 + change)), Math.floor(basePrice * 0.8));
     history.push(currentPrice);
   }
   
   return history;
+}
+
+function shouldHaveMarketplaceData(item: any): boolean {
+  // 30% of items should have marketplace data (quantity/listing)
+  return (item.classname?.charCodeAt(0) || 0) % 10 < 3;
+}
+
+function getRealisticQuantity(item: any): number {
+  // Rare items have lower quantities
+  if (item.rare) return 1;
+  if (item.bc) return Math.floor(Math.random() * 3) + 1;
+  return Math.floor(Math.random() * 5) + 1;
+}
+
+function getRealisticListingTime(): string {
+  // Random time in the last week
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const randomTime = new Date(weekAgo.getTime() + Math.random() * (now.getTime() - weekAgo.getTime()));
+  return randomTime.toISOString();
 }
 
 function calculateRealStats(items: MarketItem[]) {
@@ -355,34 +381,57 @@ function calculateRealStats(items: MarketItem[]) {
   };
 }
 
-function generateKnownFurniData(): OfficialFurniData {
-  // Known popular Habbo furniture for fallback
+function generateComprehensiveFurniData(): OfficialFurniData {
+  // Comprehensive list of real Habbo furniture
   const knownItems = {
-    // Chairs
-    'chair_basic': { name: 'Cadeira Básica', category: 'seating', rare: false, bc: false },
-    'chair_norja': { name: 'Cadeira Norja', category: 'seating', rare: false, bc: true },
-    'throne': { name: 'Trono', category: 'seating', rare: true, bc: false },
-    'chair_plasto': { name: 'Cadeira Plasto', category: 'seating', rare: false, bc: false },
+    // Chairs - Real Habbo furni
+    'chair_basic': { name: 'Cadeira Básica', category: 'seating', rare: false, bc: false, description: 'Cadeira simples para sentar' },
+    'chair_norja': { name: 'Cadeira Norja', category: 'seating', rare: false, bc: true, description: 'Cadeira moderna da linha Norja' },
+    'chair_plasto': { name: 'Cadeira Plasto', category: 'seating', rare: false, bc: false, description: 'Cadeira plástica colorida' },
+    'chair_polyfon': { name: 'Cadeira Polyfon', category: 'seating', rare: false, bc: true, description: 'Cadeira estofada confortável' },
+    'chair_plasty': { name: 'Cadeira Plasty', category: 'seating', rare: false, bc: false, description: 'Cadeira de plástico moderno' },
+    'throne': { name: 'Trono', category: 'seating', rare: true, bc: false, description: 'Trono real dourado' },
     
-    // Tables
-    'table_norja_med': { name: 'Mesa Norja Média', category: 'table', rare: false, bc: true },
-    'table_basic': { name: 'Mesa Básica', category: 'table', rare: false, bc: false },
-    'bar_basic': { name: 'Balcão Básico', category: 'table', rare: false, bc: false },
+    // Tables - Real Habbo furni  
+    'table_norja_med': { name: 'Mesa Norja Média', category: 'table', rare: false, bc: true, description: 'Mesa de centro da linha Norja' },
+    'table_basic': { name: 'Mesa Básica', category: 'table', rare: false, bc: false, description: 'Mesa simples de madeira' },
+    'table_plasto_4leg': { name: 'Mesa Plasto 4 Pernas', category: 'table', rare: false, bc: false, description: 'Mesa plástica quadrada' },
+    'table_polyfon_small': { name: 'Mesa Polyfon Pequena', category: 'table', rare: false, bc: true, description: 'Mesa pequena moderna' },
+    'bar_basic': { name: 'Balcão Básico', category: 'table', rare: false, bc: false, description: 'Balcão para bar' },
+    'table_silo_small': { name: 'Mesa Silo Pequena', category: 'table', rare: false, bc: true, description: 'Mesa industrial compacta' },
     
-    // Beds
-    'bed_basic': { name: 'Cama Básica', category: 'bed', rare: false, bc: false },
-    'bed_budget': { name: 'Cama Econômica', category: 'bed', rare: false, bc: false },
-    'bed_armas_two': { name: 'Cama Armas Dupla', category: 'bed', rare: false, bc: true },
+    // Beds - Real Habbo furni
+    'bed_basic': { name: 'Cama Básica', category: 'bed', rare: false, bc: false, description: 'Cama simples para dormir' },
+    'bed_budget': { name: 'Cama Econômica', category: 'bed', rare: false, bc: false, description: 'Cama barata mas confortável' },
+    'bed_armas_two': { name: 'Cama Armas Dupla', category: 'bed', rare: false, bc: true, description: 'Cama de casal luxuosa' },
+    'bed_polyfon': { name: 'Cama Polyfon', category: 'bed', rare: false, bc: true, description: 'Cama moderna estofada' },
+    'bed_silo': { name: 'Cama Silo', category: 'bed', rare: false, bc: true, description: 'Cama industrial robusta' },
     
-    // Plants
-    'plant_small_cactus': { name: 'Cacto Pequeno', category: 'plant', rare: false, bc: false },
-    'plant_big_cactus': { name: 'Cacto Grande', category: 'plant', rare: false, bc: false },
-    'plant_sunflower': { name: 'Girassol', category: 'plant', rare: false, bc: false },
+    // Plants - Real Habbo furni
+    'plant_small_cactus': { name: 'Cacto Pequeno', category: 'plant', rare: false, bc: false, description: 'Pequeno cacto decorativo' },
+    'plant_big_cactus': { name: 'Cacto Grande', category: 'plant', rare: false, bc: false, description: 'Grande cacto do deserto' },
+    'plant_sunflower': { name: 'Girassol', category: 'plant', rare: false, bc: false, description: 'Girassol amarelo brilhante' },
+    'plant_yukka': { name: 'Planta Yukka', category: 'plant', rare: false, bc: false, description: 'Planta tropical verde' },
+    'plant_bulrush': { name: 'Junco', category: 'plant', rare: false, bc: false, description: 'Planta aquática decorativa' },
+    'plant_small_plant': { name: 'Plantinha', category: 'plant', rare: false, bc: false, description: 'Pequena planta de vaso' },
     
-    // Rare items
-    'rare_dragonlamp': { name: 'Lâmpada Dragão', category: 'lighting', rare: true, bc: false },
-    'rare_parasol': { name: 'Guarda-sol Raro', category: 'decoration', rare: true, bc: false },
-    'diamond_painting': { name: 'Quadro Diamante', category: 'wall_decoration', rare: true, bc: false }
+    // Lamps and lighting - Real Habbo furni
+    'lamp_basic': { name: 'Lâmpada Básica', category: 'lighting', rare: false, bc: false, description: 'Lâmpada simples de mesa' },
+    'lamp_polyfon': { name: 'Lâmpada Polyfon', category: 'lighting', rare: false, bc: true, description: 'Lâmpada moderna elegante' },
+    'lamp_mood': { name: 'Lâmpada de Humor', category: 'lighting', rare: false, bc: true, description: 'Lâmpada com várias cores' },
+    
+    // Rare items - Real Habbo rares
+    'rare_dragonlamp': { name: 'Lâmpada Dragão', category: 'lighting', rare: true, bc: false, description: 'Lâmpada rara em formato de dragão' },
+    'rare_parasol': { name: 'Guarda-sol Raro', category: 'decoration', rare: true, bc: false, description: 'Guarda-sol vintage raro' },
+    'rare_fountain': { name: 'Fonte Rara', category: 'decoration', rare: true, bc: false, description: 'Fonte decorativa rara' },
+    'throne_gold': { name: 'Trono Dourado', category: 'seating', rare: true, bc: false, description: 'Trono real banhado a ouro' },
+    
+    // Decorations
+    'fireworks': { name: 'Fogos de Artifício', category: 'decoration', rare: false, bc: false, description: 'Fogos coloridos decorativos' },
+    'present_gen': { name: 'Presente', category: 'decoration', rare: false, bc: false, description: 'Presente misterioso embrulhado' },
+    'teddybear': { name: 'Ursinho de Pelúcia', category: 'decoration', rare: false, bc: false, description: 'Ursinho fofo e macio' },
+    'pillow': { name: 'Almofada', category: 'decoration', rare: false, bc: false, description: 'Almofada confortável' },
+    'rug_basic': { name: 'Tapete Básico', category: 'decoration', rare: false, bc: false, description: 'Tapete simples para o chão' }
   };
   
   const roomitems: Record<string, any> = {};
@@ -393,18 +442,29 @@ function generateKnownFurniData(): OfficialFurniData {
       id: classname,
       classname,
       name: data.name,
-      description: `${data.name} - Móvel oficial do Habbo`,
+      description: data.description,
       category: data.category,
       rare: data.rare,
       bc: data.bc,
       specialtype: data.rare ? 1 : 0,
-      furniline: data.rare ? 'rare_collection' : '',
+      furniline: data.rare ? 'rare_collection' : data.bc ? 'hc_collection' : '',
       environment: '',
-      revision: '1'
+      revision: '1',
+      defaultdir: '0',
+      xdim: 1,
+      ydim: 1,
+      partcolors: { color: ['#FFFFFF'] },
+      adurl: '',
+      offerid: -1,
+      buyout: false,
+      rentofferid: -1,
+      rentbuyout: false,
+      excludeddynamic: false
     };
     
-    if (data.category === 'wall_decoration') {
-      wallitems[classname] = item;
+    // Wall items (posters, paintings, etc.)
+    if (data.category === 'wall_decoration' || classname.includes('poster') || classname.includes('painting')) {
+      wallitems[classname] = { ...item, defaultdir: undefined, xdim: undefined, ydim: undefined };
     } else {
       roomitems[classname] = item;
     }
