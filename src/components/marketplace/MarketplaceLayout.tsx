@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceItemsList } from './MarketplaceItemsList';
 import { MarketplaceCategoryBoxes } from './MarketplaceCategoryBoxes';
 import { CountryFlags } from './CountryFlags';
-import { AnimatedConsole } from '../AnimatedConsole';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MarketItem {
@@ -140,14 +139,21 @@ export const MarketplaceLayout = () => {
     return () => clearInterval(interval);
   }, [loading, selectedHotel, searchTerm, selectedCategory, sortBy]);
 
-  // Organizar categorias com dados reais
+  // Organizar categorias com dados reais e filtro LTD melhorado
   const maioresOfertas = [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
   const maisVendidosHoje = [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
   const melhoresNegocios = [...items].filter(item => item.currentPrice < 300 && item.rarity !== 'common').slice(0, 10);
   const altasDeHoje = [...items].filter(item => item.trend === 'up').sort((a, b) => 
     parseFloat(b.changePercent) - parseFloat(a.changePercent)
   ).slice(0, 10);
-  const mostExpensive = [...items].sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
+  
+  // Filtro LTD melhorado - detectar por multiple padrões
+  const ltdItems = [...items].filter(item => 
+    item.className.toLowerCase().includes('ltd') || 
+    item.rarity === 'legendary' ||
+    item.name.toLowerCase().includes('ltd') ||
+    item.currentPrice > 1000
+  ).sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
 
   if (error && items.length === 0) {
     return (
@@ -156,7 +162,7 @@ export const MarketplaceLayout = () => {
           <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Dados</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button 
-            onClick={fetchMarketData}
+            onClick={() => window.location.reload()}
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
           >
             Tentar Novamente
@@ -168,11 +174,6 @@ export const MarketplaceLayout = () => {
 
   return (
     <div className="space-y-6">
-      {/* Console Animado */}
-      <div className="flex justify-center">
-        <AnimatedConsole isActive={true} className="mb-4" />
-      </div>
-
       {/* Hotel Selection Tabs com Bandeiras */}
       <div className="flex justify-center">
         <Tabs value={selectedHotel} onValueChange={setSelectedHotel} className="w-full max-w-4xl">
@@ -219,7 +220,7 @@ export const MarketplaceLayout = () => {
                     biggestGainers={maisVendidosHoje}
                     biggestLosers={melhoresNegocios}
                     mostExpensive={altasDeHoje}
-                    opportunities={mostExpensive}
+                    opportunities={ltdItems}
                     stats={stats}
                     totalItems={items.length}
                     hotel={hotel}

@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { UserProfilePopover } from '../components/UserProfilePopover';
 import { HabboMobileDock, DockItem } from '../components/ui/habbo-mobile-dock';
+import { AnimatedConsole } from '../components/AnimatedConsole';
 import { getUserByName } from '../services/habboApi';
 
 const MobileLayout = ({ children }: { children: React.ReactNode }) => {
@@ -27,7 +28,7 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
   const allDockItems: DockItem[] = [
     { id: 'home', label: t('home'), icon: '/assets/home.png', order: 1 },
     { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', order: 2 },
-    { id: 'console', label: t('console'), icon: '/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png', order: 3 },
+    { id: 'console', label: t('console'), icon: 'animated', order: 3 },
     { id: 'tools', label: t('tools'), icon: '/assets/ferramentas.png', order: 4 },
     { id: 'more', label: t('more'), icon: '/assets/ferramentas.png', order: 5 },
     // Ferramentas (irão para o popover)
@@ -37,7 +38,6 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
     { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', order: 9 },
     // Páginas extras (irão para "Mais")
     { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', order: 10 },
-    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', order: 11 },
   ];
 
   // Adicionar admin link se user é admin
@@ -60,7 +60,6 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
       'editor': '/editor',
       'mercado': '/mercado',
       'noticias': '/noticias',
-      'eventos': '/eventos',
       'admin-hub': '/admin-hub'
     };
 
@@ -81,7 +80,6 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
       '/editor': 'editor',
       '/mercado': 'mercado',
       '/noticias': 'noticias',
-      '/eventos': 'eventos',
       '/admin-hub': 'admin-hub'
     };
 
@@ -97,6 +95,19 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
   const headerAvatarUrl = isLoggedIn && habboData ? 
     `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=4&head_direction=4&gesture=sml&size=s&frame=1&headonly=1` 
     : '/assets/frank.png';
+
+  // Console central - usa AnimatedConsole se for a página console
+  const currentSection = getCurrentActiveSection();
+  const consoleElement = currentSection === 'console' ? (
+    <AnimatedConsole isActive={true} className="w-12 h-12" />
+  ) : (
+    <img 
+      src="/assets/consoleoff.png" 
+      alt="Console" 
+      className="w-12 h-12"
+      style={{ imageRendering: 'pixelated' }}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-repeat pb-20" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
@@ -138,7 +149,7 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </div>
 
-      {/* HabboMobileDock */}
+      {/* HabboMobileDock com Console Central Animado */}
       <HabboMobileDock
         menuItems={allDockItems}
         userAvatarUrl={userAvatarUrl}
@@ -146,6 +157,7 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
         activeItemId={getCurrentActiveSection()}
         isLoggedIn={isLoggedIn}
         currentPath={location.pathname}
+        customCenterElement={consoleElement}
       />
     </div>
   );

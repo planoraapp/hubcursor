@@ -1,6 +1,6 @@
 
 import { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './hooks/useAuth';
@@ -13,7 +13,6 @@ const EditorPuhekupla = lazy(() => import('./pages/EditorPuhekupla'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ConnectHabbo = lazy(() => import('./pages/ConnectHabbo'));
 const Noticias = lazy(() => import('./pages/Noticias'));
-const Eventos = lazy(() => import('./pages/Eventos'));
 const Catalogo = lazy(() => import('./pages/Catalogo'));
 const Ferramentas = lazy(() => import('./pages/Ferramentas'));
 const ForumPage = lazy(() => import('./pages/ForumPage'));
@@ -55,7 +54,8 @@ function App() {
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/connect-habbo" element={<ConnectHabbo />} />
                 <Route path="/noticias" element={<Noticias />} />
-                <Route path="/eventos" element={<Eventos />} />
+                {/* Redirect /eventos to /noticias */}
+                <Route path="/eventos" element={<Navigate to="/noticias" replace />} />
                 <Route path="/catalogo" element={<Catalogo />} />
                 <Route path="/ferramentas" element={<Ferramentas />} />
                 <Route path="/forum" element={<ForumPage />} />

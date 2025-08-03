@@ -1,13 +1,13 @@
-
-import { useState, useRef, useCallback } from 'react';
-import { Search, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Filter, Package2, TrendingUp, TrendingDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MarketItemCard } from './MarketItemCard';
-import { MarketItemModal } from './MarketItemModal';
-import { PanelCard } from '../PanelCard';
-import { RealPremiumItems } from './RealPremiumItems';
-import { MarketStatsFooter } from './MarketStatsFooter';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MarketFilters } from './MarketFilters';
+import { CreditIcon } from './CreditIcon';
+import { MarketStatsFooter } from './MarketStatsFooter';
+import { RealPremiumItems } from './RealPremiumItems';
+import RealFurniImageHybrid from './RealFurniImageHybrid';
 
 interface MarketItem {
   id: string;
@@ -27,7 +27,19 @@ interface MarketItem {
   lastUpdated: string;
   quantity?: number;
   listedAt?: string;
+  soldItems?: number;
   openOffers?: number;
+}
+
+interface MarketStats {
+  totalItems: number;
+  averagePrice: number;
+  totalVolume: number;
+  trendingUp: number;
+  trendingDown: number;
+  featuredItems: number;
+  highestPrice: number;
+  mostTraded: string;
 }
 
 interface MarketplaceItemsListProps {
@@ -40,13 +52,13 @@ interface MarketplaceItemsListProps {
   sortBy: 'price' | 'recent' | 'quantity' | 'ltd';
   setSortBy: (sort: 'price' | 'recent' | 'quantity' | 'ltd') => void;
   hotel: { id: string; name: string; flag: string };
-  stats: any;
+  stats: MarketStats;
 }
 
-export const MarketplaceItemsList = ({
-  items,
-  loading,
-  searchTerm,
+export const MarketplaceItemsList = ({ 
+  items, 
+  loading, 
+  searchTerm, 
   setSearchTerm,
   selectedCategory,
   setSelectedCategory,
@@ -55,124 +67,123 @@ export const MarketplaceItemsList = ({
   hotel,
   stats
 }: MarketplaceItemsListProps) => {
-  const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [displayedItems, setDisplayedItems] = useState(50);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const categories = [
-    { id: 'all', name: 'Todos' },
-    { id: 'chair', name: 'Cadeiras' },
-    { id: 'table', name: 'Mesas' },
-    { id: 'bed', name: 'Camas' },
-    { id: 'plant', name: 'Plantas' },
-    { id: 'lamp', name: 'Iluminação' },
-    { id: 'rare', name: 'Raros' },
-  ];
-
-  const filteredItems = items.filter(item => {
-    if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
-    if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-    if (sortBy === 'ltd' && !item.className.toLowerCase().includes('ltd')) return false;
-    return true;
-  }).slice(0, displayedItems);
-
-  const loadMore = useCallback(() => {
-    if (displayedItems < filteredItems.length) {
-      setDisplayedItems(prev => Math.min(prev + 50, items.length));
-    }
-  }, [displayedItems, filteredItems.length, items.length]);
-
-  const handleItemClick = (item: MarketItem) => {
-    setSelectedItem(item);
-    setModalOpen(true);
+  const toggleFilter = () => {
+    setIsFilterOpen(!isFilterOpen);
   };
 
   return (
-    <>
-      <PanelCard title={`🏪 Feira Livre - ${hotel.name}`}>
-        <div className="space-y-4">
-          {/* Top Section: Filtros à esquerda + Premium Items à direita */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="lg:flex-1">
-              <MarketFilters sortBy={sortBy} setSortBy={setSortBy} />
-            </div>
-            <div className="lg:w-80">
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
-                <h4 className="font-bold text-gray-800 mb-3 text-sm">🏆 Preços Atuais</h4>
-                <RealPremiumItems hotel={hotel.id} />
-              </div>
-            </div>
-          </div>
-
-          {/* Search */}
+    <div className="habbo-card">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <h3 className="text-lg font-bold text-gray-800 mb-2">🏪 Mercado {hotel.name}</h3>
+        
+        {/* Premium Items */}
+        <RealPremiumItems hotel={hotel.id} />
+        
+        {/* Search and Filters */}
+        <div className="space-y-3">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar na feira..."
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por nome ou classe..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="habbo-input w-full pl-10 pr-4 py-2 text-sm"
+              className="pl-10"
             />
-            {loading && (
-              <RefreshCw size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 animate-spin" />
-            )}
           </div>
           
-          {/* Category Filter */}
-          <div className="flex items-center space-x-2">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="habbo-input px-3 py-2 flex-1 text-sm"
-            >
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Items Grid */}
-          <ScrollArea className="h-[500px]" ref={scrollAreaRef}>
-            <div className="grid grid-cols-2 gap-3 p-1">
-              {filteredItems.map((item) => (
-                <MarketItemCard
-                  key={item.id}
-                  item={item}
-                  onClick={() => handleItemClick(item)}
-                  compact
-                />
-              ))}
-            </div>
+          <div className="flex gap-2">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="chair">Cadeiras</SelectItem>
+                <SelectItem value="table">Mesas</SelectItem>
+                <SelectItem value="bed">Camas</SelectItem>
+                <SelectItem value="plant">Plantas</SelectItem>
+                <SelectItem value="rare">Raros</SelectItem>
+              </SelectContent>
+            </Select>
             
-            {displayedItems < items.length && (
-              <div className="text-center p-4">
-                <button
-                  onClick={loadMore}
-                  className="habbo-button px-4 py-2 text-sm"
-                  disabled={loading}
-                >
-                  Carregar Mais ({items.length - displayedItems} restantes)
-                </button>
-              </div>
-            )}
-          </ScrollArea>
-
-          {/* Market Stats Footer */}
-          <MarketStatsFooter 
-            stats={stats}
-            totalItems={items.length}
-            hotel={hotel}
-          />
+            <MarketFilters sortBy={sortBy} setSortBy={setSortBy} />
+          </div>
         </div>
-      </PanelCard>
+      </div>
 
-      <MarketItemModal 
-        item={selectedItem}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-      />
-    </>
+      {/* Items List */}
+      <ScrollArea className="h-96">
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">
+            <Package2 className="w-8 h-8 mx-auto mb-2 animate-pulse" />
+            <p>Carregando itens...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            <Package2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p>Nenhum item encontrado.</p>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {items.map((item) => {
+              const itemType = item.id.includes('wallitem') ? 'wallitem' : 'roomitem';
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border border-gray-100 hover:shadow-md"
+                >
+                  <RealFurniImageHybrid
+                    className={item.className}
+                    name={item.name}
+                    type={itemType}
+                    hotel={item.hotel}
+                    size="sm"
+                  />
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate" title={item.name}>
+                      {item.name}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs mt-1">
+                      <span className="flex items-center gap-1 text-blue-600 font-semibold">
+                        <CreditIcon size="sm" />
+                        {item.currentPrice.toLocaleString()}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {item.trend === 'up' ? (
+                          <TrendingUp size={12} className="text-green-500" />
+                        ) : item.trend === 'down' ? (
+                          <TrendingDown size={12} className="text-red-500" />
+                        ) : null}
+                        <span className={`${
+                          item.trend === 'up' ? 'text-green-600' : 
+                          item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                        }`}>
+                          {item.changePercent}
+                        </span>
+                      </div>
+                    </div>
+                    {(item.soldItems || item.quantity) && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <Package2 size={10} />
+                        <span>
+                          {item.soldItems ? `${item.soldItems} vendidos` : `${item.quantity} disponível`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ScrollArea>
+
+      {/* Stats Footer */}
+      <MarketStatsFooter stats={stats} totalItems={items.length} hotel={hotel} />
+    </div>
   );
 };
