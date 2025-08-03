@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -43,25 +42,32 @@ export interface PuhekuplaClothing {
 }
 
 const fetchPuhekuplaData = async (endpoint: string, params: Record<string, string> = {}) => {
-  const searchParams = new URLSearchParams({
-    endpoint,
-    ...params
-  });
+  console.log(`🚀 [PuhekuplaData] Requesting ${endpoint} with params:`, params);
 
   const { data, error } = await supabase.functions.invoke('puhekupla-proxy', {
     body: { endpoint, params }
   });
 
   if (error) {
-    console.error(`❌ [PuhekuplaData] Error fetching ${endpoint}:`, error);
-    throw error;
+    console.error(`❌ [PuhekuplaData] Supabase error for ${endpoint}:`, error);
+    throw new Error(`Supabase function error: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error('No data received from Puhekupla API');
   }
 
   if (!data.success) {
-    throw new Error(data.error || 'Unknown error');
+    console.error(`❌ [PuhekuplaData] API error for ${endpoint}:`, data.error);
+    throw new Error(data.error || 'Unknown API error');
   }
 
-  console.log(`✅ [PuhekuplaData] ${endpoint} loaded:`, data.data);
+  console.log(`✅ [PuhekuplaData] ${endpoint} loaded successfully:`, {
+    hasData: !!data.data,
+    apiKeyUsed: data.apiKeyUsed,
+    fetchedAt: data.fetchedAt
+  });
+  
   return data.data;
 };
 
@@ -70,11 +76,13 @@ export const usePuhekuplaFurni = (page = 1, category = '', search = '') => {
     queryKey: ['puhekupla-furni', page, category, search],
     queryFn: () => fetchPuhekuplaData('furni', { 
       page: page.toString(), 
-      category, 
-      search 
+      category: category === 'all' ? '' : category, 
+      search: search.trim()
     }),
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 
@@ -84,6 +92,8 @@ export const usePuhekuplaCategories = () => {
     queryFn: () => fetchPuhekuplaData('categories'),
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60 * 2, // 2 hours
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 
@@ -92,10 +102,12 @@ export const usePuhekuplaBadges = (page = 1, search = '') => {
     queryKey: ['puhekupla-badges', page, search],
     queryFn: () => fetchPuhekuplaData('badges', { 
       page: page.toString(), 
-      search 
+      search: search.trim()
     }),
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 
@@ -104,10 +116,12 @@ export const usePuhekuplaClothing = (page = 1, category = '', search = '') => {
     queryKey: ['puhekupla-clothing', page, category, search],
     queryFn: () => fetchPuhekuplaData('clothing', { 
       page: page.toString(), 
-      category, 
-      search 
+      category: category === 'all' ? '' : category, 
+      search: search.trim()
     }),
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
