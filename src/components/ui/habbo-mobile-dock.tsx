@@ -58,7 +58,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     // Avatar central - usando API do Habbo para cabeça diagonal
     const avatarUrl = isLoggedIn 
       ? userAvatarUrl || 'https://www.habbo.com/habbo-imaging/avatarimage?user=Habbo&action=std&direction=4&head_direction=4&gesture=sml&size=s&frame=1&headonly=1'
-      : '/assets/frank.png';
+      : '/assets/consoleon3.gif';
     
     const avatarItem: DockItem = { 
       id: 'console', 
@@ -152,183 +152,176 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-2 flex justify-center w-full md:hidden">
-      {/* Tools Popover */}
-      <ToolsPopover 
-        isOpen={isToolsOpen} 
-        onClose={() => setIsToolsOpen(false)}
-        currentPath={currentPath}
-      />
+    <div className="fixed bottom-0 left-0 right-0 z-50 w-full md:hidden">
+      {/* Linha divisória */}
+      <div className="h-px" style={{ backgroundColor: '#000' }}></div>
+      
+      {/* Container principal da dock */}
+      <div className="p-0 flex justify-center w-full" style={{ backgroundColor: '#ffefd5' }}>
+        {/* Tools Popover */}
+        <ToolsPopover 
+          isOpen={isToolsOpen} 
+          onClose={() => setIsToolsOpen(false)}
+          currentPath={currentPath}
+        />
 
-      {/* Dropdown Menu "Mais" - Ajustado para aparecer acima da dock */}
-      {isDropdownOpen && (
-        <div 
-          ref={dropdownRef}
-          className="absolute bottom-24 left-1/2 transform -translate-x-1/2 w-72 p-4 rounded-t-xl shadow-2xl flex flex-col space-y-2 max-h-[60vh] overflow-y-auto"
-          style={{
-            backgroundColor: '#ffefd5',
-            boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          {/* Header do dropdown */}
-          <div className="text-center pb-2 border-b border-black/30">
-            <span 
-              className="font-bold text-lg text-white volter-font"
-              style={{ 
-                textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-              }}
-            >
-              {t('more')}
-            </span>
-          </div>
-
-          {dropdownItems.length > 0 ? (
-            <div className="grid grid-cols-3 gap-3">
-              {dropdownItems.map(item => (
-                <button
-                  key={item.id}
-                  className="flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-105"
-                  style={{
-                    backgroundColor: activeItemId === item.id 
-                      ? 'rgba(0, 0, 0, 0.2)' 
-                      : 'rgba(0, 0, 0, 0.1)',
-                    boxShadow: activeItemId === item.id 
-                      ? '0 0 10px rgba(0, 0, 0, 0.5)' 
-                      : '0 2px 5px rgba(0, 0, 0, 0.2)'
-                  }}
-                  onClick={() => handleDropdownItemClick(item.id)}
-                >
-                  {typeof item.icon === 'string' ? (
-                    <img src={item.icon} alt={item.label} className="w-6 h-6 object-contain" />
-                  ) : (
-                    <item.icon className="w-6 h-6 text-black" />
-                  )}
-                  <span className="text-xs font-medium text-center leading-tight text-white volter-font" style={{
-                    textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                  }}>
-                    {item.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center py-4 text-gray-600">
-              Nenhuma página adicional.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Main Dock - Aplicando cor bege sem borda preta */}
-      <nav 
-        className="w-full max-w-sm flex justify-around items-center p-3 rounded-xl shadow-2xl"
-        style={{
-          backgroundColor: '#ffefd5',
-          boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)',
-          background: 'linear-gradient(135deg, #ffefd5 0%, #f0e6d2 50%, #ffefd5 100%)'
-        }}
-      >
-        {mainDockItems.map((item) => {
-          const isActive = activeItemId === item.id;
-          const isMore = item.id === 'more';
-          const isTools = item.id === 'tools';
-          
-          let IconDisplay;
-          if (item.isAvatar) {
-            // Use custom center element if provided, otherwise use avatar
-            if (customCenterElement) {
-              IconDisplay = customCenterElement;
-            } else {
-              IconDisplay = (
-                <div className="relative">
-                  <div 
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: 'linear-gradient(135deg, #000 0%, #333 100%)',
-                      padding: '3px'
-                    }}
-                  >
-                    <div 
-                      className="w-full h-full rounded-full overflow-hidden"
-                      style={{ backgroundColor: '#1a1a1a' }}
-                    >
-                      <img 
-                        src={item.icon as string} 
-                        alt={item.label} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                  <div className="w-10 h-10" />
-                </div>
-              );
-            }
-          } else if (typeof item.icon === 'string') {
-            IconDisplay = (
-              <img 
-                src={item.icon} 
-                alt={item.label} 
-                className="w-6 h-6 object-contain" 
-              />
-            );
-          } else {
-            IconDisplay = (
-              <item.icon 
-                className={`w-6 h-6 ${isActive ? 'text-black' : 'text-gray-700'}`}
-              />
-            );
-          }
-
-          return (
-            <button
-              key={item.id}
-              className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
-                isMore ? 'dock-more-button' : ''
-              } ${isTools ? 'dock-tools-button' : ''}`}
-              style={{
-                backgroundColor: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
-                  ? 'rgba(0, 0, 0, 0.2)' 
-                  : 'transparent',
-                boxShadow: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
-                  ? '0 0 15px rgba(0, 0, 0, 0.4)' 
-                  : 'none',
-                minWidth: '60px'
-              }}
-              onClick={() => handleMainDockItemClick(item)}
-            >
-              <div className={item.isAvatar ? '' : 'relative'}>
-                {isMore && isDropdownOpen ? (
-                  <X className="w-6 h-6 text-black" />
-                ) : (
-                  IconDisplay
-                )}
-                {item.isAvatar && !customCenterElement && (
-                  <div 
-                    className="absolute inset-0 rounded-full opacity-50"
-                    style={{
-                      background: 'radial-gradient(circle, rgba(0, 0, 0, 0.3) 0%, transparent 70%)',
-                      filter: 'blur(8px)'
-                    }}
-                  />
-                )}
-              </div>
-              
+        {/* Dropdown Menu "Mais" - Ajustado para aparecer acima da dock */}
+        {isDropdownOpen && (
+          <div 
+            ref={dropdownRef}
+            className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-72 p-4 rounded-t-xl shadow-2xl flex flex-col space-y-2 max-h-[60vh] overflow-y-auto border-t-2 border-black"
+            style={{
+              backgroundColor: '#ffefd5',
+              boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            {/* Header do dropdown */}
+            <div className="text-center pb-2 border-b border-black/30">
               <span 
-                className={`text-xs font-medium text-center leading-tight volter-font ${
-                  isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? 'text-white' : 'text-gray-700'
-                }`}
+                className="font-bold text-lg text-white volter-font"
                 style={{ 
-                  textShadow: (isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)) 
-                    ? '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                    : '1px 1px 2px rgba(255, 255, 255, 0.3)'
+                  textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                 }}
               >
-                {item.label}
+                {t('more')}
               </span>
-            </button>
-          );
-        })}
-      </nav>
+            </div>
+
+            {dropdownItems.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {dropdownItems.map(item => (
+                  <button
+                    key={item.id}
+                    className="flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 hover:scale-105"
+                    style={{
+                      backgroundColor: activeItemId === item.id 
+                        ? 'rgba(0, 0, 0, 0.2)' 
+                        : 'rgba(0, 0, 0, 0.1)',
+                      boxShadow: activeItemId === item.id 
+                        ? '0 0 10px rgba(0, 0, 0, 0.5)' 
+                        : '0 2px 5px rgba(0, 0, 0, 0.2)'
+                    }}
+                    onClick={() => handleDropdownItemClick(item.id)}
+                  >
+                    {typeof item.icon === 'string' ? (
+                      <img 
+                        src={item.icon} 
+                        alt={item.label} 
+                        className="w-8 h-8 object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    ) : (
+                      <item.icon className="w-8 h-8 text-black" />
+                    )}
+                    <span className="text-xs font-medium text-center leading-tight text-white volter-font" style={{
+                      textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                    }}>
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center py-4 text-gray-600">
+                Nenhuma página adicional.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Main Dock */}
+        <nav className="w-full max-w-sm flex justify-around items-center py-4 px-3">
+          {mainDockItems.map((item) => {
+            const isActive = activeItemId === item.id;
+            const isMore = item.id === 'more';
+            const isTools = item.id === 'tools';
+            
+            let IconDisplay;
+            if (item.isAvatar) {
+              // Use custom center element if provided, otherwise use avatar
+              if (customCenterElement) {
+                IconDisplay = customCenterElement;
+              } else {
+                IconDisplay = (
+                  <div className="relative">
+                    <div 
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: 'linear-gradient(135deg, #000 0%, #333 100%)',
+                        padding: '3px'
+                      }}
+                    >
+                      <div 
+                        className="w-full h-full rounded-full overflow-hidden"
+                        style={{ backgroundColor: '#1a1a1a' }}
+                      >
+                        <img 
+                          src={item.icon as string} 
+                          alt={item.label} 
+                          className="w-full h-full object-cover"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                      </div>
+                    </div>
+                    <div className="w-12 h-12" />
+                  </div>
+                );
+              }
+            } else if (typeof item.icon === 'string') {
+              IconDisplay = (
+                <img 
+                  src={item.icon} 
+                  alt={item.label} 
+                  className="w-8 h-8 object-contain" 
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              );
+            } else {
+              IconDisplay = (
+                <item.icon 
+                  className={`w-8 h-8 ${isActive ? 'text-black' : 'text-gray-700'}`}
+                />
+              );
+            }
+
+            return (
+              <button
+                key={item.id}
+                className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
+                  isMore ? 'dock-more-button' : ''
+                } ${isTools ? 'dock-tools-button' : ''}`}
+                style={{
+                  backgroundColor: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
+                    ? 'rgba(0, 0, 0, 0.2)' 
+                    : 'transparent',
+                  boxShadow: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
+                    ? '0 0 15px rgba(0, 0, 0, 0.4)' 
+                    : 'none',
+                  minWidth: '60px'
+                }}
+                onClick={() => handleMainDockItemClick(item)}
+              >
+                <div className={item.isAvatar ? '' : 'relative'}>
+                  {isMore && isDropdownOpen ? (
+                    <X className="w-8 h-8 text-black" />
+                  ) : (
+                    IconDisplay
+                  )}
+                </div>
+                
+                <span 
+                  className={`text-xs font-medium text-center leading-tight volter-font text-white`}
+                  style={{ 
+                    textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                  }}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 };

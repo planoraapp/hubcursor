@@ -76,10 +76,20 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
       <div className="relative p-4" style={{ backgroundColor: '#ffefd5' }}>
         {isCollapsed ? (
           <div className="flex justify-center">
-            <img src="/assets/hub.gif" alt="HUB" className="w-12 h-12" />
+            <img 
+              src="/assets/hub.gif" 
+              alt="HUB" 
+              className="w-12 h-12 object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
           </div>
         ) : (
-          <img src="/assets/habbohub.gif" alt="HABBO HUB" className="w-full h-auto" />
+          <img 
+            src="/assets/habbohub.gif" 
+            alt="HABBO HUB" 
+            className="w-full h-auto object-contain" 
+            style={{ imageRendering: 'pixelated' }}
+          />
         )}
       </div>
 
@@ -98,7 +108,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
 
       {/* Menu Items */}
       <nav className="p-4">
-        <div className="space-y-2">
+        <div className="space-y-3">
           {menuItems.map((item) => {
             const isActive = currentSection === item.id;
             
@@ -106,32 +116,32 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
               <button
                 key={item.id}
                 onClick={() => handleItemClick(item)}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+                className={`w-full flex items-center gap-4 p-3 rounded-lg transition-all ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-500 to-purple-500 shadow-md'
                     : 'hover:bg-white/50'
                 }`}
               >
-                <div className={`flex items-center justify-center ${isCollapsed ? 'w-8 h-8' : 'w-8 h-8'}`}>
+                <div className="flex items-center justify-center w-10 h-10 flex-shrink-0">
                   {item.icon === 'animated' ? (
                     <AnimatedConsole 
                       isActive={isActive && currentSection === 'console'} 
-                      className="w-8 h-8"
+                      className="w-10 h-10"
                     />
                   ) : (
                     <img 
                       src={item.icon} 
                       alt={item.name}
-                      className="w-8 h-8 object-contain"
+                      className="w-10 h-10 object-contain"
                       style={{ imageRendering: 'pixelated' }}
                     />
                   )}
                 </div>
                 {!isCollapsed && (
-                  <span className={`font-medium text-sm volter-font ${
-                    isActive ? 'text-white' : 'text-gray-800'
+                  <span className={`font-medium text-base volter-font flex-1 text-left ${
+                    isActive ? 'text-white' : 'text-white'
                   }`} style={{
-                    textShadow: isActive ? 'none' : '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                    textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                   }}>
                     {item.name}
                   </span>
@@ -141,14 +151,6 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
           })}
         </div>
       </nav>
-
-      {/* Footer */}
-      {!isCollapsed && (
-        <div className="absolute bottom-4 left-4 right-4 text-center">
-          <img src="/assets/LogoSulake1.png" alt="Sulake" className="h-6 mx-auto opacity-50" />
-          <p className="text-xs text-gray-500 mt-1 volter-font">Habbo Hub v3.0</p>
-        </div>
-      )}
     </div>
   );
 };

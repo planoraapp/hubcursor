@@ -24,45 +24,59 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
     try {
       setLoading(true);
       
-      // Buscar especificamente por "31 Dias HC" e "31 Dias CA"
-      const hcPromise = supabase.functions.invoke('habbo-market-real', {
-        body: { 
-          searchTerm: '31 Dias HC', 
-          category: '',
-          hotel: hotel,
-          days: 7
-        }
-      });
-
-      const caPromise = supabase.functions.invoke('habbo-market-real', {
-        body: { 
-          searchTerm: '31 Dias CA', 
-          category: '',
-          hotel: hotel,
-          days: 7
-        }
-      });
-
-      const [hcResponse, caResponse] = await Promise.all([hcPromise, caPromise]);
-
+      // Buscar especificamente por "31 Dias HC" e "31 Dias CA" com termo exato
+      const searchTerms = ['31 Dias HC', 'HC 31 dias', 'Habbo Club 31'];
+      const caTerms = ['31 Dias CA', 'CA 31 dias', 'Builders Club 31'];
+      
       let hcItem = null;
       let caItem = null;
 
-      // Processar HC
-      if (!hcResponse.error && hcResponse.data?.items) {
-        hcItem = hcResponse.data.items.find((item: any) => 
-          item.name.toLowerCase().includes('31 dias hc') || 
-          item.name.toLowerCase().includes('habbo club')
-        );
+      // Buscar HC com múltiplos termos
+      for (const term of searchTerms) {
+        if (hcItem) break;
+        
+        const hcResponse = await supabase.functions.invoke('habbo-market-real', {
+          body: { 
+            searchTerm: term, 
+            category: '',
+            hotel: hotel,
+            days: 7
+          }
+        });
+
+        if (!hcResponse.error && hcResponse.data?.items) {
+          hcItem = hcResponse.data.items.find((item: any) => 
+            item.name.toLowerCase().includes('31') && 
+            (item.name.toLowerCase().includes('hc') || 
+             item.name.toLowerCase().includes('habbo club'))
+          );
+        }
       }
 
-      // Processar CA
-      if (!caResponse.error && caResponse.data?.items) {
-        caItem = caResponse.data.items.find((item: any) => 
-          item.name.toLowerCase().includes('31 dias ca') || 
-          item.name.toLowerCase().includes('builders')
-        );
+      // Buscar CA com múltiplos termos
+      for (const term of caTerms) {
+        if (caItem) break;
+        
+        const caResponse = await supabase.functions.invoke('habbo-market-real', {
+          body: { 
+            searchTerm: term, 
+            category: '',
+            hotel: hotel,
+            days: 7
+          }
+        });
+
+        if (!caResponse.error && caResponse.data?.items) {
+          caItem = caResponse.data.items.find((item: any) => 
+            item.name.toLowerCase().includes('31') && 
+            (item.name.toLowerCase().includes('ca') || 
+             item.name.toLowerCase().includes('builders'))
+          );
+        }
       }
+
+      console.log('HC Item found:', hcItem);
+      console.log('CA Item found:', caItem);
 
       const realItems: ClubItem[] = [
         {
@@ -123,25 +137,33 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
             <img 
               src={item.icon} 
               alt={item.name}
-              className="w-8 h-8 flex-shrink-0"
+              className="w-10 h-10 flex-shrink-0"
               style={{ imageRendering: 'pixelated' }}
             />
-            <span className="font-bold text-sm text-gray-800 min-w-0 flex-shrink-0">
+            <span className="font-bold text-sm text-white min-w-0 flex-shrink-0 volter-font" style={{
+              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+            }}>
               {item.name}
             </span>
             <div className="flex items-center gap-1">
               <CreditIcon size="sm" />
-              <span className={`font-bold text-sm ${loading ? 'animate-pulse text-gray-400' : 'text-green-600'}`}>
+              <span className={`font-bold text-sm volter-font ${loading ? 'animate-pulse text-gray-400' : 'text-white'}`} style={{
+                textShadow: loading ? 'none' : '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+              }}>
                 {loading ? '...' : (item.available > 0 ? item.price.toLocaleString() : '-')}
               </span>
             </div>
           </div>
           
           {/* Linha de baixo para aviso de zero disponíveis */}
-          {item.available === 0 && (
-            <div className="mt-1 ml-11">
-              <div className="bg-red-100 border border-red-300 rounded px-2 py-1 inline-block">
-                <span className="text-xs text-red-600 font-medium">0 disponíveis</span>
+          {item.available === 0 && !loading && (
+            <div className="mt-2 ml-13">
+              <div className="bg-red-500 border-2 border-black rounded px-3 py-1 inline-block">
+                <span className="text-xs text-white font-bold volter-font" style={{
+                  textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                }}>
+                  0 disponíveis
+                </span>
               </div>
             </div>
           )}

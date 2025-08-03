@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
@@ -5,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock } from 'lucide-react';
 import RealFurniImageHybrid from './RealFurniImageHybrid';
+import { MarketItemModal } from './MarketItemModal';
 
 interface MarketItem {
   id: string;
@@ -64,6 +66,13 @@ export const MarketplaceItemsList = ({
   hotel, 
   stats 
 }: MarketplaceItemsListProps) => {
+  const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleItemClick = (item: MarketItem) => {
+    setSelectedItem(item);
+    setModalOpen(true);
+  };
 
   const filteredItems = [...items]
     .filter(item => {
@@ -89,114 +98,124 @@ export const MarketplaceItemsList = ({
     .slice(0, 20);
 
   return (
-    <div className="bg-white border-2 border-black rounded-lg shadow-lg">
-      <div 
-        className="p-4 border-b-2 border-black rounded-t-lg"
-        style={{
-          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-          backgroundImage: 'url(/assets/bghabbohub.png)',
-          backgroundSize: 'cover'
-        }}
-      >
-        <h3 className="font-bold text-white volter-font mb-3" style={{
-          textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-        }}>
-          🏪 Feira Livre de {hotel.name}
-        </h3>
-        
-        <div className="flex gap-4">
-          <div className="flex-shrink-0">
-            <MarketFiltersIconOnly sortBy={sortBy} setSortBy={setSortBy} />
-          </div>
+    <>
+      <div className="bg-white border-2 border-black rounded-lg shadow-lg">
+        <div 
+          className="p-4 border-b-2 border-black rounded-t-lg"
+          style={{
+            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+            backgroundImage: 'url(/assets/bghabbohub.png)',
+            backgroundSize: 'cover'
+          }}
+        >
+          <h3 className="font-bold text-white volter-font mb-3" style={{
+            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+          }}>
+            🏪 Feira Livre de {hotel.name}
+          </h3>
           
-          <div className="flex-1 flex justify-end">
-            <div className="bg-transparent">
-              <VerticalClubItems hotel={hotel.id} />
+          <div className="flex gap-4">
+            <div className="flex-shrink-0">
+              <MarketFiltersIconOnly sortBy={sortBy} setSortBy={setSortBy} />
+            </div>
+            
+            <div className="flex-1 flex justify-end">
+              <div className="bg-transparent">
+                <VerticalClubItems hotel={hotel.id} />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <ScrollArea className="h-96">
-        <div className="p-4 space-y-3">
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-              <p>Carregando itens...</p>
-            </div>
-          ) : filteredItems.length > 0 ? (
-            filteredItems.map((item, index) => {
-              const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
-              
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
-                >
-                  <RealFurniImageHybrid
-                    className={item.className}
-                    name={item.name}
-                    type={itemType}
-                    hotel={item.hotel}
-                    size="sm"
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate" title={item.name}>
-                        {item.name}
-                      </p>
-                      {item.rarity.toLowerCase().includes('ltd') && (
-                        <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded border border-purple-300">
-                          LTD
-                        </span>
-                      )}
-                    </div>
+        <ScrollArea className="h-96">
+          <div className="p-4 space-y-3">
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                <p>Carregando itens...</p>
+              </div>
+            ) : filteredItems.length > 0 ? (
+              filteredItems.map((item, index) => {
+                const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
+                
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => handleItemClick(item)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
+                  >
+                    <RealFurniImageHybrid
+                      className={item.className}
+                      name={item.name}
+                      type={itemType}
+                      hotel={item.hotel}
+                      size="sm"
+                    />
                     
-                    <div className="flex items-center gap-3 text-xs mt-1">
-                      <span className="flex items-center gap-1 text-blue-600 font-semibold">
-                        <CreditIcon size="sm" />
-                        {item.currentPrice.toLocaleString()}
-                      </span>
-                      
-                      <div className="flex items-center gap-1">
-                        {item.trend === 'up' ? (
-                          <TrendingUp size={12} className="text-green-500" />
-                        ) : item.trend === 'down' ? (
-                          <TrendingDown size={12} className="text-red-500" />
-                        ) : null}
-                        <span className={`${
-                          item.trend === 'up' ? 'text-green-600' : 
-                          item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                          {item.changePercent}
-                        </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm truncate" title={item.name}>
+                          {item.name}
+                        </p>
+                        {item.rarity.toLowerCase().includes('ltd') && (
+                          <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded border border-purple-300">
+                            LTD
+                          </span>
+                        )}
                       </div>
                       
-                      {item.openOffers && (
-                        <div className="flex items-center gap-1 text-gray-500">
-                          <Package2 size={10} />
-                          <span>{item.openOffers} ofertas</span>
+                      <div className="flex items-center gap-3 text-xs mt-1">
+                        <span className="flex items-center gap-1 text-blue-600 font-semibold">
+                          <CreditIcon size="sm" />
+                          {item.currentPrice.toLocaleString()}
+                        </span>
+                        
+                        <div className="flex items-center gap-1">
+                          {item.trend === 'up' ? (
+                            <TrendingUp size={12} className="text-green-500" />
+                          ) : item.trend === 'down' ? (
+                            <TrendingDown size={12} className="text-red-500" />
+                          ) : null}
+                          <span className={`${
+                            item.trend === 'up' ? 'text-green-600' : 
+                            item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                          }`}>
+                            {item.changePercent}
+                          </span>
                         </div>
-                      )}
-                      
-                      <div className="flex items-center gap-1 text-gray-500">
-                        <Clock size={10} />
-                        <span>atualizado</span>
+                        
+                        {item.openOffers && (
+                          <div className="flex items-center gap-1 text-gray-500">
+                            <Package2 size={10} />
+                            <span>{item.openOffers} ofertas</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-1 text-gray-500">
+                          <Clock size={10} />
+                          <span>atualizado</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Package2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Nenhum item encontrado para os filtros selecionados</p>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Package2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>Nenhum item encontrado para os filtros selecionados</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Item Modal */}
+      <MarketItemModal 
+        item={selectedItem}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
+    </>
   );
 };
