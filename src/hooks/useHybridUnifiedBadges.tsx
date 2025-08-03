@@ -30,7 +30,7 @@ const fetchSimplifiedBadges = async ({
   badges: HybridUnifiedBadgeItem[];
   metadata: any;
 }> => {
-  console.log(`🎯 [HybridUnifiedBadges] Buscando badges: limit=${limit}, search="${search}", category=${category}`);
+  console.log(`🎯 [SimplifiedBadges] Fetching badges: limit=${limit}, search="${search}", category=${category}`);
   
   try {
     const { data, error } = await supabase.functions.invoke('habbo-badges-validator', {
@@ -43,26 +43,27 @@ const fetchSimplifiedBadges = async ({
     });
 
     if (error) {
-      console.error('❌ [HybridUnifiedBadges] Erro na função:', error);
+      console.error('❌ [SimplifiedBadges] Supabase function error:', error);
       throw error;
     }
 
-    if (!data || !data.success) {
-      console.error('❌ [HybridUnifiedBadges] Resposta inválida:', data);
-      throw new Error('Resposta inválida do sistema de badges');
+    if (!data || !data.success || !data.badges || !Array.isArray(data.badges)) {
+      console.error('❌ [SimplifiedBadges] Invalid response format:', data);
+      throw new Error('Resposta inválida do sistema simplificado');
     }
 
-    console.log(`✅ [HybridUnifiedBadges] Sucesso: ${data.badges?.length || 0} badges`);
+    console.log(`✅ [SimplifiedBadges] Successfully fetched ${data.badges.length} badges`);
+    console.log(`📊 [SimplifiedBadges] Metadata:`, data.metadata);
     
     return {
-      badges: data.badges || [],
+      badges: data.badges,
       metadata: data.metadata || {}
     };
     
   } catch (error) {
-    console.error('❌ [HybridUnifiedBadges] Erro:', error);
+    console.error('❌ [SimplifiedBadges] Error:', error);
     
-    // Fallback simples com badges essenciais
+    // Fallback simples apenas para demonstração
     const fallbackBadges: HybridUnifiedBadgeItem[] = [
       {
         id: 'fallback_ADM',
@@ -75,52 +76,13 @@ const fetchSimplifiedBadges = async ({
         validation_count: 1,
         is_active: true,
         category: 'official'
-      },
-      {
-        id: 'fallback_MOD',
-        badge_code: 'MOD',
-        badge_name: 'Moderador',
-        source: 'HabboWidgets',
-        image_url: 'https://www.habbowidgets.com/images/badges/MOD.gif',
-        created_at: new Date().toISOString(),
-        last_validated_at: new Date().toISOString(),
-        validation_count: 1,
-        is_active: true,
-        category: 'official'
-      },
-      {
-        id: 'fallback_HC1',
-        badge_code: 'HC1',
-        badge_name: 'Habbo Club 1',
-        source: 'HabboWidgets',
-        image_url: 'https://www.habbowidgets.com/images/badges/HC1.gif',
-        created_at: new Date().toISOString(),
-        last_validated_at: new Date().toISOString(),
-        validation_count: 1,
-        is_active: true,
-        category: 'achievements'
       }
     ];
     
-    // Aplicar filtros mesmo no fallback
-    let filtered = fallbackBadges;
-    
-    if (category !== 'all') {
-      filtered = filtered.filter(b => b.category === category);
-    }
-    
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(b => 
-        b.badge_code.toLowerCase().includes(searchLower) ||
-        b.badge_name.toLowerCase().includes(searchLower)
-      );
-    }
-    
     return {
-      badges: filtered,
+      badges: category === 'all' ? fallbackBadges : fallbackBadges.filter(b => b.category === category),
       metadata: {
-        total: filtered.length,
+        total: fallbackBadges.length,
         fallbackMode: true,
         error: error.message
       }
@@ -129,7 +91,7 @@ const fetchSimplifiedBadges = async ({
 };
 
 const populateInitialBadges = async (): Promise<any> => {
-  console.log(`🚀 [HybridUnifiedBadges] Iniciando população inicial`);
+  console.log(`🚀 [SimplifiedBadges] Starting simplified initial population`);
   
   try {
     const { data, error } = await supabase.functions.invoke('habbo-badges-validator', {
@@ -137,15 +99,15 @@ const populateInitialBadges = async (): Promise<any> => {
     });
 
     if (error) {
-      console.error('❌ [HybridUnifiedBadges] Erro na população:', error);
+      console.error('❌ [SimplifiedBadges] Population error:', error);
       throw error;
     }
 
-    console.log(`✅ [HybridUnifiedBadges] População completada:`, data);
+    console.log(`✅ [SimplifiedBadges] Population completed:`, data);
     return data;
     
   } catch (error) {
-    console.error('❌ [HybridUnifiedBadges] Falha na população:', error);
+    console.error('❌ [SimplifiedBadges] Population failed:', error);
     throw error;
   }
 };
@@ -156,10 +118,10 @@ export const useHybridUnifiedBadges = ({
   category = 'all',
   enabled = true
 }: UseHybridUnifiedBadgesProps = {}) => {
-  console.log(`🔧 [useHybridUnifiedBadges] Hook iniciado: limit=${limit}, search="${search}", category=${category}, enabled=${enabled}`);
+  console.log(`🔧 [useSimplifiedBadges] Hook: limit=${limit}, search="${search}", category=${category}, enabled=${enabled}`);
   
   return useQuery({
-    queryKey: ['hybrid-unified-badges', limit, search, category],
+    queryKey: ['simplified-badges', limit, search, category],
     queryFn: () => fetchSimplifiedBadges({ limit, search, category }),
     enabled,
     staleTime: 1000 * 60 * 15, // 15 minutos
@@ -177,12 +139,12 @@ export const usePopulateInitialBadges = () => {
   return useMutation({
     mutationFn: populateInitialBadges,
     onSuccess: (data) => {
-      console.log('✅ [PopulateMutation] Sucesso:', data);
+      console.log('✅ [PopulateMutation] Success:', data);
       // Invalidar queries para recarregar dados
-      queryClient.invalidateQueries({ queryKey: ['hybrid-unified-badges'] });
+      queryClient.invalidateQueries({ queryKey: ['simplified-badges'] });
     },
     onError: (error) => {
-      console.error('❌ [PopulateMutation] Erro:', error);
+      console.error('❌ [PopulateMutation] Error:', error);
     }
   });
 };

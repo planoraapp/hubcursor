@@ -22,22 +22,27 @@ const HybridBadgeImage = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // URLs priorizadas para badges
+  // URLs otimizadas priorizando HabboAssets
   const badgeUrls = useMemo(() => [
-    // 1. HabboWidgets (mais confiável para badges)
-    `https://www.habbowidgets.com/images/badges/${code}.gif`,
-    `https://habbowidgets.com/images/badges/${code}.gif`,
-    
-    // 2. HabboAssets
+    // 1. HabboAssets (melhor fonte para imagens)
     `https://habboassets.com/c_images/album1584/${code}.gif`,
     `https://www.habboassets.com/c_images/album1584/${code}.gif`,
+    `https://habboassets.com/web_images/badges/${code}.gif`,
     
-    // 3. Habbo Oficial
+    // 2. Habbo Oficial
     `https://images.habbo.com/c_images/album1584/${code}.gif`,
     `https://www.habbo.com/habbo-imaging/badge/${code}`,
     `https://www.habbo.com.br/habbo-imaging/badge/${code}`,
+    `https://habbo.es/habbo-imaging/badge/${code}`,
     
-    // 4. Outras fontes
+    // 3. HabboWidgets
+    `https://www.habbowidgets.com/images/badges/${code}.gif`,
+    `https://habbowidgets.com/images/badges/${code}.gif`,
+    
+    // 4. Storage Supabase (backup)
+    `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-badges/${code}.gif`,
+    
+    // 5. Outras fontes
     `https://habboemotion.com/images/badges/${code}.gif`,
     `https://cdn.habboemotion.com/badges/${code}.gif`,
   ], [code]);
@@ -51,7 +56,7 @@ const HybridBadgeImage = ({
   };
 
   const handleImageError = useCallback(() => {
-    console.log(`❌ [HybridBadgeImage] Falha URL ${currentUrlIndex + 1}/${badgeUrls.length} para badge ${code}`);
+    console.log(`❌ [HybridImage] Falha URL ${currentUrlIndex + 1}/${badgeUrls.length} para badge ${code}`);
     
     if (currentUrlIndex < badgeUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
@@ -60,24 +65,59 @@ const HybridBadgeImage = ({
     } else {
       setHasError(true);
       setIsLoading(false);
-      console.log(`💥 [HybridBadgeImage] Todas URLs falharam para badge ${code}`);
+      console.log(`💥 [HybridImage] Todas URLs falharam para badge ${code}`);
     }
   }, [currentUrlIndex, badgeUrls.length, code]);
 
   const handleImageLoad = useCallback(() => {
-    console.log(`✅ [HybridBadgeImage] Badge ${code} carregado da URL ${currentUrlIndex + 1}`);
+    console.log(`✅ [HybridImage] Badge ${code} carregado da URL ${currentUrlIndex + 1}`);
     setIsLoading(false);
     setHasError(false);
     setImageLoaded(true);
-  }, [code, currentUrlIndex]);
+    
+    // Cache inteligente com TTL de 2 horas
+    if (typeof window !== 'undefined') {
+      const cacheKey = `hybrid_badge_${code}`;
+      const validUrl = badgeUrls[currentUrlIndex];
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({
+          url: validUrl,
+          timestamp: Date.now(),
+          urlIndex: currentUrlIndex,
+          ttl: 2 * 60 * 60 * 1000 // 2 horas
+        }));
+      } catch (e) {
+        console.warn('Cache write failed:', e);
+      }
+    }
+  }, [code, badgeUrls, currentUrlIndex]);
 
-  // Reset quando o código muda
+  // Reset e verificação de cache
   useEffect(() => {
     setCurrentUrlIndex(0);
     setHasError(false);
     setIsLoading(true);
     setImageLoaded(false);
-  }, [code]);
+
+    // Verificar cache híbrido
+    if (typeof window !== 'undefined') {
+      const cacheKey = `hybrid_badge_${code}`;
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const { timestamp, urlIndex, ttl } = JSON.parse(cached);
+          const isExpired = Date.now() - timestamp > ttl;
+          
+          if (!isExpired && urlIndex < badgeUrls.length) {
+            setCurrentUrlIndex(urlIndex);
+            console.log(`💾 [HybridImage] Cache hit para badge ${code}: URL ${urlIndex + 1}`);
+          }
+        }
+      } catch (e) {
+        console.warn('Cache read failed:', e);
+      }
+    }
+  }, [code, badgeUrls.length]);
 
   if (hasError && !showFallback) {
     return null;
