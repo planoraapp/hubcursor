@@ -1,3 +1,4 @@
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2 } from 'lucide-react';
@@ -28,8 +29,8 @@ interface MarketCategoryBoxProps {
 export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryBoxProps) => {
   if (items.length === 0) {
     return (
-      <div className="habbo-card">
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="bg-white border-2 border-black rounded-lg shadow-lg">
+        <div className="p-4 border-b-2 border-black" style={{ backgroundColor: '#f5f5dc' }}>
           <h3 className="font-bold text-gray-800">{title}</h3>
           <p className="text-sm text-gray-600">Carregando...</p>
         </div>
@@ -42,8 +43,8 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
   }
 
   return (
-    <div className="habbo-card">
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+    <div className="bg-white border-2 border-black rounded-lg shadow-lg">
+      <div className="p-4 border-b-2 border-black" style={{ backgroundColor: '#f5f5dc' }}>
         <h3 className="font-bold text-gray-800 flex items-center gap-2">{title}</h3>
         <p className="text-sm text-gray-600">{items.length} itens disponíveis</p>
       </div>
@@ -58,9 +59,9 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
               <div
                 key={item.id}
                 onClick={() => onItemClick(item)}
-                className={`flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 hover:border-blue-300 ${
-                  isTopItem ? 'border-yellow-200 bg-yellow-50' : 'border-gray-100'
-                } hover:shadow-md`}
+                className={`flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 hover:border-blue-300 hover:shadow-md ${
+                  isTopItem ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
+                }`}
               >
                 <RealFurniImageHybrid
                   className={item.className}
@@ -72,7 +73,7 @@ export const MarketCategoryBox = ({ title, items, onItemClick }: MarketCategoryB
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    {isTopItem && <span className="text-yellow-500 font-bold">#{index + 1}</span>}
+                    {isTopItem && <span className="text-yellow-600 font-bold">#{index + 1}</span>}
                     <p className="font-medium text-sm truncate" title={item.name}>
                       {item.name}
                     </p>

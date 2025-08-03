@@ -20,23 +20,20 @@ const RealFurniImageHybrid = ({
   const [imageError, setImageError] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // URLs otimizadas com cache inteligente
   const getOptimizedImageUrls = useCallback((className: string, type: string, hotel: string) => {
-    // Verificar cache local primeiro
     const cachedUrl = localStorage.getItem(`furni-success-${className}`);
     const urls = [];
 
-    // Se temos uma URL cached que funcionou, usar primeiro
     if (cachedUrl) {
       urls.push(cachedUrl);
     }
 
-    // Detectar tipo de item especial
     const isLTD = className.toLowerCase().includes('ltd');
     const isHC = className.toLowerCase().includes('hc');
     const isRare = className.toLowerCase().includes('rare') || className.toLowerCase().includes('throne');
+    const isDragon = className.toLowerCase().includes('dragon') || className.toLowerCase().includes('drago');
 
-    // URLs específicas para LTDs
+    // URLs especiais por tipo
     if (isLTD) {
       urls.push(
         `https://www.habboapi.site/images/furni/${className}.png`,
@@ -45,7 +42,6 @@ const RealFurniImageHybrid = ({
       );
     }
 
-    // URLs específicas para HC
     if (isHC) {
       urls.push(
         `https://www.habboapi.site/images/furni/${className}.png`,
@@ -54,16 +50,16 @@ const RealFurniImageHybrid = ({
       );
     }
 
-    // URLs específicas para raros
-    if (isRare) {
+    if (isDragon) {
       urls.push(
         `https://www.habboapi.site/images/furni/${className}.png`,
+        `https://habboapi.site/images/furni/${className}.gif`,
         `https://images.habbo.com/dcr/hof_furni/rare/${className}.png`,
-        `https://habboapi.site/images/furni/${className}.gif`
+        `https://habbowidgets.com/images/furni/${className}.png`
       );
     }
 
-    // HabboAPI.site URLs (prioritário)
+    // URLs principais otimizadas
     urls.push(
       `https://www.habboapi.site/images/furni/${className}.png`,
       `https://www.habboapi.site/images/furni/${className}.gif`,
@@ -71,43 +67,23 @@ const RealFurniImageHybrid = ({
       `https://api.habboapi.site/furni/image/${className}`
     );
     
-    // HabboFurni.com (múltiplas versões de assets)
     const assetVersions = ['61856', '56746', '49500', '48082', '45508'];
     assetVersions.forEach(version => {
       urls.push(`https://habbofurni.com/furni_assets/${version}/${className}_icon.png`);
     });
     
-    // URLs oficiais do Habbo
     urls.push(
       `https://images.habbo.com/dcr/hof_furni/${type}/${className}.png`,
-      `https://www.habbo.com/dcr/hof_furni/${type}/${className}.png`
-    );
-    
-    // HabboWidgets (backup confiável)
-    urls.push(
+      `https://www.habbo.com/dcr/hof_furni/${type}/${className}.png`,
       `https://habbowidgets.com/images/furni/${className}.png`,
       `https://habbowidgets.com/images/furni/${className}.gif`,
-      `https://www.habbowidgets.com/images/furni/${className}.png`
-    );
-    
-    // Outras alternativas
-    urls.push(
+      `https://www.habbowidgets.com/images/furni/${className}.png`,
       `https://habboemotion.com/images/furnis/${className}.png`,
-      `https://cdn.habboemotion.com/furnis/${className}.gif`
-    );
-    
-    // URLs hotel-específicas
-    urls.push(
+      `https://cdn.habboemotion.com/furnis/${className}.gif`,
       `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/furni/${className}.png`
     );
 
-    // Storage como último recurso
-    urls.push(
-      `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${className}.png`,
-      `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/${className}.png`
-    );
-
-    return [...new Set(urls)]; // Remove duplicates
+    return [...new Set(urls)];
   }, []);
 
   const imageUrls = getOptimizedImageUrls(className, type, hotel);
@@ -122,7 +98,6 @@ const RealFurniImageHybrid = ({
   }, [currentImageIndex, imageUrls.length]);
 
   const handleImageLoad = useCallback(() => {
-    // Cache URL que funcionou
     localStorage.setItem(`furni-success-${className}`, currentUrl);
   }, [currentUrl, className]);
 
@@ -152,7 +127,7 @@ const RealFurniImageHybrid = ({
         onError={handleImageError}
         onLoad={handleImageLoad}
         loading="lazy"
-        title={`${name} (${className}) - Otimizado HabboHub`}
+        title={`${name} (${className}) - HabboHub Optimized`}
       />
     </div>
   );

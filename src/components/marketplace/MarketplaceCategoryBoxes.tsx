@@ -1,5 +1,6 @@
 import { MarketCategoryBox } from './MarketCategoryBox';
-import { MarketDashboard } from './MarketDashboard';
+import { MarketItemModal } from './MarketItemModal';
+import { useState } from 'react';
 
 interface MarketItem {
   id: string;
@@ -55,41 +56,73 @@ export const MarketplaceCategoryBoxes = ({
   totalItems,
   hotel
 }: MarketplaceCategoryBoxesProps) => {
+  const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   const handleItemClick = (item: MarketItem) => {
-    console.log('Item clicked:', item);
+    setSelectedItem(item);
+    setModalOpen(true);
   };
 
-  // Separar itens por "Maiores Ofertas do Dia" (maior volume de vendas)
-  const maioresOfertas = [...topSellers].sort((a, b) => (b.soldItems || b.volume) - (a.soldItems || a.volume)).slice(0, 8);
-  const maisVendidosHoje = [...biggestGainers].filter(item => item.trend === 'up').slice(0, 8);
-  const melhoresNegocios = [...opportunities, ...mostExpensive.filter(item => item.currentPrice < 300)].slice(0, 8);
-  const altasDeHoje = [...biggestGainers].slice(0, 8);
+  // Melhorar lógica de filtragem com dados reais
+  const maioresOfertas = [...topSellers]
+    .filter(item => item.soldItems && item.soldItems > 0)
+    .sort((a, b) => (b.soldItems || 0) - (a.soldItems || 0))
+    .slice(0, 8);
+    
+  const maisVendidosHoje = [...biggestGainers]
+    .filter(item => item.trend === 'up' && item.volume > 5)
+    .sort((a, b) => b.volume - a.volume)
+    .slice(0, 8);
+    
+  const melhoresNegocios = [...opportunities, ...mostExpensive]
+    .filter(item => item.currentPrice < 300 && item.currentPrice > 50)
+    .sort((a, b) => a.currentPrice - b.currentPrice)
+    .slice(0, 8);
+    
+  const altasDeHoje = [...biggestGainers]
+    .filter(item => item.trend === 'up')
+    .sort((a, b) => {
+      const aChange = parseFloat(a.changePercent.replace('%', ''));
+      const bChange = parseFloat(b.changePercent.replace('%', ''));
+      return bChange - aChange;
+    })
+    .slice(0, 8);
 
   return (
-    <div className="space-y-6">
-      {/* Category Boxes Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MarketCategoryBox 
-          title="🔥 Maiores Ofertas do Dia" 
-          items={maioresOfertas} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="⭐ Mais Vendidos Hoje" 
-          items={maisVendidosHoje} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="💎 Melhores Negócios" 
-          items={melhoresNegocios} 
-          onItemClick={handleItemClick}
-        />
-        <MarketCategoryBox 
-          title="📈 Altas de Hoje" 
-          items={altasDeHoje} 
-          onItemClick={handleItemClick}
-        />
+    <>
+      <div className="space-y-6">
+        {/* Category Boxes Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MarketCategoryBox 
+            title="🔥 Maiores Ofertas do Dia" 
+            items={maioresOfertas} 
+            onItemClick={handleItemClick}
+          />
+          <MarketCategoryBox 
+            title="⭐ Mais Vendidos Hoje" 
+            items={maisVendidosHoje} 
+            onItemClick={handleItemClick}
+          />
+          <MarketCategoryBox 
+            title="💎 Melhores Negócios" 
+            items={melhoresNegocios} 
+            onItemClick={handleItemClick}
+          />
+          <MarketCategoryBox 
+            title="📈 Altas de Hoje" 
+            items={altasDeHoje} 
+            onItemClick={handleItemClick}
+          />
+        </div>
       </div>
-    </div>
+
+      {/* Item Modal */}
+      <MarketItemModal 
+        item={selectedItem}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
+    </>
   );
 };
