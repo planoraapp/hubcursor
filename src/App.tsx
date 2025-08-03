@@ -9,6 +9,7 @@ import './App.css';
 // Lazy load pages for better performance
 const Index = lazy(() => import('./pages/Index'));
 const Editor = lazy(() => import('./pages/Editor'));
+const EditorPuhekupla = lazy(() => import('./pages/EditorPuhekupla'));
 const Profile = lazy(() => import('./pages/Profile'));
 const ConnectHabbo = lazy(() => import('./pages/ConnectHabbo'));
 const Noticias = lazy(() => import('./pages/Noticias'));
@@ -50,6 +51,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/editor" element={<Editor />} />
+                <Route path="/editor-puhekupla" element={<EditorPuhekupla />} />
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/connect-habbo" element={<ConnectHabbo />} />
                 <Route path="/noticias" element={<Noticias />} />
