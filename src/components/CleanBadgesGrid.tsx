@@ -316,12 +316,15 @@ export const CleanBadgesGrid: React.FC = () => {
       {selectedBadge && (
         <BadgeDetailsModal
           badge={{
+            id: `habbo_assets_${selectedBadge.code}`,
             code: selectedBadge.code,
             name: selectedBadge.name,
             description: `Emblema oficial do Habbo Hotel. Este é o badge ${selectedBadge.code} - ${selectedBadge.name}.`,
             category: selectedBadge.category,
             imageUrl: selectedBadge.image_url,
-            rarity: 'common'
+            rarity: 'common',
+            source: 'HabboAssets',
+            scrapedAt: new Date().toISOString()
           }}
           onClose={() => setSelectedBadge(null)}
         />
