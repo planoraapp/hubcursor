@@ -1,7 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceItemsList } from './MarketplaceItemsList';
 import { MarketplaceCategoryBoxes } from './MarketplaceCategoryBoxes';
+import { CountryFlags } from './CountryFlags';
+import { AnimatedConsole } from '../AnimatedConsole';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MarketItem {
@@ -54,25 +57,24 @@ export const MarketplaceLayout = () => {
   const [selectedHotel, setSelectedHotel] = useState('br');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState<'price' | 'recent' | 'quantity'>('price');
+  const [sortBy, setSortBy] = useState<'price' | 'recent' | 'quantity' | 'ltd'>('price');
 
   const hotels = [
-    { id: 'br', name: 'Habbo.com.br', flag: '🇧🇷' },
-    { id: 'com', name: 'Habbo.com', flag: '🇺🇸' },
-    { id: 'de', name: 'Habbo.de', flag: '🇩🇪' },
-    { id: 'es', name: 'Habbo.es', flag: '🇪🇸' },
-    { id: 'fr', name: 'Habbo.fr', flag: '🇫🇷' },
-    { id: 'it', name: 'Habbo.it', flag: '🇮🇹' },
-    { id: 'nl', name: 'Habbo.nl', flag: '🇳🇱' },
-    { id: 'fi', name: 'Habbo.fi', flag: '🇫🇮' },
-    { id: 'tr', name: 'Habbo.com.tr', flag: '🇹🇷' },
+    { id: 'br', name: 'Habbo.com.br' },
+    { id: 'com', name: 'Habbo.com' },
+    { id: 'de', name: 'Habbo.de' },
+    { id: 'es', name: 'Habbo.es' },
+    { id: 'fr', name: 'Habbo.fr' },
+    { id: 'it', name: 'Habbo.it' },
+    { id: 'nl', name: 'Habbo.nl' },
+    { id: 'fi', name: 'Habbo.fi' },
+    { id: 'tr', name: 'Habbo.com.tr' },
   ];
 
   const fetchMarketData = async () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔄 Fetching real marketplace data for hotel:', selectedHotel);
       
       const { data, error: functionError } = await supabase.functions.invoke('habbo-market-real', {
         body: { 
@@ -84,15 +86,11 @@ export const MarketplaceLayout = () => {
       });
       
       if (functionError) {
-        console.error('❌ Function error:', functionError);
         setError(`Erro na função: ${functionError.message}`);
         return;
       }
       
-      console.log('📊 Real market response:', data);
-      
       if (data?.items && Array.isArray(data.items)) {
-        // Sort items baseado em dados reais
         const sortedItems = [...data.items].sort((a, b) => {
           switch (sortBy) {
             case 'price':
@@ -100,7 +98,13 @@ export const MarketplaceLayout = () => {
             case 'recent':
               return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
             case 'quantity':
-              return (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0);
+              return (a.openOffers || a.quantity || 999) - (b.openOffers || b.quantity || 999);
+            case 'ltd':
+              const aIsLTD = a.className.toLowerCase().includes('ltd');
+              const bIsLTD = b.className.toLowerCase().includes('ltd');
+              if (aIsLTD && !bIsLTD) return -1;
+              if (!aIsLTD && bIsLTD) return 1;
+              return b.currentPrice - a.currentPrice;
             default:
               return 0;
           }
@@ -108,18 +112,15 @@ export const MarketplaceLayout = () => {
         
         setItems(sortedItems);
         setStats(data.stats || stats);
-        console.log(`✅ Loaded ${sortedItems.length} real marketplace items from ${selectedHotel}`);
         
         if (sortedItems.length === 0) {
           setError('Nenhum item encontrado. Verifique os filtros ou tente outro hotel.');
         }
       } else {
-        console.warn('⚠️ No items array in response:', data);
         setError('Nenhum item retornado pela API');
         setItems([]);
       }
-    } catch (error) {
-      console.error('❌ Error fetching real marketplace data:', error);
+    } catch (error: any) {
       setError(`Erro ao buscar dados reais: ${error.message}`);
       setItems([]);
     } finally {
@@ -127,22 +128,20 @@ export const MarketplaceLayout = () => {
     }
   };
 
-  // Fetch data on component mount and when dependencies change
   useEffect(() => {
     fetchMarketData();
   }, [selectedHotel, searchTerm, selectedCategory, sortBy]);
 
-  // Auto-refresh every 10 minutes para dados reais
   useEffect(() => {
     const interval = setInterval(() => {
       if (!loading) {
         fetchMarketData();
       }
-    }, 10 * 60 * 1000); // 10 minutos
+    }, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [loading, selectedHotel, searchTerm, selectedCategory, sortBy]);
 
-  // Organizar por "Maiores Ofertas do Dia" com dados reais
+  // Organizar categorias com dados reais
   const maioresOfertas = [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
   const maisVendidosHoje = [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
   const melhoresNegocios = [...items].filter(item => item.currentPrice < 300 && item.rarity !== 'common').slice(0, 10);
@@ -170,14 +169,19 @@ export const MarketplaceLayout = () => {
 
   return (
     <div className="space-y-6">
-      {/* Hotel Selection Tabs */}
+      {/* Console Animado */}
+      <div className="flex justify-center">
+        <AnimatedConsole isActive={true} className="mb-4" />
+      </div>
+
+      {/* Hotel Selection Tabs com Bandeiras */}
       <div className="flex justify-center">
         <Tabs value={selectedHotel} onValueChange={setSelectedHotel} className="w-full max-w-4xl">
           <div className="flex justify-center mb-6">
             <TabsList className="grid grid-cols-9 w-full max-w-3xl">
               {hotels.map(hotel => (
-                <TabsTrigger key={hotel.id} value={hotel.id} className="text-xs px-2">
-                  <span className="mr-1">{hotel.flag}</span>
+                <TabsTrigger key={hotel.id} value={hotel.id} className="text-xs px-2 flex items-center gap-1">
+                  <CountryFlags hotelId={hotel.id} />
                   <span className="hidden sm:inline">{hotel.id.toUpperCase()}</span>
                 </TabsTrigger>
               ))}

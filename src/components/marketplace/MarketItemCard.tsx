@@ -1,7 +1,6 @@
-
 import { TrendingUp, TrendingDown, Clock, Package2 } from 'lucide-react';
 import { CreditIcon } from './CreditIcon';
-import RealFurniImageHybrid from './RealFurniImageHybrid';
+import { OptimizedRealFurniImage } from './OptimizedRealFurniImage';
 
 interface MarketItem {
   id: string;
@@ -21,6 +20,7 @@ interface MarketItem {
   lastUpdated: string;
   quantity?: number;
   listedAt?: string;
+  openOffers?: number;
 }
 
 interface MarketItemCardProps {
@@ -38,8 +38,8 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
     });
   };
 
-  // Determine item type based on ID
   const itemType = item.id.includes('wallitem') ? 'wallitem' : 'roomitem';
+  const isLTD = item.className.toLowerCase().includes('ltd') || item.rarity === 'legendary';
 
   if (compact) {
     return (
@@ -49,12 +49,13 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
       >
         <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-center">
-            <RealFurniImageHybrid
+            <OptimizedRealFurniImage
               className={item.className}
               name={item.name}
               type={itemType}
               hotel={item.hotel}
               size="md"
+              isLTD={isLTD}
             />
           </div>
           
@@ -115,14 +116,14 @@ export const MarketItemCard = ({ item, onClick, compact = false }: MarketItemCar
     );
   }
 
-  // Regular card layout for other uses
+  // Regular card layout
   return (
     <div
       onClick={onClick}
       className="habbo-card p-4 hover:shadow-lg transition-all cursor-pointer bg-white border hover:border-blue-200"
     >
       <div className="flex items-center space-x-4">
-        <RealFurniImageHybrid
+        <OptimizedRealFurniImage
           className={item.className}
           name={item.name}
           type={itemType}

@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import { News } from '../components/News';
+import { NewsAndEvents } from '../components/NewsAndEvents';
+import { AnimatedConsole } from '../components/AnimatedConsole';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
-export default function NoticiasPage() {
+const Noticias = () => {
   const [activeSection, setActiveSection] = useState('noticias');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
@@ -26,12 +27,14 @@ export default function NoticiasPage() {
     return (
       <MobileLayout>
         <div className="p-4">
-          <PageHeader 
-            title="Notícias Habbo"
-            icon="/assets/news.png"
-            backgroundImage="/assets/1360__-3C7.png"
-          />
-          <News />
+          <div className="flex items-center gap-3 mb-6">
+            <AnimatedConsole isActive={true} />
+            <PageHeader 
+              title="Notícias & Eventos"
+              icon="/assets/news.png"
+            />
+          </div>
+          <NewsAndEvents />
         </div>
       </MobileLayout>
     );
@@ -42,14 +45,18 @@ export default function NoticiasPage() {
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <PageHeader 
-            title="Notícias Habbo"
-            icon="/assets/news.png"
-            backgroundImage="/assets/1360__-3C7.png"
-          />
-          <News />
+          <div className="flex items-center gap-3 mb-6">
+            <AnimatedConsole isActive={true} />
+            <PageHeader 
+              title="Notícias & Eventos"
+              icon="/assets/news.png"
+            />
+          </div>
+          <NewsAndEvents />
         </main>
       </div>
     </div>
   );
-}
+};
+
+export default Noticias;

@@ -1,11 +1,13 @@
+
 import { useState, useRef, useCallback } from 'react';
-import { Search, Filter, SortAsc, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MarketItemCard } from './MarketItemCard';
 import { MarketItemModal } from './MarketItemModal';
 import { PanelCard } from '../PanelCard';
-import { PremiumItemsDisplay } from './PremiumItemsDisplay';
+import { RealPremiumItems } from './RealPremiumItems';
 import { MarketStatsFooter } from './MarketStatsFooter';
+import { MarketFilters } from './MarketFilters';
 
 interface MarketItem {
   id: string;
@@ -25,6 +27,7 @@ interface MarketItem {
   lastUpdated: string;
   quantity?: number;
   listedAt?: string;
+  openOffers?: number;
 }
 
 interface MarketplaceItemsListProps {
@@ -34,8 +37,8 @@ interface MarketplaceItemsListProps {
   setSearchTerm: (term: string) => void;
   selectedCategory: string;
   setSelectedCategory: (category: string) => void;
-  sortBy: 'price' | 'recent' | 'quantity';
-  setSortBy: (sort: 'price' | 'recent' | 'quantity') => void;
+  sortBy: 'price' | 'recent' | 'quantity' | 'ltd';
+  setSortBy: (sort: 'price' | 'recent' | 'quantity' | 'ltd') => void;
   hotel: { id: string; name: string; flag: string };
   stats: any;
 }
@@ -67,15 +70,10 @@ export const MarketplaceItemsList = ({
     { id: 'rare', name: 'Raros' },
   ];
 
-  const sortOptions = [
-    { id: 'price', name: 'Mais Caros', icon: '💎' },
-    { id: 'recent', name: 'Mais Recentes', icon: '🕒' },
-    { id: 'quantity', name: 'Menor Quantidade', icon: '📦' },
-  ];
-
   const filteredItems = items.filter(item => {
     if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
     if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    if (sortBy === 'ltd' && !item.className.toLowerCase().includes('ltd')) return false;
     return true;
   }).slice(0, displayedItems);
 
@@ -92,56 +90,47 @@ export const MarketplaceItemsList = ({
 
   return (
     <>
-      <PanelCard title={`🏪 Feira Livre - ${hotel.flag} ${hotel.name}`}>
+      <PanelCard title={`🏪 Feira Livre - ${hotel.name}`}>
         <div className="space-y-4">
-          {/* Premium Items Display */}
-          <PremiumItemsDisplay hotel={hotel.id} />
-
-          {/* Search and Filters */}
-          <div className="space-y-3">
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar na feira..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="habbo-input w-full pl-10 pr-4 py-2 text-sm"
-              />
-              {loading && (
-                <RefreshCw size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 animate-spin" />
-              )}
+          {/* Top Section: Filtros à esquerda + Premium Items à direita */}
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="lg:flex-1">
+              <MarketFilters sortBy={sortBy} setSortBy={setSortBy} />
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex items-center space-x-2 flex-1 min-w-0">
-                <Filter size={16} className="text-gray-600 flex-shrink-0" />
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="habbo-input px-2 py-1 flex-1 text-sm min-w-0"
-                >
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2 flex-1 min-w-0">
-                <SortAsc size={16} className="text-gray-600 flex-shrink-0" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'price' | 'recent' | 'quantity')}
-                  className="habbo-input px-2 py-1 flex-1 text-sm min-w-0"
-                >
-                  {sortOptions.map(option => (
-                    <option key={option.id} value={option.id}>
-                      {option.icon} {option.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="lg:w-80">
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-3">
+                <h4 className="font-bold text-gray-800 mb-3 text-sm">🏆 Preços Atuais</h4>
+                <RealPremiumItems hotel={hotel.id} />
               </div>
             </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar na feira..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="habbo-input w-full pl-10 pr-4 py-2 text-sm"
+            />
+            {loading && (
+              <RefreshCw size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 animate-spin" />
+            )}
+          </div>
+          
+          {/* Category Filter */}
+          <div className="flex items-center space-x-2">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="habbo-input px-3 py-2 flex-1 text-sm"
+            >
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Items Grid */}
