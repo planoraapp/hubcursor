@@ -1,3 +1,4 @@
+
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
 import { Search, Filter, Globe, Calendar, Package } from 'lucide-react';
