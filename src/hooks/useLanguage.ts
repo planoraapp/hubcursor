@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 export type Language = 'pt' | 'es' | 'en';
@@ -16,6 +15,8 @@ export const translations = {
     catalogSubtitle: 'Explore todos os emblemas disponíveis no Habbo Hotel BR através da nossa API oficial.',
     badgeGuideTitle: 'Guia de Emblemas',
     badgeGuideSubtitle: 'Explore a vasta coleção de emblemas do Habbo. Descubra como obtê-los e os mais raros!',
+    badgesEnhancedTitle: 'Emblemas do Habbo',
+    badgesEnhancedSubtitle: 'Coleção completa de emblemas do HabboAssets com busca e categorização',
     rankingsTitle: 'Classificação Habbo',
     rankingsSubtitle: 'Veja os Habbos e quartos em destaque nos rankings.',
     profileCheckerTitle: 'Verificador de Perfil Habbo',
@@ -43,8 +44,6 @@ export const translations = {
     forumSubtitle: 'Participe das discussões e conecte-se com outros Habbos.',
     catalogEnhancedTitle: 'Catálogo Completo',
     catalogEnhancedSubtitle: 'Explore todos os mobis e raros com detalhes completos.',
-    badgesEnhancedTitle: 'Guia Completo de Emblemas',
-    badgesEnhancedSubtitle: 'Descubra todos os emblemas disponíveis e como obtê-los.',
     avatarEditorTitle: 'Editor de Visuais',
     avatarEditorSubtitle: 'Crie e personalize seu avatar Habbo com nossa ferramenta interativa.',
     marketplaceTitle: 'Mercado Habbo',
@@ -62,6 +61,8 @@ export const translations = {
     catalogSubtitle: 'Explora todas las placas disponibles en Habbo Hotel ES a través de nuestra API oficial.',
     badgeGuideTitle: 'Guía de Placas',
     badgeGuideSubtitle: 'Explora la vasta colección de placas de Habbo. ¡Descubre cómo conseguirlas y las más raras!',
+    badgesEnhancedTitle: 'Placas del Habbo',
+    badgesEnhancedSubtitle: 'Colección completa de placas de HabboAssets con búsqueda y categorización',
     rankingsTitle: 'Clasificación Habbo',
     rankingsSubtitle: 'Mira a los Habbos y salas destacadas en los rankings.',
     profileCheckerTitle: 'Verificador de Perfil Habbo',
@@ -89,8 +90,6 @@ export const translations = {
     forumSubtitle: 'Participa en las discusiones y conéctate con otros Habbos.',
     catalogEnhancedTitle: 'Catálogo Completo',
     catalogEnhancedSubtitle: 'Explora todos los muebles y raros con detalles completos.',
-    badgesEnhancedTitle: 'Guía Completa de Placas',
-    badgesEnhancedSubtitle: 'Descubre todas las placas disponibles y cómo obtenerlas.',
     avatarEditorTitle: 'Editor de Looks',
     avatarEditorSubtitle: 'Crea y personaliza tu avatar Habbo con nuestra herramienta interactiva.',
     marketplaceTitle: 'Mercado Habbo',
@@ -108,6 +107,8 @@ export const translations = {
     catalogSubtitle: 'Explore all badges available in Habbo Hotel through our official API.',
     badgeGuideTitle: 'Badge Guide',
     badgeGuideSubtitle: 'Explore the vast collection of Habbo badges. Discover how to get them and the rarest ones!',
+    badgesEnhancedTitle: 'Habbo Badges',
+    badgesEnhancedSubtitle: 'Complete collection of HabboAssets badges with search and categorization',
     rankingsTitle: 'Habbo Rankings',
     rankingsSubtitle: 'See top Habbos and rooms on the leaderboards.',
     profileCheckerTitle: 'Habbo Profile Checker',
@@ -135,8 +136,6 @@ export const translations = {
     forumSubtitle: 'Join discussions and connect with other Habbos.',
     catalogEnhancedTitle: 'Complete Catalog',
     catalogEnhancedSubtitle: 'Explore all furniture and rares with complete details.',
-    badgesEnhancedTitle: 'Complete Badge Guide',
-    badgesEnhancedSubtitle: 'Discover all available badges and how to get them.',
     avatarEditorTitle: 'Avatar Editor',
     avatarEditorSubtitle: 'Create and customize your Habbo avatar with our interactive tool.',
     marketplaceTitle: 'Habbo Marketplace',

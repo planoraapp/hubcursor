@@ -1,22 +1,34 @@
 
 import React from 'react';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
+import { PageHeader } from '../components/PageHeader';
 import { CleanBadgesGrid } from '../components/CleanBadgesGrid';
+import { useLanguage } from '../hooks/useLanguage';
 
 const Emblemas = () => {
+  const { t } = useLanguage();
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Emblemas do Habbo
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Coleção completa de emblemas do HabboAssets com busca e categorização
-          </p>
-        </div>
+    <div 
+      className="min-h-screen w-full" 
+      style={{ 
+        backgroundImage: "url('/assets/bghabbohub.png')",
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto'
+      }}
+    >
+      <CollapsibleSidebar activeSection="emblemas" setActiveSection={() => {}} />
+      
+      <div className="transition-all duration-300 ml-20">
+        <PageHeader 
+          title={t('badgesEnhancedTitle')}
+          subtitle={t('badgesEnhancedSubtitle')}
+        />
         
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-          <CleanBadgesGrid />
+        <div className="p-6">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+            <CleanBadgesGrid />
+          </div>
         </div>
       </div>
     </div>
