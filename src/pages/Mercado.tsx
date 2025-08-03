@@ -22,12 +22,6 @@ const Mercado = () => {
     };
   }, []);
 
-  const renderContent = () => (
-    <div className="space-y-6">
-      <Marketplace />
-    </div>
-  );
-
   if (isMobile) {
     return (
       <MobileLayout>
@@ -36,9 +30,7 @@ const Mercado = () => {
             title="Mercado Habbo"
             icon="/assets/Diamante.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
-            {renderContent()}
-          </div>
+          <Marketplace />
         </div>
       </MobileLayout>
     );
@@ -53,9 +45,7 @@ const Mercado = () => {
             title="Mercado Habbo"
             icon="/assets/Diamante.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-            {renderContent()}
-          </div>
+          <Marketplace />
         </main>
       </div>
     </div>

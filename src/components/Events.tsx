@@ -1,5 +1,5 @@
+
 import { PanelCard } from './PanelCard';
-import { PageHeader } from './PageHeader';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const Events = () => {
@@ -73,12 +73,6 @@ export const Events = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Eventos Habbo"
-        icon="/assets/eventos.png"
-        backgroundImage="/assets/1360__-3C7.png"
-      />
-
       {/* Current Events */}
       <PanelCard title="🔥 Eventos Atuais">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

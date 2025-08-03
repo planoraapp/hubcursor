@@ -22,12 +22,6 @@ const Catalogo = () => {
     };
   }, []);
 
-  const renderContent = () => (
-    <div className="h-full flex flex-col overflow-hidden">
-      <CatalogEnhanced />
-    </div>
-  );
-
   if (isMobile) {
     return (
       <MobileLayout>
@@ -36,8 +30,8 @@ const Catalogo = () => {
             title="Catálogo Habbo"
             icon="/assets/Carrinho.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
-            {renderContent()}
+          <div className="bg-white rounded-lg border-2 border-black shadow-lg overflow-hidden">
+            <CatalogEnhanced />
           </div>
         </div>
       </MobileLayout>
@@ -53,8 +47,8 @@ const Catalogo = () => {
             title="Catálogo Habbo"
             icon="/assets/Carrinho.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 h-full overflow-hidden">
-            {renderContent()}
+          <div className="bg-white rounded-lg border-2 border-black shadow-lg p-4 md:p-6 h-full overflow-hidden">
+            <CatalogEnhanced />
           </div>
         </main>
       </div>

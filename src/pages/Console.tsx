@@ -77,9 +77,7 @@ const Console = () => {
             icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full border-2 border-black">
-            {renderContent()}
-          </div>
+          {renderContent()}
         </div>
       </MobileLayout>
     );
@@ -95,9 +93,7 @@ const Console = () => {
             icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full border-2 border-black">
-            {renderContent()}
-          </div>
+          {renderContent()}
         </main>
       </div>
     </div>

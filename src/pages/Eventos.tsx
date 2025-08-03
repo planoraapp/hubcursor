@@ -31,9 +31,7 @@ export default function EventosPage() {
             icon="/assets/eventos.png"
             backgroundImage="/assets/event_bg_owner.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 min-h-full">
-            <Events />
-          </div>
+          <Events />
         </div>
       </MobileLayout>
     );
@@ -49,9 +47,7 @@ export default function EventosPage() {
             icon="/assets/eventos.png"
             backgroundImage="/assets/event_bg_owner.png"
           />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 md:p-6 min-h-full">
-            <Events />
-          </div>
+          <Events />
         </main>
       </div>
     </div>
