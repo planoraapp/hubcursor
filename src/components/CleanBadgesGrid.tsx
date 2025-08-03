@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useHabboAssetsBadges } from '../hooks/useHabboAssetsBadges';
 import { useLanguage } from '../hooks/useLanguage';
 import { Search, Grid, List, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
@@ -14,26 +14,38 @@ interface BadgeItem {
   name: string;
   image_url: string;
   category: 'official' | 'achievements' | 'fansites' | 'others';
+  metadata?: {
+    year?: number;
+    event?: string;
+    source_info?: string;
+  };
 }
 
 export const CleanBadgesGrid: React.FC = () => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
-  const [loadAll, setLoadAll] = useState(true); // Carregar todos por padrão
+  const [forceRefresh, setForceRefresh] = useState(false);
+
+  // Debounce search para melhor performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   console.log('🔍 [CleanBadgesGrid] Component state:', {
     activeCategory,
-    searchTerm,
-    loadAll,
-    isLoading: false,
-    isFetching: false,
-    error: null
+    searchTerm: debouncedSearch,
+    forceRefresh
   });
 
-  // Fetch badges data - carregar todos os emblemas
+  // Fetch badges data - carregar todos os emblemas com debounced search
   const { 
     data: badgeData, 
     isLoading, 
@@ -42,12 +54,13 @@ export const CleanBadgesGrid: React.FC = () => {
     isFetching,
     refetch 
   } = useHabboAssetsBadges({
-    search: searchTerm,
+    search: debouncedSearch,
     category: activeCategory,
     page: 1,
-    limit: 10000, // Limite alto
+    limit: 5000, // Limite alto para carregar mais emblemas
     enabled: true,
-    loadAll: loadAll
+    loadAll: true,
+    forceRefresh
   });
 
   // Process and filter badges
@@ -101,14 +114,20 @@ export const CleanBadgesGrid: React.FC = () => {
   ], [badgeData, t]);
 
   // Handle badge click
-  const handleBadgeClick = (badge: BadgeItem) => {
+  const handleBadgeClick = useCallback((badge: BadgeItem) => {
     setSelectedBadge(badge);
-  };
+  }, []);
 
   // Handle refresh
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
+    setForceRefresh(prev => !prev);
     refetch();
-  };
+  }, [refetch]);
+
+  // Handle category change
+  const handleCategoryChange = useCallback((category: string) => {
+    setActiveCategory(category);
+  }, []);
 
   // Loading state
   if (isLoading) {
@@ -122,7 +141,7 @@ export const CleanBadgesGrid: React.FC = () => {
             <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-700">{t('loadingBadges') || 'Carregando emblemas...'}</p>
-              <p className="text-sm text-gray-500 mt-1">Coletando todos os emblemas disponíveis</p>
+              <p className="text-sm text-gray-500 mt-1">Coletando e categorizando emblemas</p>
             </div>
           </div>
         </div>
@@ -183,7 +202,7 @@ export const CleanBadgesGrid: React.FC = () => {
             </div>
           </div>
 
-          {/* Barra de busca */}
+          {/* Barra de busca com debounce */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
@@ -192,24 +211,34 @@ export const CleanBadgesGrid: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+            {searchTerm !== debouncedSearch && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
           </div>
 
           {/* Abas de navegação com ícones */}
           <BadgeCategoryTabs
             activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
+            onCategoryChange={handleCategoryChange}
             categories={categoryOptions}
           />
 
-          {/* Stats */}
+          {/* Stats aprimoradas */}
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center gap-4">
               <span className="font-medium">
                 {t('showingBadges') || 'Mostrando'} {badges.length.toLocaleString()} {t('badges') || 'emblemas'}
               </span>
-              {loadAll && (
+              {badgeData?.metadata?.cached && (
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  ✅ Todos carregados
+                  ⚡ Cache
+                </Badge>
+              )}
+              {debouncedSearch && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  🔍 "{debouncedSearch}"
                 </Badge>
               )}
             </div>
@@ -235,7 +264,7 @@ export const CleanBadgesGrid: React.FC = () => {
                 {t('noBadgesFound') || 'Nenhum emblema encontrado'}
               </h3>
               <p className="text-gray-500 text-center max-w-md">
-                {searchTerm 
+                {debouncedSearch 
                   ? (t('tryDifferentSearch') || 'Tente uma busca diferente ou altere os filtros')
                   : (t('noBadgesAvailable') || 'Nenhum emblema disponível nesta categoria')
                 }
@@ -277,6 +306,9 @@ export const CleanBadgesGrid: React.FC = () => {
                       {viewMode === 'list' && (
                         <p className="text-xs text-gray-500 truncate">{badge.name}</p>
                       )}
+                      {badge.metadata?.year && (
+                        <p className="text-xs text-blue-600">{badge.metadata.year}</p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -307,8 +339,9 @@ export const CleanBadgesGrid: React.FC = () => {
             category: selectedBadge.category,
             imageUrl: selectedBadge.image_url,
             rarity: 'common',
-            source: 'HabboAssets',
-            scrapedAt: new Date().toISOString()
+            source: selectedBadge.metadata?.source_info || 'HabboAssets',
+            scrapedAt: new Date().toISOString(),
+            metadata: selectedBadge.metadata
           }}
           onClose={() => setSelectedBadge(null)}
         />

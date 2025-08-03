@@ -1,230 +1,228 @@
 
-import { X, Calendar, Tag, Award, ExternalLink } from 'lucide-react';
-import ValidatedBadgeImage from './ValidatedBadgeImage';
-import { ValidatedBadgeItem } from '../hooks/useValidatedBadges';
-import { EnhancedBadgeItem } from '../hooks/useEnhancedBadges';
-import { HabboApiBadgeItem } from '../hooks/useHabboApiBadges';
-import { RealBadgeItem } from '../hooks/useRealBadges';
-import { HybridUnifiedBadgeItem } from '../hooks/useHybridUnifiedBadges';
+import React, { useEffect } from 'react';
+import { X, Award, Star, Calendar, Tag } from 'lucide-react';
+import { Badge } from './ui/badge';
+import IntelligentBadgeImage from './IntelligentBadgeImage';
 
-// Type union for all badge types including the new hybrid type
-type AnyBadgeItem = ValidatedBadgeItem | EnhancedBadgeItem | HabboApiBadgeItem | RealBadgeItem | HybridUnifiedBadgeItem;
+interface BadgeItem {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+  rarity: string;
+  source?: string;
+  scrapedAt?: string;
+  metadata?: {
+    year?: number;
+    event?: string;
+    source_info?: string;
+  };
+}
 
 interface BadgeDetailsModalProps {
-  badge: AnyBadgeItem;
+  badge: BadgeItem;
   onClose: () => void;
 }
 
-export const BadgeDetailsModal = ({ badge, onClose }: BadgeDetailsModalProps) => {
-  // Helper function to get badge code (different property names across types)
-  const getBadgeCode = (badge: AnyBadgeItem): string => {
-    if ('badge_code' in badge) return badge.badge_code;
-    if ('code' in badge) return badge.code;
-    return 'Unknown';
-  };
-
-  // Helper function to get badge name
-  const getBadgeName = (badge: AnyBadgeItem): string => {
-    if ('badge_name' in badge) return badge.badge_name;
-    if ('name' in badge) return badge.name;
-    return `Badge ${getBadgeCode(badge)}`;
-  };
-
-  // Helper function to get source info
-  const getSourceInfo = (badge: AnyBadgeItem) => {
-    const defaultSources = {
-      'HabboWidgets': { name: 'HabboWidgets', color: 'bg-blue-100 text-blue-800', icon: '🌐' },
-      'HabboAssets': { name: 'HabboAssets', color: 'bg-purple-100 text-purple-800', icon: '🏛️' },
-      'SupabaseBucket': { name: 'Storage', color: 'bg-orange-100 text-orange-800', icon: '📦' },
-      'HabboOfficial': { name: 'HabboOfficial', color: 'bg-green-100 text-green-800', icon: '🏢' },
-      'HybridFallback': { name: 'Fallback', color: 'bg-gray-100 text-gray-800', icon: '🔄' },
-      'habbo-api': { name: 'HabboAPI', color: 'bg-green-100 text-green-800', icon: '🌍' },
-      'cache': { name: 'Cache', color: 'bg-gray-100 text-gray-800', icon: '⚡' }
+export const BadgeDetailsModal: React.FC<BadgeDetailsModalProps> = ({ badge, onClose }) => {
+  // Bloquear scroll e centralizar modal
+  useEffect(() => {
+    const body = document.body;
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    body.style.overflow = 'hidden';
+    body.style.paddingRight = `${scrollBarWidth}px`;
+    
+    // Focar no modal para acessibilidade
+    const modalElement = document.getElementById('badge-modal');
+    if (modalElement) {
+      modalElement.focus();
+    }
+    
+    return () => {
+      body.style.overflow = 'unset';
+      body.style.paddingRight = '0px';
     };
+  }, []);
 
-    let source = 'HabboWidgets';
-    if ('source' in badge && badge.source) {
-      source = badge.source;
-    }
-
-    return defaultSources[source as keyof typeof defaultSources] || defaultSources.HabboWidgets;
-  };
-
-  // Helper function to get rarity info
-  const getRarityInfo = (badge: AnyBadgeItem) => {
-    const rarities = {
-      'common': { name: 'Comum', color: 'bg-gray-100 text-gray-800' },
-      'uncommon': { name: 'Incomum', color: 'bg-blue-100 text-blue-800' },
-      'rare': { name: 'Raro', color: 'bg-purple-100 text-purple-800' },
-      'legendary': { name: 'Lendário', color: 'bg-yellow-100 text-yellow-800' }
+  // Fechar com ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
     };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
-    let rarity = 'common';
-    if ('rarity' in badge && badge.rarity) {
-      rarity = badge.rarity;
-    }
-
-    return rarities[rarity as keyof typeof rarities] || rarities.common;
+  const getCategoryInfo = (category: string) => {
+    const categories: Record<string, { name: string; color: string; icon: string }> = {
+      'official': { 
+        name: 'Oficiais', 
+        color: 'bg-blue-100 border-blue-300 text-blue-800',
+        icon: '🛡️'
+      },
+      'achievements': { 
+        name: 'Conquistas', 
+        color: 'bg-yellow-100 border-yellow-300 text-yellow-800',
+        icon: '🏆'
+      },
+      'fansites': { 
+        name: 'Fã-sites', 
+        color: 'bg-purple-100 border-purple-300 text-purple-800',
+        icon: '⭐'
+      },
+      'others': { 
+        name: 'Outros', 
+        color: 'bg-gray-100 border-gray-300 text-gray-800',
+        icon: '🎨'
+      },
+    };
+    return categories[category] || categories['others'];
   };
 
-  const badgeCode = getBadgeCode(badge);
-  const badgeName = getBadgeName(badge);
-  const sourceInfo = getSourceInfo(badge);
-  const rarityInfo = getRarityInfo(badge);
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+  const getRarityInfo = (rarity: string) => {
+    const rarities: Record<string, { name: string; color: string }> = {
+      'legendary': { name: 'Lendário', color: 'text-yellow-600' },
+      'rare': { name: 'Raro', color: 'text-purple-600' },
+      'uncommon': { name: 'Incomum', color: 'text-blue-600' },
+      'common': { name: 'Comum', color: 'text-gray-600' },
+    };
+    return rarities[rarity] || rarities['common'];
   };
+
+  const categoryInfo = getCategoryInfo(badge.category);
+  const rarityInfo = getRarityInfo(badge.rarity);
 
   return (
     <div 
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
+      onClick={onClose}
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      {/* Backdrop com blur */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      
+      {/* Modal centralizado */}
+      <div
+        id="badge-modal"
+        className="relative w-full max-w-md mx-auto bg-white rounded-2xl shadow-2xl transform transition-all duration-300 scale-100 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+        tabIndex={-1}
+        role="dialog"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
-          <div className="flex items-center gap-3">
-            <ValidatedBadgeImage
-              code={badgeCode}
-              name={badgeName}
-              size="lg"
-              className="shadow-md"
-            />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">
-                {badgeName}
-              </h2>
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-1 bg-gray-100 rounded text-sm font-mono text-gray-700">
-                  {badgeCode}
-                </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${rarityInfo.color}`}>
-                  {rarityInfo.name}
-                </span>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 id="modal-title" className="text-xl font-bold text-gray-900 truncate pr-4">
+            {badge.name}
+          </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
             aria-label="Fechar modal"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Description */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              Descrição
-            </h3>
-            <p className="text-gray-800 leading-relaxed">
-              {'description' in badge && badge.description 
-                ? badge.description 
-                : 'Badge oficial do Habbo Hotel. Este emblema foi verificado e confirmado como real.'
-              }
-            </p>
+          {/* Badge Display */}
+          <div className="text-center">
+            <div className="inline-block p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-inner">
+              <IntelligentBadgeImage
+                code={badge.code}
+                name={badge.name}
+                size="lg"
+                className="w-16 h-16"
+              />
+            </div>
           </div>
 
-          {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-                <Award className="w-4 h-4" />
-                Raridade
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">
-                  {rarityInfo.name === 'Lendário' ? '👑' : 
-                   rarityInfo.name === 'Raro' ? '💎' : 
-                   rarityInfo.name === 'Incomum' ? '⭐' : '🏷️'}
-                </span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${rarityInfo.color}`}>
+          {/* Badge Info */}
+          <div className="space-y-4">
+            {/* Code */}
+            <div className="text-center">
+              <Badge variant="outline" className="text-lg font-mono px-4 py-2">
+                {badge.code}
+              </Badge>
+            </div>
+
+            {/* Category and Rarity */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Tag className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-600">Categoria</span>
+                </div>
+                <Badge className={categoryInfo.color}>
+                  {categoryInfo.icon} {categoryInfo.name}
+                </Badge>
+              </div>
+
+              <div className="text-center p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Star className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-600">Raridade</span>
+                </div>
+                <span className={`font-semibold ${rarityInfo.color}`}>
                   {rarityInfo.name}
                 </span>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
-                <ExternalLink className="w-4 h-4" />
-                Fonte
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{sourceInfo.icon}</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${sourceInfo.color}`}>
-                  {sourceInfo.name}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Category Info if available */}
-          {'category' in badge && badge.category && (
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Categoria
-              </h4>
-              <p className="text-sm text-blue-700">
-                {badge.category === 'official' ? '👑 Oficial/Staff' :
-                 badge.category === 'achievements' ? '🏆 Conquistas' :
-                 badge.category === 'fansites' ? '⭐ Fã-sites' :
-                 badge.category === 'others' ? '🎨 Outros' :
-                 badge.category}
+            {/* Description */}
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Descrição
+              </h3>
+              <p id="modal-description" className="text-gray-700 leading-relaxed">
+                {badge.description}
               </p>
             </div>
-          )}
 
-          {/* Validation Info for ValidatedBadgeItem or HybridUnifiedBadgeItem */}
-          {'validation_count' in badge && (
-            <div className="bg-green-50 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Informações de Validação
-              </h4>
-              <div className="space-y-1">
-                <p className="text-sm text-green-700">
-                  <strong>Validações:</strong> {badge.validation_count}x
-                </p>
-                {'last_validated_at' in badge && badge.last_validated_at && (
-                  <p className="text-sm text-green-700">
-                    <strong>Última validação:</strong> {new Date(badge.last_validated_at).toLocaleDateString('pt-BR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+            {/* Metadata */}
+            {badge.metadata && (
+              <div className="space-y-3">
+                {badge.metadata.year && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Calendar className="w-4 h-4 text-gray-600" />
+                    <div>
+                      <span className="text-sm text-gray-600">Ano:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{badge.metadata.year}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {badge.metadata.source_info && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                    <div>
+                      <span className="text-sm text-gray-600">Fonte:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{badge.metadata.source_info}</span>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* Badge Preview */}
-          <div className="text-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6">
-            <h4 className="text-sm font-semibold text-gray-600 mb-4">Preview em Alta Resolução</h4>
-            <div className="inline-block p-4 bg-white rounded-lg shadow-md">
-              <ValidatedBadgeImage
-                code={badgeCode}
-                name={badgeName}
-                size="xl"
-              />
-            </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t bg-gray-50 text-center">
+        <div className="p-6 pt-0 text-center">
+          <div className="flex items-center justify-center gap-2 text-yellow-600 mb-2">
+            <Award className="w-5 h-5" />
+            <span className="font-semibold">Emblema Oficial do Habbo</span>
+          </div>
           <p className="text-xs text-gray-500">
-            Badge oficial • Sistema HabboHub • Fonte: {sourceInfo.name}
+            Pressione ESC ou clique fora para fechar
           </p>
         </div>
       </div>
