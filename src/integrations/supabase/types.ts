@@ -116,6 +116,7 @@ export type Database = {
         Row: {
           badge_code: string
           badge_name: string | null
+          category: string | null
           created_at: string | null
           id: string
           image_url: string | null
@@ -127,6 +128,7 @@ export type Database = {
         Insert: {
           badge_code: string
           badge_name?: string | null
+          category?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null
@@ -138,6 +140,7 @@ export type Database = {
         Update: {
           badge_code?: string
           badge_name?: string | null
+          category?: string | null
           created_at?: string | null
           id?: string
           image_url?: string | null

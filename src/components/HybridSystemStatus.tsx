@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, AlertCircle, Database, RefreshCw, TrendingUp } from 'lucide-react';
+import { CheckCircle, AlertCircle, Database, RefreshCw, TrendingUp, HardDrive } from 'lucide-react';
 
 interface SystemStatusProps {
   metadata: any;
@@ -23,7 +23,7 @@ export const HybridSystemStatus: React.FC<SystemStatusProps> = ({
         bgColor: 'bg-blue-50',
         borderColor: 'border-blue-200',
         status: 'CARREGANDO',
-        message: 'Sistema híbrido processando...'
+        message: 'Sistema simplificado processando...'
       };
     }
     
@@ -55,7 +55,7 @@ export const HybridSystemStatus: React.FC<SystemStatusProps> = ({
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       status: 'OPERACIONAL',
-      message: 'Sistema híbrido funcionando perfeitamente'
+      message: 'Sistema simplificado funcionando perfeitamente'
     };
   };
 
@@ -70,7 +70,7 @@ export const HybridSystemStatus: React.FC<SystemStatusProps> = ({
             className={`w-5 h-5 ${status.color} ${isLoading ? 'animate-spin' : ''}`} 
           />
           <span className={`font-bold ${status.color}`}>
-            SISTEMA HÍBRIDO: {status.status}
+            SISTEMA SIMPLIFICADO: {status.status}
           </span>
         </div>
         
@@ -82,14 +82,12 @@ export const HybridSystemStatus: React.FC<SystemStatusProps> = ({
             </span>
           </div>
           
-          {metadata?.discoveryMode && (
-            <div className="flex items-center gap-1">
-              <TrendingUp className="w-4 h-4 text-blue-600" />
-              <span className="font-medium text-blue-700">
-                Descoberta Ativa
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <HardDrive className="w-4 h-4 text-green-600" />
+            <span className="font-medium text-green-700">
+              Storage Supabase
+            </span>
+          </div>
         </div>
       </div>
       
@@ -100,18 +98,16 @@ export const HybridSystemStatus: React.FC<SystemStatusProps> = ({
       {metadata && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
           <div className="bg-white bg-opacity-60 rounded px-2 py-1">
-            <span className="text-gray-600">Fonte:</span>
+            <span className="text-gray-600">Fonte Principal:</span>
             <span className="font-medium ml-1">
-              {metadata.source === 'hybrid-unified-system' ? 'Sistema Unificado' : 
-               metadata.source === 'hybrid-fallback-system' ? 'Fallback' : 
-               metadata.source || 'Desconhecida'}
+              {metadata.primarySource || 'Supabase Storage'}
             </span>
           </div>
           
           <div className="bg-white bg-opacity-60 rounded px-2 py-1">
-            <span className="text-gray-600">Categorias:</span>
+            <span className="text-gray-600">Fallback:</span>
             <span className="font-medium ml-1">
-              {metadata.categories ? Object.keys(metadata.categories).length : 0}
+              {metadata.fallbackSource || 'HabboWidgets'}
             </span>
           </div>
           
@@ -129,9 +125,9 @@ export const HybridSystemStatus: React.FC<SystemStatusProps> = ({
           </div>
           
           <div className="bg-white bg-opacity-60 rounded px-2 py-1">
-            <span className="text-gray-600">Performance:</span>
-            <span className="font-medium ml-1">
-              {isLoading ? 'Processando' : 'Otimizada'}
+            <span className="text-gray-600">Status:</span>
+            <span className="font-medium ml-1 text-green-600">
+              Simplificado
             </span>
           </div>
         </div>

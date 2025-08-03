@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
-import { Search, RefreshCw, Download } from 'lucide-react';
+import { Search, RefreshCw, Download, HardDrive } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { PanelCard } from './PanelCard';
@@ -65,16 +65,16 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
   }, []);
 
   const handleRefresh = useCallback(() => {
-    toast.info('Atualizando sistema híbrido...');
+    toast.info('Atualizando sistema simplificado...');
     refetch();
   }, [refetch]);
 
   const handlePopulateInitial = useCallback(async () => {
-    toast.info('Iniciando população melhorada da base de dados...');
+    toast.info('Populando base de dados do Storage do Supabase...');
     
     try {
       const result = await populateMutation.mutateAsync();
-      toast.success(`População concluída! ${result.populated || 0} emblemas adicionados.`);
+      toast.success(`População concluída! ${result.populated || 0} emblemas do storage adicionados.`);
       refetch(); // Atualizar dados após população
     } catch (error) {
       toast.error('Erro ao popular base de dados');
@@ -87,13 +87,13 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
   }, []);
 
   // Verificar se precisa de população inicial
-  const needsPopulation = (data?.badges?.length || 0) < 10;
+  const needsPopulation = (data?.badges?.length || 0) < 50;
 
   return (
     <div className="space-y-4">
-      <PanelCard title="Sistema Híbrido Unificado de Emblemas - Versão Melhorada">
+      <PanelCard title="Sistema Simplificado de Emblemas - Storage + HabboWidgets">
         <div className="space-y-4">
-          {/* Status do Sistema Melhorado */}
+          {/* Status do Sistema Simplificado */}
           <HybridSystemStatus
             metadata={data?.metadata}
             isLoading={isLoading}
@@ -101,13 +101,13 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
             badgeCount={data?.badges?.length || 0}
           />
 
-          {/* Controles Aprimorados */}
+          {/* Controles Simplificados */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar emblemas no sistema híbrido..."
+                placeholder="Buscar emblemas (Storage + HabboWidgets)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
@@ -121,8 +121,8 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                   disabled={populateMutation.isPending}
                   className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 transition-all duration-200 flex items-center gap-2"
                 >
-                  <Download size={20} className={populateMutation.isPending ? 'animate-spin' : ''} />
-                  {populateMutation.isPending ? 'Populando...' : 'Popular Base'}
+                  <HardDrive size={20} className={populateMutation.isPending ? 'animate-spin' : ''} />
+                  {populateMutation.isPending ? 'Populando...' : 'Popular do Storage'}
                 </Button>
               )}
               
@@ -137,7 +137,7 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
             </div>
           </div>
 
-          {/* Tabs com Categorias Semânticas */}
+          {/* Tabs com Categorias */}
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-5 h-auto">
               {CATEGORIES.map(category => (
@@ -163,8 +163,8 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
             {CATEGORIES.map(category => (
               <TabsContent key={category.value} value={category.value} className="mt-6">
                 <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
-                  {/* Header melhorado da categoria */}
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b border-gray-200">
+                  {/* Header da categoria */}
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 border-b border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{category.icon}</span>
@@ -172,23 +172,23 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                           {filteredBadges.length} Emblemas - {category.label}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded">
-                        Sistema Híbrido Melhorado
+                      <div className="text-sm text-gray-600 bg-green-100 px-2 py-1 rounded">
+                        Sistema Simplificado
                       </div>
                     </div>
                   </div>
 
                   {isLoading && (
                     <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                      <p className="text-gray-700 font-bold text-lg">Carregando Sistema Melhorado...</p>
-                      <p className="text-gray-500 text-sm mt-1">Descobrindo e validando emblemas</p>
+                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
+                      <p className="text-gray-700 font-bold text-lg">Carregando Sistema Simplificado...</p>
+                      <p className="text-gray-500 text-sm mt-1">Storage Supabase + HabboWidgets</p>
                     </div>
                   )}
 
                   {error && !data && (
                     <div className="text-center py-8">
-                      <p className="text-red-600 mb-2 font-medium">Erro no Sistema Híbrido</p>
+                      <p className="text-red-600 mb-2 font-medium">Erro no Sistema Simplificado</p>
                       <p className="text-gray-500 text-sm mb-4">{error.message}</p>
                       <Button onClick={handleRefresh} variant="outline">
                         Tentar novamente
@@ -202,20 +202,21 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                         {filteredBadges.map((badge) => (
                           <div
                             key={badge.id}
-                            className="group relative aspect-square cursor-pointer hover:scale-110 transition-transform duration-200 border-2 border-transparent hover:border-blue-300 rounded"
+                            className="group relative aspect-square cursor-pointer hover:scale-110 transition-transform duration-200 border-2 border-transparent hover:border-green-300 rounded"
                             onClick={() => handleBadgeClick(badge)}
                             title={`${badge.badge_code} - ${badge.badge_name} (${badge.source})`}
                           >
-                            <ValidatedBadgeImage
-                              code={badge.badge_code}
-                              name={badge.badge_name}
-                              size="sm"
-                              className="w-full h-full"
+                            <img
+                              src={badge.image_url}
+                              alt={`${badge.badge_code} - ${badge.badge_name}`}
+                              className="w-full h-full object-contain rounded"
+                              style={{ imageRendering: 'pixelated' }}
+                              loading="lazy"
                             />
                             
-                            {/* Indicador de fonte melhorado */}
+                            {/* Indicador de fonte */}
                             <div className="absolute -bottom-1 -right-1 text-xs bg-black bg-opacity-75 text-white px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                              {badge.source}
+                              {badge.source === 'SupabaseStorage' ? '📦' : '🌐'}
                             </div>
                             
                             {/* Contador de validações */}
@@ -236,8 +237,8 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
                       {needsPopulation && (
                         <div className="mt-4">
                           <Button onClick={handlePopulateInitial} disabled={populateMutation.isPending}>
-                            <Download className="w-4 h-4 mr-2" />
-                            {populateMutation.isPending ? 'Populando...' : 'Popular Base de Dados'}
+                            <HardDrive className="w-4 h-4 mr-2" />
+                            {populateMutation.isPending ? 'Populando...' : 'Popular do Storage'}
                           </Button>
                         </div>
                       )}
@@ -248,11 +249,11 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
             ))}
           </Tabs>
 
-          {/* Estatísticas do Sistema Melhoradas */}
-          <div className="bg-gradient-to-r from-blue-50 via-purple-50 to-green-50 rounded-lg p-4 border-2 border-gray-200">
+          {/* Estatísticas do Sistema */}
+          <div className="bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 rounded-lg p-4 border-2 border-gray-200">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-green-600">
                   {data?.badges?.length || 0}
                 </div>
                 <div className="text-xs text-gray-600 font-medium">Total</div>
