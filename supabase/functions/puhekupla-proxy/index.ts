@@ -40,8 +40,9 @@ serve(async (req) => {
     const category = params.category || '';
     const search = params.search || '';
     
-    // Get API key from environment
-    const apiKey = Deno.env.get('PUHEKUPLA_API_KEY') || 'demo-habbohub';
+    // Get API key from environment or use literal demo-sitename
+    const envApiKey = Deno.env.get('PUHEKUPLA_API_KEY');
+    const apiKey = envApiKey && envApiKey !== 'demo-habbohub' ? envApiKey : 'demo-sitename';
     
     let apiUrl = '';
     
@@ -69,6 +70,7 @@ serve(async (req) => {
 
     console.log(`📡 [PuhekuplaProxy] Fetching: ${apiUrl}`);
     console.log(`🔑 [PuhekuplaProxy] Using API Key: ${apiKey.substring(0, 10)}...`);
+    console.log(`🆔 [PuhekuplaProxy] Environment API Key: ${envApiKey ? envApiKey.substring(0, 10) + '...' : 'NOT_SET'}`);
 
     // Try different authentication methods
     const authHeaders: Record<string, string> = {
@@ -77,12 +79,12 @@ serve(async (req) => {
       'Content-Type': 'application/json',
     };
 
-    // Try different API key formats
+    // Try different API key formats with more detailed logging
     const authMethods = [
-      { 'Authorization': `Bearer ${apiKey}` },
-      { 'X-API-Key': apiKey },
-      { 'apikey': apiKey },
-      { 'API-Key': apiKey },
+      { name: 'Bearer', headers: { 'Authorization': `Bearer ${apiKey}` } },
+      { name: 'X-API-Key', headers: { 'X-API-Key': apiKey } },
+      { name: 'apikey', headers: { 'apikey': apiKey } },
+      { name: 'API-Key', headers: { 'API-Key': apiKey } },
     ];
 
     let response: Response | null = null;
@@ -90,30 +92,36 @@ serve(async (req) => {
 
     for (const authMethod of authMethods) {
       try {
-        console.log(`🔄 [PuhekuplaProxy] Trying auth method:`, Object.keys(authMethod)[0]);
+        console.log(`🔄 [PuhekuplaProxy] Trying auth method: ${authMethod.name} with key: ${apiKey}`);
         
         response = await fetch(apiUrl, {
           headers: {
             ...authHeaders,
-            ...authMethod,
+            ...authMethod.headers,
           }
         });
 
+        console.log(`📊 [PuhekuplaProxy] ${authMethod.name} response: ${response.status} ${response.statusText}`);
+
         if (response.ok) {
-          console.log(`✅ [PuhekuplaProxy] Success with auth method:`, Object.keys(authMethod)[0]);
+          console.log(`✅ [PuhekuplaProxy] SUCCESS with auth method: ${authMethod.name}`);
           break;
         } else {
-          console.log(`❌ [PuhekuplaProxy] Failed with ${Object.keys(authMethod)[0]}: ${response.status}`);
-          lastError = new Error(`Auth method ${Object.keys(authMethod)[0]} failed: ${response.status}`);
+          // Log response body for debugging
+          const errorText = await response.text();
+          console.log(`❌ [PuhekuplaProxy] Failed with ${authMethod.name}: ${response.status} - ${errorText}`);
+          lastError = new Error(`${authMethod.name} failed: ${response.status} - ${errorText}`);
+          response = null; // Reset for next attempt
         }
       } catch (error) {
-        console.log(`💥 [PuhekuplaProxy] Error with ${Object.keys(authMethod)[0]}:`, error);
+        console.log(`💥 [PuhekuplaProxy] Error with ${authMethod.name}:`, error);
         lastError = error as Error;
       }
     }
 
     if (!response || !response.ok) {
       console.error('❌ [PuhekuplaProxy] All auth methods failed');
+      console.error('🔍 [PuhekuplaProxy] Last error:', lastError?.message);
       throw lastError || new Error('All authentication methods failed');
     }
 
@@ -121,7 +129,9 @@ serve(async (req) => {
     
     console.log(`✅ [PuhekuplaProxy] Success for ${endpoint}:`, {
       total: data.result?.total || data.result?.length || 0,
-      dataKeys: Object.keys(data)
+      dataKeys: Object.keys(data),
+      hasResult: !!data.result,
+      resultType: typeof data.result
     });
 
     return new Response(
