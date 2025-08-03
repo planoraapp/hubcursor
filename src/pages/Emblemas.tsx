@@ -22,7 +22,7 @@ const Emblemas = () => {
       <div className="transition-all duration-300 ml-20">
         <PageHeader 
           title={t('badgesEnhancedTitle')}
-          subtitle={t('badgesEnhancedSubtitle')}
+          icon="/assets/emblemas.png"
         />
         
         <div className="p-6">
