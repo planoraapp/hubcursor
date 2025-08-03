@@ -290,7 +290,21 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
       {/* Modal de Detalhes */}
       {selectedBadge && (
         <BadgeDetailsModal
-          badge={selectedBadge}
+          badge={{
+            id: selectedBadge.id,
+            code: selectedBadge.badge_code,
+            name: selectedBadge.badge_name,
+            description: `Emblema ${selectedBadge.badge_code} - ${selectedBadge.badge_name}`,
+            category: selectedBadge.category,
+            imageUrl: selectedBadge.image_url,
+            rarity: 'common',
+            source: selectedBadge.source,
+            scrapedAt: selectedBadge.created_at,
+            metadata: {
+              source_info: selectedBadge.source,
+              validation_count: selectedBadge.validation_count
+            }
+          }}
           onClose={() => setSelectedBadge(null)}
         />
       )}

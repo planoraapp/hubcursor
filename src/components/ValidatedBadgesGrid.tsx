@@ -267,7 +267,22 @@ export const ValidatedBadgesGrid: React.FC = () => {
       {/* Modal de Detalhes */}
       {selectedBadge && (
         <BadgeDetailsModal
-          badge={selectedBadge}
+          badge={{
+            id: selectedBadge.id,
+            code: selectedBadge.badge_code,
+            name: selectedBadge.badge_name,
+            description: `Badge validado ${selectedBadge.badge_code} - ${selectedBadge.badge_name}`,
+            category: 'official',
+            imageUrl: selectedBadge.image_url,
+            rarity: 'common',
+            source: selectedBadge.source,
+            scrapedAt: selectedBadge.created_at,
+            metadata: {
+              source_info: selectedBadge.source,
+              validation_count: selectedBadge.validation_count,
+              last_validated_at: selectedBadge.last_validated_at
+            }
+          }}
           onClose={() => setSelectedBadge(null)}
         />
       )}
