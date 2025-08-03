@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Home, Newspaper, MessageCircle, Menu, Calendar, ShoppingBag, Award, Palette, Banknote, X, Users, Cog } from 'lucide-react';
+import { Home, MessageCircle, Menu, Calendar, Newspaper, X, Cog } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
+import { ToolsPopover } from './tools-popover';
 
 // Define o tipo para os itens do menu
 type IconComponentType = React.ElementType<{ className?: string }>;
@@ -11,7 +12,7 @@ export interface DockItem {
   label: string;
   icon: IconComponentType | string;
   isAvatar?: boolean;
-  order: number; // Ordem de exibição
+  order: number;
 }
 
 export interface HabboMobileDockProps {
@@ -20,6 +21,7 @@ export interface HabboMobileDockProps {
   onItemClick: (itemId: string) => void;
   activeItemId?: string;
   isLoggedIn?: boolean;
+  currentPath?: string;
 }
 
 const HabboMobileDock: React.FC<HabboMobileDockProps> = ({ 
@@ -27,13 +29,15 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   userAvatarUrl, 
   onItemClick, 
   activeItemId,
-  isLoggedIn = false 
+  isLoggedIn = false,
+  currentPath = '/'
 }) => {
   const { t } = useLanguage();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Define os 5 itens principais da dock com ordem específica
+  // Define os 5 itens principais da dock
   const mainDockItems: DockItem[] = useMemo(() => {
     const homeItem: DockItem = { 
       id: 'home', 
@@ -63,7 +67,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     };
     
     const toolsItem: DockItem = { 
-      id: 'ferramentas', 
+      id: 'tools', 
       label: t('tools'), 
       icon: Cog, 
       order: 4 
@@ -79,19 +83,15 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     return [homeItem, forumItem, avatarItem, toolsItem, moreItem];
   }, [t, userAvatarUrl, isLoggedIn]);
 
-  // Define os itens que irão para o dropdown (excluindo os 5 principais)
+  // Items para o dropdown "Mais" (excluindo os principais e ferramentas)
   const dropdownItems: DockItem[] = useMemo(() => {
-    const mainIds = new Set(['home', 'forum', 'console', 'ferramentas', 'more']);
+    const mainIds = new Set(['home', 'forum', 'console', 'tools', 'more', 'catalogo', 'emblemas', 'editor', 'mercado']);
     const filtered = menuItems.filter(item => !mainIds.has(item.id));
     
     // Adicionar itens padrão se não existirem
     const defaultItems: DockItem[] = [
-      { id: 'emblemas', label: 'Emblemas', icon: Award, order: 6 },
-      { id: 'noticias', label: 'Notícias', icon: Newspaper, order: 7 },
-      { id: 'catalogo', label: 'Catálogo', icon: ShoppingBag, order: 8 },
-      { id: 'eventos', label: 'Eventos', icon: Calendar, order: 9 },
-      { id: 'mercado', label: 'Mercado', icon: Banknote, order: 10 },
-      { id: 'editor', label: 'Editor', icon: Palette, order: 11 },
+      { id: 'noticias', label: t('noticias'), icon: Newspaper, order: 6 },
+      { id: 'eventos', label: 'Eventos', icon: Calendar, order: 7 },
     ];
 
     const combined = [...filtered];
@@ -104,10 +104,16 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     });
 
     return combined.sort((a, b) => (a.order || 999) - (b.order || 999));
-  }, [menuItems]);
+  }, [menuItems, t]);
 
   const handleMoreClick = useCallback(() => {
     setIsDropdownOpen(prev => !prev);
+    setIsToolsOpen(false);
+  }, []);
+
+  const handleToolsClick = useCallback(() => {
+    setIsToolsOpen(prev => !prev);
+    setIsDropdownOpen(false);
   }, []);
 
   const handleDropdownItemClick = useCallback((itemId: string) => {
@@ -118,18 +124,23 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   const handleMainDockItemClick = useCallback((item: DockItem) => {
     if (item.id === 'more') {
       handleMoreClick();
+    } else if (item.id === 'tools') {
+      handleToolsClick();
     } else {
       onItemClick(item.id);
       setIsDropdownOpen(false);
+      setIsToolsOpen(false);
     }
-  }, [onItemClick, handleMoreClick]);
+  }, [onItemClick, handleMoreClick, handleToolsClick]);
 
-  // Fecha o dropdown ao clicar fora
+  // Fecha os popups ao clicar fora
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node) && 
-          !(event.target as HTMLElement).closest('.dock-more-button')) {
+          !(event.target as HTMLElement).closest('.dock-more-button') &&
+          !(event.target as HTMLElement).closest('.dock-tools-button')) {
         setIsDropdownOpen(false);
+        setIsToolsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -140,7 +151,14 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-2 flex justify-center w-full md:hidden">
-      {/* Dropdown Menu Aprimorado */}
+      {/* Tools Popover */}
+      <ToolsPopover 
+        isOpen={isToolsOpen} 
+        onClose={() => setIsToolsOpen(false)}
+        currentPath={currentPath}
+      />
+
+      {/* Dropdown Menu "Mais" */}
       {isDropdownOpen && (
         <div 
           ref={dropdownRef}
@@ -200,7 +218,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
         </div>
       )}
 
-      {/* Main Dock com design HabboHub */}
+      {/* Main Dock */}
       <nav 
         className="w-full max-w-sm flex justify-around items-center p-3 rounded-xl shadow-2xl"
         style={{
@@ -213,12 +231,12 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
         {mainDockItems.map((item) => {
           const isActive = activeItemId === item.id;
           const isMore = item.id === 'more';
+          const isTools = item.id === 'tools';
           
           let IconDisplay;
           if (item.isAvatar) {
             IconDisplay = (
               <div className="relative">
-                {/* Background circular dourado para avatar */}
                 <div 
                   className="absolute inset-0 rounded-full"
                   style={{
@@ -237,7 +255,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                     />
                   </div>
                 </div>
-                <div className="w-10 h-10" /> {/* Spacer para manter tamanho */}
+                <div className="w-10 h-10" />
               </div>
             );
           } else if (typeof item.icon === 'string') {
@@ -261,27 +279,25 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               key={item.id}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
                 isMore ? 'dock-more-button' : ''
-              }`}
+              } ${isTools ? 'dock-tools-button' : ''}`}
               style={{
-                backgroundColor: isActive 
+                backgroundColor: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
                   ? 'rgba(212, 175, 55, 0.3)' 
                   : 'transparent',
-                border: `2px solid ${isActive ? '#f4d03f' : 'transparent'}`,
-                boxShadow: isActive 
+                border: `2px solid ${isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? '#f4d03f' : 'transparent'}`,
+                boxShadow: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
                   ? '0 0 15px rgba(244, 208, 63, 0.4)' 
                   : 'none',
                 minWidth: '60px'
               }}
               onClick={() => handleMainDockItemClick(item)}
             >
-              {/* Ícone com efeito especial para "Mais" */}
               <div className={item.isAvatar ? '' : 'relative'}>
                 {isMore && isDropdownOpen ? (
                   <X className="w-6 h-6 text-yellow-300" />
                 ) : (
                   IconDisplay
                 )}
-                {/* Glow effect para avatar */}
                 {item.isAvatar && (
                   <div 
                     className="absolute inset-0 rounded-full opacity-50"
@@ -293,10 +309,9 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                 )}
               </div>
               
-              {/* Label com fonte do site */}
               <span 
                 className={`text-xs font-medium text-center leading-tight ${
-                  isActive ? 'text-yellow-300' : 'text-gray-200'
+                  isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen) ? 'text-yellow-300' : 'text-gray-200'
                 }`}
                 style={{ 
                   fontFamily: "'Arial', sans-serif",

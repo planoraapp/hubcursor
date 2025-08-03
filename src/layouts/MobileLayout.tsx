@@ -4,10 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { UserProfilePopover } from '../components/UserProfilePopover';
+import { HabboMobileDock, DockItem } from '../components/ui/habbo-mobile-dock';
 import { getUserByName } from '../services/habboApi';
 
 const MobileLayout = ({ children }: { children: React.ReactNode }) => {
-  const [showExpandedDock, setShowExpandedDock] = useState(false);
   const [habboData, setHabboData] = useState<any>(null);
   const { isLoggedIn, habboAccount, isAdmin } = useAuth();
   const { t } = useLanguage();
@@ -23,43 +23,74 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [isLoggedIn, habboAccount]);
 
-  const mainNavItems = [
-    { id: 'home', label: 'Home', icon: '/assets/home.png', path: '/' },
-    { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', path: '/noticias' },
-    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', path: '/eventos' },
-    { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', path: '/forum' },
-    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', path: '/catalogo' },
+  // Define todos os itens de menu para a dock
+  const allDockItems: DockItem[] = [
+    { id: 'home', label: t('home'), icon: '/assets/home.png', order: 1 },
+    { id: 'forum', label: t('forum'), icon: '/assets/BatePapo1.png', order: 2 },
+    { id: 'console', label: t('console'), icon: '/assets/ferramentas.png', order: 3 },
+    { id: 'tools', label: t('tools'), icon: '/assets/ferramentas.png', order: 4 },
+    { id: 'more', label: t('more'), icon: '/assets/ferramentas.png', order: 5 },
+    // Ferramentas (irão para o popover)
+    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', order: 6 },
+    { id: 'emblemas', label: t('emblemas'), icon: '/assets/emblemas.png', order: 7 },
+    { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', order: 8 },
+    { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', order: 9 },
+    // Páginas extras (irão para "Mais")
+    { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', order: 10 },
+    { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', order: 11 },
   ];
 
-  const additionalNavItems = [
-    { id: 'emblemas', label: t('emblemas'), icon: '/assets/emblemas.png', path: '/emblemas' },
-    { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', path: '/editor' },
-    { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
-    { id: 'ferramentas', label: 'Ferramentas', icon: '/assets/ferramentas.png', path: '/ferramentas' },
-    { id: 'console', label: 'Console', icon: '/assets/ferramentas.png', path: '/console' },
-  ];
-
-  // Add admin link if user is admin
+  // Adicionar admin link se user é admin
   if (isAdmin()) {
-    additionalNavItems.push({
+    allDockItems.push({
       id: 'admin-hub',
       label: 'Admin Hub',
       icon: '/assets/ferramentas.png',
-      path: '/admin-hub'
+      order: 12
     });
   }
 
-  const handleNavClick = (path: string) => {
-    navigate(path);
-    setShowExpandedDock(false);
+  const handleDockItemClick = (itemId: string) => {
+    const routeMap: Record<string, string> = {
+      'home': '/',
+      'forum': '/forum',
+      'console': '/console',
+      'catalogo': '/catalogo',
+      'emblemas': '/emblemas',
+      'editor': '/editor',
+      'mercado': '/mercado',
+      'noticias': '/noticias',
+      'eventos': '/eventos',
+      'admin-hub': '/admin-hub'
+    };
+
+    const route = routeMap[itemId];
+    if (route) {
+      navigate(route);
+    }
   };
 
   const getCurrentActiveSection = () => {
     const path = location.pathname;
-    const allItems = [...mainNavItems, ...additionalNavItems];
-    const activeItem = allItems.find(item => item.path === path);
-    return activeItem?.id || 'home';
+    const routeToItemMap: Record<string, string> = {
+      '/': 'home',
+      '/forum': 'forum',
+      '/console': 'console',
+      '/catalogo': 'catalogo',
+      '/emblemas': 'emblemas',
+      '/editor': 'editor',
+      '/mercado': 'mercado',
+      '/noticias': 'noticias',
+      '/eventos': 'eventos',
+      '/admin-hub': 'admin-hub'
+    };
+
+    return routeToItemMap[path] || 'home';
   };
+
+  const userAvatarUrl = isLoggedIn && habboData ? 
+    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
+    : '/assets/frank.png';
 
   return (
     <div className="min-h-screen bg-repeat pb-20" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
@@ -78,10 +109,7 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
               <div className="relative">
                 <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg">
                   <img
-                    src={isLoggedIn && habboData ? 
-                      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1` 
-                      : '/assets/frank.png'
-                    }
+                    src={userAvatarUrl}
                     alt={isLoggedIn && habboAccount ? habboAccount.habbo_name : 'Frank'}
                     className="w-full h-full object-cover object-center"
                   />
@@ -98,66 +126,15 @@ const MobileLayout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </div>
 
-      {/* Bottom dock */}
-      <div className="fixed bottom-0 left-0 right-0 bg-amber-50 shadow-lg border-t border-amber-200 z-50">
-        <div className="flex items-center justify-center px-4 py-2">
-          {/* Main navigation items */}
-          {mainNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.path)}
-              className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 ${
-                getCurrentActiveSection() === item.id
-                  ? 'bg-amber-200 text-amber-800'
-                  : 'text-gray-600 hover:bg-amber-100'
-              }`}
-            >
-              <img src={item.icon} alt={item.label} className="w-6 h-6 mb-1" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </button>
-          ))}
-          
-          {/* Expand button */}
-          <button
-            onClick={() => setShowExpandedDock(!showExpandedDock)}
-            className="flex flex-col items-center justify-center p-3 rounded-lg text-gray-600 hover:bg-amber-100 transition-all duration-200"
-          >
-            <div className="w-6 h-6 mb-1 flex items-center justify-center">
-              <svg 
-                className={`w-5 h-5 transition-transform duration-200 ${showExpandedDock ? 'rotate-45' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </div>
-            <span className="text-xs font-medium">Mais</span>
-          </button>
-        </div>
-
-        {/* Expanded dock */}
-        {showExpandedDock && (
-          <div className="border-t border-amber-200 bg-amber-50 p-4">
-            <div className="grid grid-cols-4 gap-2">
-              {additionalNavItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.path)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 ${
-                    getCurrentActiveSection() === item.id
-                      ? 'bg-amber-200 text-amber-800'
-                      : 'text-gray-600 hover:bg-amber-100'
-                  }`}
-                >
-                  <img src={item.icon} alt={item.label} className="w-6 h-6 mb-1" />
-                  <span className="text-xs font-medium text-center">{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* HabboMobileDock */}
+      <HabboMobileDock
+        menuItems={allDockItems}
+        userAvatarUrl={userAvatarUrl}
+        onItemClick={handleDockItemClick}
+        activeItemId={getCurrentActiveSection()}
+        isLoggedIn={isLoggedIn}
+        currentPath={location.pathname}
+      />
     </div>
   );
 };

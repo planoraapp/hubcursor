@@ -4,10 +4,13 @@ import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
 import { CleanBadgesGrid } from '../components/CleanBadgesGrid';
 import { useLanguage } from '../hooks/useLanguage';
+import { useIsMobile } from '../hooks/use-mobile';
+import MobileLayout from '../layouts/MobileLayout';
 
 const Emblemas = () => {
   const { t } = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isMobile = useIsMobile();
 
   // Listen for sidebar state changes
   useEffect(() => {
@@ -21,6 +24,30 @@ const Emblemas = () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
     };
   }, []);
+
+  const renderContent = () => (
+    <div className="flex-1 p-6">
+      <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col overflow-hidden">
+        <CleanBadgesGrid />
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        <div className="p-4">
+          <PageHeader 
+            title={t('badgesTitle')}
+            icon="/assets/emblemas.png"
+          />
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+            <CleanBadgesGrid />
+          </div>
+        </div>
+      </MobileLayout>
+    );
+  }
 
   return (
     <div 
@@ -44,11 +71,7 @@ const Emblemas = () => {
             icon="/assets/emblemas.png"
           />
           
-          <div className="flex-1 p-6">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col overflow-hidden">
-              <CleanBadgesGrid />
-            </div>
-          </div>
+          {renderContent()}
         </div>
       </main>
     </div>
