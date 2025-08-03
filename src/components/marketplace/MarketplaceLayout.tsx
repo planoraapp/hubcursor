@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceItemsList } from './MarketplaceItemsList';
@@ -60,15 +59,15 @@ export const MarketplaceLayout = () => {
   const [sortBy, setSortBy] = useState<'price' | 'recent' | 'quantity' | 'ltd'>('price');
 
   const hotels = [
-    { id: 'br', name: 'Habbo.com.br' },
-    { id: 'com', name: 'Habbo.com' },
-    { id: 'de', name: 'Habbo.de' },
-    { id: 'es', name: 'Habbo.es' },
-    { id: 'fr', name: 'Habbo.fr' },
-    { id: 'it', name: 'Habbo.it' },
-    { id: 'nl', name: 'Habbo.nl' },
-    { id: 'fi', name: 'Habbo.fi' },
-    { id: 'tr', name: 'Habbo.com.tr' },
+    { id: 'br', name: 'Habbo.com.br', flag: '/assets/flagbrazil.png' },
+    { id: 'com', name: 'Habbo.com', flag: '/assets/flagcom.png' },
+    { id: 'de', name: 'Habbo.de', flag: '/assets/flagdeus.png' },
+    { id: 'es', name: 'Habbo.es', flag: '/assets/flagspain.png' },
+    { id: 'fr', name: 'Habbo.fr', flag: '/assets/flagfrance.png' },
+    { id: 'it', name: 'Habbo.it', flag: '/assets/flagitaly.png' },
+    { id: 'nl', name: 'Habbo.nl', flag: '/assets/flagnetl.png' },
+    { id: 'fi', name: 'Habbo.fi', flag: '/assets/flafinland.png' },
+    { id: 'tr', name: 'Habbo.com.tr', flag: '/assets/flagtrky.png' },
   ];
 
   const fetchMarketData = async () => {
