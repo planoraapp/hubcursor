@@ -66,7 +66,7 @@ export const CleanBadgesGrid: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, isLoading, error } = useHabboAssetsBadges({
+  const { data, isLoading, error, isFetching } = useHabboAssetsBadges({
     search: searchTerm,
     category: activeCategory,
     page: currentPage,
@@ -74,9 +74,24 @@ export const CleanBadgesGrid: React.FC = () => {
     enabled: true
   });
 
+  // Log para debug
+  useEffect(() => {
+    console.log('🔍 [CleanBadgesGrid] Component state:', {
+      activeCategory,
+      searchTerm,
+      currentPage,
+      isLoading,
+      isFetching,
+      error,
+      badgesCount: allBadges.length,
+      dataReceived: data?.badges?.length || 0
+    });
+  }, [activeCategory, searchTerm, currentPage, isLoading, isFetching, error, allBadges.length, data]);
+
   // Agregar badges conforme novas páginas são carregadas
   useEffect(() => {
     if (data?.badges) {
+      console.log(`📦 [CleanBadgesGrid] Received ${data.badges.length} badges for page ${currentPage}`);
       if (currentPage === 1) {
         setAllBadges(data.badges);
       } else {
@@ -88,6 +103,7 @@ export const CleanBadgesGrid: React.FC = () => {
 
   // Reset quando categoria ou busca mudam
   useEffect(() => {
+    console.log(`🔄 [CleanBadgesGrid] Resetting for category: ${activeCategory}, search: "${searchTerm}"`);
     setCurrentPage(1);
     setAllBadges([]);
   }, [activeCategory, searchTerm]);
@@ -100,8 +116,10 @@ export const CleanBadgesGrid: React.FC = () => {
         document.documentElement.offsetHeight - 1000 &&
         data?.metadata?.hasMore &&
         !isLoading &&
-        !isLoadingMore
+        !isLoadingMore &&
+        !isFetching
       ) {
+        console.log('📜 [CleanBadgesGrid] Loading more badges...');
         setIsLoadingMore(true);
         setCurrentPage(prev => prev + 1);
       }
@@ -109,9 +127,10 @@ export const CleanBadgesGrid: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [data?.metadata?.hasMore, isLoading, isLoadingMore]);
+  }, [data?.metadata?.hasMore, isLoading, isLoadingMore, isFetching]);
 
   const handleCategoryChange = useCallback((category: string) => {
+    console.log(`🏷️ [CleanBadgesGrid] Category changed to: ${category}`);
     setActiveCategory(category);
   }, []);
 
@@ -124,12 +143,14 @@ export const CleanBadgesGrid: React.FC = () => {
   };
 
   if (error) {
+    console.error('❌ [CleanBadgesGrid] Error state:', error);
     return (
       <Card>
         <CardContent className="text-center py-12">
           <div className="text-red-600 mb-4">
             <h3 className="text-lg font-semibold">Erro ao Carregar Emblemas</h3>
             <p className="text-sm mt-2">Não foi possível carregar os emblemas do HabboAssets</p>
+            <p className="text-xs mt-1 text-gray-500">{error.message}</p>
           </div>
         </CardContent>
       </Card>
@@ -163,6 +184,11 @@ export const CleanBadgesGrid: React.FC = () => {
             <Badge variant="outline" className="bg-blue-100 text-blue-800">
               Fonte: HabboAssets
             </Badge>
+            {isLoading && (
+              <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                Carregando...
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -171,10 +197,10 @@ export const CleanBadgesGrid: React.FC = () => {
       <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
         <TabsList className="grid grid-cols-5 mb-6">
           {CATEGORIES.map(category => (
-            <TabsTrigger key={category.value} value={category.value}>
-              <span className="mr-2">{category.icon}</span>
+            <TabsTrigger key={category.value} value={category.value} className="text-xs sm:text-sm">
+              <span className="mr-1">{category.icon}</span>
               <span className="hidden sm:inline">{category.label}</span>
-              <span className="ml-2">({categoryStats[category.value as keyof typeof categoryStats]})</span>
+              <span className="ml-1">({categoryStats[category.value as keyof typeof categoryStats]})</span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -202,7 +228,7 @@ export const CleanBadgesGrid: React.FC = () => {
                 </div>
 
                 {/* Loading indicator para scroll infinito */}
-                {(isLoadingMore || (isLoading && currentPage > 1)) && (
+                {(isLoadingMore || (isFetching && currentPage > 1)) && (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-2"></div>
                     <p className="text-sm text-gray-600">Carregando mais emblemas...</p>
@@ -220,7 +246,7 @@ export const CleanBadgesGrid: React.FC = () => {
               <div className="text-center py-8">
                 <p className="text-gray-600">Nenhum emblema encontrado</p>
                 <p className="text-gray-500 text-sm mt-1">
-                  Tente ajustar os filtros ou fazer uma busca diferente
+                  {isLoading ? 'Carregando...' : 'Tente ajustar os filtros ou fazer uma busca diferente'}
                 </p>
               </div>
             )}

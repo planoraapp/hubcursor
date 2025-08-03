@@ -59,6 +59,7 @@ const fetchHabboAssetsBadges = async ({
     }
 
     console.log(`✅ [HabboAssetsBadges] Successfully fetched ${data.badges.length} badges`);
+    console.log(`📊 [HabboAssetsBadges] Categories:`, data.metadata?.categories);
     
     return {
       badges: data.badges,
@@ -93,8 +94,8 @@ export const useHabboAssetsBadges = ({
     enabled,
     staleTime: 1000 * 60 * 15, // 15 minutos
     gcTime: 1000 * 60 * 60, // 1 hora
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 4000),
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 8000),
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
   });

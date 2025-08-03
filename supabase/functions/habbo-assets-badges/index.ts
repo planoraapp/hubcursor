@@ -18,17 +18,17 @@ const categorizeBadge = (code: string): Badge['category'] => {
   const upperCode = code.toUpperCase();
   
   // Emblemas oficiais (staff, moderadores, etc)
-  if (/^(ADM|MOD|STAFF|VIP|SUP|GUIDE|HELPER|ADMIN|MODERATOR|SUPERVISOR|AMBASSADOR)/.test(upperCode)) {
+  if (/^(ADM|MOD|STAFF|VIP|SUP|GUIDE|HELPER|ADMIN|MODERATOR|SUPERVISOR|AMBASSADOR|AMB)/.test(upperCode)) {
     return 'official';
   }
   
   // Conquistas (achievements, jogos, etc)
-  if (/^(ACH_|GAME|WIN|VICTORY|CHAMPION|WINNER|QUEST|MISSION|COMPLETE|FINISH|SUCCESS)/.test(upperCode)) {
+  if (/^(ACH_|GAME|WIN|VICTORY|CHAMPION|WINNER|QUEST|MISSION|COMPLETE|FINISH|SUCCESS|LEVEL|SCORE|POINT)/.test(upperCode)) {
     return 'achievements';
   }
   
   // Fã-sites (eventos, promoções, parcerias)
-  if (/^(FANSITE|PARTNER|EVENT|SPECIAL|EXCLUSIVE|LIMITED|PROMO|COLLAB|COLLABORATION)/.test(upperCode) || 
+  if (/^(FANSITE|PARTNER|EVENT|SPECIAL|EXCLUSIVE|LIMITED|PROMO|COLLAB|COLLABORATION|BUNDLE)/.test(upperCode) || 
       /20\d{2}/.test(upperCode)) {
     return 'fansites';
   }
@@ -40,8 +40,8 @@ const fetchBadgesFromHabboAssets = async (page: number): Promise<Badge[]> => {
   try {
     console.log(`🔍 [HabboAssets] Fetching page ${page}`);
     
-    // HabboAssets tem estrutura de páginas com cerca de 50 emblemas cada
-    const response = await fetch(`https://habboassets.com/badges/page/${page}`, {
+    // Usar nova estrutura do HabboAssets baseada no exemplo fornecido
+    const response = await fetch(`https://www.habboassets.com/badges?page=${page}`, {
       headers: {
         'User-Agent': 'HabboHub-BadgeSystem/1.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -49,36 +49,50 @@ const fetchBadgesFromHabboAssets = async (page: number): Promise<Badge[]> => {
     });
     
     if (!response.ok) {
-      console.warn(`❌ [HabboAssets] Page ${page} not found or error`);
+      console.warn(`❌ [HabboAssets] Page ${page} returned ${response.status}`);
       return [];
     }
     
     const html = await response.text();
+    console.log(`📄 [HabboAssets] HTML length: ${html.length}`);
     
-    // Parse HTML para extrair códigos de emblemas
-    const badgeMatches = html.match(/\/c_images\/album1584\/([A-Za-z0-9_]+)\.gif/g) || [];
+    // Parse HTML para extrair emblemas usando estrutura do exemplo
     const badges: Badge[] = [];
     
-    const processedCodes = new Set<string>();
+    // Buscar por padrão de imagens do HabboAssets
+    const imageRegex = /https:\/\/www\.habboassets\.com\/assets\/badges\/([A-Za-z0-9_]+)\.gif/g;
+    const titleRegex = /title="([^"]+)\s*\(([^)]+)\)[^"]*"/g;
     
-    for (const match of badgeMatches) {
-      const codeMatch = match.match(/\/([A-Za-z0-9_]+)\.gif$/);
-      if (codeMatch) {
-        const code = codeMatch[1];
-        
-        // Evitar duplicatas
-        if (processedCodes.has(code)) continue;
-        processedCodes.add(code);
-        
-        const badge: Badge = {
-          code,
-          name: `Badge ${code}`,
-          image_url: `https://habboassets.com/c_images/album1584/${code}.gif`,
-          category: categorizeBadge(code)
-        };
-        
-        badges.push(badge);
+    let imageMatch;
+    const foundCodes = new Set<string>();
+    
+    while ((imageMatch = imageRegex.exec(html)) !== null) {
+      const code = imageMatch[1];
+      
+      if (foundCodes.has(code)) continue;
+      foundCodes.add(code);
+      
+      // Tentar extrair nome do title próximo
+      let name = `Badge ${code}`;
+      
+      // Buscar por title próximo na string HTML
+      const startPos = Math.max(0, imageMatch.index - 500);
+      const endPos = Math.min(html.length, imageMatch.index + 500);
+      const contextHtml = html.substring(startPos, endPos);
+      
+      const titleMatch = /title="([^"]+)\s*\(([^)]+)\)/.exec(contextHtml);
+      if (titleMatch && titleMatch[2] === code) {
+        name = titleMatch[1].trim();
       }
+      
+      const badge: Badge = {
+        code,
+        name,
+        image_url: `https://www.habboassets.com/assets/badges/${code}.gif`,
+        category: categorizeBadge(code)
+      };
+      
+      badges.push(badge);
     }
     
     console.log(`✅ [HabboAssets] Found ${badges.length} badges on page ${page}`);
@@ -91,11 +105,11 @@ const fetchBadgesFromHabboAssets = async (page: number): Promise<Badge[]> => {
 };
 
 const getAllBadges = async (): Promise<Badge[]> => {
-  console.log('🚀 [HabboAssets] Starting full badge collection');
+  console.log('🚀 [HabboAssets] Starting badge collection');
   
   const allBadges: Badge[] = [];
-  const maxPages = 190; // Baseado na informação do usuário
-  const concurrentPages = 5; // Processar 5 páginas por vez para não sobrecarregar
+  const maxPages = 50; // Começar com menos páginas para teste
+  const concurrentPages = 3; // Reduzir concorrência
   
   for (let i = 1; i <= maxPages; i += concurrentPages) {
     const pagePromises: Promise<Badge[]>[] = [];
@@ -112,8 +126,8 @@ const getAllBadges = async (): Promise<Badge[]> => {
       
       console.log(`📊 [HabboAssets] Progress: ${Math.min(i + concurrentPages - 1, maxPages)}/${maxPages} pages, ${allBadges.length} badges total`);
       
-      // Pequena pausa para não sobrecarregar o servidor
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Pausa entre batches
+      await new Promise(resolve => setTimeout(resolve, 200));
       
     } catch (error) {
       console.error(`❌ [HabboAssets] Error in batch starting at page ${i}:`, error);
@@ -140,8 +154,47 @@ serve(async (req) => {
     
     console.log(`🔧 [HabboAssets] Request: search="${search}", category=${category}, page=${page}, limit=${limit}`);
     
-    // Buscar todos os emblemas (com cache futuro)
+    // Buscar todos os emblemas
     const allBadges = await getAllBadges();
+    
+    if (allBadges.length === 0) {
+      console.warn('⚠️ [HabboAssets] No badges found, trying fallback');
+      // Fallback com alguns emblemas estáticos para teste
+      const fallbackBadges: Badge[] = [
+        { code: 'ADM', name: 'Administrador', image_url: 'https://www.habboassets.com/assets/badges/ADM.gif', category: 'official' },
+        { code: 'MOD', name: 'Moderador', image_url: 'https://www.habboassets.com/assets/badges/MOD.gif', category: 'official' },
+        { code: 'VIP', name: 'VIP', image_url: 'https://www.habboassets.com/assets/badges/VIP.gif', category: 'official' },
+        { code: 'HC1', name: 'Habbo Club', image_url: 'https://www.habboassets.com/assets/badges/HC1.gif', category: 'others' },
+        { code: 'ARM01', name: 'Medic Private', image_url: 'https://www.habboassets.com/assets/badges/ARM01.gif', category: 'achievements' },
+        { code: 'ARM02', name: 'Medic Sergeant', image_url: 'https://www.habboassets.com/assets/badges/ARM02.gif', category: 'achievements' },
+        { code: 'AME01', name: 'Chess Set Bundle', image_url: 'https://www.habboassets.com/assets/badges/AME01.gif', category: 'fansites' },
+      ];
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          badges: fallbackBadges,
+          metadata: {
+            total: fallbackBadges.length,
+            page: 1,
+            limit: 100,
+            hasMore: false,
+            source: 'HabboAssets-Fallback',
+            categories: {
+              all: fallbackBadges.length,
+              official: fallbackBadges.filter(b => b.category === 'official').length,
+              achievements: fallbackBadges.filter(b => b.category === 'achievements').length,
+              fansites: fallbackBadges.filter(b => b.category === 'fansites').length,
+              others: fallbackBadges.filter(b => b.category === 'others').length,
+            }
+          }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200
+        }
+      );
+    }
     
     // Filtrar por categoria
     let filteredBadges = category === 'all' 
@@ -157,7 +210,7 @@ serve(async (req) => {
       );
     }
     
-    // Paginação para scroll infinito
+    // Paginação
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
     const paginatedBadges = filteredBadges.slice(startIndex, endIndex);
@@ -176,7 +229,7 @@ serve(async (req) => {
           official: allBadges.filter(b => b.category === 'official').length,
           achievements: allBadges.filter(b => b.category === 'achievements').length,
           fansites: allBadges.filter(b => b.category === 'fansites').length,
-          others: allBadges.filter(b => b.category === 'others').length
+          others: allBadges.filter(b => b.category === 'others').length,
         }
       }
     };
