@@ -1,4 +1,3 @@
-
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
 import { Search, Filter, TrendingUp, TrendingDown, Star, Globe, Calendar, Package, Crown } from 'lucide-react';
@@ -51,7 +50,7 @@ export const MarketplaceReal = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedHotel, setSelectedHotel] = useState('br');
-  const [selectedDays, setSelectedDays] = useState(30);
+  const [selectedDays, setSelectedDays] = useState<number | 'all'>(30);
 
   const categories = [
     { id: 'all', name: 'Todas' },
