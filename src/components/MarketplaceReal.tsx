@@ -1,8 +1,13 @@
 import { useLanguage } from '../hooks/useLanguage';
 import { PanelCard } from './PanelCard';
-import { Search, Filter, TrendingUp, TrendingDown, Star, Globe, Calendar, Package, Crown } from 'lucide-react';
+import { Search, Filter, Globe, Calendar, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { MarketDashboard } from './marketplace/MarketDashboard';
+import { MarketCategoryBox } from './marketplace/MarketCategoryBox';
+import { MarketItemModal } from './marketplace/MarketItemModal';
+import { CreditIcon } from './marketplace/CreditIcon';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MarketItem {
   id: string;
@@ -51,6 +56,8 @@ export const MarketplaceReal = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedHotel, setSelectedHotel] = useState('br');
   const [selectedDays, setSelectedDays] = useState<number | 'all'>(30);
+  const [selectedItem, setSelectedItem] = useState<MarketItem | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const categories = [
     { id: 'all', name: 'Todas' },
@@ -135,66 +142,33 @@ export const MarketplaceReal = () => {
     }
   };
 
-  const formatPrice = (price: number) => `${price.toLocaleString()} cr`;
-
   const filteredItems = items.filter(item => {
     if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
     if (searchTerm && !item.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
   });
 
+  // Categorize items for boxes
+  const topSellers = [...items].sort((a, b) => b.volume - a.volume).slice(0, 10);
+  const biggestGainers = [...items].filter(item => item.trend === 'up').sort((a, b) => 
+    parseFloat(b.changePercent) - parseFloat(a.changePercent)
+  ).slice(0, 10);
+  const biggestLosers = [...items].filter(item => item.trend === 'down').sort((a, b) => 
+    parseFloat(a.changePercent) - parseFloat(b.changePercent)
+  ).slice(0, 10);
+  const mostExpensive = [...items].sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
+  const opportunities = [...items].filter(item => item.rarity === 'rare' && item.currentPrice < 100).slice(0, 10);
+
+  const handleItemClick = (item: MarketItem) => {
+    setSelectedItem(item);
+    setModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <PanelCard title="Mercado Real do Habbo - Dados Oficiais">
         <div className="space-y-6">
-          {/* Market Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="habbo-card">
-              <div className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <TrendingUp className="text-blue-500 mr-2" size={20} />
-                  <span className="text-sm font-medium text-blue-600">Total</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">{stats.totalItems}</div>
-                <div className="text-sm text-gray-600">Itens Ativos</div>
-              </div>
-            </div>
-
-            <div className="habbo-card">
-              <div className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Star className="text-yellow-500 mr-2" size={20} />
-                  <span className="text-sm font-medium text-yellow-600">Média</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">{formatPrice(stats.averagePrice)}</div>
-                <div className="text-sm text-gray-600">Preço Médio</div>
-              </div>
-            </div>
-
-            <div className="habbo-card">
-              <div className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <TrendingUp className="text-green-500 mr-2" size={20} />
-                  <span className="text-sm font-medium text-green-600">{stats.trendingUp}</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">{stats.totalVolume}</div>
-                <div className="text-sm text-gray-600">Volume Total</div>
-              </div>
-            </div>
-
-            <div className="habbo-card">
-              <div className="p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Crown className="text-purple-500 mr-2" size={20} />
-                  <span className="text-sm font-medium text-purple-600">Máximo</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-800">{formatPrice(stats.highestPrice)}</div>
-                <div className="text-sm text-gray-600">Maior Preço</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced Search and Filters */}
+          {/* Search and Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -249,80 +223,66 @@ export const MarketplaceReal = () => {
             </div>
           </div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-600 font-semibold">Carregando dados do marketplace...</p>
-              <p className="text-gray-500 text-sm mt-1">Hotel: {hotels.find(h => h.id === selectedHotel)?.flag} {hotels.find(h => h.id === selectedHotel)?.name}</p>
+          {loading ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-24" />
+                ))}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-64" />
+                ))}
+              </div>
             </div>
-          )}
+          ) : (
+            <>
+              {/* Dashboard */}
+              <MarketDashboard stats={stats} items={items} />
 
-          {/* Items Grid */}
-          {!loading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredItems.map((item) => (
-                <div key={item.id} className="habbo-card hover:shadow-lg transition-all duration-300">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getRarityColor(item.rarity)}`}>
-                        {item.rarity.toUpperCase()}
-                      </span>
-                      <div className="flex items-center">
-                        {item.trend === 'up' ? (
-                          <TrendingUp size={16} className="text-green-500 mr-1" />
-                        ) : item.trend === 'down' ? (
-                          <TrendingDown size={16} className="text-red-500 mr-1" />
-                        ) : (
-                          <div className="w-4 h-4 mr-1" />
-                        )}
-                        <span className={`text-sm ${
-                          item.trend === 'up' ? 'text-green-600' : 
-                          item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                          {item.changePercent}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center mb-4">
-                      <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="w-12 h-12 mx-auto object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/assets/package.png';
-                          }}
-                        />
-                      </div>
-                      <h3 className="font-bold text-gray-800 mb-1 text-sm truncate" title={item.name}>
-                        {item.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 truncate">{item.description}</p>
-                    </div>
-                    
-                    <div className="text-center mb-4">
-                      <div className="text-xl font-bold text-green-600">
-                        {formatPrice(item.currentPrice)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        Vol: {item.volume} | Hotel: {hotels.find(h => h.id === item.hotel)?.flag}
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <button className="habbo-button-green flex-1 text-xs py-1">
-                        Ver Histórico
-                      </button>
-                      <button className="habbo-button-blue px-2 text-xs py-1">
-                        <Star size={12} />
-                      </button>
-                    </div>
-                  </div>
+              {/* Category Boxes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <MarketCategoryBox 
+                  title="🔥 Top Vendedores" 
+                  items={topSellers} 
+                  onItemClick={handleItemClick}
+                />
+                <MarketCategoryBox 
+                  title="📈 Maiores Altas" 
+                  items={biggestGainers} 
+                  onItemClick={handleItemClick}
+                />
+                <MarketCategoryBox 
+                  title="📉 Maiores Baixas" 
+                  items={biggestLosers} 
+                  onItemClick={handleItemClick}
+                />
+                <MarketCategoryBox 
+                  title="💎 Mais Caros" 
+                  items={mostExpensive} 
+                  onItemClick={handleItemClick}
+                />
+                <MarketCategoryBox 
+                  title="🎯 Oportunidades" 
+                  items={opportunities} 
+                  onItemClick={handleItemClick}
+                />
+              </div>
+
+              {/* Footer Info */}
+              {filteredItems.length > 0 && (
+                <div className="text-center text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
+                  <p className="flex items-center justify-center gap-2">
+                    Mostrando {filteredItems.length} de {stats.totalItems} itens • 
+                    Hotel: {hotels.find(h => h.id === selectedHotel)?.flag} {hotels.find(h => h.id === selectedHotel)?.name} • 
+                    Dados reais do marketplace oficial •
+                    <CreditIcon size="sm" />
+                    Preços atualizados
+                  </p>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
 
           {/* Empty State */}
@@ -335,19 +295,15 @@ export const MarketplaceReal = () => {
               <p className="text-gray-500">Tente ajustar os filtros ou termos de busca</p>
             </div>
           )}
-
-          {/* Footer Info */}
-          {!loading && filteredItems.length > 0 && (
-            <div className="text-center text-sm text-gray-500 bg-gray-50 rounded-lg p-3">
-              <p>
-                Mostrando {filteredItems.length} de {stats.totalItems} itens • 
-                Hotel: {hotels.find(h => h.id === selectedHotel)?.flag} {hotels.find(h => h.id === selectedHotel)?.name} • 
-                Dados reais do marketplace oficial
-              </p>
-            </div>
-          )}
         </div>
       </PanelCard>
+
+      {/* Item Detail Modal */}
+      <MarketItemModal 
+        item={selectedItem}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 };
