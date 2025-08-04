@@ -54,6 +54,7 @@ const fetchPuhekuplaData = async (endpoint: string, params: Record<string, strin
   }
 
   if (!data) {
+    console.error(`❌ [PuhekuplaData] No data received for ${endpoint}`);
     throw new Error('No data received from Puhekupla API');
   }
 
@@ -64,6 +65,9 @@ const fetchPuhekuplaData = async (endpoint: string, params: Record<string, strin
 
   console.log(`✅ [PuhekuplaData] ${endpoint} loaded successfully:`, {
     hasData: !!data.data,
+    dataStructure: data.data ? Object.keys(data.data) : 'no data',
+    resultStructure: data.data?.result ? Object.keys(data.data.result) : 'no result',
+    itemCount: data.data?.result ? Object.values(data.data.result).find(Array.isArray)?.length : 0,
     apiKeyUsed: data.apiKeyUsed,
     fetchedAt: data.fetchedAt
   });
@@ -81,8 +85,9 @@ export const usePuhekuplaFurni = (page = 1, category = '', search = '') => {
     }),
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 2,
+    retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: true, // Always enabled
   });
 };
 
@@ -92,8 +97,9 @@ export const usePuhekuplaCategories = () => {
     queryFn: () => fetchPuhekuplaData('categories'),
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60 * 2, // 2 hours
-    retry: 2,
+    retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: true, // Always enabled
   });
 };
 
@@ -106,8 +112,9 @@ export const usePuhekuplaBadges = (page = 1, search = '') => {
     }),
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 2,
+    retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: true, // Always enabled
   });
 };
 
@@ -121,7 +128,8 @@ export const usePuhekuplaClothing = (page = 1, category = '', search = '') => {
     }),
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 2,
+    retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    enabled: true, // Always enabled
   });
 };

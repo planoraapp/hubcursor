@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Package, Shirt, Award, Sparkles, Download, Copy, Settings } from 'lucide-react';
+import { Search, Package, Shirt, Award, Sparkles, Settings } from 'lucide-react';
 import EnhancedAvatarPreview from './EnhancedAvatarPreview';
 import EnhancedItemGrid from './EnhancedItemGrid';
 import { usePuhekuplaCategories, usePuhekuplaFurni, usePuhekuplaClothing, usePuhekuplaBadges } from '@/hooks/usePuhekuplaData';
@@ -57,13 +57,14 @@ const PuhekuplaEditor = () => {
     }
   }, []);
 
-  const { data: categoriesData } = usePuhekuplaCategories();
+  const { data: categoriesData, isLoading: categoriesLoading } = usePuhekuplaCategories();
   const categories = categoriesData?.result?.categories || [];
 
   // Hook calls for each tab
   const { 
     data: furniData, 
-    isLoading: furniLoading 
+    isLoading: furniLoading,
+    error: furniError 
   } = usePuhekuplaFurni(
     currentPages.furni, 
     selectedCategory, 
@@ -72,7 +73,8 @@ const PuhekuplaEditor = () => {
 
   const { 
     data: clothingData, 
-    isLoading: clothingLoading 
+    isLoading: clothingLoading,
+    error: clothingError 
   } = usePuhekuplaClothing(
     currentPages.clothing, 
     selectedCategory, 
@@ -81,11 +83,35 @@ const PuhekuplaEditor = () => {
 
   const { 
     data: badgesData, 
-    isLoading: badgesLoading 
+    isLoading: badgesLoading,
+    error: badgesError 
   } = usePuhekuplaBadges(
     currentPages.badges, 
     searchTerm
   );
+
+  // Debug logs
+  useEffect(() => {
+    console.log('🔍 [PuhekuplaEditor] Current data status:', {
+      activeTab,
+      furniData: furniData ? { 
+        hasResult: !!furniData.result,
+        furniCount: furniData.result?.furni?.length || 0,
+        structure: Object.keys(furniData)
+      } : 'no data',
+      clothingData: clothingData ? {
+        hasResult: !!clothingData.result,
+        clothingCount: clothingData.result?.clothing?.length || 0,
+        structure: Object.keys(clothingData)
+      } : 'no data',
+      badgesData: badgesData ? {
+        hasResult: !!badgesData.result,
+        badgesCount: badgesData.result?.badges?.length || 0,
+        structure: Object.keys(badgesData)
+      } : 'no data',
+      categories: categories.length
+    });
+  }, [activeTab, furniData, clothingData, badgesData, categories]);
 
   const hotels = [
     { code: 'com', name: 'Habbo.com', flag: '🌍' },
@@ -99,7 +125,6 @@ const PuhekuplaEditor = () => {
     console.log('Item selecionado:', item);
     
     if (activeTab === 'clothing') {
-      // Apply clothing item to figure
       const newFigure = PuhekuplaFigureManager.applyClothingItem(currentFigure, item);
       setCurrentFigure(newFigure);
       
@@ -133,26 +158,50 @@ const PuhekuplaEditor = () => {
         return {
           items: furniData?.result?.furni || [],
           loading: furniLoading,
+          error: furniError,
           pagination: furniData?.pagination
         };
       case 'clothing':
         return {
           items: clothingData?.result?.clothing || [],
           loading: clothingLoading,
+          error: clothingError,
           pagination: clothingData?.pagination
         };
       case 'badges':
         return {
           items: badgesData?.result?.badges || [],
           loading: badgesLoading,
+          error: badgesError,
           pagination: badgesData?.pagination
         };
       default:
-        return { items: [], loading: false, pagination: null };
+        return { items: [], loading: false, error: null, pagination: null };
     }
   };
 
   const tabData = getCurrentTabData();
+
+  // Error display helper
+  const renderErrorState = (error: any, type: string) => {
+    if (!error) return null;
+    
+    console.error(`❌ [PuhekuplaEditor] ${type} error:`, error);
+    
+    return (
+      <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
+        <div className="text-red-600 mb-2">Erro ao carregar {type}</div>
+        <div className="text-sm text-red-500">{error.message || 'Erro desconhecido'}</div>
+        <Button 
+          onClick={() => window.location.reload()} 
+          className="mt-4"
+          variant="outline"
+        >
+          Recarregar
+        </Button>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-6 p-4">
@@ -188,21 +237,21 @@ const PuhekuplaEditor = () => {
                   <Package className="w-4 h-4" />
                   Móveis
                   <Badge variant="secondary" className="ml-1">
-                    {furniData?.pagination?.total || 0}
+                    {furniData?.result?.furni?.length || 0}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="clothing" className="flex items-center gap-2">
                   <Shirt className="w-4 h-4" />
                   Roupas
                   <Badge variant="secondary" className="ml-1">
-                    {clothingData?.pagination?.total || 0}
+                    {clothingData?.result?.clothing?.length || 0}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="badges" className="flex items-center gap-2">
                   <Award className="w-4 h-4" />
                   Emblemas
                   <Badge variant="secondary" className="ml-1">
-                    {badgesData?.pagination?.total || 0}
+                    {badgesData?.result?.badges?.length || 0}
                   </Badge>
                 </TabsTrigger>
               </TabsList>
@@ -245,51 +294,57 @@ const PuhekuplaEditor = () => {
               {/* Content Tabs */}
               <div className="min-h-[500px]">
                 <TabsContent value="furni" className="h-full">
-                  <EnhancedItemGrid
-                    items={tabData.items}
-                    onItemSelect={handleItemSelect}
-                    loading={tabData.loading}
-                    type="furni"
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    category={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    categories={categories}
-                    currentPage={currentPages.furni}
-                    totalPages={tabData.pagination?.pages || 1}
-                    onPageChange={(page) => handlePageChange('furni', page)}
-                  />
+                  {furniError ? renderErrorState(furniError, 'móveis') : (
+                    <EnhancedItemGrid
+                      items={tabData.items}
+                      onItemSelect={handleItemSelect}
+                      loading={tabData.loading}
+                      type="furni"
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                      category={selectedCategory}
+                      onCategoryChange={setSelectedCategory}
+                      categories={categories}
+                      currentPage={currentPages.furni}
+                      totalPages={tabData.pagination?.pages || 1}
+                      onPageChange={(page) => handlePageChange('furni', page)}
+                    />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="clothing" className="h-full">
-                  <EnhancedItemGrid
-                    items={tabData.items}
-                    onItemSelect={handleItemSelect}
-                    loading={tabData.loading}
-                    type="clothing"
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    category={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    categories={categories}
-                    currentPage={currentPages.clothing}
-                    totalPages={tabData.pagination?.pages || 1}
-                    onPageChange={(page) => handlePageChange('clothing', page)}
-                  />
+                  {clothingError ? renderErrorState(clothingError, 'roupas') : (
+                    <EnhancedItemGrid
+                      items={tabData.items}
+                      onItemSelect={handleItemSelect}
+                      loading={tabData.loading}
+                      type="clothing"
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                      category={selectedCategory}
+                      onCategoryChange={setSelectedCategory}
+                      categories={categories}
+                      currentPage={currentPages.clothing}
+                      totalPages={tabData.pagination?.pages || 1}
+                      onPageChange={(page) => handlePageChange('clothing', page)}
+                    />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="badges" className="h-full">
-                  <EnhancedItemGrid
-                    items={tabData.items}
-                    onItemSelect={handleItemSelect}
-                    loading={tabData.loading}
-                    type="badges"
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    currentPage={currentPages.badges}
-                    totalPages={tabData.pagination?.pages || 1}
-                    onPageChange={(page) => handlePageChange('badges', page)}
-                  />
+                  {badgesError ? renderErrorState(badgesError, 'emblemas') : (
+                    <EnhancedItemGrid
+                      items={tabData.items}
+                      onItemSelect={handleItemSelect}
+                      loading={tabData.loading}
+                      type="badges"
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                      currentPage={currentPages.badges}
+                      totalPages={tabData.pagination?.pages || 1}
+                      onPageChange={(page) => handlePageChange('badges', page)}
+                    />
+                  )}
                 </TabsContent>
               </div>
             </Tabs>
