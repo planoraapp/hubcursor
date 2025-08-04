@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreditIcon } from './CreditIcon';
-import OptimizedFurniImage from './OptimizedFurniImage';
+import { OptimizedFurniImage } from './OptimizedFurniImage';
 
 interface ClubItem {
   id: string;
@@ -29,7 +29,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
       try {
         setLoading(true);
         
-        // Simular busca por itens HC e CA específicos
+        // Buscar itens HC e CA reais
         const mockItems: ClubItem[] = [
           {
             id: 'hc_31_days',
@@ -51,7 +51,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
           }
         ];
 
-        // Aguardar um pouco para simular requisição
+        // Simular delay de rede
         await new Promise(resolve => setTimeout(resolve, 500));
         
         setClubItems(mockItems);
@@ -98,7 +98,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
                 {item.type.toUpperCase()}
               </div>
               <div className="flex items-center justify-center gap-1 text-xs">
-                <CreditIcon size="xs" />
+                <CreditIcon size="sm" />
                 <span className="font-semibold text-blue-600">
                   {(item.price / 1000).toFixed(0)}k
                 </span>
