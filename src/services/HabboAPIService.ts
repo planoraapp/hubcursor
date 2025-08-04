@@ -107,8 +107,8 @@ export class HabboAPIService {
           )
           .sort((a, b) => {
             const rarityWeight = { legendary: 1000, rare: 100, uncommon: 10, common: 1 };
-            const aWeight = (rarityWeight[item.rarity as keyof typeof rarityWeight] || 1) + item.currentPrice;
-            const bWeight = (rarityWeight[item.rarity as keyof typeof rarityWeight] || 1) + item.currentPrice;
+            const aWeight = (rarityWeight[a.rarity as keyof typeof rarityWeight] || 1) + a.currentPrice;
+            const bWeight = (rarityWeight[b.rarity as keyof typeof rarityWeight] || 1) + b.currentPrice;
             return bWeight - aWeight;
           })
           .slice(0, 10);
