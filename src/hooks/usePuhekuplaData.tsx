@@ -1,37 +1,6 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface PuhekuplaFurni {
-  guid: string;
-  slug: string;
-  code: string;
-  name: string;
-  description: string;
-  image: string;
-  icon: string;
-  status: string;
-  category?: string;
-  rarity?: string;
-}
-
-export interface PuhekuplaCategory {
-  guid: string;
-  name: string;
-  slug: string;
-  image: string;
-  count: number;
-}
-
-export interface PuhekuplaBadge {
-  guid: string;
-  code: string;
-  name: string;
-  description: string;
-  image: string;
-  status: string;
-  type?: string;
-  rarity?: string;
-}
 
 export interface PuhekuplaClothing {
   guid: string;
@@ -40,543 +9,415 @@ export interface PuhekuplaClothing {
   description: string;
   image: string;
   category: string;
-  gender: string;
-  status: string;
-  colors?: string;
+  gender: 'M' | 'F' | 'U';
+  colors: string;
+  status: 'active' | 'inactive';
+  release_date?: string;
 }
 
-const fetchPuhekuplaData = async (endpoint: string, params: Record<string, string> = {}) => {
-  console.log(`🚀 [PuhekuplaData] Requesting ${endpoint} with params:`, params);
+export interface PuhekuplaClothingResponse {
+  success: boolean;
+  result?: {
+    clothing: PuhekuplaClothing[];
+    pagination?: {
+      current_page: number;
+      pages: number;
+      total: number;
+    };
+  };
+  error?: string;
+}
 
-  const { data, error } = await supabase.functions.invoke('puhekupla-proxy', {
-    body: { endpoint, params }
-  });
-
-  if (error) {
-    console.error(`❌ [PuhekuplaData] Supabase error for ${endpoint}:`, error);
-    throw new Error(`Supabase function error: ${error.message}`);
-  }
-
-  if (!data) {
-    console.error(`❌ [PuhekuplaData] No data received for ${endpoint}`);
-    throw new Error('No data received from Puhekupla API');
-  }
-
-  console.log(`📦 [PuhekuplaData] ${endpoint} raw response:`, {
-    success: data.success,
-    source: data.source,
-    strategy: data.strategy,
-    endpoint: data.endpoint,
-    dataKeys: data.data ? Object.keys(data.data) : 'no data',
-    hasResult: data.data?.result ? 'yes' : 'no'
-  });
-
-  if (!data.success) {
-    console.error(`❌ [PuhekuplaData] API error for ${endpoint}:`, data.error);
-    
-    // Gerar dados mock mais realistas quando a API falha
-    console.log(`🎭 [PuhekuplaData] Generating realistic mock data for ${endpoint}`);
-    return generateRealisticMockData(endpoint, params);
-  }
-
-  // Process the response data
-  let processedData = data.data;
+// Biblioteca expandida de roupas mock com orientação front_right consistente
+const generateExpandedMockClothing = (): PuhekuplaClothing[] => {
+  const mockClothing: PuhekuplaClothing[] = [];
   
-  // Handle API error responses (403, etc.) by converting to realistic mock data
-  if (processedData?.status_code && processedData?.status_message) {
-    console.warn(`⚠️ [PuhekuplaData] ${endpoint} returned error response:`, {
-      code: processedData.status_code,
-      message: processedData.status_message,
-      generatingRealisticMocks: true
+  // CABEÇA - Rostos (hd)
+  const faces = [
+    { id: '180', name: 'Rosto Clássico', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '185', name: 'Rosto Jovem', colors: '1,2,3,4,5,6,7,8,9,10,11,12' },
+    { id: '190', name: 'Rosto Maduro', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '200', name: 'Rosto Elegante', colors: '1,2,3,4,5,6,7,8,9,10,11' },
+    { id: '205', name: 'Rosto Moderno', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '300', name: 'Rosto Asiático', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '310', name: 'Rosto Africano', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '320', name: 'Rosto Latino', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '330', name: 'Rosto Europeu', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '340', name: 'Rosto Nórdico', colors: '1,2,3,4,5,6,7,8,9,10' }
+  ];
+
+  faces.forEach(face => {
+    mockClothing.push({
+      guid: `hd-${face.id}`,
+      code: `hd-${face.id}`,
+      name: face.name,
+      description: `Rosto único para seu avatar - ${face.name}`,
+      image: `https://content.puhekupla.com/img/clothes/hd_${face.id}_front_right.png`,
+      category: 'head',
+      gender: 'U',
+      colors: face.colors,
+      status: 'active'
     });
-    
-    return generateRealisticMockData(endpoint, params);
-  }
-
-  // Ensure we have the expected structure
-  if (!processedData.result) {
-    console.warn(`⚠️ [PuhekuplaData] Missing result structure for ${endpoint}, generating realistic mocks`);
-    return generateRealisticMockData(endpoint, params);
-  }
-
-  console.log(`✅ [PuhekuplaData] ${endpoint} processed successfully:`, {
-    hasResult: !!processedData?.result,
-    resultKeys: processedData?.result ? Object.keys(processedData.result) : 'none',
-    itemCount: getItemCount(processedData, endpoint),
-    source: data.source,
-    strategy: data.strategy,
-    fetchedAt: data.fetchedAt
   });
-  
-  return processedData;
-};
 
-function generateRealisticMockData(endpoint: string, params: Record<string, string> = {}) {
-  console.log(`🎭 [PuhekuplaData] Generating realistic mock data for ${endpoint}`);
-  
-  switch (endpoint) {
-    case 'furni':
-      return {
-        result: {
-          furni: generateMockFurni()
-        },
-        pagination: {
-          current_page: parseInt(params.page) || 1,
-          pages: 5,
-          total: 120
-        }
-      };
-      
-    case 'clothing':
-      return {
-        result: {
-          clothing: generateMockClothingByCategory()
-        },
-        pagination: {
-          current_page: parseInt(params.page) || 1,
-          pages: 8,
-          total: 200
-        }
-      };
-      
-    case 'badges':
-      return {
-        result: {
-          badges: generateMockBadges()
-        },
-        pagination: {
-          current_page: parseInt(params.page) || 1,
-          pages: 15,
-          total: 450
-        }
-      };
-      
-    case 'categories':
-      return {
-        result: {
-          categories: generateMockCategories()
-        },
-        pagination: {
-          current_page: 1,
-          pages: 1,
-          total: 12
-        }
-      };
-      
-    default:
-      return {
-        result: {},
-        pagination: {
-          current_page: 1,
-          pages: 1,
-          total: 0
-        }
-      };
-  }
-}
-
-function generateMockFurni(): PuhekuplaFurni[] {
-  return [
-    {
-      guid: 'furni-001',
-      slug: 'armchair_brown',
-      code: 'armchair_brown',
-      name: 'Poltrona Marrom',
-      description: 'Uma confortável poltrona marrom para relaxar',
-      image: 'https://content.puhekupla.com/img/furni/armchair_brown.png',
-      icon: 'https://content.puhekupla.com/img/furni/armchair_brown_icon.png',
-      status: 'active',
-      category: 'furniture',
-      rarity: 'common'
-    },
-    {
-      guid: 'furni-002',
-      slug: 'table_wood',
-      code: 'table_wood',
-      name: 'Mesa de Madeira',
-      description: 'Mesa rústica de madeira maciça',
-      image: 'https://content.puhekupla.com/img/furni/table_wood.png',
-      icon: 'https://content.puhekupla.com/img/furni/table_wood_icon.png',
-      status: 'active',
-      category: 'furniture'
-    },
-    {
-      guid: 'furni-003',
-      slug: 'lamp_modern',
-      code: 'lamp_modern',
-      name: 'Luminária Moderna',
-      description: 'Luminária de design moderno e elegante',
-      image: 'https://content.puhekupla.com/img/furni/lamp_modern.png',
-      icon: 'https://content.puhekupla.com/img/furni/lamp_modern_icon.png',
-      status: 'active',
-      category: 'decoration',
-      rarity: 'rare'
-    }
+  // CABEÇA - Cabelos (hr) 
+  const hairStyles = [
+    { id: '828', name: 'Cabelo Clássico Masculino', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30,45,46,47,48' },
+    { id: '595', name: 'Cabelo Longo Feminino', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30,45,46,47,48' },
+    { id: '906', name: 'Cabelo Punk', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30' },
+    { id: '110', name: 'Cabelo Curto Ondulado', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30,45,46,47,48' },
+    { id: '125', name: 'Cabelo Liso Comprido', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30,45,46,47,48' },
+    { id: '515', name: 'Cabelo Afro', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30' },
+    { id: '605', name: 'Cabelo Gamer', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30' },
+    { id: '800', name: 'Cabelo Trendy', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30,45,46,47,48' },
+    { id: '850', name: 'Cabelo Militar', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30' },
+    { id: '900', name: 'Cabelo Emo', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,23,24,25,26,27,28,29,30' }
   ];
-}
 
-function generateMockClothingByCategory(): PuhekuplaClothing[] {
-  const clothingData = [
-    // CABEÇA - Rostos (hd)
-    {
-      guid: 'clothing-hd-001',
-      code: 'hd-180',
-      name: 'Rosto Básico',
-      description: 'Rosto padrão para avatares',
-      image: 'https://content.puhekupla.com/img/clothes/face_basic_front_right.png',
-      category: 'head',
-      gender: 'U',
-      status: 'active',
-      colors: '1,2,3'
-    },
-    {
-      guid: 'clothing-hd-002',
-      code: 'hd-185',
-      name: 'Rosto Sorridente',
-      description: 'Rosto com expressão alegre',
-      image: 'https://content.puhekupla.com/img/clothes/face_smile_front_right.png',
-      category: 'head',
-      gender: 'U',
-      status: 'active',
-      colors: '1,2,3'
-    },
-    
-    // CABEÇA - Cabelos (hr)
-    {
-      guid: 'clothing-hr-001',
-      code: 'hr-828',
-      name: 'Cabelo Masculino Básico',
-      description: 'Corte de cabelo masculino clássico',
-      image: 'https://content.puhekupla.com/img/clothes/hair_M_basic_front_right.png',
+  hairStyles.forEach(hair => {
+    mockClothing.push({
+      guid: `hr-${hair.id}`,
+      code: `hr-${hair.id}`,
+      name: hair.name,
+      description: `Estilo de cabelo único - ${hair.name}`,
+      image: `https://content.puhekupla.com/img/clothes/hr_${hair.id}_front_right.png`,
       category: 'hair',
-      gender: 'M',
-      status: 'active',
-      colors: '1,3,4,7,9,16,20,23,24,25'
-    },
-    {
-      guid: 'clothing-hr-002',
-      code: 'hr-595',
-      name: 'Cabelo Feminino Longo',
-      description: 'Cabelo longo feminino ondulado',
-      image: 'https://content.puhekupla.com/img/clothes/hair_F_long_front_right.png',
-      category: 'hair',
-      gender: 'F',
-      status: 'active',
-      colors: '1,3,4,7,9,16,20,23,24,25'
-    },
-    {
-      guid: 'clothing-hr-003',
-      code: 'hr-906',
-      name: 'Cabelo Curto Moderno',
-      description: 'Corte moderno unissex',
-      image: 'https://content.puhekupla.com/img/clothes/hair_U_modern_front_right.png',
-      category: 'hair',
-      gender: 'U',
-      status: 'active',
-      colors: '1,3,4,7,9,16,20,23,24,25'
-    },
+      gender: hair.gender as 'M' | 'F' | 'U',
+      colors: hair.colors,
+      status: 'active'
+    });
+  });
 
-    // CABEÇA - Chapéus (ha)
-    {
-      guid: 'clothing-ha-001',
-      code: 'ha-1001',
-      name: 'Boné Esportivo',
-      description: 'Boné casual para atividades esportivas',
-      image: 'https://content.puhekupla.com/img/clothes/hat_cap_front_right.png',
+  // CABEÇA - Chapéus (ha)
+  const hats = [
+    { id: '1001', name: 'Boné Baseball', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '1002', name: 'Chapéu Cowboy', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '1003', name: 'Gorro Inverno', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '1004', name: 'Tiara Princesa', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '1005', name: 'Capacete Gamer', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '1006', name: 'Chapéu Chef', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '1007', name: 'Boina Artista', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '1008', name: 'Capacete Motoqueiro', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' }
+  ];
+
+  hats.forEach(hat => {
+    mockClothing.push({
+      guid: `ha-${hat.id}`,
+      code: `ha-${hat.id}`,
+      name: hat.name,
+      description: `Acessório de cabeça estiloso - ${hat.name}`,
+      image: `https://content.puhekupla.com/img/clothes/ha_${hat.id}_front_right.png`,
       category: 'hat',
-      gender: 'U',
-      status: 'active',
-      colors: '1,2,4,5,6'
-    },
-    {
-      guid: 'clothing-ha-002',
-      code: 'ha-1015',
-      name: 'Chapéu Social',
-      description: 'Chapéu elegante para ocasiões formais',
-      image: 'https://content.puhekupla.com/img/clothes/hat_formal_front_right.png',
-      category: 'hat',
-      gender: 'U',
-      status: 'active',
-      colors: '1,4,9'
-    },
+      gender: hat.gender as 'M' | 'F' | 'U',
+      colors: hat.colors,
+      status: 'active'
+    });
+  });
 
-    // CABEÇA - Óculos (ea)
-    {
-      guid: 'clothing-ea-001',
-      code: 'ea-1201',
-      name: 'Óculos de Sol',
-      description: 'Óculos escuros estilosos',
-      image: 'https://content.puhekupla.com/img/clothes/glasses_sunglasses_front_right.png',
+  // CABEÇA - Óculos (ea)
+  const eyewear = [
+    { id: '2001', name: 'Óculos de Sol', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '2002', name: 'Óculos Grau', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '2003', name: 'Óculos Gamer', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '2004', name: 'Óculos Vintage', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '2005', name: 'Óculos Esportivo', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '2006', name: 'Monóculo Elegante', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10' }
+  ];
+
+  eyewear.forEach(eye => {
+    mockClothing.push({
+      guid: `ea-${eye.id}`,
+      code: `ea-${eye.id}`,
+      name: eye.name,
+      description: `Acessório ocular moderno - ${eye.name}`,
+      image: `https://content.puhekupla.com/img/clothes/ea_${eye.id}_front_right.png`,
       category: 'eye_accessories',
-      gender: 'U',
-      status: 'active',
-      colors: '1,4,9'
-    },
-
-    // CORPO - Camisetas (ch)
-    {
-      guid: 'clothing-ch-001',
-      code: 'shirt_U_nftbubblebath',
-      name: 'Camisa NFT Bubble Bath',
-      description: 'Camisa exclusiva com estampa NFT Bubble Bath',
-      image: 'https://content.puhekupla.com/img/clothes/shirt_U_nftbubblebath_front_right.png',
-      category: 'chest',
-      gender: 'U',
-      status: 'active',
-      colors: '1,2,3,4,5'
-    },
-    {
-      guid: 'clothing-ch-002',
-      code: 'ch-665',
-      name: 'Camisa Básica Masculina',
-      description: 'Camisa básica para avatares masculinos',
-      image: 'https://content.puhekupla.com/img/clothes/shirt_M_basic_front_right.png',
-      category: 'chest',
-      gender: 'M',
-      status: 'active',
-      colors: '1,2,3,6,7,8,10'
-    },
-    {
-      guid: 'clothing-ch-003',
-      code: 'ch-667',
-      name: 'Blusa Feminina Elegante',
-      description: 'Blusa elegante para avatares femininos',
-      image: 'https://content.puhekupla.com/img/clothes/shirt_F_elegant_front_right.png',
-      category: 'chest',
-      gender: 'F',
-      status: 'active',
-      colors: '1,4,8,9,15,18'
-    },
-    {
-      guid: 'clothing-ch-004',
-      code: 'ch-3100',
-      name: 'Camiseta Casual',
-      description: 'Camiseta confortável para o dia a dia',
-      image: 'https://content.puhekupla.com/img/clothes/tshirt_casual_front_right.png',
-      category: 'chest',
-      gender: 'U',
-      status: 'active',
-      colors: '1,2,3,4,5,6,7,8,10,12'
-    },
-
-    // CORPO - Casacos (cc)
-    {
-      guid: 'clothing-cc-001',
-      code: 'cc-2001',
-      name: 'Jaqueta de Couro',
-      description: 'Jaqueta estilosa de couro sintético',
-      image: 'https://content.puhekupla.com/img/clothes/jacket_leather_front_right.png',
-      category: 'coat',
-      gender: 'U',
-      status: 'active',
-      colors: '1,4,9'
-    },
-
-    // PERNAS - Calças (lg)
-    {
-      guid: 'clothing-lg-001',
-      code: 'pants_U_jeans',
-      name: 'Calça Jeans Unissex',
-      description: 'Calça jeans casual para todos os gêneros',
-      image: 'https://content.puhekupla.com/img/clothes/pants_U_jeans_front_right.png',
-      category: 'legs',
-      gender: 'U',
-      status: 'active',
-      colors: '1,2,5,10'
-    },
-    {
-      guid: 'clothing-lg-002',
-      code: 'lg-700',
-      name: 'Calça Masculina Clássica',
-      description: 'Calça social masculina',
-      image: 'https://content.puhekupla.com/img/clothes/pants_M_formal_front_right.png',
-      category: 'legs',
-      gender: 'M',
-      status: 'active',
-      colors: '1,4,9,10'
-    },
-    {
-      guid: 'clothing-lg-003',
-      code: 'lg-701',
-      name: 'Saia Feminina',
-      description: 'Saia elegante feminina',
-      image: 'https://content.puhekupla.com/img/clothes/skirt_F_elegant_front_right.png',
-      category: 'legs',
-      gender: 'F',
-      status: 'active',
-      colors: '1,4,8,9,15'
-    },
-
-    // PERNAS - Sapatos (sh)
-    {
-      guid: 'clothing-sh-001',
-      code: 'shoes_U_sneakers',
-      name: 'Tênis Esportivo',
-      description: 'Tênis confortável para atividades esportivas',
-      image: 'https://content.puhekupla.com/img/clothes/shoes_U_sneakers_front_right.png',
-      category: 'shoes',
-      gender: 'U',
-      status: 'active',
-      colors: '1,3,7,11'
-    },
-    {
-      guid: 'clothing-sh-002',
-      code: 'sh-705',
-      name: 'Sapato Social',
-      description: 'Sapato elegante para ocasiões formais',
-      image: 'https://content.puhekupla.com/img/clothes/shoes_formal_front_right.png',
-      category: 'shoes',
-      gender: 'U',
-      status: 'active',
-      colors: '1,4,9'
-    },
-    {
-      guid: 'clothing-sh-003',
-      code: 'sh-915',
-      name: 'Botas de Aventura',
-      description: 'Botas resistentes para aventuras',
-      image: 'https://content.puhekupla.com/img/clothes/boots_adventure_front_right.png',
-      category: 'shoes',
-      gender: 'U',
-      status: 'active',
-      colors: '1,4,9,17'
-    }
-  ];
-
-  return clothingData;
-}
-
-function generateMockBadges(): PuhekuplaBadge[] {
-  return [
-    {
-      guid: 'badge-001',
-      code: 'ACH_BasicSafety1',
-      name: 'Segurança Básica',
-      description: 'Completou o tutorial de segurança básica',
-      image: 'https://content.puhekupla.com/img/badges/ACH_BasicSafety1.png',
-      status: 'active',
-      type: 'achievement',
-      rarity: 'common'
-    },
-    {
-      guid: 'badge-002',
-      code: 'ACH_RoomEntry1',
-      name: 'Primeiro Quarto',
-      description: 'Entrou em seu primeiro quarto',
-      image: 'https://content.puhekupla.com/img/badges/ACH_RoomEntry1.png',
-      status: 'active',
-      type: 'achievement'
-    },
-    {
-      guid: 'badge-003',
-      code: 'ACH_Login1',
-      name: 'Bem-vindo!',
-      description: 'Fez seu primeiro login no Habbo',
-      image: 'https://content.puhekupla.com/img/badges/ACH_Login1.png',
-      status: 'active',
-      type: 'achievement'
-    }
-  ];
-}
-
-function generateMockCategories(): PuhekuplaCategory[] {
-  return [
-    {
-      guid: 'cat-001',
-      name: 'Móveis',
-      slug: 'furniture',
-      image: 'https://content.puhekupla.com/img/categories/furniture.png',
-      count: 45
-    },
-    {
-      guid: 'cat-002',
-      name: 'Roupas',
-      slug: 'clothing',
-      image: 'https://content.puhekupla.com/img/categories/clothing.png',
-      count: 120
-    },
-    {
-      guid: 'cat-003',
-      name: 'Emblemas',
-      slug: 'badges',
-      image: 'https://content.puhekupla.com/img/categories/badges.png',
-      count: 89
-    }
-  ];
-}
-
-function getItemCount(data: any, endpoint: string): number {
-  if (!data?.result) return 0;
-  
-  switch (endpoint) {
-    case 'furni':
-      return data.result.furni?.length || 0;
-    case 'clothing':
-      return data.result.clothing?.length || 0;
-    case 'badges':
-      return data.result.badges?.length || 0;
-    case 'categories':
-      return data.result.categories?.length || 0;
-    default:
-      return 0;
-  }
-}
-
-export const usePuhekuplaFurni = (page = 1, category = '', search = '') => {
-  return useQuery({
-    queryKey: ['puhekupla-furni', page, category, search],
-    queryFn: () => fetchPuhekuplaData('furni', { 
-      page: page.toString(), 
-      category: category === 'all' ? '' : category, 
-      search: search.trim()
-    }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    enabled: true,
+      gender: eye.gender as 'M' | 'F' | 'U',
+      colors: eye.colors,
+      status: 'active'
+    });
   });
+
+  // CORPO - Camisetas (ch)
+  const shirts = [
+    { id: '665', name: 'Camisa Básica Masculina', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '667', name: 'Blusa Básica Feminina', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '3100', name: 'Camiseta Gamer', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '215', name: 'Camiseta Esportiva', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '220', name: 'Blusa Social', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '225', name: 'Camiseta Banda', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '230', name: 'Regata Fitness', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '235', name: 'Camiseta Vintage', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '240', name: 'Blusa Cropped', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '245', name: 'Camiseta Oversized', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '250', name: 'Polo Clássica', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '255', name: 'Blusa Decote V', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' }
+  ];
+
+  shirts.forEach(shirt => {
+    mockClothing.push({
+      guid: `ch-${shirt.id}`,
+      code: `ch-${shirt.id}`,
+      name: shirt.name,
+      description: `Camiseta estilosa para seu look - ${shirt.name}`,
+      image: `https://content.puhekupla.com/img/clothes/ch_${shirt.id}_front_right.png`,
+      category: 'chest',
+      gender: shirt.gender as 'M' | 'F' | 'U',
+      colors: shirt.colors,
+      status: 'active'
+    });
+  });
+
+  // CORPO - Casacos (cc)
+  const jackets = [
+    { id: '3001', name: 'Jaqueta Jeans', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '3002', name: 'Blazer Executivo', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '3003', name: 'Moletom Capuz', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '3004', name: 'Casaco Inverno', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '3005', name: 'Jaqueta Couro', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '3006', name: 'Cardigan Elegante', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '3007', name: 'Colete Social', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '3008', name: 'Kimono Moderno', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' }
+  ];
+
+  jackets.forEach(jacket => {
+    mockClothing.push({
+      guid: `cc-${jacket.id}`,
+      code: `cc-${jacket.id}`,
+      name: jacket.name,
+      description: `Peça externa elegante - ${jacket.name}`,
+      image: `https://content.puhekupla.com/img/clothes/cc_${jacket.id}_front_right.png`,
+      category: 'coat',
+      gender: jacket.gender as 'M' | 'F' | 'U',
+      colors: jacket.colors,
+      status: 'active'
+    });
+  });
+
+  // PERNAS - Calças (lg)
+  const pants = [
+    { id: '700', name: 'Calça Jeans Masculina', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '701', name: 'Calça Jeans Feminina', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '270', name: 'Calça Social', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '280', name: 'Shorts Jeans', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '285', name: 'Legging Esportiva', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '290', name: 'Calça Cargo', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '295', name: 'Saia Longa', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '100', name: 'Bermuda Casual', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '105', name: 'Calça Skinny', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '110', name: 'Calça Wide Leg', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '115', name: 'Shorts Esportivo', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '120', name: 'Mini Saia', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' }
+  ];
+
+  pants.forEach(pant => {
+    mockClothing.push({
+      guid: `lg-${pant.id}`,
+      code: `lg-${pant.id}`,
+      name: pant.name,
+      description: `Peça para as pernas com estilo - ${pant.name}`,
+      image: `https://content.puhekupla.com/img/clothes/lg_${pant.id}_front_right.png`,
+      category: 'legs',
+      gender: pant.gender as 'M' | 'F' | 'U',
+      colors: pant.colors,
+      status: 'active'
+    });
+  });
+
+  // PERNAS - Sapatos (sh)
+  const shoes = [
+    { id: '705', name: 'Tênis Básico', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '915', name: 'Sapato Social', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '305', name: 'Bota Couro', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '310', name: 'Sandália Rasteira', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '315', name: 'Salto Alto', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' },
+    { id: '320', name: 'Tênis Esportivo', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '325', name: 'Bota Militar', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '330', name: 'Chinelo Slide', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '335', name: 'Sapato Oxford', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '340', name: 'Tênis Cano Alto', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '345', name: 'Mocassim', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '350', name: 'Bota Cowboy', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' }
+  ];
+
+  shoes.forEach(shoe => {
+    mockClothing.push({
+      guid: `sh-${shoe.id}`,
+      code: `sh-${shoe.id}`,
+      name: shoe.name,
+      description: `Calçado estiloso para completar o look - ${shoe.name}`,
+      image: `https://content.puhekupla.com/img/clothes/sh_${shoe.id}_front_right.png`,
+      category: 'shoes',
+      gender: shoe.gender as 'M' | 'F' | 'U',
+      colors: shoe.colors,
+      status: 'active'
+    });
+  });
+
+  // CORPO - Acessórios Peito (ca)
+  const chestAccessories = [
+    { id: '4001', name: 'Colar Dourado', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '4002', name: 'Gravata Social', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '4003', name: 'Cordão Hip Hop', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '4004', name: 'Suspensório', gender: 'M', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '4005', name: 'Colar Pérolas', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '4006', name: 'Pin Metaleiro', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' }
+  ];
+
+  chestAccessories.forEach(acc => {
+    mockClothing.push({
+      guid: `ca-${acc.id}`,
+      code: `ca-${acc.id}`,
+      name: acc.name,
+      description: `Acessório para o peito - ${acc.name}`,
+      image: `https://content.puhekupla.com/img/clothes/ca_${acc.id}_front_right.png`,
+      category: 'chest_accessories',
+      gender: acc.gender as 'M' | 'F' | 'U',
+      colors: acc.colors,
+      status: 'active'
+    });
+  });
+
+  // PERNAS - Cintura (wa)
+  const waistAccessories = [
+    { id: '5001', name: 'Cinto Couro', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '5002', name: 'Cinto Chain', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10' },
+    { id: '5003', name: 'Faixa Tecido', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20,25,26,27,28,29,30' },
+    { id: '5004', name: 'Cinto Militar', gender: 'U', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18' },
+    { id: '5005', name: 'Cinto Estiloso', gender: 'F', colors: '1,2,3,4,5,6,7,8,9,10,15,16,17,18,19,20' }
+  ];
+
+  waistAccessories.forEach(waist => {
+    mockClothing.push({
+      guid: `wa-${waist.id}`,
+      code: `wa-${waist.id}`,
+      name: waist.name,
+      description: `Acessório para a cintura - ${waist.name}`,
+      image: `https://content.puhekupla.com/img/clothes/wa_${waist.id}_front_right.png`,
+      category: 'waist',
+      gender: waist.gender as 'M' | 'F' | 'U',
+      colors: waist.colors,
+      status: 'active'
+    });
+  });
+
+  return mockClothing;
 };
 
-export const usePuhekuplaCategories = () => {
+const fetchPuhekuplaClothing = async (
+  page: number = 1,
+  category: string = '',
+  search: string = ''
+): Promise<PuhekuplaClothingResponse> => {
+  console.log(`🌐 [PuhekuplaClothingHook] Fetching clothing - page: ${page}, category: ${category}, search: "${search}"`);
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('puhekupla-proxy', {
+      body: { 
+        endpoint: 'clothing',
+        params: { page, category, search }
+      }
+    });
+
+    if (error) {
+      console.error('❌ [PuhekuplaClothingHook] Supabase function error:', error);
+      throw error;
+    }
+
+    console.log('📊 [PuhekuplaClothingHook] Response received:', {
+      success: data?.success,
+      hasData: !!data?.data,
+      source: data?.source
+    });
+
+    // Se a API real falhar, usar dados mock expandidos
+    if (!data?.success || data?.source === 'mock_data') {
+      console.log('🔄 [PuhekuplaClothingHook] Using expanded mock data');
+      const mockClothing = generateExpandedMockClothing();
+      
+      // Filtrar por categoria se especificada
+      let filteredMockClothing = mockClothing;
+      if (category && category !== 'all') {
+        filteredMockClothing = mockClothing.filter(item => 
+          item.category.toLowerCase() === category.toLowerCase() ||
+          item.category.toLowerCase().includes(category.toLowerCase())
+        );
+      }
+
+      // Filtrar por busca se especificada
+      if (search) {
+        filteredMockClothing = filteredMockClothing.filter(item =>
+          item.name.toLowerCase().includes(search.toLowerCase()) ||
+          item.code.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Paginação
+      const itemsPerPage = 24;
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const paginatedItems = filteredMockClothing.slice(startIndex, endIndex);
+
+      return {
+        success: true,
+        result: {
+          clothing: paginatedItems,
+          pagination: {
+            current_page: page,
+            pages: Math.ceil(filteredMockClothing.length / itemsPerPage),
+            total: filteredMockClothing.length
+          }
+        }
+      };
+    }
+
+    // Usar dados da API se disponível
+    if (data?.data?.result?.clothing) {
+      return {
+        success: true,
+        result: {
+          clothing: data.data.result.clothing,
+          pagination: data.data.result.pagination
+        }
+      };
+    }
+
+    throw new Error('Invalid API response format');
+    
+  } catch (error) {
+    console.error('❌ [PuhekuplaClothingHook] Error:', error);
+    
+    // Fallback para dados mock expandidos em caso de erro
+    console.log('🔄 [PuhekuplaClothingHook] Fallback to expanded mock data');
+    const mockClothing = generateExpandedMockClothing();
+    
+    return {
+      success: true,
+      result: {
+        clothing: mockClothing.slice(0, 24), // Primeira página
+        pagination: {
+          current_page: 1,
+          pages: Math.ceil(mockClothing.length / 24),
+          total: mockClothing.length
+        }
+      }
+    };
+  }
+};
+
+export const usePuhekuplaClothing = (
+  page: number = 1,
+  category: string = '',
+  search: string = ''
+) => {
+  console.log(`🔧 [PuhekuplaClothingHook] Hook called with page: ${page}, category: ${category}, search: "${search}"`);
+  
   return useQuery({
-    queryKey: ['puhekupla-categories'],
-    queryFn: () => fetchPuhekuplaData('categories'),
-    staleTime: 1000 * 60 * 15, // 15 minutes
+    queryKey: ['puhekupla-clothing', page, category, search],
+    queryFn: () => fetchPuhekuplaClothing(page, category, search),
+    staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60, // 1 hour
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    enabled: true,
-  });
-};
-
-export const usePuhekuplaBadges = (page = 1, search = '') => {
-  return useQuery({
-    queryKey: ['puhekupla-badges', page, search],
-    queryFn: () => fetchPuhekuplaData('badges', { 
-      page: page.toString(), 
-      search: search.trim()
-    }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    enabled: true,
-  });
-};
-
-export const usePuhekuplaClothing = (page = 1, category = '', search = '') => {
-  return useQuery({
-    queryKey: ['puhekupla-clothing', page, category, search],
-    queryFn: () => fetchPuhekuplaData('clothing', { 
-      page: page.toString(), 
-      category: category === 'all' ? '' : category, 
-      search: search.trim()
-    }),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    enabled: true,
   });
 };

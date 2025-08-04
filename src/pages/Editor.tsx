@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import { ViaJovemEditor } from '../components/ViaJovemEditor';
+import PuhekuplaEditor from '../components/PuhekuplaEditor/PuhekuplaEditor';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -27,11 +27,11 @@ const Editor = () => {
       <MobileLayout>
         <div className="p-4">
           <PageHeader 
-            title="Editor de Personagem"
+            title="Editor de Avatar - HabboHub"
             icon="/assets/editorvisuais.png"
           />
-          <div className="bg-white rounded-lg border-2 border-black shadow-lg overflow-hidden">
-            <ViaJovemEditor />
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200 shadow-lg overflow-hidden">
+            <PuhekuplaEditor />
           </div>
         </div>
       </MobileLayout>
@@ -44,11 +44,11 @@ const Editor = () => {
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
-            title="Editor de Personagem"
+            title="🎨 Editor de Avatar - HabboHub"
             icon="/assets/editorvisuais.png"
           />
-          <div className="bg-white rounded-lg border-2 border-black shadow-lg p-4 md:p-6 h-full overflow-hidden">
-            <ViaJovemEditor />
+          <div className="bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm rounded-lg border-2 border-purple-200 shadow-xl p-4 md:p-6 h-full overflow-hidden">
+            <PuhekuplaEditor />
           </div>
         </main>
       </div>

@@ -66,7 +66,9 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
     let filtered = items.filter(item => {
       // Filtro por categoria
       const allowedCategories = categoryMapping[selectedCategory] || [selectedCategory];
-      const matchesCategory = allowedCategories.includes(item.category.toLowerCase());
+      const matchesCategory = allowedCategories.some(cat => 
+        item.category.toLowerCase().includes(cat.toLowerCase())
+      );
       
       // Filtro por gênero
       const matchesGender = item.gender === 'U' || item.gender === selectedGender;
@@ -108,6 +110,7 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
   };
 
   const handleItemClick = (item: PuhekuplaClothing) => {
+    // Extrair o ID do item do code (remover prefixo de categoria se existir)
     const itemId = item.code.replace(/^[a-z]{2}[-_]?/i, '') || item.guid;
     onItemSelect(itemId);
     console.log('🎯 [PuhekuplaClothingGrid] Item selecionado:', {
@@ -129,17 +132,17 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
             key={colorId}
             onClick={(e) => {
               e.stopPropagation();
-              onColorSelect(colorId);
+              onColorSelect(colorId.trim());
             }}
             className={`w-4 h-4 rounded-full border-2 transition-all duration-200 ${
-              selectedColor === colorId 
+              selectedColor === colorId.trim() 
                 ? 'border-purple-500 scale-110' 
                 : 'border-gray-300 hover:border-purple-300'
             }`}
             style={{ 
-              backgroundColor: getHabboColor(colorId)
+              backgroundColor: getHabboColor(colorId.trim())
             }}
-            title={`Cor ${colorId}`}
+            title={`Cor ${colorId.trim()}`}
           />
         ))}
         {colors.length > 8 && (
@@ -152,13 +155,16 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
   };
 
   const getHabboColor = (colorId: string): string => {
-    // Cores básicas do Habbo (simplificadas para demo)
+    // Cores básicas do Habbo (paleta expandida)
     const colorMap: Record<string, string> = {
       '1': '#74551F', '2': '#000000', '3': '#1F1F1F', '4': '#7A463B',
       '5': '#E74C3C', '6': '#FA7921', '7': '#FAC51C', '8': '#82C341',
       '9': '#3498DB', '10': '#9B59B6', '11': '#71368A', '12': '#A0522D',
       '13': '#C0392B', '14': '#D35400', '15': '#F39C12', '16': '#27AE60',
-      '17': '#2980B9', '18': '#8E44AD', '19': '#2C3E50', '20': '#95A5A6'
+      '17': '#2980B9', '18': '#8E44AD', '19': '#2C3E50', '20': '#95A5A6',
+      '23': '#8B4513', '24': '#FF69B4', '25': '#00CED1', '26': '#FF6347',
+      '27': '#9ACD32', '28': '#FF1493', '29': '#00FF7F', '30': '#FF4500',
+      '45': '#DAA520', '46': '#DC143C', '47': '#00BFFF', '48': '#ADFF2F'
     };
     return colorMap[colorId] || '#74551F';
   };
@@ -166,7 +172,8 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
   const renderGridView = () => (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
       {filteredItems.map((item) => {
-        const isSelected = selectedItem === item.code.replace(/^[a-z]{2}[-_]?/i, '');
+        const extractedId = item.code.replace(/^[a-z]{2}[-_]?/i, '');
+        const isSelected = selectedItem === extractedId;
         const isFavorite = favorites.includes(item.guid);
         const isHovered = hoveredItem === item.guid;
 
@@ -195,7 +202,7 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
                 <Heart className="w-3 h-3" fill={isFavorite ? 'currentColor' : 'none'} />
               </button>
 
-              {/* Item Image */}
+              {/* Item Image - Sempre front_right orientation */}
               <div className="relative mb-2">
                 <img
                   src={item.image}
@@ -206,7 +213,8 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
                   style={{ imageRendering: 'pixelated' }}
                   loading="lazy"
                   onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
+                    // Fallback para placeholder se a imagem falhar
+                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxNkgzMlYzMkgxNlYxNloiIGZpbGw9IiNEMUQ1REIiLz4KPFRFU1QgY2xhc3M9InNtYWxsIj57aXRlbS5jb2RlfTwvVEVTVD4KPC9zdmc+';
                   }}
                 />
                 
@@ -237,7 +245,11 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
 
               {/* Selection Overlay */}
               {isSelected && (
-                <div className="absolute inset-0 bg-purple-500/20 rounded-lg pointer-events-none" />
+                <div className="absolute inset-0 bg-purple-500/20 rounded-lg pointer-events-none">
+                  <div className="absolute top-1 left-1">
+                    <Badge className="bg-purple-600 text-white text-xs">✓</Badge>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -251,6 +263,10 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
       <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
         <span className="text-6xl mb-4 block">👕</span>
         <h3 className="text-lg font-medium text-gray-600 mb-2">Nenhuma roupa encontrada</h3>
+        <p className="text-gray-500 mb-4">
+          Categoria: <Badge variant="outline">{selectedCategory}</Badge> | 
+          Gênero: <Badge variant="outline">{selectedGender}</Badge>
+        </p>
         <p className="text-gray-500">
           Tente selecionar uma categoria diferente ou ajustar os filtros
         </p>
@@ -265,7 +281,7 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
         <div className="flex items-center gap-4">
           <h3 className="text-lg font-bold text-purple-800 flex items-center gap-2">
             <span className="text-xl">👕</span>
-            Roupas
+            Roupas Puhekupla
             <Badge variant="secondary">{filteredItems.length}</Badge>
           </h3>
           
