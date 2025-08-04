@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles } from 'lucide-react';
 import LocalClothingGrid from './LocalClothingGrid';
-import { LocalHabboClothingItem } from '@/hooks/useLocalHabboClothing';
+import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 import { useToast } from '@/hooks/use-toast';
 
 // Configuração das categorias baseada no ViaJovem
@@ -113,8 +112,8 @@ const RealHabboEditor = () => {
   const currentFigureString = generateFigureString();
   const currentAvatarUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${currentFigureString}&gender=${selectedGender === 'U' ? 'M' : selectedGender}&direction=${currentDirection}&head_direction=${currentDirection}&img_format=png&action=gesture=nrm&size=${avatarSize}`;
 
-  const handleItemSelect = (item: LocalHabboClothingItem, colorId: string = '1') => {
-    console.log('🎯 [RealHabboEditor] Item selecionado:', { item, colorId });
+  const handleItemSelect = (item: ViaJovemFlashItem, colorId: string = '1') => {
+    console.log('🎯 [RealHabboEditor] Item ViaJovem selecionado:', { item, colorId });
     
     const itemString = `${item.figureId}-${colorId}`;
     
@@ -199,6 +198,7 @@ const RealHabboEditor = () => {
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
+                  console.error('❌ [RealHabboEditor] Erro no preview do avatar:', target.src);
                   target.src = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-190-7&gender=M&direction=2&head_direction=2&img_format=png&action=gesture=nrm&size=${avatarSize}`;
                 }}
               />
@@ -297,15 +297,15 @@ const RealHabboEditor = () => {
         </Card>
       </div>
 
-      {/* Editor Tabs (Direita) - Usando Sistema Local */}
+      {/* Editor Tabs (Direita) - Usando Sistema ViaJovem */}
       <div className="flex-1">
         <Card className="h-full">
           <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor HabboHub - Sistema Local/Flash Assets
+              Editor HabboHub - Sistema ViaJovem
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                ViaJovem Style
+                Flash Assets
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -331,7 +331,7 @@ const RealHabboEditor = () => {
                   <div className="mb-3">
                     <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Roupas disponíveis - Gênero: {selectedGender}
+                      Sistema ViaJovem - Gênero: {selectedGender}
                     </p>
                   </div>
                   

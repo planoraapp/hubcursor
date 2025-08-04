@@ -4,14 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { useLocalHabboCategory, LocalHabboClothingItem } from '@/hooks/useLocalHabboClothing';
+import { Loader2 } from 'lucide-react';
+import { useEditorHabboCategory } from '@/hooks/useEditorHabboClothing';
+import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 import { HABBO_COLORS, getColorById } from '@/data/habboColors';
 
 interface LocalClothingGridProps {
   selectedCategory: string;
   selectedGender: 'M' | 'F';
-  onItemSelect: (item: LocalHabboClothingItem, colorId: string) => void;
+  onItemSelect: (item: ViaJovemFlashItem, colorId: string) => void;
   selectedItem?: string;
   selectedColor?: string;
   className?: string;
@@ -27,10 +28,14 @@ const LocalClothingGrid = ({
 }: LocalClothingGridProps) => {
   const [colorPopoverOpen, setColorPopoverOpen] = useState<string | null>(null);
   
-  const { items, isLoading, error } = useLocalHabboCategory(selectedCategory, selectedGender);
+  const { items, isLoading, error } = useEditorHabboCategory(selectedCategory, selectedGender);
 
-  const generateThumbnailUrl = (item: LocalHabboClothingItem, colorId: string = '1') => {
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${colorId}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
+  console.log(`🎯 [LocalClothingGrid] Categoria: ${selectedCategory}, Items encontrados: ${items.length}`);
+
+  const generateThumbnailUrl = (item: ViaJovemFlashItem, colorId: string = '1') => {
+    const url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${colorId}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
+    console.log(`🖼️ [LocalClothingGrid] Thumbnail gerada:`, { item: item.name, url });
+    return url;
   };
 
   // Cores disponíveis baseadas no sistema ViaJovem
@@ -42,13 +47,13 @@ const LocalClothingGrid = ({
     ];
   }, []);
 
-  const handleItemClick = (item: LocalHabboClothingItem) => {
+  const handleItemClick = (item: ViaJovemFlashItem) => {
     console.log('🎯 [LocalClothingGrid] Item selecionado:', item);
     onItemSelect(item, selectedColor);
     setColorPopoverOpen(item.id);
   };
 
-  const handleColorSelect = (item: LocalHabboClothingItem, colorId: string) => {
+  const handleColorSelect = (item: ViaJovemFlashItem, colorId: string) => {
     console.log('🎨 [LocalClothingGrid] Cor selecionada:', { item: item.name, colorId });
     onItemSelect(item, colorId);
     setColorPopoverOpen(null);
@@ -64,17 +69,19 @@ const LocalClothingGrid = ({
   }
 
   if (error) {
+    console.error('❌ [LocalClothingGrid] Erro ao carregar roupas:', error);
     return (
       <Card className="p-6">
         <div className="text-center text-red-500">
           <p>Erro ao carregar roupas</p>
-          <p className="text-sm text-gray-600 mt-1">Usando dados locais como fallback</p>
+          <p className="text-sm text-gray-600 mt-1">Sistema ViaJovem indisponível</p>
         </div>
       </Card>
     );
   }
 
   if (items.length === 0) {
+    console.warn('⚠️ [LocalClothingGrid] Nenhum item encontrado para:', { selectedCategory, selectedGender });
     return (
       <Card className="p-8">
         <div className="text-center text-muted-foreground">
@@ -84,6 +91,8 @@ const LocalClothingGrid = ({
       </Card>
     );
   }
+
+  console.log('✅ [LocalClothingGrid] Renderizando grid com', items.length, 'itens');
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -96,7 +105,7 @@ const LocalClothingGrid = ({
               {items.length} itens
             </Badge>
             <Badge variant="outline" className="ml-2">
-              {items[0]?.source === 'flash-assets' ? 'Flash Assets' : 'Dados Locais'}
+              Sistema ViaJovem
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -126,6 +135,7 @@ const LocalClothingGrid = ({
                     style={{ imageRendering: 'pixelated' }}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
+                      console.error('❌ [LocalClothingGrid] Erro ao carregar imagem:', target.src);
                       target.src = generateThumbnailUrl(item, '1');
                     }}
                   />
@@ -164,7 +174,7 @@ const LocalClothingGrid = ({
                   </div>
                   
                   <div className="text-xs text-gray-400 text-center">
-                    ID: {item.figureId} | Fonte: {item.source}
+                    ID: {item.figureId} | Fonte: ViaJovem
                   </div>
                 </div>
               </PopoverContent>
@@ -177,7 +187,7 @@ const LocalClothingGrid = ({
       <Card>
         <CardContent className="p-3">
           <div className="text-xs text-gray-600 flex items-center justify-between">
-            <span>Fonte: {items[0]?.source === 'flash-assets' ? 'Flash Assets' : 'Dados Locais'}</span>
+            <span>Fonte: Sistema ViaJovem (Flash Assets)</span>
             <span>{items.length} itens carregados</span>
           </div>
         </CardContent>
