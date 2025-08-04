@@ -96,7 +96,6 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
               currentFigure={ViaJovemFigureManager.getFigureString(currentFigure)}
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
-              hotels={hotels}
               onFigureChange={(figureString: string) => {
                 const figure = ViaJovemFigureManager.parseFigureString(figureString);
                 setCurrentFigure(figure);
