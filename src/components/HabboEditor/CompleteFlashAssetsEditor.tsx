@@ -28,8 +28,8 @@ const CompleteFlashAssetsEditor = ({
   className = ''
 }: CompleteFlashAssetsEditorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('hd');
-  const [selectedSection, setSelectedSection] = useState('head');
+  const [selectedCategory, setSelectedCategory] = useState<string>('hd');
+  const [selectedSection, setSelectedSection] = useState<string>('head');
   const [selectedRarity, setSelectedRarity] = useState<'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common'>('all');
 
   const { 
@@ -65,7 +65,7 @@ const CompleteFlashAssetsEditor = ({
 
   // Atualizar categoria quando mudar seção
   useEffect(() => {
-    if (currentSection && !currentSection.categories.includes(selectedCategory)) {
+    if (currentSection && currentSection.categories.length > 0 && !currentSection.categories.some(cat => cat === selectedCategory)) {
       setSelectedCategory(currentSection.categories[0]);
     }
   }, [selectedSection, currentSection, selectedCategory]);
