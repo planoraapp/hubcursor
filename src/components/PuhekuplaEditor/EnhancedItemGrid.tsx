@@ -141,6 +141,10 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
     return null;
   };
 
+  const handleSortChange = (value: string) => {
+    setSortBy(value as 'name' | 'date' | 'popular');
+  };
+
   const renderGridView = () => (
     <div className={`${config.gridCols} gap-4`}>
       {sortedItems.map((item) => {
@@ -325,7 +329,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
 
         {/* Sort Controls */}
         <div className="flex items-center gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={handleSortChange}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
