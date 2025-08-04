@@ -11,36 +11,6 @@ interface FocusedClothingThumbnailProps {
   className?: string;
 }
 
-// Sistema de crop para focar na peça específica
-const getCropParameters = (category: string) => {
-  const cropMap = {
-    // Focar no tronco para camisetas
-    'ch': '&crop=0,20,64,45',
-    // Focar na cabeça para cabelos  
-    'hr': '&crop=0,0,64,35',
-    // Focar na cabeça para rostos
-    'hd': '&crop=0,0,64,35', 
-    // Focar nas pernas para calças
-    'lg': '&crop=0,35,64,64',
-    // Focar nos pés para sapatos
-    'sh': '&crop=0,50,64,64',
-    // Focar na cabeça para chapéus
-    'ha': '&crop=0,0,64,40',
-    // Focar nos olhos para óculos
-    'ea': '&crop=15,10,35,25',
-    // Focar no peito para acessórios
-    'ca': '&crop=10,25,45,45',
-    // Focar no corpo para casacos
-    'cc': '&crop=0,15,64,55',
-    // Focar na cintura
-    'wa': '&crop=15,40,45,55',
-    // Focar no peito para estampas
-    'cp': '&crop=5,20,55,50'
-  };
-  
-  return cropMap[category] || '';
-};
-
 const FocusedClothingThumbnail = ({ 
   item, 
   colorId, 
@@ -52,30 +22,26 @@ const FocusedClothingThumbnail = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // URL focada na peça específica - similar ao ViaJovem
-  const getFocusedThumbnailUrl = (item: ViaJovemFlashItem, colorId: string): string => {
-    const cropParams = getCropParameters(item.category);
-    const baseUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${colorId}&gender=${gender}&size=l&direction=2&head_direction=2&action=std&gesture=std`;
-    
-    // Se tem crop específico, aplicar
-    if (cropParams) {
-      return `${baseUrl}${cropParams}`;
-    }
-    
-    return baseUrl;
+  // URL simples sem crop - igual ao ViaJovem original
+  const getThumbnailUrl = (item: ViaJovemFlashItem, colorId: string): string => {
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${colorId}&gender=${gender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
   };
 
   const handleImageLoad = () => {
     setIsLoading(false);
+    setImageError(false);
   };
 
   const handleImageError = () => {
     setImageError(true);
     setIsLoading(false);
-    console.error('❌ [FocusedThumbnail] Erro ao carregar:', item.name);
+    console.error('❌ [FocusedThumbnail] Erro ao carregar:', {
+      item: item.name,
+      url: getThumbnailUrl(item, colorId)
+    });
   };
 
-  const thumbnailUrl = getFocusedThumbnailUrl(item, colorId);
+  const thumbnailUrl = getThumbnailUrl(item, colorId);
 
   return (
     <div
@@ -99,15 +65,16 @@ const FocusedClothingThumbnail = ({
           <img
             src={thumbnailUrl}
             alt={item.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
             style={{ imageRendering: 'pixelated' }}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-            <span>Erro</span>
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-xs p-2">
+            <span>❌</span>
+            <span className="mt-1 text-center">Erro</span>
           </div>
         )}
 
@@ -131,8 +98,13 @@ const FocusedClothingThumbnail = ({
       </div>
 
       {/* Nome da peça */}
-      <div className="mt-1 text-xs text-center text-gray-700 font-medium">
+      <div className="mt-1 text-xs text-center text-gray-700 font-medium truncate">
         {item.name}
+      </div>
+      
+      {/* Info técnica */}
+      <div className="mt-0.5 text-[10px] text-center text-gray-500 truncate">
+        {item.category.toUpperCase()}-{item.figureId}
       </div>
     </div>
   );
