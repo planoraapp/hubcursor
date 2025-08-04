@@ -29,12 +29,13 @@ serve(async (req) => {
     
     console.log(`🌐 [Official API] Fetching figure data for hotel: ${hotel}`);
     
-    // Try official Sulake endpoints in priority order
+    // Official Habbo figuredata endpoints (ViaJovem pattern)
     const endpoints = [
       `https://www.habbo.${hotel}/gamedata/figuredata/1`,
-      `https://www.habbo.${hotel}/api/public/figuredata/`,
-      `https://images.habbo.com/gordon/PRODUCTION/figuredata.txt`,
-      `https://www.habbo.com/gamedata/figuredata/1`
+      `https://www.habbo.com/gamedata/figuredata/1`,
+      `https://www.habbo.com.br/gamedata/figuredata/1`,
+      `https://images.habbo.com/gordon/PRODUCTION-202104211117-620814015/figuredata.xml`,
+      `https://images.habbo.com/gordon/PRODUCTION/figuredata.xml`
     ];
 
     let figureData: OfficialFigureData = {};

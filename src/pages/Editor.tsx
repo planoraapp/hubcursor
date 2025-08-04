@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
-import PuhekuplaEditor from '../components/PuhekuplaEditor/PuhekuplaEditor';
+import OfficialHabboEditor from '../components/PuhekuplaEditor/OfficialHabboEditor';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -31,7 +31,7 @@ const Editor = () => {
             icon="/assets/editorvisuais.png"
           />
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200 shadow-lg overflow-hidden">
-            <PuhekuplaEditor />
+            <OfficialHabboEditor />
           </div>
         </div>
       </MobileLayout>
@@ -48,7 +48,7 @@ const Editor = () => {
             icon="/assets/editorvisuais.png"
           />
           <div className="bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm rounded-lg border-2 border-purple-200 shadow-xl p-4 md:p-6 h-full overflow-hidden">
-            <PuhekuplaEditor />
+            <OfficialHabboEditor />
           </div>
         </main>
       </div>

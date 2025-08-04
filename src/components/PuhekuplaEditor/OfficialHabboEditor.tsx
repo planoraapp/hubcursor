@@ -1,54 +1,53 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, RefreshCw } from 'lucide-react';
 import { PuhekuplaAvatarPreviewClean } from './PuhekuplaAvatarPreviewClean';
-import { HabboEmotionClothingGrid } from './HabboEmotionClothingGrid';
-import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
+import OfficialClothingGrid from '@/components/HabboEditor/OfficialClothingGrid';
+import { PuhekuplaFigureManager, PuhekuplaFigure, FigurePart } from '@/lib/puhekuplaFigureManager';
 import { useToast } from '@/hooks/use-toast';
-import { useOfficialHabboFigureData } from '@/hooks/useOfficialHabboFigureData';
-import type { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
+import { useOfficialHabboFigureData, type OfficialHabboItem } from '@/hooks/useOfficialHabboFigureData';
 
-// Configuração das categorias corrigida para HabboEmotion
+// Configuração das categorias oficiais do Habbo (baseado na documentação ViaJovem)
 const categoryGroups = [
   {
     id: 'head',
     name: 'Cabeça e Acessórios',
     icon: '👤',
     categories: [
-      { id: 'hd', name: 'Rostos', icon: '👤' },
+      { id: 'hd', name: 'Rosto', icon: '👤' },
       { id: 'hr', name: 'Cabelos', icon: '💇' },
       { id: 'ea', name: 'Óculos', icon: '👓' },
       { id: 'ha', name: 'Chapéus', icon: '🎩' },
-      { id: 'fa', name: 'Acess. Rosto', icon: '😎' }
+      { id: 'fa', name: 'Máscaras', icon: '🎭' }
     ]
   },
   {
     id: 'body',
-    name: 'Corpo e Costas',
+    name: 'Corpo e Roupas',
     icon: '👕',
     categories: [
       { id: 'ch', name: 'Camisetas', icon: '👕' },
       { id: 'cc', name: 'Casacos', icon: '🧥' },
-      { id: 'ca', name: 'Acessórios Peito', icon: '🎖️' },
+      { id: 'ca', name: 'Bijuteria', icon: '💍' },
       { id: 'cp', name: 'Estampas', icon: '🎨' }
     ]
   },
   {
     id: 'legs',
-    name: 'Calças e Pés',
+    name: 'Pernas e Pés',
     icon: '👖',
     categories: [
       { id: 'lg', name: 'Calças', icon: '👖' },
       { id: 'sh', name: 'Sapatos', icon: '👟' },
-      { id: 'wa', name: 'Cintura', icon: '👔' }
+      { id: 'wa', name: 'Cintos', icon: '🔗' }
     ]
   }
 ];
 
-const PuhekuplaEditor = () => {
+const OfficialHabboEditor = () => {
   const [currentFigure, setCurrentFigure] = useState<PuhekuplaFigure>(() => 
     PuhekuplaFigureManager.getDefaultFigure('M')
   );
@@ -57,10 +56,10 @@ const PuhekuplaEditor = () => {
   const [currentDirection, setCurrentDirection] = useState('2');
   const [selectedSection, setSelectedSection] = useState('head');
   const [selectedCategory, setSelectedCategory] = useState('hd');
-  const [selectedColor, setSelectedColor] = useState('1');
   const [selectedItem, setSelectedItem] = useState('');
   
   const { toast } = useToast();
+  const { data: officialData, refetch, isLoading } = useOfficialHabboFigureData();
 
   // Hotéis disponíveis
   const hotels = [
@@ -98,44 +97,47 @@ const PuhekuplaEditor = () => {
     }
   }, []);
 
-  const handleItemSelect = (item: HabboEmotionClothingItem) => {
-    console.log('🎯 [PuhekuplaEditor] Item HabboEmotion selecionado:', item);
+  const handleItemSelect = (item: OfficialHabboItem) => {
+    console.log('🎯 [OfficialEditor] Item oficial selecionado:', item);
     
-    setSelectedItem(item.code);
+    setSelectedItem(item.id);
     
-    // Aplicar item usando o FigureManager
-    const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
-      currentFigure, 
-      item, 
-      selectedColor
-    );
-    
+    // Aplicar item usando o padrão oficial do Habbo
+    const updatedFigure = applyOfficialItem(currentFigure, item);
     setCurrentFigure(updatedFigure);
     
     toast({
-      title: "👕 Roupa HabboEmotion aplicada!",
-      description: `${item.name} foi aplicado ao seu avatar.`,
+      title: "✨ Item oficial aplicado!",
+      description: `${item.category.toUpperCase()}-${item.id} foi aplicado ao seu avatar.`,
     });
   };
 
-  const handleColorSelect = (colorId: string, item: HabboEmotionClothingItem) => {
-    console.log('🎨 [PuhekuplaEditor] Cor selecionada:', { colorId, item: item.name });
+  // Aplicar item oficial ao avatar
+  const applyOfficialItem = (figure: PuhekuplaFigure, item: OfficialHabboItem): PuhekuplaFigure => {
+    const newFigure = { ...figure };
+    const newPart: FigurePart = {
+      category: item.category,
+      id: item.id,
+      colors: [item.colors[0] || '1']
+    };
     
-    setSelectedColor(colorId);
+    // Aplicar o item na categoria correspondente usando as propriedades corretas do PuhekuplaFigure
+    switch (item.category) {
+      case 'hd': newFigure.hd = newPart; break;
+      case 'hr': newFigure.hr = newPart; break;
+      case 'ch': newFigure.ch = newPart; break;
+      case 'lg': newFigure.lg = newPart; break;
+      case 'sh': newFigure.sh = newPart; break;
+      case 'ha': newFigure.ha = newPart; break;
+      case 'ea': newFigure.ea = newPart; break;
+      case 'fa': newFigure.fa = newPart; break;
+      case 'cc': newFigure.cc = newPart; break;
+      case 'ca': newFigure.ca = newPart; break;
+      case 'wa': newFigure.wa = newPart; break;
+      case 'cp': newFigure.cp = newPart; break;
+    }
     
-    // Aplicar nova cor
-    const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
-      currentFigure, 
-      item, 
-      colorId
-    );
-    
-    setCurrentFigure(updatedFigure);
-    
-    toast({
-      title: "🎨 Cor aplicada!",
-      description: `Nova cor ${colorId} aplicada em ${item.name}`,
-    });
+    return newFigure;
   };
 
   // Update selected category when section changes
@@ -148,22 +150,19 @@ const PuhekuplaEditor = () => {
 
   // Update figure when gender changes
   const handleGenderChange = (gender: 'M' | 'F' | 'U') => {
-    console.log('👤 [PuhekuplaEditor] Mudança de gênero:', gender);
+    console.log('👤 [OfficialEditor] Mudança de gênero:', gender);
     setSelectedGender(gender);
-    
-    // Manter a figura atual ao mudar gênero - não resetar
-    // Apenas atualizar o estado do gênero para filtrar roupas corretamente
   };
 
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
-      {/* Avatar Preview (Esquerda) - Layout Clean ViaJovem */}
+      {/* Avatar Preview (Esquerda) */}
       <div className="lg:w-80">
         <Card>
           <CardContent className="p-4">
             <PuhekuplaAvatarPreviewClean
               currentFigure={currentFigure}
-              selectedGender={selectedGender === 'U' ? 'M' : selectedGender} // Para preview, U vira M
+              selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
               currentDirection={currentDirection}
               hotels={hotels}
@@ -176,16 +175,25 @@ const PuhekuplaEditor = () => {
         </Card>
       </div>
 
-      {/* Editor Tabs (Direita) - HabboEmotion Grid */}
+      {/* Editor Tabs (Direita) */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor Puhekupla - HabboEmotion API
+              Editor Oficial do Habbo
               <Badge className="ml-auto bg-white/20 text-white text-xs">
                 {selectedGender === 'M' ? 'Masculino' : selectedGender === 'F' ? 'Feminino' : 'Unissex'}
               </Badge>
+              <Button 
+                onClick={() => refetch()} 
+                size="sm" 
+                variant="ghost" 
+                className="text-white hover:bg-white/20"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
@@ -210,8 +218,15 @@ const PuhekuplaEditor = () => {
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
-                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
-                    <p className="text-sm text-gray-600">Roupas da HabboEmotion API - Gênero: {selectedGender}</p>
+                    <h3 className="font-bold text-base text-blue-800">{group.name}</h3>
+                    <p className="text-sm text-gray-600">
+                      Dados oficiais do Habbo - Gênero: {selectedGender}
+                      {officialData && (
+                        <span className="text-green-600 ml-2">
+                          • {Object.values(officialData).reduce((sum, items) => sum + items.length, 0)} itens carregados
+                        </span>
+                      )}
+                    </p>
                   </div>
                   
                   {/* Sub-categorias */}
@@ -234,16 +249,14 @@ const PuhekuplaEditor = () => {
                       ))}
                     </TabsList>
 
-                    {/* HabboEmotion Clothing Grids */}
+                    {/* Official Clothing Grids */}
                     {group.categories.map(category => (
                       <TabsContent key={category.id} value={category.id}>
-                        <HabboEmotionClothingGrid 
+                        <OfficialClothingGrid 
                           selectedCategory={category.id}
                           selectedGender={selectedGender}
                           onItemSelect={handleItemSelect}
-                          onColorSelect={handleColorSelect}
                           selectedItem={selectedItem}
-                          selectedColor={selectedColor}
                         />
                       </TabsContent>
                     ))}
@@ -258,4 +271,4 @@ const PuhekuplaEditor = () => {
   );
 };
 
-export default PuhekuplaEditor;
+export default OfficialHabboEditor;
