@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { RealHabboItem, generateIsolatedThumbnail } from '@/hooks/useRealHabboData';
+import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 
 interface ViaJovemStyleThumbnailProps {
-  item: RealHabboItem;
+  item: ViaJovemFlashItem;
   colorId: string;
   gender: 'M' | 'F';
   hotel: string;
@@ -26,8 +26,8 @@ const ViaJovemStyleThumbnail = ({
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Gerar URL isolada igual ViaJovem
-  const thumbnailUrl = generateIsolatedThumbnail(item.category, item.figureId, colorId, gender, hotel);
+  // Usar thumbnail do sistema ViaJovem para flash assets
+  const thumbnailUrl = item.thumbnail;
 
   const handleImageLoad = () => {
     setIsLoading(false);
@@ -37,11 +37,12 @@ const ViaJovemStyleThumbnail = ({
   const handleImageError = () => {
     setImageError(true);
     setIsLoading(false);
-    console.error('❌ [ViaJovemThumbnail] Erro ao carregar:', {
+    console.error('❌ [FlashAssetThumbnail] Erro ao carregar:', {
       item: item.name,
       figureId: item.figureId,
       category: item.category,
-      url: thumbnailUrl
+      url: thumbnailUrl,
+      swfName: item.swfName
     });
   };
 
@@ -53,10 +54,8 @@ const ViaJovemStyleThumbnail = ({
 
   const getClubBadgeStyle = (club: string) => {
     switch (club) {
-      case 'HC':
+      case 'hc':
         return 'bg-yellow-500 text-black';
-      case 'LTD':
-        return 'bg-purple-600 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -69,11 +68,11 @@ const ViaJovemStyleThumbnail = ({
         className={`
           clothes-object cursor-pointer transition-all duration-200 hover:scale-105
           w-16 h-16 bg-gray-100 rounded border-2 relative overflow-hidden
-          ${isSelected ? 'selected border-blue-500 ring-2 ring-blue-300' : 'border-gray-200 hover:border-gray-300'}
+          ${isSelected ? 'selected border-purple-500 ring-2 ring-purple-300' : 'border-gray-200 hover:border-gray-300'}
         `}
         data-clothing={item.figureId}
         onClick={onClick}
-        title={`${item.name} (${item.figureId})`}
+        title={`${item.name} (${item.figureId}) - ${item.swfName}`}
         style={{
           backgroundImage: !imageError && !isLoading ? `url(${thumbnailUrl})` : 'none',
           backgroundSize: 'contain',
@@ -84,11 +83,11 @@ const ViaJovemStyleThumbnail = ({
         {/* Loading indicator */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         
-        {/* Imagem isolada (fallback se background não funcionar) */}
+        {/* Imagem do flash asset */}
         {!imageError ? (
           <img
             src={thumbnailUrl}
@@ -101,22 +100,22 @@ const ViaJovemStyleThumbnail = ({
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 text-xs">
-            <span className="text-sm">❌</span>
+            <span className="text-sm">📦</span>
             <span className="text-[10px] mt-1">{item.figureId}</span>
           </div>
         )}
 
         {/* Badge de raridade */}
-        {item.club !== 'FREE' && (
+        {item.club === 'hc' && (
           <div className={`absolute top-1 right-1 text-xs px-1 py-0.5 rounded font-bold text-shadow ${getClubBadgeStyle(item.club)}`}>
-            {item.club}
+            HC
           </div>
         )}
 
         {/* Indicador de seleção */}
         {isSelected && (
-          <div className="absolute inset-0 bg-blue-500/20 border-2 border-blue-400 rounded flex items-center justify-center">
-            <div className="bg-blue-500 text-white rounded-full p-1">
+          <div className="absolute inset-0 bg-purple-500/20 border-2 border-purple-400 rounded flex items-center justify-center">
+            <div className="bg-purple-500 text-white rounded-full p-1">
               <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
@@ -133,16 +132,19 @@ const ViaJovemStyleThumbnail = ({
         <div className="text-[10px] text-center text-gray-500">
           ID: {item.figureId}
         </div>
+        <div className="text-[9px] text-center text-purple-600 truncate">
+          {item.swfName}
+        </div>
       </div>
 
-      {/* Paleta de cores (igual ViaJovem) */}
+      {/* Paleta de cores (flash assets) */}
       {item.colors.length > 1 && (
         <div className="mt-1 flex justify-center gap-0.5 flex-wrap">
           {item.colors.slice(0, 6).map((color) => (
             <button
               key={color}
               className={`w-2 h-2 rounded-sm border hover:scale-125 transition-all duration-200 ${
-                colorId === color ? 'border-blue-500 ring-1 ring-blue-300' : 'border-gray-300'
+                colorId === color ? 'border-purple-500 ring-1 ring-purple-300' : 'border-gray-300'
               }`}
               style={{ backgroundColor: getHabboColorHex(color) }}
               onClick={(e) => {

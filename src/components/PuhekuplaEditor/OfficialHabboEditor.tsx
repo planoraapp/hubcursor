@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 import ViaJovemStyleGrid from '../HabboEditor/ViaJovemStyleGrid';
 import EnhancedAvatarPreview from '../HabboEditor/EnhancedAvatarPreview';
-import { RealHabboItem } from '@/hooks/useRealHabboData';
+import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 import { useToast } from '@/hooks/use-toast';
 
 // Categorias organizadas igual ViaJovem
@@ -91,12 +91,13 @@ const OfficialHabboEditor = () => {
     return parts.join('.');
   };
 
-  const handleItemSelect = (item: RealHabboItem, colorId: string = '1') => {
-    console.log('🎯 [ViaJovemEditor] Item real selecionado:', { 
+  const handleItemSelect = (item: ViaJovemFlashItem, colorId: string = '1') => {
+    console.log('🎯 [FlashAssetsEditor] Flash Asset selecionado:', { 
       item: item.name, 
       category: item.category, 
       figureId: item.figureId,
-      colorId 
+      colorId,
+      swfName: item.swfName
     });
     
     const itemString = `${item.figureId}-${colorId}`;
@@ -108,10 +109,10 @@ const OfficialHabboEditor = () => {
 
     setSelectedColor(colorId);
     
-    const clubBadge = item.club === 'HC' ? '🟨 HC' : item.club === 'LTD' ? '🟣 LTD' : '⭐ FREE';
+    const clubBadge = item.club === 'hc' ? '🟨 HC' : '⭐ FREE';
     
     toast({
-      title: "✨ Item aplicado!",
+      title: "✨ Flash Asset aplicado!",
       description: `${item.name} (${clubBadge}) foi aplicado ao avatar.`,
     });
   };
@@ -140,7 +141,7 @@ const OfficialHabboEditor = () => {
     
     toast({
       title: "🔄 Avatar resetado",
-      description: "Avatar voltou ao estado padrão do ViaJovem.",
+      description: "Avatar voltou ao estado padrão.",
     });
   };
 
@@ -168,15 +169,15 @@ const OfficialHabboEditor = () => {
         />
       </div>
 
-      {/* Editor igual ViaJovem */}
+      {/* Editor com Flash Assets */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor ViaJovem Style - Dados Reais Habbo
+              Flash Assets Editor - Seus Assets Locais
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                Sistema Real • Hotel: {selectedHotel}
+                2800+ Assets • Storage Local
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -200,9 +201,9 @@ const OfficialHabboEditor = () => {
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
-                    <h3 className="font-bold text-base text-green-800">{group.name}</h3>
+                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Estilo ViaJovem - Dados Oficiais Habbo - Gênero: {selectedGender} - Hotel: {selectedHotel}
+                      Flash Assets Locais - Gênero: {selectedGender} - Total: 2800+ assets
                     </p>
                   </div>
                   
