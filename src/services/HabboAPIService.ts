@@ -18,7 +18,8 @@ export class HabboAPIService {
         body: { 
           hotel: params.hotel,
           searchTerm: params.searchTerm,
-          category: params.category === 'all' ? '' : params.category
+          category: params.category === 'all' ? '' : params.category,
+          days: params.days
         }
       });
       
@@ -114,7 +115,7 @@ export class HabboAPIService {
       
       case 'todayHigh':
         return [...items]
-          .filter(item => item.soldItems > 0)
+          .filter(item => (item.soldItems || 0) > 0)
           .sort((a, b) => b.currentPrice - a.currentPrice)
           .slice(0, 10);
       

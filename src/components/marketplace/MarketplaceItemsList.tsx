@@ -8,41 +8,7 @@ import { TrendingUp, TrendingDown, Package2, Clock, Zap, AlertCircle, RefreshCw 
 import { HabboAPIImage } from './HabboAPIImage';
 import { MarketItemModal } from './MarketItemModal';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
-
-interface MarketItem {
-  id: string;
-  name: string;
-  category: string;
-  currentPrice: number;
-  previousPrice?: number;
-  trend: 'up' | 'down' | 'stable';
-  changePercent: string;
-  volume: number;
-  imageUrl: string;
-  rarity: string;
-  description: string;
-  className: string;
-  hotel: string;
-  priceHistory: number[];
-  lastUpdated: string;
-  quantity?: number;
-  listedAt?: string;
-  soldItems?: number;
-  openOffers?: number;
-}
-
-interface MarketStats {
-  totalItems: number;
-  averagePrice: number;
-  totalVolume: number;
-  trendingUp: number;
-  trendingDown: number;
-  featuredItems: number;
-  highestPrice: number;
-  mostTraded: string;
-  apiStatus?: 'success' | 'partial' | 'no-data' | 'error' | 'unavailable';
-  apiMessage?: string;
-}
+import type { MarketItem, MarketStats } from '@/contexts/MarketplaceContext';
 
 interface MarketplaceItemsListProps {
   items: MarketItem[];
