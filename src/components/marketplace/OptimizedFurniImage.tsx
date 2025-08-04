@@ -33,19 +33,7 @@ const OptimizedFurniImage = ({
     lg: 'w-24 h-24'
   };
 
-  // Gerar URLs otimizadas com cache
-  const imageUrls = useMemo(() => {
-    const cacheKey = `${className}_${hotel}`;
-    
-    // Se já temos uma URL em cache que funciona, usar primeiro
-    if (imageCache.has(cacheKey)) {
-      const cachedUrl = imageCache.get(cacheKey)!;
-      return [cachedUrl, ...generateFurniUrls(className, name, hotel, type)].filter(url => url !== cachedUrl);
-    }
-    
-    return generateFurniUrls(className, name, hotel, type);
-  }, [className, name, hotel, type]);
-
+  // Move generateFurniUrls BEFORE useMemo
   const generateFurniUrls = useCallback((className: string, name: string, hotel: string, type: string) => {
     const urls: string[] = [];
     
@@ -93,6 +81,19 @@ const OptimizedFurniImage = ({
     // Remover URLs que já falharam e duplicatas
     return [...new Set(urls)].filter(url => !failedUrls.has(url));
   }, []);
+
+  // Gerar URLs otimizadas com cache - NOW generateFurniUrls is defined
+  const imageUrls = useMemo(() => {
+    const cacheKey = `${className}_${hotel}`;
+    
+    // Se já temos uma URL em cache que funciona, usar primeiro
+    if (imageCache.has(cacheKey)) {
+      const cachedUrl = imageCache.get(cacheKey)!;
+      return [cachedUrl, ...generateFurniUrls(className, name, hotel, type)].filter(url => url !== cachedUrl);
+    }
+    
+    return generateFurniUrls(className, name, hotel, type);
+  }, [className, name, hotel, type, generateFurniUrls]);
 
   const handleImageError = useCallback(() => {
     const currentUrl = imageUrls[currentUrlIndex];
