@@ -74,12 +74,13 @@ const OfficialHabboEditor = () => {
   const [selectedSection, setSelectedSection] = useState('head');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedColor, setSelectedColor] = useState('1');
-  
+  const [selectedItem, setSelectedItem] = useState('');
+
   const { toast } = useToast();
 
   const generateFigureString = (): string => {
     const parts: string[] = [];
-    const categoryOrder = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'ca', 'wa', 'cp'];
+    const categoryOrder = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'ca', 'wa', 'cp'];
     
     categoryOrder.forEach(category => {
       if (avatarState[category as keyof AvatarState]) {
@@ -91,7 +92,7 @@ const OfficialHabboEditor = () => {
   };
 
   const handleItemSelect = (item: ViaJovemFlashItem, colorId: string = '1') => {
-    console.log('🎯 [FlashAssetsEditor] Flash Asset selecionado:', { 
+    console.log('🎯 [OfficialHabboEditor] Flash Asset selecionado:', { 
       item: item.name, 
       category: item.category, 
       figureId: item.figureId,
@@ -99,21 +100,35 @@ const OfficialHabboEditor = () => {
       swfName: item.swfName
     });
     
-    // Use figureId directly from flash asset
+    // Sistema melhorado de substituição de peças
     const itemString = `${item.figureId}-${colorId}`;
     
-    setAvatarState(prevState => ({
-      ...prevState,
-      [item.category]: itemString
-    }));
+    setAvatarState(prevState => {
+      const newState = { ...prevState };
+      
+      // Substituir apenas a categoria específica
+      newState[item.category as keyof AvatarState] = itemString;
+      
+      console.log('✅ [OfficialHabboEditor] Estado do avatar atualizado:', {
+        categoria: item.category,
+        novoValor: itemString,
+        figuraCompleta: Object.entries(newState)
+          .filter(([_, value]) => value)
+          .map(([cat, value]) => `${cat}-${value}`)
+          .join('.')
+      });
+      
+      return newState;
+    });
 
     setSelectedColor(colorId);
+    setSelectedItem(item.figureId);
     
     const clubBadge = item.club === 'hc' ? '🟨 HC' : '⭐ FREE';
     
     toast({
-      title: "✨ Flash Asset aplicado!",
-      description: `${item.name} (${clubBadge}) aplicado ao avatar.`,
+      title: "✨ Peça aplicada!",
+      description: `${item.name} (${clubBadge}) aplicado na categoria ${item.category.toUpperCase()}.`,
     });
   };
 
@@ -169,15 +184,15 @@ const OfficialHabboEditor = () => {
         />
       </div>
 
-      {/* Simplified Flash Assets Editor */}
+      {/* Editor melhorado */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-3">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg py-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Flash Assets Editor - Simplificado
+              Flash Assets Editor - Sistema Melhorado
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2800+ Assets Local
+                2800+ Assets • Cores Interativas
               </Badge>
             </CardTitle>
           </CardHeader>

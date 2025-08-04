@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useFlashAssetsClothing, FlashAssetItem } from './useFlashAssetsClothing';
+import { getCategoryFromSwfName, generateIsolatedThumbnail } from '@/lib/improvedCategoryMapper';
 
 export interface ViaJovemFlashItem {
   id: string;
@@ -42,46 +42,29 @@ const FLASH_TO_VIAJOVEM_MAPPING = {
 } as const;
 
 const mapFlashToViaJovem = (flashItems: FlashAssetItem[]): ViaJovemFlashItem[] => {
-  console.log('🔄 [FlashToViaJovem] Iniciando mapeamento de', flashItems.length, 'itens');
+  console.log('🔄 [FlashToViaJovem] Iniciando mapeamento melhorado de', flashItems.length, 'itens');
   
   const mapped = flashItems
     .map((item, index) => {
-      // Extrair categoria base do swfName ou type
-      let flashCategory = '';
+      // Usar o novo sistema de categorização melhorado
+      const detectedCategory = getCategoryFromSwfName(item.swfName);
       
-      // Tentar extrair do swfName primeiro
-      const swfMatch = item.swfName.match(/^([a-z_]+)_/);
-      if (swfMatch) {
-        flashCategory = swfMatch[1];
-      } else {
-        // Usar type como fallback
-        flashCategory = item.type || item.category;
-      }
+      console.log(`📝 [FlashToViaJovem] Item ${index}: ${item.swfName} -> categoria: ${detectedCategory}`);
       
-      console.log(`📝 [FlashToViaJovem] Item ${index}: ${item.swfName} -> categoria flash: ${flashCategory}`);
+      // Extrair figureId de forma mais inteligente
+      const figureId = extractFigureId(item.swfName, item.figureId);
       
-      const viaJovemCategory = FLASH_TO_VIAJOVEM_MAPPING[flashCategory as keyof typeof FLASH_TO_VIAJOVEM_MAPPING];
-      
-      if (!viaJovemCategory) {
-        console.warn(`⚠️ [FlashToViaJovem] Categoria não mapeada: ${flashCategory} para item: ${item.swfName}`);
-        return null;
-      }
-      
-      // Extrair gênero do nome do arquivo ou usar default
-      const genderMatch = item.swfName.match(/_([MFU])_/);
-      const gender = genderMatch ? genderMatch[1] as 'M' | 'F' | 'U' : item.gender || 'U';
-      
-      // Gerar figureId único e determinístico
-      const figureId = generateUniqueFigureId(item.swfName, viaJovemCategory);
+      // Determinar gênero de forma mais precisa
+      const gender = determineGender(item.swfName, item.gender);
       
       return {
-        id: `flash_${viaJovemCategory}_${figureId}_${gender}`, // ID único por categoria/figura/gênero
-        name: formatItemName(item.swfName, viaJovemCategory, item.name),
-        category: viaJovemCategory,
+        id: `flash_${detectedCategory}_${figureId}_${gender}`,
+        name: formatItemName(item.swfName, detectedCategory, item.name),
+        category: detectedCategory,
         gender,
         figureId,
-        colors: generateCategoryColors(viaJovemCategory),
-        thumbnail: generateSimpleThumbnail(viaJovemCategory, figureId, '1', gender),
+        colors: generateCategoryColors(detectedCategory),
+        thumbnail: generateIsolatedThumbnail(detectedCategory, figureId, '1', gender),
         club: item.club === 'HC' ? 'hc' : 'normal',
         swfName: item.swfName,
         source: 'flash-assets'
@@ -89,34 +72,49 @@ const mapFlashToViaJovem = (flashItems: FlashAssetItem[]): ViaJovemFlashItem[] =
     })
     .filter(Boolean) as ViaJovemFlashItem[];
 
-  // Log estatísticas por categoria
+  // Log estatísticas melhoradas
   const categoryStats = mapped.reduce((acc, item) => {
     acc[item.category] = (acc[item.category] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   
   console.log('📊 [FlashToViaJovem] Estatísticas por categoria:', categoryStats);
-  console.log('✅ [FlashToViaJovem] Mapeamento concluído:', mapped.length, 'itens válidos');
+  console.log('✅ [FlashToViaJovem] Mapeamento melhorado concluído:', mapped.length, 'itens válidos');
   
   return mapped;
 };
 
-const generateUniqueFigureId = (swfName: string, category: string): string => {
-  // Extrair ID numérico se existir
-  const numericMatch = swfName.match(/(\d+)/);
-  if (numericMatch) {
-    return numericMatch[1];
+const extractFigureId = (swfName: string, originalFigureId?: string): string => {
+  if (originalFigureId) return originalFigureId;
+  
+  // Extrair ID numérico do nome do arquivo
+  const numericMatches = swfName.match(/(\d+)/g);
+  if (numericMatches && numericMatches.length > 0) {
+    // Pegar o maior número encontrado (geralmente é o ID)
+    return numericMatches.sort((a, b) => parseInt(b) - parseInt(a))[0];
   }
   
-  // Criar hash único baseado no nome + categoria
-  const combined = `${category}_${swfName}`;
+  // Criar hash determinístico se não houver ID
   let hash = 0;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
+  for (let i = 0; i < swfName.length; i++) {
+    const char = swfName.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
   return Math.abs(hash % 9999).toString();
+};
+
+const determineGender = (swfName: string, originalGender?: 'M' | 'F' | 'U'): 'M' | 'F' | 'U' => {
+  if (originalGender && originalGender !== 'U') return originalGender;
+  
+  const lowerName = swfName.toLowerCase();
+  
+  // Padrões específicos para gênero
+  if (lowerName.includes('_f_') || lowerName.includes('female')) return 'F';
+  if (lowerName.includes('_m_') || lowerName.includes('male')) return 'M';
+  if (lowerName.includes('dress') || lowerName.includes('skirt')) return 'F';
+  
+  return 'U'; // Unissex por padrão
 };
 
 const formatItemName = (swfName: string, category: string, originalName?: string): string => {
