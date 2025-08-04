@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,14 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, RefreshCw, Filter, Grid3x3, List, Info } from 'lucide-react';
-import { useHabboEmotionClothing, triggerHabboEmotionSync } from '@/hooks/useHabboEmotionClothing';
+import { useHabboEmotionClothing, triggerHabboEmotionSync, HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
 import { useToast } from '@/hooks/use-toast';
 import EnhancedClothingThumbnail from '@/components/HabboEditor/EnhancedClothingThumbnail';
 
 interface HabboEmotionClothingGridProps {
   selectedCategory: string;
   selectedGender: 'M' | 'F' | 'U';
-  onItemSelect: (item: any) => void;
+  onItemSelect: (item: HabboEmotionClothingItem) => void;
+  onColorSelect?: (colorId: string, item: HabboEmotionClothingItem) => void;
+  selectedItem?: string;
+  selectedColor?: string;
   selectedColorId?: string;
   className?: string;
 }
@@ -37,13 +39,16 @@ export const HabboEmotionClothingGrid = ({
   selectedCategory,
   selectedGender,
   onItemSelect,
+  onColorSelect,
+  selectedItem,
+  selectedColor = '1',
   selectedColorId = '1',
   className = ''
 }: HabboEmotionClothingGridProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('name');
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItemState, setSelectedItemState] = useState<any>(null);
   const { toast } = useToast();
 
   // Fetch comprehensive HabboEmotion clothing data
@@ -100,7 +105,7 @@ export const HabboEmotionClothingGrid = ({
   }, [clothingData, selectedCategory, selectedGender, searchTerm, sortBy]);
 
   const handleItemClick = (item: any) => {
-    setSelectedItem(item);
+    setSelectedItemState(item);
     onItemSelect(item);
     toast({
       title: "✅ Item Selecionado",
@@ -291,7 +296,7 @@ export const HabboEmotionClothingGrid = ({
             <Card
               key={`${item.id}_${item.code}_${index}`}
               className={`cursor-pointer transition-all hover:shadow-md hover:scale-105 ${
-                selectedItem?.id === item.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                selectedItemState?.id === item.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
               } ${viewMode === 'grid' ? '' : 'flex flex-row'}`}
               onClick={() => handleItemClick(item)}
             >
