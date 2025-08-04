@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreditIcon } from './CreditIcon';
-import { OptimizedFurniImage } from './OptimizedFurniImage';
+import OptimizedFurniImage from './OptimizedFurniImage';
 
 interface ClubItem {
   id: string;
