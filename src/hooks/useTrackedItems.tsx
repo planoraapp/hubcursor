@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 interface TrackedItem {
@@ -17,7 +16,9 @@ export const useTrackedItems = (hotelId: string) => {
   const [trackedItems, setTrackedItems] = useState<TrackedItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Função para buscar itens salvos
+  // For now, use localStorage until the database table is created
+  const storageKey = `tracked_items_${user?.id}_${hotelId}`;
+
   const fetchTrackedItems = async () => {
     if (!user) {
       setTrackedItems([]);
@@ -26,19 +27,10 @@ export const useTrackedItems = (hotelId: string) => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_tracked_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('hotel_id', hotelId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao buscar itens salvos:', error);
-        return;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        setTrackedItems(JSON.parse(stored));
       }
-
-      setTrackedItems(data || []);
     } catch (error) {
       console.error('Erro ao buscar itens salvos:', error);
     } finally {
@@ -46,27 +38,24 @@ export const useTrackedItems = (hotelId: string) => {
     }
   };
 
-  // Função para salvar item
   const trackItem = async (item: { classname: string; name: string; hotel_id: string }) => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
-        .from('user_tracked_items')
-        .insert({
-          user_id: user.id,
-          item_classname: item.classname,
-          item_name: item.name,
-          hotel_id: item.hotel_id
-        });
-
-      if (error) {
-        console.error('Erro ao salvar item:', error);
-        return false;
+      const currentItems = [...trackedItems];
+      const newItem: TrackedItem = {
+        classname: item.classname,
+        name: item.name,
+        hotel_id: item.hotel_id,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      if (!currentItems.find(i => i.classname === item.classname)) {
+        currentItems.push(newItem);
+        localStorage.setItem(storageKey, JSON.stringify(currentItems));
+        setTrackedItems(currentItems);
       }
-
-      // Atualizar lista local
-      await fetchTrackedItems();
+      
       return true;
     } catch (error) {
       console.error('Erro ao salvar item:', error);
@@ -74,25 +63,13 @@ export const useTrackedItems = (hotelId: string) => {
     }
   };
 
-  // Função para remover item
   const untrackItem = async (classname: string) => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
-        .from('user_tracked_items')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('item_classname', classname)
-        .eq('hotel_id', hotelId);
-
-      if (error) {
-        console.error('Erro ao remover item:', error);
-        return false;
-      }
-
-      // Atualizar lista local
-      await fetchTrackedItems();
+      const currentItems = trackedItems.filter(item => item.classname !== classname);
+      localStorage.setItem(storageKey, JSON.stringify(currentItems));
+      setTrackedItems(currentItems);
       return true;
     } catch (error) {
       console.error('Erro ao remover item:', error);
@@ -100,12 +77,10 @@ export const useTrackedItems = (hotelId: string) => {
     }
   };
 
-  // Verificar se item está salvo
   const isTracked = (classname: string): boolean => {
     return trackedItems.some(item => item.classname === classname);
   };
 
-  // Buscar itens quando usuário ou hotel mudar
   useEffect(() => {
     fetchTrackedItems();
   }, [user, hotelId]);

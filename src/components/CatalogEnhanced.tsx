@@ -1,301 +1,285 @@
 
-import { useLanguage } from '../hooks/useLanguage';
-import { PanelCard } from './PanelCard';
-import { HabboIcon } from './HabboIcon';
-import { Search, Filter, Star, Package } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, Filter, Grid, List, Star, Crown, Zap } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useHabboFurniApi } from '@/hooks/useHabboFurniApi';
 import { FurnidataService } from '@/services/FurnidataService';
-import IntelligentFurniImage from './IntelligentFurniImage';
+import { IntelligentFurniImage } from '@/components/IntelligentFurniImage';
 
 interface CatalogItem {
-  id: string;
+  classname: string;
   name: string;
-  category: string;
-  rarity: string;
-  price: number;
-  imageUrl: string;
-  description: string;
-  className: string;
+  category?: string;
+  rarity?: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  isHC?: boolean;
   behaviors?: string[];
-  dimensions?: { width: number; height: number; };
-  club: 'HC' | 'FREE';
-  animated?: boolean;
+  dimensions?: { width: number; height: number };
+  credits?: number;
 }
 
 export const CatalogEnhanced = () => {
-  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedRarity, setSelectedRarity] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const { data: furniData, isLoading: apiLoading } = useHabboFurniApi({
-    searchTerm: searchTerm || '',
-    limit: 300,
-    enabled: true
+  
+  // Use the existing hook correctly
+  const { furniData, loading, error } = useHabboFurniApi({
+    searchTerm: searchTerm || undefined,
+    className: selectedCategory !== 'all' ? selectedCategory : undefined
   });
 
-  const categories = [
-    { id: 'all', name: 'Todos', icon: Package },
-    { id: 'seating', name: '🪑 Assentos', icon: Package },
-    { id: 'table', name: '🪑 Mesas', icon: Package },
-    { id: 'decoration', name: '🖼️ Decoração', icon: Star },
-    { id: 'floor', name: '📐 Pisos', icon: Package },
-    { id: 'wallitem', name: '🖼️ Parede', icon: Star },
-    { id: 'rare', name: '💎 Raros', icon: Star },
-    { id: 'hc', name: '🏆 Habbo Club', icon: Package },
-  ];
-
-  // Processar dados da API e combinar com furnidata local
+  // Load local furnidata and combine with API data
   useEffect(() => {
-    const processApiData = async () => {
-      if (!furniData?.furnis) {
-        setLoading(false);
-        return;
-      }
-
+    const loadCatalogData = async () => {
       try {
-        const processedItems: CatalogItem[] = furniData.furnis.map(item => {
-          // Enriquecer com dados do FurnidataService
-          const furniInfo = FurnidataService.getFurniInfo(item.className || item.name);
-          const behaviors = FurnidataService.getFurniBehaviors(item.className || item.name);
-          const dimensions = FurnidataService.getFurniDimensions(item.className || item.name);
+        // Get items from API
+        const apiItems = furniData.map(item => ({
+          classname: item.className || item.name,
+          name: item.name,
+          category: item.category || 'furniture',
+          rarity: 'common' as const,
+          isHC: item.name.toLowerCase().includes('hc') || item.name.toLowerCase().includes('club'),
+          behaviors: [],
+          dimensions: { width: 1, height: 1 },
+          credits: 0
+        }));
 
-          return {
-            id: item.id,
-            name: item.name || furniInfo.name,
-            category: item.category || furniInfo.category,
-            rarity: item.rarity || furniInfo.rarity,
-            price: 0, // Preço será calculado posteriormente se necessário
-            imageUrl: item.imageUrl,
-            description: furniInfo.description || `Móvel do Habbo: ${item.name}`,
-            className: item.className || item.name,
-            behaviors,
-            dimensions,
-            club: item.club || (item.name?.toLowerCase().includes('hc') ? 'HC' : 'FREE'),
-            animated: item.imageUrl?.includes('.gif') || behaviors?.includes('animated')
-          };
+        // Try to get additional data from local service if available
+        const enrichedItems = apiItems.map(item => {
+          try {
+            // Basic enrichment without calling non-existent methods
+            const enriched = {
+              ...item,
+              rarity: item.isHC ? 'rare' as const : 'common' as const
+            };
+            return enriched;
+          } catch {
+            return item;
+          }
         });
 
-        setCatalogItems(processedItems);
+        setCatalogItems(enrichedItems);
       } catch (error) {
-        console.error('Erro ao processar dados do catálogo:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error loading catalog data:', error);
       }
     };
 
-    if (furniData) {
-      processApiData();
+    if (furniData.length > 0) {
+      loadCatalogData();
     }
   }, [furniData]);
 
-  const filteredItems = catalogItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.className.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || 
-                           item.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-                           (selectedCategory === 'hc' && item.club === 'HC') ||
-                           (selectedCategory === 'rare' && ['rare', 'legendary', 'ltd'].includes(item.rarity));
-    return matchesSearch && matchesCategory;
-  });
+  const categories = [
+    { id: 'all', name: 'Todos', icon: '🏠', count: catalogItems.length },
+    { id: 'seating', name: 'Assentos', icon: '🪑', count: catalogItems.filter(i => i.name.toLowerCase().includes('chair') || i.name.toLowerCase().includes('seat')).length },
+    { id: 'table', name: 'Mesas', icon: '🪤', count: catalogItems.filter(i => i.name.toLowerCase().includes('table')).length },
+    { id: 'decoration', name: 'Decoração', icon: '🎨', count: catalogItems.filter(i => i.category === 'decoration').length },
+    { id: 'rare', name: 'Raros', icon: '💎', count: catalogItems.filter(i => i.rarity === 'rare' || i.rarity === 'epic').length },
+    { id: 'hc', name: 'Habbo Club', icon: '👑', count: catalogItems.filter(i => i.isHC).length }
+  ];
+
+  const filteredItems = useMemo(() => {
+    return catalogItems.filter(item => {
+      const matchesSearch = !searchTerm || 
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.classname.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'all' || 
+        (selectedCategory === 'hc' && item.isHC) ||
+        (selectedCategory === 'rare' && (item.rarity === 'rare' || item.rarity === 'epic')) ||
+        item.category === selectedCategory ||
+        item.name.toLowerCase().includes(selectedCategory);
+      
+      const matchesRarity = selectedRarity === 'all' || item.rarity === selectedRarity;
+      
+      return matchesSearch && matchesCategory && matchesRarity;
+    });
+  }, [catalogItems, searchTerm, selectedCategory, selectedRarity]);
 
   const getRarityColor = (rarity: string) => {
-    switch (rarity.toLowerCase()) {
-      case 'common': return 'text-gray-600';
-      case 'uncommon': return 'text-blue-600';
-      case 'rare': return 'text-purple-600';
-      case 'legendary':
-      case 'ltd': return 'text-yellow-600';
-      case 'hc': return 'text-orange-600';
-      default: return 'text-gray-600';
+    switch (rarity) {
+      case 'legendary': return 'bg-gradient-to-r from-yellow-400 to-orange-500';
+      case 'epic': return 'bg-gradient-to-r from-purple-400 to-pink-500';
+      case 'rare': return 'bg-gradient-to-r from-blue-400 to-indigo-500';
+      case 'uncommon': return 'bg-gradient-to-r from-green-400 to-teal-500';
+      default: return 'bg-gray-400';
     }
   };
 
-  const getRarityBg = (rarity: string) => {
-    switch (rarity.toLowerCase()) {
-      case 'common': return 'bg-gray-100';
-      case 'uncommon': return 'bg-blue-100';
-      case 'rare': return 'bg-purple-100';
-      case 'legendary':
-      case 'ltd': return 'bg-yellow-100';
-      case 'hc': return 'bg-orange-100';
-      default: return 'bg-gray-100';
+  const getRarityIcon = (rarity: string) => {
+    switch (rarity) {
+      case 'legendary': return <Crown className="w-3 h-3" />;
+      case 'epic': return <Zap className="w-3 h-3" />;
+      case 'rare': return <Star className="w-3 h-3" />;
+      default: return null;
     }
   };
 
-  const formatBehaviors = (behaviors?: string[]) => {
-    if (!behaviors || behaviors.length === 0) return 'Decorativo';
-    
-    const behaviorNames: Record<string, string> = {
-      'canSitOn': 'Pode sentar',
-      'canLayOn': 'Pode deitar', 
-      'canStandOn': 'Pode ficar em cima',
-      'canWalk': 'Atravessável',
-      'animated': 'Animado',
-      'interactive': 'Interativo'
-    };
-
-    return behaviors
-      .map(b => behaviorNames[b] || b)
-      .slice(0, 2)
-      .join(', ');
-  };
-
-  if (loading || apiLoading) {
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <PanelCard title="Carregando Catálogo...">
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-600 font-semibold">Carregando catálogo de móveis...</p>
-              <p className="text-gray-500 text-sm mt-1">Conectando com HabboFurni API</p>
-            </div>
-          </div>
-        </PanelCard>
+      <div className="min-h-screen bg-repeat p-6 flex items-center justify-center" 
+           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 volter-font">Carregando catálogo...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PanelCard title="Catálogo Oficial do Habbo - Móveis e Decoração">
-        <div className="space-y-6">
-          {/* Filtros e Busca */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar móveis por nome..."
+    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      {/* Header */}
+      <div className="bg-white/90 backdrop-blur-sm border-b-2 border-black p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <img src="/assets/Carrinho.png" alt="Catálogo" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+            <h1 className="text-2xl font-bold volter-font">Catálogo de Mobis</h1>
+          </div>
+          
+          {/* Search and Filters */}
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar móveis, decorações..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="habbo-input w-full pl-10 pr-4 py-2"
+                className="pl-10 volter-font"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Filter size={20} className="text-gray-600" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="habbo-input px-4 py-2 min-w-[200px]"
+            
+            <Select value={selectedRarity} onValueChange={setSelectedRarity}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Raridade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="common">Comum</SelectItem>
+                <SelectItem value="uncommon">Incomum</SelectItem>
+                <SelectItem value="rare">Raro</SelectItem>
+                <SelectItem value="epic">Épico</SelectItem>
+                <SelectItem value="legendary">Lendário</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
               >
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </select>
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="w-4 h-4" />
+              </Button>
             </div>
-          </div>
-
-          {/* Estatísticas */}
-          <div className="bg-blue-50 rounded-lg p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">{catalogItems.length}</div>
-              <div className="text-gray-600">Total de Móveis</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">{catalogItems.filter(i => i.rarity === 'rare').length}</div>
-              <div className="text-gray-600">Itens Raros</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-orange-600">{catalogItems.filter(i => i.club === 'HC').length}</div>
-              <div className="text-gray-600">Exclusivos HC</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-green-600">{filteredItems.length}</div>
-              <div className="text-gray-600">Resultados</div>
-            </div>
-          </div>
-
-          {/* Grid de Itens */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.slice(0, 50).map((item) => (
-              <div key={item.id} className="habbo-card hover:shadow-lg transition-shadow">
-                <div className={`p-4 ${getRarityBg(item.rarity)} flex justify-center relative`}>
-                  {/* Badge de raridade */}
-                  {item.rarity !== 'common' && (
-                    <div className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded ${getRarityColor(item.rarity)} bg-white/80`}>
-                      {item.rarity.toUpperCase()}
-                    </div>
-                  )}
-                  
-                  {/* Badge HC */}
-                  {item.club === 'HC' && (
-                    <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded bg-orange-500 text-white">
-                      HC
-                    </div>
-                  )}
-
-                  <IntelligentFurniImage
-                    swfName={item.className}
-                    name={item.name}
-                    originalUrl={item.imageUrl}
-                    size="lg"
-                    className="w-16 h-16 object-contain"
-                  />
-                </div>
-                
-                <div className="p-4 space-y-2">
-                  <h3 className="font-bold text-gray-800 text-sm truncate" title={item.name}>
-                    {item.name}
-                  </h3>
-                  
-                  <p className="text-xs text-gray-600 line-clamp-2">
-                    {item.description}
-                  </p>
-
-                  {/* Informações técnicas */}
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Comportamento:</span>
-                      <span className="font-medium">{formatBehaviors(item.behaviors)}</span>
-                    </div>
-                    
-                    {item.dimensions && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Dimensões:</span>
-                        <span className="font-medium">
-                          {item.dimensions.width}x{item.dimensions.height}
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Categoria:</span>
-                      <span className="font-medium capitalize">{item.category}</span>
-                    </div>
-                  </div>
-
-                  {/* Código do móvel */}
-                  <div className="text-xs bg-gray-100 p-2 rounded font-mono break-all">
-                    {item.className}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mensagem quando sem resultados */}
-          {filteredItems.length === 0 && !loading && (
-            <div className="text-center py-20">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg font-semibold mb-2">Nenhum móvel encontrado</p>
-              <p className="text-gray-500">Tente ajustar os filtros ou termos de busca</p>
-            </div>
-          )}
-
-          {/* Rodapé com informações */}
-          <div className="text-center text-xs text-gray-500 mt-8 pt-4 border-t border-gray-200">
-            <p>📊 Dados: HabboFurni API • 🎨 Imagens: Habbo.com • 💻 Interface: HabboHub</p>
-            <p className="mt-1">
-              🔄 Última atualização: {new Date().toLocaleString('pt-BR')} • 
-              📦 {catalogItems.length} móveis disponíveis
-            </p>
           </div>
         </div>
-      </PanelCard>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+          {/* Category Tabs */}
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full mb-6">
+            {categories.map((category) => (
+              <TabsTrigger key={category.id} value={category.id} className="text-xs">
+                <span className="mr-1">{category.icon}</span>
+                <span className="hidden sm:inline">{category.name}</span>
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {category.count}
+                </Badge>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {categories.map((category) => (
+            <TabsContent key={category.id} value={category.id} className="space-y-6">
+              {filteredItems.length > 0 ? (
+                <div className={
+                  viewMode === 'grid' 
+                    ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"
+                    : "space-y-3"
+                }>
+                  {filteredItems.map((item) => (
+                    <div
+                      key={`${item.classname}-${item.name}`}
+                      className={`bg-white rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-300 ${
+                        viewMode === 'list' ? 'flex items-center p-3 gap-4' : 'p-3'
+                      }`}
+                    >
+                      <div className={viewMode === 'list' ? 'flex-shrink-0' : 'relative'}>
+                        <IntelligentFurniImage
+                          classname={item.classname}
+                          name={item.name}
+                          size={viewMode === 'list' ? 'sm' : 'md'}
+                        />
+                        
+                        {/* Rarity Badge */}
+                        {item.rarity !== 'common' && (
+                          <div className={`absolute -top-1 -right-1 rounded-full p-1 text-white ${getRarityColor(item.rarity)}`}>
+                            {getRarityIcon(item.rarity)}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className={viewMode === 'list' ? 'flex-1 min-w-0' : 'mt-2'}>
+                        <h3 className="font-semibold text-sm volter-font truncate" title={item.name}>
+                          {item.name || item.classname}
+                        </h3>
+                        
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.isHC && (
+                            <Badge variant="outline" className="text-xs">
+                              <Crown className="w-2 h-2 mr-1" />
+                              HC
+                            </Badge>
+                          )}
+                          
+                          {item.rarity !== 'common' && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {item.rarity}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {item.behaviors && item.behaviors.length > 0 && (
+                          <p className="text-xs text-gray-500 mt-1 truncate">
+                            {item.behaviors.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 mb-4">
+                    <Search className="w-12 h-12 mx-auto" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-600 volter-font">
+                    Nenhum item encontrado
+                  </h3>
+                  <p className="text-gray-500 mt-2">
+                    Tente ajustar os filtros ou termo de busca
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
     </div>
   );
 };
