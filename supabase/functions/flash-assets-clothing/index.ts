@@ -8,19 +8,191 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
-interface ClothingAsset {
+interface EnhancedFlashAsset {
   id: string;
   name: string;
   category: string;
   gender: 'M' | 'F' | 'U';
-  type: string;
-  imageUrl: string;
-  swfName: string;
   figureId: string;
-  club: 'HC' | 'FREE';
   colors: string[];
-  source: 'official-assets';
+  thumbnailUrl: string;
+  club: 'hc' | 'normal';
+  rarity: 'nft' | 'hc' | 'ltd' | 'rare' | 'common';
+  swfName: string;
+  source: 'flash-assets-enhanced';
 }
+
+// Sistema de categorização inteligente melhorado
+const ENHANCED_CATEGORY_MAPPING: Record<string, string> = {
+  // Acessórios específicos
+  'acc_chest': 'ca',
+  'acc_head': 'ha',
+  'acc_eye': 'ea',
+  'acc_face': 'fa',
+  'acc_waist': 'wa',
+  'acc_print': 'cp',
+  
+  // Roupas principais
+  'shirt': 'ch',
+  'jacket': 'cc',
+  'trousers': 'lg',
+  'shoes': 'sh',
+  
+  // Cabeça
+  'hair': 'hr',
+  'hat': 'ha',
+  'face': 'hd',
+  
+  // Novas categorias
+  'effects': 'fx',
+  'pets': 'pets',
+  'dance': 'dance'
+};
+
+const parseAssetCategory = (filename: string): string => {
+  if (!filename) return 'ch';
+  
+  const cleanName = filename.toLowerCase().replace('.swf', '');
+  
+  // Verificar prefixos específicos
+  for (const [pattern, category] of Object.entries(ENHANCED_CATEGORY_MAPPING)) {
+    if (cleanName.startsWith(pattern)) {
+      return category;
+    }
+  }
+  
+  // Padrões nos nomes
+  if (cleanName.includes('hair') || cleanName.includes('hr_')) return 'hr';
+  if (cleanName.includes('hat') || cleanName.includes('cap')) return 'ha';
+  if (cleanName.includes('shirt') || cleanName.includes('top')) return 'ch';
+  if (cleanName.includes('jacket') || cleanName.includes('coat')) return 'cc';
+  if (cleanName.includes('trouser') || cleanName.includes('pant')) return 'lg';
+  if (cleanName.includes('shoe') || cleanName.includes('boot')) return 'sh';
+  if (cleanName.includes('glass')) return 'ea';
+  if (cleanName.includes('mask') || cleanName.includes('beard')) return 'fa';
+  if (cleanName.includes('belt')) return 'wa';
+  if (cleanName.includes('necklace') || cleanName.includes('badge')) return 'ca';
+  
+  // Efeitos especiais
+  if (cleanName.includes('effect') || cleanName.includes('ghost') || 
+      cleanName.includes('freeze') || cleanName.includes('butterfly') ||
+      cleanName.includes('fire') || cleanName.includes('ice')) return 'fx';
+  
+  // Pets
+  if (cleanName.includes('dog') || cleanName.includes('cat') || 
+      cleanName.includes('horse') || cleanName.includes('pet')) return 'pets';
+  
+  // Danças
+  if (cleanName.includes('dance')) return 'dance';
+  
+  return 'ch';
+};
+
+const parseAssetGender = (filename: string): 'M' | 'F' | 'U' => {
+  const lowerName = filename.toLowerCase();
+  
+  if (lowerName.includes('_f_') || lowerName.includes('female')) return 'F';
+  if (lowerName.includes('_m_') || lowerName.includes('male')) return 'M';
+  if (lowerName.includes('dress') || lowerName.includes('skirt')) return 'F';
+  if (lowerName.includes('beard') || lowerName.includes('moustache')) return 'M';
+  
+  return 'U';
+};
+
+const parseAssetFigureId = (filename: string): string => {
+  const numbers = filename.match(/(\d+)/g);
+  if (numbers && numbers.length > 0) {
+    return numbers.sort((a, b) => parseInt(b) - parseInt(a))[0];
+  }
+  
+  let hash = 0;
+  for (let i = 0; i < filename.length; i++) {
+    const char = filename.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash % 9999).toString();
+};
+
+const generateCategoryColors = (category: string): string[] => {
+  const colorSets: Record<string, string[]> = {
+    'hd': ['1', '2', '3', '4', '5'],
+    'hr': ['1', '2', '45', '61', '92', '104', '100'],
+    'ha': ['1', '61', '92', '100', '102', '143'],
+    'ea': ['1', '2', '3', '4', '61'],
+    'fa': ['1', '2', '3', '61', '92'],
+    'ch': ['1', '61', '92', '100', '101', '102', '143'],
+    'cc': ['1', '2', '61', '92', '100', '102'],
+    'ca': ['1', '61', '92', '100'],
+    'cp': ['1', '2', '3', '4', '5'],
+    'lg': ['1', '2', '61', '92', '100', '101'],
+    'sh': ['1', '2', '61', '92', '100'],
+    'wa': ['1', '61', '92'],
+    'fx': ['1', '61', '92', '100'],
+    'pets': ['1', '45', '61'],
+    'dance': ['1']
+  };
+  
+  return colorSets[category] || ['1', '2', '3', '4', '5'];
+};
+
+const parseAssetRarity = (filename: string): 'nft' | 'hc' | 'ltd' | 'rare' | 'common' => {
+  const lowerName = filename.toLowerCase();
+  
+  if (lowerName.includes('nft')) return 'nft';
+  if (lowerName.includes('ltd')) return 'ltd';
+  if (lowerName.includes('hc') || lowerName.includes('club')) return 'hc';
+  if (lowerName.includes('rare')) return 'rare';
+  
+  return 'common';
+};
+
+const generateIsolatedThumbnail = (category: string, figureId: string, colorId: string, gender: string): string => {
+  const baseConfigurations: Record<string, string> = {
+    'hd': `hd-180-1`,
+    'hr': `hd-180-1`,
+    'ha': `hd-180-1.hr-828-45`,
+    'ea': `hd-180-1.hr-828-45`,
+    'fa': `hd-180-1.hr-828-45`,
+    'ch': `hd-180-1.hr-828-45`,
+    'cc': `hd-180-1.hr-828-45.ch-665-92`,
+    'ca': `hd-180-1.hr-828-45.ch-665-92`,
+    'cp': `hd-180-1.hr-828-45.ch-665-92`,
+    'lg': `hd-180-1.hr-828-45.ch-665-92`,
+    'sh': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
+    'wa': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
+    'fx': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
+    'pets': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
+    'dance': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`
+  };
+  
+  const baseAvatar = baseConfigurations[category] || baseConfigurations['ch'];
+  const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
+  
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+};
+
+const formatAssetName = (filename: string, category: string): string => {
+  const categoryNames: Record<string, string> = {
+    'hd': 'Rosto', 'hr': 'Cabelo', 'ha': 'Chapéu', 'ea': 'Óculos', 'fa': 'Acessório Facial',
+    'ch': 'Camiseta', 'cc': 'Casaco', 'ca': 'Acessório Peito', 'cp': 'Estampa',
+    'lg': 'Calça', 'sh': 'Sapato', 'wa': 'Cintura',
+    'fx': 'Efeito', 'pets': 'Pet', 'dance': 'Dança'
+  };
+  
+  const categoryName = categoryNames[category] || 'Item';
+  const namePart = filename
+    .replace(/^[a-z_]+_[MFU]?_?/, '')
+    .replace('.swf', '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
+  
+  const figureId = parseAssetFigureId(filename);
+  const rarity = parseAssetRarity(filename);
+  const rarityTag = rarity !== 'common' ? ` (${rarity.toUpperCase()})` : '';
+  
+  return `${categoryName} ${namePart || figureId}${rarityTag}`.trim();
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,16 +200,16 @@ serve(async (req) => {
   }
 
   try {
-    const { limit = 300, category = 'all', search = '' } = await req.json().catch(() => ({}));
+    const { limit = 3000, category = 'all', search = '' } = await req.json().catch(() => ({}));
     
-    console.log(`🌐 [FlashAssets] Fetching clothing assets - limit: ${limit}, category: ${category}, search: "${search}"`);
+    console.log(`🌐 [EnhancedFlashAssets] Processando ${limit} assets com categorização inteligente`);
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // List all files from flash-assets bucket
+    // Listar todos os arquivos
     const { data: files, error } = await supabase.storage
       .from('flash-assets')
       .list('', {
@@ -49,7 +221,7 @@ serve(async (req) => {
       throw new Error(`Storage error: ${error.message}`);
     }
 
-    console.log(`📁 [FlashAssets] Found ${files?.length || 0} asset files in storage`);
+    console.log(`📁 [EnhancedFlashAssets] Encontrados ${files?.length || 0} arquivos no storage`);
 
     if (!files || files.length === 0) {
       return new Response(
@@ -65,61 +237,88 @@ serve(async (req) => {
       );
     }
 
-    // Filter and parse clothing assets
-    let clothingAssets: ClothingAsset[] = files
-      .filter(file => file.name.endsWith('.swf') && (
-        file.name.startsWith('acc_') || 
-        file.name.startsWith('hair_') || 
-        file.name.startsWith('hat_') ||
-        file.name.startsWith('face_')
-      ))
-      .map(file => {
-        const parsed = parseAssetFilename(file.name);
+    // Processar todos os arquivos SWF com categorização inteligente
+    let enhancedAssets: EnhancedFlashAsset[] = files
+      .filter(file => file.name.endsWith('.swf'))
+      .map((file, index) => {
+        const filename = file.name.replace('.swf', '');
+        
+        // Usar o novo sistema inteligente
+        const category = parseAssetCategory(filename);
+        const gender = parseAssetGender(filename);
+        const figureId = parseAssetFigureId(filename);
+        const rarity = parseAssetRarity(filename);
+        const colors = generateCategoryColors(category);
+        const name = formatAssetName(filename, category);
+        const thumbnailUrl = generateIsolatedThumbnail(category, figureId, '1', gender);
         
         return {
-          id: `fa_${parsed.category}_${parsed.figureId}`,
-          name: generateAssetName(parsed),
-          category: parsed.category,
-          gender: parsed.gender,
-          type: parsed.type,
-          imageUrl: `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/flash-assets/${file.name}`,
-          swfName: file.name.replace('.swf', ''),
-          figureId: parsed.figureId,
-          club: parsed.club,
-          colors: generateDefaultColors(parsed.category),
-          source: 'official-assets' as const
+          id: `enhanced_${category}_${figureId}_${gender}`,
+          name,
+          category,
+          gender,
+          figureId,
+          colors,
+          thumbnailUrl,
+          club: rarity === 'hc' ? 'hc' : 'normal',
+          rarity,
+          swfName: filename,
+          source: 'flash-assets-enhanced' as const
         };
       });
 
-    // Apply category filter
+    // Aplicar filtros
     if (category !== 'all') {
-      clothingAssets = clothingAssets.filter(asset => asset.category === category);
+      enhancedAssets = enhancedAssets.filter(asset => asset.category === category);
     }
 
-    // Apply search filter
     if (search) {
-      clothingAssets = clothingAssets.filter(asset => 
+      enhancedAssets = enhancedAssets.filter(asset => 
         asset.name.toLowerCase().includes(search.toLowerCase()) ||
         asset.swfName.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // Apply limit
-    clothingAssets = clothingAssets.slice(0, limit);
+    // Aplicar limite
+    enhancedAssets = enhancedAssets.slice(0, limit);
+
+    // Estatísticas detalhadas
+    const categoryStats = enhancedAssets.reduce((acc, asset) => {
+      acc[asset.category] = (acc[asset.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const rarityStats = enhancedAssets.reduce((acc, asset) => {
+      acc[asset.rarity] = (acc[asset.rarity] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
     const result = {
-      assets: clothingAssets,
+      assets: enhancedAssets,
       metadata: {
-        source: 'flash-assets-storage',
+        source: 'flash-assets-enhanced-intelligent',
         totalFiles: files.length,
-        clothingFiles: files.filter(f => f.name.startsWith('acc_') || f.name.startsWith('hair_') || f.name.startsWith('hat_') || f.name.startsWith('face_')).length,
-        filteredCount: clothingAssets.length,
-        categories: getUniqueCategories(clothingAssets),
-        fetchedAt: new Date().toISOString()
+        processedAssets: enhancedAssets.length,
+        categoryStats,
+        rarityStats,
+        newCategories: ['fx', 'pets', 'dance'],
+        enhancedCategories: 13,
+        fetchedAt: new Date().toISOString(),
+        improvements: {
+          intelligentCategorization: true,
+          isolatedThumbnails: true,
+          rarityDetection: true,
+          genderParsing: true,
+          colorOptimization: true
+        }
       }
     };
 
-    console.log(`✅ [FlashAssets] Returning ${clothingAssets.length} clothing assets from storage`);
+    console.log(`✅ [EnhancedFlashAssets] Processamento concluído:`, {
+      totalAssets: enhancedAssets.length,
+      categorias: Object.keys(categoryStats).length,
+      raridadeDistribuida: rarityStats
+    });
     
     return new Response(
       JSON.stringify(result),
@@ -129,7 +328,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ [FlashAssets] Error:', error);
+    console.error('❌ [EnhancedFlashAssets] Erro:', error);
     
     return new Response(
       JSON.stringify({
@@ -141,115 +340,9 @@ serve(async (req) => {
         }
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     );
   }
 });
-
-function parseAssetFilename(filename: string): {
-  category: string;
-  gender: 'M' | 'F' | 'U';
-  type: string;
-  figureId: string;
-  club: 'HC' | 'FREE';
-} {
-  // Parse filenames like: acc_chest_U_backpack.swf, hair_F_curls.swf, etc.
-  const parts = filename.replace('.swf', '').split('_');
-  
-  if (parts.length < 3) {
-    return {
-      category: 'ch',
-      gender: 'U',
-      type: 'clothing',
-      figureId: '1',
-      club: 'FREE'
-    };
-  }
-
-  const [prefix, bodyPart, gender, ...nameParts] = parts;
-  const itemName = nameParts.join('_');
-  
-  // Map body parts to standard categories
-  const categoryMap: Record<string, string> = {
-    'chest': 'ch',
-    'head': 'hd', 
-    'eye': 'ea',
-    'face': 'fa',
-    'waist': 'wa',
-    'print': 'cp'
-  };
-
-  let category = categoryMap[bodyPart] || bodyPart;
-  
-  // Special handling for hair and hats
-  if (prefix === 'hair') category = 'hr';
-  if (prefix === 'hat') category = 'ha';
-  if (prefix === 'face') category = 'hd';
-
-  // Determine club status based on item name
-  const isHC = itemName.toLowerCase().includes('hc') || 
-              itemName.toLowerCase().includes('gold') ||
-              itemName.toLowerCase().includes('nft');
-
-  return {
-    category,
-    gender: (gender as 'M' | 'F' | 'U') || 'U',
-    type: prefix,
-    figureId: extractFigureId(itemName),
-    club: isHC ? 'HC' : 'FREE'
-  };
-}
-
-function extractFigureId(itemName: string): string {
-  // Extract numeric ID from item name
-  const match = itemName.match(/(\d+)/);
-  return match ? match[1] : Math.floor(Math.random() * 100).toString();
-}
-
-function generateAssetName(parsed: any): string {
-  const typeNames: Record<string, string> = {
-    'acc': 'Acessório',
-    'hair': 'Cabelo',
-    'hat': 'Chapéu', 
-    'face': 'Rosto'
-  };
-
-  const categoryNames: Record<string, string> = {
-    'ch': 'Peito',
-    'hd': 'Cabeça',
-    'ea': 'Olhos',
-    'fa': 'Rosto',
-    'wa': 'Cintura',
-    'cp': 'Estampa',
-    'hr': 'Cabelo',
-    'ha': 'Chapéu'
-  };
-
-  const typeName = typeNames[parsed.type] || 'Item';
-  const categoryName = categoryNames[parsed.category] || parsed.category;
-  const genderSuffix = parsed.gender === 'M' ? ' (M)' : parsed.gender === 'F' ? ' (F)' : '';
-  const clubSuffix = parsed.club === 'HC' ? ' (HC)' : '';
-
-  return `${typeName} ${categoryName} ${parsed.figureId}${genderSuffix}${clubSuffix}`;
-}
-
-function generateDefaultColors(category: string): string[] {
-  // Generate realistic color arrays based on category
-  const colorSets: Record<string, string[]> = {
-    'hr': ['45', '61', '1', '92', '104'], // Hair colors
-    'hd': ['1', '2', '3', '4', '5'], // Skin tones
-    'ch': ['1', '92', '61', '106', '143'], // Clothing colors
-    'ha': ['61', '92', '1', '102'], // Hat colors
-    'ea': ['1', '2', '3'], // Eye accessory colors
-    'fa': ['1', '2', '3'], // Face colors
-    'wa': ['61', '92', '1'], // Waist colors
-    'cp': ['1', '92', '61'] // Print colors
-  };
-  
-  return colorSets[category] || ['1', '2', '3', '4'];
-}
-
-function getUniqueCategories(assets: ClothingAsset[]): string[] {
-  return [...new Set(assets.map(asset => asset.category))];
-}
