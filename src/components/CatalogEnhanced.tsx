@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +24,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
   const { furniData, loading, error, refetch } = useHabboFurniApi({
     searchTerm: searchTerm.length >= 2 ? searchTerm : '',
     className: selectedCategory !== 'all' ? selectedCategory : '',
-    limit: 200,
+    limit: 500,
     autoFetch: true
   });
   
@@ -129,6 +128,11 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
     }
   };
 
+  // Fixed refetch handlers
+  const handleRefetch = () => {
+    refetch();
+  };
+
   // Estados de loading e erro
   if (loading && (!furniData || furniData.length === 0)) {
     return (
@@ -153,7 +157,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
         <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-red-600 mb-2">Erro ao Carregar Catálogo</h3>
         <p className="text-gray-600 mb-4">{error}</p>
-        <Button onClick={refetch} variant="outline">
+        <Button onClick={handleRefetch} variant="outline">
           <Package className="w-4 h-4 mr-2" />
           Tentar Novamente
         </Button>
@@ -253,7 +257,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
               <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhum móvel encontrado</h3>
               <p className="text-gray-500">Tente ajustar os filtros ou termo de busca</p>
-              <Button onClick={refetch} variant="outline" className="mt-4">
+              <Button onClick={handleRefetch} variant="outline" className="mt-4">
                 Recarregar Catálogo
               </Button>
             </div>
