@@ -101,6 +101,10 @@ const CompleteFlashAssetsEditor = ({
     return icons[rarity as keyof typeof icons];
   };
 
+  const handleRarityChange = (value: string) => {
+    setSelectedRarity(value as 'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common');
+  };
+
   if (error) {
     return (
       <div className={`${className} flex items-center justify-center p-8`}>
@@ -168,7 +172,7 @@ const CompleteFlashAssetsEditor = ({
 
         {/* Filtros */}
         <div className="flex gap-2">
-          <Select value={selectedRarity} onValueChange={setSelectedRarity}>
+          <Select value={selectedRarity} onValueChange={handleRarityChange}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Raridade" />
             </SelectTrigger>
