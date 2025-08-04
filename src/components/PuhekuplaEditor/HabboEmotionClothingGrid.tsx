@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, RefreshCw, Filter, Grid3x3, List, Info } from 'lucide-react';
-import { useHabboEmotionClothing, triggerHabboEmotionSync, HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
+import { useHabboEmotionAPI } from '@/hooks/useHabboEmotionAPI';
+import { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
 import { useToast } from '@/hooks/use-toast';
 import EnhancedClothingThumbnail from '@/components/HabboEditor/EnhancedClothingThumbnail';
 
@@ -51,13 +52,33 @@ export const HabboEmotionClothingGrid = ({
   const [selectedItemState, setSelectedItemState] = useState<any>(null);
   const { toast } = useToast();
 
-  // Fetch comprehensive HabboEmotion clothing data
+  // Fetch REAL HabboEmotion API data
   const { 
-    data: clothingData, 
+    data: apiData, 
     isLoading, 
     error, 
     refetch 
-  } = useHabboEmotionClothing(2000, selectedCategory, selectedGender);
+  } = useHabboEmotionAPI({ limit: 200, enabled: true });
+
+  // Convert API data to HabboEmotionClothingItem format
+  const clothingData: HabboEmotionClothingItem[] = useMemo(() => {
+    if (!apiData) return [];
+    
+    return apiData.map(item => ({
+      id: item.id,
+      code: item.code,
+      part: item.part,
+      gender: item.gender,
+      date: item.date,
+      colors: item.colors,
+      colorDetails: [],
+      imageUrl: `https://www.habbo.com/habbo-imaging/clothing/${item.part}/${item.id}/1.png`,
+      club: item.club,
+      source: 'habboemotion-api' as const,
+      name: item.name,
+      category: item.category
+    }));
+  }, [apiData]);
 
   // Filter and sort items
   const filteredItems = useMemo(() => {
@@ -116,21 +137,20 @@ export const HabboEmotionClothingGrid = ({
   const handleSync = async () => {
     try {
       toast({
-        title: "🔄 Sincronizando...",
-        description: "Atualizando catálogo HabboEmotion",
+        title: "🔄 Atualizando...",
+        description: "Recarregando dados da API HabboEmotion",
       });
       
-      await triggerHabboEmotionSync();
       await refetch();
       
       toast({
-        title: "✅ Sincronização Completa",
-        description: "Catálogo atualizado com sucesso",
+        title: "✅ Atualização Completa",
+        description: "Dados recarregados com sucesso",
       });
     } catch (error) {
       toast({
-        title: "❌ Erro na Sincronização",
-        description: "Falha ao atualizar o catálogo",
+        title: "❌ Erro na Atualização",
+        description: "Falha ao recarregar os dados",
         variant: "destructive"
       });
     }
@@ -145,7 +165,7 @@ export const HabboEmotionClothingGrid = ({
     
     clothingData.forEach(item => {
       byCategory[item.part] = (byCategory[item.part] || 0) + 1;
-      bySource[item.source] = (bySource[item.source] || 0) + 1;
+      bySource['habboemotion-api'] = (bySource['habboemotion-api'] || 0) + 1;
     });
     
     return {
@@ -201,7 +221,7 @@ export const HabboEmotionClothingGrid = ({
         
         <Button onClick={handleSync} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Sincronizar
+          Atualizar
         </Button>
       </div>
 
@@ -223,12 +243,12 @@ export const HabboEmotionClothingGrid = ({
               <div className="text-gray-600">Categorias</div>
             </div>
             <div>
-              <div className="font-medium text-gray-900">{stats.bySource['habboemotion-scraping'] || 0}</div>
-              <div className="text-gray-600">HE Originais</div>
+              <div className="font-medium text-gray-900">{stats.bySource['habboemotion-api'] || 0}</div>
+              <div className="text-gray-600">API Real</div>
             </div>
             <div>
-              <div className="font-medium text-gray-900">{stats.bySource['enhanced-generation'] || 0}</div>
-              <div className="text-gray-600">Gerados</div>
+              <div className="font-medium text-gray-900">{stats.filtered}</div>
+              <div className="text-gray-600">Filtrados</div>
             </div>
           </div>
         </div>

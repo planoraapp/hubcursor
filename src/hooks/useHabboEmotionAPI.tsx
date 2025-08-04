@@ -9,12 +9,16 @@ export interface HabboEmotionClothing {
   gender: 'M' | 'F' | 'U';
   rarity: string;
   thumbnail: string;
-  colors: number[];
+  colors: string[];
   swf_name: string;
   release: string;
   code: string;
   date: string;
   part: string;
+  // Adicionar propriedades para compatibilidade
+  imageUrl: string;
+  club: 'HC' | 'FREE';
+  source: 'habboemotion-api' | 'habboemotion-scraping' | 'enhanced-generation' | 'error-fallback';
 }
 
 interface UseHabboEmotionAPIProps {
@@ -68,12 +72,16 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
           gender: item.gender || 'U',
           rarity: determineRarity(item.code || ''),
           thumbnail: '',
-          colors: [1, 2, 3, 4, 5], // Default colors
+          colors: ['1', '2', '3', '4', '5'], // Default colors
           swf_name: item.code || '',
           release: item.date || '',
           code: item.code || '',
           date: item.date || '',
-          part: item.part || 'ch'
+          part: item.part || 'ch',
+          // Propriedades de compatibilidade
+          imageUrl: generateImageUrl(item.code, item.part, item.id || index + 1),
+          club: determineClub(item.code || ''),
+          source: 'habboemotion-api'
         };
       }).filter(Boolean);
       
@@ -88,6 +96,16 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
     console.error('❌ [HabboEmotionAPI] Error fetching data:', error);
     throw error;
   }
+};
+
+const generateImageUrl = (code: string, part: string, id: number): string => {
+  return `https://www.habbo.com/habbo-imaging/clothing/${part}/${id}/1.png`;
+};
+
+const determineClub = (code: string): 'HC' | 'FREE' => {
+  if (!code) return 'FREE';
+  const lowerCode = code.toLowerCase();
+  return (lowerCode.includes('hc') || lowerCode.includes('club')) ? 'HC' : 'FREE';
 };
 
 const determineRarity = (code: string): string => {

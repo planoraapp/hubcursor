@@ -145,8 +145,8 @@ const EnhancedClothingThumbnail = ({
         <>
           {/* Source indicator */}
           <div className="absolute bottom-0 right-0 bg-black bg-opacity-60 text-white text-xs px-1 rounded-tl">
-            {item.source === 'habboemotion-scraping' ? 'HE' : 
-             item.source === 'enhanced-generation' ? 'EG' : 'FB'}
+            {item.source === 'habboemotion-api' ? 'API' : 
+             item.source === 'habboemotion-scraping' ? 'HE' : 'GEN'}
           </div>
           
           {/* HC indicator only if HC */}

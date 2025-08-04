@@ -19,7 +19,7 @@ export interface HabboEmotionClothingItem {
   }>;
   imageUrl: string;
   club: 'HC' | 'FREE';
-  source: 'habboemotion-scraping' | 'enhanced-generation' | 'error-fallback';
+  source: 'habboemotion-api' | 'habboemotion-scraping' | 'enhanced-generation' | 'error-fallback';
   name: string;
   category: string;
 }
