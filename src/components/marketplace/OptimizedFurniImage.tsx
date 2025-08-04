@@ -37,11 +37,19 @@ const OptimizedFurniImage = ({
   const generateFurniUrls = useCallback((className: string, name: string, hotel: string, type: string) => {
     const urls: string[] = [];
     
-    // HabboFurni como fonte primária (mais confiável)
+    // Múltiplas fontes primárias para maior cobertura
     urls.push(
+      // HabboFurni
       `https://habbofurni.com/furniture_images/${className}.png`,
       `https://habbofurni.com/images/furniture/${className}.png`,
-      `https://cdn.habbofurni.com/furniture/${className}.png`
+      
+      // Habbo oficial
+      `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
+      `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/dcr/hof_furni/${className}.png`,
+      
+      // HabboWidgets como backup rápido
+      `https://www.habbowidgets.com/images/furni/${className}.gif`,
+      `https://habbowidgets.com/images/furni/${className}.png`
     );
 
     // Detectar características especiais

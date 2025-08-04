@@ -120,9 +120,18 @@ serve(async (req) => {
           }
 
           if (className) {
+            console.log(`🔍 [HabboFurni] Filtering by className: "${className}"`);
+            const beforeFilter = furniData.length;
             furniData = furniData.filter(item => 
               item.className.toLowerCase().includes(className.toLowerCase())
             );
+            console.log(`📊 [HabboFurni] Filter results: ${beforeFilter} -> ${furniData.length} items`);
+            
+            // Debug: mostrar primeiros 5 classNames encontrados
+            if (furniData.length === 0 && beforeFilter > 0) {
+              const sampleClassNames = furniData.slice(0, 5).map(item => item.className);
+              console.log(`🔍 [HabboFurni] Sample classNames in data:`, sampleClassNames);
+            }
           }
 
           successEndpoint = endpoint;

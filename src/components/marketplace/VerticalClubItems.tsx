@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreditIcon } from './CreditIcon';
-import OptimizedFurniImage from './OptimizedFurniImage';
+import { Package } from 'lucide-react';
 
 interface ClubItem {
   id: string;
@@ -17,6 +17,66 @@ interface VerticalClubItemsProps {
   hotel: string;
 }
 
+interface ClubItemImageProps {
+  imageUrl: string;
+  name: string;
+  type: 'hc' | 'ca';
+}
+
+const ClubItemImage = ({ imageUrl, name, type }: ClubItemImageProps) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fallbackImages = [
+    imageUrl,
+    type === 'hc' ? '/assets/HC.png' : '/assets/bc31.png',
+    `https://images.habbo.com/dcr/hof_furni/br/${type === 'hc' ? 'hc_membership' : 'club_membership'}.png`,
+    `https://habbofurni.com/furniture_images/${type === 'hc' ? 'hc_membership' : 'club_membership'}.png`
+  ];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const handleImageError = () => {
+    if (currentImageIndex < fallbackImages.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
+      setIsLoading(true);
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  if (hasError) {
+    return (
+      <div className="w-12 h-12 bg-gray-100 border-2 border-gray-300 rounded flex items-center justify-center">
+        <Package size={16} className="text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-12 h-12 bg-gray-50 border-2 border-gray-300 rounded overflow-hidden flex items-center justify-center relative">
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-100 animate-pulse rounded"></div>
+      )}
+      <img
+        src={fallbackImages[currentImageIndex]}
+        alt={name}
+        className={`max-w-full max-h-full object-contain transition-opacity duration-200 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        style={{ imageRendering: 'pixelated' }}
+        loading="eager"
+      />
+    </div>
+  );
+};
+
 export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
   const [clubItems, setClubItems] = useState<ClubItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,24 +88,24 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
       try {
         setLoading(true);
         
-        // Buscar itens HC e CA reais
+        // Itens HC e CA com imagens diretas
         const mockItems: ClubItem[] = [
           {
             id: 'hc_31_days',
             name: '31 Dias HC',
             price: 25000,
-            className: 'hc_membership_31',
+            className: 'hc31',
             type: 'hc',
-            imageUrl: 'https://habbofurni.com/furniture_images/hc_membership_31.png',
+            imageUrl: '/assets/hc31.png',
             available: true
           },
           {
             id: 'ca_31_days', 
             name: '31 Dias CA',
             price: 30000,
-            className: 'club_membership_31',
+            className: 'bc31',
             type: 'ca',
-            imageUrl: 'https://habbofurni.com/furniture_images/club_membership_31.png',
+            imageUrl: '/assets/bc31.png',
             available: true
           }
         ];
@@ -84,12 +144,10 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
           style={{ backgroundColor: item.type === 'hc' ? '#fef3c7' : '#f3e8ff' }}
         >
           <CardContent className="p-2 text-center">
-            <OptimizedFurniImage
-              className={item.className}
+            <ClubItemImage 
+              imageUrl={item.imageUrl}
               name={item.name}
-              hotel={hotel}
-              size="sm"
-              priority={true}
+              type={item.type}
             />
             
             <div className="mt-1">
