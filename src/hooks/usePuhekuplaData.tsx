@@ -9,6 +9,7 @@ export interface PuhekuplaClothing {
   gender: 'M' | 'F' | 'U';
   colors?: string;
   image: string;
+  status?: string;
 }
 
 export interface PuhekuplaBadge {
@@ -17,6 +18,7 @@ export interface PuhekuplaBadge {
   code: string;
   description?: string;
   image: string;
+  status?: string;
 }
 
 export interface PuhekuplaFurni {
@@ -26,12 +28,16 @@ export interface PuhekuplaFurni {
   category: string;
   image: string;
   colors?: string;
+  icon?: string;
+  status?: string;
 }
 
 export interface PuhekuplaCategory {
   id: string;
   name: string;
   count: number;
+  guid?: string;
+  slug?: string;
 }
 
 export interface PuhekuplaClothingResponse {
@@ -343,7 +349,7 @@ export const usePuhekuplaClothing = (page = 1, category?: string, search?: strin
       }
     },
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -447,7 +453,7 @@ export const usePuhekuplaBadges = (page = 1, search?: string) => {
       }
     },
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -513,7 +519,7 @@ export const usePuhekuplaFurni = (page = 1, category?: string, search?: string) 
       }
     },
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -554,24 +560,24 @@ const getMockFurniData = (page = 1, category?: string, search?: string): Puhekup
 };
 
 export const usePuhekuplaCategories = () => {
-  return useQuery<PuhekuplaCategory[]>({
+  return useQuery<{ result?: { categories: PuhekuplaCategory[] } }>({
     queryKey: ['puhekupla-categories'],
     queryFn: async () => {
       const categories: PuhekuplaCategory[] = [
-        { id: 'hd', name: 'Rostos', count: 25 },
-        { id: 'hr', name: 'Cabelos', count: 120 },
-        { id: 'ch', name: 'Camisetas', count: 180 },
-        { id: 'lg', name: 'Calças', count: 140 },
-        { id: 'sh', name: 'Sapatos', count: 95 },
-        { id: 'ha', name: 'Chapéus', count: 80 },
-        { id: 'ea', name: 'Óculos', count: 45 },
-        { id: 'cc', name: 'Casacos', count: 65 },
-        { id: 'ca', name: 'Acessórios Peito', count: 35 },
-        { id: 'wa', name: 'Cintura', count: 25 }
+        { id: 'hd', name: 'Rostos', count: 25, guid: 'hd', slug: 'hd' },
+        { id: 'hr', name: 'Cabelos', count: 120, guid: 'hr', slug: 'hr' },
+        { id: 'ch', name: 'Camisetas', count: 180, guid: 'ch', slug: 'ch' },
+        { id: 'lg', name: 'Calças', count: 140, guid: 'lg', slug: 'lg' },
+        { id: 'sh', name: 'Sapatos', count: 95, guid: 'sh', slug: 'sh' },
+        { id: 'ha', name: 'Chapéus', count: 80, guid: 'ha', slug: 'ha' },
+        { id: 'ea', name: 'Óculos', count: 45, guid: 'ea', slug: 'ea' },
+        { id: 'cc', name: 'Casacos', count: 65, guid: 'cc', slug: 'cc' },
+        { id: 'ca', name: 'Acessórios Peito', count: 35, guid: 'ca', slug: 'ca' },
+        { id: 'wa', name: 'Cintura', count: 25, guid: 'wa', slug: 'wa' }
       ];
-      return categories;
+      return { result: { categories } };
     },
     staleTime: 10 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 };

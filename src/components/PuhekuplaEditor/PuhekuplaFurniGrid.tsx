@@ -49,7 +49,7 @@ const PuhekuplaFurniGrid: React.FC<PuhekuplaFurniGridProps> = ({
   }
 
   const furniList = data?.result?.furni || [];
-  const pagination = data?.pagination;
+  const pagination = data?.result?.pagination || data?.pagination;
   const totalPages = pagination?.pages || 1;
 
   return (

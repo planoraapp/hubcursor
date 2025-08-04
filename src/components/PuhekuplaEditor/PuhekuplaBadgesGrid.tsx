@@ -47,7 +47,7 @@ const PuhekuplaBadgesGrid: React.FC<PuhekuplaBadgesGridProps> = ({
   }
 
   const badgesList = data?.result?.badges || [];
-  const pagination = data?.pagination;
+  const pagination = data?.result?.pagination || data?.pagination;
   const totalPages = pagination?.pages || 1;
 
   return (
