@@ -21,6 +21,7 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
   const [selectedHotel, setSelectedHotel] = useState('com');
   const [selectedItem, setSelectedItem] = useState('');
   const [selectedColor, setSelectedColor] = useState('1');
+  const [username, setUsername] = useState('');
 
   const { toast } = useToast();
 
@@ -86,6 +87,54 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
     });
   };
 
+  const handleCopyUrl = () => {
+    const figureString = ViaJovemFigureManager.getFigureString(currentFigure);
+    const hotel = hotels.find(h => h.code === selectedHotel);
+    const baseUrl = hotel?.url || 'habbo.com';
+    const imageUrl = `https://www.${baseUrl}/habbo-imaging/avatarimage?figure=${figureString}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+    navigator.clipboard.writeText(imageUrl);
+    toast({
+      title: "URL copiada!",
+      description: "URL da imagem foi copiada para a área de transferência.",
+    });
+  };
+
+  const handleDownload = () => {
+    const figureString = ViaJovemFigureManager.getFigureString(currentFigure);
+    const hotel = hotels.find(h => h.code === selectedHotel);
+    const baseUrl = hotel?.url || 'habbo.com';
+    const imageUrl = `https://www.${baseUrl}/habbo-imaging/avatarimage?figure=${figureString}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+    
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `habbo-avatar-${figureString}.png`;
+    link.click();
+    
+    toast({
+      title: "Download iniciado!",
+      description: "A imagem do avatar está sendo baixada.",
+    });
+  };
+
+  const handleRandomize = () => {
+    const randomFigure = ViaJovemFigureManager.getDefaultFigure(selectedGender === 'U' ? 'M' : selectedGender);
+    setCurrentFigure(randomFigure);
+    toast({
+      title: "Avatar randomizado!",
+      description: "Um novo avatar aleatório foi gerado.",
+    });
+  };
+
+  const handleSearchUser = () => {
+    if (username.trim()) {
+      toast({
+        title: "Buscando usuário...",
+        description: `Procurando por ${username} no ${selectedHotel}`,
+      });
+      // TODO: Implement user search functionality
+    }
+  };
+
   return (
     <div className={`w-full h-full flex flex-col lg:flex-row gap-4 p-4 ${className}`}>
       {/* Avatar Preview (Esquerda) */}
@@ -96,12 +145,14 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
               currentFigure={ViaJovemFigureManager.getFigureString(currentFigure)}
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
-              onFigureChange={(figureString: string) => {
-                const figure = ViaJovemFigureManager.parseFigureString(figureString);
-                setCurrentFigure(figure);
-              }}
+              username={username}
               onGenderChange={handleGenderChange}
               onHotelChange={setSelectedHotel}
+              onUsernameChange={setUsername}
+              onSearchUser={handleSearchUser}
+              onCopyUrl={handleCopyUrl}
+              onDownload={handleDownload}
+              onRandomize={handleRandomize}
             />
           </CardContent>
         </Card>
