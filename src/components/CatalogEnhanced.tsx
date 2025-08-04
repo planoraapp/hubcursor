@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Filter, Star, Sparkles, Crown, Gem } from 'lucide-react';
 import { useHabboFurniApi } from '../hooks/useHabboFurniApi';
-import IntelligentFurniImage from '@/components/IntelligentFurniImage';
+import { IntelligentFurniImage } from '@/components/IntelligentFurniImage';
 import { useTrackedItems } from '../hooks/useTrackedItems';
 import { useAuth } from '../hooks/useAuth';
 
@@ -27,7 +28,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
     className: selectedCategory !== 'all' ? selectedCategory : ''
   });
   
-  const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems();
+  const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems(hotel);
   const { isLoggedIn } = useAuth();
 
   const filteredData = useMemo(() => {
