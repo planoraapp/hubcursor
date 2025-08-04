@@ -151,6 +151,144 @@ export type Database = {
         }
         Relationships: []
       }
+      habbo_emotion_api_cache: {
+        Row: {
+          endpoint: string
+          expires_at: string
+          fetched_at: string
+          id: string
+          item_count: number
+          response_data: Json
+          status: string
+        }
+        Insert: {
+          endpoint: string
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          item_count?: number
+          response_data: Json
+          status?: string
+        }
+        Update: {
+          endpoint?: string
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          item_count?: number
+          response_data?: Json
+          status?: string
+        }
+        Relationships: []
+      }
+      habbo_emotion_clothing: {
+        Row: {
+          club: string
+          code: string
+          colors: Json
+          created_at: string
+          gender: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          item_id: number
+          part: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          club?: string
+          code: string
+          colors?: Json
+          created_at?: string
+          gender?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_id: number
+          part: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          club?: string
+          code?: string
+          colors?: Json
+          created_at?: string
+          gender?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_id?: number
+          part?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      habbo_emotion_colors: {
+        Row: {
+          color_id: string
+          color_name: string | null
+          created_at: string
+          hex_code: string
+          id: string
+          is_hc: boolean
+        }
+        Insert: {
+          color_id: string
+          color_name?: string | null
+          created_at?: string
+          hex_code: string
+          id?: string
+          is_hc?: boolean
+        }
+        Update: {
+          color_id?: string
+          color_name?: string | null
+          created_at?: string
+          hex_code?: string
+          id?: string
+          is_hc?: boolean
+        }
+        Relationships: []
+      }
+      habbo_emotion_item_colors: {
+        Row: {
+          clothing_item_id: string
+          color_id: string
+          id: string
+          is_default: boolean
+        }
+        Insert: {
+          clothing_item_id: string
+          color_id: string
+          id?: string
+          is_default?: boolean
+        }
+        Update: {
+          clothing_item_id?: string
+          color_id?: string
+          id?: string
+          is_default?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habbo_emotion_item_colors_clothing_item_id_fkey"
+            columns: ["clothing_item_id"]
+            isOneToOne: false
+            referencedRelation: "habbo_emotion_clothing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habbo_emotion_item_colors_color_id_fkey"
+            columns: ["color_id"]
+            isOneToOne: false
+            referencedRelation: "habbo_emotion_colors"
+            referencedColumns: ["color_id"]
+          },
+        ]
+      }
       habbo_figures_cache: {
         Row: {
           created_at: string

@@ -6,7 +6,7 @@ export interface HabboColor {
   isHC: boolean;
 }
 
-// Cores extraídas do código do KiHabbo
+// Cores extraídas do código oficial do Habbo
 export const HABBO_COLORS: HabboColor[] = [
   // Cores básicas (sem HC)
   { id: '1', hex: 'DDDDDD', name: 'Cinza Claro', isHC: false },
@@ -62,7 +62,7 @@ export const HABBO_COLORS: HabboColor[] = [
   { id: '49', hex: 'FF27A6', name: 'Pink HC', isHC: true },
   { id: '50', hex: 'C600AD', name: 'Roxo Pink HC', isHC: true },
 
-  // Mais cores (continuando a extração)
+  // Mais cores HC
   { id: '51', hex: 'a1295e', name: 'Roxo Escuro HC', isHC: true },
   { id: '52', hex: 'a723c9', name: 'Violeta HC', isHC: true },
   { id: '53', hex: '6a0481', name: 'Roxo Profundo HC', isHC: true },
@@ -84,8 +84,7 @@ export const HABBO_COLORS: HabboColor[] = [
   { id: '69', hex: '1946c7', name: 'Azul Escuro HC', isHC: true },
   { id: '70', hex: '0219A5', name: 'Azul Marinho HC', isHC: true },
 
-  // Adicionar mais cores conforme necessário
-  // Cores básicas adicionais do código
+  // Cores básicas adicionais
   { id: '71', hex: '003F1D', name: 'Verde Floresta', isHC: false },
   { id: '72', hex: '096E16', name: 'Verde Escuro', isHC: false },
   { id: '73', hex: '105262', name: 'Azul Petróleo', isHC: false },
@@ -103,6 +102,16 @@ export const HABBO_COLORS: HabboColor[] = [
   { id: '83', hex: 'FFCB98', name: 'Pele Morena', isHC: false },
   { id: '84', hex: 'F4AC54', name: 'Pele Escura', isHC: false },
   { id: '85', hex: 'FF987F', name: 'Pele Muito Escura', isHC: false },
+
+  // Cores especiais e adicionais
+  { id: '92', hex: '1', name: 'Branco Padrão', isHC: false },
+  { id: '100', hex: '100', name: 'Cor 100', isHC: false },
+  { id: '101', hex: '101', name: 'Cor 101', isHC: false },
+  { id: '102', hex: '102', name: 'Cor 102', isHC: false },
+  { id: '104', hex: '104', name: 'Cor 104', isHC: false },
+  { id: '105', hex: '105', name: 'Cor 105', isHC: false },
+  { id: '106', hex: '106', name: 'Cor 106', isHC: false },
+  { id: '143', hex: '143', name: 'Cor 143', isHC: false },
 ];
 
 // Função para obter cor por ID
@@ -122,3 +131,19 @@ export const getHCColors = (): HabboColor[] => {
 
 // Cores mais comuns para quick access
 export const POPULAR_COLORS = ['1', '2', '4', '6', '8', '11', '13', '17', '20', '26', '31', '42', '49', '68'];
+
+// Mapeamento de cores por categoria (cores mais usadas para cada tipo de peça)
+export const COLORS_BY_CATEGORY = {
+  hr: ['45', '61', '1', '92', '104', '21', '26', '31', '42', '49'], // Hair
+  hd: ['1', '2', '6', '81', '82', '83', '84', '85'], // Head/skin
+  ch: ['1', '92', '61', '106', '143', '21', '26', '31', '42', '8', '13', '17'], // Shirts
+  lg: ['61', '92', '1', '102', '21', '2', '13', '20'], // Pants
+  sh: ['61', '102', '92', '1', '21', '2', '20'], // Shoes
+  ha: ['1', '61', '92', '21', '26', '31', '2', '20'], // Hats
+  ea: ['1', '21', '61', '92', '2', '20'], // Eye accessories
+  fa: ['1', '21', '61', '92', '26'], // Face accessories
+  cc: ['1', '61', '92', '21', '2', '13', '17', '8'], // Coats
+  ca: ['1', '61', '92', '21', '26', '31'], // Chest accessories
+  wa: ['1', '61', '92', '21', '2', '20'], // Waist
+  cp: ['1', '61', '92', '21', '26', '31', '42', '8', '13', '17'] // Prints
+} as const;
