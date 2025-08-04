@@ -25,6 +25,73 @@ export interface PuhekuplaClothingResponse {
       total: number;
     };
   };
+  pagination?: {
+    current_page: number;
+    pages: number;
+    total: number;
+  };
+  error?: string;
+}
+
+export interface PuhekuplaBadge {
+  guid: string;
+  code: string;
+  name: string;
+  description: string;
+  image: string;
+  status: 'active' | 'inactive';
+  release_date?: string;
+}
+
+export interface PuhekuplaBadgeResponse {
+  success: boolean;
+  result?: {
+    badges: PuhekuplaBadge[];
+    pagination?: {
+      current_page: number;
+      pages: number;
+      total: number;
+    };
+  };
+  error?: string;
+}
+
+export interface PuhekuplaFurni {
+  guid: string;
+  code: string;
+  name: string;
+  description: string;
+  image: string;
+  icon?: string;
+  category: string;
+  status: 'active' | 'inactive';
+  release_date?: string;
+}
+
+export interface PuhekuplaFurniResponse {
+  success: boolean;
+  result?: {
+    furni: PuhekuplaFurni[];
+    pagination?: {
+      current_page: number;
+      pages: number;
+      total: number;
+    };
+  };
+  error?: string;
+}
+
+export interface PuhekuplaCategory {
+  guid: string;
+  name: string;
+  slug: string;
+}
+
+export interface PuhekuplaCategoriesResponse {
+  success: boolean;
+  result?: {
+    categories: PuhekuplaCategory[];
+  };
   error?: string;
 }
 
@@ -304,6 +371,53 @@ const generateExpandedMockClothing = (): PuhekuplaClothing[] => {
   return mockClothing;
 };
 
+// Mock data generators for other types
+const generateMockBadges = (): PuhekuplaBadge[] => {
+  const badges: PuhekuplaBadge[] = [];
+  
+  for (let i = 1; i <= 50; i++) {
+    badges.push({
+      guid: `badge-${i}`,
+      code: `BADGE${i.toString().padStart(3, '0')}`,
+      name: `Badge ${i}`,
+      description: `Badge de exemplo ${i}`,
+      image: `https://content.puhekupla.com/img/badges/BADGE${i.toString().padStart(3, '0')}.png`,
+      status: 'active'
+    });
+  }
+  
+  return badges;
+};
+
+const generateMockFurni = (): PuhekuplaFurni[] => {
+  const furni: PuhekuplaFurni[] = [];
+  
+  for (let i = 1; i <= 100; i++) {
+    furni.push({
+      guid: `furni-${i}`,
+      code: `furniture_${i}`,
+      name: `Móvel ${i}`,
+      description: `Móvel de exemplo ${i}`,
+      image: `https://content.puhekupla.com/img/furniture/furniture_${i}.png`,
+      icon: `https://content.puhekupla.com/img/furniture/furniture_${i}_icon.png`,
+      category: 'furniture',
+      status: 'active'
+    });
+  }
+  
+  return furni;
+};
+
+const generateMockCategories = (): PuhekuplaCategory[] => {
+  return [
+    { guid: 'furniture', name: 'Móveis', slug: 'furniture' },
+    { guid: 'decoration', name: 'Decoração', slug: 'decoration' },
+    { guid: 'floor', name: 'Pisos', slug: 'floor' },
+    { guid: 'wall', name: 'Paredes', slug: 'wall' },
+    { guid: 'lighting', name: 'Iluminação', slug: 'lighting' }
+  ];
+};
+
 const fetchPuhekuplaClothing = async (
   page: number = 1,
   category: string = '',
@@ -367,6 +481,11 @@ const fetchPuhekuplaClothing = async (
             pages: Math.ceil(filteredMockClothing.length / itemsPerPage),
             total: filteredMockClothing.length
           }
+        },
+        pagination: {
+          current_page: page,
+          pages: Math.ceil(filteredMockClothing.length / itemsPerPage),
+          total: filteredMockClothing.length
         }
       };
     }
@@ -378,7 +497,8 @@ const fetchPuhekuplaClothing = async (
         result: {
           clothing: data.data.result.clothing,
           pagination: data.data.result.pagination
-        }
+        },
+        pagination: data.data.result.pagination
       };
     }
 
@@ -400,9 +520,105 @@ const fetchPuhekuplaClothing = async (
           pages: Math.ceil(mockClothing.length / 24),
           total: mockClothing.length
         }
+      },
+      pagination: {
+        current_page: 1,
+        pages: Math.ceil(mockClothing.length / 24),
+        total: mockClothing.length
       }
     };
   }
+};
+
+const fetchPuhekuplaBadges = async (
+  page: number = 1,
+  search: string = ''
+): Promise<PuhekuplaBadgeResponse> => {
+  console.log(`🌐 [PuhekuplaBadgesHook] Fetching badges - page: ${page}, search: "${search}"`);
+  
+  const mockBadges = generateMockBadges();
+  
+  // Filtrar por busca se especificada
+  let filteredBadges = mockBadges;
+  if (search) {
+    filteredBadges = mockBadges.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.code.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  // Paginação
+  const itemsPerPage = 24;
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredBadges.slice(startIndex, endIndex);
+
+  return {
+    success: true,
+    result: {
+      badges: paginatedItems,
+      pagination: {
+        current_page: page,
+        pages: Math.ceil(filteredBadges.length / itemsPerPage),
+        total: filteredBadges.length
+      }
+    }
+  };
+};
+
+const fetchPuhekuplaFurni = async (
+  page: number = 1,
+  category: string = '',
+  search: string = ''
+): Promise<PuhekuplaFurniResponse> => {
+  console.log(`🌐 [PuhekuplaFurniHook] Fetching furni - page: ${page}, category: ${category}, search: "${search}"`);
+  
+  const mockFurni = generateMockFurni();
+  
+  // Filtrar por categoria se especificada
+  let filteredFurni = mockFurni;
+  if (category && category !== 'all') {
+    filteredFurni = mockFurni.filter(item => 
+      item.category.toLowerCase() === category.toLowerCase()
+    );
+  }
+
+  // Filtrar por busca se especificada
+  if (search) {
+    filteredFurni = filteredFurni.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.code.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  // Paginação
+  const itemsPerPage = 24;
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredFurni.slice(startIndex, endIndex);
+
+  return {
+    success: true,
+    result: {
+      furni: paginatedItems,
+      pagination: {
+        current_page: page,
+        pages: Math.ceil(filteredFurni.length / itemsPerPage),
+        total: filteredFurni.length
+      }
+    }
+  };
+};
+
+const fetchPuhekuplaCategories = async (): Promise<PuhekuplaCategoriesResponse> => {
+  const mockCategories = generateMockCategories();
+  
+  return {
+    success: true,
+    result: {
+      categories: mockCategories
+    }
+  };
 };
 
 export const usePuhekuplaClothing = (
@@ -419,5 +635,41 @@ export const usePuhekuplaClothing = (
     gcTime: 1000 * 60 * 60, // 1 hour
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  });
+};
+
+export const usePuhekuplaBadges = (
+  page: number = 1,
+  search: string = ''
+) => {
+  return useQuery({
+    queryKey: ['puhekupla-badges', page, search],
+    queryFn: () => fetchPuhekuplaBadges(page, search),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
+    retry: 2,
+  });
+};
+
+export const usePuhekuplaFurni = (
+  page: number = 1,
+  category: string = '',
+  search: string = ''
+) => {
+  return useQuery({
+    queryKey: ['puhekupla-furni', page, category, search],
+    queryFn: () => fetchPuhekuplaFurni(page, category, search),
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
+    retry: 2,
+  });
+};
+
+export const usePuhekuplaCategories = () => {
+  return useQuery({
+    queryKey: ['puhekupla-categories'],
+    queryFn: fetchPuhekuplaCategories,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    gcTime: 1000 * 60 * 60 * 2, // 2 hours
   });
 };
