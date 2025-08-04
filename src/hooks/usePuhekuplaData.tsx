@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -131,7 +130,7 @@ function generateRealisticMockData(endpoint: string, params: Record<string, stri
     case 'clothing':
       return {
         result: {
-          clothing: generateMockClothing()
+          clothing: generateMockClothingByCategory()
         },
         pagination: {
           current_page: parseInt(params.page) || 1,
@@ -216,75 +215,235 @@ function generateMockFurni(): PuhekuplaFurni[] {
   ];
 }
 
-function generateMockClothing(): PuhekuplaClothing[] {
-  return [
+function generateMockClothingByCategory(): PuhekuplaClothing[] {
+  const clothingData = [
+    // CABEÇA - Rostos (hd)
     {
-      guid: 'clothing-001',
+      guid: 'clothing-hd-001',
+      code: 'hd-180',
+      name: 'Rosto Básico',
+      description: 'Rosto padrão para avatares',
+      image: 'https://content.puhekupla.com/img/clothes/face_basic_front_right.png',
+      category: 'head',
+      gender: 'U',
+      status: 'active',
+      colors: '1,2,3'
+    },
+    {
+      guid: 'clothing-hd-002',
+      code: 'hd-185',
+      name: 'Rosto Sorridente',
+      description: 'Rosto com expressão alegre',
+      image: 'https://content.puhekupla.com/img/clothes/face_smile_front_right.png',
+      category: 'head',
+      gender: 'U',
+      status: 'active',
+      colors: '1,2,3'
+    },
+    
+    // CABEÇA - Cabelos (hr)
+    {
+      guid: 'clothing-hr-001',
+      code: 'hr-828',
+      name: 'Cabelo Masculino Básico',
+      description: 'Corte de cabelo masculino clássico',
+      image: 'https://content.puhekupla.com/img/clothes/hair_M_basic_front_right.png',
+      category: 'hair',
+      gender: 'M',
+      status: 'active',
+      colors: '1,3,4,7,9,16,20,23,24,25'
+    },
+    {
+      guid: 'clothing-hr-002',
+      code: 'hr-595',
+      name: 'Cabelo Feminino Longo',
+      description: 'Cabelo longo feminino ondulado',
+      image: 'https://content.puhekupla.com/img/clothes/hair_F_long_front_right.png',
+      category: 'hair',
+      gender: 'F',
+      status: 'active',
+      colors: '1,3,4,7,9,16,20,23,24,25'
+    },
+    {
+      guid: 'clothing-hr-003',
+      code: 'hr-906',
+      name: 'Cabelo Curto Moderno',
+      description: 'Corte moderno unissex',
+      image: 'https://content.puhekupla.com/img/clothes/hair_U_modern_front_right.png',
+      category: 'hair',
+      gender: 'U',
+      status: 'active',
+      colors: '1,3,4,7,9,16,20,23,24,25'
+    },
+
+    // CABEÇA - Chapéus (ha)
+    {
+      guid: 'clothing-ha-001',
+      code: 'ha-1001',
+      name: 'Boné Esportivo',
+      description: 'Boné casual para atividades esportivas',
+      image: 'https://content.puhekupla.com/img/clothes/hat_cap_front_right.png',
+      category: 'hat',
+      gender: 'U',
+      status: 'active',
+      colors: '1,2,4,5,6'
+    },
+    {
+      guid: 'clothing-ha-002',
+      code: 'ha-1015',
+      name: 'Chapéu Social',
+      description: 'Chapéu elegante para ocasiões formais',
+      image: 'https://content.puhekupla.com/img/clothes/hat_formal_front_right.png',
+      category: 'hat',
+      gender: 'U',
+      status: 'active',
+      colors: '1,4,9'
+    },
+
+    // CABEÇA - Óculos (ea)
+    {
+      guid: 'clothing-ea-001',
+      code: 'ea-1201',
+      name: 'Óculos de Sol',
+      description: 'Óculos escuros estilosos',
+      image: 'https://content.puhekupla.com/img/clothes/glasses_sunglasses_front_right.png',
+      category: 'eye_accessories',
+      gender: 'U',
+      status: 'active',
+      colors: '1,4,9'
+    },
+
+    // CORPO - Camisetas (ch)
+    {
+      guid: 'clothing-ch-001',
       code: 'shirt_U_nftbubblebath',
       name: 'Camisa NFT Bubble Bath',
       description: 'Camisa exclusiva com estampa NFT Bubble Bath',
-      image: 'https://content.puhekupla.com/img/clothes/shirt_U_nftbubblebath_front.png',
+      image: 'https://content.puhekupla.com/img/clothes/shirt_U_nftbubblebath_front_right.png',
       category: 'chest',
       gender: 'U',
       status: 'active',
       colors: '1,2,3,4,5'
     },
     {
-      guid: 'clothing-002',
-      code: 'shirt_M_basic',
+      guid: 'clothing-ch-002',
+      code: 'ch-665',
       name: 'Camisa Básica Masculina',
       description: 'Camisa básica para avatares masculinos',
-      image: 'https://content.puhekupla.com/img/clothes/shirt_M_basic_front.png',
+      image: 'https://content.puhekupla.com/img/clothes/shirt_M_basic_front_right.png',
       category: 'chest',
       gender: 'M',
       status: 'active',
-      colors: '1,2,3,6,7'
+      colors: '1,2,3,6,7,8,10'
     },
     {
-      guid: 'clothing-003',
-      code: 'dress_F_elegant',
-      name: 'Vestido Elegante',
-      description: 'Vestido elegante para ocasiões especiais',
-      image: 'https://content.puhekupla.com/img/clothes/dress_F_elegant_front.png',
+      guid: 'clothing-ch-003',
+      code: 'ch-667',
+      name: 'Blusa Feminina Elegante',
+      description: 'Blusa elegante para avatares femininos',
+      image: 'https://content.puhekupla.com/img/clothes/shirt_F_elegant_front_right.png',
       category: 'chest',
       gender: 'F',
       status: 'active',
-      colors: '1,4,8,9'
+      colors: '1,4,8,9,15,18'
     },
     {
-      guid: 'clothing-004',
+      guid: 'clothing-ch-004',
+      code: 'ch-3100',
+      name: 'Camiseta Casual',
+      description: 'Camiseta confortável para o dia a dia',
+      image: 'https://content.puhekupla.com/img/clothes/tshirt_casual_front_right.png',
+      category: 'chest',
+      gender: 'U',
+      status: 'active',
+      colors: '1,2,3,4,5,6,7,8,10,12'
+    },
+
+    // CORPO - Casacos (cc)
+    {
+      guid: 'clothing-cc-001',
+      code: 'cc-2001',
+      name: 'Jaqueta de Couro',
+      description: 'Jaqueta estilosa de couro sintético',
+      image: 'https://content.puhekupla.com/img/clothes/jacket_leather_front_right.png',
+      category: 'coat',
+      gender: 'U',
+      status: 'active',
+      colors: '1,4,9'
+    },
+
+    // PERNAS - Calças (lg)
+    {
+      guid: 'clothing-lg-001',
       code: 'pants_U_jeans',
       name: 'Calça Jeans Unissex',
       description: 'Calça jeans casual para todos os gêneros',
-      image: 'https://content.puhekupla.com/img/clothes/pants_U_jeans_front.png',
+      image: 'https://content.puhekupla.com/img/clothes/pants_U_jeans_front_right.png',
       category: 'legs',
       gender: 'U',
       status: 'active',
       colors: '1,2,5,10'
     },
     {
-      guid: 'clothing-005',
+      guid: 'clothing-lg-002',
+      code: 'lg-700',
+      name: 'Calça Masculina Clássica',
+      description: 'Calça social masculina',
+      image: 'https://content.puhekupla.com/img/clothes/pants_M_formal_front_right.png',
+      category: 'legs',
+      gender: 'M',
+      status: 'active',
+      colors: '1,4,9,10'
+    },
+    {
+      guid: 'clothing-lg-003',
+      code: 'lg-701',
+      name: 'Saia Feminina',
+      description: 'Saia elegante feminina',
+      image: 'https://content.puhekupla.com/img/clothes/skirt_F_elegant_front_right.png',
+      category: 'legs',
+      gender: 'F',
+      status: 'active',
+      colors: '1,4,8,9,15'
+    },
+
+    // PERNAS - Sapatos (sh)
+    {
+      guid: 'clothing-sh-001',
       code: 'shoes_U_sneakers',
       name: 'Tênis Esportivo',
       description: 'Tênis confortável para atividades esportivas',
-      image: 'https://content.puhekupla.com/img/clothes/shoes_U_sneakers_front.png',
+      image: 'https://content.puhekupla.com/img/clothes/shoes_U_sneakers_front_right.png',
       category: 'shoes',
       gender: 'U',
       status: 'active',
       colors: '1,3,7,11'
     },
     {
-      guid: 'clothing-006',
-      code: 'hat_U_cap',
-      name: 'Boné Casual',
-      description: 'Boné descolado para proteger do sol',
-      image: 'https://content.puhekupla.com/img/clothes/hat_U_cap_front.png',
-      category: 'hat',
+      guid: 'clothing-sh-002',
+      code: 'sh-705',
+      name: 'Sapato Social',
+      description: 'Sapato elegante para ocasiões formais',
+      image: 'https://content.puhekupla.com/img/clothes/shoes_formal_front_right.png',
+      category: 'shoes',
       gender: 'U',
       status: 'active',
-      colors: '1,2,4,12'
+      colors: '1,4,9'
+    },
+    {
+      guid: 'clothing-sh-003',
+      code: 'sh-915',
+      name: 'Botas de Aventura',
+      description: 'Botas resistentes para aventuras',
+      image: 'https://content.puhekupla.com/img/clothes/boots_adventure_front_right.png',
+      category: 'shoes',
+      gender: 'U',
+      status: 'active',
+      colors: '1,4,9,17'
     }
   ];
+
+  return clothingData;
 }
 
 function generateMockBadges(): PuhekuplaBadge[] {

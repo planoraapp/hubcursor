@@ -31,14 +31,19 @@ export class PuhekuplaFigureManager {
     'pants': 'lg',
     'legs': 'lg',
     'shoes': 'sh',
+    'footwear': 'sh',
     'jacket': 'cc',
     'coat': 'cc',
     'acc_eye': 'ea',
+    'eye_accessories': 'ea',
     'acc_head': 'ha',
     'acc_chest': 'ca',
     'acc_waist': 'wa',
     'acc_print': 'cp',
-    'acc_face': 'fa'
+    'acc_face': 'fa',
+    'face_accessories': 'fa',
+    'head': 'hd',
+    'face': 'hd'
   };
 
   static parseFigureString(figureString: string): PuhekuplaFigure {
@@ -83,39 +88,59 @@ export class PuhekuplaFigureManager {
     item: any,
     colorId: string = '1'
   ): PuhekuplaFigure {
+    console.log('🎨 [PuhekuplaFigureManager] Aplicando item de roupa:', {
+      item: {
+        name: item.name,
+        code: item.code,
+        category: item.category,
+        guid: item.guid
+      },
+      colorId,
+      currentFigure: this.figureToString(currentFigure)
+    });
+
     // Extract category from item
     let category = item.category?.toLowerCase() || '';
     
     // Map category to figure part if needed
     const figureCategory = this.CATEGORY_MAPPING[category] || category;
     
-    // If no valid category found, try to extract from code/name
-    if (!figureCategory || figureCategory.length !== 2) {
+    // Ensure we have a valid 2-letter category
+    let finalCategory = figureCategory;
+    if (!finalCategory || finalCategory.length !== 2) {
+      // Try to extract from code
       const codeMatch = item.code?.match(/^([a-z]{2})/i);
       if (codeMatch) {
-        category = codeMatch[1].toLowerCase();
+        finalCategory = codeMatch[1].toLowerCase();
+      } else {
+        console.warn('❌ [PuhekuplaFigureManager] Could not determine category for item:', item);
+        return currentFigure;
       }
     }
 
     // Extract item ID from code or use guid
-    let itemId = item.code?.replace(/^[a-z]{2}_?/i, '') || item.guid || '1';
+    let itemId = item.code?.replace(/^[a-z]{2}[-_]?/i, '') || item.guid || '1';
     
+    // Ensure itemId is just numbers
+    itemId = itemId.replace(/[^0-9]/g, '') || '1';
+
     const newPart: FigurePart = {
-      category: figureCategory,
+      category: finalCategory,
       id: itemId,
       colors: [colorId]
     };
 
     const updatedFigure = {
       ...currentFigure,
-      [figureCategory]: newPart
+      [finalCategory]: newPart
     };
 
-    console.log('🎨 [FigureManager] Applied item:', {
-      category: figureCategory,
+    console.log('✅ [PuhekuplaFigureManager] Item aplicado com sucesso:', {
+      category: finalCategory,
       id: itemId,
       colors: [colorId],
-      itemName: item.name
+      itemName: item.name,
+      newFigureString: this.figureToString(updatedFigure)
     });
 
     return updatedFigure;

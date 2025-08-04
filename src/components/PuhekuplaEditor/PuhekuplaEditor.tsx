@@ -1,33 +1,64 @@
+
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Package, Shirt, Award, Sparkles, Settings } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import EnhancedAvatarPreview from './EnhancedAvatarPreview';
-import EnhancedItemGrid from './EnhancedItemGrid';
-import { usePuhekuplaCategories, usePuhekuplaFurni, usePuhekuplaClothing, usePuhekuplaBadges } from '@/hooks/usePuhekuplaData';
-import type { PuhekuplaFurni, PuhekuplaClothing, PuhekuplaBadge } from '@/hooks/usePuhekuplaData';
+import PuhekuplaClothingGridClean from './PuhekuplaClothingGridClean';
+import { usePuhekuplaClothing } from '@/hooks/usePuhekuplaData';
+import type { PuhekuplaClothing } from '@/hooks/usePuhekuplaData';
 import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
 import { useToast } from '@/hooks/use-toast';
 
+// Configuração das categorias agrupadas (igual ao ViaJovem)
+const categoryGroups = [
+  {
+    id: 'head',
+    name: 'Cabeça e Acessórios',
+    icon: '👤',
+    categories: [
+      { id: 'hd', name: 'Rostos', icon: '👤' },
+      { id: 'hr', name: 'Cabelos', icon: '💇' },
+      { id: 'ea', name: 'Óculos', icon: '👓' },
+      { id: 'ha', name: 'Chapéus', icon: '🎩' }
+    ]
+  },
+  {
+    id: 'body',
+    name: 'Corpo e Costas',
+    icon: '👕',
+    categories: [
+      { id: 'ch', name: 'Camisetas', icon: '👕' },
+      { id: 'cc', name: 'Casacos', icon: '🧥' },
+      { id: 'ca', name: 'Acessórios Peito', icon: '🎖️' },
+      { id: 'cp', name: 'Estampas', icon: '🎨' }
+    ]
+  },
+  {
+    id: 'legs',
+    name: 'Calças e Pés',
+    icon: '👖',
+    categories: [
+      { id: 'lg', name: 'Calças', icon: '👖' },
+      { id: 'sh', name: 'Sapatos', icon: '👟' },
+      { id: 'wa', name: 'Cintura', icon: '👔' }
+    ]
+  }
+];
+
 const PuhekuplaEditor = () => {
-  const [activeTab, setActiveTab] = useState('furni');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentFigure, setCurrentFigure] = useState<PuhekuplaFigure>(() => 
     PuhekuplaFigureManager.getDefaultFigure('M')
   );
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
   const [selectedHotel, setSelectedHotel] = useState('com');
   const [currentDirection, setCurrentDirection] = useState('2');
-  const [currentPages, setCurrentPages] = useState({
-    furni: 1,
-    clothing: 1,
-    badges: 1
-  });
+  const [selectedSection, setSelectedSection] = useState('head');
+  const [selectedCategory, setSelectedCategory] = useState('hd');
+  const [selectedColor, setSelectedColor] = useState('1');
+  const [selectedItem, setSelectedItem] = useState('665');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const { toast } = useToast();
 
@@ -56,77 +87,11 @@ const PuhekuplaEditor = () => {
     }
   }, []);
 
-  const { data: categoriesData, isLoading: categoriesLoading } = usePuhekuplaCategories();
-  const categories = categoriesData?.result?.categories || [];
-
-  // Hook calls for each tab
-  const { 
-    data: furniData, 
-    isLoading: furniLoading,
-    error: furniError 
-  } = usePuhekuplaFurni(
-    currentPages.furni, 
-    selectedCategory, 
-    searchTerm
-  );
-
   const { 
     data: clothingData, 
     isLoading: clothingLoading,
     error: clothingError 
-  } = usePuhekuplaClothing(
-    currentPages.clothing, 
-    selectedCategory, 
-    searchTerm
-  );
-
-  const { 
-    data: badgesData, 
-    isLoading: badgesLoading,
-    error: badgesError 
-  } = usePuhekuplaBadges(
-    currentPages.badges, 
-    searchTerm
-  );
-
-  // Enhanced debug logs
-  useEffect(() => {
-    console.log('🔍 [PuhekuplaEditor] Comprehensive data status:', {
-      activeTab,
-      categoriesData: {
-        raw: categoriesData,
-        hasResult: !!categoriesData?.result,
-        categories: categories.length,
-        loading: categoriesLoading
-      },
-      furniData: {
-        raw: furniData,
-        hasResult: !!furniData?.result,
-        items: furniData?.result?.furni?.length || 0,
-        loading: furniLoading,
-        error: furniError?.message
-      },
-      clothingData: {
-        raw: clothingData,
-        hasResult: !!clothingData?.result,
-        items: clothingData?.result?.clothing?.length || 0,
-        loading: clothingLoading,
-        error: clothingError?.message
-      },
-      badgesData: {
-        raw: badgesData,
-        hasResult: !!badgesData?.result,
-        items: badgesData?.result?.badges?.length || 0,
-        loading: badgesLoading,
-        error: badgesError?.message
-      }
-    });
-  }, [
-    activeTab, categoriesData, categories, categoriesLoading,
-    furniData, furniLoading, furniError,
-    clothingData, clothingLoading, clothingError,
-    badgesData, badgesLoading, badgesError
-  ]);
+  } = usePuhekuplaClothing(1, selectedCategory, searchTerm);
 
   const hotels = [
     { code: 'com', name: 'Habbo.com', flag: '🌍' },
@@ -136,91 +101,77 @@ const PuhekuplaEditor = () => {
     { code: 'de', name: 'Habbo.de', flag: '🇩🇪' },
   ];
 
-  const handleItemSelect = (item: PuhekuplaFurni | PuhekuplaClothing | PuhekuplaBadge) => {
-    console.log('Item selecionado:', item);
+  const handleItemSelect = (itemId: string) => {
+    console.log('🎯 [PuhekuplaEditor] Item selecionado:', {
+      itemId,
+      selectedCategory,
+      selectedColor,
+      currentFigure
+    });
     
-    if (activeTab === 'clothing') {
-      const newFigure = PuhekuplaFigureManager.applyClothingItem(currentFigure, item);
-      setCurrentFigure(newFigure);
-      
-      toast({
-        title: "👕 Roupa aplicada!",
-        description: `${item.name} foi adicionado ao seu avatar.`,
-      });
-    } else if (activeTab === 'badges') {
-      toast({
-        title: "🏆 Emblema selecionado!",
-        description: `${item.name} foi selecionado. (Funcionalidade em desenvolvimento)`,
-      });
-    } else if (activeTab === 'furni') {
-      toast({
-        title: "🪑 Móvel selecionado!",
-        description: `${item.name} foi selecionado. (Funcionalidade em desenvolvimento)`,
-      });
+    setSelectedItem(itemId);
+    
+    // Aplicar ao avatar usando PuhekuplaFigureManager
+    const figureParts = PuhekuplaFigureManager.figureToString(currentFigure).split('.');
+    const categoryPattern = new RegExp(`^${selectedCategory}-`);
+    const filteredParts = figureParts.filter(part => !categoryPattern.test(part));
+    const newPart = `${selectedCategory}-${itemId}-${selectedColor}`;
+    filteredParts.push(newPart);
+    
+    const newFigureString = filteredParts.join('.');
+    const newFigure = PuhekuplaFigureManager.parseFigureString(newFigureString);
+    setCurrentFigure(newFigure);
+    
+    toast({
+      title: "👕 Roupa aplicada!",
+      description: `Item ${itemId} foi aplicado ao seu avatar.`,
+    });
+  };
+
+  const handleColorSelect = (colorId: string) => {
+    console.log('🎨 [PuhekuplaEditor] Cor selecionada:', {
+      colorId,
+      selectedCategory,
+      selectedItem
+    });
+    
+    setSelectedColor(colorId);
+    
+    // Aplicar nova cor ao item atual
+    const figureString = PuhekuplaFigureManager.figureToString(currentFigure);
+    const figureParts = figureString.split('.');
+    const categoryPattern = new RegExp(`^${selectedCategory}-`);
+    const updatedParts = figureParts.map(part => {
+      if (categoryPattern.test(part)) {
+        const [cat, item] = part.split('-');
+        return `${cat}-${item}-${colorId}`;
+      }
+      return part;
+    });
+    
+    const newFigureString = updatedParts.join('.');
+    const newFigure = PuhekuplaFigureManager.parseFigureString(newFigureString);
+    setCurrentFigure(newFigure);
+  };
+
+  // Update selected category when section changes
+  useEffect(() => {
+    const currentGroup = categoryGroups.find(group => group.id === selectedSection);
+    if (currentGroup && currentGroup.categories.length > 0) {
+      setSelectedCategory(currentGroup.categories[0].id);
     }
-  };
+  }, [selectedSection]);
 
-  const handlePageChange = (tab: string, page: number) => {
-    setCurrentPages(prev => ({
-      ...prev,
-      [tab]: page
-    }));
-  };
-
-  const getCurrentTabData = () => {
-    switch (activeTab) {
-      case 'furni':
-        return {
-          items: furniData?.result?.furni || [],
-          loading: furniLoading,
-          error: furniError,
-          pagination: furniData?.pagination
-        };
-      case 'clothing':
-        return {
-          items: clothingData?.result?.clothing || [],
-          loading: clothingLoading,
-          error: clothingError,
-          pagination: clothingData?.pagination
-        };
-      case 'badges':
-        return {
-          items: badgesData?.result?.badges || [],
-          loading: badgesLoading,
-          error: badgesError,
-          pagination: badgesData?.pagination
-        };
-      default:
-        return { items: [], loading: false, error: null, pagination: null };
-    }
-  };
-
-  const tabData = getCurrentTabData();
-
-  // Error display helper
-  const renderErrorState = (error: any, type: string) => {
-    if (!error) return null;
-    
-    console.error(`❌ [PuhekuplaEditor] ${type} error:`, error);
-    
-    return (
-      <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
-        <div className="text-red-600 mb-2">Erro ao carregar {type}</div>
-        <div className="text-sm text-red-500">{error.message || 'Erro desconhecido'}</div>
-        <Button 
-          onClick={() => window.location.reload()} 
-          className="mt-4"
-          variant="outline"
-        >
-          Recarregar
-        </Button>
-      </div>
-    );
+  // Update figure when gender changes
+  const handleGenderChange = (gender: 'M' | 'F') => {
+    setSelectedGender(gender);
+    const newFigure = PuhekuplaFigureManager.getDefaultFigure(gender);
+    setCurrentFigure(newFigure);
   };
 
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-6 p-4">
-      {/* Avatar Preview */}
+      {/* Avatar Preview (Esquerda) */}
       <div className="lg:w-1/3">
         <EnhancedAvatarPreview
           currentFigure={currentFigure}
@@ -230,12 +181,12 @@ const PuhekuplaEditor = () => {
           hotels={hotels}
           onFigureChange={setCurrentFigure}
           onDirectionChange={setCurrentDirection}
-          onGenderChange={setSelectedGender}
+          onGenderChange={handleGenderChange}
           onHotelChange={setSelectedHotel}
         />
       </div>
 
-      {/* Editor Tabs */}
+      {/* Editor Tabs (Direita) */}
       <div className="lg:w-2/3">
         <Card className="h-full">
           <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg">
@@ -246,122 +197,90 @@ const PuhekuplaEditor = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            <Tabs value={selectedSection} onValueChange={setSelectedSection} className="h-full">
+              {/* Abas Principais */}
               <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="furni" className="flex items-center gap-2">
-                  <Package className="w-4 h-4" />
-                  Móveis
-                  <Badge variant="secondary" className="ml-1">
-                    {furniData?.result?.furni?.length || 0}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="clothing" className="flex items-center gap-2">
-                  <Shirt className="w-4 h-4" />
-                  Roupas
-                  <Badge variant="secondary" className="ml-1">
-                    {clothingData?.result?.clothing?.length || 0}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="badges" className="flex items-center gap-2">
-                  <Award className="w-4 h-4" />
-                  Emblemas
-                  <Badge variant="secondary" className="ml-1">
-                    {badgesData?.result?.badges?.length || 0}
-                  </Badge>
-                </TabsTrigger>
+                {categoryGroups.map(group => (
+                  <TabsTrigger 
+                    key={group.id} 
+                    value={group.id} 
+                    className="text-sm px-4 py-3"
+                  >
+                    <div className="text-center">
+                      <div className="text-lg">{group.icon}</div>
+                      <div className="text-xs mt-1">{group.name}</div>
+                    </div>
+                  </TabsTrigger>
+                ))}
               </TabsList>
 
-              {/* Search and Filter Controls */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder={`Buscar ${activeTab === 'furni' ? 'móveis' : activeTab === 'clothing' ? 'roupas' : 'emblemas'}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                {(activeTab === 'furni' || activeTab === 'clothing') && (
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas as Categorias</SelectItem>
-                      {categories
-                        .filter(category => category.guid && category.guid.trim() !== '')
-                        .map((category) => (
-                          <SelectItem key={category.guid} value={category.slug || category.guid}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                
-                <Button variant="outline" size="icon">
-                  <Settings className="w-4 h-4" />
-                </Button>
-              </div>
+              {/* Conteúdo das Abas */}
+              {categoryGroups.map(group => (
+                <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
+                  <div className="mb-4">
+                    <h3 className="font-bold text-lg text-purple-800">{group.name}</h3>
+                  </div>
+                  
+                  {/* Sub-categorias */}
+                  <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <TabsList 
+                      className="grid gap-1 mb-4" 
+                      style={{ gridTemplateColumns: `repeat(${group.categories.length}, 1fr)` }}
+                    >
+                      {group.categories.map(category => (
+                        <TabsTrigger 
+                          key={category.id} 
+                          value={category.id} 
+                          className="text-xs px-2 py-2"
+                        >
+                          <div className="text-center">
+                            <div>{category.icon}</div>
+                            <div className="text-[10px] mt-1">{category.name}</div>
+                          </div>
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
 
-              {/* Content Tabs */}
-              <div className="min-h-[500px]">
-                <TabsContent value="furni" className="h-full">
-                  {furniError ? renderErrorState(furniError, 'móveis') : (
-                    <EnhancedItemGrid
-                      items={tabData.items}
-                      onItemSelect={handleItemSelect}
-                      loading={tabData.loading}
-                      type="furni"
-                      searchTerm={searchTerm}
-                      onSearchChange={setSearchTerm}
-                      category={selectedCategory}
-                      onCategoryChange={setSelectedCategory}
-                      categories={categories}
-                      currentPage={currentPages.furni}
-                      totalPages={tabData.pagination?.pages || 1}
-                      onPageChange={(page) => handlePageChange('furni', page)}
-                    />
-                  )}
+                    {/* Conteúdo das Sub-categorias */}
+                    {group.categories.map(category => (
+                      <TabsContent key={category.id} value={category.id}>
+                        {clothingLoading ? (
+                          <div className="flex items-center justify-center h-96 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                              <h3 className="text-xl font-bold text-purple-800 mb-2">Carregando Roupas</h3>
+                              <p className="text-purple-600">Buscando itens na Puhekupla...</p>
+                            </div>
+                          </div>
+                        ) : clothingError ? (
+                          <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
+                            <div className="text-red-600 mb-2">Erro ao carregar roupas</div>
+                            <div className="text-sm text-red-500">{clothingError.message || 'Erro desconhecido'}</div>
+                            <button 
+                              onClick={() => window.location.reload()} 
+                              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            >
+                              Recarregar
+                            </button>
+                          </div>
+                        ) : (
+                          <PuhekuplaClothingGridClean 
+                            items={clothingData?.result?.clothing || []}
+                            selectedCategory={category.id}
+                            selectedGender={selectedGender}
+                            onItemSelect={handleItemSelect}
+                            onColorSelect={handleColorSelect}
+                            selectedItem={selectedItem}
+                            selectedColor={selectedColor}
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                          />
+                        )}
+                      </TabsContent>
+                    ))}
+                  </Tabs>
                 </TabsContent>
-
-                <TabsContent value="clothing" className="h-full">
-                  {clothingError ? renderErrorState(clothingError, 'roupas') : (
-                    <EnhancedItemGrid
-                      items={tabData.items}
-                      onItemSelect={handleItemSelect}
-                      loading={tabData.loading}
-                      type="clothing"
-                      searchTerm={searchTerm}
-                      onSearchChange={setSearchTerm}
-                      category={selectedCategory}
-                      onCategoryChange={setSelectedCategory}
-                      categories={categories}
-                      currentPage={currentPages.clothing}
-                      totalPages={tabData.pagination?.pages || 1}
-                      onPageChange={(page) => handlePageChange('clothing', page)}
-                    />
-                  )}
-                </TabsContent>
-
-                <TabsContent value="badges" className="h-full">
-                  {badgesError ? renderErrorState(badgesError, 'emblemas') : (
-                    <EnhancedItemGrid
-                      items={tabData.items}
-                      onItemSelect={handleItemSelect}
-                      loading={tabData.loading}
-                      type="badges"
-                      searchTerm={searchTerm}
-                      onSearchChange={setSearchTerm}
-                      currentPage={currentPages.badges}
-                      totalPages={tabData.pagination?.pages || 1}
-                      onPageChange={(page) => handlePageChange('badges', page)}
-                    />
-                  )}
-                </TabsContent>
-              </div>
+              ))}
             </Tabs>
           </CardContent>
         </Card>
