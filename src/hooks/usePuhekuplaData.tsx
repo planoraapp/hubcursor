@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -53,6 +52,11 @@ export interface PuhekuplaBadgeResponse {
       total: number;
     };
   };
+  pagination?: {
+    current_page: number;
+    pages: number;
+    total: number;
+  };
   error?: string;
 }
 
@@ -77,6 +81,11 @@ export interface PuhekuplaFurniResponse {
       pages: number;
       total: number;
     };
+  };
+  pagination?: {
+    current_page: number;
+    pages: number;
+    total: number;
   };
   error?: string;
 }
@@ -553,16 +562,19 @@ const fetchPuhekuplaBadges = async (
   const endIndex = startIndex + itemsPerPage;
   const paginatedItems = filteredBadges.slice(startIndex, endIndex);
 
+  const paginationData = {
+    current_page: page,
+    pages: Math.ceil(filteredBadges.length / itemsPerPage),
+    total: filteredBadges.length
+  };
+
   return {
     success: true,
     result: {
       badges: paginatedItems,
-      pagination: {
-        current_page: page,
-        pages: Math.ceil(filteredBadges.length / itemsPerPage),
-        total: filteredBadges.length
-      }
-    }
+      pagination: paginationData
+    },
+    pagination: paginationData
   };
 };
 
@@ -597,16 +609,19 @@ const fetchPuhekuplaFurni = async (
   const endIndex = startIndex + itemsPerPage;
   const paginatedItems = filteredFurni.slice(startIndex, endIndex);
 
+  const paginationData = {
+    current_page: page,
+    pages: Math.ceil(filteredFurni.length / itemsPerPage),
+    total: filteredFurni.length
+  };
+
   return {
     success: true,
     result: {
       furni: paginatedItems,
-      pagination: {
-        current_page: page,
-        pages: Math.ceil(filteredFurni.length / itemsPerPage),
-        total: filteredFurni.length
-      }
-    }
+      pagination: paginationData
+    },
+    pagination: paginationData
   };
 };
 
