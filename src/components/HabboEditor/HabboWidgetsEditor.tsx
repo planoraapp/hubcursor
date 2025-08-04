@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Loader2, User, Shuffle, Copy, Download, Search, Palette, RefreshCw, Zap, AlertCircle } from 'lucide-react';
-import { useHabboWidgetsClothing } from '@/hooks/useHabboWidgetsClothing';
+import { useUnifiedClothingAPI } from '@/hooks/useUnifiedClothingAPI';
 import { useToast } from '@/hooks/use-toast';
 import OptimizedItemThumbnail from './OptimizedItemThumbnail';
 import HabboColorPalette from '../HabboColorPalette';
@@ -28,7 +28,10 @@ const CATEGORY_LABELS = {
 
 const HabboWidgetsEditor = () => {
   const { toast } = useToast();
-  const { data: clothingData, isLoading, error, refetch } = useHabboWidgetsClothing();
+  const { data: clothingItems, isLoading, error, refetch } = useUnifiedClothingAPI({
+    limit: 2000,
+    enabled: true
+  });
   
   // Estados principais
   const [selectedItems, setSelectedItems] = useState<Record<string, string>>({
@@ -89,17 +92,24 @@ const HabboWidgetsEditor = () => {
   }, [toast]);
 
   const handleRandomize = useCallback(() => {
-    if (!clothingData) return;
+    if (!clothingItems || clothingItems.length === 0) return;
     
     const newItems: Record<string, string> = {};
     const newColors: Record<string, string> = {};
     
-    Object.entries(clothingData).forEach(([category, items]) => {
+    // Group items by category
+    const categorizedItems = clothingItems.reduce((acc, item) => {
+      if (!acc[item.part]) acc[item.part] = [];
+      acc[item.part].push(item);
+      return acc;
+    }, {} as Record<string, typeof clothingItems>);
+    
+    Object.entries(categorizedItems).forEach(([category, items]) => {
       if (items.length > 0) {
         const randomItem = items[Math.floor(Math.random() * items.length)];
-        newItems[category] = randomItem.figureId;
+        newItems[category] = randomItem.item_id.toString();
         
-        if (randomItem.colors.length > 0) {
+        if (randomItem.colors && randomItem.colors.length > 0) {
           const randomColor = randomItem.colors[Math.floor(Math.random() * randomItem.colors.length)];
           newColors[category] = randomColor;
         }
@@ -114,7 +124,7 @@ const HabboWidgetsEditor = () => {
       description: "Novo visual gerado com itens aleatórios",
       duration: 2000
     });
-  }, [clothingData, toast]);
+  }, [clothingItems, toast]);
 
   const handleCopyUrl = useCallback(() => {
     const url = getAvatarUrl();
@@ -139,30 +149,47 @@ const HabboWidgetsEditor = () => {
   // Filtro otimizado de itens
   const getFilteredItems = useMemo(() => {
     return (category: string) => {
-      if (!clothingData?.[category]) return [];
+      if (!clothingItems || clothingItems.length === 0) return [];
       
-      let items = clothingData[category];
+      let items = clothingItems.filter(item => item.part === category);
       
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         items = items.filter(item => 
-          item.name.toLowerCase().includes(searchLower) ||
-          item.figureId.includes(searchTerm)
+          (item.name && item.name.toLowerCase().includes(searchLower)) ||
+          item.code.toLowerCase().includes(searchLower) ||
+          item.item_id.toString().includes(searchTerm)
         );
       }
       
       return items.sort((a, b) => {
-        if (a.club && !b.club) return -1;
-        if (!a.club && b.club) return 1;
-        return parseInt(a.figureId) - parseInt(b.figureId);
+        if (a.club === 'HC' && b.club !== 'HC') return -1;
+        if (a.club !== 'HC' && b.club === 'HC') return 1;
+        return a.item_id - b.item_id;
       });
     };
-  }, [clothingData, searchTerm]);
+  }, [clothingItems, searchTerm]);
 
   // Stats em tempo real
-  const totalItems = clothingData ? Object.values(clothingData).reduce((sum, items) => sum + items.length, 0) : 0;
+  const totalItems = clothingItems ? clothingItems.length : 0;
   const filteredItems = getFilteredItems(activeCategory);
-  const availableCategories = clothingData ? Object.keys(clothingData).sort() : [];
+  
+  // Categorias disponíveis baseadas nos dados
+  const availableCategories = useMemo(() => {
+    if (!clothingItems) return [];
+    const categories = [...new Set(clothingItems.map(item => item.part))];
+    return categories.sort();
+  }, [clothingItems]);
+
+  // Agrupar itens por categoria para estatísticas
+  const categorizedItems = useMemo(() => {
+    if (!clothingItems) return {};
+    return clothingItems.reduce((acc, item) => {
+      if (!acc[item.part]) acc[item.part] = [];
+      acc[item.part].push(item);
+      return acc;
+    }, {} as Record<string, typeof clothingItems>);
+  }, [clothingItems]);
 
   // Loading state
   if (isLoading) {
@@ -299,7 +326,7 @@ const HabboWidgetsEditor = () => {
                 {/* Category Tabs */}
                 <TabsList className="grid grid-cols-4 lg:grid-cols-6 gap-1 mb-6 bg-gray-100 p-1">
                   {availableCategories.map(category => {
-                    const count = clothingData?.[category]?.length || 0;
+                    const count = categorizedItems[category]?.length || 0;
                     return (
                       <TabsTrigger 
                         key={category} 
@@ -351,34 +378,34 @@ const HabboWidgetsEditor = () => {
                         {/* Items */}
                         {filteredItems.map((item) => (
                           <Button
-                            key={item.id}
-                            variant={selectedItems[category] === item.figureId ? "default" : "outline"}
+                            key={item.item_id}
+                            variant={selectedItems[category] === item.item_id.toString() ? "default" : "outline"}
                             className={`aspect-square p-1 relative group transition-all duration-200 ${
-                              selectedItems[category] === item.figureId 
+                              selectedItems[category] === item.item_id.toString() 
                                 ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-lg scale-105' 
                                 : 'hover:bg-blue-50 hover:scale-105 hover:shadow-md'
                             }`}
-                            onClick={() => handleItemSelect(category, item.figureId)}
-                            title={`${item.name} - ID: ${item.figureId}${item.club ? ' (HC)' : ''}`}
+                            onClick={() => handleItemSelect(category, item.item_id.toString())}
+                            title={`${item.name || item.code} - ID: ${item.item_id}${item.club === 'HC' ? ' (HC)' : ''}`}
                           >
                             <OptimizedItemThumbnail
                               category={category}
-                              figureId={item.figureId}
+                              figureId={item.item_id.toString()}
                               colorId={selectedColors[category] || '1'}
-                              itemName={item.name}
+                              itemName={item.name || item.code}
                               className="w-full h-full"
                               size="md"
                             />
                             
                             {/* Badges */}
-                            {item.club && (
+                            {item.club === 'HC' && (
                               <Badge className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs px-1 py-0">
                                 HC
                               </Badge>
                             )}
                             
                             {/* Selected Indicator */}
-                            {selectedItems[category] === item.figureId && (
+                            {selectedItems[category] === item.item_id.toString() && (
                               <div className="absolute inset-0 bg-blue-600/20 rounded flex items-center justify-center">
                                 <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
                                   ✓

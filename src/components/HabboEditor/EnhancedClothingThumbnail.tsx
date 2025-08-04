@@ -1,10 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { HabboEmotionClothing } from '@/hooks/useHabboEmotionAPI';
+import { UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
 
 interface EnhancedClothingThumbnailProps {
-  item: HabboEmotionClothing;
+  item: UnifiedClothingItem;
   className?: string;
   size?: 's' | 'm' | 'l';
   selectedColorId?: string;
@@ -21,31 +21,33 @@ const EnhancedClothingThumbnail = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageCache] = useState(new Map<string, boolean>());
 
-  // Generate functional clothing image URLs using HabboEmotion patterns
+  // Generate functional clothing image URLs using unified system
   const generateRealClothingUrls = useCallback(() => {
     const urls: string[] = [];
     const category = item.part;
-    const itemId = item.id;
+    const itemId = item.item_id;
     const code = item.code;
     
-    // PRIORITY 1: HabboEmotion Sprites (individual clothing items)
-    if (code && category && itemId) {
-      // Standard direction (front-facing)
-      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_2_0.png`);
-      // Alternative directions
-      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_0_0.png`);
-      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_1_0.png`);
+    // PRIORITY 1: Use image_url from unified API if available
+    if (item.image_url) {
+      urls.push(item.image_url);
     }
     
-    // PRIORITY 2: Habbo Official Avatar Imaging (complete avatar with item)
-    if (category && itemId && selectedColorId) {
+    // PRIORITY 2: Official Habbo Avatar Imaging (most reliable)
+    if (category && itemId) {
       urls.push(`https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${itemId}-${selectedColorId}&direction=2&head_direction=2&size=s`);
       urls.push(`https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-185-1.${category}-${itemId}-${selectedColorId}&direction=2&size=s`);
+      urls.push(`https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.${category}-${itemId}-${selectedColorId}&direction=2&size=s`);
     }
     
-    // PRIORITY 3: Alternative HabboEmotion patterns
+    // PRIORITY 3: HabboEmotion sprites (if code is available)
+    if (code && category && itemId) {
+      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_2_0.png`);
+      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_0_0.png`);
+    }
+    
+    // PRIORITY 4: Alternative patterns
     if (code) {
-      urls.push(`https://files.habboemotion.com/habbo-assets/clothing/${code}.png`);
       urls.push(`https://www.habboemotion.com/assets/clothing/${code}.png`);
     }
     
@@ -80,7 +82,7 @@ const EnhancedClothingThumbnail = ({
     setCurrentUrlIndex(0);
     setHasError(false);
     setIsLoading(true);
-  }, [item.id, selectedColorId]);
+  }, [item.item_id, selectedColorId]);
 
   // Use cached successful URL if available
   useEffect(() => {
@@ -106,7 +108,7 @@ const EnhancedClothingThumbnail = ({
         <div className="text-center p-1">
           <AlertCircle className="w-4 h-4 text-gray-400 mx-auto mb-1" />
           <span className="text-xs font-bold text-gray-600 block">
-            {item.code ? item.code.substring(0, 8) : String(item.id)}
+            {item.code ? item.code.substring(0, 8) : String(item.item_id)}
           </span>
           <span className="text-xs text-gray-500 block">
             {item.part.toUpperCase()}
@@ -124,7 +126,7 @@ const EnhancedClothingThumbnail = ({
         </div>
       )}
       <img 
-        key={`real_${item.id}_${currentUrlIndex}_${selectedColorId}`}
+        key={`real_${item.item_id}_${currentUrlIndex}_${selectedColorId}`}
         src={thumbnailUrls[currentUrlIndex]}
         alt={item.name || item.code}
         className={`w-full h-full object-contain rounded border border-gray-200 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}

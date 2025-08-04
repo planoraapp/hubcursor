@@ -151,6 +151,54 @@ export type Database = {
         }
         Relationships: []
       }
+      habbo_clothing_cache: {
+        Row: {
+          api_synced_at: string
+          club: string
+          code: string
+          colors: Json
+          created_at: string
+          gender: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          item_id: number
+          part: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          api_synced_at?: string
+          club?: string
+          code: string
+          colors?: Json
+          created_at?: string
+          gender?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_id: number
+          part: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          api_synced_at?: string
+          club?: string
+          code?: string
+          colors?: Json
+          created_at?: string
+          gender?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_id?: number
+          part?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       habbo_emotion_api_cache: {
         Row: {
           endpoint: string
