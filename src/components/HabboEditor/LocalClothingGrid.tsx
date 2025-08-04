@@ -52,7 +52,7 @@ const LocalClothingGrid = ({
     gender: item.gender,
     club: 'FREE' as const,
     colors: availableColors, // Use available colors
-    source: 'viajovem-flash' as const,
+    source: 'official-habbo' as const,
     thumbnailUrl: `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-1&gender=${selectedGender}&direction=2&head_direction=2&size=s`
   });
 
