@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,6 +99,7 @@ const OfficialHabboEditor = () => {
       swfName: item.swfName
     });
     
+    // Use figureId directly from flash asset
     const itemString = `${item.figureId}-${colorId}`;
     
     setAvatarState(prevState => ({
@@ -113,7 +113,7 @@ const OfficialHabboEditor = () => {
     
     toast({
       title: "✨ Flash Asset aplicado!",
-      description: `${item.name} (${clubBadge}) foi aplicado ao avatar.`,
+      description: `${item.name} (${clubBadge}) aplicado ao avatar.`,
     });
   };
 
@@ -169,15 +169,15 @@ const OfficialHabboEditor = () => {
         />
       </div>
 
-      {/* Editor com Flash Assets */}
+      {/* Simplified Flash Assets Editor */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Flash Assets Editor - Seus Assets Locais
+              Flash Assets Editor - Simplificado
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2800+ Assets • Storage Local
+                2800+ Assets Local
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -200,12 +200,6 @@ const OfficialHabboEditor = () => {
 
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
-                  <div className="mb-3">
-                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      Flash Assets Locais - Gênero: {selectedGender} - Total: 2800+ assets
-                    </p>
-                  </div>
                   
                   <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
                     <TabsList 
