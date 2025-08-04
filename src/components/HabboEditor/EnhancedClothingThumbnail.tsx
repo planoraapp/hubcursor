@@ -21,30 +21,33 @@ const EnhancedClothingThumbnail = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageCache] = useState(new Map<string, boolean>());
 
-  // Generate functional clothing image URLs
+  // Generate functional clothing image URLs using HabboEmotion patterns
   const generateRealClothingUrls = useCallback(() => {
     const urls: string[] = [];
     const category = item.part;
     const itemId = item.id;
     const code = item.code;
     
-    // PRIORITY 1: HabboAssets - most reliable for clothing items
-    if (code) {
-      urls.push(`https://habboassets.com/clothing/${code}.png`);
-      urls.push(`https://www.habboassets.com/clothing/${code}.png`);
+    // PRIORITY 1: HabboEmotion Sprites (individual clothing items)
+    if (code && category && itemId) {
+      // Standard direction (front-facing)
+      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_2_0.png`);
+      // Alternative directions
+      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_0_0.png`);
+      urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_1_0.png`);
     }
     
-    // PRIORITY 2: Habblet Assets (alternative reliable source)
-    if (code) {
-      urls.push(`https://habblet-assets.s3.amazonaws.com/clothing/${code}.png`);
+    // PRIORITY 2: Habbo Official Avatar Imaging (complete avatar with item)
+    if (category && itemId && selectedColorId) {
+      urls.push(`https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${itemId}-${selectedColorId}&direction=2&head_direction=2&size=s`);
+      urls.push(`https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-185-1.${category}-${itemId}-${selectedColorId}&direction=2&size=s`);
     }
     
-    // PRIORITY 3: Official Habbo patterns with corrected structure
-    urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_${selectedColorId}.png`);
-    urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}_${selectedColorId}.png`);
-    
-    // PRIORITY 4: Simplified patterns
-    urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}.png`);
+    // PRIORITY 3: Alternative HabboEmotion patterns
+    if (code) {
+      urls.push(`https://files.habboemotion.com/habbo-assets/clothing/${code}.png`);
+      urls.push(`https://www.habboemotion.com/assets/clothing/${code}.png`);
+    }
     
     return [...new Set(urls)]; // Remove duplicates
   }, [item, selectedColorId]);
