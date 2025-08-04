@@ -1,3 +1,4 @@
+
 import { Suspense, lazy } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceProvider, useMarketplace } from '@/contexts/MarketplaceContext';

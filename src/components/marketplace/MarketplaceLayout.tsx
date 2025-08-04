@@ -36,6 +36,8 @@ interface MarketStats {
   featuredItems: number;
   highestPrice: number;
   mostTraded: string;
+  apiStatus: 'success' | 'partial' | 'no-data' | 'error' | 'unavailable';
+  apiMessage: string;
 }
 
 export const MarketplaceLayout = () => {
@@ -48,7 +50,9 @@ export const MarketplaceLayout = () => {
     trendingDown: 0,
     featuredItems: 0,
     highestPrice: 0,
-    mostTraded: 'N/A'
+    mostTraded: 'N/A',
+    apiStatus: 'no-data',
+    apiMessage: 'Aguardando dados...'
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +143,6 @@ export const MarketplaceLayout = () => {
     return () => clearInterval(interval);
   }, [loading, selectedHotel, searchTerm, selectedCategory, sortBy]);
 
-  // Organizar categorias com dados reais e filtro LTD melhorado
   const maioresOfertas = [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
   const maisVendidosHoje = [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
   const melhoresNegocios = [...items].filter(item => item.currentPrice < 300 && item.rarity !== 'common').slice(0, 10);
@@ -147,7 +150,6 @@ export const MarketplaceLayout = () => {
     parseFloat(b.changePercent) - parseFloat(a.changePercent)
   ).slice(0, 10);
   
-  // Filtro LTD melhorado - detectar por multiple padrões
   const ltdItems = [...items].filter(item => 
     item.className.toLowerCase().includes('ltd') || 
     item.rarity === 'legendary' ||
