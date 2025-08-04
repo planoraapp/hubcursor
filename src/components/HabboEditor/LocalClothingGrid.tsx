@@ -44,6 +44,18 @@ const LocalClothingGrid = ({
     ];
   }, []);
 
+  // Convert ViaJovemFlashItem to OfficialHabboAsset format for FocusedClothingThumbnail
+  const convertToAssetFormat = (item: ViaJovemFlashItem) => ({
+    id: item.id,
+    figureId: item.figureId,
+    name: item.name,
+    category: item.category,
+    gender: item.gender,
+    club: 'FREE' as const,
+    colors: availableColors, // Use available colors
+    source: 'viajovem-flash' as const
+  });
+
   const handleItemClick = (item: ViaJovemFlashItem) => {
     console.log('🎯 [LocalClothingGrid] Item selecionado:', item.name);
     onItemSelect(item, selectedColor);
@@ -137,11 +149,13 @@ const LocalClothingGrid = ({
           <div key={item.id} className="relative group">
             {viewMode === 'focused' ? (
               <FocusedClothingThumbnail
-                item={item}
+                asset={convertToAssetFormat(item)}
                 colorId={selectedColor}
                 gender={selectedGender}
+                hotel="com.br"
                 isSelected={selectedItem === item.figureId}
                 onClick={() => handleItemClick(item)}
+                onColorChange={(colorId) => handleColorSelect(item, colorId)}
                 className="w-full"
               />
             ) : (
