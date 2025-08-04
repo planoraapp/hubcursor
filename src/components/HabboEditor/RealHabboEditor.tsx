@@ -73,7 +73,6 @@ const RealHabboEditor = () => {
   
   const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
   const [selectedHotel, setSelectedHotel] = useState('com.br');
-  const [currentDirection, setCurrentDirection] = useState('2');
   const [selectedSection, setSelectedSection] = useState('head');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedColor, setSelectedColor] = useState('1');
@@ -164,11 +163,9 @@ const RealHabboEditor = () => {
           figureString={generateFigureString()}
           selectedGender={selectedGender}
           selectedHotel={selectedHotel}
-          currentDirection={currentDirection}
           avatarState={avatarState}
           onGenderChange={setSelectedGender}
           onHotelChange={setSelectedHotel}
-          onDirectionChange={setCurrentDirection}
           onRemoveItem={handleRemoveItem}
           onResetAvatar={handleResetAvatar}
         />
