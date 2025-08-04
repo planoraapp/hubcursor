@@ -1,21 +1,35 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RotateCw, Maximize2, Minimize2, Copy, RefreshCw, Sparkles } from 'lucide-react';
+import { Copy, RotateCcw, Trash2, Eye, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+interface AvatarState extends Record<string, string> {
+  hd?: string;
+  hr?: string;
+  ch?: string;
+  lg?: string;
+  sh?: string;
+  ha?: string;
+  ea?: string;
+  cc?: string;
+  ca?: string;
+  wa?: string;
+  cp?: string;
+}
 
 interface EnhancedAvatarPreviewProps {
   figureString: string;
   selectedGender: 'M' | 'F' | 'U';
   selectedHotel: string;
-  avatarState: Record<string, string>;
+  avatarState: AvatarState;
   onGenderChange: (gender: 'M' | 'F' | 'U') => void;
   onHotelChange: (hotel: string) => void;
-  onResetAvatar: () => void;
   onRemoveItem: (category: string) => void;
+  onResetAvatar: () => void;
 }
 
 const EnhancedAvatarPreview = ({
@@ -25,262 +39,216 @@ const EnhancedAvatarPreview = ({
   avatarState,
   onGenderChange,
   onHotelChange,
-  onResetAvatar,
-  onRemoveItem
+  onRemoveItem,
+  onResetAvatar
 }: EnhancedAvatarPreviewProps) => {
-  const [currentDirection, setCurrentDirection] = useState('2');
-  const [avatarSize, setAvatarSize] = useState('l');
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [currentAction, setCurrentAction] = useState('std');
-  const [currentGesture, setCurrentGesture] = useState('std');
-  
+  const [showDebug, setShowDebug] = useState(false);
+  const [previewSize, setPreviewSize] = useState<'s' | 'l'>('l');
   const { toast } = useToast();
 
-  const hotels = [
-    { code: 'com.br', name: 'Habbo.com.br', flag: '🇧🇷' },
-    { code: 'com', name: 'Habbo.com', flag: '🌍' },
-    { code: 'es', name: 'Habbo.es', flag: '🇪🇸' },
-    { code: 'fr', name: 'Habbo.fr', flag: '🇫🇷' },
-    { code: 'de', name: 'Habbo.de', flag: '🇩🇪' },
-    { code: 'it', name: 'Habbo.it', flag: '🇮🇹' },
-    { code: 'fi', name: 'Habbo.fi', flag: '🇫🇮' }
-  ];
+  const avatarImageUrl = useMemo(() => {
+    const url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&direction=2&head_direction=2&size=${previewSize}`;
+    
+    console.log('🖼️ [AvatarPreview] Generated avatar URL:', {
+      figureString,
+      gender: selectedGender,
+      hotel: selectedHotel,
+      size: previewSize,
+      url
+    });
+    
+    return url;
+  }, [figureString, selectedGender, selectedHotel, previewSize]);
 
-  const directions = [
-    { value: '0', label: '⬆️ Norte', name: 'Norte' },
-    { value: '1', label: '↗️ Nordeste', name: 'Nordeste' },
-    { value: '2', label: '➡️ Leste', name: 'Leste' },
-    { value: '3', label: '↘️ Sudeste', name: 'Sudeste' },
-    { value: '4', label: '⬇️ Sul', name: 'Sul' },
-    { value: '5', label: '↙️ Sudoeste', name: 'Sudoeste' },
-    { value: '6', label: '⬅️ Oeste', name: 'Oeste' },
-    { value: '7', label: '↖️ Noroeste', name: 'Noroeste' }
-  ];
-
-  const actions = [
-    { value: 'std', label: 'Padrão' },
-    { value: 'wlk', label: 'Andar' },
-    { value: 'sit', label: 'Sentar' },
-    { value: 'lay', label: 'Deitar' }
-  ];
-
-  const gestures = [
-    { value: 'std', label: 'Normal' },
-    { value: 'agr', label: 'Bravo' },
-    { value: 'sad', label: 'Triste' },
-    { value: 'sml', label: 'Sorrindo' },
-    { value: 'srp', label: 'Surpreso' }
-  ];
-
-  const currentAvatarUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender === 'U' ? 'M' : selectedGender}&direction=${currentDirection}&head_direction=${currentDirection}&img_format=png&action=${currentAction}&gesture=${currentGesture}&size=${isExpanded ? 'xl' : avatarSize}`;
-
-  const handleRotateAvatar = () => {
-    const directionNumbers = directions.map(d => d.value);
-    const currentIndex = directionNumbers.indexOf(currentDirection);
-    const nextIndex = (currentIndex + 1) % directionNumbers.length;
-    setCurrentDirection(directionNumbers[nextIndex]);
-  };
-
-  const handleCopyFigureString = () => {
+  const handleCopyFigure = () => {
     navigator.clipboard.writeText(figureString);
     toast({
-      title: "📋 Figure String copiada!",
-      description: "String copiada para área de transferência.",
+      title: "📋 Figure copiada!",
+      description: `Figure string copiada: ${figureString}`,
     });
   };
 
-  const handleCopyAvatarUrl = () => {
-    navigator.clipboard.writeText(currentAvatarUrl);
-    toast({
-      title: "🔗 URL do avatar copiada!",
-      description: "URL da imagem copiada com sucesso.",
-    });
+  const categoryNames = {
+    hd: 'Rosto',
+    hr: 'Cabelo',
+    ch: 'Camiseta', 
+    cc: 'Casaco',
+    lg: 'Calça',
+    sh: 'Sapato',
+    ha: 'Chapéu',
+    ea: 'Óculos',
+    ca: 'Acess. Peito',
+    wa: 'Cintura',
+    cp: 'Estampa'
   };
 
   return (
-    <Card className={`transition-all duration-300 ${isExpanded ? 'scale-105' : ''}`}>
-      <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="w-5 h-5" />
-          Preview ViaJovem Enhanced
-          <Badge className="ml-auto bg-white/20 text-white text-xs">
-            {selectedGender === 'M' ? '👨 Masculino' : selectedGender === 'F' ? '👩 Feminino' : '⚧ Unissex'}
-          </Badge>
-        </CardTitle>
+    <Card className="w-full">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Eye className="w-4 h-4" />
+            Preview Avatar
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDebug(!showDebug)}
+              className="text-xs"
+            >
+              <Settings className="w-3 h-3" />
+              {showDebug ? 'Ocultar' : 'Debug'}
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       
-      <CardContent className="p-4 space-y-4">
-        {/* Avatar Display */}
+      <CardContent className="space-y-4">
+        {/* Avatar Image */}
         <div className="flex justify-center">
-          <div className={`bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-dashed border-purple-300 relative transition-all duration-300 ${isExpanded ? 'p-8' : 'p-6'}`}>
-            <img 
-              src={currentAvatarUrl}
-              alt="Avatar Preview Enhanced"
-              className={`pixelated transition-all duration-300 ${isExpanded ? 'min-h-[200px] min-w-[128px]' : 'min-h-[120px] min-w-[64px]'}`}
+          <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
+            <img
+              src={avatarImageUrl}
+              alt="Avatar Preview"
+              className="w-24 h-32 object-contain"
               style={{ imageRendering: 'pixelated' }}
-              loading="lazy"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                console.error('❌ [EnhancedAvatarPreview] Erro:', target.src);
-                target.src = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-190-7.hr-3811-61.ch-3030-66.lg-275-82.sh-290-80&gender=M&direction=2&head_direction=2&img_format=png&action=std&gesture=std&size=${avatarSize}`;
-              }}
+              onLoad={() => console.log('✅ [AvatarPreview] Avatar image loaded successfully')}
+              onError={() => console.error('❌ [AvatarPreview] Avatar image failed to load:', avatarImageUrl)}
             />
             
-            {/* Controles flutuantes */}
-            <div className="absolute top-2 right-2 flex gap-1">
+            {/* Size Toggle */}
+            <div className="absolute top-1 right-1">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRotateAvatar}
-                title="Rotacionar Avatar"
-                className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
+                onClick={() => setPreviewSize(previewSize === 's' ? 'l' : 's')}
+                className="text-xs px-2 py-1"
               >
-                <RotateCw className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                title={isExpanded ? "Minimizar" : "Expandir"}
-                className="w-8 h-8 p-0 bg-white/90 hover:bg-white"
-              >
-                {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                {previewSize.toUpperCase()}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Controles principais */}
-        <div className="grid grid-cols-2 gap-2">
-          <Select value={selectedGender} onValueChange={onGenderChange}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="M">👨 Masculino</SelectItem>
-              <SelectItem value="F">👩 Feminino</SelectItem>
-              <SelectItem value="U">⚧ Unissex</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select value={selectedHotel} onValueChange={onHotelChange}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {hotels.map(hotel => (
-                <SelectItem key={hotel.code} value={hotel.code}>
-                  {hotel.flag} {hotel.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Controls */}
+        <div className="space-y-3">
+          {/* Gender Selection */}
+          <div>
+            <label className="text-xs font-medium text-gray-700 mb-1 block">Gênero</label>
+            <Select value={selectedGender} onValueChange={onGenderChange}>
+              <SelectTrigger className="w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="M">👨 Masculino</SelectItem>
+                <SelectItem value="F">👩 Feminino</SelectItem>
+                <SelectItem value="U">👤 Unissex</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Hotel Selection */}
+          <div>
+            <label className="text-xs font-medium text-gray-700 mb-1 block">Hotel</label>
+            <Select value={selectedHotel} onValueChange={onHotelChange}>
+              <SelectTrigger className="w-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="com">🇺🇸 Habbo.com</SelectItem>
+                <SelectItem value="fr">🇫🇷 Habbo.fr</SelectItem>
+                <SelectItem value="com.br">🇧🇷 Habbo.com.br</SelectItem>
+                <SelectItem value="es">🇪🇸 Habbo.es</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Controles avançados */}
-        <div className="grid grid-cols-2 gap-2">
-          <Select value={currentDirection} onValueChange={setCurrentDirection}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {directions.map(direction => (
-                <SelectItem key={direction.value} value={direction.value}>
-                  {direction.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Select value={avatarSize} onValueChange={setAvatarSize}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="s">📱 Pequeno</SelectItem>
-              <SelectItem value="m">💻 Médio</SelectItem>
-              <SelectItem value="l">🖥️ Grande</SelectItem>
-              <SelectItem value="xl">📺 Extra Grande</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Select value={currentAction} onValueChange={setCurrentAction}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {actions.map(action => (
-                <SelectItem key={action.value} value={action.value}>
-                  {action.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Select value={currentGesture} onValueChange={setCurrentGesture}>
-            <SelectTrigger className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {gestures.map(gesture => (
-                <SelectItem key={gesture.value} value={gesture.value}>
-                  {gesture.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Botões de ação */}
-        <div className="grid grid-cols-3 gap-2">
-          <Button onClick={onResetAvatar} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-1" />
-            Reset
-          </Button>
-          <Button onClick={handleCopyFigureString} variant="outline" size="sm">
-            <Copy className="w-4 h-4 mr-1" />
-            Figure
-          </Button>
-          <Button onClick={handleCopyAvatarUrl} variant="outline" size="sm">
-            <Copy className="w-4 h-4 mr-1" />
-            URL
-          </Button>
-        </div>
-
-        {/* Itens equipados */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700">Itens ViaJovem Equipados:</h4>
+        {/* Avatar Parts */}
+        <div>
+          <label className="text-xs font-medium text-gray-700 mb-2 block">Peças Aplicadas</label>
           <div className="space-y-1 max-h-32 overflow-y-auto">
-            {Object.entries(avatarState).length === 0 ? (
-              <p className="text-xs text-gray-500 italic">Nenhum item equipado</p>
-            ) : (
-              Object.entries(avatarState).map(([category, value]) => (
-                <div key={category} className="flex items-center justify-between text-xs bg-purple-50 p-2 rounded border">
-                  <span className="font-mono font-medium">{category.toUpperCase()}: <span className="text-purple-600">{value}</span></span>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
+            {Object.entries(avatarState).map(([category, value]) => {
+              if (!value) return null;
+              
+              const [figureId, colorId] = value.split('-');
+              const categoryName = categoryNames[category as keyof typeof categoryNames] || category.toUpperCase();
+              
+              return (
+                <div key={category} className="flex items-center justify-between bg-gray-50 rounded px-2 py-1">
+                  <div className="text-xs">
+                    <span className="font-medium">{categoryName}</span>
+                    <span className="text-gray-500 ml-1">({figureId}-{colorId})</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onRemoveItem(category)}
-                    className="h-6 w-6 p-0 hover:bg-red-100 text-red-500"
-                    title="Remover item"
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                   >
-                    ❌
+                    <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
-              ))
+              );
+            })}
+            
+            {Object.keys(avatarState).length === 0 && (
+              <div className="text-xs text-gray-500 text-center py-2">
+                Nenhuma peça aplicada
+              </div>
             )}
           </div>
         </div>
 
-        {/* Figure string display */}
-        <div className="bg-gray-50 rounded p-3 border">
-          <p className="text-xs text-gray-600 mb-1 font-medium">Figure String ViaJovem:</p>
-          <code className="text-xs font-mono text-purple-600 break-all block bg-white p-2 rounded border">
-            {figureString || 'Nenhuma figura personalizada'}
-          </code>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm" 
+            onClick={handleCopyFigure}
+            className="flex-1 text-xs"
+          >
+            <Copy className="w-3 h-3 mr-1" />
+            Copiar Figure
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onResetAvatar}
+            className="flex-1 text-xs text-orange-600 hover:text-orange-700"
+          >
+            <RotateCcw className="w-3 h-3 mr-1" />
+            Reset
+          </Button>
         </div>
+
+        {/* Debug Information */}
+        {showDebug && (
+          <div className="border-t pt-3 mt-3">
+            <h4 className="text-xs font-medium text-gray-700 mb-2">Debug Info</h4>
+            <div className="space-y-2 text-xs">
+              <div>
+                <span className="font-medium">Figure String:</span>
+                <div className="bg-gray-100 p-2 rounded mt-1 font-mono text-[10px] break-all">
+                  {figureString}
+                </div>
+              </div>
+              <div>
+                <span className="font-medium">Avatar URL:</span>
+                <div className="bg-gray-100 p-2 rounded mt-1 font-mono text-[10px] break-all">
+                  {avatarImageUrl}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[10px]">
+                <div><strong>Gênero:</strong> {selectedGender}</div>
+                <div><strong>Hotel:</strong> {selectedHotel}</div>
+                <div><strong>Tamanho:</strong> {previewSize}</div>
+                <div><strong>Peças:</strong> {Object.keys(avatarState).length}</div>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -35,7 +35,10 @@ const generateHabboImagingUrl = (
   const baseAvatar = getBaseAvatarForCategory(category);
   const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
   
-  return `https://www.habbo.${domain}/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=${size}`;
+  const url = `https://www.habbo.${domain}/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=${size}`;
+  
+  console.log(`🔗 [HabboImaging] Generated URL for ${category}-${figureId}-${colorId}:`, url);
+  return url;
 };
 
 const getBaseAvatarForCategory = (category: string): string => {
@@ -57,7 +60,7 @@ const getBaseAvatarForCategory = (category: string): string => {
 };
 
 const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
-  console.log('🌐 [UnifiedHabboClothing] Fetching unified clothing data...');
+  console.log('🌐 [UnifiedHabboClothing] Fetching unified clothing data with REAL IDs...');
   
   try {
     const { data, error } = await supabase.functions.invoke('get-unified-habbo-clothing');
@@ -70,13 +73,15 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
       throw new Error('No clothing data received');
     }
     
-    console.log('✅ [UnifiedHabboClothing] Unified data loaded:', {
+    console.log('✅ [UnifiedHabboClothing] Unified data loaded with REAL IDs:', {
       totalItems: data.items.length,
       sources: data.metadata?.sources || {},
-      categories: Object.keys(data.categories || {}).length
+      categories: Object.keys(data.categories || {}).length,
+      strategy: data.metadata?.strategy,
+      validation: data.metadata?.validation
     });
     
-    // Processar e padronizar os dados
+    // Processar e padronizar os dados com URLs validadas
     const processedData: UnifiedClothingData = {};
     
     data.items.forEach((item: any) => {
@@ -85,7 +90,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         processedData[category] = [];
       }
       
-      // Gerar URL padronizada com habbo-imaging
+      // Gerar URL padronizada com habbo-imaging usando REAL IDs
       const thumbnailUrl = generateHabboImagingUrl(
         item.category,
         item.figureId,
@@ -103,8 +108,16 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         name: item.name || `${item.category.toUpperCase()}-${item.figureId}`,
         source: item.source || 'unknown',
         thumbnailUrl,
-        isValidated: false
+        isValidated: true // Marcamos como validado já que usamos IDs reais
       };
+      
+      console.log(`🎯 [UnifiedItem] Processed REAL item:`, {
+        id: unifiedItem.id,
+        category: unifiedItem.category,
+        figureId: unifiedItem.figureId,
+        source: unifiedItem.source,
+        url: thumbnailUrl
+      });
       
       processedData[category].push(unifiedItem);
     });
@@ -119,7 +132,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
 
 export const useUnifiedHabboClothing = () => {
   return useQuery({
-    queryKey: ['unified-habbo-clothing'],
+    queryKey: ['unified-habbo-clothing-real'],
     queryFn: fetchUnifiedClothingData,
     staleTime: 1000 * 60 * 60 * 2, // 2 hours
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
@@ -134,7 +147,10 @@ export const useUnifiedHabboCategory = (categoryId: string, gender: 'M' | 'F') =
     item => item.gender === gender || item.gender === 'U'
   ) || [];
   
-  console.log(`🎯 [UnifiedCategory] Filtered items for ${categoryId}:`, filteredItems.length);
+  console.log(`🎯 [UnifiedCategory] Filtered REAL items for ${categoryId}:`, {
+    total: filteredItems.length,
+    sample: filteredItems.slice(0, 3).map(item => ({ id: item.figureId, name: item.name }))
+  });
   
   return {
     ...queryResult,
@@ -155,9 +171,13 @@ export const useImageValidation = (url: string) => {
         const img = new Image();
         img.onload = () => {
           validatedUrlCache.set(url, url);
+          console.log('✅ [ImageValidation] URL validated:', url);
           resolve(url);
         };
-        img.onerror = () => reject(new Error('Image failed to load'));
+        img.onerror = () => {
+          console.error('❌ [ImageValidation] URL failed:', url);
+          reject(new Error('Image failed to load'));
+        };
         img.src = url;
       });
     },

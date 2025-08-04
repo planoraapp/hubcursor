@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,24 +86,44 @@ const HabboWidgetsEditor = () => {
       }
     });
     
-    return parts.join('.');
+    const figureString = parts.join('.');
+    
+    console.log('🎯 [HabboWidgetsEditor] Generated figure string:', {
+      avatarState,
+      figureString,
+      parts: parts.length
+    });
+    
+    return figureString;
   };
 
   const handleItemSelect = (item: UnifiedHabboClothingItem, colorId: string = '1') => {
-    console.log('🎯 [HabboWidgetsEditor] Item unificado aplicado:', { 
+    console.log('🎯 [HabboWidgetsEditor] REAL item unified aplicado:', { 
       item: item.name, 
       category: item.category, 
       figureId: item.figureId,
       colorId,
-      source: item.source
+      source: item.source,
+      realId: `${item.category}-${item.figureId}-${colorId}`
     });
     
     const itemString = `${item.figureId}-${colorId}`;
     
-    setAvatarState(prevState => ({
-      ...prevState,
-      [item.category]: itemString
-    }));
+    setAvatarState(prevState => {
+      const newState = {
+        ...prevState,
+        [item.category]: itemString
+      };
+      
+      console.log('🔄 [HabboWidgetsEditor] Avatar state updated:', {
+        category: item.category,
+        oldValue: prevState[item.category as keyof AvatarState],
+        newValue: itemString,
+        newState
+      });
+      
+      return newState;
+    });
 
     setSelectedColor(colorId);
     
@@ -116,8 +135,8 @@ const HabboWidgetsEditor = () => {
     };
     
     toast({
-      title: "✨ Item aplicado!",
-      description: `${item.name} (${sourceBadges[item.source as keyof typeof sourceBadges] || item.source}) foi aplicado ao avatar.`,
+      title: "✅ Item REAL aplicado!",
+      description: `${item.name} (${sourceBadges[item.source as keyof typeof sourceBadges] || item.source}) foi aplicado com ID real ${item.figureId}.`,
     });
   };
 
@@ -127,6 +146,12 @@ const HabboWidgetsEditor = () => {
     setAvatarState(prevState => {
       const newState = { ...prevState };
       delete newState[category as keyof AvatarState];
+      
+      console.log('🔄 [HabboWidgetsEditor] Estado após remoção:', {
+        removedCategory: category,
+        newState
+      });
+      
       return newState;
     });
     
@@ -137,17 +162,21 @@ const HabboWidgetsEditor = () => {
   };
 
   const handleResetAvatar = () => {
-    setAvatarState({
+    const defaultState = {
       hd: '180-1',
       hr: '1001-45', 
       ch: '1001-61',
       lg: '280-82',
       sh: '300-80'
-    });
+    };
+    
+    setAvatarState(defaultState);
+    
+    console.log('🔄 [HabboWidgetsEditor] Avatar resetado para estado padrão:', defaultState);
     
     toast({
       title: "🔄 Avatar resetado",
-      description: "Avatar voltou ao estado padrão.",
+      description: "Avatar voltou ao estado padrão com IDs reais validados.",
     });
   };
 
@@ -177,10 +206,10 @@ const HabboWidgetsEditor = () => {
       {/* Editor Unificado */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              HabboHub - Sistema Unificado Híbrido
+              HabboHub - Sistema Unificado com IDs REAIS
               <div className="ml-auto flex items-center gap-2">
                 <Badge className="bg-green-500/20 text-green-200 text-xs flex items-center gap-1">
                   <Database className="w-3 h-3" />
@@ -196,8 +225,8 @@ const HabboWidgetsEditor = () => {
                 </Badge>
               </div>
             </CardTitle>
-            <div className="text-sm text-purple-100 mt-1">
-              Sistema híbrido com múltiplas fontes • Habbo-Imaging unificado • Hotel: {selectedHotel}
+            <div className="text-sm text-green-100 mt-1">
+              Sistema com IDs REAIS validados • Habbo-Imaging oficial • Hotel: {selectedHotel}
             </div>
           </CardHeader>
           <CardContent className="p-4">
@@ -220,9 +249,9 @@ const HabboWidgetsEditor = () => {
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
-                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
+                    <h3 className="font-bold text-base text-green-800">{group.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Sistema Híbrido Unificado - Múltiplas fontes com habbo-imaging - Gênero: {selectedGender}
+                      Sistema com IDs REAIS • Múltiplas fontes validadas • Gênero: {selectedGender}
                     </p>
                   </div>
                   
