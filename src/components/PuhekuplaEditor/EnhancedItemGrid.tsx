@@ -55,6 +55,15 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
   const [favorites, setFavorites] = useState<string[]>([]);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
+  // Debug log para verificar se os itens chegam ao componente
+  console.log(`🔍 [EnhancedItemGrid] Rendering ${type} with ${items.length} items:`, {
+    type,
+    itemCount: items.length,
+    loading,
+    firstItem: items[0],
+    sampleItems: items.slice(0, 3).map(item => ({ name: item.name, guid: item.guid, image: item.image }))
+  });
+
   const typeConfig = {
     furni: {
       title: 'Móveis',
@@ -89,7 +98,6 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
         });
         break;
       case 'date':
-        // Assuming items have a created_at or similar field
         sorted.sort((a, b) => {
           const aDate = new Date(a.created_at || a.updated_at || 0);
           const bDate = new Date(b.created_at || b.updated_at || 0);
@@ -98,7 +106,6 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
         });
         break;
       case 'popular':
-        // Sort by status, favorites, or other popularity metrics
         sorted.sort((a, b) => {
           const aScore = (favorites.includes(a.guid) ? 10 : 0) + (a.status === 'active' ? 5 : 0);
           const bScore = (favorites.includes(b.guid) ? 10 : 0) + (b.status === 'active' ? 5 : 0);
@@ -121,6 +128,15 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
   };
 
   const getItemImage = (item: any) => {
+    // Log para debug da imagem
+    console.log(`🖼️ [EnhancedItemGrid] Getting image for ${item.name}:`, {
+      providedImage: item.image,
+      icon: item.icon,
+      code: item.code,
+      type
+    });
+
+    // Usar a imagem fornecida pelos dados mock ou fallback
     return item.image || item.icon || '/placeholder.svg';
   };
 
@@ -145,86 +161,103 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
     setSortBy(value as 'name' | 'date' | 'popular');
   };
 
-  const renderGridView = () => (
-    <div className={`${config.gridCols} gap-4`}>
-      {sortedItems.map((item) => {
-        const isSelected = selectedItems.includes(item.guid);
-        const isFavorite = favorites.includes(item.guid);
-        const isHovered = hoveredItem === item.guid;
+  const renderGridView = () => {
+    console.log(`🎨 [EnhancedItemGrid] Rendering grid with ${sortedItems.length} sorted items`);
+    
+    return (
+      <div className={config.gridCols + ' gap-4'}>
+        {sortedItems.map((item, index) => {
+          const isSelected = selectedItems.includes(item.guid);
+          const isFavorite = favorites.includes(item.guid);
+          const isHovered = hoveredItem === item.guid;
+          const itemImage = getItemImage(item);
 
-        return (
-          <Card 
-            key={item.guid}
-            className={`group relative cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
-              isSelected 
-                ? `ring-2 ring-${config.color}-500 shadow-lg scale-105` 
-                : `border-2 border-${config.color}-200 hover:border-${config.color}-400`
-            } bg-white/90 backdrop-blur-sm overflow-hidden`}
-            onClick={() => onItemSelect(item)}
-            onMouseEnter={() => setHoveredItem(item.guid)}
-            onMouseLeave={() => setHoveredItem(null)}
-          >
-            <CardContent className="p-3 text-center relative">
-              {/* Favorite Button */}
-              <button
-                onClick={(e) => toggleFavorite(item.guid, e)}
-                className={`absolute top-1 right-1 z-10 p-1 rounded-full transition-all duration-200 ${
-                  isFavorite 
-                    ? 'bg-red-500 text-white' 
-                    : 'bg-white/80 text-gray-400 hover:text-red-500'
-                }`}
-              >
-                <Heart className="w-3 h-3" fill={isFavorite ? 'currentColor' : 'none'} />
-              </button>
+          console.log(`🎯 [EnhancedItemGrid] Rendering item ${index + 1}/${sortedItems.length}:`, {
+            name: item.name,
+            guid: item.guid,
+            image: itemImage,
+            isSelected,
+            isFavorite
+          });
 
-              {/* Item Image */}
-              <div className="relative mb-2">
-                <img
-                  src={getItemImage(item)}
-                  alt={item.name}
-                  className={`mx-auto object-contain rounded-lg bg-gray-50 p-1 transition-transform duration-200 ${
-                    type === 'badges' ? 'w-12 h-12' : 'w-16 h-16'
-                  } ${isHovered ? 'scale-110' : ''}`}
-                  style={{ imageRendering: 'pixelated' }}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
-                  }}
-                />
+          return (
+            <Card 
+              key={item.guid || `item-${index}`}
+              className={`group relative cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
+                isSelected 
+                  ? 'ring-2 ring-purple-500 shadow-lg scale-105' 
+                  : 'border-2 border-purple-200 hover:border-purple-400'
+              } bg-white/90 backdrop-blur-sm overflow-hidden`}
+              onClick={() => onItemSelect(item)}
+              onMouseEnter={() => setHoveredItem(item.guid)}
+              onMouseLeave={() => setHoveredItem(null)}
+            >
+              <CardContent className="p-3 text-center relative">
+                {/* Favorite Button */}
+                <button
+                  onClick={(e) => toggleFavorite(item.guid, e)}
+                  className={`absolute top-1 right-1 z-10 p-1 rounded-full transition-all duration-200 ${
+                    isFavorite 
+                      ? 'bg-red-500 text-white' 
+                      : 'bg-white/80 text-gray-400 hover:text-red-500'
+                  }`}
+                >
+                  <Heart className="w-3 h-3" fill={isFavorite ? 'currentColor' : 'none'} />
+                </button>
+
+                {/* Item Image */}
+                <div className="relative mb-2">
+                  <img
+                    src={itemImage}
+                    alt={item.name || 'Item'}
+                    className={`mx-auto object-contain rounded-lg bg-gray-50 p-1 transition-transform duration-200 ${
+                      type === 'badges' ? 'w-12 h-12' : 'w-16 h-16'
+                    } ${isHovered ? 'scale-110' : ''}`}
+                    style={{ imageRendering: 'pixelated' }}
+                    loading="lazy"
+                    onError={(e) => {
+                      console.warn(`❌ [EnhancedItemGrid] Failed to load image for ${item.name}:`, itemImage);
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                    onLoad={() => {
+                      console.log(`✅ [EnhancedItemGrid] Successfully loaded image for ${item.name}`);
+                    }}
+                  />
+                  
+                  {/* Status Badge */}
+                  {getItemBadge(item) && (
+                    <div className="absolute -top-1 -left-1">
+                      {getItemBadge(item)}
+                    </div>
+                  )}
+                </div>
                 
-                {/* Status Badge */}
-                {getItemBadge(item) && (
-                  <div className="absolute -top-1 -left-1">
-                    {getItemBadge(item)}
-                  </div>
+                {/* Item Info */}
+                <div className="space-y-1">
+                  <h4 className={`font-medium text-xs text-gray-800 leading-tight line-clamp-2 ${
+                    isHovered ? 'text-gray-900' : ''
+                  }`}>
+                    {item.name || 'Item sem nome'}
+                  </h4>
+                  <p className="text-xs text-gray-500 truncate">
+                    {item.code || item.category || 'N/A'}
+                  </p>
+                </div>
+
+                {/* Selection Overlay */}
+                {isSelected && (
+                  <div className="absolute inset-0 bg-purple-500/20 rounded-lg pointer-events-none" />
                 )}
-              </div>
-              
-              {/* Item Info */}
-              <div className="space-y-1">
-                <h4 className={`font-medium text-xs text-gray-800 leading-tight line-clamp-2 ${
-                  isHovered ? 'text-gray-900' : ''
-                }`}>
-                  {item.name}
-                </h4>
-                <p className="text-xs text-gray-500 truncate">
-                  {item.code || item.category}
-                </p>
-              </div>
 
-              {/* Selection Overlay */}
-              {isSelected && (
-                <div className={`absolute inset-0 bg-${config.color}-500/20 rounded-lg pointer-events-none`} />
-              )}
-
-              {/* Hover Effect */}
-              <div className={`absolute inset-0 bg-${config.color}-500/0 group-hover:bg-${config.color}-500/10 rounded-lg transition-colors duration-200`} />
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
-  );
+                {/* Hover Effect */}
+                <div className="absolute inset-0 bg-purple-500/0 group-hover:bg-purple-500/10 rounded-lg transition-colors duration-200" />
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderListView = () => (
     <div className="space-y-2">
@@ -237,8 +270,8 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
             key={item.guid}
             className={`group cursor-pointer transition-all duration-200 hover:shadow-md ${
               isSelected 
-                ? `ring-2 ring-${config.color}-500 shadow-md` 
-                : `border border-${config.color}-200 hover:border-${config.color}-400`
+                ? 'ring-2 ring-purple-500 shadow-md' 
+                : 'border border-purple-200 hover:border-purple-400'
             } bg-white/90 backdrop-blur-sm`}
             onClick={() => onItemSelect(item)}
           >
@@ -284,23 +317,31 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
   );
 
   if (loading) {
+    console.log(`⏳ [EnhancedItemGrid] Showing loading state for ${type}`);
     return (
-      <div className={`flex items-center justify-center h-96 bg-gradient-to-br from-${config.color}-50 to-${config.color}-100 rounded-lg`}>
+      <div className="flex items-center justify-center h-96 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <h3 className={`text-xl font-bold text-${config.color}-800 mb-2`}>Carregando {config.title}</h3>
-          <p className={`text-${config.color}-600`}>Buscando itens na Puhekupla...</p>
+          <h3 className="text-xl font-bold text-purple-800 mb-2">Carregando {config.title}</h3>
+          <p className="text-purple-600">Buscando itens na Puhekupla...</p>
         </div>
       </div>
     );
   }
+
+  console.log(`🎬 [EnhancedItemGrid] Final render decision:`, {
+    type,
+    hasItems: sortedItems.length > 0,
+    viewMode,
+    itemCount: sortedItems.length
+  });
 
   return (
     <div className="space-y-6">
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex items-center gap-4">
-          <h2 className={`text-lg font-bold text-${config.color}-800 flex items-center gap-2`}>
+          <h2 className="text-lg font-bold text-purple-800 flex items-center gap-2">
             <span className="text-xl">{config.icon}</span>
             {config.title}
             <Badge variant="secondary">{sortedItems.length}</Badge>
@@ -386,7 +427,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
                       variant={page === currentPage ? "default" : "outline"}
                       size="sm"
                       onClick={() => onPageChange?.(page)}
-                      className={page === currentPage ? `bg-${config.color}-600` : ""}
+                      className={page === currentPage ? "bg-purple-600" : ""}
                     >
                       {page}
                     </Button>
