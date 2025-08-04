@@ -19,7 +19,7 @@ export interface HabboEmotionClothingItem {
   }>;
   imageUrl: string;
   club: 'HC' | 'FREE';
-  source: 'habboemotion' | 'supabase-cache' | 'enhanced-fallback';
+  source: 'habboemotion' | 'supabase-comprehensive' | 'comprehensive-fallback';
   name: string;
   category: string;
 }
@@ -29,7 +29,7 @@ const fetchHabboEmotionClothing = async (
   category?: string, 
   gender: 'M' | 'F' | 'U' = 'U'
 ): Promise<HabboEmotionClothingItem[]> => {
-  console.log(`🌐 [HabboEmotion] Fetching clothing data - limit: ${limit}, category: ${category}, gender: ${gender}`);
+  console.log(`🌐 [HabboEmotion] Fetching expanded clothing data - limit: ${limit}, category: ${category}, gender: ${gender}`);
   
   try {
     const { data, error } = await supabase.functions.invoke('habbo-emotion-clothing', {
@@ -43,12 +43,12 @@ const fetchHabboEmotionClothing = async (
 
     if (!data || !data.items || !Array.isArray(data.items)) {
       console.error('❌ [HabboEmotion] Invalid response format:', data);
-      throw new Error('Invalid response format from HabboEmotion API');
+      throw new Error('Invalid response format from expanded HabboEmotion system');
     }
 
-    console.log(`✅ [HabboEmotion] Successfully fetched ${data.items.length} items from ${data.metadata?.source}`);
+    console.log(`✅ [HabboEmotion] Successfully fetched ${data.items.length} expanded items from ${data.metadata?.source}`);
     
-    // Enriquecer dados com informações de cores
+    // Enriquecer dados com informações de cores e URLs corrigidas
     const enrichedItems = data.items.map((item: any) => {
       const colorDetails = item.colors?.map((colorId: string) => {
         const colorInfo = getColorById(colorId);
@@ -69,9 +69,9 @@ const fetchHabboEmotionClothing = async (
         date: item.date || '',
         colors: Array.isArray(item.colors) ? item.colors : ['1', '2', '3', '4', '5'],
         colorDetails,
-        imageUrl: item.imageUrl || generateClothingImageUrl(item.code, item.part),
+        imageUrl: item.imageUrl || generateExpandedImageUrl(item.code, item.part, item.id),
         club: item.club || 'FREE',
-        source: item.source || 'habboemotion',
+        source: item.source || 'comprehensive-fallback',
         name: item.name || `${item.code}`,
         category: item.category || mapCategoryToStandard(item.part || 'ch')
       };
@@ -117,8 +117,27 @@ const mapCategoryToStandard = (category: string): string => {
   return CATEGORY_MAPPING[category.toLowerCase()] || category;
 };
 
-const generateClothingImageUrl = (code: string, part: string): string => {
-  return `https://habboemotion.com/usables/clothing/${part}_U_${code}_2_0.png`;
+const generateExpandedImageUrl = (code: string, part: string, itemId: number): string => {
+  // Usar o formato correto do HabboEmotion expandido
+  const categoryNames: Record<string, string> = {
+    'hr': 'hair',
+    'ch': 'shirt', 
+    'lg': 'trousers',
+    'sh': 'shoes',
+    'ha': 'hat',
+    'ea': 'glasses',
+    'cc': 'jacket',
+    'ca': 'chest_accessory',
+    'wa': 'belt',
+    'fa': 'face_accessory',
+    'cp': 'chest_print',
+    'hd': 'head'
+  };
+  
+  const categoryName = categoryNames[part] || 'shirt';
+  const spriteName = code.includes('_U_') ? code : `${categoryName}_U_${code}`;
+  
+  return `https://files.habboemotion.com/habbo-assets/sprites/clothing/${spriteName}/h_std_${part}_${itemId}_2_0.png`;
 };
 
 export const useHabboEmotionClothing = (
@@ -127,7 +146,7 @@ export const useHabboEmotionClothing = (
   gender: 'M' | 'F' | 'U' = 'U'
 ) => {
   return useQuery({
-    queryKey: ['habbo-emotion-clothing', limit, category, gender],
+    queryKey: ['habbo-emotion-clothing-expanded', limit, category, gender],
     queryFn: () => fetchHabboEmotionClothing(limit, category, gender),
     staleTime: 1000 * 60 * 60 * 2, // 2 hours
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
@@ -136,14 +155,14 @@ export const useHabboEmotionClothing = (
   });
 };
 
-// Hook especializado para buscar por categoria específica
+// Hook especializado para buscar por categoria específica com sistema expandido
 export const useHabboEmotionClothingByCategory = (
   category: string,
   gender: 'M' | 'F' | 'U' = 'U',
-  limit: number = 500
+  limit: number = 1000
 ) => {
   return useQuery({
-    queryKey: ['habbo-emotion-clothing-category', category, gender, limit],
+    queryKey: ['habbo-emotion-clothing-category-expanded', category, gender, limit],
     queryFn: () => fetchHabboEmotionClothing(limit, category, gender),
     staleTime: 1000 * 60 * 60 * 1, // 1 hour
     gcTime: 1000 * 60 * 60 * 12, // 12 hours
@@ -152,22 +171,22 @@ export const useHabboEmotionClothingByCategory = (
   });
 };
 
-// Função para sincronização manual
+// Função para sincronização manual do sistema expandido
 export const triggerHabboEmotionSync = async () => {
   try {
-    console.log('🔄 [HabboEmotion] Triggering manual synchronization...');
+    console.log('🔄 [HabboEmotion] Triggering comprehensive synchronization...');
     
     const { data, error } = await supabase.functions.invoke('sync-habbo-emotion-data');
     
     if (error) {
-      console.error('❌ [HabboEmotion] Sync error:', error);
+      console.error('❌ [HabboEmotion] Comprehensive sync error:', error);
       throw error;
     }
     
-    console.log('✅ [HabboEmotion] Manual sync completed:', data);
+    console.log('✅ [HabboEmotion] Comprehensive sync completed:', data);
     return data;
   } catch (error) {
-    console.error('❌ [HabboEmotion] Manual sync failed:', error);
+    console.error('❌ [HabboEmotion] Comprehensive sync failed:', error);
     throw error;
   }
 };
