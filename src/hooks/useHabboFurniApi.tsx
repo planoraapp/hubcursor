@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface HabboFurniItem {
@@ -44,42 +44,75 @@ export const useHabboFurniApi = ({
 
       console.log('🔍 [HabboFurniApi] Fetching with params:', searchParams);
 
+      const startTime = Date.now();
       const { data, error: functionError } = await supabase.functions.invoke('habbo-furni-api', {
         body: searchParams
       });
 
+      const duration = Date.now() - startTime;
+      console.log(`⏱️ [HabboFurniApi] Request took ${duration}ms`);
+
       if (functionError) {
+        console.error('❌ [HabboFurniApi] Function error:', functionError);
         throw new Error(functionError.message);
       }
+
+      console.log('📊 [HabboFurniApi] Response structure:', {
+        hasFurnis: !!data?.furnis,
+        furniCount: data?.furnis?.length || 0,
+        metadata: data?.metadata,
+        apiStatus: data?.metadata?.apiStatus
+      });
 
       if (data?.furnis && Array.isArray(data.furnis)) {
         setFurniData(data.furnis);
         console.log(`✅ [HabboFurniApi] Loaded ${data.furnis.length} furniture items`);
         
-        // Cache successful results
-        if (data.furnis.length > 0) {
-          localStorage.setItem(`habbo-furni-cache-${JSON.stringify(searchParams)}`, JSON.stringify(data.furnis));
+        // Cache de resultados bem-sucedidos (apenas se não for fallback)
+        if (data.furnis.length > 0 && data.metadata?.apiStatus !== 'fallback') {
+          const cacheKey = `habbo-furni-cache-${JSON.stringify(searchParams)}`;
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+              data: data.furnis,
+              timestamp: Date.now(),
+              ttl: 5 * 60 * 1000 // 5 minutos
+            }));
+            console.log('💾 [HabboFurniApi] Results cached successfully');
+          } catch (cacheError) {
+            console.warn('⚠️ [HabboFurniApi] Cache write failed:', cacheError);
+          }
         }
+      } else {
+        console.warn('⚠️ [HabboFurniApi] No furnis array in response');
+        setFurniData([]);
       }
     } catch (err) {
       console.error('❌ [HabboFurniApi] Error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch furniture data');
       
-      // Try cache as fallback
+      // Tentar cache como fallback
       const cacheKey = `habbo-furni-cache-${JSON.stringify({
         searchTerm: searchTerm || '',
         className: className || '',
         limit
       })}`;
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-        try {
+      
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
           const cachedData = JSON.parse(cached);
-          setFurniData(cachedData);
-          console.log('📦 [HabboFurniApi] Using cached data');
-        } catch (cacheError) {
-          console.error('❌ [HabboFurniApi] Cache error:', cacheError);
+          
+          // Verificar se o cache não expirou
+          if (cachedData.timestamp && Date.now() - cachedData.timestamp < cachedData.ttl) {
+            setFurniData(cachedData.data);
+            console.log('📦 [HabboFurniApi] Using valid cached data');
+          } else {
+            console.log('⏰ [HabboFurniApi] Cache expired, removing');
+            localStorage.removeItem(cacheKey);
+          }
         }
+      } catch (cacheError) {
+        console.error('❌ [HabboFurniApi] Cache fallback error:', cacheError);
       }
     } finally {
       setLoading(false);
@@ -90,25 +123,49 @@ export const useHabboFurniApi = ({
     try {
       console.log(`🔍 [HabboFurniApi] Finding item by className: ${targetClassName}`);
       
+      const startTime = Date.now();
       const { data, error: functionError } = await supabase.functions.invoke('habbo-furni-api', {
         body: {
           className: targetClassName,
-          limit: 1
+          limit: 1,
+          searchTerm: '',
+          category: 'all'
         }
       });
 
-      if (functionError || !data?.furnis || data.furnis.length === 0) {
+      const duration = Date.now() - startTime;
+      console.log(`⏱️ [HabboFurniApi] findItemByClassName took ${duration}ms`);
+
+      if (functionError) {
+        console.error('❌ [HabboFurniApi] Function error in findItemByClassName:', functionError);
         return null;
       }
 
-      const item = data.furnis[0];
-      console.log(`✅ [HabboFurniApi] Found item:`, item);
-      return item;
+      if (data?.furnis && data.furnis.length > 0) {
+        const item = data.furnis[0];
+        console.log(`✅ [HabboFurniApi] Found item:`, {
+          name: item.name,
+          className: item.className,
+          imageUrl: item.imageUrl,
+          source: item.source
+        });
+        return item;
+      }
+
+      console.log(`❌ [HabboFurniApi] No item found for className: ${targetClassName}`);
+      return null;
     } catch (error) {
       console.error(`❌ [HabboFurniApi] Error finding ${targetClassName}:`, error);
       return null;
     }
   }, []);
+
+  // Auto-fetch na inicialização se habilitado
+  useEffect(() => {
+    if (autoFetch) {
+      fetchFurniData();
+    }
+  }, [autoFetch, fetchFurniData]);
 
   return {
     furniData,

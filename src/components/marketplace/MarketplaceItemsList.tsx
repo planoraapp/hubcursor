@@ -5,7 +5,7 @@ import { VerticalClubItems } from './VerticalClubItems';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock } from 'lucide-react';
-import RealFurniImageHybrid from './RealFurniImageHybrid';
+import OptimizedFurniImage from './OptimizedFurniImage';
 import { MarketItemModal } from './MarketItemModal';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
 
@@ -96,7 +96,7 @@ export const MarketplaceItemsList = ({
           return 0;
       }
     })
-    .slice(0, 15); // Reduzir para 15 itens para melhor performance
+    .slice(0, 20); // Aumentado para 20 itens com otimizações
 
   // Mostrar skeleton loading enquanto carrega
   if (loading) {
@@ -145,7 +145,7 @@ export const MarketplaceItemsList = ({
         <ScrollArea className="h-96">
           <div className="p-4 space-y-3">
             {filteredItems.length > 0 ? (
-              filteredItems.map((item) => {
+              filteredItems.map((item, index) => {
                 const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
                 
                 return (
@@ -154,12 +154,13 @@ export const MarketplaceItemsList = ({
                     onClick={() => handleItemClick(item)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
                   >
-                    <RealFurniImageHybrid
+                    <OptimizedFurniImage
                       className={item.className}
                       name={item.name}
                       type={itemType}
                       hotel={item.hotel}
                       size="sm"
+                      priority={index < 5} // Prioridade para os primeiros 5 itens
                     />
                     
                     <div className="flex-1 min-w-0">
