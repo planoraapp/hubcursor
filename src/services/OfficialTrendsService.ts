@@ -5,20 +5,22 @@ interface OfficialTrendItem {
   className: string;
   name: string;
   currentPrice: number;
-  previousPrice: number;
+  previousPrice?: number;
   changePercent: number;
   totalOpenOffers: number;
   soldItems: number;
   trend: 'up' | 'down' | 'stable';
+  isOfficialData: boolean;
+  lastUpdated: string;
 }
 
 export class OfficialTrendsService {
-  // ETAPA 4: "Altas de Hoje" com dados oficiais
+  // "Altas de Hoje" baseado 100% em dados oficiais
   static async getTodayHighs(hotel: string = 'br'): Promise<OfficialTrendItem[]> {
     try {
-      console.log(`📈 [TrendsService] Fetching today's highs for ${hotel}`);
+      console.log(`📈 [TrendsService] Fetching today's highs with 100% real data for ${hotel}`);
       
-      // Buscar dados oficiais atualizados
+      // Buscar dados oficiais
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
         body: { hotel }
       });
@@ -29,54 +31,58 @@ export class OfficialTrendsService {
       }
       
       if (!data?.items || !Array.isArray(data.items)) {
-        console.warn('⚠️ [TrendsService] No items returned from API');
+        console.warn('⚠️ [TrendsService] No official items returned from API');
         return [];
       }
       
-      // Filtrar apenas itens disponíveis no marketplace (totalOpenOffers > 0)
-      const availableItems = data.items.filter((item: any) => 
-        item.openOffers && item.openOffers > 0 && item.currentPrice > 0
+      console.log(`📊 [TrendsService] Processing ${data.items.length} official items`);
+      
+      // Filtrar apenas dados oficiais reais
+      const officialItems = data.items.filter((item: any) => 
+        item.isOfficialData === true && 
+        item.currentPrice > 0 &&
+        typeof item.soldItems === 'number'
       );
       
-      // Calcular tendências baseado em dados oficiais
-      const trendsItems: OfficialTrendItem[] = availableItems.map((item: any) => {
-        const currentPrice = item.currentPrice || 0;
-        const previousPrice = item.previousPrice || currentPrice;
+      console.log(`✅ [TrendsService] Found ${officialItems.length} items with verified official data`);
+      
+      // Converter para formato de tendências (sem simular dados)
+      const trendsItems: OfficialTrendItem[] = officialItems.map((item: any) => {
+        const currentPrice = item.currentPrice;
+        const soldItems = item.soldItems;
         
-        let changePercent = 0;
-        if (previousPrice > 0) {
-          changePercent = ((currentPrice - previousPrice) / previousPrice) * 100;
-        }
-        
+        // Por enquanto, sem cálculo de tendência até implementarmos histórico real
         return {
           className: item.className,
           name: item.name,
           currentPrice,
-          previousPrice,
-          changePercent,
+          previousPrice: item.previousPrice, // undefined se não temos dados históricos
+          changePercent: 0, // Será calculado quando tivermos histórico real
           totalOpenOffers: item.openOffers || 0,
-          soldItems: item.soldItems || 0,
-          trend: changePercent > 2 ? 'up' : changePercent < -2 ? 'down' : 'stable'
+          soldItems,
+          trend: 'stable' as const, // Será calculado com dados históricos reais
+          isOfficialData: true,
+          lastUpdated: item.lastUpdated
         };
       });
       
-      // Ordenar por maior variação percentual positiva
-      const todayHighs = trendsItems
-        .filter(item => item.trend === 'up' && item.changePercent > 0)
-        .sort((a, b) => b.changePercent - a.changePercent)
+      // Ordenar por volume de vendas (mais realista que variação simulada)
+      const topByVolume = trendsItems
+        .filter(item => item.soldItems > 0) // Apenas itens que realmente venderam
+        .sort((a, b) => b.soldItems - a.soldItems)
         .slice(0, 10);
       
-      console.log(`📊 [TrendsService] Found ${todayHighs.length} items with positive trends`);
+      console.log(`🔥 [TrendsService] Top items by sales volume: ${topByVolume.length}`);
       
-      return todayHighs;
+      return topByVolume;
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get today highs:', error);
+      console.error('❌ [TrendsService] Failed to get real today highs:', error);
       return [];
     }
   }
   
-  // Obter itens mais vendidos (baseado em soldItems)
+  // Obter itens mais vendidos (100% baseado em dados oficiais)
   static async getTopSellers(hotel: string = 'br'): Promise<OfficialTrendItem[]> {
     try {
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
@@ -85,30 +91,36 @@ export class OfficialTrendsService {
       
       if (error || !data?.items) return [];
       
-      const topSellers = data.items
-        .filter((item: any) => item.soldItems && item.soldItems > 0)
+      const officialItems = data.items.filter((item: any) => 
+        item.isOfficialData === true && item.soldItems > 0
+      );
+      
+      const topSellers = officialItems
         .map((item: any) => ({
           className: item.className,
           name: item.name,
-          currentPrice: item.currentPrice || 0,
-          previousPrice: item.previousPrice || 0,
-          changePercent: parseFloat(item.changePercent) || 0,
+          currentPrice: item.currentPrice,
+          previousPrice: item.previousPrice,
+          changePercent: 0, // Será calculado com histórico real
           totalOpenOffers: item.openOffers || 0,
-          soldItems: item.soldItems || 0,
-          trend: item.trend || 'stable'
+          soldItems: item.soldItems,
+          trend: 'stable' as const,
+          isOfficialData: true,
+          lastUpdated: item.lastUpdated
         }))
         .sort((a: any, b: any) => b.soldItems - a.soldItems)
         .slice(0, 10);
       
+      console.log(`📊 [TrendsService] Found ${topSellers.length} top sellers with official data`);
       return topSellers;
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get top sellers:', error);
+      console.error('❌ [TrendsService] Failed to get real top sellers:', error);
       return [];
     }
   }
   
-  // Obter oportunidades (itens raros com bom preço)
+  // Obter oportunidades (apenas dados oficiais de itens raros)
   static async getOpportunities(hotel: string = 'br'): Promise<OfficialTrendItem[]> {
     try {
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
@@ -119,30 +131,76 @@ export class OfficialTrendsService {
       
       const opportunities = data.items
         .filter((item: any) => 
+          item.isOfficialData === true &&
           (item.rarity === 'legendary' || 
            item.rarity === 'rare' || 
-           item.className.toLowerCase().includes('ltd') ||
-           item.currentPrice > 300) &&
+           item.currentPrice > 200) &&
           item.openOffers >= 0
         )
         .map((item: any) => ({
           className: item.className,
           name: item.name,
-          currentPrice: item.currentPrice || 0,
-          previousPrice: item.previousPrice || 0,
-          changePercent: parseFloat(item.changePercent) || 0,
+          currentPrice: item.currentPrice,
+          previousPrice: item.previousPrice,
+          changePercent: 0, // Dados reais quando tivermos histórico
           totalOpenOffers: item.openOffers || 0,
           soldItems: item.soldItems || 0,
-          trend: item.trend || 'stable'
+          trend: 'stable' as const,
+          isOfficialData: true,
+          lastUpdated: item.lastUpdated
         }))
         .sort((a: any, b: any) => b.currentPrice - a.currentPrice)
         .slice(0, 10);
       
+      console.log(`💎 [TrendsService] Found ${opportunities.length} rare opportunities with official data`);
       return opportunities;
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get opportunities:', error);
+      console.error('❌ [TrendsService] Failed to get real opportunities:', error);
       return [];
+    }
+  }
+  
+  // Verificar status da qualidade dos dados
+  static async getDataQualityStatus(hotel: string = 'br'): Promise<{
+    totalItems: number;
+    officialItemsCount: number;
+    realDataPercentage: number;
+    lastUpdate: string;
+    apiSuccessRate?: number;
+  }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
+        body: { hotel }
+      });
+      
+      if (error || !data) {
+        return {
+          totalItems: 0,
+          officialItemsCount: 0,
+          realDataPercentage: 0,
+          lastUpdate: new Date().toISOString()
+        };
+      }
+      
+      const officialItems = data.items?.filter((item: any) => item.isOfficialData === true) || [];
+      
+      return {
+        totalItems: data.items?.length || 0,
+        officialItemsCount: officialItems.length,
+        realDataPercentage: data.metadata?.realDataPercentage || 100,
+        lastUpdate: data.metadata?.fetchedAt || new Date().toISOString(),
+        apiSuccessRate: data.metadata?.apiSuccessRate
+      };
+      
+    } catch (error) {
+      console.error('❌ [TrendsService] Failed to get data quality status:', error);
+      return {
+        totalItems: 0,
+        officialItemsCount: 0,
+        realDataPercentage: 0,
+        lastUpdate: new Date().toISOString()
+      };
     }
   }
 }

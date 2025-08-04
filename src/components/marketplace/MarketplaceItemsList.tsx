@@ -77,6 +77,9 @@ export const MarketplaceItemsList = ({
 
   const filteredItems = [...items]
     .filter(item => {
+      // Mostrar apenas itens com dados oficiais
+      if (!(item as any).isOfficialData) return false;
+      
       if (sortBy === 'ltd') {
         return item.rarity === 'legendary' || 
                item.className.toLowerCase().includes('ltd') || 
@@ -100,6 +103,9 @@ export const MarketplaceItemsList = ({
       }
     })
     .slice(0, 25);
+
+  // Contar apenas itens oficiais
+  const officialItemsCount = items.filter((item: any) => item.isOfficialData === true).length;
 
   if (loading) {
     return (
@@ -131,20 +137,22 @@ export const MarketplaceItemsList = ({
             🏪 Feira Livre de {hotel.name}
           </h3>
           
-          {/* Status indicador melhorado */}
+          {/* Indicadores de qualidade dos dados */}
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded border border-green-300">
               <Zap size={12} className="text-green-600" />
-              <span className="text-xs text-green-700 font-medium">Dados Oficiais</span>
-            </div>
-            <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded border border-yellow-300">
-              <Package2 size={12} className="text-yellow-600" />
-              <span className="text-xs text-yellow-700">Imagens Oficiais</span>
+              <span className="text-xs text-green-700 font-medium">100% Dados Reais</span>
             </div>
             <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded border border-blue-300">
-              <Clock size={12} className="text-blue-600" />
-              <span className="text-xs text-blue-700">{items.length} itens</span>
+              <Package2 size={12} className="text-blue-600" />
+              <span className="text-xs text-blue-700">{officialItemsCount} itens oficiais</span>
             </div>
+            {filteredItems.length > 0 && (
+              <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded border border-yellow-300">
+                <Clock size={12} className="text-yellow-600" />
+                <span className="text-xs text-yellow-700">API Oficial Habbo</span>
+              </div>
+            )}
           </div>
           
           <div className="flex gap-4">
@@ -167,9 +175,8 @@ export const MarketplaceItemsList = ({
                 <div
                   key={item.id}
                   onClick={() => handleItemClick(item)}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-50 cursor-pointer transition-all border-2 border-yellow-200 hover:border-yellow-400 hover:shadow-md"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-50 cursor-pointer transition-all border-2 border-green-200 hover:border-green-400 hover:shadow-md"
                 >
-                  {/* ETAPA 2: Usar OfficialMarketplaceImage */}
                   <OfficialMarketplaceImage
                     className={item.className}
                     name={FurnidataService.getFurniName(item.className)}
@@ -179,12 +186,16 @@ export const MarketplaceItemsList = ({
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      {/* ETAPA 3: Usar nome correto do Furnidata */}
                       <p className="font-medium text-sm truncate" title={FurnidataService.getFurniName(item.className)}>
                         {FurnidataService.getFurniName(item.className)}
                       </p>
                       
-                      {/* Badges melhoradas com dados do Furnidata */}
+                      {/* Badge de dados oficiais */}
+                      <span className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-xs px-2 py-1 rounded border border-green-300 font-medium">
+                        ✅ Oficial
+                      </span>
+                      
+                      {/* Outras badges baseadas em dados reais */}
                       {(FurnidataService.getFurniRarity(item.className) === 'legendary' || 
                         item.className.toLowerCase().includes('ltd')) && (
                         <span className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs px-2 py-1 rounded border border-purple-300 font-medium">
@@ -196,9 +207,9 @@ export const MarketplaceItemsList = ({
                           💎 Raro
                         </span>
                       )}
-                      {item.soldItems && item.soldItems > 10 && (
-                        <span className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 text-xs px-2 py-1 rounded border border-green-300">
-                          🔥 Popular
+                      {item.soldItems && item.soldItems > 5 && (
+                        <span className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 text-xs px-2 py-1 rounded border border-orange-300">
+                          🔥 {item.soldItems} vendidos
                         </span>
                       )}
                     </div>
@@ -206,41 +217,18 @@ export const MarketplaceItemsList = ({
                     <div className="flex items-center gap-3 text-xs">
                       <span className="flex items-center gap-1 text-blue-600 font-semibold">
                         <CreditIcon size="sm" />
-                        {item.currentPrice.toLocaleString()}
+                        {item.currentPrice.toLocaleString()} créditos
                       </span>
                       
-                      {parseFloat(item.changePercent) > 0 && (
-                        <div className="flex items-center gap-1">
-                          {item.trend === 'up' ? (
-                            <TrendingUp size={12} className="text-green-500" />
-                          ) : item.trend === 'down' ? (
-                            <TrendingDown size={12} className="text-red-500" />
-                          ) : null}
-                          <span className={`${
-                            item.trend === 'up' ? 'text-green-600' : 
-                            item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                          }`}>
-                            {item.trend === 'up' ? '+' : item.trend === 'down' ? '-' : ''}{item.changePercent}%
-                          </span>
-                        </div>
-                      )}
-                      
-                      {item.openOffers !== undefined && item.openOffers >= 0 && (
+                      {item.openOffers !== undefined && (
                         <div className="flex items-center gap-1 text-gray-600">
                           <Package2 size={10} />
-                          <span>{item.openOffers} ofertas</span>
+                          <span>{item.openOffers} ofertas disponíveis</span>
                         </div>
                       )}
                       
-                      {item.soldItems !== undefined && item.soldItems > 0 && (
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <span>📊 {item.soldItems} vendidos</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-1 text-gray-500">
-                        <Clock size={10} />
-                        <span>oficial</span>
+                      <div className="flex items-center gap-1 text-green-600 font-medium">
+                        <span>📊 Dados da API oficial</span>
                       </div>
                     </div>
                   </div>
@@ -249,8 +237,8 @@ export const MarketplaceItemsList = ({
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Package2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Nenhum item encontrado</p>
-                <p className="text-xs mt-2">Verifique os filtros ou tente outro hotel</p>
+                <p>Nenhum item oficial disponível</p>
+                <p className="text-xs mt-2">A API oficial do Habbo pode estar indisponível no momento</p>
               </div>
             )}
           </div>

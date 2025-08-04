@@ -11,10 +11,10 @@ interface FetchMarketDataParams {
 
 export class MarketplaceService {
   static async fetchMarketData(params: FetchMarketDataParams): Promise<{ items: MarketItem[]; stats: MarketStats } | null> {
-    console.log('🔄 [MarketplaceService] Fetching official marketplace data...');
+    console.log('🔄 [MarketplaceService] Fetching 100% real marketplace data...');
     
     try {
-      // ETAPA 2 e 3: Usar a nova edge function oficial com dados integrados
+      // Usar apenas a API oficial com dados reais
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
         body: { 
           hotel: params.hotel
@@ -22,23 +22,29 @@ export class MarketplaceService {
       });
       
       if (error) {
-        console.error('❌ [MarketplaceService] Official function error:', error);
-        throw new Error(`Erro na função oficial: ${error.message}`);
+        console.error('❌ [MarketplaceService] Official API error:', error);
+        throw new Error(`Erro na API oficial: ${error.message}`);
       }
       
       if (data?.items && Array.isArray(data.items)) {
-        console.log(`✅ [MarketplaceService] Loaded ${data.items.length} items (${data.metadata?.realItems || 0} real + ${data.metadata?.fallbackItems || 0} fallback)`);
+        const realDataPercentage = data.metadata?.realDataPercentage || 0;
+        const officialItemsCount = data.metadata?.officialItemsCount || 0;
         
-        // ETAPA 3: Enriquecer dados com informações do Furnidata
-        const enrichedItems = data.items.map((item: any) => ({
-          ...item,
-          name: FurnidataService.getFurniName(item.className),
-          description: FurnidataService.getFurniDescription(item.className),
-          category: FurnidataService.getFurniCategory(item.className),
-          rarity: FurnidataService.getFurniRarity(item.className)
-        }));
+        console.log(`✅ [MarketplaceService] Loaded ${data.items.length} items`);
+        console.log(`📊 [MarketplaceService] Real data: ${realDataPercentage}% (${officialItemsCount} official items)`);
         
-        // Filtrar itens baseado nos parâmetros
+        // Enriquecer apenas dados oficiais com informações do Furnidata
+        const enrichedItems = data.items
+          .filter((item: any) => item.isOfficialData === true) // Apenas dados oficiais
+          .map((item: any) => ({
+            ...item,
+            name: FurnidataService.getFurniName(item.className),
+            description: FurnidataService.getFurniDescription(item.className),
+            category: FurnidataService.getFurniCategory(item.className),
+            rarity: FurnidataService.getFurniRarity(item.className)
+          }));
+        
+        // Filtrar baseado nos parâmetros
         let filteredItems = enrichedItems;
         
         if (params.searchTerm) {
@@ -56,46 +62,24 @@ export class MarketplaceService {
         
         return {
           items: filteredItems,
-          stats: data.stats || this.calculateDefaultStats(filteredItems)
+          stats: this.calculateRealStats(filteredItems, data.metadata)
         };
       }
       
-      console.warn('⚠️ [MarketplaceService] No items returned from official API, trying fallback...');
-      return await this.fallbackToRealMarket(params);
+      console.warn('⚠️ [MarketplaceService] No official items returned from API');
+      return {
+        items: [],
+        stats: this.calculateRealStats([], {})
+      };
       
     } catch (error: any) {
-      console.error('❌ [MarketplaceService] Failed to fetch official data:', error);
-      
-      // Fallback para a função anterior se a oficial falhar
-      return await this.fallbackToRealMarket(params);
-    }
-  }
-
-  private static async fallbackToRealMarket(params: FetchMarketDataParams): Promise<{ items: MarketItem[]; stats: MarketStats } | null> {
-    console.log('🔄 [MarketplaceService] Using fallback habbo-market-real...');
-    
-    try {
-      const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('habbo-market-real', {
-        body: params
-      });
-      
-      if (fallbackError) {
-        throw new Error(`Erro no fallback: ${fallbackError.message}`);
-      }
-      
-      if (fallbackData?.items && Array.isArray(fallbackData.items)) {
-        console.log(`✅ [MarketplaceService] Fallback loaded ${fallbackData.items.length} items`);
-        return fallbackData;
-      }
-      
-      return null;
-    } catch (fallbackErr) {
-      console.error('❌ [MarketplaceService] Fallback also failed:', fallbackErr);
-      throw new Error(`Todas as fontes de dados falharam`);
+      console.error('❌ [MarketplaceService] Failed to fetch real data:', error);
+      throw new Error(`Falha ao carregar dados oficiais: ${error.message}`);
     }
   }
 
   static async fetchClubItems(hotel: string): Promise<ClubItem[]> {
+    // Manter dados de club simples (não são do marketplace)
     const clubItems: ClubItem[] = [
       {
         id: 'hc_31_days',
@@ -142,36 +126,38 @@ export class MarketplaceService {
     });
   }
 
-  // ETAPA 4: Métodos melhorados para "Altas de Hoje" e tendências
+  // Obter itens filtrados com base apenas em dados oficiais
   static getFilteredItems(items: MarketItem[], type: 'topSellers' | 'biggestGainers' | 'opportunities' | 'todayHigh'): MarketItem[] {
+    // Filtrar apenas itens com dados oficiais reais
+    const officialItems = items.filter(item => (item as any).isOfficialData === true);
+    
     switch (type) {
       case 'topSellers':
-        // Baseado em soldItems da API oficial
-        return [...items]
-          .filter(item => (item.soldItems || item.volume || 0) > 0)
-          .sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0))
+        // Baseado em soldItems reais da API oficial
+        return [...officialItems]
+          .filter(item => (item.soldItems || 0) > 0)
+          .sort((a, b) => (b.soldItems || 0) - (a.soldItems || 0))
           .slice(0, 10);
       
       case 'biggestGainers':
-        // Itens com trend 'up' e maior variação percentual
-        return [...items]
+        // Apenas itens com dados de tendência reais (quando implementarmos histórico)
+        return [...officialItems]
           .filter(item => item.trend === 'up' && parseFloat(item.changePercent) > 0)
           .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
           .slice(0, 10);
       
       case 'opportunities':
-        // LTDs e itens raros com dados do Furnidata
-        return [...items]
+        // Itens raros com dados oficiais
+        return [...officialItems]
           .filter(item => {
             const rarity = FurnidataService.getFurniRarity(item.className);
             return (
               rarity === 'legendary' || 
               rarity === 'rare' ||
-              item.currentPrice > 300
+              item.currentPrice > 200
             ) && (item.openOffers || 0) >= 0;
           })
           .sort((a, b) => {
-            // Priorizar por raridade (do Furnidata) e depois por preço
             const rarityWeight = { legendary: 3, rare: 2, uncommon: 1, common: 0 };
             const aRarity = FurnidataService.getFurniRarity(a.className);
             const bRarity = FurnidataService.getFurniRarity(b.className);
@@ -182,14 +168,10 @@ export class MarketplaceService {
           .slice(0, 10);
       
       case 'todayHigh':
-        // ETAPA 4: Maiores altas baseado em dados oficiais
-        return [...items]
-          .filter(item => 
-            item.trend === 'up' && 
-            parseFloat(item.changePercent) > 0 &&
-            (item.openOffers || 0) > 0 // Apenas itens disponíveis no marketplace
-          )
-          .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
+        // Baseado em volume de vendas real (mais confiável que variação simulada)
+        return [...officialItems]
+          .filter(item => (item.soldItems || 0) > 0)
+          .sort((a, b) => (b.soldItems || 0) - (a.soldItems || 0))
           .slice(0, 10);
       
       default:
@@ -197,8 +179,10 @@ export class MarketplaceService {
     }
   }
 
-  private static calculateDefaultStats(items: MarketItem[]): MarketStats {
-    if (items.length === 0) {
+  private static calculateRealStats(items: MarketItem[], metadata: any): MarketStats {
+    const officialItems = items.filter((item: any) => item.isOfficialData === true);
+    
+    if (officialItems.length === 0) {
       return {
         totalItems: 0,
         averagePrice: 0,
@@ -211,31 +195,20 @@ export class MarketplaceService {
       };
     }
     
-    const totalVolume = items.reduce((sum, item) => sum + (item.soldItems || item.volume || 0), 0);
-    const trendingUp = items.filter(item => item.trend === 'up').length;
-    const trendingDown = items.filter(item => item.trend === 'down').length;
-    const mostTradedItem = items.sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0))[0];
+    const totalVolume = officialItems.reduce((sum, item) => sum + (item.soldItems || 0), 0);
+    const trendingUp = officialItems.filter(item => item.trend === 'up').length;
+    const trendingDown = officialItems.filter(item => item.trend === 'down').length;
+    const mostTradedItem = officialItems.sort((a, b) => (b.soldItems || 0) - (a.soldItems || 0))[0];
     
     return {
-      totalItems: items.length,
-      averagePrice: Math.floor(items.reduce((sum, item) => sum + item.currentPrice, 0) / items.length),
+      totalItems: officialItems.length,
+      averagePrice: Math.floor(officialItems.reduce((sum, item) => sum + item.currentPrice, 0) / officialItems.length),
       totalVolume,
       trendingUp,
       trendingDown,
-      featuredItems: Math.min(items.length, 15),
-      highestPrice: Math.max(...items.map(item => item.currentPrice)),
+      featuredItems: officialItems.length,
+      highestPrice: Math.max(...officialItems.map(item => item.currentPrice)),
       mostTraded: mostTradedItem?.name || 'N/A'
-    };
-  }
-
-  static calculatePriceChange(current: number, previous: number): { changePercent: string; trend: 'up' | 'down' | 'stable' } {
-    if (previous === 0) return { changePercent: '0', trend: 'stable' };
-    
-    const change = ((current - previous) / previous) * 100;
-    
-    return {
-      changePercent: change.toFixed(1),
-      trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
     };
   }
 
