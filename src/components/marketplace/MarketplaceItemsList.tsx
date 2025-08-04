@@ -5,7 +5,7 @@ import { VerticalClubItems } from './VerticalClubItems';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock } from 'lucide-react';
-import OptimizedFurniImage from './OptimizedFurniImage';
+import { RealMarketplaceImage } from './RealMarketplaceImage';
 import { MarketItemModal } from './MarketItemModal';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
 
@@ -154,12 +154,10 @@ export const MarketplaceItemsList = ({
                     onClick={() => handleItemClick(item)}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
                   >
-                    <OptimizedFurniImage
+                    <RealMarketplaceImage
                       className={item.className}
                       name={item.name}
-                      type={itemType}
-                      hotel={item.hotel}
-                      size="sm"
+                      size="md"
                       priority={index < 5} // Prioridade para os primeiros 5 itens
                     />
                     

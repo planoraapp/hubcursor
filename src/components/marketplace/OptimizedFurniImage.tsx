@@ -35,60 +35,79 @@ const OptimizedFurniImage = ({
 
   // Move generateFurniUrls BEFORE useMemo
   const generateFurniUrls = useCallback((className: string, name: string, hotel: string, type: string) => {
-    const urls: string[] = [];
+    if (!className) return [];
     
-    // Múltiplas fontes primárias para maior cobertura
-    urls.push(
-      // HabboFurni
-      `https://habbofurni.com/furniture_images/${className}.png`,
-      `https://habbofurni.com/images/furniture/${className}.png`,
-      
-      // Habbo oficial
-      `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
-      `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/dcr/hof_furni/${className}.png`,
-      
-      // HabboWidgets como backup rápido
-      `https://www.habbowidgets.com/images/furni/${className}.gif`,
-      `https://habbowidgets.com/images/furni/${className}.png`
-    );
-
-    // Detectar características especiais
-    const isLTD = name.toLowerCase().includes('ltd') || className.toLowerCase().includes('ltd');
-    const isHC = name.toLowerCase().includes('hc') || className.toLowerCase().includes('hc_');
-    const isRare = name.toLowerCase().includes('rare') || name.toLowerCase().includes('throne');
+    const failedSet = new Set(failedUrls);
+    const cached = getCachedUrl(className);
     
-    // URLs específicas para itens especiais
-    if (isLTD || isHC || isRare) {
-      urls.push(
-        `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
-        `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/dcr/hof_furni/${className}.png`
-      );
-    }
-
-    // HabboWidgets como backup
-    urls.push(
-      `https://www.habbowidgets.com/images/furni/${className}.gif`,
-      `https://habbowidgets.com/images/furni/${className}.gif`
-    );
-
-    // URLs padrão do Habbo
-    const hotelMapping: Record<string, string> = {
-      'br': 'com.br',
-      'com': 'com',
-      'es': 'es',
-      'fr': 'fr',
-      'de': 'de'
-    };
-
-    const mappedHotel = hotelMapping[hotel] || hotel;
-    urls.push(
-      `https://images.habbo.com/dcr/hof_furni/${mappedHotel}/${className}.png`,
-      `https://www.habbo.${mappedHotel}/dcr/hof_furni/${className}.png`
-    );
-
-    // Remover URLs que já falharam e duplicatas
-    return [...new Set(urls)].filter(url => !failedUrls.has(url));
+    // Mapear className para URLs reais de móveis do Habbo
+    const urls = [
+      // Cached URLs first (highest priority)
+      ...(cached ? [cached] : []),
+      
+      // HabboAPI.site - Fonte primária mais confiável
+      `https://habboapi.site/images/furni/${className}.png`,
+      `https://habboapi.site/images/furni/${className}.gif`,
+      `https://www.habboapi.site/images/furni/${className}.png`,
+      
+      // HabboFurni - Boa cobertura
+      `https://habbofurni.com/images/furni/${className}.png`,
+      `https://habbofurni.com/images/furni/${className}.gif`,
+      `https://habbofurni.com/avatars/${className}.png`,
+      
+      // HabboWidgets - Recursos diversificados
+      `https://resources.habbowidgets.com/furnidata/${className}.gif`,
+      `https://resources.habbowidgets.com/furnidata/${className}.png`,
+      `https://resources.habbowidgets.com/furniture/${className}.png`,
+      
+      // Habbo Oficial - Domínios oficiais
+      `https://images.habbo.com/c_images/catalogue/${className}.png`,
+      `https://images.habbo.com/c_images/catalogue/${className}.gif`,
+      `https://images.habbo.com/c_images/items/${className}.png`,
+      `https://images.habbo.com/dcr/hof_furni/icons/${className}_icon.png`,
+      
+      // Room item icons oficiais
+      `https://www.habbo.com.br/habbo-imaging/roomitemicon?classname=${className}`,
+      `https://www.habbo.es/habbo-imaging/roomitemicon?classname=${className}`,
+      `https://www.habbo.com/habbo-imaging/roomitemicon?classname=${className}`,
+      
+      // HabboEmotion (funciona para alguns mobis)
+      `https://habboemotion.com/resources/c_images/catalogue/${className}.png`,
+      `https://habboemotion.com/resources/items/${className}.png`,
+      
+      // Outras fontes confiáveis
+      `https://habbo-stories.s3.amazonaws.com/furni_icons/${className}.png`,
+      `https://raw.githubusercontent.com/habbo-hotel/assets/main/furni/${className}.png`,
+      
+      // Fallbacks para patterns específicos
+      ...(className.includes('hc_') ? [
+        `https://images.habbo.com/c_images/catalogue/hc_${className.replace('hc_', '')}.png`,
+        `https://habboapi.site/images/furni/hc_${className.replace('hc_', '')}.png`
+      ] : []),
+      
+      ...(className.includes('rare_') ? [
+        `https://images.habbo.com/c_images/catalogue/rare_${className.replace('rare_', '')}.png`,
+        `https://habboapi.site/images/furni/rare_${className.replace('rare_', '')}.png`
+      ] : []),
+      
+      ...(className.includes('ltd_') ? [
+        `https://images.habbo.com/c_images/catalogue/ltd_${className.replace('ltd_', '')}.png`,
+        `https://habboapi.site/images/furni/ltd_${className.replace('ltd_', '')}.png`
+      ] : [])
+    ];
+    
+    // Filter out failed URLs and remove duplicates
+    const uniqueUrls = [...new Set(urls.filter(url => url && !failedSet.has(url)))];
+    console.log(`🖼️ [OptimizedFurniImage] Generated ${uniqueUrls.length} URLs for ${className}`);
+    
+    return uniqueUrls;
   }, []);
+
+  // Função auxiliar para cache
+  const getCachedUrl = (className: string): string | undefined => {
+    const cacheKey = `${className}_${hotel}`;
+    return imageCache.get(cacheKey);
+  };
 
   // Gerar URLs otimizadas com cache - NOW generateFurniUrls is defined
   const imageUrls = useMemo(() => {
