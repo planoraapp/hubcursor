@@ -212,45 +212,17 @@ export const HabboEmotionClothingGrid = ({
               <span className="font-medium">{categoryConfig.name}</span>
             </div>
           )}
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            {stats.filtered} de {stats.total} itens REAIS
+          <Badge variant="secondary">
+            {stats.filtered} itens
           </Badge>
         </div>
         
         <Button onClick={handleSync} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar API Real
+          Atualizar
         </Button>
       </div>
 
-      {/* Real API Statistics Panel */}
-      {stats.total > 0 && (
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border">
-          <div className="flex items-center gap-2 mb-3">
-            <Info className="w-4 h-4 text-green-600" />
-            <span className="font-medium text-green-900">Dados Reais da API HabboEmotion</span>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-            <div>
-              <div className="font-medium text-gray-900">{stats.total}</div>
-              <div className="text-gray-600">Itens Reais</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-900">{Object.keys(stats.byCategory).length}</div>
-              <div className="text-gray-600">Categorias</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-900">{stats.bySource['habboemotion-api'] || 0}</div>
-              <div className="text-gray-600">API Direta</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-900">{stats.filtered}</div>
-              <div className="text-gray-600">Filtrados</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -326,11 +298,6 @@ export const HabboEmotionClothingGrid = ({
                     size={viewMode === 'grid' ? 'm' : 's'}
                     className={`${viewMode === 'grid' ? 'w-full h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded' : ''}`}
                   />
-                  
-                  {/* Real item indicator */}
-                  <div className="absolute top-0 left-0 bg-green-500 text-white text-xs px-1 rounded-br font-bold">
-                    REAL
-                  </div>
                   
                   {/* Color count indicator */}
                   {item.colors && item.colors.length > 1 && (

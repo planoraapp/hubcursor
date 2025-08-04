@@ -21,39 +21,31 @@ const EnhancedClothingThumbnail = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageCache] = useState(new Map<string, boolean>());
 
-  // Generate WORKING clothing image URLs based on REAL API data
+  // Generate functional clothing image URLs
   const generateRealClothingUrls = useCallback(() => {
     const urls: string[] = [];
     const category = item.part;
     const itemId = item.id;
     const code = item.code;
     
-    console.log(`🖼️ [EnhancedThumbnail] Generating URLs for REAL item:`, {
-      id: itemId,
-      code,
-      part: category,
-      source: item.source
-    });
-    
-    // PRIORITY 1: Official Habbo imaging (MOST RELIABLE for real items)
-    urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/${selectedColorId}.png`);
-    urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/1.png`);
-    
-    // PRIORITY 2: HabboAssets (reliable alternative)
+    // PRIORITY 1: HabboAssets - most reliable for clothing items
     if (code) {
+      urls.push(`https://habboassets.com/clothing/${code}.png`);
       urls.push(`https://www.habboassets.com/clothing/${code}.png`);
-      urls.push(`https://www.habboassets.com/assets/clothing/${category}/${code}.png`);
     }
     
-    // PRIORITY 3: Alternative official patterns
-    urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}_${selectedColorId}.png`);
-    urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_1.png`);
+    // PRIORITY 2: Habblet Assets (alternative reliable source)
+    if (code) {
+      urls.push(`https://habblet-assets.s3.amazonaws.com/clothing/${code}.png`);
+    }
     
-    // PRIORITY 4: Fallback to generic patterns
-    urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/0.png`);
+    // PRIORITY 3: Official Habbo patterns with corrected structure
+    urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_${selectedColorId}.png`);
+    urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}_${selectedColorId}.png`);
+    
+    // PRIORITY 4: Simplified patterns
     urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}.png`);
     
-    console.log(`📋 [EnhancedThumbnail] Generated ${urls.length} URLs for real item ${itemId}`);
     return [...new Set(urls)]; // Remove duplicates
   }, [item, selectedColorId]);
 
@@ -61,15 +53,12 @@ const EnhancedClothingThumbnail = ({
 
   const handleImageError = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`❌ [EnhancedThumbnail] Real item image failed: ${currentUrl} (${item.name})`);
-    
     imageCache.set(currentUrl, false);
     
     if (currentUrlIndex < thumbnailUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
     } else {
-      console.log(`💥 [EnhancedThumbnail] All URLs failed for real item ${item.name} (${item.id})`);
       setHasError(true);
       setIsLoading(false);
     }
@@ -77,8 +66,6 @@ const EnhancedClothingThumbnail = ({
 
   const handleImageLoad = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`✅ [EnhancedThumbnail] Real item image success: ${currentUrl} (${item.name})`);
-    
     imageCache.set(currentUrl, true);
     
     setIsLoading(false);
@@ -145,21 +132,11 @@ const EnhancedClothingThumbnail = ({
         decoding="async"
       />
       
-      {/* Real item indicators */}
-      {!isLoading && !hasError && (
-        <>
-          {/* Source indicator - API Real */}
-          <div className="absolute bottom-0 right-0 bg-green-600 text-white text-xs px-1 rounded-tl font-bold">
-            API
-          </div>
-          
-          {/* HC indicator only if HC */}
-          {item.club === 'HC' && (
-            <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs px-1 rounded-bl font-bold">
-              HC
-            </div>
-          )}
-        </>
+      {/* HC indicator only if HC */}
+      {!isLoading && !hasError && item.club === 'HC' && (
+        <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs px-1 rounded-bl font-bold">
+          HC
+        </div>
       )}
     </div>
   );
