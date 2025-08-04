@@ -19,7 +19,7 @@ export interface OfficialHabboAssetsData {
 }
 
 const fetchOfficialHabboAssets = async (): Promise<OfficialHabboAssetsData> => {
-  console.log('🌐 [OfficialHabboAssets] Fetching real Habbo assets...');
+  console.log('🌐 [OfficialHabboAssets] Fetching real focused Habbo assets...');
   
   try {
     const { data, error } = await supabase.functions.invoke('get-official-habbo-assets');
@@ -32,9 +32,10 @@ const fetchOfficialHabboAssets = async (): Promise<OfficialHabboAssetsData> => {
       throw new Error('No assets data received');
     }
     
-    console.log('✅ [OfficialHabboAssets] Assets loaded:', {
+    console.log('✅ [OfficialHabboAssets] Focused assets loaded:', {
       categories: Object.keys(data.assets).length,
-      totalItems: Object.values(data.assets).reduce((sum: number, items: any) => sum + items.length, 0)
+      totalItems: Object.values(data.assets).reduce((sum: number, items: any) => sum + items.length, 0),
+      source: data.metadata?.source
     });
     
     return data.assets;
@@ -47,9 +48,9 @@ const fetchOfficialHabboAssets = async (): Promise<OfficialHabboAssetsData> => {
 
 export const useOfficialHabboAssets = () => {
   return useQuery({
-    queryKey: ['official-habbo-assets'],
+    queryKey: ['official-habbo-assets-focused'],
     queryFn: fetchOfficialHabboAssets,
-    staleTime: 1000 * 60 * 60 * 12, // 12 hours
+    staleTime: 1000 * 60 * 60 * 6, // 6 hours
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
     retry: 2,
   });
@@ -61,6 +62,8 @@ export const useOfficialHabboCategory = (categoryId: string, gender: 'M' | 'F') 
   const filteredAssets = allAssets?.[categoryId]?.filter(
     asset => asset.gender === gender || asset.gender === 'U'
   ) || [];
+  
+  console.log(`🎯 [OfficialCategory] Filtered focused assets for ${categoryId}:`, filteredAssets.length);
   
   return {
     ...queryResult,
@@ -76,11 +79,28 @@ export const generateFocusedThumbnail = (
   gender: 'M' | 'F' = 'M',
   hotel: string = 'com'
 ): string => {
-  // URL base do sistema oficial Habbo (igual ao ViaJovem)
-  return `https://www.habbo.${hotel}/habbo-imaging/avatarimage?figure=${category}-${figureId}-${colorId}&gender=${gender}&direction=2&head_direction=2&size=s`;
+  // Avatar base que destaca a categoria específica
+  const baseAvatars = {
+    'hd': 'hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61',
+    'hr': 'hd-180-1.ch-3216-61.lg-3116-61.sh-3297-61', 
+    'ch': 'hd-180-1.hr-828-45.lg-3116-61.sh-3297-61',
+    'cc': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61',
+    'lg': 'hd-180-1.hr-828-45.ch-3216-61.sh-3297-61',
+    'sh': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61',
+    'ha': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61',
+    'ea': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61',
+    'ca': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61',
+    'cp': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61',
+    'wa': 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61'
+  };
+  
+  const baseAvatar = baseAvatars[category as keyof typeof baseAvatars] || 'hd-180-1.hr-828-45.ch-3216-61.lg-3116-61.sh-3297-61';
+  const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
+  
+  return `https://www.habbo.${hotel}/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=l`;
 };
 
-// Função para gerar URL de preview completo do avatar
+// Função para gerar URL de preview completo do avatar  
 export const generateAvatarPreview = (
   figureString: string,
   gender: 'M' | 'F' = 'M',

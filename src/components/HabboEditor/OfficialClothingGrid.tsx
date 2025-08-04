@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Filter } from 'lucide-react';
 import { useOfficialHabboCategory, OfficialHabboAsset } from '@/hooks/useOfficialHabboAssets';
-import OfficialClothingThumbnail from './OfficialClothingThumbnail';
+import FocusedClothingThumbnail from './FocusedClothingThumbnail';
 
 interface OfficialClothingGridProps {
   selectedCategory: string;
@@ -43,12 +43,12 @@ const OfficialClothingGrid = ({
   }, [assets, showHCOnly]);
 
   const handleItemClick = (asset: OfficialHabboAsset) => {
-    console.log('🎯 [OfficialGrid] Asset selecionado:', asset.name, asset.figureId);
+    console.log('🎯 [OfficialGrid] Asset focado selecionado:', asset.name, asset.figureId);
     onItemSelect(asset, selectedColor);
   };
 
   const handleColorChange = (asset: OfficialHabboAsset, colorId: string) => {
-    console.log('🎨 [OfficialGrid] Cor alterada:', { asset: asset.name, colorId });
+    console.log('🎨 [OfficialGrid] Cor alterada com preview focado:', { asset: asset.name, colorId });
     onItemSelect(asset, colorId);
   };
 
@@ -56,7 +56,7 @@ const OfficialClothingGrid = ({
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-2 text-gray-600">Carregando assets oficiais...</span>
+        <span className="ml-2 text-gray-600">Carregando assets focados...</span>
       </div>
     );
   }
@@ -79,7 +79,7 @@ const OfficialClothingGrid = ({
         <div className="text-center text-muted-foreground">
           <p className="font-medium">Nenhum asset encontrado</p>
           <p className="text-sm mt-2">Categoria: {selectedCategory} - Gênero: {selectedGender}</p>
-          <Badge variant="outline" className="mt-2">Sistema Oficial Habbo</Badge>
+          <Badge variant="outline" className="mt-2">Sistema Oficial Focado</Badge>
         </div>
       </Card>
     );
@@ -92,10 +92,10 @@ const OfficialClothingGrid = ({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <span>Assets Oficiais Habbo</span>
+              <span>Assets Focados Habbo</span>
               <Badge variant="secondary">{filteredAssets.length} itens</Badge>
               <Badge variant="outline" className="bg-green-50 text-green-700">
-                Sistema Oficial
+                Preview Focado
               </Badge>
             </CardTitle>
             
@@ -123,16 +123,16 @@ const OfficialClothingGrid = ({
         </CardHeader>
       </Card>
 
-      {/* Grid de assets */}
+      {/* Grid de assets focados */}
       <div className={`
-        max-h-96 overflow-y-auto p-2 bg-gray-50 rounded-lg
+        max-h-96 overflow-y-auto p-3 bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg border
         ${viewMode === 'grid' 
           ? 'grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3' 
           : 'space-y-2'
         }
       `}>
         {filteredAssets.map((asset) => (
-          <OfficialClothingThumbnail
+          <FocusedClothingThumbnail
             key={asset.id}
             asset={asset}
             colorId={selectedColor}
@@ -141,18 +141,18 @@ const OfficialClothingGrid = ({
             isSelected={selectedItem === asset.figureId}
             onClick={() => handleItemClick(asset)}
             onColorChange={(colorId) => handleColorChange(asset, colorId)}
-            className={viewMode === 'list' ? 'flex items-center gap-3 p-2 bg-white rounded' : ''}
+            className={viewMode === 'list' ? 'flex items-center gap-3 p-2 bg-white rounded shadow-sm' : ''}
           />
         ))}
       </div>
 
-      {/* Footer com informações */}
+      {/* Footer com informações focadas */}
       <Card>
         <CardContent className="p-3">
           <div className="text-xs text-gray-600 flex items-center justify-between">
-            <span>🌐 Fonte: Sistema Oficial Habbo ({selectedHotel})</span>
+            <span>🎯 Fonte: Sistema Habbo Focado ({selectedHotel})</span>
             <span>
-              📊 {filteredAssets.length} assets • 
+              📊 {filteredAssets.length} focados • 
               {filteredAssets.filter(a => a.club === 'HC').length} HC • 
               {filteredAssets.filter(a => a.club === 'FREE').length} FREE
             </span>
