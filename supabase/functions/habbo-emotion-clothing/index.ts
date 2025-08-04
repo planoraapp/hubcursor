@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { limit = 200 } = await req.json().catch(() => ({}));
+    const { limit = 1000 } = await req.json().catch(() => ({}));
     
     console.log(`🌐 [HabboEmotion] Fetching clothing data with limit: ${limit}`);
     
@@ -84,8 +84,8 @@ serve(async (req) => {
     }
 
     if (clothingData.length === 0) {
-      console.log('🔄 [HabboEmotion] All endpoints failed, generating structured fallback');
-      clothingData = generateEmotionFallbackData();
+      console.log('🔄 [HabboEmotion] All endpoints failed, generating enhanced fallback');
+      clothingData = generateEnhancedFallbackData(limit);
     }
 
     const result = {
@@ -111,7 +111,7 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({
-        items: generateEmotionFallbackData(),
+        items: generateEnhancedFallbackData(1000),
         metadata: {
           source: 'error-fallback',
           fetchedAt: new Date().toISOString(),
@@ -145,14 +145,8 @@ function mapCategoryToStandard(category: string): string {
 }
 
 function generateEmotionImageUrl(code: string, part: string): string {
-  // Generate multiple possible image URLs for HabboEmotion
-  const baseUrls = [
-    `https://habboemotion.com/images/clothing/${part}/${code}.png`,
-    `https://habboemotion.com/assets/clothing/${code}.png`,
-    `https://cdn.habboemotion.com/clothing/${code}.gif`
-  ];
-  
-  return baseUrls[0]; // Return primary URL
+  // Garantir padrão _2_0.png (front_right) para todas as imagens
+  return `https://habboemotion.com/usables/clothing/${part}_U_${code}_2_0.png`;
 }
 
 function determineClub(code: string): 'HC' | 'FREE' {
@@ -175,42 +169,42 @@ function generateDefaultColors(part: string): string[] {
   return colorSets[part] || ['1', '2', '3', '4', '5'];
 }
 
-function generateEmotionFallbackData(): any[] {
+function generateEnhancedFallbackData(requestedLimit: number): any[] {
   const categories = [
-    { code: 'hr', name: 'Hair', count: 50 },
-    { code: 'hd', name: 'Head', count: 20 },
-    { code: 'ch', name: 'Shirt', count: 80 },
-    { code: 'lg', name: 'Trousers', count: 60 },
-    { code: 'sh', name: 'Shoes', count: 40 },
-    { code: 'ha', name: 'Hat', count: 30 },
-    { code: 'ea', name: 'Eye Accessory', count: 20 },
-    { code: 'fa', name: 'Face Accessory', count: 15 },
-    { code: 'cc', name: 'Coat', count: 35 },
-    { code: 'ca', name: 'Chest Accessory', count: 25 },
-    { code: 'wa', name: 'Waist', count: 15 },
-    { code: 'cp', name: 'Chest Print', count: 10 }
+    { code: 'hr', name: 'Hair', count: Math.floor(requestedLimit * 0.25) },
+    { code: 'hd', name: 'Head', count: Math.floor(requestedLimit * 0.1) },
+    { code: 'ch', name: 'Shirt', count: Math.floor(requestedLimit * 0.3) },
+    { code: 'lg', name: 'Trousers', count: Math.floor(requestedLimit * 0.2) },
+    { code: 'sh', name: 'Shoes', count: Math.floor(requestedLimit * 0.15) },
+    { code: 'ha', name: 'Hat', count: Math.floor(requestedLimit * 0.12) },
+    { code: 'ea', name: 'Eye Accessory', count: Math.floor(requestedLimit * 0.08) },
+    { code: 'fa', name: 'Face Accessory', count: Math.floor(requestedLimit * 0.05) },
+    { code: 'cc', name: 'Coat', count: Math.floor(requestedLimit * 0.1) },
+    { code: 'ca', name: 'Chest Accessory', count: Math.floor(requestedLimit * 0.08) },
+    { code: 'wa', name: 'Waist', count: Math.floor(requestedLimit * 0.05) },
+    { code: 'cp', name: 'Chest Print', count: Math.floor(requestedLimit * 0.03) }
   ];
 
   const fallbackItems: any[] = [];
   
   categories.forEach(category => {
     for (let i = 1; i <= category.count; i++) {
-      const isHC = i % 6 === 0;
+      const isHC = i % 8 === 0;
       
       fallbackItems.push({
-        id: parseInt(`${category.code === 'hr' ? '1' : '2'}${i.toString().padStart(3, '0')}`),
+        id: parseInt(`${category.code === 'hr' ? '1' : '2'}${i.toString().padStart(4, '0')}`),
         code: `${category.code}_${i}`,
         part: category.code,
-        gender: 'U',
+        gender: Math.random() > 0.5 ? 'U' : (Math.random() > 0.5 ? 'M' : 'F'),
         date: new Date().toISOString(),
         colors: generateDefaultColors(category.code),
-        imageUrl: `https://habboemotion.com/images/clothing/${category.code}/${category.code}_${i}.png`,
+        imageUrl: `https://habboemotion.com/usables/clothing/${category.code}_U_${category.code}_${i}_2_0.png`,
         club: isHC ? 'HC' : 'FREE',
         source: 'habboemotion'
       });
     }
   });
   
-  console.log(`🔄 [Fallback] Generated ${fallbackItems.length} HabboEmotion fallback items`);
+  console.log(`🔄 [Enhanced Fallback] Generated ${fallbackItems.length} HabboEmotion fallback items`);
   return fallbackItems;
 }

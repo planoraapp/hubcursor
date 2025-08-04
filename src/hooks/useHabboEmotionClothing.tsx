@@ -38,7 +38,7 @@ const CATEGORY_MAPPING: Record<string, string> = {
   'acc_face': 'fa'
 };
 
-const fetchHabboEmotionClothing = async (limit: number = 500): Promise<HabboEmotionClothingItem[]> => {
+const fetchHabboEmotionClothing = async (limit: number = 1000): Promise<HabboEmotionClothingItem[]> => {
   console.log(`🌐 [HabboEmotion] Fetching clothing data with limit: ${limit}`);
   
   try {
@@ -82,12 +82,12 @@ const fetchHabboEmotionClothing = async (limit: number = 500): Promise<HabboEmot
 };
 
 const generateClothingImageUrl = (code: string, part: string): string => {
-  // Gerar URL da imagem da roupa isolada (padrão _2_0.png para diagonal direita)
+  // Garantir uso do padrão _2_0.png (front_right/diagonal direita)
   const baseUrl = 'https://habboemotion.com/usables/clothing';
   return `${baseUrl}/${part}_U_${code}_2_0.png`;
 };
 
-export const useHabboEmotionClothing = (limit: number = 500) => {
+export const useHabboEmotionClothing = (limit: number = 1000) => {
   return useQuery({
     queryKey: ['habbo-emotion-clothing', limit],
     queryFn: () => fetchHabboEmotionClothing(limit),

@@ -24,7 +24,7 @@ export const HabboEmotionClothingGrid: React.FC<HabboEmotionClothingGridProps> =
   selectedColor
 }) => {
   const [colorPopoverOpen, setColorPopoverOpen] = useState<string | null>(null);
-  const { data: clothingItems, isLoading, error } = useHabboEmotionClothing(500);
+  const { data: clothingItems, isLoading, error } = useHabboEmotionClothing(1000);
 
   // Filtrar itens por categoria e gênero
   const filteredItems = useMemo(() => {
@@ -91,8 +91,8 @@ export const HabboEmotionClothingGrid: React.FC<HabboEmotionClothingGridProps> =
         </div>
       </div>
 
-      {/* Items Grid */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+      {/* Items Grid - Reduzida densidade e imagens maiores */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
         {filteredItems.map((item) => (
           <Popover 
             key={item.code}
@@ -106,40 +106,34 @@ export const HabboEmotionClothingGrid: React.FC<HabboEmotionClothingGridProps> =
                 }`}
                 onClick={() => handleItemClick(item)}
               >
-                <CardContent className="p-2">
+                <CardContent className="p-3">
                   <div className="relative">
                     <img
                       src={item.imageUrl}
-                      alt={item.name}
-                      className="w-full h-12 object-contain rounded bg-gray-50"
+                      alt={`Item ${item.code}`}
+                      className="w-full h-20 object-contain rounded bg-gray-50"
                       style={{ imageRendering: 'pixelated' }}
                       loading="lazy"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        // Fallback para imagem genérica
-                        target.src = `https://habboemotion.com/usables/clothing/${item.part}_U_${item.code}.png`;
+                        // Fallback para imagem genérica usando padrão _2_0
+                        target.src = `https://habboemotion.com/usables/clothing/${item.part}_U_${item.code}_2_0.png`;
                       }}
                     />
                     
                     {/* Indicador de cores disponíveis */}
                     {item.colors && item.colors.length > 1 && (
-                      <div className="absolute top-0 right-0 bg-purple-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      <div className="absolute top-1 right-1 bg-purple-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                         {item.colors.length}
                       </div>
                     )}
                     
                     {/* Badge HC */}
                     {item.club === 'HC' && (
-                      <div className="absolute bottom-0 right-0 bg-yellow-500 text-white text-xs px-1 rounded-tl">
+                      <div className="absolute bottom-1 right-1 bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded">
                         HC
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="mt-1 text-center">
-                    <p className="text-xs text-gray-600 truncate" title={item.name}>
-                      {item.code}
-                    </p>
                   </div>
                 </CardContent>
               </Card>
