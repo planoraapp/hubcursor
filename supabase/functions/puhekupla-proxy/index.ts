@@ -39,22 +39,11 @@ serve(async (req) => {
     const category = params.category || '';
     const search = params.search || '';
     
-    // Get API key from environment with better fallback handling
+    // Get API key from environment
     const envApiKey = Deno.env.get('PUHEKUPLA_API_KEY');
     
-    // Try multiple valid demo keys - these might work better
-    const demoKeys = [
-      'demo-sitename',
-      'demo-site', 
-      'demo-habbo-hub',
-      'demo-habbohub',
-      'demo-habbo', 
-      'demo-test',
-      'demo-puhekupla',
-      'demo-dev',
-      'demo-client',
-      'demo'
-    ];
+    // Use correct demo key format as specified in documentation
+    const correctDemoKey = 'demo-habbohub';
     
     let apiUrl = '';
     
@@ -83,20 +72,26 @@ serve(async (req) => {
     console.log(`📡 [PuhekuplaProxy] Fetching: ${apiUrl}`);
     console.log(`🔑 [PuhekuplaProxy] Environment key available: ${!!envApiKey}`);
 
-    // Multiple authentication strategies to try
+    // Authentication strategies in order of preference
     const authStrategies = [
-      // No auth (public endpoints)
-      { name: 'No Auth', headers: () => ({}) },
-      // Bearer with environment key
-      ...(envApiKey ? [{ name: 'Bearer (env)', headers: () => ({ 'Authorization': `Bearer ${envApiKey}` }) }] : []),
-      // X-API-Key with environment key
-      ...(envApiKey ? [{ name: 'X-API-Key (env)', headers: () => ({ 'X-API-Key': envApiKey }) }] : []),
-      // Demo keys with different auth methods
-      ...demoKeys.flatMap(key => [
-        { name: `Bearer (${key})`, headers: () => ({ 'Authorization': `Bearer ${key}` }) },
-        { name: `X-API-Key (${key})`, headers: () => ({ 'X-API-Key': key }) },
-        { name: `API-Key (${key})`, headers: () => ({ 'API-Key': key }) }
-      ])
+      // Environment API key first (if available)
+      ...(envApiKey ? [
+        { name: 'X-API-Key (env)', headers: { 'X-API-Key': envApiKey } },
+        { name: 'Authorization Bearer (env)', headers: { 'Authorization': `Bearer ${envApiKey}` } },
+        { name: 'apikey header (env)', headers: { 'apikey': envApiKey } },
+      ] : []),
+      
+      // Correct demo key format from documentation
+      { name: 'X-API-Key (demo-habbohub)', headers: { 'X-API-Key': correctDemoKey } },
+      { name: 'Authorization Bearer (demo-habbohub)', headers: { 'Authorization': `Bearer ${correctDemoKey}` } },
+      { name: 'apikey header (demo-habbohub)', headers: { 'apikey': correctDemoKey } },
+      
+      // Alternative demo formats
+      { name: 'X-API-Key (demo-habbo-hub)', headers: { 'X-API-Key': 'demo-habbo-hub' } },
+      { name: 'Authorization Bearer (demo-habbo-hub)', headers: { 'Authorization': `Bearer demo-habbo-hub` } },
+      
+      // No auth as last resort
+      { name: 'No Auth', headers: {} }
     ];
 
     const baseHeaders = {
@@ -109,45 +104,65 @@ serve(async (req) => {
     let successfulStrategy = '';
     let responseData: any = null;
 
-    // Try each strategy until one works
+    // Try each authentication strategy
     for (const strategy of authStrategies) {
       try {
         console.log(`🔄 [PuhekuplaProxy] Trying ${strategy.name}...`);
         
         const fetchHeaders = {
           ...baseHeaders,
-          ...strategy.headers()
+          ...strategy.headers
         };
 
-        response = await fetch(apiUrl, {
+        // Also try as query parameter for demo keys
+        let testUrl = apiUrl;
+        if (strategy.name.includes('demo')) {
+          const apiKeyParam = strategy.headers['X-API-Key'] || strategy.headers['Authorization']?.replace('Bearer ', '') || strategy.headers['apikey'];
+          if (apiKeyParam) {
+            testUrl += `${apiUrl.includes('?') ? '&' : '?'}api_key=${apiKeyParam}`;
+            console.log(`🔗 [PuhekuplaProxy] Testing with query param: ${testUrl}`);
+          }
+        }
+
+        response = await fetch(testUrl, {
           headers: fetchHeaders,
           method: 'GET'
         });
 
         console.log(`📊 [PuhekuplaProxy] ${strategy.name} response: ${response.status} ${response.statusText}`);
+        console.log(`📋 [PuhekuplaProxy] Response headers:`, Object.fromEntries(response.headers.entries()));
 
         if (response.ok) {
-          responseData = await response.json();
-          console.log(`✅ [PuhekuplaProxy] SUCCESS with ${strategy.name}`);
-          console.log(`📦 [PuhekuplaProxy] Response keys:`, Object.keys(responseData));
-          successfulStrategy = strategy.name;
-          break;
+          const responseText = await response.text();
+          console.log(`📝 [PuhekuplaProxy] Raw response (first 200 chars):`, responseText.substring(0, 200));
+          
+          try {
+            responseData = JSON.parse(responseText);
+            console.log(`✅ [PuhekuplaProxy] SUCCESS with ${strategy.name}`);
+            console.log(`📦 [PuhekuplaProxy] Response structure:`, Object.keys(responseData));
+            successfulStrategy = strategy.name;
+            break;
+          } catch (jsonError) {
+            console.log(`❌ [PuhekuplaProxy] JSON parse error with ${strategy.name}:`, jsonError.message);
+            console.log(`📄 [PuhekuplaProxy] Response content:`, responseText);
+          }
         } else {
           const errorText = await response.text();
           console.log(`❌ [PuhekuplaProxy] Failed with ${strategy.name}: ${response.status} - ${errorText.substring(0, 200)}`);
         }
       } catch (error) {
-        console.log(`💥 [PuhekuplaProxy] Error with ${strategy.name}:`, error.message);
+        console.log(`💥 [PuhekuplaProxy] Network error with ${strategy.name}:`, error.message);
       }
       
       response = null;
+      responseData = null;
     }
 
-    // If all strategies failed, return mock data for development
+    // If all authentication strategies failed, return mock data
     if (!response || !response.ok || !responseData) {
-      console.log('🚨 [PuhekuplaProxy] All strategies failed, returning mock data for development');
+      console.log('🚨 [PuhekuplaProxy] All strategies failed, returning enhanced mock data');
       
-      const mockData = generateMockData(endpoint, page);
+      const mockData = generateEnhancedMockData(endpoint, page);
       
       return new Response(
         JSON.stringify({
@@ -156,7 +171,8 @@ serve(async (req) => {
           data: mockData,
           fetchedAt: new Date().toISOString(),
           source: 'mock_data',
-          note: 'Using mock data - API authentication failed'
+          note: 'API authentication failed - using mock data for development',
+          authStrategiesAttempted: authStrategies.length
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -164,10 +180,10 @@ serve(async (req) => {
       );
     }
 
-    // Handle successful response
-    console.log(`🎉 [PuhekuplaProxy] Final success for ${endpoint}:`, {
+    // Handle successful API response
+    console.log(`🎉 [PuhekuplaProxy] API Success for ${endpoint}:`, {
       strategy: successfulStrategy,
-      dataStructure: Object.keys(responseData),
+      dataKeys: Object.keys(responseData),
       hasResult: 'result' in responseData,
       statusCode: responseData.status_code,
       statusMessage: responseData.status_message
@@ -180,7 +196,7 @@ serve(async (req) => {
         data: responseData,
         fetchedAt: new Date().toISOString(),
         strategy: successfulStrategy,
-        source: 'api'
+        source: 'puhekupla_api'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -196,8 +212,9 @@ serve(async (req) => {
         error: error.message,
         fetchedAt: new Date().toISOString(),
         troubleshooting: {
-          suggestion: 'API authentication failed, check PUHEKUPLA_API_KEY or use mock data',
-          note: 'This might be a temporary issue with the Puhekupla API'
+          suggestion: 'Check API documentation and ensure correct demo key format',
+          demoKeyFormat: 'demo-habbohub (as per Puhekupla API docs)',
+          note: 'Using fallback mock data instead'
         }
       }),
       { 
@@ -208,7 +225,7 @@ serve(async (req) => {
   }
 });
 
-function generateMockData(endpoint: string, page: string) {
+function generateEnhancedMockData(endpoint: string, page: string) {
   const pageNum = parseInt(page) || 1;
   
   switch (endpoint) {
@@ -216,11 +233,12 @@ function generateMockData(endpoint: string, page: string) {
       return {
         result: {
           categories: [
-            { guid: 'mock-1', name: 'Mobília', slug: 'mobilia', image: '', count: 150 },
-            { guid: 'mock-2', name: 'Decoração', slug: 'decoracao', image: '', count: 89 },
-            { guid: 'mock-3', name: 'Plantas', slug: 'plantas', image: '', count: 34 },
-            { guid: 'mock-4', name: 'Eletrônicos', slug: 'eletronicos', image: '', count: 67 },
-            { guid: 'mock-5', name: 'Raros', slug: 'raros', image: '', count: 23 }
+            { guid: 'cat-1', name: 'Mobília Básica', slug: 'mobilia-basica', image: '/placeholder.svg', count: 45 },
+            { guid: 'cat-2', name: 'Decoração', slug: 'decoracao', image: '/placeholder.svg', count: 32 },
+            { guid: 'cat-3', name: 'Plantas e Jardim', slug: 'plantas-jardim', image: '/placeholder.svg', count: 18 },
+            { guid: 'cat-4', name: 'Eletrônicos', slug: 'eletronicos', image: '/placeholder.svg', count: 24 },
+            { guid: 'cat-5', name: 'Raros e Especiais', slug: 'raros-especiais', image: '/placeholder.svg', count: 12 },
+            { guid: 'cat-6', name: 'Iluminação', slug: 'iluminacao', image: '/placeholder.svg', count: 15 }
           ]
         }
       };
@@ -228,37 +246,21 @@ function generateMockData(endpoint: string, page: string) {
     case 'furni':
       return {
         result: {
-          furni: Array.from({ length: 20 }, (_, i) => ({
-            guid: `mock-furni-${pageNum}-${i + 1}`,
-            slug: `mock-furni-${i + 1}`,
-            code: `furni_mock_${i + 1}`,
-            name: `Móvel Mock ${i + 1}`,
-            description: `Descrição do móvel mock ${i + 1}`,
-            image: `/placeholder.svg`,
-            icon: `/placeholder.svg`,
-            status: 'active'
-          }))
-        },
-        pagination: {
-          current_page: pageNum,
-          pages: 5,
-          total: 100
-        }
-      };
-      
-    case 'clothing':
-      return {
-        result: {
-          clothing: Array.from({ length: 20 }, (_, i) => ({
-            guid: `mock-clothing-${pageNum}-${i + 1}`,
-            code: `clothing_mock_${i + 1}`,
-            name: `Roupa Mock ${i + 1}`,
-            description: `Descrição da roupa mock ${i + 1}`,
-            image: `/placeholder.svg`,
-            category: 'shirt',
-            gender: i % 2 === 0 ? 'M' : 'F',
-            status: 'active'
-          }))
+          furni: Array.from({ length: 20 }, (_, i) => {
+            const furniId = (pageNum - 1) * 20 + i + 1;
+            return {
+              guid: `furni-${furniId}`,
+              slug: `movel-demo-${furniId}`,
+              code: `furni_${furniId}`,
+              name: `Móvel Demo ${furniId}`,
+              description: `Descrição detalhada do móvel demo número ${furniId}. Ideal para decoração.`,
+              image: `/placeholder.svg?text=Furni${furniId}`,
+              icon: `/placeholder.svg?text=Icon${furniId}`,
+              status: 'active',
+              category: i % 3 === 0 ? 'mobilia-basica' : i % 3 === 1 ? 'decoracao' : 'eletronicos',
+              rarity: i % 5 === 0 ? 'rare' : 'common'
+            };
+          })
         },
         pagination: {
           current_page: pageNum,
@@ -267,26 +269,56 @@ function generateMockData(endpoint: string, page: string) {
         }
       };
       
-    case 'badges':
+    case 'clothing':
       return {
         result: {
-          badges: Array.from({ length: 20 }, (_, i) => ({
-            guid: `mock-badge-${pageNum}-${i + 1}`,
-            code: `badge_mock_${i + 1}`,
-            name: `Emblema Mock ${i + 1}`,
-            description: `Descrição do emblema mock ${i + 1}`,
-            image: `/placeholder.svg`,
-            status: 'active'
-          }))
+          clothing: Array.from({ length: 20 }, (_, i) => {
+            const clothingId = (pageNum - 1) * 20 + i + 1;
+            return {
+              guid: `clothing-${clothingId}`,
+              code: `clothing_${clothingId}`,
+              name: `Roupa Demo ${clothingId}`,
+              description: `Descrição da roupa demo ${clothingId}. Estilo moderno.`,
+              image: `/placeholder.svg?text=Cloth${clothingId}`,
+              category: ['shirt', 'pants', 'shoes', 'hat', 'accessory'][i % 5],
+              gender: i % 2 === 0 ? 'M' : 'F',
+              status: 'active',
+              colors: ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'][i % 5]
+            };
+          })
         },
         pagination: {
           current_page: pageNum,
-          pages: 3,
-          total: 60
+          pages: 6,
+          total: 120
+        }
+      };
+      
+    case 'badges':
+      return {
+        result: {
+          badges: Array.from({ length: 20 }, (_, i) => {
+            const badgeId = (pageNum - 1) * 20 + i + 1;
+            return {
+              guid: `badge-${badgeId}`,
+              code: `BADGE${badgeId}`,
+              name: `Emblema Demo ${badgeId}`,
+              description: `Emblema especial número ${badgeId}. Conquista rara.`,
+              image: `/placeholder.svg?text=Badge${badgeId}`,
+              status: 'active',
+              type: ['achievement', 'event', 'special', 'competition'][i % 4],
+              rarity: i % 4 === 0 ? 'legendary' : i % 4 === 1 ? 'epic' : 'common'
+            };
+          })
+        },
+        pagination: {
+          current_page: pageNum,
+          pages: 4,
+          total: 80
         }
       };
       
     default:
-      return { result: {} };
+      return { result: {}, pagination: { current_page: 1, pages: 1, total: 0 } };
   }
 }

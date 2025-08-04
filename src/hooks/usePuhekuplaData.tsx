@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,6 +11,8 @@ export interface PuhekuplaFurni {
   image: string;
   icon: string;
   status: string;
+  category?: string;
+  rarity?: string;
 }
 
 export interface PuhekuplaCategory {
@@ -27,6 +30,8 @@ export interface PuhekuplaBadge {
   description: string;
   image: string;
   status: string;
+  type?: string;
+  rarity?: string;
 }
 
 export interface PuhekuplaClothing {
@@ -38,6 +43,7 @@ export interface PuhekuplaClothing {
   category: string;
   gender: string;
   status: string;
+  colors?: string;
 }
 
 const fetchPuhekuplaData = async (endpoint: string, params: Record<string, string> = {}) => {
@@ -61,10 +67,9 @@ const fetchPuhekuplaData = async (endpoint: string, params: Record<string, strin
     success: data.success,
     source: data.source,
     strategy: data.strategy,
+    endpoint: data.endpoint,
     dataKeys: data.data ? Object.keys(data.data) : 'no data',
-    hasResult: data.data?.result ? 'yes' : 'no',
-    statusCode: data.data?.status_code,
-    statusMessage: data.data?.status_message
+    hasResult: data.data?.result ? 'yes' : 'no'
   });
 
   if (!data.success) {
@@ -72,23 +77,34 @@ const fetchPuhekuplaData = async (endpoint: string, params: Record<string, strin
     throw new Error(data.error || 'Unknown API error');
   }
 
-  // Handle both real API responses and mock data
+  // Process the response data
   let processedData = data.data;
   
-  // If we get a status_code/status_message response (API error), treat as empty result
+  // Handle API error responses (403, etc.) by converting to empty result format
   if (processedData?.status_code && processedData?.status_message) {
-    console.warn(`⚠️ [PuhekuplaData] ${endpoint} returned status response:`, {
+    console.warn(`⚠️ [PuhekuplaData] ${endpoint} returned error response:`, {
       code: processedData.status_code,
-      message: processedData.status_message
+      message: processedData.status_message,
+      convertingToEmptyResult: true
     });
     
     // Convert to expected format with empty results
     processedData = {
-      result: {
-        [endpoint]: [],
-        ...(endpoint === 'categories' ? { categories: [] } : {})
-      },
+      result: createEmptyResult(endpoint),
       pagination: {
+        current_page: 1,
+        pages: 1,
+        total: 0
+      }
+    };
+  }
+
+  // Ensure we have the expected structure
+  if (!processedData.result) {
+    console.warn(`⚠️ [PuhekuplaData] Missing result structure for ${endpoint}, creating empty result`);
+    processedData = {
+      result: createEmptyResult(endpoint),
+      pagination: processedData.pagination || {
         current_page: 1,
         pages: 1,
         total: 0
@@ -107,6 +123,21 @@ const fetchPuhekuplaData = async (endpoint: string, params: Record<string, strin
   
   return processedData;
 };
+
+function createEmptyResult(endpoint: string) {
+  switch (endpoint) {
+    case 'furni':
+      return { furni: [] };
+    case 'clothing':
+      return { clothing: [] };
+    case 'badges':
+      return { badges: [] };
+    case 'categories':
+      return { categories: [] };
+    default:
+      return {};
+  }
+}
 
 function getItemCount(data: any, endpoint: string): number {
   if (!data?.result) return 0;
@@ -133,11 +164,11 @@ export const usePuhekuplaFurni = (page = 1, category = '', search = '') => {
       category: category === 'all' ? '' : category, 
       search: search.trim()
     }),
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    enabled: true, // Always enabled
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    enabled: true,
   });
 };
 
@@ -145,11 +176,11 @@ export const usePuhekuplaCategories = () => {
   return useQuery({
     queryKey: ['puhekupla-categories'],
     queryFn: () => fetchPuhekuplaData('categories'),
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60 * 2, // 2 hours
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    enabled: true, // Always enabled
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 60, // 1 hour
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    enabled: true,
   });
 };
 
@@ -160,11 +191,11 @@ export const usePuhekuplaBadges = (page = 1, search = '') => {
       page: page.toString(), 
       search: search.trim()
     }),
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    enabled: true, // Always enabled
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    enabled: true,
   });
 };
 
@@ -176,10 +207,10 @@ export const usePuhekuplaClothing = (page = 1, category = '', search = '') => {
       category: category === 'all' ? '' : category, 
       search: search.trim()
     }),
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    enabled: true, // Always enabled
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    enabled: true,
   });
 };
