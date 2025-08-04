@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock } from 'lucide-react';
-import { RealMarketplaceImage } from './RealMarketplaceImage';
+import { OfficialHabboImage } from './OfficialHabboImage';
 import { MarketItemModal } from './MarketItemModal';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
 
@@ -96,9 +95,8 @@ export const MarketplaceItemsList = ({
           return 0;
       }
     })
-    .slice(0, 20); // Aumentado para 20 itens com otimizações
+    .slice(0, 20);
 
-  // Mostrar skeleton loading enquanto carrega
   if (loading) {
     return (
       <>
@@ -126,7 +124,7 @@ export const MarketplaceItemsList = ({
           <h3 className="font-bold text-white volter-font mb-3" style={{
             textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
           }}>
-            🏪 Feira Livre de {hotel.name}
+            🏪 Feira Livre de {hotel.name} (Dados Oficiais)
           </h3>
           
           <div className="flex gap-4">
@@ -145,74 +143,82 @@ export const MarketplaceItemsList = ({
         <ScrollArea className="h-96">
           <div className="p-4 space-y-3">
             {filteredItems.length > 0 ? (
-              filteredItems.map((item, index) => {
-                const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
-                
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => handleItemClick(item)}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
-                  >
-                    <RealMarketplaceImage
-                      className={item.className}
-                      name={item.name}
-                      size="md"
-                      priority={index < 5} // Prioridade para os primeiros 5 itens
-                    />
+              filteredItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleItemClick(item)}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
+                >
+                  <OfficialHabboImage
+                    className={item.className}
+                    name={item.name}
+                    size="md"
+                    priority={index < 5}
+                  />
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm truncate" title={item.name}>
+                        {item.name}
+                      </p>
+                      {(item.rarity.toLowerCase().includes('ltd') || item.className.toLowerCase().includes('ltd')) && (
+                        <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded border border-purple-300">
+                          LTD
+                        </span>
+                      )}
+                      {item.soldItems && item.soldItems > 10 && (
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded border border-green-300">
+                          Popular
+                        </span>
+                      )}
+                    </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm truncate" title={item.name}>
-                          {item.name}
-                        </p>
-                        {item.rarity.toLowerCase().includes('ltd') && (
-                          <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded border border-purple-300">
-                            LTD
-                          </span>
-                        )}
+                    <div className="flex items-center gap-3 text-xs mt-1">
+                      <span className="flex items-center gap-1 text-blue-600 font-semibold">
+                        <CreditIcon size="sm" />
+                        {item.currentPrice.toLocaleString()}
+                      </span>
+                      
+                      <div className="flex items-center gap-1">
+                        {item.trend === 'up' ? (
+                          <TrendingUp size={12} className="text-green-500" />
+                        ) : item.trend === 'down' ? (
+                          <TrendingDown size={12} className="text-red-500" />
+                        ) : null}
+                        <span className={`${
+                          item.trend === 'up' ? 'text-green-600' : 
+                          item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
+                        }`}>
+                          {item.changePercent}%
+                        </span>
                       </div>
                       
-                      <div className="flex items-center gap-3 text-xs mt-1">
-                        <span className="flex items-center gap-1 text-blue-600 font-semibold">
-                          <CreditIcon size="sm" />
-                          {item.currentPrice.toLocaleString()}
-                        </span>
-                        
-                        <div className="flex items-center gap-1">
-                          {item.trend === 'up' ? (
-                            <TrendingUp size={12} className="text-green-500" />
-                          ) : item.trend === 'down' ? (
-                            <TrendingDown size={12} className="text-red-500" />
-                          ) : null}
-                          <span className={`${
-                            item.trend === 'up' ? 'text-green-600' : 
-                            item.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                          }`}>
-                            {item.changePercent}
-                          </span>
-                        </div>
-                        
-                        {item.openOffers && (
-                          <div className="flex items-center gap-1 text-gray-500">
-                            <Package2 size={10} />
-                            <span>{item.openOffers} ofertas</span>
-                          </div>
-                        )}
-                        
+                      {item.openOffers && (
                         <div className="flex items-center gap-1 text-gray-500">
-                          <Clock size={10} />
-                          <span>atualizado</span>
+                          <Package2 size={10} />
+                          <span>{item.openOffers} ofertas</span>
                         </div>
+                      )}
+                      
+                      {item.soldItems && (
+                        <div className="flex items-center gap-1 text-gray-500">
+                          <span>📊 {item.soldItems} vendidos</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-1 text-gray-500">
+                        <Clock size={10} />
+                        <span>oficial</span>
                       </div>
                     </div>
                   </div>
-                );
-              })
+                </div>
+              ))
             ) : (
               <div className="text-center py-8 text-gray-500">
                 <Package2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Nenhum item encontrado para os filtros selecionados</p>
+                <p>Nenhum item encontrado na API oficial</p>
+                <p className="text-xs mt-2">Verifique os filtros ou tente outro hotel</p>
               </div>
             )}
           </div>

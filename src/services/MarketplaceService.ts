@@ -10,19 +10,73 @@ interface FetchMarketDataParams {
 
 export class MarketplaceService {
   static async fetchMarketData(params: FetchMarketDataParams): Promise<{ items: MarketItem[]; stats: MarketStats } | null> {
-    const { data, error } = await supabase.functions.invoke('habbo-market-real', {
-      body: params
-    });
+    console.log('🔄 [MarketplaceService] Fetching official marketplace data...');
     
-    if (error) {
-      throw new Error(`Erro na função: ${error.message}`);
+    try {
+      // Usar a nova edge function oficial
+      const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
+        body: { 
+          hotel: params.hotel
+        }
+      });
+      
+      if (error) {
+        console.error('❌ [MarketplaceService] Official function error:', error);
+        throw new Error(`Erro na função oficial: ${error.message}`);
+      }
+      
+      if (data?.items && Array.isArray(data.items)) {
+        console.log(`✅ [MarketplaceService] Loaded ${data.items.length} official items`);
+        
+        // Filtrar itens baseado nos parâmetros
+        let filteredItems = data.items;
+        
+        if (params.searchTerm) {
+          filteredItems = filteredItems.filter(item =>
+            item.name.toLowerCase().includes(params.searchTerm.toLowerCase()) ||
+            item.className.toLowerCase().includes(params.searchTerm.toLowerCase())
+          );
+        }
+        
+        if (params.category && params.category !== 'all') {
+          filteredItems = filteredItems.filter(item =>
+            item.category.toLowerCase().includes(params.category.toLowerCase())
+          );
+        }
+        
+        return {
+          items: filteredItems,
+          stats: data.stats || this.calculateDefaultStats(filteredItems)
+        };
+      }
+      
+      console.warn('⚠️ [MarketplaceService] No items returned from official API');
+      return null;
+      
+    } catch (error: any) {
+      console.error('❌ [MarketplaceService] Failed to fetch official data:', error);
+      
+      // Fallback para a função anterior se a oficial falhar
+      console.log('🔄 [MarketplaceService] Falling back to habbo-market-real...');
+      
+      try {
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('habbo-market-real', {
+          body: params
+        });
+        
+        if (fallbackError) {
+          throw new Error(`Erro no fallback: ${fallbackError.message}`);
+        }
+        
+        return fallbackData;
+      } catch (fallbackErr) {
+        console.error('❌ [MarketplaceService] Fallback also failed:', fallbackErr);
+        throw new Error(`Ambas as fontes de dados falharam: ${error.message}`);
+      }
     }
-    
-    return data;
   }
 
   static async fetchClubItems(hotel: string): Promise<ClubItem[]> {
-    // Dados fixos para HC e CA com imagens corretas
     const clubItems: ClubItem[] = [
       {
         id: 'hc_31_days',
@@ -44,9 +98,7 @@ export class MarketplaceService {
       }
     ];
 
-    // Simular delay de rede
     await new Promise(resolve => setTimeout(resolve, 300));
-    
     return clubItems;
   }
 
@@ -74,27 +126,64 @@ export class MarketplaceService {
   static getFilteredItems(items: MarketItem[], type: 'topSellers' | 'biggestGainers' | 'opportunities' | 'todayHigh'): MarketItem[] {
     switch (type) {
       case 'topSellers':
+        // Baseado em soldItems da API oficial
         return [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
       
       case 'biggestGainers':
-        return [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
+        // Itens com trend 'up' e volume significativo
+        return [...items].filter(item => 
+          item.trend === 'up' && (item.soldItems || item.volume || 0) > 0
+        ).sort((a, b) => 
+          parseFloat(b.changePercent) - parseFloat(a.changePercent)
+        ).slice(0, 10);
       
       case 'opportunities':
+        // LTDs e itens raros com ofertas abertas
         return [...items].filter(item => 
-          item.className.toLowerCase().includes('ltd') || 
-          item.rarity === 'legendary' ||
-          item.name.toLowerCase().includes('ltd') ||
-          item.currentPrice > 1000
+          (item.className.toLowerCase().includes('ltd') || 
+           item.rarity === 'legendary' ||
+           item.name.toLowerCase().includes('rare') ||
+           item.currentPrice > 500) &&
+          (item.openOffers || 0) > 0
         ).sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
       
       case 'todayHigh':
-        return [...items].filter(item => item.trend === 'up').sort((a, b) => 
+        // Maiores altas baseado em dados oficiais
+        return [...items].filter(item => 
+          item.trend === 'up' && parseFloat(item.changePercent) > 0
+        ).sort((a, b) => 
           parseFloat(b.changePercent) - parseFloat(a.changePercent)
         ).slice(0, 10);
       
       default:
         return [];
     }
+  }
+
+  private static calculateDefaultStats(items: MarketItem[]): MarketStats {
+    if (items.length === 0) {
+      return {
+        totalItems: 0,
+        averagePrice: 0,
+        totalVolume: 0,
+        trendingUp: 0,
+        trendingDown: 0,
+        featuredItems: 0,
+        highestPrice: 0,
+        mostTraded: 'N/A'
+      };
+    }
+    
+    return {
+      totalItems: items.length,
+      averagePrice: Math.floor(items.reduce((sum, item) => sum + item.currentPrice, 0) / items.length),
+      totalVolume: items.reduce((sum, item) => sum + (item.soldItems || item.volume || 0), 0),
+      trendingUp: items.filter(item => item.trend === 'up').length,
+      trendingDown: items.filter(item => item.trend === 'down').length,
+      featuredItems: Math.min(items.length, 10),
+      highestPrice: Math.max(...items.map(item => item.currentPrice)),
+      mostTraded: items.sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0))[0]?.name || 'N/A'
+    };
   }
 
   static calculatePriceChange(current: number, previous: number): { changePercent: string; trend: 'up' | 'down' | 'stable' } {
