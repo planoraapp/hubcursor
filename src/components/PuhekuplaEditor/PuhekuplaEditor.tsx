@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
-import EnhancedAvatarPreview from './EnhancedAvatarPreview';
+import PuhekuplaAvatarSectionClean from './PuhekuplaAvatarSectionClean';
 import PuhekuplaClothingGridClean from './PuhekuplaClothingGridClean';
 import { usePuhekuplaClothing } from '@/hooks/usePuhekuplaData';
 import type { PuhekuplaClothing } from '@/hooks/usePuhekuplaData';
@@ -170,10 +170,10 @@ const PuhekuplaEditor = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col lg:flex-row gap-6 p-4">
-      {/* Avatar Preview (Esquerda) */}
-      <div className="lg:w-1/3">
-        <EnhancedAvatarPreview
+    <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
+      {/* Avatar Preview (Esquerda) - Largura reduzida e layout limpo */}
+      <div className="lg:w-80">
+        <PuhekuplaAvatarSectionClean
           currentFigure={currentFigure}
           selectedGender={selectedGender}
           selectedHotel={selectedHotel}
@@ -187,28 +187,28 @@ const PuhekuplaEditor = () => {
       </div>
 
       {/* Editor Tabs (Direita) */}
-      <div className="lg:w-2/3">
+      <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg">
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
+          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg py-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="w-5 h-5" />
               Editor Puhekupla - Nova Geração
-              <Badge className="ml-auto bg-white/20 text-white">Beta</Badge>
+              <Badge className="ml-auto bg-white/20 text-white text-xs">Beta</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <Tabs value={selectedSection} onValueChange={setSelectedSection} className="h-full">
               {/* Abas Principais */}
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
                 {categoryGroups.map(group => (
                   <TabsTrigger 
                     key={group.id} 
                     value={group.id} 
-                    className="text-sm px-4 py-3"
+                    className="text-xs px-3 py-2"
                   >
                     <div className="text-center">
-                      <div className="text-lg">{group.icon}</div>
-                      <div className="text-xs mt-1">{group.name}</div>
+                      <div className="text-base">{group.icon}</div>
+                      <div className="text-[10px] mt-1">{group.name}</div>
                     </div>
                   </TabsTrigger>
                 ))}
@@ -217,8 +217,8 @@ const PuhekuplaEditor = () => {
               {/* Conteúdo das Abas */}
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
-                  <div className="mb-4">
-                    <h3 className="font-bold text-lg text-purple-800">{group.name}</h3>
+                  <div className="mb-3">
+                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
                   </div>
                   
                   {/* Sub-categorias */}
@@ -234,8 +234,8 @@ const PuhekuplaEditor = () => {
                           className="text-xs px-2 py-2"
                         >
                           <div className="text-center">
-                            <div>{category.icon}</div>
-                            <div className="text-[10px] mt-1">{category.name}</div>
+                            <div className="text-sm">{category.icon}</div>
+                            <div className="text-[9px] mt-1">{category.name}</div>
                           </div>
                         </TabsTrigger>
                       ))}
