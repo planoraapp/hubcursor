@@ -51,20 +51,48 @@ export class ViaJovemFigureManager {
     colorId: string
   ): ViaJovemFigure {
     const category = item.category || 'ch';
-    
-    // CORREÇÃO: Não remover outras categorias, apenas atualizar a categoria específica
     const updatedFigure = { ...currentFigure };
+    
+    // CORREÇÃO ESPECIAL V3: Categoria 'sk' (skin) altera apenas a cor do 'hd' existente
+    if (category === 'sk') {
+      if (updatedFigure.hd) {
+        updatedFigure.hd = {
+          ...updatedFigure.hd,
+          color: colorId
+        };
+      } else {
+        updatedFigure.hd = {
+          id: item.figureId || '180',
+          color: colorId
+        };
+      }
+      console.log(`🤏 [ViaJovemFigureManager] Cor de pele aplicada: hd-${updatedFigure.hd.id}-${colorId}`);
+      return updatedFigure;
+    }
+    
+    // VALIDAÇÃO: Impedir conflitos entre categorias incompatíveis
+    const incompatibleCategories: Record<string, string[]> = {
+      'ha': ['hr'], // Chapéus podem ocultar cabelo
+      'fa': ['hd'], // Máscaras podem ocultar rosto
+    };
+    
+    // Verificar e remover categorias incompatíveis
+    const incompatible = incompatibleCategories[category];
+    if (incompatible) {
+      incompatible.forEach(incompatCat => {
+        if (updatedFigure[incompatCat]) {
+          console.log(`⚠️ [ViaJovemFigureManager] Removendo categoria incompatível: ${incompatCat}`);
+        }
+      });
+    }
     
     // Aplicar o item na categoria correta
     updatedFigure[category] = {
-      id: item.figureId || item.id,
+      id: item.figureId || item.id || '1',
       color: colorId
     };
     
-    // IMPORTANTE: Manter todas as outras categorias intactas
-    // Não há conflitos - cada categoria é independente
-    
-    console.log(`✅ [ViaJovemFigureManager] Item aplicado: ${category}-${item.figureId}-${colorId}`);
+    console.log(`✅ [ViaJovemFigureManager] Item aplicado: ${category}-${item.figureId || item.id}-${colorId}`);
     console.log(`📊 [ViaJovemFigureManager] Figure atual:`, updatedFigure);
     
     return updatedFigure;

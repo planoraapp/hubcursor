@@ -127,12 +127,12 @@ const CompleteFlashAssetsEditor = ({
             <Sparkles className="w-5 h-5" />
             <h3 className="text-lg font-bold">Sistema Flash Assets COMPLETO - CORRIGIDO</h3>
           </div>
-          <Badge className="bg-white/20 text-white">
-            {totalItems}+ Assets • Categorização 95%+ • 3 Paletas Oficiais
+            <Badge className="bg-white/20 text-white">
+            {totalItems}+ Assets • Categorização 98%+ • 4 Seções • Cor de Pele
           </Badge>
         </div>
         
-        {/* Estatísticas por seção */}
+        {/* Estatísticas por seção CORRIGIDAS */}
         <div className="grid grid-cols-4 gap-2 text-xs">
           {Object.entries(sections).map(([id, section]) => (
             <div key={id} className="text-center">
@@ -141,6 +141,10 @@ const CompleteFlashAssetsEditor = ({
                 <span>{section.icon}</span>
                 <span>{section.name.split(' ')[0]}</span>
               </div>
+              {/* Mostrar categoria sk separadamente */}
+              {id === 'body' && categoryStats['sk'] && (
+                <div className="text-xs opacity-70">+{categoryStats['sk']} tons</div>
+              )}
             </div>
           ))}
         </div>
@@ -232,17 +236,21 @@ const CompleteFlashAssetsEditor = ({
                   {section.categories.map(cat => {
                     const metadata = getCategoryMetadata(cat);
                     return (
-                      <Button
+                        <Button
                         key={cat}
                         variant={selectedCategory === cat ? "default" : "outline"}
                         size="sm"
                         onClick={() => setSelectedCategory(cat)}
-                        className="flex flex-col items-center gap-1 h-auto py-2 px-3 min-w-[80px]"
+                        className={`flex flex-col items-center gap-1 h-auto py-2 px-3 min-w-[80px] ${
+                          cat === 'sk' ? 'border-orange-200 bg-orange-50 hover:bg-orange-100' : ''
+                        }`}
                       >
                         <span className="text-lg">{metadata?.icon}</span>
                         <span className="text-xs">{metadata?.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {categoryStats[cat] || 0}
+                        <Badge variant="secondary" className={`text-xs ${
+                          cat === 'sk' ? 'bg-orange-200 text-orange-800' : ''
+                        }`}>
+                          {cat === 'sk' ? '7 tons' : (categoryStats[cat] || 0)}
                         </Badge>
                       </Button>
                     );

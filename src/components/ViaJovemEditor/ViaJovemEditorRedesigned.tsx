@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { ViaJovemAvatarSection } from './ViaJovemAvatarSection';
 import { ViaJovemFigureManager, ViaJovemFigure } from '@/lib/viaJovemFigureManager';
 import { useToast } from '@/hooks/use-toast';
-import CompleteFlashAssetsEditor from '@/components/HabboEditor/CompleteFlashAssetsEditor';
+import FlashAssetsV3Complete from '@/components/HabboEditor/FlashAssetsV3Complete';
 
 interface ViaJovemEditorRedesignedProps {
   className?: string;
@@ -173,14 +173,14 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
           <CardHeader className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              ViaJovem Editor - Sistema Flash Assets COMPLETO V2
+              ViaJovem Editor - Sistema Flash Assets V3 COMPLETO
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2871+ Assets • 15 Categorias • 4 Seções • Sistema Inteligente
+                2871+ Assets • Cor de Pele • 3 Paletas • Sistema V3
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 h-full">
-            <CompleteFlashAssetsEditor
+            <FlashAssetsV3Complete
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
               onItemSelect={handleCompleteItemSelect}
