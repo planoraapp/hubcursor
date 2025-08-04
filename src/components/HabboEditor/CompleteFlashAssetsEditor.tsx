@@ -31,7 +31,7 @@ const CompleteFlashAssetsEditor = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedSection, setSelectedSection] = useState('head');
-  const [selectedRarity, setSelectedRarity] = useState('all');
+  const [selectedRarity, setSelectedRarity] = useState<string>('all');
 
   const { 
     items, 
@@ -48,7 +48,7 @@ const CompleteFlashAssetsEditor = ({
     category: selectedCategory,
     gender: selectedGender,
     search: searchTerm,
-    rarity: selectedRarity
+    rarity: selectedRarity === 'all' ? undefined : selectedRarity
   });
 
   console.log('🎯 [CompleteFlashAssetsEditor] Stats COMPLETAS:', {
