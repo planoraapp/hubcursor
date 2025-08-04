@@ -30,21 +30,24 @@ const IntelligentFurniImage = ({
       urls.push(original);
     }
     
+    // Safety check - ensure swf is a string before using string methods
+    const safeSwf = swf || '';
+    
     // Add multiple fallback patterns
     urls.push(
-      `https://www.habbowidgets.com/images/furni/${swf}.gif`,
-      `https://habbowidgets.com/images/furni/${swf}.gif`,
-      `https://www.habbowidgets.com/images/${swf}.gif`,
-      `https://images.habbo.com/dcr/hof_furni/${swf}.png`,
-      `https://www.habbo.com.br/habbo-imaging/furni/${swf}.png`,
-      `https://habboemotion.com/images/furnis/${swf}.png`,
-      `https://cdn.habboemotion.com/furnis/${swf}.gif`,
+      `https://www.habbowidgets.com/images/furni/${safeSwf}.gif`,
+      `https://habbowidgets.com/images/furni/${safeSwf}.gif`,
+      `https://www.habbowidgets.com/images/${safeSwf}.gif`,
+      `https://images.habbo.com/dcr/hof_furni/${safeSwf}.png`,
+      `https://www.habbo.com.br/habbo-imaging/furni/${safeSwf}.png`,
+      `https://habboemotion.com/images/furnis/${safeSwf}.png`,
+      `https://cdn.habboemotion.com/furnis/${safeSwf}.gif`,
       // Alternative formats
-      `https://www.habbowidgets.com/images/furni/${swf}.png`,
-      `https://habbowidgets.com/images/furni/${swf}.png`,
+      `https://www.habbowidgets.com/images/furni/${safeSwf}.png`,
+      `https://habbowidgets.com/images/furni/${safeSwf}.png`,
       // Clean swf name attempts
-      `https://www.habbowidgets.com/images/furni/${swf.replace(/[^a-z0-9_]/gi, '')}.gif`,
-      `https://habbowidgets.com/images/${swf.replace(/[^a-z0-9_]/gi, '')}.gif`
+      `https://www.habbowidgets.com/images/furni/${safeSwf.replace(/[^a-z0-9_]/gi, '')}.gif`,
+      `https://habbowidgets.com/images/${safeSwf.replace(/[^a-z0-9_]/gi, '')}.gif`
     );
     
     return urls;

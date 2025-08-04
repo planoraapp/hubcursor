@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
     className: selectedCategory !== 'all' ? selectedCategory : ''
   });
   
-  const { trackedItems, addItem, removeItem, isTracked } = useTrackedItems();
+  const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems();
   const { isLoggedIn } = useAuth();
 
   const filteredData = useMemo(() => {
@@ -58,7 +59,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
     
     return filtered.sort((a, b) => {
       if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
-      if (sortBy === 'recent') return (b.id || 0) - (a.id || 0);
+      if (sortBy === 'recent') return (Number(b.id) || 0) - (Number(a.id) || 0);
       return 0;
     });
   }, [furniData, selectedCategory, selectedRarity, showHcOnly, sortBy]);
@@ -77,7 +78,7 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
     return null;
   };
 
-  const handleBookmark = (item: any) => {
+  const handleBookmark = async (item: any) => {
     if (!isLoggedIn) return;
     
     const trackedItem = {
@@ -87,9 +88,9 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
     };
     
     if (isTracked(item.className || '')) {
-      removeItem(item.className || '');
+      await untrackItem(item.className || '');
     } else {
-      addItem(trackedItem);
+      await trackItem(trackedItem);
     }
   };
 
@@ -184,10 +185,10 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
                 <CardContent className="p-3">
                   <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                     <IntelligentFurniImage
-                      className={item.className || ''}
-                      revision={item.revision}
-                      direction={0}
-                      className_img="w-full h-full object-contain"
+                      swfName={item.className || ''}
+                      name={item.name || 'Item desconhecido'}
+                      originalUrl={item.imageUrl}
+                      className="w-full h-full object-contain"
                     />
                   </div>
                   
