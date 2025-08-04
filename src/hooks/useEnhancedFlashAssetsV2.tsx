@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,13 +28,15 @@ export interface EnhancedFlashAssetV2 {
   source: 'flash-assets-enhanced-v2';
 }
 
-const fetchEnhancedFlashAssetsV2 = async (params: {
+interface FetchParams {
   category?: string;
   gender?: 'M' | 'F';
   search?: string;
   rarity?: string;
   limit?: number;
-}): Promise<EnhancedFlashAssetV2[]> => {
+}
+
+const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<EnhancedFlashAssetV2[]> => {
   console.log('🌐 [EnhancedFlashAssetsV2] Buscando assets com sistema COMPLETO', params);
   
   try {
@@ -70,12 +71,14 @@ const fetchEnhancedFlashAssetsV2 = async (params: {
   }
 };
 
-export const useEnhancedFlashAssetsV2 = (params: {
+interface UseEnhancedFlashAssetsV2Params {
   category?: string;
   gender?: 'M' | 'F';
   search?: string;
   rarity?: string;
-}) => {
+}
+
+export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params) => {
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
   const [rarityStats, setRarityStats] = useState<Record<string, number>>({});
   const [sectionStats, setSectionStats] = useState<Record<string, number>>({});
