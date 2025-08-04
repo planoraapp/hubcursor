@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Package2 } from 'lucide-react';
 
 interface RealFurniImageHybridProps {
@@ -19,6 +19,7 @@ const RealFurniImageHybrid = ({
 }: RealFurniImageHybridProps) => {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const sizeClasses = {
     sm: 'w-12 h-12',
@@ -26,39 +27,77 @@ const RealFurniImageHybrid = ({
     lg: 'w-24 h-24'
   };
 
-  // URLs otimizadas com foco em tipos específicos
+  // Cache de URLs bem-sucedidas
+  const getCachedUrl = (className: string) => {
+    try {
+      const cache = localStorage.getItem('furni-image-cache');
+      if (cache) {
+        const parsed = JSON.parse(cache);
+        return parsed[className];
+      }
+    } catch (error) {
+      console.error('Cache read error:', error);
+    }
+    return null;
+  };
+
+  const setCachedUrl = (className: string, url: string) => {
+    try {
+      const cache = localStorage.getItem('furni-image-cache');
+      const parsed = cache ? JSON.parse(cache) : {};
+      parsed[className] = url;
+      localStorage.setItem('furni-image-cache', JSON.stringify(parsed));
+    } catch (error) {
+      console.error('Cache write error:', error);
+    }
+  };
+
+  // URLs otimizadas com HabboFurni como prioridade
   const imageUrls = useMemo(() => {
-    const baseUrls = [];
+    const cachedUrl = getCachedUrl(className);
+    const urls = [];
     
-    // Priorizar URLs baseadas no tipo e características do item
+    // Se temos URL em cache, usar primeiro
+    if (cachedUrl) {
+      urls.push(cachedUrl);
+    }
+    
+    // HabboFurni.com como fonte primária
+    urls.push(
+      `https://habbofurni.com/furniture_images/${className}.png`,
+      `https://habbofurni.com/images/furniture/${className}.png`,
+      `https://cdn.habbofurni.com/furniture/${className}.png`
+    );
+
+    // Características especiais do item
     const isLTD = name.toLowerCase().includes('ltd') || className.toLowerCase().includes('ltd');
     const isHC = name.toLowerCase().includes('hc') || className.toLowerCase().includes('hc_');
     const isRare = name.toLowerCase().includes('rare') || name.toLowerCase().includes('throne') || name.toLowerCase().includes('dragon');
     
     // URLs específicas para itens especiais
     if (isLTD) {
-      baseUrls.push(
+      urls.push(
         `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
         `https://www.habbo.${hotel}/dcr/hof_furni/${className}.png`
       );
     }
     
     if (isHC) {
-      baseUrls.push(
+      urls.push(
         `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
         `https://www.habbo.${hotel}/dcr/hof_furni/${className}.png`
       );
     }
     
     if (isRare) {
-      baseUrls.push(
+      urls.push(
         `https://images.habbo.com/dcr/hof_furni/${hotel}/${className}.png`,
         `https://www.habbo.${hotel}/dcr/hof_furni/${className}.png`,
         `https://images.habbo.com/dcr/hof_furni/${className}.png`
       );
     }
 
-    // URLs padrão do Habbo
+    // URLs padrão do Habbo como fallback
     const hotelMapping: Record<string, string> = {
       'br': 'com.br',
       'com': 'com',
@@ -73,28 +112,45 @@ const RealFurniImageHybrid = ({
 
     const mappedHotel = hotelMapping[hotel] || hotel;
 
-    baseUrls.push(
+    urls.push(
       `https://images.habbo.com/dcr/hof_furni/${mappedHotel}/${className}.png`,
       `https://www.habbo.${mappedHotel}/dcr/hof_furni/${className}.png`,
       `https://images.habbo.com/dcr/hof_furni/${className}.png`,
       `https://habbo-stories.s3.amazonaws.com/web_promo/lpromo_${className}.png`,
-      `https://www.habbo.com/dcr/hof_furni/${className}.png`
+      `https://www.habbo.com/dcr/hof_furni/${className}.png`,
+      `https://habbowidgets.com/images/furni/${className}.gif`
     );
 
-    return baseUrls;
+    // Remover duplicatas
+    return [...new Set(urls)];
   }, [className, hotel, name]);
 
   const handleImageError = useCallback(() => {
     if (currentUrlIndex < imageUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
+      setIsLoading(true);
     } else {
       setHasError(true);
+      setIsLoading(false);
     }
   }, [currentUrlIndex, imageUrls.length]);
 
   const handleImageLoad = useCallback(() => {
+    setIsLoading(false);
     setHasError(false);
-  }, []);
+    
+    // Cache da URL bem-sucedida (apenas se não for a primeira que já estava em cache)
+    if (currentUrlIndex > 0 || !getCachedUrl(className)) {
+      setCachedUrl(className, imageUrls[currentUrlIndex]);
+    }
+  }, [currentUrlIndex, imageUrls, className]);
+
+  // Reset quando className mudar
+  useEffect(() => {
+    setCurrentUrlIndex(0);
+    setHasError(false);
+    setIsLoading(true);
+  }, [className]);
 
   if (hasError || imageUrls.length === 0) {
     return (
@@ -105,14 +161,18 @@ const RealFurniImageHybrid = ({
   }
 
   return (
-    <div className={`${sizeClasses[size]} bg-gray-50 border-2 border-gray-300 rounded overflow-hidden flex items-center justify-center`}>
+    <div className={`${sizeClasses[size]} bg-gray-50 border-2 border-gray-300 rounded overflow-hidden flex items-center justify-center relative`}>
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-100 animate-pulse rounded"></div>
+      )}
       <img
         src={imageUrls[currentUrlIndex]}
         alt={name}
-        className="max-w-full max-h-full object-contain"
+        className={`max-w-full max-h-full object-contain transition-opacity duration-200 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
         onError={handleImageError}
         onLoad={handleImageLoad}
         style={{ imageRendering: 'pixelated' }}
+        loading="lazy"
       />
     </div>
   );

@@ -24,66 +24,97 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
     try {
       setLoading(true);
       
-      // Buscar especificamente por "31 Dias HC" e "31 Dias CA" com termo exato
-      const searchTerms = ['31 Dias HC', 'HC 31 dias', 'Habbo Club 31'];
-      const caTerms = ['31 Dias CA', 'CA 31 dias', 'Builders Club 31'];
-      
+      // Buscar dados reais do mercado para HC e CA
+      const marketResponse = await supabase.functions.invoke('habbo-market-real', {
+        body: { 
+          searchTerm: '',
+          category: '',
+          hotel: hotel,
+          days: 7
+        }
+      });
+
       let hcItem = null;
       let caItem = null;
 
-      // Buscar HC com múltiplos termos
-      for (const term of searchTerms) {
-        if (hcItem) break;
+      if (!marketResponse.error && marketResponse.data?.items) {
+        const items = marketResponse.data.items;
         
-        const hcResponse = await supabase.functions.invoke('habbo-market-real', {
-          body: { 
-            searchTerm: term, 
-            category: '',
-            hotel: hotel,
-            days: 7
-          }
-        });
+        // Buscar HC 31 dias
+        hcItem = items.find((item: any) => 
+          (item.name.toLowerCase().includes('31') && 
+           (item.name.toLowerCase().includes('hc') || 
+            item.name.toLowerCase().includes('habbo club'))) ||
+          (item.className && item.className.toLowerCase().includes('hc_') && 
+           item.name.toLowerCase().includes('31'))
+        );
+        
+        // Buscar CA/BC 31 dias
+        caItem = items.find((item: any) => 
+          (item.name.toLowerCase().includes('31') && 
+           (item.name.toLowerCase().includes('ca') || 
+            item.name.toLowerCase().includes('builders') ||
+            item.name.toLowerCase().includes('bc'))) ||
+          (item.className && 
+           (item.className.toLowerCase().includes('bc_') || 
+            item.className.toLowerCase().includes('ca_')) && 
+           item.name.toLowerCase().includes('31'))
+        );
+      }
 
-        if (!hcResponse.error && hcResponse.data?.items) {
-          hcItem = hcResponse.data.items.find((item: any) => 
-            item.name.toLowerCase().includes('31') && 
-            (item.name.toLowerCase().includes('hc') || 
-             item.name.toLowerCase().includes('habbo club'))
-          );
+      // Se não encontrou nos dados do mercado, tentar busca específica
+      if (!hcItem || !caItem) {
+        const specificSearches = [
+          '31 Dias HC',
+          'HC 31 dias', 
+          'Habbo Club 31',
+          '31 Dias CA',
+          'CA 31 dias',
+          'Builders Club 31',
+          'BC 31 dias'
+        ];
+
+        for (const searchTerm of specificSearches) {
+          const specificResponse = await supabase.functions.invoke('habbo-market-real', {
+            body: { 
+              searchTerm,
+              category: '',
+              hotel: hotel,
+              days: 7
+            }
+          });
+
+          if (!specificResponse.error && specificResponse.data?.items) {
+            const foundItems = specificResponse.data.items;
+            
+            if (!hcItem && (searchTerm.toLowerCase().includes('hc') || searchTerm.toLowerCase().includes('habbo'))) {
+              hcItem = foundItems.find((item: any) => 
+                item.name.toLowerCase().includes('31') && 
+                (item.name.toLowerCase().includes('hc') || item.name.toLowerCase().includes('habbo'))
+              );
+            }
+            
+            if (!caItem && (searchTerm.toLowerCase().includes('ca') || searchTerm.toLowerCase().includes('bc') || searchTerm.toLowerCase().includes('builders'))) {
+              caItem = foundItems.find((item: any) => 
+                item.name.toLowerCase().includes('31') && 
+                (item.name.toLowerCase().includes('ca') || 
+                 item.name.toLowerCase().includes('bc') || 
+                 item.name.toLowerCase().includes('builders'))
+              );
+            }
+          }
         }
       }
 
-      // Buscar CA com múltiplos termos
-      for (const term of caTerms) {
-        if (caItem) break;
-        
-        const caResponse = await supabase.functions.invoke('habbo-market-real', {
-          body: { 
-            searchTerm: term, 
-            category: '',
-            hotel: hotel,
-            days: 7
-          }
-        });
-
-        if (!caResponse.error && caResponse.data?.items) {
-          caItem = caResponse.data.items.find((item: any) => 
-            item.name.toLowerCase().includes('31') && 
-            (item.name.toLowerCase().includes('ca') || 
-             item.name.toLowerCase().includes('builders'))
-          );
-        }
-      }
-
-      console.log('HC Item found:', hcItem);
-      console.log('CA Item found:', caItem);
+      console.log('🔍 HC Item found:', hcItem);
+      console.log('🔍 CA Item found:', caItem);
 
       const realItems: ClubItem[] = [
         {
           id: 'hc_premium_31',
           name: '31 Dias HC',
           price: hcItem?.currentPrice || 0,
-          available: hcItem?.openOffers || 0,
+          available: hcItem?.openOffers || hcItem?.quantity || 0,
           icon: '/assets/hc31.png',
           className: hcItem?.className || 'hc_premium'
         },
@@ -91,7 +122,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
           id: 'ca_premium_31', 
           name: '31 Dias CA',
           price: caItem?.currentPrice || 0,
-          available: caItem?.openOffers || 0,
+          available: caItem?.openOffers || caItem?.quantity || 0,
           icon: '/assets/bc31.png',
           className: caItem?.className || 'bc_premium'
         }
@@ -99,7 +130,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
 
       setClubItems(realItems);
     } catch (error) {
-      console.error('Erro ao buscar preços de clube:', error);
+      console.error('❌ Erro ao buscar preços de clube:', error);
       // Fallback com zero disponível
       setClubItems([
         {

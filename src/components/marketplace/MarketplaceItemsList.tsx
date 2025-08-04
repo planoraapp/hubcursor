@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
@@ -7,6 +6,7 @@ import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock } from 'lucide-react';
 import RealFurniImageHybrid from './RealFurniImageHybrid';
 import { MarketItemModal } from './MarketItemModal';
+import { MarketplaceSkeleton } from './MarketplaceSkeleton';
 
 interface MarketItem {
   id: string;
@@ -97,6 +97,21 @@ export const MarketplaceItemsList = ({
     })
     .slice(0, 20);
 
+  // Mostrar skeleton loading enquanto carrega
+  if (loading) {
+    return (
+      <>
+        <MarketplaceSkeleton />
+        {/* Item Modal */}
+        <MarketItemModal 
+          item={selectedItem}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="bg-white border-2 border-black rounded-lg shadow-lg">
@@ -129,12 +144,7 @@ export const MarketplaceItemsList = ({
 
         <ScrollArea className="h-96">
           <div className="p-4 space-y-3">
-            {loading ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
-                <p>Carregando itens...</p>
-              </div>
-            ) : filteredItems.length > 0 ? (
+            {filteredItems.length > 0 ? (
               filteredItems.map((item, index) => {
                 const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
                 
