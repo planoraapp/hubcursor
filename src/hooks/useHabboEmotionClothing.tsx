@@ -90,44 +90,11 @@ const fetchHabboEmotionClothing = async (
 };
 
 const generateCorrectImageUrl = (code: string, part: string, gender: 'M' | 'F' | 'U', itemId: number): string => {
-  // Estrutura correta das URLs do HabboEmotion
-  // files.habboemotion.com é o domínio correto para assets
-  const baseUrl = 'https://files.habboemotion.com';
+  // PRIORITY 1: Real HabboEmotion catalog structure
+  const catalogUrl = `https://files.habboemotion.com/assets/images/catalog/${part}/${part}${String(itemId).padStart(3, '0')}.gif`;
   
-  // Mapear partes para estrutura de pastas
-  const partMapping: Record<string, string> = {
-    'hr': 'hair',
-    'ch': 'shirt', 
-    'lg': 'trousers',
-    'sh': 'shoes',
-    'ha': 'hat',
-    'ea': 'glasses',
-    'cc': 'jacket',
-    'ca': 'chest_accessory',
-    'wa': 'belt',
-    'fa': 'face_accessory',
-    'cp': 'chest_print',
-    'hd': 'head'
-  };
-  
-  const categoryFolder = partMapping[part] || 'shirt';
-  
-  // Tentar diferentes estruturas de nomenclatura
-  let spriteName = code;
-  
-  // Se o código já tem sufixo de gênero, usar direto
-  if (code.includes('_M_') || code.includes('_F_') || code.includes('_U_')) {
-    spriteName = code;
-  } else {
-    // Adicionar sufixo de gênero se não tiver
-    spriteName = `${categoryFolder}_${gender}_${code}`;
-  }
-  
-  // URL final no formato correto do HabboEmotion
-  const finalUrl = `${baseUrl}/habbo-assets/sprites/clothing/${spriteName}/h_std_${part}_${itemId}_2_0.png`;
-  
-  console.log(`🖼️ [HabboEmotion] Generated image URL: ${finalUrl}`);
-  return finalUrl;
+  console.log(`🖼️ [HabboEmotion] Generated catalog URL: ${catalogUrl}`);
+  return catalogUrl;
 };
 
 export const useHabboEmotionClothing = (

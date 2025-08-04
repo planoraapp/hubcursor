@@ -253,8 +253,8 @@ function generateEnhancedClothingItems(limit: number, category?: string, gender?
       const categoryName = categoryNames[cat] || 'shirt';
       const code = `${categoryName}_U_${categoryName}${String(itemId).padStart(4, '0')}`;
       
-      // Generate correct image URL format
-      const imageUrl = `https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${cat}_${itemId}_2_0.png`;
+      // Generate correct catalog image URL format
+      const imageUrl = `https://files.habboemotion.com/assets/images/catalog/${cat}/${cat}${String(itemId).padStart(3, '0')}.gif`;
       
       allItems.push({
         id: itemId,
