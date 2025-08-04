@@ -170,7 +170,7 @@ function extractItemsFromHTML(html: string, category: string): any[] {
       
       if (partCategory === category) {
         const code = spriteName;
-        const realImageUrl = `https://files.habboemotion.com/habbo-assets/sprites/clothing/${spriteName}/h_std_${partCategory}_${itemId}_2_0.png`;
+        const realImageUrl = `https://www.habbo.com/habbo-imaging/clothing/${partCategory}/${itemId}/1.png`;
         
         items.push({
           id: parseInt(itemId),
@@ -253,8 +253,8 @@ function generateEnhancedClothingItems(limit: number, category?: string, gender?
       const categoryName = categoryNames[cat] || 'shirt';
       const code = `${categoryName}_U_${categoryName}${String(itemId).padStart(4, '0')}`;
       
-      // Generate correct catalog image URL format
-      const imageUrl = `https://files.habboemotion.com/assets/images/catalog/${cat}/${cat}${String(itemId).padStart(3, '0')}.gif`;
+      // Generate WORKING image URL - use official Habbo imaging
+      const imageUrl = `https://www.habbo.com/habbo-imaging/clothing/${cat}/${itemId}/1.png`;
       
       allItems.push({
         id: itemId,

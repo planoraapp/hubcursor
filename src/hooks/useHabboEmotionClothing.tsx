@@ -90,11 +90,11 @@ const fetchHabboEmotionClothing = async (
 };
 
 const generateCorrectImageUrl = (code: string, part: string, gender: 'M' | 'F' | 'U', itemId: number): string => {
-  // PRIORITY 1: Real HabboEmotion catalog structure
-  const catalogUrl = `https://files.habboemotion.com/assets/images/catalog/${part}/${part}${String(itemId).padStart(3, '0')}.gif`;
+  // PRIORITY 1: Official Habbo imaging (most reliable for clothing items)
+  const officialUrl = `https://www.habbo.com/habbo-imaging/clothing/${part}/${itemId}/1.png`;
   
-  console.log(`🖼️ [HabboEmotion] Generated catalog URL: ${catalogUrl}`);
-  return catalogUrl;
+  console.log(`🖼️ [HabboEmotion] Generated official URL: ${officialUrl}`);
+  return officialUrl;
 };
 
 export const useHabboEmotionClothing = (
