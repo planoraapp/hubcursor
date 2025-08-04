@@ -32,7 +32,7 @@ interface FetchParams {
   category?: string;
   gender?: 'M' | 'F';
   search?: string;
-  rarity?: string;
+  rarity?: 'nft' | 'hc' | 'ltd' | 'rare' | 'common';
   limit?: number;
 }
 
@@ -75,7 +75,7 @@ interface UseEnhancedFlashAssetsV2Params {
   category?: string;
   gender?: 'M' | 'F';
   search?: string;
-  rarity?: string;
+  rarity?: 'nft' | 'hc' | 'ltd' | 'rare' | 'common';
 }
 
 export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params) => {
