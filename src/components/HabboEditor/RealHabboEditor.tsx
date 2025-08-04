@@ -47,7 +47,8 @@ const categoryGroups = [
   }
 ];
 
-interface AvatarState {
+// Fixed AvatarState to extend Record<string, string> for compatibility
+interface AvatarState extends Record<string, string> {
   hd?: string;
   hr?: string;
   ch?: string;
