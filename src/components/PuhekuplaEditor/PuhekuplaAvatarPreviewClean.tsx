@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,7 @@ interface Hotel {
 
 interface PuhekuplaAvatarPreviewCleanProps {
   currentFigure: PuhekuplaFigure;
-  selectedGender: 'M' | 'F';
+  selectedGender: 'M' | 'F' | 'U';
   selectedHotel: string;
   currentDirection: string;
   hotels: Hotel[];
