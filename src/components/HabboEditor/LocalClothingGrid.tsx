@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +52,8 @@ const LocalClothingGrid = ({
     gender: item.gender,
     club: 'FREE' as const,
     colors: availableColors, // Use available colors
-    source: 'viajovem-flash' as const
+    source: 'viajovem-flash' as const,
+    thumbnailUrl: `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-1&gender=${selectedGender}&direction=2&head_direction=2&size=s`
   });
 
   const handleItemClick = (item: ViaJovemFlashItem) => {
@@ -159,7 +159,6 @@ const LocalClothingGrid = ({
                 className="w-full"
               />
             ) : (
-              // Modo completo (avatar inteiro)
               <div
                 className={`
                   aspect-square cursor-pointer transition-all duration-200 hover:scale-105 relative
