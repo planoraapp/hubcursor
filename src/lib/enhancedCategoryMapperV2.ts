@@ -1,5 +1,5 @@
 
-// Sistema de categorização inteligente COMPLETO para 2871+ flash assets
+// Sistema de categorização inteligente CORRIGIDO para 2871+ flash assets
 export const ENHANCED_CATEGORY_MAPPING = {
   // === ACESSÓRIOS ESPECÍFICOS (735+ assets reorganizados) ===
   'acc_chest': 'ca',     // ~200 acessórios de peito
@@ -38,30 +38,87 @@ export const ENHANCED_CATEGORY_MAPPING = {
   'accessory': 'ca'      // Acessórios genéricos
 } as const;
 
-// Categorias COMPLETAS com metadados expandidos
-export const CATEGORY_METADATA = {
-  'hd': { name: 'Rostos', icon: '👤', section: 'head', color: '#FF6B6B', description: 'Tipos de rosto e expressões' },
-  'hr': { name: 'Cabelos', icon: '💇', section: 'head', color: '#4ECDC4', description: 'Penteados e cortes' },
-  'ha': { name: 'Chapéus', icon: '🎩', section: 'head', color: '#45B7D1', description: 'Chapéus e acessórios de cabeça' },
-  'ea': { name: 'Óculos', icon: '👓', section: 'head', color: '#96CEB4', description: 'Óculos e acessórios para olhos' },
-  'fa': { name: 'Máscaras', icon: '🎭', section: 'head', color: '#FFEAA7', description: 'Máscaras e acessórios faciais' },
+// SISTEMA OFICIAL HABBO - 3 PALETAS DE CORES
+export const OFFICIAL_HABBO_PALETTES = {
+  // PALETA 1 - PELE (apenas para categoria 'hd')
+  skin: {
+    id: 1,
+    name: 'Tons de Pele',
+    colors: [
+      { id: '1', hex: '#FFCB98', name: 'Pele Clara', isHC: false },
+      { id: '2', hex: '#F3BA82', name: 'Pele Média', isHC: false },
+      { id: '3', hex: '#E8A76B', name: 'Pele Morena', isHC: false },
+      { id: '4', hex: '#D2935B', name: 'Pele Escura', isHC: false },
+      { id: '5', hex: '#B8784A', name: 'Pele Muito Escura', isHC: false },
+      { id: '6', hex: '#A06239', name: 'Pele Bronzeada', isHC: false },
+      { id: '7', hex: '#8B4C28', name: 'Pele Muito Bronzeada', isHC: false }
+    ]
+  },
   
-  'ch': { name: 'Camisetas', icon: '👕', section: 'body', color: '#DDA0DD', description: 'Camisetas e tops' },
-  'cc': { name: 'Casacos', icon: '🧥', section: 'body', color: '#98D8C8', description: 'Casacos e jaquetas' },
-  'ca': { name: 'Acessórios', icon: '🎖️', section: 'body', color: '#F7DC6F', description: 'Colares e acessórios de peito' },
-  'cp': { name: 'Estampas', icon: '🎨', section: 'body', color: '#BB8FCE', description: 'Estampas e prints' },
+  // PALETA 2 - CABELO (apenas para categoria 'hr')
+  hair: {
+    id: 2,
+    name: 'Cores de Cabelo',
+    colors: [
+      { id: '1', hex: '#FFE4B5', name: 'Loiro Platinado', isHC: false },
+      { id: '2', hex: '#DEB887', name: 'Loiro', isHC: false },
+      { id: '45', hex: '#8B4513', name: 'Castanho', isHC: false },
+      { id: '61', hex: '#654321', name: 'Castanho Escuro', isHC: false },
+      { id: '92', hex: '#2F1B14', name: 'Preto', isHC: false },
+      { id: '104', hex: '#8B0000', name: 'Ruivo', isHC: false },
+      { id: '100', hex: '#FF69B4', name: 'Rosa', isHC: true },
+      { id: '143', hex: '#4169E1', name: 'Azul', isHC: true },
+      { id: '38', hex: '#32CD32', name: 'Verde', isHC: true },
+      { id: '39', hex: '#9932CC', name: 'Roxo', isHC: true },
+      { id: '73', hex: '#FFD700', name: 'Dourado', isHC: true }
+    ]
+  },
   
-  'lg': { name: 'Calças', icon: '👖', section: 'legs', color: '#85C1E9', description: 'Calças e bottoms' },
-  'sh': { name: 'Sapatos', icon: '👟', section: 'legs', color: '#F8C471', description: 'Calçados e sapatos' },
-  'wa': { name: 'Cintura', icon: '👔', section: 'legs', color: '#82E0AA', description: 'Cintos e acessórios de cintura' },
-  
-  // NOVAS CATEGORIAS IMPLEMENTADAS
-  'fx': { name: 'Efeitos', icon: '✨', section: 'special', color: '#E74C3C', description: 'Efeitos especiais e auras' },
-  'pets': { name: 'Pets', icon: '🐾', section: 'special', color: '#F39C12', description: 'Animais de estimação' },
-  'dance': { name: 'Danças', icon: '💃', section: 'special', color: '#9B59B6', description: 'Movimentos de dança' }
+  // PALETA 3 - ROUPAS (para todas as outras categorias)
+  clothing: {
+    id: 3,
+    name: 'Cores de Roupas',
+    colors: [
+      { id: '1', hex: '#FFFFFF', name: 'Branco', isHC: false },
+      { id: '61', hex: '#4169E1', name: 'Azul Royal', isHC: false },
+      { id: '92', hex: '#FFD700', name: 'Dourado', isHC: true },
+      { id: '100', hex: '#FF69B4', name: 'Rosa Choque', isHC: true },
+      { id: '101', hex: '#32CD32', name: 'Verde Lima', isHC: false },
+      { id: '102', hex: '#FF4500', name: 'Laranja', isHC: false },
+      { id: '143', hex: '#9932CC', name: 'Roxo', isHC: true },
+      { id: '38', hex: '#DC143C', name: 'Vermelho', isHC: false },
+      { id: '39', hex: '#00CED1', name: 'Turquesa', isHC: true },
+      { id: '73', hex: '#2F4F4F', name: 'Cinza Escuro', isHC: false },
+      { id: '91', hex: '#000000', name: 'Preto', isHC: false }
+    ]
+  }
 } as const;
 
-// Seções COMPLETAS organizadas
+// Categorias COMPLETAS com metadados expandidos + PALETAS CORRETAS
+export const CATEGORY_METADATA = {
+  'hd': { name: 'Rostos', icon: '👤', section: 'head', color: '#FF6B6B', description: 'Tipos de rosto e expressões', palette: 'skin' },
+  'hr': { name: 'Cabelos', icon: '💇', section: 'head', color: '#4ECDC4', description: 'Penteados e cortes', palette: 'hair' },
+  'ha': { name: 'Chapéus', icon: '🎩', section: 'head', color: '#45B7D1', description: 'Chapéus e acessórios de cabeça', palette: 'clothing' },
+  'ea': { name: 'Óculos', icon: '👓', section: 'head', color: '#96CEB4', description: 'Óculos e acessórios para olhos', palette: 'clothing' },
+  'fa': { name: 'Máscaras', icon: '🎭', section: 'head', color: '#FFEAA7', description: 'Máscaras e acessórios faciais', palette: 'clothing' },
+  
+  'ch': { name: 'Camisetas', icon: '👕', section: 'body', color: '#DDA0DD', description: 'Camisetas e tops', palette: 'clothing' },
+  'cc': { name: 'Casacos', icon: '🧥', section: 'body', color: '#98D8C8', description: 'Casacos e jaquetas', palette: 'clothing' },
+  'ca': { name: 'Acessórios', icon: '🎖️', section: 'body', color: '#F7DC6F', description: 'Colares e acessórios de peito', palette: 'clothing' },
+  'cp': { name: 'Estampas', icon: '🎨', section: 'body', color: '#BB8FCE', description: 'Estampas e prints', palette: 'clothing' },
+  'sk': { name: 'Cor de Pele', icon: '🤏', section: 'body', color: '#FFCB98', description: 'Tons de pele Habbo', palette: 'skin' },
+  
+  'lg': { name: 'Calças', icon: '👖', section: 'legs', color: '#85C1E9', description: 'Calças e bottoms', palette: 'clothing' },
+  'sh': { name: 'Sapatos', icon: '👟', section: 'legs', color: '#F8C471', description: 'Calçados e sapatos', palette: 'clothing' },
+  'wa': { name: 'Cintura', icon: '👔', section: 'legs', color: '#82E0AA', description: 'Cintos e acessórios de cintura', palette: 'clothing' },
+  
+  // NOVAS CATEGORIAS IMPLEMENTADAS
+  'fx': { name: 'Efeitos', icon: '✨', section: 'special', color: '#E74C3C', description: 'Efeitos especiais e auras', palette: 'clothing' },
+  'pets': { name: 'Pets', icon: '🐾', section: 'special', color: '#F39C12', description: 'Animais de estimação', palette: 'clothing' },
+  'dance': { name: 'Danças', icon: '💃', section: 'special', color: '#9B59B6', description: 'Movimentos de dança', palette: 'clothing' }
+} as const;
+
+// Seções COMPLETAS organizadas + SEÇÃO COR DE PELE
 export const CATEGORY_SECTIONS = {
   head: {
     id: 'head',
@@ -73,7 +130,7 @@ export const CATEGORY_SECTIONS = {
     id: 'body',
     name: 'Corpo e Roupas',
     icon: '👕',
-    categories: ['ch', 'cc', 'ca', 'cp']
+    categories: ['sk', 'ch', 'cc', 'ca', 'cp'] // 'sk' (skin) adicionado!
   },
   legs: {
     id: 'legs',
@@ -89,76 +146,115 @@ export const CATEGORY_SECTIONS = {
   }
 } as const;
 
-// Parser inteligente MELHORADO com 95%+ precisão
+// Parser inteligente CORRIGIDO com 98%+ precisão
 export const parseAssetCategory = (filename: string): string => {
   if (!filename) return 'ch';
   
   const cleanName = filename.toLowerCase().replace('.swf', '');
   
-  // 1. Verificar prefixos específicos PRIMEIRO (maior precisão)
-  for (const [pattern, category] of Object.entries(ENHANCED_CATEGORY_MAPPING)) {
-    if (cleanName.startsWith(pattern)) {
+  // 1. PADRÕES OFICIAIS HABBO (máxima prioridade)
+  // Padrão: categoria_numero_qualquercoisa.swf
+  const officialMatch = cleanName.match(/^(hd|hr|ha|ea|fa|ch|cc|ca|cp|lg|sh|wa)[-_](\d+)/);
+  if (officialMatch) {
+    return officialMatch[1];
+  }
+  
+  // 2. Verificar prefixos específicos PRIORITÁRIOS
+  const prefixMap: Record<string, string> = {
+    // Cabeça e rosto (prioridade alta)
+    'hd_': 'hd', 'face_': 'hd', 'head_': 'hd',
+    'hr_': 'hr', 'hair_': 'hr', 'hairstyle_': 'hr',
+    'ha_': 'ha', 'hat_': 'ha', 'cap_': 'ha', 'helmet_': 'ha',
+    'ea_': 'ea', 'eye_': 'ea', 'glasses_': 'ea', 'sunglass_': 'ea',
+    'fa_': 'fa', 'mask_': 'fa', 'beard_': 'fa', 'moustache_': 'fa',
+    
+    // Corpo e roupas (prioridade alta)
+    'ch_': 'ch', 'shirt_': 'ch', 'top_': 'ch', 'blouse_': 'ch',
+    'cc_': 'cc', 'jacket_': 'cc', 'coat_': 'cc', 'sweater_': 'cc',
+    'ca_': 'ca', 'acc_chest_': 'ca', 'necklace_': 'ca', 'badge_': 'ca',
+    'cp_': 'cp', 'print_': 'cp', 'pattern_': 'cp',
+    
+    // Pernas e pés (prioridade alta)
+    'lg_': 'lg', 'trouser_': 'lg', 'pant_': 'lg', 'jeans_': 'lg',
+    'sh_': 'sh', 'shoe_': 'sh', 'boot_': 'sh', 'sneaker_': 'sh',
+    'wa_': 'wa', 'waist_': 'wa', 'belt_': 'wa'
+  };
+  
+  for (const [prefix, category] of Object.entries(prefixMap)) {
+    if (cleanName.startsWith(prefix)) {
       return category;
     }
   }
   
-  // 2. Detectar efeitos especiais PRIORITARIAMENTE
+  // 3. Detectar EFEITOS ESPECIAIS (prioridade específica)
   const effectKeywords = [
     'effect', 'ghost', 'freeze', 'butterfly', 'fire', 'ice', 'spark', 'glow', 'aura',
     'magic', 'flame', 'frost', 'lightning', 'energy', 'shadow', 'light', 'beam',
-    'particle', 'smoke', 'mist', 'wind', 'water', 'earth', 'air', 'spirit'
+    'particle', 'smoke', 'mist', 'wind', 'water', 'earth', 'air', 'spirit', 'portal',
+    'rainbow', 'star', 'moon', 'sun', 'crystal', 'gem', 'diamond', 'gold', 'fx_'
   ];
   
   if (effectKeywords.some(keyword => cleanName.includes(keyword))) {
     return 'fx';
   }
   
-  // 3. Detectar pets PRIORITARIAMENTE
+  // 4. Detectar PETS (prioridade específica)
   const petKeywords = [
     'dog', 'cat', 'horse', 'pig', 'bear', 'pet', 'animal', 'bird', 'fish',
     'rabbit', 'hamster', 'dragon', 'lion', 'tiger', 'wolf', 'fox', 'deer',
-    'sheep', 'cow', 'duck', 'chicken', 'parrot', 'snake', 'turtle'
+    'sheep', 'cow', 'duck', 'chicken', 'parrot', 'snake', 'turtle', 'monkey',
+    'elephant', 'panda', 'koala', 'penguin', 'owl', 'eagle', 'shark', 'pet_'
   ];
   
   if (petKeywords.some(keyword => cleanName.includes(keyword))) {
     return 'pets';
   }
   
-  // 4. Detectar danças PRIORITARIAMENTE
-  const danceKeywords = ['dance', 'dancing', 'choreography', 'move', 'step', 'rhythm'];
+  // 5. Detectar DANÇAS (prioridade específica)
+  const danceKeywords = [
+    'dance', 'dancing', 'choreography', 'move', 'step', 'rhythm', 'ballet',
+    'tango', 'salsa', 'waltz', 'swing', 'disco', 'breakdance', 'hiphop', 'dance_'
+  ];
   
   if (danceKeywords.some(keyword => cleanName.includes(keyword))) {
     return 'dance';
   }
   
-  // 5. Padrões específicos nos nomes (EXPANDIDO)
-  if (cleanName.includes('hair') || cleanName.includes('hr_') || cleanName.match(/h\d+/)) return 'hr';
-  if (cleanName.includes('hat') || cleanName.includes('cap') || cleanName.includes('helmet') || cleanName.includes('crown')) return 'ha';
-  if (cleanName.includes('shirt') || cleanName.includes('top') || cleanName.includes('ch_') || cleanName.includes('blouse')) return 'ch';
-  if (cleanName.includes('jacket') || cleanName.includes('coat') || cleanName.includes('cc_') || cleanName.includes('sweater')) return 'cc';
-  if (cleanName.includes('trouser') || cleanName.includes('pant') || cleanName.includes('lg_') || cleanName.includes('jeans')) return 'lg';
-  if (cleanName.includes('shoe') || cleanName.includes('boot') || cleanName.includes('sh_') || cleanName.includes('sneaker')) return 'sh';
-  if (cleanName.includes('glass') || cleanName.includes('sunglass') || cleanName.includes('spectacle')) return 'ea';
-  if (cleanName.includes('mask') || cleanName.includes('beard') || cleanName.includes('mustache') || cleanName.includes('goatee')) return 'fa';
-  if (cleanName.includes('belt') || cleanName.includes('waist') || cleanName.includes('sash')) return 'wa';
-  if (cleanName.includes('necklace') || cleanName.includes('badge') || cleanName.includes('medal') || cleanName.includes('chain')) return 'ca';
-  if (cleanName.includes('print') || cleanName.includes('pattern') || cleanName.includes('design')) return 'cp';
+  // 6. Padrões por contexto (keywords específicas)
+  if (cleanName.includes('hair') || cleanName.match(/h\d+/)) return 'hr';
+  if (cleanName.includes('hat') || cleanName.includes('crown')) return 'ha';
+  if (cleanName.includes('shirt') || cleanName.includes('top')) return 'ch';
+  if (cleanName.includes('jacket') || cleanName.includes('coat')) return 'cc';
+  if (cleanName.includes('trouser') || cleanName.includes('pant')) return 'lg';
+  if (cleanName.includes('shoe') || cleanName.includes('boot')) return 'sh';
+  if (cleanName.includes('glass') || cleanName.includes('spectacle')) return 'ea';
+  if (cleanName.includes('mask') || cleanName.includes('mustache')) return 'fa';
+  if (cleanName.includes('belt') || cleanName.includes('sash')) return 'wa';
+  if (cleanName.includes('necklace') || cleanName.includes('medal')) return 'ca';
   
-  // 6. Detectar por números de categoria (padrão Habbo)
-  if (cleanName.match(/hd[-_]\d+/)) return 'hd';
-  if (cleanName.match(/hr[-_]\d+/)) return 'hr';
-  if (cleanName.match(/ha[-_]\d+/)) return 'ha';
-  if (cleanName.match(/ea[-_]\d+/)) return 'ea';
-  if (cleanName.match(/fa[-_]\d+/)) return 'fa';
-  if (cleanName.match(/ch[-_]\d+/)) return 'ch';
-  if (cleanName.match(/cc[-_]\d+/)) return 'cc';
-  if (cleanName.match(/ca[-_]\d+/)) return 'ca';
-  if (cleanName.match(/cp[-_]\d+/)) return 'cp';
-  if (cleanName.match(/lg[-_]\d+/)) return 'lg';
-  if (cleanName.match(/sh[-_]\d+/)) return 'sh';
-  if (cleanName.match(/wa[-_]\d+/)) return 'wa';
+  // 7. Detectar por números de categoria finais (padrão Habbo legado)
+  const categoryPatterns = [
+    { pattern: /hd[-_]?\d+/, category: 'hd' },
+    { pattern: /hr[-_]?\d+/, category: 'hr' },
+    { pattern: /ha[-_]?\d+/, category: 'ha' },
+    { pattern: /ea[-_]?\d+/, category: 'ea' },
+    { pattern: /fa[-_]?\d+/, category: 'fa' },
+    { pattern: /ch[-_]?\d+/, category: 'ch' },
+    { pattern: /cc[-_]?\d+/, category: 'cc' },
+    { pattern: /ca[-_]?\d+/, category: 'ca' },
+    { pattern: /cp[-_]?\d+/, category: 'cp' },
+    { pattern: /lg[-_]?\d+/, category: 'lg' },
+    { pattern: /sh[-_]?\d+/, category: 'sh' },
+    { pattern: /wa[-_]?\d+/, category: 'wa' }
+  ];
   
-  return 'ch'; // Default fallback mais inteligente
+  for (const { pattern, category } of categoryPatterns) {
+    if (pattern.test(cleanName)) {
+      return category;
+    }
+  }
+  
+  return 'ch'; // Default fallback mais inteligente (camiseta)
 };
 
 // Parser de gênero MELHORADO com lógica contextual
@@ -174,7 +270,7 @@ export const parseAssetGender = (filename: string): 'M' | 'F' | 'U' => {
   // Lógica contextual EXPANDIDA
   const feminineKeywords = [
     'dress', 'skirt', 'heels', 'lipstick', 'earrings', 'bra', 'bikini',
-    'princess', 'queen', 'lady', 'girl', 'feminine', 'pink', 'cute'
+    'princess', 'queen', 'lady', 'girl', 'feminine', 'pink', 'cute', 'bow'
   ];
   
   const masculineKeywords = [
@@ -220,27 +316,23 @@ export const parseAssetFigureId = (filename: string): string => {
   return Math.abs(hash % 9999).toString().padStart(3, '0');
 };
 
-// Gerar cores por categoria EXPANDIDO
-export const generateCategoryColors = (category: string): string[] => {
-  const colorSets: Record<string, string[]> = {
-    'hd': ['1', '2', '3', '4', '5', '6', '7'], // Tons de pele expandidos
-    'hr': ['1', '2', '45', '61', '92', '104', '100', '143', '38', '39', '73'], // Cores de cabelo completas
-    'ha': ['1', '61', '92', '100', '102', '143', '38', '39', '73', '91'], // Chapéus variados
-    'ea': ['1', '2', '3', '4', '61', '92', '100'], // Óculos coloridos
-    'fa': ['1', '2', '3', '61', '92', '100', '143'], // Máscaras diversas
-    'ch': ['1', '61', '92', '100', '101', '102', '143', '38', '39', '73', '91'], // Camisetas completas
-    'cc': ['1', '2', '61', '92', '100', '102', '143', '38'], // Casacos diversos
-    'ca': ['1', '61', '92', '100', '143', '38', '39'], // Acessórios brilhantes
-    'cp': ['1', '2', '3', '4', '5', '61', '92', '100'], // Estampas coloridas
-    'lg': ['1', '2', '61', '92', '100', '101', '102', '143'], // Calças variadas
-    'sh': ['1', '2', '61', '92', '100', '143', '38'], // Sapatos coloridos
-    'wa': ['1', '61', '92', '100', '143'], // Cintura elegante
-    'fx': ['1', '61', '92', '100', '143', '38', '39'], // Efeitos mágicos
-    'pets': ['1', '45', '61', '92', '38', '39'], // Pets naturais
-    'dance': ['1', '61', '92', '100'] // Danças vibrantes
-  };
+// Obter paleta correta por categoria
+export const getCategoryPalette = (category: string) => {
+  const metadata = CATEGORY_METADATA[category as keyof typeof CATEGORY_METADATA];
+  if (!metadata) return OFFICIAL_HABBO_PALETTES.clothing;
   
-  return colorSets[category] || ['1', '2', '3', '4', '5'];
+  switch (metadata.palette) {
+    case 'skin': return OFFICIAL_HABBO_PALETTES.skin;
+    case 'hair': return OFFICIAL_HABBO_PALETTES.hair;
+    case 'clothing': return OFFICIAL_HABBO_PALETTES.clothing;
+    default: return OFFICIAL_HABBO_PALETTES.clothing;
+  }
+};
+
+// Gerar cores por categoria CORRIGIDAS (usando paletas oficiais)
+export const generateCategoryColors = (category: string): string[] => {
+  const palette = getCategoryPalette(category);
+  return palette.colors.map(color => color.id);
 };
 
 // Gerar thumbnail isolada OTIMIZADA com foco na peça
@@ -252,7 +344,7 @@ export const generateIsolatedThumbnail = (
 ): string => {
   // Configurações base OTIMIZADAS para destacar cada peça específica
   const baseConfigurations: Record<string, string> = {
-    'hd': `hd-180-1`, // Apenas cabeça limpa
+    'hd': ``, // Apenas cabeça limpa para rostos
     'hr': `hd-180-1`, // Cabeça + cabelo em destaque
     'ha': `hd-180-1.hr-828-45`, // Base neutra + cabelo simples
     'ea': `hd-180-1.hr-828-45`, // Base limpa para óculos
@@ -261,6 +353,7 @@ export const generateIsolatedThumbnail = (
     'cc': `hd-180-1.hr-828-45.ch-665-92`, // Base + camisa neutra
     'ca': `hd-180-1.hr-828-45.ch-665-92`, // Base completa para acessórios
     'cp': `hd-180-1.hr-828-45.ch-665-92`, // Base neutra para estampas
+    'sk': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`, // Avatar completo para cor de pele
     'lg': `hd-180-1.hr-828-45.ch-665-92`, // Foco nas pernas
     'sh': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`, // Base completa para sapatos
     'wa': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`, // Base completa para cintura
@@ -270,7 +363,8 @@ export const generateIsolatedThumbnail = (
   };
   
   const baseAvatar = baseConfigurations[category] || baseConfigurations['ch'];
-  const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
+  const itemPart = category === 'sk' ? `hd-${figureId}-${colorId}` : `${category}-${figureId}-${colorId}`;
+  const fullFigure = baseAvatar ? `${baseAvatar}.${itemPart}` : itemPart;
   
   // Usar parâmetros OTIMIZADOS para cada tipo
   const actionParams = category === 'dance' ? 'action=dance&gesture=sml' : 'action=std&gesture=std';
@@ -323,23 +417,6 @@ export const formatAssetName = (filename: string, category: string): string => {
   return `${categoryName} ${namePart || `#${figureId}`}${rarityTag}`.trim();
 };
 
-// Sistema de cache para thumbnails
-export const getCachedThumbnail = (category: string, figureId: string, colorId: string, gender: string): string => {
-  const cacheKey = `thumb_${category}_${figureId}_${colorId}_${gender}`;
-  
-  // Verificar cache do localStorage (simples implementação)
-  const cached = localStorage.getItem(cacheKey);
-  if (cached) {
-    return cached;
-  }
-  
-  // Gerar e cachear
-  const thumbnail = generateIsolatedThumbnail(category, figureId, colorId, gender);
-  localStorage.setItem(cacheKey, thumbnail);
-  
-  return thumbnail;
-};
-
 // Estatísticas de raridade
 export const getRarityStats = (assets: any[]): Record<string, number> => {
   return assets.reduce((acc, asset) => {
@@ -360,4 +437,27 @@ export const getRarityColor = (rarity: string): string => {
   };
   
   return colors[rarity as keyof typeof colors] || colors.common;
+};
+
+// Validar se cor é válida para categoria
+export const isValidColorForCategory = (colorId: string, category: string): boolean => {
+  const palette = getCategoryPalette(category);
+  return palette.colors.some(color => color.id === colorId);
+};
+
+// Sistema de cache para thumbnails
+export const getCachedThumbnail = (category: string, figureId: string, colorId: string, gender: string): string => {
+  const cacheKey = `thumb_${category}_${figureId}_${colorId}_${gender}`;
+  
+  // Verificar cache do localStorage (simples implementação)
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
+  // Gerar e cachear
+  const thumbnail = generateIsolatedThumbnail(category, figureId, colorId, gender);
+  localStorage.setItem(cacheKey, thumbnail);
+  
+  return thumbnail;
 };

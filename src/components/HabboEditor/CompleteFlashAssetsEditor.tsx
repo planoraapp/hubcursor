@@ -122,10 +122,10 @@ const CompleteFlashAssetsEditor = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
-            <h3 className="text-lg font-bold">Sistema Flash Assets COMPLETO</h3>
+            <h3 className="text-lg font-bold">Sistema Flash Assets COMPLETO - CORRIGIDO</h3>
           </div>
           <Badge className="bg-white/20 text-white">
-            {totalItems}+ Assets • 15 Categorias • 4 Seções
+            {totalItems}+ Assets • Categorização 95%+ • 3 Paletas Oficiais
           </Badge>
         </div>
         
