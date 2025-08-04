@@ -1,13 +1,13 @@
-
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock, Zap } from 'lucide-react';
-import { OfficialHabboImage } from './OfficialHabboImage';
+import { OfficialMarketplaceImage } from './OfficialMarketplaceImage';
 import { MarketItemModal } from './MarketItemModal';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
+import { FurnidataService } from '@/services/FurnidataService';
 
 interface MarketItem {
   id: string;
@@ -99,7 +99,7 @@ export const MarketplaceItemsList = ({
           return 0;
       }
     })
-    .slice(0, 25); // Aumentar limite para mostrar mais itens
+    .slice(0, 25);
 
   if (loading) {
     return (
@@ -131,11 +131,15 @@ export const MarketplaceItemsList = ({
             🏪 Feira Livre de {hotel.name}
           </h3>
           
-          {/* Status indicador */}
+          {/* Status indicador melhorado */}
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded border border-green-300">
               <Zap size={12} className="text-green-600" />
               <span className="text-xs text-green-700 font-medium">Dados Oficiais</span>
+            </div>
+            <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded border border-yellow-300">
+              <Package2 size={12} className="text-yellow-600" />
+              <span className="text-xs text-yellow-700">Imagens Oficiais</span>
             </div>
             <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded border border-blue-300">
               <Clock size={12} className="text-blue-600" />
@@ -163,28 +167,31 @@ export const MarketplaceItemsList = ({
                 <div
                   key={item.id}
                   onClick={() => handleItemClick(item)}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 cursor-pointer transition-all border-2 border-gray-200 hover:border-blue-300 hover:shadow-md"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-yellow-50 cursor-pointer transition-all border-2 border-yellow-200 hover:border-yellow-400 hover:shadow-md"
                 >
-                  <OfficialHabboImage
+                  {/* ETAPA 2: Usar OfficialMarketplaceImage */}
+                  <OfficialMarketplaceImage
                     className={item.className}
-                    name={item.name}
+                    name={FurnidataService.getFurniName(item.className)}
                     size="md"
                     priority={index < 10}
                   />
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-sm truncate" title={item.name}>
-                        {item.name}
+                      {/* ETAPA 3: Usar nome correto do Furnidata */}
+                      <p className="font-medium text-sm truncate" title={FurnidataService.getFurniName(item.className)}>
+                        {FurnidataService.getFurniName(item.className)}
                       </p>
                       
-                      {/* Badges melhoradas */}
-                      {(item.rarity === 'legendary' || item.className.toLowerCase().includes('ltd')) && (
+                      {/* Badges melhoradas com dados do Furnidata */}
+                      {(FurnidataService.getFurniRarity(item.className) === 'legendary' || 
+                        item.className.toLowerCase().includes('ltd')) && (
                         <span className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 text-xs px-2 py-1 rounded border border-purple-300 font-medium">
                           ✨ LTD
                         </span>
                       )}
-                      {item.rarity === 'rare' && (
+                      {FurnidataService.getFurniRarity(item.className) === 'rare' && (
                         <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-xs px-2 py-1 rounded border border-blue-300">
                           💎 Raro
                         </span>

@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { MarketItem, ClubItem, MarketStats } from '@/contexts/MarketplaceContext';
+import { FurnidataService } from './FurnidataService';
 
 interface FetchMarketDataParams {
   searchTerm: string;
@@ -13,7 +14,7 @@ export class MarketplaceService {
     console.log('🔄 [MarketplaceService] Fetching official marketplace data...');
     
     try {
-      // Usar a nova edge function oficial
+      // ETAPA 2 e 3: Usar a nova edge function oficial com dados integrados
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
         body: { 
           hotel: params.hotel
@@ -28,8 +29,17 @@ export class MarketplaceService {
       if (data?.items && Array.isArray(data.items)) {
         console.log(`✅ [MarketplaceService] Loaded ${data.items.length} items (${data.metadata?.realItems || 0} real + ${data.metadata?.fallbackItems || 0} fallback)`);
         
+        // ETAPA 3: Enriquecer dados com informações do Furnidata
+        const enrichedItems = data.items.map((item: any) => ({
+          ...item,
+          name: FurnidataService.getFurniName(item.className),
+          description: FurnidataService.getFurniDescription(item.className),
+          category: FurnidataService.getFurniCategory(item.className),
+          rarity: FurnidataService.getFurniRarity(item.className)
+        }));
+        
         // Filtrar itens baseado nos parâmetros
-        let filteredItems = data.items;
+        let filteredItems = enrichedItems;
         
         if (params.searchTerm) {
           filteredItems = filteredItems.filter(item =>
@@ -132,6 +142,7 @@ export class MarketplaceService {
     });
   }
 
+  // ETAPA 4: Métodos melhorados para "Altas de Hoje" e tendências
   static getFilteredItems(items: MarketItem[], type: 'topSellers' | 'biggestGainers' | 'opportunities' | 'todayHigh'): MarketItem[] {
     switch (type) {
       case 'topSellers':
@@ -144,33 +155,40 @@ export class MarketplaceService {
       case 'biggestGainers':
         // Itens com trend 'up' e maior variação percentual
         return [...items]
-          .filter(item => item.trend === 'up')
+          .filter(item => item.trend === 'up' && parseFloat(item.changePercent) > 0)
           .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
           .slice(0, 10);
       
       case 'opportunities':
-        // LTDs e itens raros com bom preço
+        // LTDs e itens raros com dados do Furnidata
         return [...items]
-          .filter(item => 
-            (item.className.toLowerCase().includes('ltd') || 
-             item.rarity === 'legendary' ||
-             item.rarity === 'rare' ||
-             item.currentPrice > 300) &&
-            (item.openOffers || 0) >= 0
-          )
+          .filter(item => {
+            const rarity = FurnidataService.getFurniRarity(item.className);
+            return (
+              rarity === 'legendary' || 
+              rarity === 'rare' ||
+              item.currentPrice > 300
+            ) && (item.openOffers || 0) >= 0;
+          })
           .sort((a, b) => {
-            // Priorizar por raridade e depois por preço
+            // Priorizar por raridade (do Furnidata) e depois por preço
             const rarityWeight = { legendary: 3, rare: 2, uncommon: 1, common: 0 };
-            const aWeight = (rarityWeight[a.rarity as keyof typeof rarityWeight] || 0) * 1000 + a.currentPrice;
-            const bWeight = (rarityWeight[b.rarity as keyof typeof rarityWeight] || 0) * 1000 + b.currentPrice;
+            const aRarity = FurnidataService.getFurniRarity(a.className);
+            const bRarity = FurnidataService.getFurniRarity(b.className);
+            const aWeight = (rarityWeight[aRarity] || 0) * 1000 + a.currentPrice;
+            const bWeight = (rarityWeight[bRarity] || 0) * 1000 + b.currentPrice;
             return bWeight - aWeight;
           })
           .slice(0, 10);
       
       case 'todayHigh':
-        // Maiores altas baseado em dados reais
+        // ETAPA 4: Maiores altas baseado em dados oficiais
         return [...items]
-          .filter(item => item.trend === 'up' && parseFloat(item.changePercent) > 0)
+          .filter(item => 
+            item.trend === 'up' && 
+            parseFloat(item.changePercent) > 0 &&
+            (item.openOffers || 0) > 0 // Apenas itens disponíveis no marketplace
+          )
           .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
           .slice(0, 10);
       
