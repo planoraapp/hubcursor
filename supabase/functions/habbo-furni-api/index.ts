@@ -15,7 +15,7 @@ interface HabboFurniItem {
   imageUrl: string;
   rarity: string;
   type: string;
-  swfName: string;
+  className: string;
   colors: string[];
   club: 'HC' | 'FREE';
   source: 'habbofurni';
@@ -27,20 +27,21 @@ serve(async (req) => {
   }
 
   try {
-    const { limit = 200, category = 'all', page = 1 } = await req.json().catch(() => ({}));
+    const { searchTerm = '', className = '', limit = 200, category = 'all' } = await req.json().catch(() => ({}));
     
-    console.log(`🌐 [HabboFurni] Fetching furniture data - limit: ${limit}, category: ${category}, page: ${page}`);
+    console.log(`🌐 [HabboFurni] Fetching furniture data - searchTerm: "${searchTerm}", className: "${className}", limit: ${limit}`);
     
-    const apiKey = Deno.env.get('HABBO_FURNI_API_KEY');
+    const apiKey = Deno.env.get('HABBOHUB_FURNIAPI');
     if (!apiKey) {
-      throw new Error('HABBO_FURNI_API_KEY not configured');
+      console.error('❌ [HabboFurni] HABBOHUB_FURNIAPI not configured');
+      throw new Error('HABBOHUB_FURNIAPI not configured');
     }
 
     // HabboFurni.com API endpoints
     const endpoints = [
-      `https://api.habbofurni.com/furniture?limit=${limit}&page=${page}`,
-      `https://api.habbofurni.com/items?limit=${limit}&page=${page}`,
-      `https://habbofurni.com/api/furniture?limit=${limit}&page=${page}`
+      `https://api.habbofurni.com/v1/furniture?limit=${limit}`,
+      `https://habbofurni.com/api/v1/furniture?limit=${limit}`,
+      `https://habbofurni.com/api/furniture?limit=${limit}`
     ];
 
     let furniData: HabboFurniItem[] = [];
@@ -57,8 +58,10 @@ serve(async (req) => {
             'User-Agent': 'HabboHub-Console/2.0',
             'Accept': 'application/json',
           },
-          signal: AbortSignal.timeout(15000)
+          signal: AbortSignal.timeout(10000)
         });
+
+        console.log(`📊 [HabboFurni] Response status: ${response.status}`);
 
         if (!response.ok) {
           console.log(`❌ [HabboFurni] Failed ${endpoint}: ${response.status}`);
@@ -66,37 +69,48 @@ serve(async (req) => {
         }
 
         const data = await response.json();
-        console.log(`📊 [HabboFurni] Response structure:`, {
-          hasFurniture: !!data.furniture,
-          hasItems: !!data.items,
-          hasData: !!data.data,
-          dataLength: data.furniture?.length || data.items?.length || data.data?.length || 0
-        });
+        console.log(`📊 [HabboFurni] Response keys:`, Object.keys(data));
 
         // Process different response formats
-        let rawItems = data.furniture || data.items || data.data || [];
+        let rawItems = data.furniture || data.items || data.data || data || [];
         
         if (Array.isArray(rawItems) && rawItems.length > 0) {
+          console.log(`✅ [HabboFurni] Found ${rawItems.length} items`);
+          
           furniData = rawItems.map((item: any, index: number) => ({
-            id: item.id || `hf_${index}`,
-            name: item.name || item.public_name || `Furniture ${index}`,
-            category: mapCategoryToStandard(item.category || item.type || 'furniture'),
+            id: item.id || item.furni_id || `hf_${index}`,
+            name: item.name || item.public_name || item.furni_name || `Furniture ${index}`,
+            category: item.category || item.furni_type || 'furniture',
             description: item.description || item.furni_line || 'Habbo furniture item',
             imageUrl: generateFurniImageUrl(item),
             rarity: determineFurniRarity(item),
             type: item.type || 'furniture',
-            swfName: item.class_name || item.swf_name || `furni_${item.id}`,
+            className: item.class_name || item.swf_name || item.className || `furni_${item.id}`,
             colors: extractColors(item),
             club: item.hc_required || item.club ? 'HC' : 'FREE',
             source: 'habbofurni'
           }));
 
+          // Filter by searchTerm if provided
+          if (searchTerm) {
+            furniData = furniData.filter(item => 
+              item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              item.className.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+          }
+
+          // Filter by className if provided
+          if (className) {
+            furniData = furniData.filter(item => 
+              item.className.toLowerCase().includes(className.toLowerCase())
+            );
+          }
+
           metadata = {
             source: endpoint,
-            page,
-            limit,
-            total: data.total || furniData.length,
-            hasMore: data.hasMore || (data.total ? page * limit < data.total : false)
+            total: furniData.length,
+            searchTerm,
+            className
           };
 
           console.log(`✅ [HabboFurni] Success with ${furniData.length} items from ${endpoint}`);
@@ -111,8 +125,8 @@ serve(async (req) => {
     // Fallback data if API fails
     if (furniData.length === 0) {
       console.log('🔄 [HabboFurni] All endpoints failed, generating fallback data');
-      furniData = generateHabboFurniFallback();
-      metadata = { source: 'fallback', page, limit };
+      furniData = generateHabboFurniFallback(searchTerm, className);
+      metadata = { source: 'fallback', searchTerm, className };
     }
 
     const result = {
@@ -138,7 +152,7 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({
-        furnis: generateHabboFurniFallback(),
+        furnis: [],
         metadata: {
           source: 'error-fallback',
           fetchedAt: new Date().toISOString(),
@@ -152,39 +166,25 @@ serve(async (req) => {
   }
 });
 
-function mapCategoryToStandard(category: string): string {
-  const mapping: Record<string, string> = {
-    'seating': 'cadeiras',
-    'tables': 'mesas',
-    'beds': 'camas',
-    'storage': 'armazenamento',
-    'lighting': 'iluminacao',
-    'wall_items': 'parede',
-    'floor_items': 'piso',
-    'plants': 'plantas',
-    'electronics': 'eletronicos',
-    'decorations': 'diversos'
-  };
-  
-  return mapping[category.toLowerCase()] || 'diversos';
-}
-
 function generateFurniImageUrl(item: any): string {
-  // Generate multiple possible image URLs
-  const id = item.id || item.sprite_id || '1';
+  const className = item.class_name || item.swf_name || item.className || item.id;
   
+  // Priority order for image URLs
   if (item.icon_url) return item.icon_url;
   if (item.image_url) return item.image_url;
   if (item.preview_image) return item.preview_image;
   
-  // Try common Habbo imaging patterns
-  return `https://images.habbo.com/dcr/hof_furni/${id}/${id}.png`;
+  // HabboFurni URLs
+  return `https://habbofurni.com/furniture_images/${className}.png`;
 }
 
 function determineFurniRarity(item: any): string {
+  const name = item.name?.toLowerCase() || '';
+  const className = item.class_name?.toLowerCase() || item.swf_name?.toLowerCase() || '';
+  
+  if (name.includes('ltd') || className.includes('ltd')) return 'ltd';
   if (item.rare || item.rarity === 'rare') return 'rare';
-  if (item.ltd || item.limited) return 'ltd';
-  if (item.hc_required || item.club) return 'hc';
+  if (item.hc_required || item.club || name.includes('hc') || className.includes('hc')) return 'hc';
   if (item.credits_cost > 1000) return 'expensive';
   return 'common';
 }
@@ -199,44 +199,23 @@ function extractColors(item: any): string[] {
   return ['1', '2', '3', '4'];
 }
 
-function generateHabboFurniFallback(): HabboFurniItem[] {
-  const categories = [
-    { name: 'cadeiras', count: 150 },
-    { name: 'mesas', count: 100 },
-    { name: 'camas', count: 80 },
-    { name: 'sofas', count: 60 },
-    { name: 'plantas', count: 40 },
-    { name: 'iluminacao', count: 70 },
-    { name: 'parede', count: 200 },
-    { name: 'piso', count: 50 },
-    { name: 'armazenamento', count: 90 },
-    { name: 'eletronicos', count: 110 },
-    { name: 'diversos', count: 300 }
-  ];
-
-  const fallbackItems: HabboFurniItem[] = [];
-  
-  categories.forEach(category => {
-    for (let i = 1; i <= category.count; i++) {
-      const isRare = i % 20 === 0;
-      const isHC = i % 8 === 0;
-      
-      fallbackItems.push({
-        id: `hf_${category.name}_${i}`,
-        name: `${category.name.charAt(0).toUpperCase() + category.name.slice(1)} ${i}${isRare ? ' (Raro)' : ''}${isHC ? ' (HC)' : ''}`,
-        category: category.name,
-        description: `Item de ${category.name} do catálogo Habbo`,
-        imageUrl: `https://images.habbo.com/dcr/hof_furni/${i}/${i}.png`,
-        rarity: isRare ? 'rare' : isHC ? 'hc' : 'common',
-        type: 'furniture',
-        swfName: `${category.name}_${i}`,
-        colors: ['1', '2', '3', '4'],
-        club: isHC ? 'HC' : 'FREE',
-        source: 'habbofurni'
-      });
+function generateHabboFurniFallback(searchTerm?: string, className?: string): HabboFurniItem[] {
+  // Simple fallback items
+  const fallbackItems: HabboFurniItem[] = [
+    {
+      id: 'hf_chair_1',
+      name: 'Chair Basic',
+      category: 'seating',
+      description: 'Basic chair furniture',
+      imageUrl: 'https://habbofurni.com/furniture_images/chair.png',
+      rarity: 'common',
+      type: 'furniture',
+      className: 'chair_basic',
+      colors: ['1', '2', '3'],
+      club: 'FREE',
+      source: 'habbofurni'
     }
-  });
+  ];
   
-  console.log(`🔄 [Fallback] Generated ${fallbackItems.length} HabboFurni fallback items`);
   return fallbackItems;
 }

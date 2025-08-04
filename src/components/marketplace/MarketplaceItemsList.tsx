@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
@@ -95,14 +96,13 @@ export const MarketplaceItemsList = ({
           return 0;
       }
     })
-    .slice(0, 20);
+    .slice(0, 15); // Reduzir para 15 itens para melhor performance
 
   // Mostrar skeleton loading enquanto carrega
   if (loading) {
     return (
       <>
         <MarketplaceSkeleton />
-        {/* Item Modal */}
         <MarketItemModal 
           item={selectedItem}
           open={modalOpen}
@@ -145,7 +145,7 @@ export const MarketplaceItemsList = ({
         <ScrollArea className="h-96">
           <div className="p-4 space-y-3">
             {filteredItems.length > 0 ? (
-              filteredItems.map((item, index) => {
+              filteredItems.map((item) => {
                 const itemType = item.className.includes('wall') ? 'wallitem' : 'roomitem';
                 
                 return (
@@ -220,7 +220,6 @@ export const MarketplaceItemsList = ({
         </ScrollArea>
       </div>
 
-      {/* Item Modal */}
       <MarketItemModal 
         item={selectedItem}
         open={modalOpen}

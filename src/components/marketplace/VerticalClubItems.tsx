@@ -23,6 +23,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
   const fetchClubPrices = async () => {
     try {
       setLoading(true);
+      console.log('🔍 [VerticalClubItems] Fetching club prices for hotel:', hotel);
       
       // Buscar dados reais do mercado para HC e CA
       const marketResponse = await supabase.functions.invoke('habbo-market-real', {
@@ -34,44 +35,63 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
         }
       });
 
+      console.log('📊 [VerticalClubItems] Market response:', marketResponse);
+
       let hcItem = null;
       let caItem = null;
 
       if (!marketResponse.error && marketResponse.data?.items) {
         const items = marketResponse.data.items;
+        console.log('🔍 [VerticalClubItems] Searching in', items.length, 'items');
         
-        // Buscar HC 31 dias
-        hcItem = items.find((item: any) => 
-          (item.name.toLowerCase().includes('31') && 
-           (item.name.toLowerCase().includes('hc') || 
-            item.name.toLowerCase().includes('habbo club'))) ||
-          (item.className && item.className.toLowerCase().includes('hc_') && 
-           item.name.toLowerCase().includes('31'))
-        );
+        // Buscar HC 31 dias - múltiplas variações
+        hcItem = items.find((item: any) => {
+          const name = item.name?.toLowerCase() || '';
+          const className = item.className?.toLowerCase() || '';
+          
+          return (
+            (name.includes('31') && (name.includes('hc') || name.includes('habbo club'))) ||
+            (name.includes('31') && name.includes('dias') && name.includes('hc')) ||
+            (className.includes('hc_') && name.includes('31')) ||
+            name.includes('31 dias hc') ||
+            name.includes('hc 31') ||
+            name.includes('habbo club 31')
+          );
+        });
         
-        // Buscar CA/BC 31 dias
-        caItem = items.find((item: any) => 
-          (item.name.toLowerCase().includes('31') && 
-           (item.name.toLowerCase().includes('ca') || 
-            item.name.toLowerCase().includes('builders') ||
-            item.name.toLowerCase().includes('bc'))) ||
-          (item.className && 
-           (item.className.toLowerCase().includes('bc_') || 
-            item.className.toLowerCase().includes('ca_')) && 
-           item.name.toLowerCase().includes('31'))
-        );
+        // Buscar CA/BC 31 dias - múltiplas variações  
+        caItem = items.find((item: any) => {
+          const name = item.name?.toLowerCase() || '';
+          const className = item.className?.toLowerCase() || '';
+          
+          return (
+            (name.includes('31') && (name.includes('ca') || name.includes('builders') || name.includes('bc'))) ||
+            (name.includes('31') && name.includes('dias') && (name.includes('ca') || name.includes('bc'))) ||
+            (className.includes('bc_') || className.includes('ca_')) && name.includes('31') ||
+            name.includes('31 dias ca') ||
+            name.includes('31 dias bc') ||
+            name.includes('ca 31') ||
+            name.includes('bc 31') ||
+            name.includes('builders club 31')
+          );
+        });
+
+        console.log('🔍 [VerticalClubItems] Found HC item:', hcItem);
+        console.log('🔍 [VerticalClubItems] Found CA item:', caItem);
       }
 
       // Se não encontrou nos dados do mercado, tentar busca específica
       if (!hcItem || !caItem) {
+        console.log('🔄 [VerticalClubItems] Trying specific searches...');
+        
         const specificSearches = [
+          'HC 31',
           '31 Dias HC',
-          'HC 31 dias', 
           'Habbo Club 31',
+          'CA 31', 
           '31 Dias CA',
-          'CA 31 dias',
-          'Builders Club 31',
-          'BC 31 dias'
+          'BC 31',
+          'Builders Club 31'
         ];
 
         for (const searchTerm of specificSearches) {
@@ -80,58 +100,52 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
               searchTerm,
               category: '',
               hotel: hotel,
-              days: 7
+              days: 3
             }
           });
 
-          if (!specificResponse.error && specificResponse.data?.items) {
+          if (!specificResponse.error && specificResponse.data?.items && specificResponse.data.items.length > 0) {
             const foundItems = specificResponse.data.items;
+            console.log(`🔍 [VerticalClubItems] Search "${searchTerm}" found:`, foundItems.length, 'items');
             
-            if (!hcItem && (searchTerm.toLowerCase().includes('hc') || searchTerm.toLowerCase().includes('habbo'))) {
-              hcItem = foundItems.find((item: any) => 
-                item.name.toLowerCase().includes('31') && 
-                (item.name.toLowerCase().includes('hc') || item.name.toLowerCase().includes('habbo'))
-              );
+            if (!hcItem && searchTerm.includes('HC')) {
+              hcItem = foundItems[0]; // Pegar o primeiro resultado
             }
             
-            if (!caItem && (searchTerm.toLowerCase().includes('ca') || searchTerm.toLowerCase().includes('bc') || searchTerm.toLowerCase().includes('builders'))) {
-              caItem = foundItems.find((item: any) => 
-                item.name.toLowerCase().includes('31') && 
-                (item.name.toLowerCase().includes('ca') || 
-                 item.name.toLowerCase().includes('bc') || 
-                 item.name.toLowerCase().includes('builders'))
-              );
+            if (!caItem && (searchTerm.includes('CA') || searchTerm.includes('BC'))) {
+              caItem = foundItems[0]; // Pegar o primeiro resultado
             }
           }
         }
       }
 
-      console.log('🔍 HC Item found:', hcItem);
-      console.log('🔍 CA Item found:', caItem);
+      console.log('✅ [VerticalClubItems] Final HC Item:', hcItem);
+      console.log('✅ [VerticalClubItems] Final CA Item:', caItem);
 
       const realItems: ClubItem[] = [
         {
           id: 'hc_premium_31',
           name: '31 Dias HC',
-          price: hcItem?.currentPrice || 0,
-          available: hcItem?.openOffers || hcItem?.quantity || 0,
+          price: hcItem?.currentPrice || hcItem?.price || 0,
+          available: hcItem?.openOffers || hcItem?.quantity || hcItem?.available || 0,
           icon: '/assets/hc31.png',
           className: hcItem?.className || 'hc_premium'
         },
         {
           id: 'ca_premium_31', 
           name: '31 Dias CA',
-          price: caItem?.currentPrice || 0,
-          available: caItem?.openOffers || caItem?.quantity || 0,
+          price: caItem?.currentPrice || caItem?.price || 0,
+          available: caItem?.openOffers || caItem?.quantity || caItem?.available || 0,
           icon: '/assets/bc31.png',
           className: caItem?.className || 'bc_premium'
         }
       ];
 
+      console.log('🎯 [VerticalClubItems] Final items:', realItems);
       setClubItems(realItems);
     } catch (error) {
-      console.error('❌ Erro ao buscar preços de clube:', error);
-      // Fallback com zero disponível
+      console.error('❌ [VerticalClubItems] Error fetching club prices:', error);
+      // Fallback com dados básicos
       setClubItems([
         {
           id: 'hc_premium_31',
@@ -181,23 +195,10 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
               <span className={`font-bold text-sm volter-font ${loading ? 'animate-pulse text-gray-400' : 'text-white'}`} style={{
                 textShadow: loading ? 'none' : '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
               }}>
-                {loading ? '...' : (item.available > 0 ? item.price.toLocaleString() : '-')}
+                {loading ? '...' : (item.price > 0 ? item.price.toLocaleString() : '-')}
               </span>
             </div>
           </div>
-          
-          {/* Linha de baixo para aviso de zero disponíveis */}
-          {item.available === 0 && !loading && (
-            <div className="mt-2 ml-13">
-              <div className="bg-red-500 border-2 border-black rounded px-3 py-1 inline-block">
-                <span className="text-xs text-white font-bold volter-font" style={{
-                  textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                }}>
-                  0 disponíveis
-                </span>
-              </div>
-            </div>
-          )}
         </div>
       ))}
     </div>

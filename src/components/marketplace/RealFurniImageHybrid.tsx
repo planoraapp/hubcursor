@@ -1,6 +1,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Package2 } from 'lucide-react';
+import { useHabboFurniApi } from '@/hooks/useHabboFurniApi';
 
 interface RealFurniImageHybridProps {
   className: string;
@@ -20,6 +21,9 @@ const RealFurniImageHybrid = ({
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [habboFurniImageUrl, setHabboFurniImageUrl] = useState<string | null>(null);
+
+  const { findItemByClassName } = useHabboFurniApi({ autoFetch: false });
 
   const sizeClasses = {
     sm: 'w-12 h-12',
@@ -52,6 +56,25 @@ const RealFurniImageHybrid = ({
     }
   };
 
+  // Fetch HabboFurni image URL
+  useEffect(() => {
+    const fetchHabboFurniImage = async () => {
+      try {
+        const item = await findItemByClassName(className);
+        if (item?.imageUrl) {
+          setHabboFurniImageUrl(item.imageUrl);
+          console.log(`🎯 [RealFurniImage] Found HabboFurni image for ${className}:`, item.imageUrl);
+        }
+      } catch (error) {
+        console.error(`❌ [RealFurniImage] Error fetching HabboFurni image for ${className}:`, error);
+      }
+    };
+
+    if (className) {
+      fetchHabboFurniImage();
+    }
+  }, [className, findItemByClassName]);
+
   // URLs otimizadas com HabboFurni como prioridade
   const imageUrls = useMemo(() => {
     const cachedUrl = getCachedUrl(className);
@@ -61,8 +84,13 @@ const RealFurniImageHybrid = ({
     if (cachedUrl) {
       urls.push(cachedUrl);
     }
-    
-    // HabboFurni.com como fonte primária
+
+    // HabboFurni.com como fonte primária (da API)
+    if (habboFurniImageUrl) {
+      urls.push(habboFurniImageUrl);
+    }
+
+    // HabboFurni.com URLs estáticas como backup
     urls.push(
       `https://habbofurni.com/furniture_images/${className}.png`,
       `https://habbofurni.com/images/furniture/${className}.png`,
@@ -123,25 +151,30 @@ const RealFurniImageHybrid = ({
 
     // Remover duplicatas
     return [...new Set(urls)];
-  }, [className, hotel, name]);
+  }, [className, hotel, name, habboFurniImageUrl]);
 
   const handleImageError = useCallback(() => {
+    console.log(`❌ [RealFurniImage] Image failed: ${imageUrls[currentUrlIndex]} (${className})`);
     if (currentUrlIndex < imageUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
     } else {
       setHasError(true);
       setIsLoading(false);
+      console.log(`❌ [RealFurniImage] All URLs failed for ${className}`);
     }
-  }, [currentUrlIndex, imageUrls.length]);
+  }, [currentUrlIndex, imageUrls.length, className]);
 
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
     setHasError(false);
     
+    const successUrl = imageUrls[currentUrlIndex];
+    console.log(`✅ [RealFurniImage] Image loaded: ${successUrl} (${className})`);
+    
     // Cache da URL bem-sucedida (apenas se não for a primeira que já estava em cache)
     if (currentUrlIndex > 0 || !getCachedUrl(className)) {
-      setCachedUrl(className, imageUrls[currentUrlIndex]);
+      setCachedUrl(className, successUrl);
     }
   }, [currentUrlIndex, imageUrls, className]);
 
