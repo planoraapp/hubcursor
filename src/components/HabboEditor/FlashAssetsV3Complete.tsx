@@ -1,14 +1,13 @@
+
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Sparkles, Crown, Zap, Heart, Music, Filter, Star, Palette, User } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { useEnhancedFlashAssetsV2 } from '@/hooks/useEnhancedFlashAssetsV2';
-import { getRarityColor, CATEGORY_SECTIONS } from '@/lib/enhancedCategoryMapperV2';
+import { getRarityColor } from '@/lib/enhancedCategoryMapperV2';
 import { SkinColorSelector } from './SkinColorSelector';
 import { OfficialHabboColorPalette } from './OfficialHabboColorPalette';
 import { isValidColorForCategory, getDefaultColorForCategory } from '@/utils/habboColorValidator';
@@ -21,6 +20,53 @@ interface FlashAssetsV3CompleteProps {
   selectedColor: string;
   className?: string;
 }
+
+// 4 SEÇÕES PRINCIPAIS reorganizadas
+const MAIN_SECTIONS = {
+  head: {
+    id: 'head',
+    name: 'Cabeça',
+    icon: '👤',
+    categories: ['hd', 'hr', 'ha', 'ea', 'fa'] // Rosto, Cabelo, Chapéus, Óculos, Acessórios de Rosto
+  },
+  body: {
+    id: 'body',
+    name: 'Corpo e Acessórios',
+    icon: '👕',
+    categories: ['sk', 'ch', 'cc', 'cp', 'ca'] // Cor de Pele, Camisetas, Casacos, Estampas, Acessórios Peito
+  },
+  legs: {
+    id: 'legs',
+    name: 'Pernas e Pés',
+    icon: '👖',
+    categories: ['lg', 'sh', 'wa'] // Calças, Sapatos, Cintura
+  },
+  other: {
+    id: 'other',
+    name: 'Outros',
+    icon: '✨',
+    categories: ['fx', 'pets', 'dance'] // Efeitos especiais e não categorizados
+  }
+};
+
+const CATEGORY_METADATA = {
+  hd: { name: 'Rostos', icon: '😊' },
+  hr: { name: 'Cabelos', icon: '💇' },
+  ha: { name: 'Chapéus', icon: '🎩' },
+  ea: { name: 'Óculos', icon: '👓' },
+  fa: { name: 'Acessórios Rosto', icon: '🎭' },
+  sk: { name: 'Cor de Pele', icon: '🤏' },
+  ch: { name: 'Camisetas', icon: '👕' },
+  cc: { name: 'Casacos', icon: '🧥' },
+  cp: { name: 'Estampas', icon: '🎨' },
+  ca: { name: 'Acessórios Peito', icon: '💍' },
+  lg: { name: 'Calças', icon: '👖' },
+  sh: { name: 'Sapatos', icon: '👟' },
+  wa: { name: 'Cintura', icon: '🎀' },
+  fx: { name: 'Efeitos', icon: '✨' },
+  pets: { name: 'Pets', icon: '🐾' },
+  dance: { name: 'Dança', icon: '💃' }
+};
 
 const FlashAssetsV3Complete = ({
   selectedGender,
@@ -40,13 +86,9 @@ const FlashAssetsV3Complete = ({
     items, 
     categoryStats, 
     rarityStats,
-    sectionStats,
     isLoading, 
     error, 
-    totalItems,
-    getCategoryMetadata,
-    getSectionMetadata,
-    getAllSections
+    totalItems
   } = useEnhancedFlashAssetsV2({
     category: selectedCategory,
     gender: selectedGender,
@@ -54,22 +96,11 @@ const FlashAssetsV3Complete = ({
     rarity: selectedRarity === 'all' ? undefined : selectedRarity
   });
 
-  console.log('🎯 [FlashAssetsV3Complete] Sistema V3 COMPLETO carregado:', {
-    category: selectedCategory,
-    section: selectedSection,
-    gender: selectedGender,
-    rarity: selectedRarity,
-    itemsCount: items.length,
-    totalItems,
-    stats: { categoryStats, rarityStats, sectionStats }
-  });
-
-  const sections = getAllSections();
-  const currentSection = getSectionMetadata(selectedSection);
+  const currentSection = MAIN_SECTIONS[selectedSection as keyof typeof MAIN_SECTIONS];
 
   // Atualizar categoria quando mudar seção
   useEffect(() => {
-    if (currentSection && currentSection.categories.length > 0 && !currentSection.categories.some(cat => cat === selectedCategory)) {
+    if (currentSection && currentSection.categories.length > 0 && !currentSection.categories.includes(selectedCategory)) {
       setSelectedCategory(currentSection.categories[0]);
     }
   }, [selectedSection, currentSection, selectedCategory]);
@@ -85,7 +116,6 @@ const FlashAssetsV3Complete = ({
   const handleItemClick = (item: any) => {
     console.log('🎯 [FlashAssetsV3Complete] Item selecionado:', item);
     
-    // Validar cor antes de aplicar
     const validColor = isValidColorForCategory(currentColor, item.category) 
       ? currentColor 
       : getDefaultColorForCategory(item.category);
@@ -100,7 +130,6 @@ const FlashAssetsV3Complete = ({
 
   const handleSkinColorSelect = (colorId: string) => {
     console.log('🤏 [FlashAssetsV3Complete] Cor de pele selecionada:', colorId);
-    // Aplicar cor de pele imediatamente
     const skinItem = {
       id: `sk_${colorId}_${selectedGender}`,
       name: `Pele Cor ${colorId}`,
@@ -118,7 +147,6 @@ const FlashAssetsV3Complete = ({
     if (item.thumbnailUrl) return item.thumbnailUrl;
     if (item.imageUrl) return item.imageUrl;
     
-    // Fallback para Supabase storage
     return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
   };
 
@@ -128,17 +156,6 @@ const FlashAssetsV3Complete = ({
     item.figureId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.swfName.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const getRarityIcon = (rarity: string) => {
-    const icons = {
-      'nft': <Star className="w-3 h-3" />,
-      'ltd': <Crown className="w-3 h-3" />,
-      'hc': <Zap className="w-3 h-3" />,
-      'rare': <Heart className="w-3 h-3" />,
-      'common': null
-    };
-    return icons[rarity as keyof typeof icons];
-  };
 
   const handleRarityChange = (value: string) => {
     setSelectedRarity(value as 'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common');
@@ -159,61 +176,18 @@ const FlashAssetsV3Complete = ({
 
   return (
     <div className={`${className} flex flex-col h-full`}>
-      {/* Header V3 COMPLETO */}
-      <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white p-4 rounded-t-lg">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5" />
-            <h3 className="text-lg font-bold">Flash Assets System V3 - COMPLETO</h3>
-          </div>
-          <Badge className="bg-white/20 text-white">
-            {totalItems}+ Assets • Sistema V3 • Cor de Pele • 98%+ Precisão
-          </Badge>
-        </div>
-        
-        {/* Estatísticas COMPLETAS */}
-        <div className="grid grid-cols-4 gap-2 text-xs">
-          {Object.entries(sections).map(([id, section]) => (
-            <div key={id} className="text-center">
-              <div className="font-bold text-lg">{sectionStats[id] || 0}</div>
-              <div className="opacity-80 flex items-center justify-center gap-1">
-                <span>{section.icon}</span>
-                <span>{section.name.split(' ')[0]}</span>
-              </div>
-              {/* Destaque especial para cor de pele */}
-              {id === 'body' && categoryStats['sk'] && (
-                <div className="text-xs opacity-70 text-orange-200">+7 tons de pele</div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Estatísticas de raridade */}
-        <div className="mt-2 flex justify-center gap-3 text-xs">
-          {Object.entries(rarityStats).map(([rarity, count]) => (
-            <div key={rarity} className="flex items-center gap-1">
-              {getRarityIcon(rarity)}
-              <span className="font-medium">{count}</span>
-              <span className="opacity-80">{rarity.toUpperCase()}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Controles COMPLETOS */}
+      {/* Controles de Busca e Filtros */}
       <div className="p-4 border-b bg-gray-50 space-y-3">
-        {/* Busca */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Buscar por nome, ID, categoria ou arquivo SWF..."
+            placeholder="Buscar itens..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
 
-        {/* Filtros e Cores */}
         <div className="flex gap-2 items-center">
           <Select value={selectedRarity} onValueChange={handleRarityChange}>
             <SelectTrigger className="w-32">
@@ -240,46 +214,34 @@ const FlashAssetsV3Complete = ({
             <Filter className="w-4 h-4 mr-1" />
             Limpar
           </Button>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            <span className="text-sm font-medium">Cor Selecionada:</span>
-            <div 
-              className="w-6 h-6 rounded border border-gray-300"
-              style={{ backgroundColor: '#' + currentColor.padStart(6, '0') }}
-            />
-          </div>
         </div>
       </div>
 
-      {/* Navegação por SEÇÕES V3 */}
+      {/* 4 SEÇÕES PRINCIPAIS */}
       <Tabs value={selectedSection} onValueChange={setSelectedSection} className="flex-1 flex flex-col">
         <div className="p-2 border-b bg-white">
           <ScrollArea className="w-full">
             <TabsList className="grid grid-cols-4 w-full gap-1">
-              {Object.entries(sections).map(([id, section]) => (
+              {Object.values(MAIN_SECTIONS).map((section) => (
                 <TabsTrigger 
-                  key={id} 
-                  value={id} 
+                  key={section.id} 
+                  value={section.id} 
                   className="flex flex-col items-center gap-1 p-3"
                 >
                   <span className="text-xl">{section.icon}</span>
                   <span className="text-xs font-medium">{section.name}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {sectionStats[id] || 0}
-                  </Badge>
                 </TabsTrigger>
               ))}
             </TabsList>
           </ScrollArea>
         </div>
 
-        {/* Conteúdo das SEÇÕES V3 */}
-        {Object.entries(sections).map(([sectionId, section]) => (
-          <TabsContent key={sectionId} value={sectionId} className="flex-1 p-0 m-0 flex flex-col">
+        {/* Conteúdo das SEÇÕES */}
+        {Object.values(MAIN_SECTIONS).map((section) => (
+          <TabsContent key={section.id} value={section.id} className="flex-1 p-0 m-0 flex flex-col">
             
             {/* ESPECIAL: Seção de Cor de Pele */}
-            {sectionId === 'body' && selectedCategory === 'sk' ? (
+            {section.id === 'body' && selectedCategory === 'sk' ? (
               <div className="flex-1 p-4">
                 <SkinColorSelector
                   selectedColor={currentColor}
@@ -290,12 +252,12 @@ const FlashAssetsV3Complete = ({
               </div>
             ) : (
               <>
-                {/* Sub-categorias com destaque especial para 'sk' */}
+                {/* Sub-categorias */}
                 <div className="p-2 border-b bg-gray-50">
                   <ScrollArea className="w-full">
                     <div className="flex gap-1">
                       {section.categories.map(cat => {
-                        const metadata = getCategoryMetadata(cat);
+                        const metadata = CATEGORY_METADATA[cat as keyof typeof CATEGORY_METADATA];
                         const isSpecialSkin = cat === 'sk';
                         return (
                           <Button
@@ -309,11 +271,6 @@ const FlashAssetsV3Complete = ({
                           >
                             <span className="text-lg">{metadata?.icon}</span>
                             <span className="text-xs">{metadata?.name}</span>
-                            <Badge variant="secondary" className={`text-xs ${
-                              isSpecialSkin ? 'bg-orange-200 text-orange-800' : ''
-                            }`}>
-                              {isSpecialSkin ? '7 tons' : (categoryStats[cat] || 0)}
-                            </Badge>
                           </Button>
                         );
                       })}
@@ -331,68 +288,50 @@ const FlashAssetsV3Complete = ({
                   />
                 </div>
 
-                {/* Grid de Assets */}
+                {/* Grid de Assets - SEM LEGENDAS, thumbnails focadas */}
                 <ScrollArea className="flex-1 p-4">
                   {isLoading ? (
-                    <div className="grid grid-cols-4 gap-3">
-                      {[...Array(12)].map((_, i) => (
+                    <div className="grid grid-cols-6 gap-2">
+                      {[...Array(18)].map((_, i) => (
                         <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
                       ))}
                     </div>
                   ) : filteredItems.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <div className="text-4xl mb-2">{section.icon}</div>
-                      <p>Nenhum asset encontrado</p>
+                      <p>Nenhum item encontrado</p>
                       {searchTerm && <p className="text-sm">Tente buscar por outro termo</p>}
-                      {selectedRarity !== 'all' && <p className="text-sm">Ou altere o filtro de raridade</p>}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-4 gap-3">
-                      {filteredItems.map(item => {
-                        const metadata = getCategoryMetadata(item.category);
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => handleItemClick(item)}
-                            className={`aspect-square rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all duration-200 p-2 flex flex-col items-center justify-center relative ${
-                              selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : ''
-                            }`}
-                            style={{ 
-                              backgroundColor: metadata?.color ? `${metadata.color}20` : '#f3f4f6'
-                            }}
-                          >
-                            {/* Indicador de raridade */}
-                            {item.rarity !== 'common' && (
-                              <div 
-                                className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
-                                style={{ backgroundColor: getRarityColor(item.rarity) }}
-                              >
-                                {getRarityIcon(item.rarity)}
-                              </div>
-                            )}
+                    <div className="grid grid-cols-6 gap-2">
+                      {filteredItems.map(item => (
+                        <div
+                          key={item.id}
+                          onClick={() => handleItemClick(item)}
+                          className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative ${
+                            selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
+                          }`}
+                        >
+                          {/* Indicador de raridade compacto */}
+                          {item.rarity !== 'common' && (
+                            <div 
+                              className="absolute top-0 right-0 w-3 h-3 rounded-full"
+                              style={{ backgroundColor: getRarityColor(item.rarity) }}
+                            />
+                          )}
 
-                            <div className="w-12 h-12 mb-1 flex items-center justify-center">
-                              <img
-                                src={getItemImageUrl(item)}
-                                alt={item.name}
-                                className="max-w-full max-h-full object-contain pixelated"
-                                onError={(e) => {
-                                  const img = e.target as HTMLImageElement;
-                                  img.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                            
-                            <div className="text-center text-xs">
-                              <div className="font-medium truncate w-full">{item.name}</div>
-                              <div className="text-gray-500 text-xs">#{item.figureId}</div>
-                              {item.club === 'hc' && (
-                                <Crown className="w-3 h-3 text-yellow-500 mx-auto mt-1" />
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                          {/* Imagem do item - SEM legendas */}
+                          <img
+                            src={getItemImageUrl(item)}
+                            alt={item.name}
+                            className="max-w-full max-h-full object-contain pixelated"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ))}
                     </div>
                   )}
                 </ScrollArea>

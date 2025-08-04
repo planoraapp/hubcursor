@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import EnhancedAvatarPreview from '../HabboEditor/EnhancedAvatarPreview';
 import FlashAssetsV3Complete from '../HabboEditor/FlashAssetsV3Complete';
 import { useToast } from '@/hooks/use-toast';
@@ -23,13 +21,13 @@ interface AvatarState extends Record<string, string> {
 }
 
 const OfficialHabboEditor = () => {
-  // Estado V3 melhorado
+  // Avatar inicial randomizado com roupas clássicas do Habbo
   const [avatarState, setAvatarState] = useState<AvatarState>({
-    hd: '180-1',
-    hr: '1001-45',
-    ch: '1001-61',
-    lg: '280-82',
-    sh: '300-80'
+    hd: '180-2', // Cor de pele clara (ID 2)
+    hr: '828-45', // Cabelo clássico masculino castanho
+    ch: '665-92', // Camiseta clássica azul
+    lg: '700-1', // Calça clássica preta
+    sh: '705-1' // Sapato clássico preto
   });
   
   const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
@@ -38,6 +36,35 @@ const OfficialHabboEditor = () => {
   const [selectedItem, setSelectedItem] = useState('');
 
   const { toast } = useToast();
+
+  // Randomizar avatar inicial com roupas clássicas
+  useEffect(() => {
+    const classicItems = {
+      M: {
+        hr: ['828', '1001', '205', '830'], // Cabelos masculinos clássicos
+        ch: ['665', '1001', '255', '600'], // Camisetas clássicas
+        lg: ['700', '280', '285', '290'], // Calças clássicas
+        sh: ['705', '300', '310', '320'] // Sapatos clássicos
+      },
+      F: {
+        hr: ['595', '600', '605', '830'], // Cabelos femininos clássicos
+        ch: ['667', '1002', '256', '601'], // Camisetas femininas clássicas
+        lg: ['701', '281', '286', '291'], // Calças femininas clássicas
+        sh: ['705', '301', '311', '321'] // Sapatos femininos clássicos
+      }
+    };
+
+    const genderItems = classicItems[selectedGender === 'U' ? 'M' : selectedGender];
+    const randomAvatar = {
+      hd: '180-2', // Sempre cor de pele clara
+      hr: `${genderItems.hr[Math.floor(Math.random() * genderItems.hr.length)]}-${Math.floor(Math.random() * 10) + 40}`,
+      ch: `${genderItems.ch[Math.floor(Math.random() * genderItems.ch.length)]}-${Math.floor(Math.random() * 20) + 60}`,
+      lg: `${genderItems.lg[Math.floor(Math.random() * genderItems.lg.length)]}-${Math.floor(Math.random() * 10) + 1}`,
+      sh: `${genderItems.sh[Math.floor(Math.random() * genderItems.sh.length)]}-${Math.floor(Math.random() * 10) + 1}`
+    };
+
+    setAvatarState(randomAvatar);
+  }, [selectedGender]);
 
   const generateFigureString = (): string => {
     const parts: string[] = [];
@@ -117,7 +144,7 @@ const OfficialHabboEditor = () => {
     const clubBadge = item.club === 'hc' ? '🟨 HC' : item.rarity !== 'common' ? `${rarityEmoji[item.rarity]} ${item.rarity.toUpperCase()}` : '⭐ FREE';
     
     toast({
-      title: "✨ Flash Asset V3 aplicado!",
+      title: "✨ Item aplicado!",
       description: `${item.name} (${clubBadge}) aplicado na categoria ${item.category.toUpperCase()}.`,
     });
   };
@@ -137,11 +164,11 @@ const OfficialHabboEditor = () => {
 
   const handleResetAvatar = () => {
     setAvatarState({
-      hd: '180-1',
-      hr: '1001-45', 
-      ch: '1001-61',
-      lg: '280-82',
-      sh: '300-80'
+      hd: '180-2',
+      hr: '828-45', 
+      ch: '665-92',
+      lg: '700-1',
+      sh: '705-1'
     });
     
     toast({
@@ -166,18 +193,9 @@ const OfficialHabboEditor = () => {
         />
       </div>
 
-      {/* SISTEMA V3 COMPLETO - Flash Assets V3 Complete */}
+      {/* SISTEMA V3 COMPLETO - Interface Limpa sem Headers */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white rounded-t-lg py-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="w-5 h-5" />
-              Flash Assets System V3 - OFICIAL HABBO EDITOR
-              <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2871+ Assets • Cor de Pele • 3 Paletas • 98%+ Precisão
-              </Badge>
-            </CardTitle>
-          </CardHeader>
           <CardContent className="p-0 h-full">
             <FlashAssetsV3Complete
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
