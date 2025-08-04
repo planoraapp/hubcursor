@@ -26,48 +26,43 @@ const EnhancedClothingThumbnail = ({
     const urls: string[] = [];
     const category = item.part;
     const itemId = item.id || 1000;
-    const code = item.code || `${category}_${itemId}`;
+    const code = item.code || `${category}${itemId}`;
     
-    // Category mapping for sprite names
-    const categoryNames: Record<string, string> = {
-      'hr': 'hair',
-      'ch': 'shirt', 
-      'lg': 'trousers',
-      'sh': 'shoes',
-      'ha': 'hat',
-      'ea': 'glasses',
-      'cc': 'jacket',
-      'ca': 'chest_accessory',
-      'wa': 'belt',
-      'fa': 'face_accessory',
-      'cp': 'chest_print',
-      'hd': 'head'
-    };
-    
-    const categoryName = categoryNames[category] || 'shirt';
-    
-    // PRIORITY 1: Direct HabboEmotion individual clothing sprites
-    const spriteName = code.includes('_U_') ? code : `${categoryName}_U_${code.replace(/[^a-zA-Z0-9]/g, '')}`;
-    urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
-    
-    // PRIORITY 2: Alternative sprite name patterns
-    urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_2_0.png`);
-    urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${categoryName}_${itemId}/h_std_${category}_${itemId}_2_0.png`);
-    
-    // PRIORITY 3: Different directory structures
-    urls.push(`https://files.habboemotion.com/sprites/clothing/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
-    urls.push(`https://files.habboemotion.com/clothing/${category}/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
-    
-    // PRIORITY 4: Alternative HabboEmotion domains
-    urls.push(`https://habboemotion.com/assets/sprites/clothing/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
-    urls.push(`https://cdn.habboemotion.com/clothing/${category}/${itemId}.png`);
-    
-    // PRIORITY 5: Use provided imageUrl if available
+    // Use provided imageUrl if available and from correct domain
     if (item.imageUrl && item.imageUrl.includes('files.habboemotion.com')) {
-      urls.unshift(item.imageUrl); // Add to beginning of array for priority
+      urls.push(item.imageUrl);
     }
     
-    // LAST RESORT: Official Habbo imaging (BUT ISOLATED ITEM ONLY)
+    // PRIORITY 1: Real HabboEmotion structure - catalog images
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}.gif`);
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}.png`);
+    
+    // PRIORITY 2: With gender suffix
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}_M.gif`);
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}_F.gif`);
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}_U.gif`);
+    
+    // PRIORITY 3: Alternative patterns observed in HabboEmotion
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${category}${itemId}.gif`);
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${category}${itemId}.png`);
+    
+    // PRIORITY 4: With color variations
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}_${selectedColorId}.gif`);
+    urls.push(`https://files.habboemotion.com/assets/images/catalog/${category}/${code}_${selectedColorId}.png`);
+    
+    // PRIORITY 5: Icon directory structure
+    urls.push(`https://files.habboemotion.com/assets/images/icons/${category}/${code}.gif`);
+    urls.push(`https://files.habboemotion.com/assets/images/icons/${category}/${code}.png`);
+    
+    // PRIORITY 6: Alternative HabboEmotion domains
+    urls.push(`https://habboemotion.com/assets/images/catalog/${category}/${code}.gif`);
+    urls.push(`https://www.habboemotion.com/assets/images/catalog/${category}/${code}.gif`);
+    
+    // PRIORITY 7: Simplified patterns
+    urls.push(`https://files.habboemotion.com/${category}/${code}.gif`);
+    urls.push(`https://files.habboemotion.com/catalog/${category}/${code}.gif`);
+    
+    // LAST RESORT: Official Habbo imaging (isolated item only)
     urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/${selectedColorId}.png`);
     urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_${selectedColorId}.png`);
     
