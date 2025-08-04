@@ -5,15 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, User, Crown, Shirt, PaintBucket, Footprints, Glasses } from 'lucide-react';
-import RealClothingGrid from './RealClothingGrid';
-import { 
-  generateOfficialAvatarUrl, 
-  type HabboRealClothingItem 
-} from '@/hooks/useHabboRealAssets';
+import { Sparkles } from 'lucide-react';
+import LocalClothingGrid from './LocalClothingGrid';
+import { LocalHabboClothingItem } from '@/hooks/useLocalHabboClothing';
 import { useToast } from '@/hooks/use-toast';
 
-// Configuração das categorias baseada no tutorial oficial
+// Configuração das categorias baseada no ViaJovem
 const categoryGroups = [
   {
     id: 'head',
@@ -51,27 +48,27 @@ const categoryGroups = [
 ];
 
 interface AvatarState {
-  hd?: string; // Rosto
-  hr?: string; // Cabelo  
-  ch?: string; // Camiseta
-  lg?: string; // Calças
-  sh?: string; // Sapatos
-  ha?: string; // Chapéu
-  ea?: string; // Óculos
-  fa?: string; // Máscaras
-  cc?: string; // Casacos
-  ca?: string; // Bijuteria
-  wa?: string; // Cintos
-  cp?: string; // Estampas
+  hd?: string;
+  hr?: string;
+  ch?: string;
+  lg?: string;
+  sh?: string;
+  ha?: string;
+  ea?: string;
+  fa?: string;
+  cc?: string;
+  ca?: string;
+  wa?: string;
+  cp?: string;
 }
 
 const RealHabboEditor = () => {
   const [avatarState, setAvatarState] = useState<AvatarState>({
-    hd: '190-7',   // Rosto padrão
-    hr: '3811-61', // Cabelo padrão
-    ch: '3030-66', // Camiseta padrão
-    lg: '275-82',  // Calças padrão
-    sh: '290-80'   // Sapatos padrão
+    hd: '190-7',
+    hr: '3811-61',
+    ch: '3030-66',
+    lg: '275-82',
+    sh: '290-80'
   });
   
   const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
@@ -80,10 +77,10 @@ const RealHabboEditor = () => {
   const [selectedSection, setSelectedSection] = useState('head');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [avatarSize, setAvatarSize] = useState('l');
+  const [selectedColor, setSelectedColor] = useState('1');
   
   const { toast } = useToast();
 
-  // Hotéis disponíveis
   const hotels = [
     { code: 'com.br', name: 'Habbo.com.br', flag: '🇧🇷' },
     { code: 'com', name: 'Habbo.com', flag: '🌍' },
@@ -94,11 +91,9 @@ const RealHabboEditor = () => {
     { code: 'fi', name: 'Habbo.fi', flag: '🇫🇮' }
   ];
 
-  // Generate figure string from avatar state
   const generateFigureString = (): string => {
     const parts: string[] = [];
     
-    // Ordem correta baseada no tutorial oficial
     if (avatarState.hd) parts.push(`hd-${avatarState.hd}`);
     if (avatarState.hr) parts.push(`hr-${avatarState.hr}`);
     if (avatarState.ch) parts.push(`ch-${avatarState.ch}`);
@@ -116,23 +111,19 @@ const RealHabboEditor = () => {
   };
 
   const currentFigureString = generateFigureString();
-  const currentAvatarUrl = generateOfficialAvatarUrl(
-    currentFigureString,
-    selectedHotel,
-    currentDirection,
-    avatarSize
-  );
+  const currentAvatarUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${currentFigureString}&gender=${selectedGender === 'U' ? 'M' : selectedGender}&direction=${currentDirection}&head_direction=${currentDirection}&img_format=png&action=gesture=nrm&size=${avatarSize}`;
 
-  const handleItemSelect = (item: HabboRealClothingItem, colorId: string = '1') => {
+  const handleItemSelect = (item: LocalHabboClothingItem, colorId: string = '1') => {
     console.log('🎯 [RealHabboEditor] Item selecionado:', { item, colorId });
     
-    // Aplicar item ao estado do avatar
-    const itemString = `${item.id}-${colorId}`;
+    const itemString = `${item.figureId}-${colorId}`;
     
     setAvatarState(prevState => ({
       ...prevState,
       [item.category]: itemString
     }));
+
+    setSelectedColor(colorId);
     
     toast({
       title: "✨ Roupa aplicada!",
@@ -156,8 +147,6 @@ const RealHabboEditor = () => {
   };
 
   const handleResetAvatar = () => {
-    console.log('🔄 [RealHabboEditor] Resetando avatar...');
-    
     setAvatarState({
       hd: '190-7',
       hr: '3811-61', 
@@ -180,7 +169,6 @@ const RealHabboEditor = () => {
     });
   };
 
-  // Update selected category when section changes
   useEffect(() => {
     const currentGroup = categoryGroups.find(group => group.id === selectedSection);
     if (currentGroup && currentGroup.categories.length > 0) {
@@ -203,7 +191,6 @@ const RealHabboEditor = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
-            {/* Avatar Image */}
             <div className="flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6">
               <img
                 src={currentAvatarUrl}
@@ -212,12 +199,11 @@ const RealHabboEditor = () => {
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = generateOfficialAvatarUrl('hd-190-7', selectedHotel, currentDirection, avatarSize);
+                  target.src = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-190-7&gender=M&direction=2&head_direction=2&img_format=png&action=gesture=nrm&size=${avatarSize}`;
                 }}
               />
             </div>
 
-            {/* Controls */}
             <div className="grid grid-cols-2 gap-2">
               <Select value={selectedGender} onValueChange={(value: 'M' | 'F' | 'U') => setSelectedGender(value)}>
                 <SelectTrigger>
@@ -273,7 +259,6 @@ const RealHabboEditor = () => {
               </Select>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-2">
               <Button onClick={handleResetAvatar} variant="outline" className="flex-1">
                 🔄 Reset
@@ -283,7 +268,6 @@ const RealHabboEditor = () => {
               </Button>
             </div>
 
-            {/* Current Items */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-gray-700">Itens Equipados:</h4>
               <div className="space-y-1">
@@ -303,7 +287,6 @@ const RealHabboEditor = () => {
               </div>
             </div>
 
-            {/* Figure String */}
             <div className="bg-gray-50 rounded p-2">
               <p className="text-xs text-gray-600 mb-1">Figure String:</p>
               <code className="text-xs font-mono text-blue-600 break-all">
@@ -314,21 +297,20 @@ const RealHabboEditor = () => {
         </Card>
       </div>
 
-      {/* Editor Tabs (Direita) */}
+      {/* Editor Tabs (Direita) - Usando Sistema Local */}
       <div className="flex-1">
         <Card className="h-full">
           <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor de Avatar Real - Dados Oficiais Habbo
+              Editor HabboHub - Sistema Local/Flash Assets
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                Sistema Oficial
+                ViaJovem Style
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
             <Tabs value={selectedSection} onValueChange={setSelectedSection} className="h-full">
-              {/* Abas Principais */}
               <TabsList className="grid w-full grid-cols-3 mb-4">
                 {categoryGroups.map(group => (
                   <TabsTrigger 
@@ -344,17 +326,15 @@ const RealHabboEditor = () => {
                 ))}
               </TabsList>
 
-              {/* Conteúdo das Abas */}
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
                     <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Dados reais extraídos do Habbo {selectedHotel} - Gênero: {selectedGender}
+                      Roupas disponíveis - Gênero: {selectedGender}
                     </p>
                   </div>
                   
-                  {/* Sub-categorias */}
                   <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
                     <TabsList 
                       className="grid gap-1 mb-4" 
@@ -374,15 +354,14 @@ const RealHabboEditor = () => {
                       ))}
                     </TabsList>
 
-                    {/* Real Clothing Grids */}
                     {group.categories.map(category => (
                       <TabsContent key={category.id} value={category.id}>
-                        <RealClothingGrid 
+                        <LocalClothingGrid 
                           selectedCategory={category.id}
-                          selectedGender={selectedGender}
-                          selectedHotel={selectedHotel}
+                          selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
                           onItemSelect={handleItemSelect}
                           selectedItem={avatarState[category.id as keyof AvatarState]?.split('-')[0]}
+                          selectedColor={selectedColor}
                         />
                       </TabsContent>
                     ))}
