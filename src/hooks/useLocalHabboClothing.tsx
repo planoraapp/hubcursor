@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFlashAssetsClothing, FlashAssetItem } from './useFlashAssetsClothing';
-import habboClothingData from '@/data/habboClothingData';
+import { HABBO_CLOTHING_DATA } from '@/data/habboClothingData';
 
 export interface LocalHabboClothingItem {
   id: string;
@@ -61,22 +61,18 @@ const mapFlashToLocal = (flashItems: FlashAssetItem[]): LocalHabboClothingItem[]
 const mapLocalDataToItems = (): LocalHabboClothingItem[] => {
   const items: LocalHabboClothingItem[] = [];
   
-  Object.entries(habboClothingData).forEach(([categoryId, categoryItems]) => {
-    if (categoryId.startsWith('_') || !Array.isArray(categoryItems)) return;
-    
-    categoryItems.forEach((item: any) => {
-      items.push({
-        id: `local_${categoryId}_${item.id}`,
-        name: `${getCategoryName(categoryId)} ${item.id}`,
-        category: categoryId,
-        gender: item.gender || 'U',
-        figureId: item.id.toString(),
-        colors: item.colors || ['1', '2', '3', '4', '5'],
-        thumbnail: generateViaJovemThumbnail(categoryId, item.id.toString(), '1', item.gender || 'M'),
-        club: item.club === '1' ? 'hc' : 'normal',
-        swfName: `${categoryId}_${item.id}`,
-        source: 'local-data'
-      });
+  HABBO_CLOTHING_DATA.forEach((item) => {
+    items.push({
+      id: `local_${item.category}_${item.id}`,
+      name: item.name,
+      category: item.category,
+      gender: item.gender,
+      figureId: item.id,
+      colors: item.colors,
+      thumbnail: generateViaJovemThumbnail(item.category, item.id, '1', item.gender),
+      club: item.rarity === 'hc' ? 'hc' : item.rarity === 'nft' ? 'nft' : item.rarity === 'ltd' ? 'ltd' : 'normal',
+      swfName: item.swfCode,
+      source: 'local-data'
     });
   });
   
