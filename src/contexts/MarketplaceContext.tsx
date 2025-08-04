@@ -1,12 +1,12 @@
 import { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
-import { MarketplaceService } from '@/services/MarketplaceService';
+import { HabboAPIService } from '@/services/HabboAPIService';
 
 export interface MarketItem {
   id: string;
   name: string;
   category: string;
   currentPrice: number;
-  previousPrice: number;
+  previousPrice?: number;
   trend: 'up' | 'down' | 'stable';
   changePercent: string;
   volume: number;
@@ -83,11 +83,11 @@ const initialState: MarketplaceState = {
     highestPrice: 0,
     mostTraded: 'N/A',
     apiStatus: 'no-data',
-    apiMessage: 'Aguardando dados...'
+    apiMessage: 'Aguardando dados da HabboAPI.site...'
   },
   loading: true,
   error: null,
-  selectedHotel: 'br',
+  selectedHotel: 'com',
   searchTerm: '',
   selectedCategory: 'all',
   sortBy: 'price'
@@ -151,9 +151,9 @@ export const MarketplaceProvider = ({ children }: MarketplaceProviderProps) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
-      console.log('🔄 [Context] Iniciando busca de dados...');
+      console.log('🔄 [Context] Buscando dados da HabboAPI.site...');
       
-      const data = await MarketplaceService.fetchMarketData({
+      const data = await HabboAPIService.fetchMarketData({
         searchTerm: state.searchTerm,
         category: state.selectedCategory === 'all' ? '' : state.selectedCategory,
         hotel: state.selectedHotel,
@@ -161,35 +161,29 @@ export const MarketplaceProvider = ({ children }: MarketplaceProviderProps) => {
       });
       
       if (data) {
-        // Sempre aceitar a resposta, mesmo que seja vazia
-        const sortedItems = MarketplaceService.sortItems(data.items, state.sortBy);
+        const sortedItems = HabboAPIService.sortItems(data.items, state.sortBy);
         dispatch({ type: 'SET_ITEMS', payload: sortedItems });
         dispatch({ type: 'SET_STATS', payload: data.stats });
         
-        console.log(`✅ [Context] Dados processados: ${sortedItems.length} itens`);
-        console.log(`📊 [Context] Status da API: ${data.stats.apiStatus}`);
+        console.log(`✅ [Context] Carregados ${sortedItems.length} itens da HabboAPI.site`);
         
-        // Apenas mostrar aviso se houver problema real na API
+        // Tratar diferentes estados da API
         if (data.stats.apiStatus === 'error') {
-          dispatch({ type: 'SET_ERROR', payload: data.stats.apiMessage || 'Erro na API oficial' });
-        } else if (data.stats.apiStatus === 'unavailable') {
-          dispatch({ type: 'SET_ERROR', payload: 'API oficial temporariamente indisponível. Tentando novamente...' });
-        } else if (sortedItems.length === 0 && data.stats.apiStatus === 'no-data') {
-          // Não é erro - é situação normal da API oficial
-          console.log('ℹ️ [Context] API oficial sem dados no momento - situação normal');
+          dispatch({ type: 'SET_ERROR', payload: data.stats.apiMessage || 'Erro na HabboAPI.site' });
+        } else if (data.stats.apiStatus === 'no-data' && sortedItems.length === 0) {
+          dispatch({ type: 'SET_ERROR', payload: 'Nenhum dado disponível para os filtros selecionados' });
         }
       } else {
-        // Fallback seguro
         dispatch({ type: 'SET_ITEMS', payload: [] });
         dispatch({ type: 'SET_STATS', payload: {
           ...initialState.stats,
           apiStatus: 'error',
-          apiMessage: 'Falha na conexão com API oficial'
+          apiMessage: 'Falha na conexão com HabboAPI.site'
         }});
-        dispatch({ type: 'SET_ERROR', payload: 'Não foi possível conectar à API oficial do Habbo' });
+        dispatch({ type: 'SET_ERROR', payload: 'Não foi possível conectar à HabboAPI.site' });
       }
     } catch (error: any) {
-      console.error('❌ [Context] Erro inesperado:', error);
+      console.error('❌ [Context] Erro:', error);
       dispatch({ type: 'SET_ERROR', payload: `Erro interno: ${error.message}` });
       dispatch({ type: 'SET_ITEMS', payload: [] });
       dispatch({ type: 'SET_STATS', payload: {
@@ -204,7 +198,29 @@ export const MarketplaceProvider = ({ children }: MarketplaceProviderProps) => {
 
   const fetchClubItems = async () => {
     try {
-      const clubItems = await MarketplaceService.fetchClubItems(state.selectedHotel);
+      // Simulação de dados do clube (não precisam da API)
+      const clubItems: ClubItem[] = [
+        {
+          id: 'hc_31_days',
+          name: '31 Dias HC',
+          price: 25000,
+          className: 'hc31',
+          type: 'hc',
+          imageUrl: '/assets/hc31.png',
+          available: true
+        },
+        {
+          id: 'ca_31_days', 
+          name: '31 Dias CA',
+          price: 30000,
+          className: 'ca31',
+          type: 'ca',
+          imageUrl: '/assets/bc31.png',
+          available: true
+        }
+      ];
+
+      await new Promise(resolve => setTimeout(resolve, 300));
       dispatch({ type: 'SET_CLUB_ITEMS', payload: clubItems });
     } catch (error: any) {
       console.error('Erro ao buscar itens de clube:', error);
@@ -228,7 +244,7 @@ export const MarketplaceProvider = ({ children }: MarketplaceProviderProps) => {
   };
 
   const getFilteredItems = (type: 'topSellers' | 'biggestGainers' | 'opportunities' | 'todayHigh'): MarketItem[] => {
-    return MarketplaceService.getFilteredItems(state.items, type);
+    return HabboAPIService.getFilteredItems(state.items, type);
   };
 
   // Auto-fetch quando filtros mudam
