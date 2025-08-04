@@ -293,7 +293,12 @@ export const HabboEmotionClothingGrid = ({
               <CardContent className={`${viewMode === 'grid' ? 'p-2' : 'flex items-center p-3 space-x-3'}`}>
                 <div className={`relative ${viewMode === 'grid' ? '' : 'flex-shrink-0'}`}>
                   <EnhancedClothingThumbnail 
-                    item={item}
+                    item={{
+                      ...item,
+                      item_id: item.id,
+                      image_url: item.imageUrl,
+                      is_active: true
+                    }}
                     selectedColorId={selectedColorId}
                     size={viewMode === 'grid' ? 'm' : 's'}
                     className={`${viewMode === 'grid' ? 'w-full h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded' : ''}`}
