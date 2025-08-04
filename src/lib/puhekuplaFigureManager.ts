@@ -93,7 +93,8 @@ export class PuhekuplaFigureManager {
         name: item.name,
         code: item.code,
         category: item.category,
-        part: item.part
+        part: item.part,
+        gender: item.gender
       },
       colorId,
       currentFigure: this.figureToString(currentFigure)
@@ -121,6 +122,12 @@ export class PuhekuplaFigureManager {
     // Extract item ID from code or use id directly
     let itemId = item.id?.toString() || item.code?.replace(/[^0-9]/g, '') || '1';
 
+    // Se o itemId está vazio ou inválido, tentar extrair do código
+    if (!itemId || itemId === '') {
+      const idMatch = item.code?.match(/(\d+)/);
+      itemId = idMatch ? idMatch[1] : '1';
+    }
+
     const newPart: FigurePart = {
       category: finalCategory,
       id: itemId,
@@ -137,13 +144,17 @@ export class PuhekuplaFigureManager {
       id: itemId,
       colors: [colorId],
       itemName: item.name,
+      itemGender: item.gender,
       newFigureString: this.figureToString(updatedFigure)
     });
 
     return updatedFigure;
   }
 
-  static generateRandomFigure(gender: 'M' | 'F' = 'M'): PuhekuplaFigure {
+  static generateRandomFigure(gender: 'M' | 'F' | 'U' = 'M'): PuhekuplaFigure {
+    // Para gênero U (unissex), usar base masculina
+    const baseGender = gender === 'U' ? 'M' : gender;
+    
     const baseFigure: PuhekuplaFigure = {
       hd: { category: 'hd', id: '180', colors: ['1'] },
       hr: { category: 'hr', id: Math.floor(Math.random() * 1000).toString(), colors: [Math.floor(Math.random() * 50).toString()] },
@@ -164,12 +175,15 @@ export class PuhekuplaFigureManager {
     return baseFigure;
   }
 
-  static getDefaultFigure(gender: 'M' | 'F' = 'M'): PuhekuplaFigure {
+  static getDefaultFigure(gender: 'M' | 'F' | 'U' = 'M'): PuhekuplaFigure {
+    // Para gênero U (unissex), usar base masculina
+    const baseGender = gender === 'U' ? 'M' : gender;
+    
     return {
       hd: { category: 'hd', id: '180', colors: ['2'] },
-      hr: { category: 'hr', id: gender === 'M' ? '828' : '595', colors: ['45'] },
-      ch: { category: 'ch', id: gender === 'M' ? '665' : '667', colors: ['92'] },
-      lg: { category: 'lg', id: gender === 'M' ? '700' : '701', colors: ['1'] },
+      hr: { category: 'hr', id: baseGender === 'M' ? '828' : '595', colors: ['45'] },
+      ch: { category: 'ch', id: baseGender === 'M' ? '665' : '667', colors: ['92'] },
+      lg: { category: 'lg', id: baseGender === 'M' ? '700' : '701', colors: ['1'] },
       sh: { category: 'sh', id: '705', colors: ['1'] }
     };
   }

@@ -10,7 +10,7 @@ import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureMa
 import { useToast } from '@/hooks/use-toast';
 import type { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
 
-// Configuração das categorias (igual ao sistema anterior)
+// Configuração das categorias corrigida para HabboEmotion
 const categoryGroups = [
   {
     id: 'head',
@@ -20,7 +20,8 @@ const categoryGroups = [
       { id: 'hd', name: 'Rostos', icon: '👤' },
       { id: 'hr', name: 'Cabelos', icon: '💇' },
       { id: 'ea', name: 'Óculos', icon: '👓' },
-      { id: 'ha', name: 'Chapéus', icon: '🎩' }
+      { id: 'ha', name: 'Chapéus', icon: '🎩' },
+      { id: 'fa', name: 'Acess. Rosto', icon: '😎' }
     ]
   },
   {
@@ -50,7 +51,7 @@ const PuhekuplaEditor = () => {
   const [currentFigure, setCurrentFigure] = useState<PuhekuplaFigure>(() => 
     PuhekuplaFigureManager.getDefaultFigure('M')
   );
-  const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
   const [selectedHotel, setSelectedHotel] = useState('com');
   const [currentDirection, setCurrentDirection] = useState('2');
   const [selectedSection, setSelectedSection] = useState('head');
@@ -75,7 +76,7 @@ const PuhekuplaEditor = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const figureParam = urlParams.get('figure');
-    const genderParam = urlParams.get('gender') as 'M' | 'F';
+    const genderParam = urlParams.get('gender') as 'M' | 'F' | 'U';
     const hotelParam = urlParams.get('hotel');
     
     if (figureParam) {
@@ -87,7 +88,7 @@ const PuhekuplaEditor = () => {
       }
     }
     
-    if (genderParam && ['M', 'F'].includes(genderParam)) {
+    if (genderParam && ['M', 'F', 'U'].includes(genderParam)) {
       setSelectedGender(genderParam);
     }
     
@@ -145,10 +146,12 @@ const PuhekuplaEditor = () => {
   }, [selectedSection]);
 
   // Update figure when gender changes
-  const handleGenderChange = (gender: 'M' | 'F') => {
+  const handleGenderChange = (gender: 'M' | 'F' | 'U') => {
+    console.log('👤 [PuhekuplaEditor] Mudança de gênero:', gender);
     setSelectedGender(gender);
-    const newFigure = PuhekuplaFigureManager.getDefaultFigure(gender);
-    setCurrentFigure(newFigure);
+    
+    // Manter a figura atual ao mudar gênero - não resetar
+    // Apenas atualizar o estado do gênero para filtrar roupas corretamente
   };
 
   return (
@@ -159,7 +162,7 @@ const PuhekuplaEditor = () => {
           <CardContent className="p-4">
             <PuhekuplaAvatarPreviewClean
               currentFigure={currentFigure}
-              selectedGender={selectedGender}
+              selectedGender={selectedGender === 'U' ? 'M' : selectedGender} // Para preview, U vira M
               selectedHotel={selectedHotel}
               currentDirection={currentDirection}
               hotels={hotels}
@@ -179,7 +182,9 @@ const PuhekuplaEditor = () => {
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
               Editor Puhekupla - HabboEmotion API
-              <Badge className="ml-auto bg-white/20 text-white text-xs">Nova Geração</Badge>
+              <Badge className="ml-auto bg-white/20 text-white text-xs">
+                {selectedGender === 'M' ? 'Masculino' : selectedGender === 'F' ? 'Feminino' : 'Unissex'}
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
@@ -205,7 +210,7 @@ const PuhekuplaEditor = () => {
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
                     <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
-                    <p className="text-sm text-gray-600">Roupas da HabboEmotion API</p>
+                    <p className="text-sm text-gray-600">Roupas da HabboEmotion API - Gênero: {selectedGender}</p>
                   </div>
                   
                   {/* Sub-categorias */}

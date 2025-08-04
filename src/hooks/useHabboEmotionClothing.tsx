@@ -49,7 +49,7 @@ const fetchHabboEmotionClothing = async (
     console.log(`✅ [HabboEmotion] Successfully fetched ${data.items.length} real items from ${data.metadata?.source}`);
     console.log(`📊 [HabboEmotion] Metadata:`, data.metadata);
     
-    // Process and enrich the items
+    // Process and enrich the items with corrected URLs
     const enrichedItems = data.items.map((item: any) => {
       const colorDetails = item.colors?.map((colorId: string) => {
         const colorInfo = getColorById(colorId);
@@ -62,6 +62,9 @@ const fetchHabboEmotionClothing = async (
         };
       }) || [];
 
+      // Correção das URLs baseada nas orientações
+      const correctedImageUrl = generateCorrectImageUrl(item.code, item.part, item.gender, item.id);
+
       return {
         id: item.id || Math.random(),
         code: item.code || '',
@@ -70,7 +73,7 @@ const fetchHabboEmotionClothing = async (
         date: item.date || '',
         colors: Array.isArray(item.colors) ? item.colors : ['1', '2', '3'],
         colorDetails,
-        imageUrl: item.imageUrl || generateFallbackImageUrl(item.code, item.part, item.id),
+        imageUrl: correctedImageUrl,
         club: item.club || 'FREE',
         source: item.source || 'error-fallback',
         name: item.name || item.code || `Item ${item.id}`,
@@ -86,8 +89,13 @@ const fetchHabboEmotionClothing = async (
   }
 };
 
-const generateFallbackImageUrl = (code: string, part: string, itemId: number): string => {
-  const categoryNames: Record<string, string> = {
+const generateCorrectImageUrl = (code: string, part: string, gender: 'M' | 'F' | 'U', itemId: number): string => {
+  // Estrutura correta das URLs do HabboEmotion
+  // files.habboemotion.com é o domínio correto para assets
+  const baseUrl = 'https://files.habboemotion.com';
+  
+  // Mapear partes para estrutura de pastas
+  const partMapping: Record<string, string> = {
     'hr': 'hair',
     'ch': 'shirt', 
     'lg': 'trousers',
@@ -102,10 +110,24 @@ const generateFallbackImageUrl = (code: string, part: string, itemId: number): s
     'hd': 'head'
   };
   
-  const categoryName = categoryNames[part] || 'shirt';
-  const spriteName = code.includes('_U_') ? code : `${categoryName}_U_${code}`;
+  const categoryFolder = partMapping[part] || 'shirt';
   
-  return `https://files.habboemotion.com/habbo-assets/sprites/clothing/${spriteName}/h_std_${part}_${itemId}_2_0.png`;
+  // Tentar diferentes estruturas de nomenclatura
+  let spriteName = code;
+  
+  // Se o código já tem sufixo de gênero, usar direto
+  if (code.includes('_M_') || code.includes('_F_') || code.includes('_U_')) {
+    spriteName = code;
+  } else {
+    // Adicionar sufixo de gênero se não tiver
+    spriteName = `${categoryFolder}_${gender}_${code}`;
+  }
+  
+  // URL final no formato correto do HabboEmotion
+  const finalUrl = `${baseUrl}/habbo-assets/sprites/clothing/${spriteName}/h_std_${part}_${itemId}_2_0.png`;
+  
+  console.log(`🖼️ [HabboEmotion] Generated image URL: ${finalUrl}`);
+  return finalUrl;
 };
 
 export const useHabboEmotionClothing = (

@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Copy, Download, Shuffle, RotateCcw } from 'lucide-react';
+import { Copy, Download, Shuffle, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PuhekuplaFigureManager, type PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
+import { PuhekuplaFigure, PuhekuplaFigureManager } from '@/lib/puhekuplaFigureManager';
 
 interface Hotel {
   code: string;
@@ -22,7 +23,7 @@ interface PuhekuplaAvatarPreviewCleanProps {
   hotels: Hotel[];
   onFigureChange: (figure: PuhekuplaFigure) => void;
   onDirectionChange: (direction: string) => void;
-  onGenderChange: (gender: 'M' | 'F') => void;
+  onGenderChange: (gender: 'M' | 'F' | 'U') => void;
   onHotelChange: (hotel: string) => void;
 }
 
@@ -57,18 +58,15 @@ export const PuhekuplaAvatarPreviewClean = ({
       });
       return;
     }
-
+    
     try {
-      const hotel = hotels.find(h => h.code === selectedHotel);
-      const hotelUrl = hotel?.url || 'habbo.com';
+      const hotelUrl = selectedHotel === 'com' ? 'habbo.com' : `habbo.${selectedHotel}`;
       const response = await fetch(`https://www.${hotelUrl}/api/public/users?name=${username}`);
-      
       if (!response.ok) throw new Error('Usuário não encontrado');
-      
       const data = await response.json();
       if (data.figureString) {
-        const figure = PuhekuplaFigureManager.parseFigureString(data.figureString);
-        onFigureChange(figure);
+        const parsedFigure = PuhekuplaFigureManager.parseFigureString(data.figureString);
+        onFigureChange(parsedFigure);
         toast({
           title: "✅ Sucesso",
           description: `Visual de ${data.name} carregado!`
@@ -84,7 +82,8 @@ export const PuhekuplaAvatarPreviewClean = ({
   };
 
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(getAvatarUrl());
+    const url = getAvatarUrl();
+    navigator.clipboard.writeText(url);
     toast({
       title: "📋 Copiado!",
       description: "URL do avatar copiada"
@@ -92,9 +91,10 @@ export const PuhekuplaAvatarPreviewClean = ({
   };
 
   const handleDownload = () => {
+    const url = getAvatarUrl();
     const link = document.createElement('a');
-    link.href = getAvatarUrl();
-    link.download = `avatar-puhekupla-${Date.now()}.png`;
+    link.href = url;
+    link.download = `avatar-${Date.now()}.png`;
     link.click();
     toast({
       title: "⬇️ Download iniciado",
@@ -111,29 +111,20 @@ export const PuhekuplaAvatarPreviewClean = ({
     });
   };
 
-  const handleDirectionChange = () => {
-    const directions = ['0', '1', '2', '3', '4', '5', '6', '7'];
-    const currentIndex = directions.indexOf(currentDirection);
-    const nextIndex = (currentIndex + 1) % directions.length;
-    onDirectionChange(directions[nextIndex]);
-  };
-
   const selectedHotelData = hotels.find(h => h.code === selectedHotel);
 
   return (
     <div className="flex flex-col space-y-4">
-      {/* Avatar e Botões de Ação */}
+      {/* Avatar e Botões */}
       <div className="flex gap-4">
-        {/* Avatar Preview - Aumentado */}
+        {/* Avatar - Aumentado */}
         <div className="relative">
-          <div className="w-32 h-40 bg-gradient-to-b from-purple-100 to-blue-100 rounded-lg border-2 border-purple-200 flex items-end justify-center p-2">
+          <div className="w-32 h-40 bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg border-2 border-gray-200 flex items-end justify-center p-2">
             <img
               src={getAvatarUrl()}
-              alt="Puhekupla Avatar Preview"
-              className="max-w-full max-h-full object-contain cursor-pointer"
+              alt="Avatar Preview"
+              className="max-w-full max-h-full object-contain"
               style={{ imageRendering: 'pixelated' }}
-              onClick={handleDirectionChange}
-              title="Clique para girar o avatar"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&size=l&direction=2&head_direction=3&action=std&gesture=std`;
@@ -171,37 +162,31 @@ export const PuhekuplaAvatarPreviewClean = ({
           >
             <Shuffle className="w-4 h-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDirectionChange}
-            title="Girar Avatar"
-            className="w-10 h-10 p-0"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </Button>
         </div>
       </div>
 
-      {/* Seleção de Gênero */}
-      <div className="flex justify-center gap-2">
+      {/* Seleção de Gênero - Atualizada com Unissex */}
+      <div className="flex justify-center gap-1">
         <button 
-          className={`p-2 rounded text-2xl transition-colors ${
-            selectedGender === 'M' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
-          }`}
+          className={`p-2 rounded-l text-sm font-medium ${selectedGender === 'M' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
           onClick={() => onGenderChange('M')}
           title="Masculino"
         >
-          ♂️
+          ♂️ M
         </button>
         <button 
-          className={`p-2 rounded text-2xl transition-colors ${
-            selectedGender === 'F' ? 'bg-pink-500 text-white' : 'bg-gray-200 hover:bg-gray-300'
-          }`}
+          className={`p-2 text-sm font-medium ${selectedGender === 'F' ? 'bg-pink-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
           onClick={() => onGenderChange('F')}
           title="Feminino"
         >
-          ♀️
+          ♀️ F
+        </button>
+        <button 
+          className={`p-2 rounded-r text-sm font-medium ${selectedGender === 'U' ? 'bg-purple-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+          onClick={() => onGenderChange('U')}
+          title="Unissex"
+        >
+          ⚧ U
         </button>
       </div>
 
@@ -218,7 +203,7 @@ export const PuhekuplaAvatarPreviewClean = ({
             />
           </div>
           
-          {/* Seletor de Hotel */}
+          {/* Seletor de Hotel com Popover */}
           <Popover open={hotelPopoverOpen} onOpenChange={setHotelPopoverOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="px-2">
@@ -231,7 +216,7 @@ export const PuhekuplaAvatarPreviewClean = ({
                   <button
                     key={hotel.code}
                     className={`w-full text-left px-2 py-1 rounded text-sm hover:bg-gray-100 flex items-center gap-2 ${
-                      selectedHotel === hotel.code ? 'bg-purple-50' : ''
+                      selectedHotel === hotel.code ? 'bg-blue-50' : ''
                     }`}
                     onClick={() => {
                       onHotelChange(hotel.code);
@@ -251,6 +236,23 @@ export const PuhekuplaAvatarPreviewClean = ({
         <Button onClick={handleSearchUser} size="sm" className="w-full">
           Buscar Usuário
         </Button>
+      </div>
+
+      {/* Direções do Avatar */}
+      <div className="grid grid-cols-4 gap-1">
+        {['0', '1', '2', '3', '4', '5', '6', '7'].map((direction) => (
+          <button
+            key={direction}
+            className={`p-1 rounded text-xs ${
+              currentDirection === direction 
+                ? 'bg-blue-500 text-white' 
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+            }`}
+            onClick={() => onDirectionChange(direction)}
+          >
+            {direction}
+          </button>
+        ))}
       </div>
     </div>
   );
