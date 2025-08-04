@@ -19,7 +19,6 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
   );
   const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
   const [selectedHotel, setSelectedHotel] = useState('com');
-  const [currentDirection, setCurrentDirection] = useState('2');
   const [selectedItem, setSelectedItem] = useState('');
   const [selectedColor, setSelectedColor] = useState('1');
 
@@ -94,12 +93,14 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
         <Card>
           <CardContent className="p-4">
             <ViaJovemAvatarSection
-              currentFigure={currentFigure}
+              currentFigure={ViaJovemFigureManager.getFigureString(currentFigure)}
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
               hotels={hotels}
-              onFigureChange={setCurrentFigure}
-              onDirectionChange={setCurrentDirection}
+              onFigureChange={(figureString: string) => {
+                const figure = ViaJovemFigureManager.parseFigureString(figureString);
+                setCurrentFigure(figure);
+              }}
               onGenderChange={handleGenderChange}
               onHotelChange={setSelectedHotel}
             />

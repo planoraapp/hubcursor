@@ -26,12 +26,22 @@ export interface EnhancedFlashAsset {
   source: 'flash-assets-enhanced';
 }
 
-const fetchEnhancedFlashAssets = async (limit: number = 3000): Promise<EnhancedFlashAsset[]> => {
-  console.log(`🌐 [EnhancedFlashAssets] Buscando ${limit} assets com sistema inteligente`);
+const fetchEnhancedFlashAssets = async (params: {
+  category?: string;
+  gender?: 'M' | 'F';
+  search?: string;
+  limit?: number;
+}): Promise<EnhancedFlashAsset[]> => {
+  console.log('🌐 [EnhancedFlashAssets] Buscando assets com sistema inteligente', params);
   
   try {
     const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
-      body: { limit, category: 'all', search: '' }
+      body: { 
+        limit: params.limit || 3000, 
+        category: params.category || 'all', 
+        search: params.search || '',
+        gender: params.gender || 'M'
+      }
     });
 
     if (error) {
@@ -55,13 +65,17 @@ const fetchEnhancedFlashAssets = async (limit: number = 3000): Promise<EnhancedF
   }
 };
 
-export const useEnhancedFlashAssets = (limit: number = 3000) => {
+export const useEnhancedFlashAssets = (params: {
+  category?: string;
+  gender?: 'M' | 'F';
+  search?: string;
+}) => {
   const [categoryStats, setCategoryStats] = useState<Record<string, number>>({});
   const [rarityStats, setRarityStats] = useState<Record<string, number>>({});
 
   const query = useQuery({
-    queryKey: ['enhanced-flash-assets', limit],
-    queryFn: () => fetchEnhancedFlashAssets(limit),
+    queryKey: ['enhanced-flash-assets', params],
+    queryFn: () => fetchEnhancedFlashAssets(params),
     staleTime: 1000 * 60 * 30, // 30 minutes
     gcTime: 1000 * 60 * 60 * 2, // 2 hours
     retry: 2,
@@ -101,39 +115,5 @@ export const useEnhancedFlashAssets = (limit: number = 3000) => {
     isLoading: query.isLoading,
     error: query.error,
     isSuccess: query.isSuccess
-  };
-};
-
-export const useEnhancedFlashAssetsByCategory = (
-  categoryId: string, 
-  gender: 'M' | 'F' = 'M',
-  limit: number = 100
-) => {
-  const { items, isLoading, error } = useEnhancedFlashAssets();
-  const [filteredItems, setFilteredItems] = useState<EnhancedFlashAsset[]>([]);
-
-  useEffect(() => {
-    if (items.length > 0 && categoryId) {
-      const filtered = items
-        .filter(item => item.category === categoryId)
-        .filter(item => item.gender === gender || item.gender === 'U')
-        .slice(0, limit);
-      
-      setFilteredItems(filtered);
-      
-      console.log(`🔍 [EnhancedFlashAssetsByCategory] Filtro aplicado:`, {
-        categoria: categoryId,
-        genero: gender,
-        totalItens: items.length,
-        itensFiltrados: filtered.length,
-        limit
-      });
-    }
-  }, [items, categoryId, gender, limit]);
-
-  return {
-    items: filteredItems,
-    isLoading,
-    error
   };
 };
