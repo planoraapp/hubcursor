@@ -1,447 +1,341 @@
-import React, { useState, useMemo, useCallback } from 'react';
+
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Shirt, Palette, Search, Filter, RefreshCw, Zap, Database, Sparkles } from 'lucide-react';
-import { useHabboEmotionClothing, triggerHabboEmotionSync, type HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
-import { getColorById } from '@/data/habboColors';
-import EnhancedClothingThumbnail from '../HabboEditor/EnhancedClothingThumbnail';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, RefreshCw, Filter, Grid3x3, List, Info } from 'lucide-react';
+import { useHabboEmotionClothing, triggerHabboEmotionSync } from '@/hooks/useHabboEmotionClothing';
+import { useToast } from '@/hooks/use-toast';
+import EnhancedClothingThumbnail from '@/components/HabboEditor/EnhancedClothingThumbnail';
 
 interface HabboEmotionClothingGridProps {
   selectedCategory: string;
-  selectedGender: 'M' | 'F';
-  onItemSelect: (item: HabboEmotionClothingItem) => void;
-  onColorSelect: (colorId: string, item: HabboEmotionClothingItem) => void;
-  selectedItem?: string;
-  selectedColor?: string;
+  selectedGender: 'M' | 'F' | 'U';
+  onItemSelect: (item: any) => void;
+  selectedColorId?: string;
+  className?: string;
 }
 
-const CATEGORY_NAMES = {
-  'hr': '💇 Cabelos',
-  'hd': '👤 Rostos', 
-  'ch': '👕 Camisetas',
-  'lg': '👖 Calças',
-  'sh': '👟 Sapatos',
-  'ha': '🎩 Chapéus',
-  'ea': '👓 Óculos',
-  'fa': '😷 Acess. Faciais',
-  'cc': '🧥 Casacos',
-  'ca': '🎖️ Acess. Peito',
-  'wa': '👔 Cintura',
-  'cp': '🎨 Estampas'
+const CATEGORY_CONFIG = {
+  hd: { name: 'Rostos', icon: '👤', color: 'bg-pink-100' },
+  hr: { name: 'Cabelos', icon: '💇', color: 'bg-purple-100' },
+  ch: { name: 'Camisetas', icon: '👕', color: 'bg-blue-100' },
+  lg: { name: 'Calças', icon: '👖', color: 'bg-green-100' },
+  sh: { name: 'Sapatos', icon: '👟', color: 'bg-yellow-100' },
+  ha: { name: 'Chapéus', icon: '🎩', color: 'bg-red-100' },
+  ea: { name: 'Óculos', icon: '👓', color: 'bg-indigo-100' },
+  cc: { name: 'Casacos', icon: '🧥', color: 'bg-teal-100' },
+  ca: { name: 'Acessórios Peito', icon: '🎖️', color: 'bg-orange-100' },
+  wa: { name: 'Cintura', icon: '👔', color: 'bg-cyan-100' },
+  fa: { name: 'Acessórios Rosto', icon: '😎', color: 'bg-lime-100' },
+  cp: { name: 'Estampas', icon: '🎨', color: 'bg-rose-100' }
 };
 
-export const HabboEmotionClothingGrid: React.FC<HabboEmotionClothingGridProps> = ({
+export const HabboEmotionClothingGrid = ({
   selectedCategory,
   selectedGender,
   onItemSelect,
-  onColorSelect,
-  selectedItem,
-  selectedColor
-}) => {
-  const [colorPopoverOpen, setColorPopoverOpen] = useState<string | null>(null);
+  selectedColorId = '1',
+  className = ''
+}: HabboEmotionClothingGridProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [clubFilter, setClubFilter] = useState<'all' | 'HC' | 'FREE'>('all');
-  const [isSyncing, setIsSyncing] = useState(false);
-  
-  const { data: clothingItems, isLoading, error, refetch } = useHabboEmotionClothing(
-    2000, // Limite aumentado para mais itens
-    selectedCategory,
-    selectedGender
-  );
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState('name');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const { toast } = useToast();
 
-  // Filtrar e organizar itens
+  // Fetch comprehensive HabboEmotion clothing data
+  const { 
+    data: clothingData, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useHabboEmotionClothing(2000, selectedCategory, selectedGender);
+
+  // Filter and sort items
   const filteredItems = useMemo(() => {
-    if (!clothingItems) return [];
+    if (!clothingData) return [];
     
-    return clothingItems.filter(item => {
-      const categoryMatch = item.category === selectedCategory || item.part === selectedCategory;
-      const genderMatch = item.gender === selectedGender || item.gender === 'U';
-      const searchMatch = !searchTerm || 
-        item.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const clubMatch = clubFilter === 'all' || item.club === clubFilter;
+    let filtered = clothingData.filter(item => {
+      // Category filter
+      if (selectedCategory !== 'all' && item.part !== selectedCategory) return false;
       
-      return categoryMatch && genderMatch && searchMatch && clubMatch;
-    }).sort((a, b) => {
-      // Priorizar itens HC no topo se filtro não for específico
-      if (clubFilter === 'all') {
-        if (a.club === 'HC' && b.club === 'FREE') return -1;
-        if (a.club === 'FREE' && b.club === 'HC') return 1;
+      // Gender filter
+      if (selectedGender !== 'U' && item.gender !== 'U' && item.gender !== selectedGender) return false;
+      
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          item.name?.toLowerCase().includes(searchLower) ||
+          item.code?.toLowerCase().includes(searchLower) ||
+          item.part?.toLowerCase().includes(searchLower)
+        );
       }
-      // Depois ordenar por código
-      return a.code.localeCompare(b.code);
+      
+      return true;
     });
-  }, [clothingItems, selectedCategory, selectedGender, searchTerm, clubFilter]);
 
-  // Agrupar por raridade
-  const groupedItems = useMemo(() => {
-    const groups = {
-      hc: filteredItems.filter(item => item.club === 'HC'),
-      free: filteredItems.filter(item => item.club === 'FREE')
-    };
-    return groups;
-  }, [filteredItems]);
+    // Sort items
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return (a.name || a.code || '').localeCompare(b.name || b.code || '');
+        case 'id':
+          return (a.id || 0) - (b.id || 0);
+        case 'newest':
+          return new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
+        case 'club':
+          if (a.club === 'HC' && b.club !== 'HC') return -1;
+          if (b.club === 'HC' && a.club !== 'HC') return 1;
+          return 0;
+        default:
+          return 0;
+      }
+    });
 
-  const handleItemClick = useCallback((item: HabboEmotionClothingItem) => {
+    return filtered;
+  }, [clothingData, selectedCategory, selectedGender, searchTerm, sortBy]);
+
+  const handleItemClick = (item: any) => {
+    setSelectedItem(item);
     onItemSelect(item);
-    
-    // Se o item tem cores disponíveis, abrir popover
-    if (item.colors && item.colors.length > 1) {
-      setColorPopoverOpen(item.code);
-    }
-  }, [onItemSelect]);
+    toast({
+      title: "✅ Item Selecionado",
+      description: `${item.name || item.code} aplicado ao avatar`,
+    });
+  };
 
-  const handleColorClick = useCallback((colorId: string, item: HabboEmotionClothingItem) => {
-    onColorSelect(colorId, item);
-    setColorPopoverOpen(null);
-  }, [onColorSelect]);
-
-  const handleManualSync = async () => {
-    setIsSyncing(true);
+  const handleSync = async () => {
     try {
+      toast({
+        title: "🔄 Sincronizando...",
+        description: "Atualizando catálogo HabboEmotion",
+      });
+      
       await triggerHabboEmotionSync();
       await refetch();
+      
+      toast({
+        title: "✅ Sincronização Completa",
+        description: "Catálogo atualizado com sucesso",
+      });
     } catch (error) {
-      console.error('❌ Manual sync failed:', error);
-    } finally {
-      setIsSyncing(false);
+      toast({
+        title: "❌ Erro na Sincronização",
+        description: "Falha ao atualizar o catálogo",
+        variant: "destructive"
+      });
     }
   };
 
-  const renderColorButton = (colorId: string, item: HabboEmotionClothingItem) => {
-    const colorInfo = getColorById(colorId);
-    const isSelected = selectedColor === colorId;
+  // Statistics
+  const stats = useMemo(() => {
+    if (!clothingData) return { total: 0, byCategory: {}, bySource: {} };
     
-    return (
-      <Button
-        key={colorId}
-        size="sm"
-        variant={isSelected ? "default" : "outline"}
-        className={`w-8 h-8 p-0 relative ${isSelected ? 'ring-2 ring-purple-500' : ''}`}
-        style={{
-          backgroundColor: colorInfo ? `#${colorInfo.hex}` : '#DDDDDD',
-          color: colorInfo && ['1', '26', '5', '15', '16', '25'].includes(colorId) ? '#000' : '#fff'
-        }}
-        onClick={() => handleColorClick(colorId, item)}
-        title={colorInfo?.name || `Cor ${colorId}`}
-      >
-        {colorInfo?.isHC && (
-          <div className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center">
-            ★
-          </div>
-        )}
-        <span className="text-xs font-bold">{colorId}</span>
-      </Button>
-    );
-  };
+    const byCategory: Record<string, number> = {};
+    const bySource: Record<string, number> = {};
+    
+    clothingData.forEach(item => {
+      byCategory[item.part] = (byCategory[item.part] || 0) + 1;
+      bySource[item.source] = (bySource[item.source] || 0) + 1;
+    });
+    
+    return {
+      total: clothingData.length,
+      byCategory,
+      bySource,
+      filtered: filteredItems.length
+    };
+  }, [clothingData, filteredItems]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-purple-800 mb-2">Carregando HabboEmotion Completo</h3>
-          <p className="text-purple-600">Buscando catálogo expandido com milhares de roupas...</p>
-          <div className="mt-4 flex justify-center gap-2">
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
-              <Database className="w-3 h-3 mr-1" />
-              Cache Supabase
-            </Badge>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-              <Sparkles className="w-3 h-3 mr-1" />
-              2000+ Itens
-            </Badge>
-          </div>
-        </div>
+      <div className="text-center py-12">
+        <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+        <p className="text-gray-600">Carregando catálogo HabboEmotion...</p>
+        <p className="text-sm text-gray-500 mt-2">Milhares de itens sendo processados</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
-        <Shirt className="w-12 h-12 mx-auto mb-3 text-red-500" />
-        <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao Carregar Sistema Expandido</h3>
-        <p className="text-sm text-red-600 mb-4">
-          Não foi possível conectar com o sistema HabboEmotion expandido
-        </p>
-        <div className="flex gap-2 justify-center">
-          <Button onClick={() => refetch()} variant="outline" className="border-red-300 text-red-600">
+      <div className="text-center py-12">
+        <div className="bg-red-50 border border-red-200 rounded p-6">
+          <p className="text-red-600 font-medium mb-2">❌ Erro ao carregar itens</p>
+          <p className="text-sm text-gray-600 mb-4">{error.message}</p>
+          <Button onClick={() => refetch()} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Recarregar
-          </Button>
-          <Button onClick={handleManualSync} disabled={isSyncing} className="bg-purple-600 hover:bg-purple-700">
-            {isSyncing ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Zap className="w-4 h-4 mr-2" />
-            )}
-            Sincronizar Completo
+            Tentar Novamente
           </Button>
         </div>
       </div>
     );
   }
 
-  const totalItems = clothingItems?.length || 0;
-  const categoryName = CATEGORY_NAMES[selectedCategory as keyof typeof CATEGORY_NAMES] || selectedCategory.toUpperCase();
+  const categoryConfig = CATEGORY_CONFIG[selectedCategory as keyof typeof CATEGORY_CONFIG];
 
   return (
-    <div className="space-y-4">
-      {/* Header expandido com estatísticas detalhadas */}
-      <div className="bg-gradient-to-r from-purple-100 via-blue-100 to-green-100 rounded-lg p-4 border-2 border-purple-200">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-purple-700" />
-            <div>
-              <h3 className="font-bold text-purple-800">
-                HabboEmotion Expandido - {categoryName}
-              </h3>
-              <p className="text-sm text-purple-600">
-                {filteredItems.length} itens • {groupedItems.hc.length} HC • {groupedItems.free.length} Gratuitos
-              </p>
-              <div className="flex gap-2 mt-1">
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300 text-xs">
-                  <Database className="w-3 h-3 mr-1" />
-                  Sistema Completo
-                </Badge>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs">
-                  ✨ {totalItems} Total
-                </Badge>
-              </div>
+    <div className={`space-y-4 ${className}`}>
+      {/* Header with Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {categoryConfig && (
+            <div className={`flex items-center gap-2 px-3 py-1 rounded ${categoryConfig.color}`}>
+              <span className="text-lg">{categoryConfig.icon}</span>
+              <span className="font-medium">{categoryConfig.name}</span>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-              ✅ Cache Expandido
-            </Badge>
-            <Button
-              onClick={handleManualSync}
-              disabled={isSyncing}
-              size="sm"
-              variant="outline"
-              className="text-purple-700 border-purple-300 hover:bg-purple-50"
-            >
-              {isSyncing ? (
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-              ) : (
-                <Zap className="w-4 h-4 mr-1" />
-              )}
-              Sync Completo
-            </Button>
-          </div>
+          )}
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            {stats.filtered} de {stats.total} itens
+          </Badge>
         </div>
+        
+        <Button onClick={handleSync} variant="outline" size="sm">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Sincronizar
+        </Button>
       </div>
 
-      {/* Controles de busca e filtro */}
-      <div className="flex gap-3">
+      {/* Statistics Panel */}
+      {stats.total > 0 && (
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border">
+          <div className="flex items-center gap-2 mb-3">
+            <Info className="w-4 h-4 text-blue-600" />
+            <span className="font-medium text-blue-900">Estatísticas do Catálogo</span>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+              <div className="font-medium text-gray-900">{stats.total}</div>
+              <div className="text-gray-600">Total de Itens</div>
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">{Object.keys(stats.byCategory).length}</div>
+              <div className="text-gray-600">Categorias</div>
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">{stats.bySource['habboemotion-scraping'] || 0}</div>
+              <div className="text-gray-600">HE Originais</div>
+            </div>
+            <div>
+              <div className="font-medium text-gray-900">{stats.bySource['enhanced-generation'] || 0}</div>
+              <div className="text-gray-600">Gerados</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Buscar por código ou nome..."
+            placeholder="Buscar roupas por nome ou código..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
         
-        <div className="flex gap-1">
-          {(['all', 'HC', 'FREE'] as const).map((filter) => (
-            <Button
-              key={filter}
-              size="sm"
-              variant={clubFilter === filter ? "default" : "outline"}
-              onClick={() => setClubFilter(filter)}
-              className={`${clubFilter === filter ? 'bg-purple-600 text-white' : 'text-purple-700 border-purple-300'}`}
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Ordenar" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name">Nome</SelectItem>
+            <SelectItem value="id">ID</SelectItem>
+            <SelectItem value="newest">Mais Recentes</SelectItem>
+            <SelectItem value="club">HC Primeiro</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="flex border rounded">
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+            className="border-0"
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="border-0"
+          >
+            <List className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Items Grid */}
+      {filteredItems.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-gray-600 mb-2">Nenhum item encontrado</p>
+          <p className="text-sm text-gray-500">
+            Tente ajustar os filtros ou fazer uma nova busca
+          </p>
+        </div>
+      ) : (
+        <div className={`${
+          viewMode === 'grid' 
+            ? 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3' 
+            : 'space-y-2'
+        }`}>
+          {filteredItems.map((item, index) => (
+            <Card
+              key={`${item.id}_${item.code}_${index}`}
+              className={`cursor-pointer transition-all hover:shadow-md hover:scale-105 ${
+                selectedItem?.id === item.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
+              } ${viewMode === 'grid' ? '' : 'flex flex-row'}`}
+              onClick={() => handleItemClick(item)}
             >
-              <Filter className="w-3 h-3 mr-1" />
-              {filter === 'all' ? 'Todos' : filter}
-            </Button>
+              <CardContent className={`${viewMode === 'grid' ? 'p-2' : 'flex items-center p-3 space-x-3'}`}>
+                <div className={`relative ${viewMode === 'grid' ? '' : 'flex-shrink-0'}`}>
+                  <EnhancedClothingThumbnail 
+                    item={item}
+                    selectedColorId={selectedColorId}
+                    size={viewMode === 'grid' ? 'm' : 's'}
+                    className={`${viewMode === 'grid' ? 'w-full h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded' : ''}`}
+                  />
+                  
+                  {/* Color count indicator */}
+                  {item.colors && item.colors.length > 1 && (
+                    <div className="absolute top-1 right-1 bg-purple-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      {item.colors.length}
+                    </div>
+                  )}
+                </div>
+                
+                <div className={`${viewMode === 'grid' ? 'mt-1 text-center' : 'flex-1 min-w-0'}`}>
+                  <div className={`text-xs font-medium truncate ${viewMode === 'list' ? 'text-sm' : ''}`} 
+                       title={item.name || item.code}>
+                    {item.name || item.code}
+                  </div>
+                  
+                  {viewMode === 'list' && (
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-gray-500">ID: {item.id}</span>
+                      {item.club === 'HC' && (
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                          HC
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
-      </div>
-
-      {/* Grid de itens com thumbnail aprimorado */}
-      <div className="max-h-80 overflow-y-auto space-y-4">
-        {filteredItems.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-            <Shirt className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-600 mb-2">Nenhuma roupa encontrada no catálogo expandido</h3>
-            <p className="text-gray-500">
-              Tente ajustar os filtros ou sincronizar novamente
-            </p>
-            <Button onClick={handleManualSync} className="mt-3" disabled={isSyncing}>
-              {isSyncing ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Zap className="w-4 h-4 mr-2" />
-              )}
-              Sincronizar Sistema Completo
-            </Button>
-          </div>
-        ) : (
-          <>
-            {/* Items HC */}
-            {groupedItems.hc.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                    ⭐ HABBO CLUB ({groupedItems.hc.length})
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                  {groupedItems.hc.map((item) => (
-                    <EnhancedItemCard
-                      key={item.code}
-                      item={item}
-                      isSelected={selectedItem === item.code}
-                      selectedColor={selectedColor}
-                      onItemClick={handleItemClick}
-                      colorPopoverOpen={colorPopoverOpen}
-                      setColorPopoverOpen={setColorPopoverOpen}
-                      renderColorButton={renderColorButton}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Items Gratuitos */}
-            {groupedItems.free.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-gradient-to-r from-gray-500 to-gray-600 text-white">
-                    🆓 GRATUITO ({groupedItems.free.length})
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                  {groupedItems.free.map((item) => (
-                    <EnhancedItemCard
-                      key={item.code}
-                      item={item}
-                      isSelected={selectedItem === item.code}
-                      selectedColor={selectedColor}
-                      onItemClick={handleItemClick}
-                      colorPopoverOpen={colorPopoverOpen}
-                      setColorPopoverOpen={setColorPopoverOpen}
-                      renderColorButton={renderColorButton}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Footer expandido com informações detalhadas */}
-      <div className="text-xs text-gray-500 border-t pt-3 space-y-1">
-        <div className="flex justify-between">
-          <span>Total no sistema: {totalItems} itens expandidos</span>
-          <span>Visualizando: {filteredItems.length} itens</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Fonte: {clothingItems?.[0]?.source || 'Sistema Expandido'}</span>
-          <span className="text-green-600">✅ HabboEmotion 3.0 - Sistema Completo Ativo</span>
-        </div>
-        <div className="flex justify-between">
-          <span>HC: {groupedItems.hc.length} | Gratuito: {groupedItems.free.length}</span>
-          <span>Categoria: {categoryName}</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
 
-// Componente do card individual aprimorado
-interface EnhancedItemCardProps {
-  item: HabboEmotionClothingItem;
-  isSelected: boolean;
-  selectedColor?: string;
-  onItemClick: (item: HabboEmotionClothingItem) => void;
-  colorPopoverOpen: string | null;
-  setColorPopoverOpen: (value: string | null) => void;
-  renderColorButton: (colorId: string, item: HabboEmotionClothingItem) => React.ReactNode;
-}
-
-const EnhancedItemCard: React.FC<EnhancedItemCardProps> = ({ 
-  item, 
-  isSelected, 
-  selectedColor,
-  onItemClick, 
-  colorPopoverOpen, 
-  setColorPopoverOpen, 
-  renderColorButton 
-}) => (
-  <Popover 
-    open={colorPopoverOpen === item.code} 
-    onOpenChange={(open) => setColorPopoverOpen(open ? item.code : null)}
-  >
-    <PopoverTrigger asChild>
-      <Card 
-        className={`group cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg border-2 ${
-          isSelected ? 'border-purple-500 bg-purple-50 shadow-lg' : 'border-gray-200 hover:border-purple-300'
-        }`}
-        onClick={() => onItemClick(item)}
-      >
-        <CardContent className="p-2">
-          <div className="relative">
-            <EnhancedClothingThumbnail
-              item={item}
-              selectedColorId={selectedColor}
-              className="w-full h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded"
-            />
-            
-            {/* Indicadores aprimorados */}
-            {item.colors && item.colors.length > 1 && (
-              <div className="absolute top-1 right-1 bg-purple-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                {item.colors.length}
-              </div>
-            )}
-            
-            {item.club === 'HC' && (
-              <div className="absolute bottom-1 right-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs px-1.5 py-0.5 rounded font-bold shadow-md">
-                HC
-              </div>
-            )}
-
-            {/* Indicador de fonte */}
-            {item.source === 'supabase-comprehensive' && (
-              <div className="absolute top-1 left-1 bg-green-500 text-white text-xs rounded-full w-3 h-3 ring-2 ring-white"></div>
-            )}
-          </div>
-          
-          <div className="mt-1 text-center">
-            <div className="text-xs font-medium truncate" title={item.code}>
-              {item.code}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </PopoverTrigger>
-    
-    {/* Popover de cores expandido */}
-    {item.colors && item.colors.length > 1 && (
-      <PopoverContent className="w-64 p-3" align="center">
-        <div className="space-y-3">
-          <h4 className="font-medium text-sm flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            Cores Disponíveis ({item.colors.length})
-          </h4>
-          <div className="grid grid-cols-6 gap-1 max-h-32 overflow-y-auto">
-            {item.colors.map((colorId) => renderColorButton(colorId, item))}
-          </div>
-          <div className="text-xs text-gray-500 border-t pt-2 space-y-1">
-            <div>Item: {item.code}</div>
-            <div>Categoria: {item.part} • Clube: {item.club}</div>
-          </div>
-        </div>
-      </PopoverContent>
-    )}
-  </Popover>
-);
+export default HabboEmotionClothingGrid;

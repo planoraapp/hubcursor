@@ -21,14 +21,14 @@ const EnhancedClothingThumbnail = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageCache] = useState(new Map<string, boolean>());
 
-  // Gerar URLs de imagem com múltiplos fallbacks usando padrão correto
-  const generateImageUrls = useCallback(() => {
+  // Generate correct HabboEmotion URLs - INDIVIDUAL CLOTHING PIECES ONLY
+  const generateClothingImageUrls = useCallback(() => {
     const urls: string[] = [];
     const category = item.part;
     const itemId = item.id || 1000;
     const code = item.code || `${category}_${itemId}`;
     
-    // Mapeamento de categorias para nomes de sprites
+    // Category mapping for sprite names
     const categoryNames: Record<string, string> = {
       'hr': 'hair',
       'ch': 'shirt', 
@@ -45,48 +45,48 @@ const EnhancedClothingThumbnail = ({
     };
     
     const categoryName = categoryNames[category] || 'shirt';
-    const spriteName = code.includes('_U_') ? code : `${categoryName}_U_${code}`;
     
-    // 1. URL principal do HabboEmotion (formato correto)
+    // PRIORITY 1: Direct HabboEmotion individual clothing sprites
+    const spriteName = code.includes('_U_') ? code : `${categoryName}_U_${code.replace(/[^a-zA-Z0-9]/g, '')}`;
     urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
     
-    // 2. Variações do sprite name
+    // PRIORITY 2: Alternative sprite name patterns
     urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${category}_${itemId}_2_0.png`);
     urls.push(`https://files.habboemotion.com/habbo-assets/sprites/clothing/${categoryName}_${itemId}/h_std_${category}_${itemId}_2_0.png`);
     
-    // 3. URLs alternativas com diferentes estruturas
-    urls.push(`https://files.habboemotion.com/habbo-assets/clothing/${category}/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
+    // PRIORITY 3: Different directory structures
     urls.push(`https://files.habboemotion.com/sprites/clothing/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
+    urls.push(`https://files.habboemotion.com/clothing/${category}/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
     
-    // 4. Fallbacks para outros domínios/formatos
+    // PRIORITY 4: Alternative HabboEmotion domains
     urls.push(`https://habboemotion.com/assets/sprites/clothing/${spriteName}/h_std_${category}_${itemId}_2_0.png`);
     urls.push(`https://cdn.habboemotion.com/clothing/${category}/${itemId}.png`);
     
-    // 5. Usar URL original se fornecida
-    if (item.imageUrl) {
-      urls.push(item.imageUrl);
+    // PRIORITY 5: Use provided imageUrl if available
+    if (item.imageUrl && item.imageUrl.includes('files.habboemotion.com')) {
+      urls.unshift(item.imageUrl); // Add to beginning of array for priority
     }
     
-    // 6. Fallback genérico do Habbo oficial
-    urls.push(`https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${itemId}-${selectedColorId}&direction=2&head_direction=3&size=${size}&img_format=png&gesture=std&action=std`);
+    // LAST RESORT: Official Habbo imaging (BUT ISOLATED ITEM ONLY)
+    urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/${selectedColorId}.png`);
+    urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_${selectedColorId}.png`);
     
     return [...new Set(urls)]; // Remove duplicates
-  }, [item, selectedColorId, size]);
+  }, [item, selectedColorId]);
 
-  const thumbnailUrls = generateImageUrls();
+  const thumbnailUrls = generateClothingImageUrls();
 
   const handleImageError = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`❌ [EnhancedThumbnail] Failed: ${currentUrl} (${item.name})`);
+    console.log(`❌ [ClothingThumbnail] Failed: ${currentUrl} (${item.name})`);
     
-    // Mark this URL as failed in cache
     imageCache.set(currentUrl, false);
     
     if (currentUrlIndex < thumbnailUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
     } else {
-      console.log(`💥 [EnhancedThumbnail] All URLs failed for ${item.name} (${item.id})`);
+      console.log(`💥 [ClothingThumbnail] All URLs failed for ${item.name} (${item.id})`);
       setHasError(true);
       setIsLoading(false);
     }
@@ -94,9 +94,8 @@ const EnhancedClothingThumbnail = ({
 
   const handleImageLoad = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`✅ [EnhancedThumbnail] Success: ${currentUrl} (${item.name})`);
+    console.log(`✅ [ClothingThumbnail] Success: ${currentUrl} (${item.name})`);
     
-    // Mark this URL as successful in cache
     imageCache.set(currentUrl, true);
     
     setIsLoading(false);
@@ -110,12 +109,13 @@ const EnhancedClothingThumbnail = ({
     setIsLoading(true);
   }, [item.id, selectedColorId]);
 
-  // Skip to cached successful URL if available
+  // Use cached successful URL if available
   useEffect(() => {
     for (let i = 0; i < thumbnailUrls.length; i++) {
       if (imageCache.get(thumbnailUrls[i]) === true) {
         setCurrentUrlIndex(i);
         setIsLoading(false);
+        setHasError(false);
         break;
       }
     }
@@ -133,7 +133,7 @@ const EnhancedClothingThumbnail = ({
         <div className="text-center p-1">
           <AlertCircle className="w-4 h-4 text-gray-400 mx-auto mb-1" />
           <span className="text-xs font-bold text-gray-600 block">
-            {item.code.split('_').pop() || '?'}
+            {item.code ? item.code.split('_').pop() || '?' : String(item.id)}
           </span>
           <span className="text-xs text-gray-500 block">
             {item.part.toUpperCase()}
@@ -146,14 +146,14 @@ const EnhancedClothingThumbnail = ({
   return (
     <div className={`${sizeClasses[size]} relative ${className}`}>
       {isLoading && (
-        <div className="absolute inset-0 bg-gray-100 rounded flex items-center justify-center">
+        <div className="absolute inset-0 bg-gray-100 rounded flex items-center justify-center z-10">
           <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
         </div>
       )}
       <img 
         key={`${item.id}_${currentUrlIndex}_${selectedColorId}`}
         src={thumbnailUrls[currentUrlIndex]}
-        alt={item.name}
+        alt={item.name || item.code}
         className={`w-full h-full object-contain rounded border border-gray-200 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
         style={{ imageRendering: 'pixelated' }}
         onError={handleImageError}
@@ -162,12 +162,16 @@ const EnhancedClothingThumbnail = ({
         decoding="async"
       />
       
-      {/* Source and club indicators */}
+      {/* Minimal indicators - no complex overlays */}
       {!isLoading && !hasError && (
         <>
+          {/* Source indicator */}
           <div className="absolute bottom-0 right-0 bg-black bg-opacity-60 text-white text-xs px-1 rounded-tl">
-            {item.source === 'supabase-comprehensive' ? 'SC' : item.source === 'comprehensive-fallback' ? 'CF' : 'HE'}
+            {item.source === 'habboemotion-scraping' ? 'HE' : 
+             item.source === 'enhanced-generation' ? 'EG' : 'FB'}
           </div>
+          
+          {/* HC indicator only if HC */}
           {item.club === 'HC' && (
             <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs px-1 rounded-bl font-bold">
               HC
