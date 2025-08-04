@@ -47,7 +47,7 @@ const CompleteFlashAssetsEditor = ({
     category: selectedCategory,
     gender: selectedGender,
     search: searchTerm,
-    rarity: selectedRarity === 'all' ? undefined : selectedRarity
+    rarity: selectedRarity === 'all' ? undefined : (selectedRarity as 'nft' | 'hc' | 'ltd' | 'rare' | 'common')
   });
 
   console.log('🎯 [CompleteFlashAssetsEditor] Stats COMPLETAS:', {
