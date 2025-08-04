@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles } from 'lucide-react';
-import LocalClothingGrid from './LocalClothingGrid';
+import OfficialClothingGrid from './OfficialClothingGrid';
 import EnhancedAvatarPreview from './EnhancedAvatarPreview';
-import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
+import { OfficialHabboAsset, generateAvatarPreview } from '@/hooks/useOfficialHabboAssets';
 import { useToast } from '@/hooks/use-toast';
 
-// Categorias EXATAS do ViaJovem - 11 categorias padrão
+// Categorias OFICIAIS do Habbo (igual ViaJovem)
 const categoryGroups = [
   {
     id: 'head',
@@ -47,7 +47,6 @@ const categoryGroups = [
   }
 ];
 
-// Fixed AvatarState to extend Record<string, string> for compatibility
 interface AvatarState extends Record<string, string> {
   hd?: string;
   hr?: string;
@@ -63,16 +62,17 @@ interface AvatarState extends Record<string, string> {
 }
 
 const RealHabboEditor = () => {
+  // State oficial baseado no Habbo real
   const [avatarState, setAvatarState] = useState<AvatarState>({
-    hd: '190-7',
-    hr: '3811-61',
-    ch: '3030-66',
-    lg: '275-82',
-    sh: '290-80'
+    hd: '180-1', // Rosto padrão
+    hr: '1001-45', // Cabelo padrão
+    ch: '1001-61', // Camiseta padrão
+    lg: '280-82', // Calça padrão
+    sh: '300-80' // Sapato padrão
   });
   
   const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
-  const [selectedHotel, setSelectedHotel] = useState('com.br');
+  const [selectedHotel, setSelectedHotel] = useState('com');
   const [selectedSection, setSelectedSection] = useState('head');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedColor, setSelectedColor] = useState('1');
@@ -82,7 +82,7 @@ const RealHabboEditor = () => {
   const generateFigureString = (): string => {
     const parts: string[] = [];
     
-    // Ordem específica das categorias como no ViaJovem
+    // Ordem oficial das categorias Habbo
     const categoryOrder = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'ca', 'wa', 'cp'];
     
     categoryOrder.forEach(category => {
@@ -94,26 +94,26 @@ const RealHabboEditor = () => {
     return parts.join('.');
   };
 
-  const handleItemSelect = (item: ViaJovemFlashItem, colorId: string = '1') => {
-    console.log('🎯 [RealHabboEditor] Item ViaJovem aplicado:', { 
-      item: item.name, 
-      category: item.category, 
-      figureId: item.figureId,
+  const handleItemSelect = (asset: OfficialHabboAsset, colorId: string = '1') => {
+    console.log('🎯 [RealHabboEditor] Asset oficial aplicado:', { 
+      asset: asset.name, 
+      category: asset.category, 
+      figureId: asset.figureId,
       colorId 
     });
     
-    const itemString = `${item.figureId}-${colorId}`;
+    const itemString = `${asset.figureId}-${colorId}`;
     
     setAvatarState(prevState => ({
       ...prevState,
-      [item.category]: itemString
+      [asset.category]: itemString
     }));
 
     setSelectedColor(colorId);
     
     toast({
-      title: "✨ Roupa ViaJovem aplicada!",
-      description: `${item.name} foi aplicado ao avatar.`,
+      title: "✨ Asset oficial aplicado!",
+      description: `${asset.name} foi aplicado ao avatar.`,
     });
   };
 
@@ -134,16 +134,16 @@ const RealHabboEditor = () => {
 
   const handleResetAvatar = () => {
     setAvatarState({
-      hd: '190-7',
-      hr: '3811-61', 
-      ch: '3030-66',
-      lg: '275-82',
-      sh: '290-80'
+      hd: '180-1',
+      hr: '1001-45', 
+      ch: '1001-61',
+      lg: '280-82',
+      sh: '300-80'
     });
     
     toast({
       title: "🔄 Avatar resetado",
-      description: "Avatar voltou ao estado padrão ViaJovem.",
+      description: "Avatar voltou ao estado padrão oficial.",
     });
   };
 
@@ -174,12 +174,12 @@ const RealHabboEditor = () => {
       {/* Editor Tabs (Direita) */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor HabboHub - ViaJovem Flash Assets
+              Editor HabboHub - Sistema Oficial Habbo
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                11 Categorias ViaJovem
+                Assets Oficiais • Hotel: {selectedHotel}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -203,9 +203,9 @@ const RealHabboEditor = () => {
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
-                    <h3 className="font-bold text-base text-indigo-800">{group.name}</h3>
+                    <h3 className="font-bold text-base text-green-800">{group.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Sistema ViaJovem Flash Assets - Gênero: {selectedGender} - {group.categories.length} categorias
+                      Sistema Oficial Habbo - Gênero: {selectedGender} - Hotel: {selectedHotel} - {group.categories.length} categorias
                     </p>
                   </div>
                   
@@ -230,9 +230,10 @@ const RealHabboEditor = () => {
 
                     {group.categories.map(category => (
                       <TabsContent key={category.id} value={category.id}>
-                        <LocalClothingGrid 
+                        <OfficialClothingGrid 
                           selectedCategory={category.id}
                           selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
+                          selectedHotel={selectedHotel}
                           onItemSelect={handleItemSelect}
                           selectedItem={avatarState[category.id as keyof AvatarState]?.split('-')[0]}
                           selectedColor={selectedColor}

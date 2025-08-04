@@ -1,110 +1,85 @@
+
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Search, RefreshCw, Shirt } from 'lucide-react';
-import { useOfficialHabboFigureData, type OfficialHabboItem } from '@/hooks/useOfficialHabboFigureData';
+import { Loader2, Filter } from 'lucide-react';
+import { useOfficialHabboCategory, OfficialHabboAsset } from '@/hooks/useOfficialHabboAssets';
+import OfficialClothingThumbnail from './OfficialClothingThumbnail';
 
 interface OfficialClothingGridProps {
   selectedCategory: string;
-  selectedGender?: 'M' | 'F' | 'U';
-  onItemSelect?: (item: OfficialHabboItem) => void;
+  selectedGender: 'M' | 'F';
+  selectedHotel: string;
+  onItemSelect: (asset: OfficialHabboAsset, colorId: string) => void;
   selectedItem?: string;
+  selectedColor?: string;
   className?: string;
 }
 
-// Configuração das categorias oficiais do Habbo (baseado na documentação ViaJovem)
-const CATEGORY_CONFIG = {
-  'hd': { name: 'Rosto', icon: '👤', bgColor: 'bg-pink-100 dark:bg-pink-900' },
-  'hr': { name: 'Cabelo', icon: '💇', bgColor: 'bg-amber-100 dark:bg-amber-900' },
-  'ch': { name: 'Camisetas', icon: '👕', bgColor: 'bg-blue-100 dark:bg-blue-900' },
-  'lg': { name: 'Calças', icon: '👖', bgColor: 'bg-green-100 dark:bg-green-900' },
-  'sh': { name: 'Sapatos', icon: '👟', bgColor: 'bg-purple-100 dark:bg-purple-900' },
-  'ha': { name: 'Chapéus', icon: '🎩', bgColor: 'bg-yellow-100 dark:bg-yellow-900' },
-  'ea': { name: 'Óculos', icon: '👓', bgColor: 'bg-red-100 dark:bg-red-900' },
-  'fa': { name: 'Máscaras', icon: '🎭', bgColor: 'bg-indigo-100 dark:bg-indigo-900' },
-  'cc': { name: 'Casacos', icon: '🧥', bgColor: 'bg-orange-100 dark:bg-orange-900' },
-  'ca': { name: 'Bijuteria', icon: '💍', bgColor: 'bg-cyan-100 dark:bg-cyan-900' },
-  'wa': { name: 'Cintos', icon: '🔗', bgColor: 'bg-slate-100 dark:bg-slate-900' },
-  'cp': { name: 'Estampas', icon: '🎨', bgColor: 'bg-rose-100 dark:bg-rose-900' }
-};
-
 const OfficialClothingGrid = ({
   selectedCategory,
-  selectedGender = 'U',
+  selectedGender,
+  selectedHotel,
   onItemSelect,
-  selectedItem,
+  selectedItem = '',
+  selectedColor = '1',
   className = ''
 }: OfficialClothingGridProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'id' | 'club'>('id');
+  const [showHCOnly, setShowHCOnly] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
-  const { data: officialData, isLoading, error, refetch } = useOfficialHabboFigureData();
+  const { data: assets, isLoading, error } = useOfficialHabboCategory(selectedCategory, selectedGender);
 
-  // Filtrar e ordenar itens
-  const filteredItems = useMemo(() => {
-    if (!officialData || !officialData[selectedCategory]) {
-      return [];
+  // Filtrar assets
+  const filteredAssets = useMemo(() => {
+    let filtered = assets || [];
+    
+    if (showHCOnly) {
+      filtered = filtered.filter(asset => asset.club === 'HC');
     }
+    
+    return filtered;
+  }, [assets, showHCOnly]);
 
-    let items = officialData[selectedCategory];
-
-    // Filtrar por gênero
-    if (selectedGender !== 'U') {
-      items = items.filter(item => item.gender === 'U' || item.gender === selectedGender);
-    }
-
-    // Filtrar por busca
-    if (searchTerm) {
-      items = items.filter(item => 
-        item.id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Ordenar
-    items = items.sort((a, b) => {
-      if (sortBy === 'club') {
-        if (a.club === b.club) return a.id.localeCompare(b.id);
-        return a.club === 'HC' ? -1 : 1;
-      }
-      return a.id.localeCompare(b.id);
-    });
-
-    return items;
-  }, [officialData, selectedCategory, selectedGender, searchTerm, sortBy]);
-
-  const categoryInfo = CATEGORY_CONFIG[selectedCategory as keyof typeof CATEGORY_CONFIG];
-
-  const handleItemClick = (item: OfficialHabboItem) => {
-    console.log('🎯 [OfficialGrid] Item selecionado:', item);
-    onItemSelect?.(item);
+  const handleItemClick = (asset: OfficialHabboAsset) => {
+    console.log('🎯 [OfficialGrid] Asset selecionado:', asset.name, asset.figureId);
+    onItemSelect(asset, selectedColor);
   };
 
-  const handleSync = () => {
-    console.log('🔄 [OfficialGrid] Sincronizando dados oficiais...');
-    refetch();
+  const handleColorChange = (asset: OfficialHabboAsset, colorId: string) => {
+    console.log('🎨 [OfficialGrid] Cor alterada:', { asset: asset.name, colorId });
+    onItemSelect(asset, colorId);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Carregando dados oficiais do Habbo...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Carregando assets oficiais...</span>
       </div>
     );
   }
 
   if (error) {
+    console.error('❌ [OfficialGrid] Erro:', error);
     return (
       <Card className="p-6">
         <div className="text-center text-red-500">
-          <p>Erro ao carregar dados oficiais</p>
-          <Button onClick={handleSync} variant="outline" className="mt-2">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Tentar Novamente
-          </Button>
+          <p className="font-medium">Erro ao carregar assets oficiais</p>
+          <p className="text-sm text-gray-600 mt-1">Sistema Habbo indisponível</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!filteredAssets.length) {
+    return (
+      <Card className="p-8">
+        <div className="text-center text-muted-foreground">
+          <p className="font-medium">Nenhum asset encontrado</p>
+          <p className="text-sm mt-2">Categoria: {selectedCategory} - Gênero: {selectedGender}</p>
+          <Badge variant="outline" className="mt-2">Sistema Oficial Habbo</Badge>
         </div>
       </Card>
     );
@@ -112,113 +87,78 @@ const OfficialClothingGrid = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Header da categoria */}
+      {/* Header com controles */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <span className="text-2xl">{categoryInfo?.icon}</span>
-            <span>{categoryInfo?.name || selectedCategory.toUpperCase()}</span>
-            <Badge variant="secondary">
-              {filteredItems.length} itens
-            </Badge>
-            <Button 
-              onClick={handleSync} 
-              size="sm" 
-              variant="ghost"
-              className="ml-auto"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <span>Assets Oficiais Habbo</span>
+              <Badge variant="secondary">{filteredAssets.length} itens</Badge>
+              <Badge variant="outline" className="bg-green-50 text-green-700">
+                Sistema Oficial
+              </Badge>
+            </CardTitle>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={showHCOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowHCOnly(!showHCOnly)}
+                className="text-xs"
+              >
+                <Filter className="w-3 h-3 mr-1" />
+                {showHCOnly ? 'Todos' : 'HC Only'}
+              </Button>
+              
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="text-xs"
+              >
+                {viewMode === 'grid' ? '📋 Lista' : '📱 Grid'}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
       </Card>
 
-      {/* Controles de filtro */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Select value={sortBy} onValueChange={(value: 'id' | 'club') => setSortBy(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="id">Por ID</SelectItem>
-                <SelectItem value="club">Por Club</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Grid de itens */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-        {filteredItems.map((item) => (
-          <Card 
-            key={`${item.category}-${item.id}`}
-            className={`cursor-pointer transition-all hover:shadow-md border-2 ${
-              selectedItem === item.id ? 'border-primary shadow-lg' : 'border-transparent'
-            }`}
-            onClick={() => handleItemClick(item)}
-          >
-            <CardContent className="p-2">
-              <div className="aspect-square relative mb-2">
-                <img
-                  src={item.imageUrl}
-                  alt={`${item.category}-${item.id}`}
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-                <div className="absolute top-0 right-0">
-                  {item.club === 'HC' && (
-                    <Badge variant="secondary" className="text-xs bg-yellow-500 text-white">
-                      HC
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-mono">{item.id}</p>
-                <div className="flex justify-center gap-1 mt-1">
-                  {item.colors.slice(0, 4).map((color, idx) => (
-                    <div
-                      key={`${item.id}-color-${idx}`}
-                      className="w-2 h-2 bg-gray-300 rounded-sm border"
-                      title={`Cor ${color}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Grid de assets */}
+      <div className={`
+        max-h-96 overflow-y-auto p-2 bg-gray-50 rounded-lg
+        ${viewMode === 'grid' 
+          ? 'grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3' 
+          : 'space-y-2'
+        }
+      `}>
+        {filteredAssets.map((asset) => (
+          <OfficialClothingThumbnail
+            key={asset.id}
+            asset={asset}
+            colorId={selectedColor}
+            gender={selectedGender}
+            hotel={selectedHotel}
+            isSelected={selectedItem === asset.figureId}
+            onClick={() => handleItemClick(asset)}
+            onColorChange={(colorId) => handleColorChange(asset, colorId)}
+            className={viewMode === 'list' ? 'flex items-center gap-3 p-2 bg-white rounded' : ''}
+          />
         ))}
       </div>
 
-      {filteredItems.length === 0 && (
-        <Card className="p-8">
-          <div className="text-center text-muted-foreground">
-            <Shirt className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum item encontrado para esta categoria</p>
-            {searchTerm && (
-              <p className="text-sm mt-2">
-                Tente ajustar sua busca ou verificar a categoria selecionada
-              </p>
-            )}
+      {/* Footer com informações */}
+      <Card>
+        <CardContent className="p-3">
+          <div className="text-xs text-gray-600 flex items-center justify-between">
+            <span>🌐 Fonte: Sistema Oficial Habbo ({selectedHotel})</span>
+            <span>
+              📊 {filteredAssets.length} assets • 
+              {filteredAssets.filter(a => a.club === 'HC').length} HC • 
+              {filteredAssets.filter(a => a.club === 'FREE').length} FREE
+            </span>
           </div>
-        </Card>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
