@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,19 +43,6 @@ const LocalClothingGrid = ({
       '101', '102', '104', '105', '106', '143'
     ];
   }, []);
-
-  // Convert ViaJovemFlashItem to OfficialHabboAsset format for FocusedClothingThumbnail
-  const convertToAssetFormat = (item: ViaJovemFlashItem) => ({
-    id: item.id,
-    figureId: item.figureId,
-    name: item.name,
-    category: item.category,
-    gender: item.gender,
-    club: 'FREE' as const,
-    colors: availableColors, // Use available colors
-    source: 'official-habbo' as const,
-    thumbnailUrl: `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-1&gender=${selectedGender}&direction=2&head_direction=2&size=s`
-  });
 
   const handleItemClick = (item: ViaJovemFlashItem) => {
     console.log('🎯 [LocalClothingGrid] Item selecionado:', item.name);
@@ -149,13 +137,12 @@ const LocalClothingGrid = ({
           <div key={item.id} className="relative group">
             {viewMode === 'focused' ? (
               <FocusedClothingThumbnail
-                asset={convertToAssetFormat(item)}
+                item={item}
                 colorId={selectedColor}
                 gender={selectedGender}
-                hotel="com.br"
                 isSelected={selectedItem === item.figureId}
-                onClick={() => handleItemClick(item)}
-                onColorChange={(colorId) => handleColorSelect(item, colorId)}
+                onClick={handleItemClick}
+                onColorChange={handleColorSelect}
                 className="w-full"
               />
             ) : (

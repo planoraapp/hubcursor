@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Filter } from 'lucide-react';
 import { useOfficialHabboCategory, OfficialHabboAsset } from '@/hooks/useOfficialHabboAssets';
+import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 import FocusedClothingThumbnail from './FocusedClothingThumbnail';
 
 interface OfficialClothingGridProps {
@@ -42,14 +43,35 @@ const OfficialClothingGrid = ({
     return filtered;
   }, [assets, showHCOnly]);
 
-  const handleItemClick = (asset: OfficialHabboAsset) => {
-    console.log('🎯 [OfficialGrid] Asset focado selecionado:', asset.name, asset.figureId);
-    onItemSelect(asset, selectedColor);
+  // Convert OfficialHabboAsset to ViaJovemFlashItem format for FocusedClothingThumbnail
+  const convertToFlashItemFormat = (asset: OfficialHabboAsset): ViaJovemFlashItem => ({
+    id: asset.id,
+    name: asset.name,
+    category: asset.category,
+    gender: asset.gender,
+    figureId: asset.figureId,
+    colors: asset.colors,
+    thumbnail: asset.thumbnailUrl || '',
+    club: asset.club === 'HC' ? 'hc' : 'normal',
+    swfName: `${asset.category}_${asset.figureId}.swf`,
+    source: 'flash-assets'
+  });
+
+  const handleItemClick = (item: ViaJovemFlashItem) => {
+    console.log('🎯 [OfficialGrid] Asset focado selecionado:', item.name, item.figureId);
+    // Convert back to OfficialHabboAsset format for the callback
+    const originalAsset = filteredAssets.find(asset => asset.figureId === item.figureId);
+    if (originalAsset) {
+      onItemSelect(originalAsset, selectedColor);
+    }
   };
 
-  const handleColorChange = (asset: OfficialHabboAsset, colorId: string) => {
-    console.log('🎨 [OfficialGrid] Cor alterada com preview focado:', { asset: asset.name, colorId });
-    onItemSelect(asset, colorId);
+  const handleColorChange = (item: ViaJovemFlashItem, colorId: string) => {
+    console.log('🎨 [OfficialGrid] Cor alterada com preview focado:', { asset: item.name, colorId });
+    const originalAsset = filteredAssets.find(asset => asset.figureId === item.figureId);
+    if (originalAsset) {
+      onItemSelect(originalAsset, colorId);
+    }
   };
 
   if (isLoading) {
@@ -134,13 +156,12 @@ const OfficialClothingGrid = ({
         {filteredAssets.map((asset) => (
           <FocusedClothingThumbnail
             key={asset.id}
-            asset={asset}
+            item={convertToFlashItemFormat(asset)}
             colorId={selectedColor}
             gender={selectedGender}
-            hotel={selectedHotel}
             isSelected={selectedItem === asset.figureId}
-            onClick={() => handleItemClick(asset)}
-            onColorChange={(colorId) => handleColorChange(asset, colorId)}
+            onClick={handleItemClick}
+            onColorChange={handleColorChange}
             className={viewMode === 'list' ? 'flex items-center gap-3 p-2 bg-white rounded shadow-sm' : ''}
           />
         ))}
