@@ -88,19 +88,19 @@ export class PuhekuplaFigureManager {
     item: any,
     colorId: string = '1'
   ): PuhekuplaFigure {
-    console.log('🎨 [PuhekuplaFigureManager] Aplicando item de roupa:', {
+    console.log('🎨 [PuhekuplaFigureManager] Aplicando item HabboEmotion:', {
       item: {
         name: item.name,
         code: item.code,
         category: item.category,
-        guid: item.guid
+        part: item.part
       },
       colorId,
       currentFigure: this.figureToString(currentFigure)
     });
 
-    // Extract category from item
-    let category = item.category?.toLowerCase() || '';
+    // Usar category ou part do item
+    let category = item.category || item.part;
     
     // Map category to figure part if needed
     const figureCategory = this.CATEGORY_MAPPING[category] || category;
@@ -118,11 +118,8 @@ export class PuhekuplaFigureManager {
       }
     }
 
-    // Extract item ID from code or use guid
-    let itemId = item.code?.replace(/^[a-z]{2}[-_]?/i, '') || item.guid || '1';
-    
-    // Ensure itemId is just numbers
-    itemId = itemId.replace(/[^0-9]/g, '') || '1';
+    // Extract item ID from code or use id directly
+    let itemId = item.id?.toString() || item.code?.replace(/[^0-9]/g, '') || '1';
 
     const newPart: FigurePart = {
       category: finalCategory,
@@ -135,7 +132,7 @@ export class PuhekuplaFigureManager {
       [finalCategory]: newPart
     };
 
-    console.log('✅ [PuhekuplaFigureManager] Item aplicado com sucesso:', {
+    console.log('✅ [PuhekuplaFigureManager] Item HabboEmotion aplicado:', {
       category: finalCategory,
       id: itemId,
       colors: [colorId],

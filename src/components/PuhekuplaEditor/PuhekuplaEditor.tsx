@@ -4,14 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
-import PuhekuplaAvatarSectionClean from './PuhekuplaAvatarSectionClean';
-import PuhekuplaClothingGridClean from './PuhekuplaClothingGridClean';
-import { usePuhekuplaClothing } from '@/hooks/usePuhekuplaData';
-import type { PuhekuplaClothing } from '@/hooks/usePuhekuplaData';
+import { PuhekuplaAvatarPreviewClean } from './PuhekuplaAvatarPreviewClean';
+import { HabboEmotionClothingGrid } from './HabboEmotionClothingGrid';
 import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
 import { useToast } from '@/hooks/use-toast';
+import type { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
 
-// Configuração das categorias agrupadas (igual ao ViaJovem)
+// Configuração das categorias (igual ao sistema anterior)
 const categoryGroups = [
   {
     id: 'head',
@@ -57,10 +56,20 @@ const PuhekuplaEditor = () => {
   const [selectedSection, setSelectedSection] = useState('head');
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedColor, setSelectedColor] = useState('1');
-  const [selectedItem, setSelectedItem] = useState('665');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItem, setSelectedItem] = useState('');
   
   const { toast } = useToast();
+
+  // Hotéis disponíveis
+  const hotels = [
+    { code: 'com', name: 'Habbo.com', flag: '🌍', url: 'habbo.com' },
+    { code: 'com.br', name: 'Habbo.com.br', flag: '🇧🇷', url: 'habbo.com.br' },
+    { code: 'es', name: 'Habbo.es', flag: '🇪🇸', url: 'habbo.es' },
+    { code: 'fr', name: 'Habbo.fr', flag: '🇫🇷', url: 'habbo.fr' },
+    { code: 'de', name: 'Habbo.de', flag: '🇩🇪', url: 'habbo.de' },
+    { code: 'it', name: 'Habbo.it', flag: '🇮🇹', url: 'habbo.it' },
+    { code: 'fi', name: 'Habbo.fi', flag: '🇫🇮', url: 'habbo.fi' }
+  ];
 
   // Load figure from URL on mount
   useEffect(() => {
@@ -87,71 +96,44 @@ const PuhekuplaEditor = () => {
     }
   }, []);
 
-  const { 
-    data: clothingData, 
-    isLoading: clothingLoading,
-    error: clothingError 
-  } = usePuhekuplaClothing(1, selectedCategory, searchTerm);
-
-  const hotels = [
-    { code: 'com', name: 'Habbo.com', flag: '🌍' },
-    { code: 'br', name: 'Habbo.com.br', flag: '🇧🇷' },
-    { code: 'es', name: 'Habbo.es', flag: '🇪🇸' },
-    { code: 'fr', name: 'Habbo.fr', flag: '🇫🇷' },
-    { code: 'de', name: 'Habbo.de', flag: '🇩🇪' },
-  ];
-
-  const handleItemSelect = (itemId: string) => {
-    console.log('🎯 [PuhekuplaEditor] Item selecionado:', {
-      itemId,
-      selectedCategory,
-      selectedColor,
-      currentFigure
-    });
+  const handleItemSelect = (item: HabboEmotionClothingItem) => {
+    console.log('🎯 [PuhekuplaEditor] Item HabboEmotion selecionado:', item);
     
-    setSelectedItem(itemId);
+    setSelectedItem(item.code);
     
-    // Aplicar ao avatar usando PuhekuplaFigureManager
-    const figureParts = PuhekuplaFigureManager.figureToString(currentFigure).split('.');
-    const categoryPattern = new RegExp(`^${selectedCategory}-`);
-    const filteredParts = figureParts.filter(part => !categoryPattern.test(part));
-    const newPart = `${selectedCategory}-${itemId}-${selectedColor}`;
-    filteredParts.push(newPart);
+    // Aplicar item usando o FigureManager
+    const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
+      currentFigure, 
+      item, 
+      selectedColor
+    );
     
-    const newFigureString = filteredParts.join('.');
-    const newFigure = PuhekuplaFigureManager.parseFigureString(newFigureString);
-    setCurrentFigure(newFigure);
+    setCurrentFigure(updatedFigure);
     
     toast({
-      title: "👕 Roupa aplicada!",
-      description: `Item ${itemId} foi aplicado ao seu avatar.`,
+      title: "👕 Roupa HabboEmotion aplicada!",
+      description: `${item.name} foi aplicado ao seu avatar.`,
     });
   };
 
-  const handleColorSelect = (colorId: string) => {
-    console.log('🎨 [PuhekuplaEditor] Cor selecionada:', {
-      colorId,
-      selectedCategory,
-      selectedItem
-    });
+  const handleColorSelect = (colorId: string, item: HabboEmotionClothingItem) => {
+    console.log('🎨 [PuhekuplaEditor] Cor selecionada:', { colorId, item: item.name });
     
     setSelectedColor(colorId);
     
-    // Aplicar nova cor ao item atual
-    const figureString = PuhekuplaFigureManager.figureToString(currentFigure);
-    const figureParts = figureString.split('.');
-    const categoryPattern = new RegExp(`^${selectedCategory}-`);
-    const updatedParts = figureParts.map(part => {
-      if (categoryPattern.test(part)) {
-        const [cat, item] = part.split('-');
-        return `${cat}-${item}-${colorId}`;
-      }
-      return part;
-    });
+    // Aplicar nova cor
+    const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
+      currentFigure, 
+      item, 
+      colorId
+    );
     
-    const newFigureString = updatedParts.join('.');
-    const newFigure = PuhekuplaFigureManager.parseFigureString(newFigureString);
-    setCurrentFigure(newFigure);
+    setCurrentFigure(updatedFigure);
+    
+    toast({
+      title: "🎨 Cor aplicada!",
+      description: `Nova cor ${colorId} aplicada em ${item.name}`,
+    });
   };
 
   // Update selected category when section changes
@@ -171,29 +153,33 @@ const PuhekuplaEditor = () => {
 
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
-      {/* Avatar Preview (Esquerda) - Largura reduzida e layout limpo */}
+      {/* Avatar Preview (Esquerda) - Layout Clean ViaJovem */}
       <div className="lg:w-80">
-        <PuhekuplaAvatarSectionClean
-          currentFigure={currentFigure}
-          selectedGender={selectedGender}
-          selectedHotel={selectedHotel}
-          currentDirection={currentDirection}
-          hotels={hotels}
-          onFigureChange={setCurrentFigure}
-          onDirectionChange={setCurrentDirection}
-          onGenderChange={handleGenderChange}
-          onHotelChange={setSelectedHotel}
-        />
+        <Card>
+          <CardContent className="p-4">
+            <PuhekuplaAvatarPreviewClean
+              currentFigure={currentFigure}
+              selectedGender={selectedGender}
+              selectedHotel={selectedHotel}
+              currentDirection={currentDirection}
+              hotels={hotels}
+              onFigureChange={setCurrentFigure}
+              onDirectionChange={setCurrentDirection}
+              onGenderChange={handleGenderChange}
+              onHotelChange={setSelectedHotel}
+            />
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Editor Tabs (Direita) */}
+      {/* Editor Tabs (Direita) - HabboEmotion Grid */}
       <div className="flex-1">
         <Card className="h-full">
           <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor Puhekupla - Nova Geração
-              <Badge className="ml-auto bg-white/20 text-white text-xs">Beta</Badge>
+              Editor Puhekupla - HabboEmotion API
+              <Badge className="ml-auto bg-white/20 text-white text-xs">Nova Geração</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4">
@@ -219,6 +205,7 @@ const PuhekuplaEditor = () => {
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
                     <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
+                    <p className="text-sm text-gray-600">Roupas da HabboEmotion API</p>
                   </div>
                   
                   {/* Sub-categorias */}
@@ -241,41 +228,17 @@ const PuhekuplaEditor = () => {
                       ))}
                     </TabsList>
 
-                    {/* Conteúdo das Sub-categorias */}
+                    {/* HabboEmotion Clothing Grids */}
                     {group.categories.map(category => (
                       <TabsContent key={category.id} value={category.id}>
-                        {clothingLoading ? (
-                          <div className="flex items-center justify-center h-96 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
-                            <div className="text-center">
-                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                              <h3 className="text-xl font-bold text-purple-800 mb-2">Carregando Roupas</h3>
-                              <p className="text-purple-600">Buscando itens na Puhekupla...</p>
-                            </div>
-                          </div>
-                        ) : clothingError ? (
-                          <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
-                            <div className="text-red-600 mb-2">Erro ao carregar roupas</div>
-                            <div className="text-sm text-red-500">{clothingError.message || 'Erro desconhecido'}</div>
-                            <button 
-                              onClick={() => window.location.reload()} 
-                              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                            >
-                              Recarregar
-                            </button>
-                          </div>
-                        ) : (
-                          <PuhekuplaClothingGridClean 
-                            items={clothingData?.result?.clothing || []}
-                            selectedCategory={category.id}
-                            selectedGender={selectedGender}
-                            onItemSelect={handleItemSelect}
-                            onColorSelect={handleColorSelect}
-                            selectedItem={selectedItem}
-                            selectedColor={selectedColor}
-                            searchTerm={searchTerm}
-                            onSearchChange={setSearchTerm}
-                          />
-                        )}
+                        <HabboEmotionClothingGrid 
+                          selectedCategory={category.id}
+                          selectedGender={selectedGender}
+                          onItemSelect={handleItemSelect}
+                          onColorSelect={handleColorSelect}
+                          selectedItem={selectedItem}
+                          selectedColor={selectedColor}
+                        />
                       </TabsContent>
                     ))}
                   </Tabs>

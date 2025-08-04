@@ -12,10 +12,34 @@ export interface HabboEmotionClothingItem {
   imageUrl: string;
   club: 'HC' | 'FREE';
   source: 'habboemotion';
+  name: string;
+  category: string;
 }
 
-const fetchHabboEmotionClothing = async (limit: number = 300): Promise<HabboEmotionClothingItem[]> => {
-  console.log(`🌐 [HabboEmotion Hook] Fetching clothing data with limit: ${limit}`);
+const CATEGORY_MAPPING: Record<string, string> = {
+  'hair': 'hr',
+  'hat': 'ha', 
+  'head': 'hd',
+  'shirt': 'ch',
+  'top': 'ch',
+  'chest': 'ch',
+  'trousers': 'lg',
+  'pants': 'lg',
+  'legs': 'lg',
+  'shoes': 'sh',
+  'footwear': 'sh',
+  'jacket': 'cc',
+  'coat': 'cc',
+  'acc_eye': 'ea',
+  'eye_accessories': 'ea',
+  'acc_head': 'ha',
+  'acc_chest': 'ca',
+  'acc_waist': 'wa',
+  'acc_face': 'fa'
+};
+
+const fetchHabboEmotionClothing = async (limit: number = 500): Promise<HabboEmotionClothingItem[]> => {
+  console.log(`🌐 [HabboEmotion] Fetching clothing data with limit: ${limit}`);
   
   try {
     const { data, error } = await supabase.functions.invoke('habbo-emotion-clothing', {
@@ -23,27 +47,47 @@ const fetchHabboEmotionClothing = async (limit: number = 300): Promise<HabboEmot
     });
 
     if (error) {
-      console.error('❌ [HabboEmotion Hook] Supabase function error:', error);
+      console.error('❌ [HabboEmotion] Supabase function error:', error);
       throw error;
     }
 
     if (!data || !data.items || !Array.isArray(data.items)) {
-      console.error('❌ [HabboEmotion Hook] Invalid response format:', data);
+      console.error('❌ [HabboEmotion] Invalid response format:', data);
       throw new Error('Invalid response format from HabboEmotion API');
     }
 
-    console.log(`✅ [HabboEmotion Hook] Successfully fetched ${data.items.length} items`);
-    console.log(`📊 [HabboEmotion Hook] Source: ${data.metadata?.source}`);
+    console.log(`✅ [HabboEmotion] Successfully fetched ${data.items.length} items`);
     
-    return data.items;
+    // Mapear e enriquecer os dados
+    const mappedItems = data.items.map((item: any) => ({
+      id: item.id || Math.random(),
+      code: item.code || '',
+      part: CATEGORY_MAPPING[item.part] || item.part || 'ch',
+      gender: item.gender || 'U',
+      date: item.date || '',
+      colors: Array.isArray(item.colors) ? item.colors : ['1', '2', '3', '4', '5'],
+      imageUrl: generateClothingImageUrl(item.code, item.part),
+      club: item.club || 'FREE',
+      source: 'habboemotion',
+      name: item.code ? `${item.code}` : 'Item Desconhecido',
+      category: CATEGORY_MAPPING[item.part] || item.part || 'ch'
+    }));
+    
+    return mappedItems;
     
   } catch (error) {
-    console.error('❌ [HabboEmotion Hook] Error:', error);
+    console.error('❌ [HabboEmotion] Error:', error);
     throw error;
   }
 };
 
-export const useHabboEmotionClothing = (limit: number = 300) => {
+const generateClothingImageUrl = (code: string, part: string): string => {
+  // Gerar URL da imagem da roupa isolada (padrão _2_0.png para diagonal direita)
+  const baseUrl = 'https://habboemotion.com/usables/clothing';
+  return `${baseUrl}/${part}_U_${code}_2_0.png`;
+};
+
+export const useHabboEmotionClothing = (limit: number = 500) => {
   return useQuery({
     queryKey: ['habbo-emotion-clothing', limit],
     queryFn: () => fetchHabboEmotionClothing(limit),
