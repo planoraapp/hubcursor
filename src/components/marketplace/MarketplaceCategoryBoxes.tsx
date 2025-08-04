@@ -24,30 +24,35 @@ export const MarketplaceCategoryBoxes = ({
   hotel
 }: MarketplaceCategoryBoxesProps) => {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-4 h-full">
+      <div className="grid grid-cols-1 gap-4 h-full">
         <MarketCategoryBox
           title="🔥 Mais Vendidos"
           items={topSellers}
           hotel={hotel}
+          icon="/assets/promo_star.gif"
+          height="h-[145px]"
         />
         <MarketCategoryBox
           title="📈 Maiores Altas"
           items={biggestGainers}
           hotel={hotel}
+          icon="/assets/135217166.gif"
+          height="h-[145px]"
         />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <MarketCategoryBox
           title="💰 Mais Caros"
           items={mostExpensive}
           hotel={hotel}
+          icon="/assets/Diamantes.png"
+          height="h-[145px]"
         />
         <MarketCategoryBox
           title="💎 Oportunidades"
           items={opportunities}
           hotel={hotel}
+          icon="/assets/gcreate_icon_credit.png"
+          height="h-[145px]"
         />
       </div>
     </div>

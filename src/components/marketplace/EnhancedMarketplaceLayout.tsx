@@ -1,9 +1,12 @@
+
 import { Suspense, lazy } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceProvider, useMarketplace, type MarketItem } from '@/contexts/MarketplaceContext';
 import { CountryFlags } from './CountryFlags';
 import { ClubItemsDisplay } from './ClubItemsDisplay';
 import { MarketStatsFooter } from './MarketStatsFooter';
+import { UserTrackedItems } from './UserTrackedItems';
+import { useAuth } from '@/hooks/useAuth';
 
 // Lazy loading para otimização
 const MarketplaceItemsList = lazy(() => import('./MarketplaceItemsList').then(module => ({
@@ -12,6 +15,7 @@ const MarketplaceItemsList = lazy(() => import('./MarketplaceItemsList').then(mo
 const MarketplaceCategoryBoxes = lazy(() => import('./MarketplaceCategoryBoxes').then(module => ({
   default: module.MarketplaceCategoryBoxes
 })));
+
 const hotels = [{
   id: 'br',
   name: 'Habbo.com.br',
@@ -49,6 +53,7 @@ const hotels = [{
   name: 'Habbo.com.tr',
   flag: '/assets/flagtrky.png'
 }];
+
 const MarketplaceContent = () => {
   const {
     state,
@@ -68,7 +73,10 @@ const MarketplaceContent = () => {
     selectedCategory,
     sortBy
   } = state;
+  
+  const { user } = useAuth();
   const selectedHotelData = hotels.find(h => h.id === selectedHotel) || hotels[0];
+  
   if (error && items.length === 0) {
     return <div className="text-center p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -80,6 +88,7 @@ const MarketplaceContent = () => {
         </div>
       </div>;
   }
+  
   return <div className="space-y-6">
       {/* Hotel Selection com Bandeiras */}
       <div className="flex justify-center">
@@ -98,22 +107,68 @@ const MarketplaceContent = () => {
                   <p className="text-yellow-800 text-sm">{error}</p>
                 </div>}
               
-              {/* Seção de Itens Club HC/CA */}
-              
-              
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Lista de Itens do Marketplace */}
-                <div className="lg:col-span-5">
-                  <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>}>
-                    <MarketplaceItemsList items={items} loading={loading} searchTerm={searchTerm} setSearchTerm={setSearch} selectedCategory={selectedCategory} setSelectedCategory={setCategory} sortBy={sortBy} setSortBy={setSort} hotel={hotel} stats={stats} />
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px]">
+                {/* Lista de Itens do Marketplace - Coluna da esquerda */}
+                <div className="lg:col-span-4">
+                  <Suspense fallback={<div className="h-full bg-gray-100 animate-pulse rounded-lg"></div>}>
+                    <MarketplaceItemsList 
+                      items={items} 
+                      loading={loading} 
+                      searchTerm={searchTerm} 
+                      setSearchTerm={setSearch} 
+                      selectedCategory={selectedCategory} 
+                      setSelectedCategory={setCategory} 
+                      sortBy={sortBy} 
+                      setSortBy={setSort} 
+                      hotel={hotel} 
+                      stats={stats} 
+                    />
                   </Suspense>
                 </div>
                 
-                {/* Boxes de Categorias */}
-                <div className="lg:col-span-7">
-                  <Suspense fallback={<div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>}>
-                    <MarketplaceCategoryBoxes topSellers={getFilteredItems('topSellers')} biggestGainers={getFilteredItems('biggestGainers')} biggestLosers={[]} // Não usado, manter por compatibilidade
-                mostExpensive={getFilteredItems('todayHigh')} opportunities={getFilteredItems('opportunities')} stats={stats} totalItems={items.length} hotel={hotel} />
+                {/* Coluna do meio - Caixas HC/CA e Tracking */}
+                <div className="lg:col-span-4 space-y-4">
+                  {/* Seção de Itens Club HC/CA */}
+                  <div className="bg-white border-2 border-black rounded-lg shadow-lg">
+                    <div 
+                      className="p-3 border-b-2 border-black rounded-t-lg"
+                      style={{
+                        background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
+                        backgroundImage: 'url(/assets/bghabbohub.png)',
+                        backgroundSize: 'cover'
+                      }}
+                    >
+                      <h3 className="font-bold text-white volter-font text-sm flex items-center gap-2" style={{
+                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                      }}>
+                        <img src="/assets/HC.png" alt="HC" className="w-4 h-4" />
+                        Assinaturas Premium
+                      </h3>
+                    </div>
+                    <div className="p-3">
+                      <ClubItemsDisplay />
+                    </div>
+                  </div>
+                  
+                  {/* Sistema de Tracking para usuários logados */}
+                  {user && (
+                    <UserTrackedItems hotel={selectedHotel} />
+                  )}
+                </div>
+                
+                {/* Boxes de Categorias - Coluna da direita */}
+                <div className="lg:col-span-4">
+                  <Suspense fallback={<div className="h-full bg-gray-100 animate-pulse rounded-lg"></div>}>
+                    <MarketplaceCategoryBoxes 
+                      topSellers={getFilteredItems('topSellers')} 
+                      biggestGainers={getFilteredItems('biggestGainers')} 
+                      biggestLosers={[]} 
+                      mostExpensive={getFilteredItems('todayHigh')} 
+                      opportunities={getFilteredItems('opportunities')} 
+                      stats={stats} 
+                      totalItems={items.length} 
+                      hotel={hotel} 
+                    />
                   </Suspense>
                 </div>
               </div>
@@ -130,6 +185,7 @@ const MarketplaceContent = () => {
       </div>
     </div>;
 };
+
 export const EnhancedMarketplaceLayout = () => {
   return <MarketplaceProvider>
       <MarketplaceContent />
