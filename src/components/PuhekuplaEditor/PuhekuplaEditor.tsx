@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,28 +89,44 @@ const PuhekuplaEditor = () => {
     searchTerm
   );
 
-  // Debug logs
+  // Enhanced debug logs
   useEffect(() => {
-    console.log('🔍 [PuhekuplaEditor] Current data status:', {
+    console.log('🔍 [PuhekuplaEditor] Comprehensive data status:', {
       activeTab,
-      furniData: furniData ? { 
-        hasResult: !!furniData.result,
-        furniCount: furniData.result?.furni?.length || 0,
-        structure: Object.keys(furniData)
-      } : 'no data',
-      clothingData: clothingData ? {
-        hasResult: !!clothingData.result,
-        clothingCount: clothingData.result?.clothing?.length || 0,
-        structure: Object.keys(clothingData)
-      } : 'no data',
-      badgesData: badgesData ? {
-        hasResult: !!badgesData.result,
-        badgesCount: badgesData.result?.badges?.length || 0,
-        structure: Object.keys(badgesData)
-      } : 'no data',
-      categories: categories.length
+      categoriesData: {
+        raw: categoriesData,
+        hasResult: !!categoriesData?.result,
+        categories: categories.length,
+        loading: categoriesLoading
+      },
+      furniData: {
+        raw: furniData,
+        hasResult: !!furniData?.result,
+        items: furniData?.result?.furni?.length || 0,
+        loading: furniLoading,
+        error: furniError?.message
+      },
+      clothingData: {
+        raw: clothingData,
+        hasResult: !!clothingData?.result,
+        items: clothingData?.result?.clothing?.length || 0,
+        loading: clothingLoading,
+        error: clothingError?.message
+      },
+      badgesData: {
+        raw: badgesData,
+        hasResult: !!badgesData?.result,
+        items: badgesData?.result?.badges?.length || 0,
+        loading: badgesLoading,
+        error: badgesError?.message
+      }
     });
-  }, [activeTab, furniData, clothingData, badgesData, categories]);
+  }, [
+    activeTab, categoriesData, categories, categoriesLoading,
+    furniData, furniLoading, furniError,
+    clothingData, clothingLoading, clothingError,
+    badgesData, badgesLoading, badgesError
+  ]);
 
   const hotels = [
     { code: 'com', name: 'Habbo.com', flag: '🌍' },

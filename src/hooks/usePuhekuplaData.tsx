@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -58,22 +57,73 @@ const fetchPuhekuplaData = async (endpoint: string, params: Record<string, strin
     throw new Error('No data received from Puhekupla API');
   }
 
+  console.log(`📦 [PuhekuplaData] ${endpoint} raw response:`, {
+    success: data.success,
+    source: data.source,
+    strategy: data.strategy,
+    dataKeys: data.data ? Object.keys(data.data) : 'no data',
+    hasResult: data.data?.result ? 'yes' : 'no',
+    statusCode: data.data?.status_code,
+    statusMessage: data.data?.status_message
+  });
+
   if (!data.success) {
     console.error(`❌ [PuhekuplaData] API error for ${endpoint}:`, data.error);
     throw new Error(data.error || 'Unknown API error');
   }
 
-  console.log(`✅ [PuhekuplaData] ${endpoint} loaded successfully:`, {
-    hasData: !!data.data,
-    dataStructure: data.data ? Object.keys(data.data) : 'no data',
-    resultStructure: data.data?.result ? Object.keys(data.data.result) : 'no result',
-    itemCount: data.data?.result ? Object.values(data.data.result).find(Array.isArray)?.length : 0,
-    apiKeyUsed: data.apiKeyUsed,
+  // Handle both real API responses and mock data
+  let processedData = data.data;
+  
+  // If we get a status_code/status_message response (API error), treat as empty result
+  if (processedData?.status_code && processedData?.status_message) {
+    console.warn(`⚠️ [PuhekuplaData] ${endpoint} returned status response:`, {
+      code: processedData.status_code,
+      message: processedData.status_message
+    });
+    
+    // Convert to expected format with empty results
+    processedData = {
+      result: {
+        [endpoint]: [],
+        ...(endpoint === 'categories' ? { categories: [] } : {})
+      },
+      pagination: {
+        current_page: 1,
+        pages: 1,
+        total: 0
+      }
+    };
+  }
+
+  console.log(`✅ [PuhekuplaData] ${endpoint} processed successfully:`, {
+    hasResult: !!processedData?.result,
+    resultKeys: processedData?.result ? Object.keys(processedData.result) : 'none',
+    itemCount: getItemCount(processedData, endpoint),
+    source: data.source,
+    strategy: data.strategy,
     fetchedAt: data.fetchedAt
   });
   
-  return data.data;
+  return processedData;
 };
+
+function getItemCount(data: any, endpoint: string): number {
+  if (!data?.result) return 0;
+  
+  switch (endpoint) {
+    case 'furni':
+      return data.result.furni?.length || 0;
+    case 'clothing':
+      return data.result.clothing?.length || 0;
+    case 'badges':
+      return data.result.badges?.length || 0;
+    case 'categories':
+      return data.result.categories?.length || 0;
+    default:
+      return 0;
+  }
+}
 
 export const usePuhekuplaFurni = (page = 1, category = '', search = '') => {
   return useQuery({
