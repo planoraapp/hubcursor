@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,8 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { ViaJovemAvatarSection } from './ViaJovemAvatarSection';
 import { ViaJovemFigureManager, ViaJovemFigure } from '@/lib/viaJovemFigureManager';
 import { useToast } from '@/hooks/use-toast';
-import type { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
-import EnhancedFlashAssetsEditor from '@/components/HabboEditor/EnhancedFlashAssetsEditor';
+import CompleteFlashAssetsEditor from '@/components/HabboEditor/CompleteFlashAssetsEditor';
 
 interface ViaJovemEditorRedesignedProps {
   className?: string;
@@ -66,8 +64,8 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
     setSelectedGender(gender);
   };
 
-  const handleEnhancedItemSelect = (item: any, colorId: string) => {
-    console.log('🎯 [ViaJovemEditor] Item do sistema melhorado selecionado:', item);
+  const handleCompleteItemSelect = (item: any, colorId: string) => {
+    console.log('🎯 [ViaJovemEditor] Item do sistema COMPLETO selecionado:', item);
     
     setSelectedItem(item.figureId);
     setSelectedColor(colorId);
@@ -81,9 +79,20 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
     
     setCurrentFigure(updatedFigure);
     
+    // Toast com informações da categoria
+    const categoryEmojis: Record<string, string> = {
+      'hd': '😊', 'hr': '💇', 'ha': '🎩', 'ea': '👓', 'fa': '🎭',
+      'ch': '👕', 'cc': '🧥', 'ca': '💍', 'cp': '🎨',
+      'lg': '👖', 'sh': '👟', 'wa': '🎀',
+      'fx': '✨', 'pets': '🐾', 'dance': '💃'
+    };
+    
+    const emoji = categoryEmojis[item.category] || '👕';
+    const rarityText = item.rarity !== 'common' ? ` ${item.rarity.toUpperCase()}` : '';
+    
     toast({
-      title: "👕 Asset Flash aplicado!",
-      description: `${item.name} foi aplicado ao seu avatar.`,
+      title: `${emoji} Asset Flash aplicado!`,
+      description: `${item.name}${rarityText} foi aplicado ao seu avatar.`,
     });
   };
 
@@ -158,23 +167,23 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
         </Card>
       </div>
 
-      {/* Editor Enhanced (Direita) */}
+      {/* Editor COMPLETO (Direita) */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              ViaJovem Editor - Sistema Flash Assets Melhorado
+              ViaJovem Editor - Sistema Flash Assets COMPLETO V2
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2871+ Assets • 13 Categorias
+                2871+ Assets • 15 Categorias • 4 Seções • Sistema Inteligente
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 h-full">
-            <EnhancedFlashAssetsEditor
+            <CompleteFlashAssetsEditor
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
-              onItemSelect={handleEnhancedItemSelect}
+              onItemSelect={handleCompleteItemSelect}
               selectedItem={selectedItem}
               selectedColor={selectedColor}
               className="h-full"
