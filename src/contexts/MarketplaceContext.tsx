@@ -1,6 +1,5 @@
 import { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
 import { MarketplaceService } from '@/services/MarketplaceService';
-import { handleError } from '@/utils/errorHandler';
 
 export interface MarketItem {
   id: string;
@@ -34,6 +33,8 @@ export interface MarketStats {
   featuredItems: number;
   highestPrice: number;
   mostTraded: string;
+  apiStatus?: 'success' | 'partial' | 'no-data' | 'error' | 'unavailable';
+  apiMessage?: string;
 }
 
 export interface ClubItem {
@@ -80,7 +81,9 @@ const initialState: MarketplaceState = {
     trendingDown: 0,
     featuredItems: 0,
     highestPrice: 0,
-    mostTraded: 'N/A'
+    mostTraded: 'N/A',
+    apiStatus: 'no-data',
+    apiMessage: 'Aguardando dados...'
   },
   loading: true,
   error: null,
@@ -148,6 +151,8 @@ export const MarketplaceProvider = ({ children }: MarketplaceProviderProps) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
       
+      console.log('🔄 [Context] Iniciando busca de dados...');
+      
       const data = await MarketplaceService.fetchMarketData({
         searchTerm: state.searchTerm,
         category: state.selectedCategory === 'all' ? '' : state.selectedCategory,
@@ -155,22 +160,43 @@ export const MarketplaceProvider = ({ children }: MarketplaceProviderProps) => {
         days: 30
       });
       
-      if (data?.items && Array.isArray(data.items)) {
+      if (data) {
+        // Sempre aceitar a resposta, mesmo que seja vazia
         const sortedItems = MarketplaceService.sortItems(data.items, state.sortBy);
         dispatch({ type: 'SET_ITEMS', payload: sortedItems });
-        dispatch({ type: 'SET_STATS', payload: data.stats || state.stats });
+        dispatch({ type: 'SET_STATS', payload: data.stats });
         
-        if (sortedItems.length === 0) {
-          dispatch({ type: 'SET_ERROR', payload: 'Nenhum item encontrado. Verifique os filtros ou tente outro hotel.' });
+        console.log(`✅ [Context] Dados processados: ${sortedItems.length} itens`);
+        console.log(`📊 [Context] Status da API: ${data.stats.apiStatus}`);
+        
+        // Apenas mostrar aviso se houver problema real na API
+        if (data.stats.apiStatus === 'error') {
+          dispatch({ type: 'SET_ERROR', payload: data.stats.apiMessage || 'Erro na API oficial' });
+        } else if (data.stats.apiStatus === 'unavailable') {
+          dispatch({ type: 'SET_ERROR', payload: 'API oficial temporariamente indisponível. Tentando novamente...' });
+        } else if (sortedItems.length === 0 && data.stats.apiStatus === 'no-data') {
+          // Não é erro - é situação normal da API oficial
+          console.log('ℹ️ [Context] API oficial sem dados no momento - situação normal');
         }
       } else {
-        dispatch({ type: 'SET_ERROR', payload: 'Nenhum item retornado pela API' });
+        // Fallback seguro
         dispatch({ type: 'SET_ITEMS', payload: [] });
+        dispatch({ type: 'SET_STATS', payload: {
+          ...initialState.stats,
+          apiStatus: 'error',
+          apiMessage: 'Falha na conexão com API oficial'
+        }});
+        dispatch({ type: 'SET_ERROR', payload: 'Não foi possível conectar à API oficial do Habbo' });
       }
     } catch (error: any) {
-      const errorMessage = handleError(error, 'Erro ao buscar dados do marketplace');
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      console.error('❌ [Context] Erro inesperado:', error);
+      dispatch({ type: 'SET_ERROR', payload: `Erro interno: ${error.message}` });
       dispatch({ type: 'SET_ITEMS', payload: [] });
+      dispatch({ type: 'SET_STATS', payload: {
+        ...initialState.stats,
+        apiStatus: 'error',
+        apiMessage: 'Erro interno do sistema'
+      }});
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }

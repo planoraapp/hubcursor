@@ -3,7 +3,7 @@ import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CreditIcon } from './CreditIcon';
-import { TrendingUp, TrendingDown, Package2, Clock, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package2, Clock, Zap, AlertCircle, RefreshCw } from 'lucide-react';
 import { OfficialMarketplaceImage } from './OfficialMarketplaceImage';
 import { MarketItemModal } from './MarketItemModal';
 import { MarketplaceSkeleton } from './MarketplaceSkeleton';
@@ -40,6 +40,8 @@ interface MarketStats {
   featuredItems: number;
   highestPrice: number;
   mostTraded: string;
+  apiStatus: 'success' | 'partial' | 'no-data' | 'error' | 'unavailable';
+  apiMessage: string;
 }
 
 interface MarketplaceItemsListProps {
@@ -107,6 +109,55 @@ export const MarketplaceItemsList = ({
   // Contar apenas itens oficiais
   const officialItemsCount = items.filter((item: any) => item.isOfficialData === true).length;
 
+  // Função para obter status da API de forma visual
+  const getApiStatusIndicator = () => {
+    const apiStatus = stats.apiStatus || 'unknown';
+    
+    switch (apiStatus) {
+      case 'success':
+        return {
+          icon: <Zap size={12} className="text-green-600" />,
+          bgColor: 'bg-green-100',
+          borderColor: 'border-green-300',
+          textColor: 'text-green-700',
+          label: 'API Oficial Ativa'
+        };
+      case 'partial':
+        return {
+          icon: <TrendingUp size={12} className="text-yellow-600" />,
+          bgColor: 'bg-yellow-100',
+          borderColor: 'border-yellow-300',
+          textColor: 'text-yellow-700',
+          label: 'API Parcial'
+        };
+      case 'no-data':
+        return {
+          icon: <Clock size={12} className="text-blue-600" />,
+          bgColor: 'bg-blue-100',
+          borderColor: 'border-blue-300',
+          textColor: 'text-blue-700',
+          label: 'API Sem Dados'
+        };
+      case 'error':
+      case 'unavailable':
+        return {
+          icon: <AlertCircle size={12} className="text-red-600" />,
+          bgColor: 'bg-red-100',
+          borderColor: 'border-red-300',
+          textColor: 'text-red-700',
+          label: 'API Indisponível'
+        };
+      default:
+        return {
+          icon: <RefreshCw size={12} className="text-gray-600" />,
+          bgColor: 'bg-gray-100',
+          borderColor: 'border-gray-300',
+          textColor: 'text-gray-700',
+          label: 'Carregando...'
+        };
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -119,6 +170,8 @@ export const MarketplaceItemsList = ({
       </>
     );
   }
+
+  const apiIndicator = getApiStatusIndicator();
 
   return (
     <>
@@ -137,20 +190,25 @@ export const MarketplaceItemsList = ({
             🏪 Feira Livre de {hotel.name}
           </h3>
           
-          {/* Indicadores de qualidade dos dados */}
+          {/* Indicadores de status da API */}
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded border border-green-300">
-              <Zap size={12} className="text-green-600" />
-              <span className="text-xs text-green-700 font-medium">100% Dados Reais</span>
+            <div className={`flex items-center gap-1 px-2 py-1 rounded ${apiIndicator.bgColor} ${apiIndicator.borderColor} border`}>
+              {apiIndicator.icon}
+              <span className={`text-xs font-medium ${apiIndicator.textColor}`}>
+                {apiIndicator.label}
+              </span>
             </div>
-            <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded border border-blue-300">
-              <Package2 size={12} className="text-blue-600" />
-              <span className="text-xs text-blue-700">{officialItemsCount} itens oficiais</span>
-            </div>
-            {filteredItems.length > 0 && (
-              <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded border border-yellow-300">
-                <Clock size={12} className="text-yellow-600" />
-                <span className="text-xs text-yellow-700">API Oficial Habbo</span>
+            
+            {officialItemsCount > 0 && (
+              <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded border border-green-300">
+                <Package2 size={12} className="text-green-600" />
+                <span className="text-xs text-green-700">{officialItemsCount} itens oficiais</span>
+              </div>
+            )}
+            
+            {stats.apiMessage && (
+              <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded border border-blue-300">
+                <span className="text-xs text-blue-700">{stats.apiMessage}</span>
               </div>
             )}
           </div>
@@ -236,9 +294,32 @@ export const MarketplaceItemsList = ({
               ))
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <Package2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Nenhum item oficial disponível</p>
-                <p className="text-xs mt-2">A API oficial do Habbo pode estar indisponível no momento</p>
+                {stats.apiStatus === 'error' || stats.apiStatus === 'unavailable' ? (
+                  <>
+                    <AlertCircle className="w-12 h-12 mx-auto mb-3 text-red-400" />
+                    <p className="text-red-600 font-medium">API Oficial Indisponível</p>
+                    <p className="text-xs mt-2 text-gray-600">
+                      A API oficial do Habbo está temporariamente indisponível.
+                      <br />
+                      Os dados serão atualizados automaticamente quando a API voltar ao normal.
+                    </p>
+                  </>
+                ) : stats.apiStatus === 'no-data' ? (
+                  <>
+                    <Package2 className="w-12 h-12 mx-auto mb-3 text-blue-400" />
+                    <p className="text-blue-600 font-medium">Sem Dados Oficiais no Momento</p>
+                    <p className="text-xs mt-2 text-gray-600">
+                      A API oficial está funcionando, mas não há dados de marketplace disponíveis.
+                      <br />
+                      Isso é normal e os dados podem aparecer a qualquer momento.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-12 h-12 mx-auto mb-3 text-gray-400 animate-spin" />
+                    <p>Buscando dados oficiais...</p>
+                  </>
+                )}
               </div>
             )}
           </div>

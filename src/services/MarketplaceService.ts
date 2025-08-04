@@ -23,19 +23,29 @@ export class MarketplaceService {
       
       if (error) {
         console.error('❌ [MarketplaceService] Official API error:', error);
-        throw new Error(`Erro na API oficial: ${error.message}`);
+        // Não lançar exceção - retornar dados vazios com transparência
+        return {
+          items: [],
+          stats: this.calculateRealStats([], { 
+            error: error.message,
+            apiStatus: 'unavailable' 
+          })
+        };
       }
       
-      if (data?.items && Array.isArray(data.items)) {
+      // Dados válidos da API, mesmo que seja lista vazia
+      if (data) {
         const realDataPercentage = data.metadata?.realDataPercentage || 0;
         const officialItemsCount = data.metadata?.officialItemsCount || 0;
+        const apiSuccessRate = data.metadata?.apiSuccessRate || 0;
         
-        console.log(`✅ [MarketplaceService] Loaded ${data.items.length} items`);
-        console.log(`📊 [MarketplaceService] Real data: ${realDataPercentage}% (${officialItemsCount} official items)`);
+        console.log(`✅ [MarketplaceService] API Response received`);
+        console.log(`📊 [MarketplaceService] Items: ${data.items?.length || 0}, Success Rate: ${apiSuccessRate}%`);
         
-        // Enriquecer apenas dados oficiais com informações do Furnidata
-        const enrichedItems = data.items
-          .filter((item: any) => item.isOfficialData === true) // Apenas dados oficiais
+        // Enriquecer dados oficiais disponíveis
+        const items = data.items || [];
+        const enrichedItems = items
+          .filter((item: any) => item.isOfficialData === true)
           .map((item: any) => ({
             ...item,
             name: FurnidataService.getFurniName(item.className),
@@ -62,19 +72,35 @@ export class MarketplaceService {
         
         return {
           items: filteredItems,
-          stats: this.calculateRealStats(filteredItems, data.metadata)
+          stats: this.calculateRealStats(filteredItems, {
+            ...data.metadata,
+            apiSuccessRate,
+            officialItemsCount,
+            apiStatus: apiSuccessRate > 0 ? 'partial' : 'no-data'
+          })
         };
       }
       
-      console.warn('⚠️ [MarketplaceService] No official items returned from API');
+      // Resposta sem dados - situação normal para API oficial instável
+      console.warn('⚠️ [MarketplaceService] No data returned from official API - this is normal');
       return {
         items: [],
-        stats: this.calculateRealStats([], {})
+        stats: this.calculateRealStats([], { 
+          apiStatus: 'no-data',
+          message: 'API oficial temporariamente sem dados' 
+        })
       };
       
     } catch (error: any) {
-      console.error('❌ [MarketplaceService] Failed to fetch real data:', error);
-      throw new Error(`Falha ao carregar dados oficiais: ${error.message}`);
+      console.error('❌ [MarketplaceService] Network or system error:', error);
+      // Retornar dados vazios com informação do erro, não lançar exceção
+      return {
+        items: [],
+        stats: this.calculateRealStats([], { 
+          apiStatus: 'error',
+          message: `Erro de conexão: ${error.message}` 
+        })
+      };
     }
   }
 
@@ -191,7 +217,9 @@ export class MarketplaceService {
         trendingDown: 0,
         featuredItems: 0,
         highestPrice: 0,
-        mostTraded: 'N/A'
+        mostTraded: 'N/A',
+        apiStatus: metadata?.apiStatus || 'unknown',
+        apiMessage: metadata?.message || 'Sem dados oficiais disponíveis'
       };
     }
     
@@ -208,7 +236,9 @@ export class MarketplaceService {
       trendingDown,
       featuredItems: officialItems.length,
       highestPrice: Math.max(...officialItems.map(item => item.currentPrice)),
-      mostTraded: mostTradedItem?.name || 'N/A'
+      mostTraded: mostTradedItem?.name || 'N/A',
+      apiStatus: 'success',
+      apiMessage: `${officialItems.length} itens oficiais carregados`
     };
   }
 
