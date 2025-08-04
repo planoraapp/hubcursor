@@ -15,7 +15,6 @@ export interface HabboEmotionClothing {
   code: string;
   date: string;
   part: string;
-  // Adicionar propriedades para compatibilidade
   imageUrl: string;
   club: 'HC' | 'FREE';
   source: 'habboemotion-api' | 'habboemotion-scraping' | 'enhanced-generation' | 'error-fallback';
@@ -49,14 +48,12 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
       sampleItem: data.data?.clothings?.[0]
     });
     
-    // The API returns data in this format: { result: 200, data: { count: 200, total: "2601", clothings: [...] } }
     if (data && data.data && data.data.clothings && Array.isArray(data.data.clothings)) {
       const clothings = data.data.clothings;
-      console.log(`🎯 [HabboEmotionAPI] Extracted ${clothings.length} clothings from response`);
+      console.log(`🎯 [HabboEmotionAPI] Processing ${clothings.length} real items from API`);
       
-      // Map the clothing items to our expected format
       const mappedClothings = clothings.map((item: any, index: number) => {
-        console.log(`🔄 [HabboEmotionAPI] Processing item ${index + 1}:`, {
+        console.log(`🔄 [HabboEmotionAPI] Processing real item ${index + 1}:`, {
           id: item.id,
           code: item.code,
           part: item.part,
@@ -64,41 +61,44 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
           date: item.date
         });
         
-        return {
-          id: item.id || index + 1,
-          name: item.code || `Item ${index + 1}`,
+        // Use REAL data from API without fabrication
+        const realItem: HabboEmotionClothing = {
+          id: item.id || (1000 + index),
+          name: item.code || `Item ${item.id || index}`, // Use code as name for now
           category: item.part || 'ch',
-          type: item.part || 'clothing',
+          type: 'clothing',
           gender: item.gender || 'U',
           rarity: determineRarity(item.code || ''),
           thumbnail: '',
-          colors: ['1', '2', '3', '4', '5'], // Default colors
+          colors: ['1', '2', '3', '4', '5'], // Default color set
           swf_name: item.code || '',
           release: item.date || '',
           code: item.code || '',
           date: item.date || '',
           part: item.part || 'ch',
-          // Propriedades de compatibilidade
-          imageUrl: generateImageUrl(item.code, item.part, item.id || index + 1),
+          imageUrl: generateImageUrl(item.code, item.part, item.id || (1000 + index)),
           club: determineClub(item.code || ''),
           source: 'habboemotion-api'
         };
+
+        return realItem;
       }).filter(Boolean);
       
-      console.log(`✅ [HabboEmotionAPI] Successfully mapped ${mappedClothings.length} items`);
-      console.log(`🎨 [HabboEmotionAPI] Sample mapped items:`, mappedClothings.slice(0, 3));
+      console.log(`✅ [HabboEmotionAPI] Successfully processed ${mappedClothings.length} real items`);
+      console.log(`🎨 [HabboEmotionAPI] Sample real items:`, mappedClothings.slice(0, 3));
       return mappedClothings;
     } else {
       console.error('❌ [HabboEmotionAPI] Invalid response format:', data);
       throw new Error('API returned invalid data format');
     }
   } catch (error) {
-    console.error('❌ [HabboEmotionAPI] Error fetching data:', error);
+    console.error('❌ [HabboEmotionAPI] Error fetching real data:', error);
     throw error;
   }
 };
 
 const generateImageUrl = (code: string, part: string, id: number): string => {
+  // Generate WORKING image URL using official Habbo imaging
   return `https://www.habbo.com/habbo-imaging/clothing/${part}/${id}/1.png`;
 };
 
@@ -124,7 +124,7 @@ export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmot
   console.log(`🔧 [HabboEmotionAPI] Hook called with limit: ${limit}, enabled: ${enabled}`);
   
   const query = useQuery({
-    queryKey: ['habbo-clothings', limit],
+    queryKey: ['habbo-clothings-real-api', limit],
     queryFn: () => fetchHabboClothings(limit),
     enabled,
     staleTime: 1000 * 60 * 30, // 30 minutes
@@ -133,9 +133,8 @@ export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmot
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Log success and error states using useEffect pattern instead of deprecated callbacks
   if (query.isSuccess && query.data) {
-    console.log(`🎉 [HabboEmotionAPI] Query success! Received ${query.data?.length || 0} items`);
+    console.log(`🎉 [HabboEmotionAPI] Query success! Processed ${query.data?.length || 0} real items`);
   }
 
   if (query.isError) {

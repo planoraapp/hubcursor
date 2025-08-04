@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -5,16 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, RefreshCw, Filter, Grid3x3, List, Info } from 'lucide-react';
-import { useHabboEmotionAPI } from '@/hooks/useHabboEmotionAPI';
-import { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
+import { useHabboEmotionAPI, HabboEmotionClothing } from '@/hooks/useHabboEmotionAPI';
 import { useToast } from '@/hooks/use-toast';
 import EnhancedClothingThumbnail from '@/components/HabboEditor/EnhancedClothingThumbnail';
 
 interface HabboEmotionClothingGridProps {
   selectedCategory: string;
   selectedGender: 'M' | 'F' | 'U';
-  onItemSelect: (item: HabboEmotionClothingItem) => void;
-  onColorSelect?: (colorId: string, item: HabboEmotionClothingItem) => void;
+  onItemSelect: (item: HabboEmotionClothing) => void;
+  onColorSelect?: (colorId: string, item: HabboEmotionClothing) => void;
   selectedItem?: string;
   selectedColor?: string;
   selectedColorId?: string;
@@ -52,39 +52,35 @@ export const HabboEmotionClothingGrid = ({
   const [selectedItemState, setSelectedItemState] = useState<any>(null);
   const { toast } = useToast();
 
-  // Fetch REAL HabboEmotion API data
+  // Usar diretamente a API real do HabboEmotion
   const { 
-    data: apiData, 
+    data: realApiData, 
     isLoading, 
     error, 
     refetch 
   } = useHabboEmotionAPI({ limit: 200, enabled: true });
 
-  // Convert API data to HabboEmotionClothingItem format
-  const clothingData: HabboEmotionClothingItem[] = useMemo(() => {
-    if (!apiData) return [];
-    
-    return apiData.map(item => ({
-      id: item.id,
-      code: item.code,
-      part: item.part,
-      gender: item.gender,
-      date: item.date,
-      colors: item.colors,
-      colorDetails: [],
-      imageUrl: `https://www.habbo.com/habbo-imaging/clothing/${item.part}/${item.id}/1.png`,
-      club: item.club,
-      source: 'habboemotion-api' as const,
-      name: item.name,
-      category: item.category
-    }));
-  }, [apiData]);
+  console.log(`📊 [HabboEmotionGrid] Real API data received:`, {
+    dataLength: realApiData?.length || 0,
+    sampleData: realApiData?.slice(0, 2),
+    isLoading,
+    hasError: !!error
+  });
 
-  // Filter and sort items
+  // Filter and sort REAL items directly from API
   const filteredItems = useMemo(() => {
-    if (!clothingData) return [];
+    if (!realApiData || !Array.isArray(realApiData)) {
+      console.log('⚠️ [HabboEmotionGrid] No real data available');
+      return [];
+    }
     
-    let filtered = clothingData.filter(item => {
+    console.log(`🔍 [HabboEmotionGrid] Filtering ${realApiData.length} real items`, {
+      selectedCategory,
+      selectedGender,
+      searchTerm
+    });
+    
+    let filtered = realApiData.filter(item => {
       // Category filter
       if (selectedCategory !== 'all' && item.part !== selectedCategory) return false;
       
@@ -122,66 +118,68 @@ export const HabboEmotionClothingGrid = ({
       }
     });
 
+    console.log(`✅ [HabboEmotionGrid] Filtered to ${filtered.length} real items`);
     return filtered;
-  }, [clothingData, selectedCategory, selectedGender, searchTerm, sortBy]);
+  }, [realApiData, selectedCategory, selectedGender, searchTerm, sortBy]);
 
-  const handleItemClick = (item: any) => {
+  const handleItemClick = (item: HabboEmotionClothing) => {
+    console.log(`🎯 [HabboEmotionGrid] Real item selected:`, item);
     setSelectedItemState(item);
     onItemSelect(item);
     toast({
-      title: "✅ Item Selecionado",
-      description: `${item.name || item.code} aplicado ao avatar`,
+      title: "✅ Item Real Selecionado",
+      description: `${item.name || item.code} da API HabboEmotion aplicado`,
     });
   };
 
   const handleSync = async () => {
     try {
       toast({
-        title: "🔄 Atualizando...",
-        description: "Recarregando dados da API HabboEmotion",
+        title: "🔄 Atualizando API Real...",
+        description: "Recarregando dados reais da API HabboEmotion",
       });
       
       await refetch();
       
       toast({
-        title: "✅ Atualização Completa",
-        description: "Dados recarregados com sucesso",
+        title: "✅ API Real Atualizada",
+        description: "Dados reais recarregados com sucesso",
       });
     } catch (error) {
       toast({
-        title: "❌ Erro na Atualização",
-        description: "Falha ao recarregar os dados",
+        title: "❌ Erro na API Real",
+        description: "Falha ao recarregar dados da API",
         variant: "destructive"
       });
     }
   };
 
-  // Statistics
+  // Statistics for REAL data
   const stats = useMemo(() => {
-    if (!clothingData) return { total: 0, byCategory: {}, bySource: {} };
+    if (!realApiData) return { total: 0, byCategory: {}, bySource: {} };
     
     const byCategory: Record<string, number> = {};
     const bySource: Record<string, number> = {};
     
-    clothingData.forEach(item => {
+    realApiData.forEach(item => {
       byCategory[item.part] = (byCategory[item.part] || 0) + 1;
       bySource['habboemotion-api'] = (bySource['habboemotion-api'] || 0) + 1;
     });
     
     return {
-      total: clothingData.length,
+      total: realApiData.length,
       byCategory,
       bySource,
       filtered: filteredItems.length
     };
-  }, [clothingData, filteredItems]);
+  }, [realApiData, filteredItems]);
 
   if (isLoading) {
     return (
       <div className="text-center py-12">
         <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
-        <p className="text-gray-600">Carregando catálogo HabboEmotion...</p>
-        <p className="text-sm text-gray-500 mt-2">Milhares de itens sendo processados</p>
+        <p className="text-gray-600">Carregando API Real HabboEmotion...</p>
+        <p className="text-sm text-gray-500 mt-2">Conectando com api.habboemotion.com</p>
       </div>
     );
   }
@@ -190,11 +188,11 @@ export const HabboEmotionClothingGrid = ({
     return (
       <div className="text-center py-12">
         <div className="bg-red-50 border border-red-200 rounded p-6">
-          <p className="text-red-600 font-medium mb-2">❌ Erro ao carregar itens</p>
+          <p className="text-red-600 font-medium mb-2">❌ Erro na API Real</p>
           <p className="text-sm text-gray-600 mb-4">{error.message}</p>
           <Button onClick={() => refetch()} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Tentar Novamente
+            Reconectar API Real
           </Button>
         </div>
       </div>
@@ -205,7 +203,7 @@ export const HabboEmotionClothingGrid = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Header with Stats */}
+      {/* Header with Real API Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {categoryConfig && (
@@ -214,29 +212,29 @@ export const HabboEmotionClothingGrid = ({
               <span className="font-medium">{categoryConfig.name}</span>
             </div>
           )}
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            {stats.filtered} de {stats.total} itens
+          <Badge variant="secondary" className="bg-green-100 text-green-800">
+            {stats.filtered} de {stats.total} itens REAIS
           </Badge>
         </div>
         
         <Button onClick={handleSync} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar
+          Atualizar API Real
         </Button>
       </div>
 
-      {/* Statistics Panel */}
+      {/* Real API Statistics Panel */}
       {stats.total > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border">
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border">
           <div className="flex items-center gap-2 mb-3">
-            <Info className="w-4 h-4 text-blue-600" />
-            <span className="font-medium text-blue-900">Estatísticas do Catálogo</span>
+            <Info className="w-4 h-4 text-green-600" />
+            <span className="font-medium text-green-900">Dados Reais da API HabboEmotion</span>
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
               <div className="font-medium text-gray-900">{stats.total}</div>
-              <div className="text-gray-600">Total de Itens</div>
+              <div className="text-gray-600">Itens Reais</div>
             </div>
             <div>
               <div className="font-medium text-gray-900">{Object.keys(stats.byCategory).length}</div>
@@ -244,7 +242,7 @@ export const HabboEmotionClothingGrid = ({
             </div>
             <div>
               <div className="font-medium text-gray-900">{stats.bySource['habboemotion-api'] || 0}</div>
-              <div className="text-gray-600">API Real</div>
+              <div className="text-gray-600">API Direta</div>
             </div>
             <div>
               <div className="font-medium text-gray-900">{stats.filtered}</div>
@@ -259,7 +257,7 @@ export const HabboEmotionClothingGrid = ({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Buscar roupas por nome ou código..."
+            placeholder="Buscar roupas reais por nome ou código..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -298,10 +296,10 @@ export const HabboEmotionClothingGrid = ({
         </div>
       </div>
 
-      {/* Items Grid */}
+      {/* Real Items Grid */}
       {filteredItems.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600 mb-2">Nenhum item encontrado</p>
+          <p className="text-gray-600 mb-2">Nenhum item real encontrado</p>
           <p className="text-sm text-gray-500">
             Tente ajustar os filtros ou fazer uma nova busca
           </p>
@@ -314,9 +312,9 @@ export const HabboEmotionClothingGrid = ({
         }`}>
           {filteredItems.map((item, index) => (
             <Card
-              key={`${item.id}_${item.code}_${index}`}
+              key={`real_${item.id}_${item.code}_${index}`}
               className={`cursor-pointer transition-all hover:shadow-md hover:scale-105 ${
-                selectedItemState?.id === item.id ? 'ring-2 ring-blue-500 shadow-lg' : ''
+                selectedItemState?.id === item.id ? 'ring-2 ring-green-500 shadow-lg' : ''
               } ${viewMode === 'grid' ? '' : 'flex flex-row'}`}
               onClick={() => handleItemClick(item)}
             >
@@ -328,6 +326,11 @@ export const HabboEmotionClothingGrid = ({
                     size={viewMode === 'grid' ? 'm' : 's'}
                     className={`${viewMode === 'grid' ? 'w-full h-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded' : ''}`}
                   />
+                  
+                  {/* Real item indicator */}
+                  <div className="absolute top-0 left-0 bg-green-500 text-white text-xs px-1 rounded-br font-bold">
+                    REAL
+                  </div>
                   
                   {/* Color count indicator */}
                   {item.colors && item.colors.length > 1 && (
@@ -345,7 +348,7 @@ export const HabboEmotionClothingGrid = ({
                   
                   {viewMode === 'list' && (
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-gray-500">ID: {item.id}</span>
+                      <span className="text-xs text-gray-500">Real ID: {item.id}</span>
                       {item.club === 'HC' && (
                         <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
                           HC

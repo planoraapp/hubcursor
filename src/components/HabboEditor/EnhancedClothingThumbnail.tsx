@@ -1,10 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
+import { HabboEmotionClothing } from '@/hooks/useHabboEmotionAPI';
 
 interface EnhancedClothingThumbnailProps {
-  item: HabboEmotionClothingItem;
+  item: HabboEmotionClothing;
   className?: string;
   size?: 's' | 'm' | 'l';
   selectedColorId?: string;
@@ -21,42 +21,47 @@ const EnhancedClothingThumbnail = ({
   const [isLoading, setIsLoading] = useState(true);
   const [imageCache] = useState(new Map<string, boolean>());
 
-  // Generate WORKING clothing image URLs - SIMPLIFIED and FUNCTIONAL
-  const generateClothingImageUrls = useCallback(() => {
+  // Generate WORKING clothing image URLs based on REAL API data
+  const generateRealClothingUrls = useCallback(() => {
     const urls: string[] = [];
     const category = item.part;
-    const itemId = item.id || 1000;
-    const code = item.code || `${category}${itemId}`;
+    const itemId = item.id;
+    const code = item.code;
     
-    // Use provided imageUrl if available and from working domain
-    if (item.imageUrl && (item.imageUrl.includes('habbo.com') || item.imageUrl.includes('habboassets.com'))) {
-      urls.push(item.imageUrl);
-    }
+    console.log(`🖼️ [EnhancedThumbnail] Generating URLs for REAL item:`, {
+      id: itemId,
+      code,
+      part: category,
+      source: item.source
+    });
     
-    // PRIORITY 1: Official Habbo imaging (MOST RELIABLE)
+    // PRIORITY 1: Official Habbo imaging (MOST RELIABLE for real items)
     urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/${selectedColorId}.png`);
     urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/1.png`);
     
     // PRIORITY 2: HabboAssets (reliable alternative)
-    urls.push(`https://www.habboassets.com/assets/clothing/${category}/${code}.png`);
-    urls.push(`https://www.habboassets.com/assets/clothing/${category}/${code}.gif`);
+    if (code) {
+      urls.push(`https://www.habboassets.com/clothing/${code}.png`);
+      urls.push(`https://www.habboassets.com/assets/clothing/${category}/${code}.png`);
+    }
     
     // PRIORITY 3: Alternative official patterns
     urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}_${selectedColorId}.png`);
-    urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_${selectedColorId}.png`);
+    urls.push(`https://images.habbo.com/c_images/clothing/icon_${category}_${itemId}_1.png`);
     
-    // PRIORITY 4: Fallback to simple patterns
+    // PRIORITY 4: Fallback to generic patterns
     urls.push(`https://www.habbo.com/habbo-imaging/clothing/${category}/${itemId}/0.png`);
     urls.push(`https://images.habbo.com/c_images/clothing/${category}_${itemId}.png`);
     
+    console.log(`📋 [EnhancedThumbnail] Generated ${urls.length} URLs for real item ${itemId}`);
     return [...new Set(urls)]; // Remove duplicates
   }, [item, selectedColorId]);
 
-  const thumbnailUrls = generateClothingImageUrls();
+  const thumbnailUrls = generateRealClothingUrls();
 
   const handleImageError = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`❌ [ClothingThumbnail] Failed: ${currentUrl} (${item.name})`);
+    console.log(`❌ [EnhancedThumbnail] Real item image failed: ${currentUrl} (${item.name})`);
     
     imageCache.set(currentUrl, false);
     
@@ -64,7 +69,7 @@ const EnhancedClothingThumbnail = ({
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
     } else {
-      console.log(`💥 [ClothingThumbnail] All URLs failed for ${item.name} (${item.id})`);
+      console.log(`💥 [EnhancedThumbnail] All URLs failed for real item ${item.name} (${item.id})`);
       setHasError(true);
       setIsLoading(false);
     }
@@ -72,7 +77,7 @@ const EnhancedClothingThumbnail = ({
 
   const handleImageLoad = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`✅ [ClothingThumbnail] Success: ${currentUrl} (${item.name})`);
+    console.log(`✅ [EnhancedThumbnail] Real item image success: ${currentUrl} (${item.name})`);
     
     imageCache.set(currentUrl, true);
     
@@ -111,7 +116,7 @@ const EnhancedClothingThumbnail = ({
         <div className="text-center p-1">
           <AlertCircle className="w-4 h-4 text-gray-400 mx-auto mb-1" />
           <span className="text-xs font-bold text-gray-600 block">
-            {item.code ? item.code.split('_').pop() || '?' : String(item.id)}
+            {item.code ? item.code.substring(0, 8) : String(item.id)}
           </span>
           <span className="text-xs text-gray-500 block">
             {item.part.toUpperCase()}
@@ -129,7 +134,7 @@ const EnhancedClothingThumbnail = ({
         </div>
       )}
       <img 
-        key={`${item.id}_${currentUrlIndex}_${selectedColorId}`}
+        key={`real_${item.id}_${currentUrlIndex}_${selectedColorId}`}
         src={thumbnailUrls[currentUrlIndex]}
         alt={item.name || item.code}
         className={`w-full h-full object-contain rounded border border-gray-200 ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
@@ -140,13 +145,12 @@ const EnhancedClothingThumbnail = ({
         decoding="async"
       />
       
-      {/* Minimal indicators - no complex overlays */}
+      {/* Real item indicators */}
       {!isLoading && !hasError && (
         <>
-          {/* Source indicator */}
-          <div className="absolute bottom-0 right-0 bg-black bg-opacity-60 text-white text-xs px-1 rounded-tl">
-            {item.source === 'habboemotion-api' ? 'API' : 
-             item.source === 'habboemotion-scraping' ? 'HE' : 'GEN'}
+          {/* Source indicator - API Real */}
+          <div className="absolute bottom-0 right-0 bg-green-600 text-white text-xs px-1 rounded-tl font-bold">
+            API
           </div>
           
           {/* HC indicator only if HC */}
