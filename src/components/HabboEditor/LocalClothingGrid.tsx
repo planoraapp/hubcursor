@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Palette } from 'lucide-react';
 import { useEditorHabboCategory } from '@/hooks/useEditorHabboClothing';
 import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 import { HABBO_COLORS, getColorById } from '@/data/habboColors';
+import FocusedClothingThumbnail from './FocusedClothingThumbnail';
 
 interface LocalClothingGridProps {
   selectedCategory: string;
@@ -27,53 +28,53 @@ const LocalClothingGrid = ({
   className = ''
 }: LocalClothingGridProps) => {
   const [colorPopoverOpen, setColorPopoverOpen] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'focused' | 'full'>('focused');
   
   const { items, isLoading, error } = useEditorHabboCategory(selectedCategory, selectedGender);
 
-  console.log(`🎯 [LocalClothingGrid] Categoria: ${selectedCategory}, Items encontrados: ${items.length}`);
+  console.log(`🎯 [LocalClothingGrid] Categoria: ${selectedCategory}, Items: ${items.length}, Modo: ${viewMode}`);
 
-  const generateThumbnailUrl = (item: ViaJovemFlashItem, colorId: string = '1') => {
-    const url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${colorId}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
-    console.log(`🖼️ [LocalClothingGrid] Thumbnail gerada:`, { item: item.name, url });
-    return url;
-  };
-
-  // Cores disponíveis baseadas no sistema ViaJovem
+  // Cores disponíveis baseadas no sistema ViaJovem (cores mais usadas)
   const availableColors = useMemo(() => {
     return [
       '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
       '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
-      '61', '92', '45', '66', '82', '100', '101', '102', '104', '105', '106', '143'
+      '21', '26', '31', '42', '45', '49', '61', '68', '92', '100', 
+      '101', '102', '104', '105', '106', '143'
     ];
   }, []);
 
   const handleItemClick = (item: ViaJovemFlashItem) => {
-    console.log('🎯 [LocalClothingGrid] Item selecionado:', item);
+    console.log('🎯 [LocalClothingGrid] Item selecionado:', item.name);
     onItemSelect(item, selectedColor);
-    setColorPopoverOpen(item.id);
   };
 
   const handleColorSelect = (item: ViaJovemFlashItem, colorId: string) => {
-    console.log('🎨 [LocalClothingGrid] Cor selecionada:', { item: item.name, colorId });
+    console.log('🎨 [LocalClothingGrid] Nova cor:', { item: item.name, colorId });
     onItemSelect(item, colorId);
     setColorPopoverOpen(null);
+  };
+
+  const openColorPicker = (item: ViaJovemFlashItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setColorPopoverOpen(item.id);
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Carregando roupas...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+        <span className="ml-2 text-gray-600">Carregando roupas ViaJovem...</span>
       </div>
     );
   }
 
   if (error) {
-    console.error('❌ [LocalClothingGrid] Erro ao carregar roupas:', error);
+    console.error('❌ [LocalClothingGrid] Erro:', error);
     return (
       <Card className="p-6">
         <div className="text-center text-red-500">
-          <p>Erro ao carregar roupas</p>
+          <p className="font-medium">Erro ao carregar roupas</p>
           <p className="text-sm text-gray-600 mt-1">Sistema ViaJovem indisponível</p>
         </div>
       </Card>
@@ -81,40 +82,91 @@ const LocalClothingGrid = ({
   }
 
   if (items.length === 0) {
-    console.warn('⚠️ [LocalClothingGrid] Nenhum item encontrado para:', { selectedCategory, selectedGender });
+    console.warn('⚠️ [LocalClothingGrid] Nenhum item encontrado');
     return (
       <Card className="p-8">
         <div className="text-center text-muted-foreground">
-          <p>Nenhuma roupa encontrada para esta categoria</p>
+          <p className="font-medium">Nenhuma roupa encontrada</p>
           <p className="text-sm mt-2">Categoria: {selectedCategory} - Gênero: {selectedGender}</p>
+          <Badge variant="outline" className="mt-2">Sistema ViaJovem</Badge>
         </div>
       </Card>
     );
   }
 
-  console.log('✅ [LocalClothingGrid] Renderizando grid com', items.length, 'itens');
-
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Header */}
+      {/* Header com controles */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <span>Roupas Disponíveis</span>
-            <Badge variant="secondary">
-              {items.length} itens
-            </Badge>
-            <Badge variant="outline" className="ml-2">
-              Sistema ViaJovem
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <span>Roupas ViaJovem</span>
+              <Badge variant="secondary">{items.length} itens</Badge>
+              <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                Flash Assets
+              </Badge>
+            </CardTitle>
+            
+            {/* Toggle para modo de visualização */}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'focused' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('focused')}
+                className="text-xs"
+              >
+                🔍 Focado
+              </Button>
+              <Button
+                variant={viewMode === 'full' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('full')}
+                className="text-xs"
+              >
+                👤 Completo
+              </Button>
+            </div>
+          </div>
         </CardHeader>
       </Card>
 
-      {/* Grid de itens baseado no ViaJovem */}
-      <div className="grid grid-cols-6 gap-2 max-h-96 overflow-y-auto">
+      {/* Grid de itens */}
+      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 max-h-96 overflow-y-auto p-2 bg-gray-50 rounded-lg">
         {items.map((item) => (
-          <div key={item.id} className="relative">
+          <div key={item.id} className="relative group">
+            {viewMode === 'focused' ? (
+              <FocusedClothingThumbnail
+                item={item}
+                colorId={selectedColor}
+                gender={selectedGender}
+                isSelected={selectedItem === item.figureId}
+                onClick={() => handleItemClick(item)}
+                className="w-full"
+              />
+            ) : (
+              // Modo completo (avatar inteiro)
+              <div
+                className={`
+                  aspect-square cursor-pointer transition-all duration-200 hover:scale-105 relative
+                  ${selectedItem === item.figureId ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:ring-1 hover:ring-gray-300'}
+                `}
+                onClick={() => handleItemClick(item)}
+                title={item.name}
+              >
+                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg overflow-hidden border border-gray-200">
+                  <img
+                    src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`}
+                    alt={item.name}
+                    className="w-full h-full object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Botão de cor */}
             <Popover 
               open={colorPopoverOpen === item.id} 
               onOpenChange={(open) => setColorPopoverOpen(open ? item.id : null)}
@@ -122,30 +174,11 @@ const LocalClothingGrid = ({
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`aspect-square p-1 h-auto hover:bg-gray-100 transition-colors border-2 ${
-                    selectedItem === item.figureId ? 'border-blue-500 ring-2 ring-blue-300' : 'border-transparent'
-                  }`}
-                  onClick={() => handleItemClick(item)}
-                  title={item.name}
+                  size="sm"
+                  className="absolute bottom-0 right-0 w-6 h-6 p-0 bg-white/80 hover:bg-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => openColorPicker(item, e)}
                 >
-                  <img
-                    src={generateThumbnailUrl(item, selectedColor)}
-                    alt={item.name}
-                    className="w-full h-full object-contain"
-                    style={{ imageRendering: 'pixelated' }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      console.error('❌ [LocalClothingGrid] Erro ao carregar imagem:', target.src);
-                      target.src = generateThumbnailUrl(item, '1');
-                    }}
-                  />
-                  
-                  {/* Indicador de clube */}
-                  {item.club === 'hc' && (
-                    <Badge className="absolute top-0 right-0 text-xs bg-yellow-500 text-white p-1">
-                      HC
-                    </Badge>
-                  )}
+                  <Palette className="w-3 h-3" />
                 </Button>
               </PopoverTrigger>
               
@@ -174,7 +207,7 @@ const LocalClothingGrid = ({
                   </div>
                   
                   <div className="text-xs text-gray-400 text-center">
-                    ID: {item.figureId} | Fonte: ViaJovem
+                    ID: {item.figureId} | Fonte: ViaJovem Flash Assets
                   </div>
                 </div>
               </PopoverContent>
@@ -183,12 +216,12 @@ const LocalClothingGrid = ({
         ))}
       </div>
 
-      {/* Info rodapé */}
+      {/* Footer com informações */}
       <Card>
         <CardContent className="p-3">
           <div className="text-xs text-gray-600 flex items-center justify-between">
-            <span>Fonte: Sistema ViaJovem (Flash Assets)</span>
-            <span>{items.length} itens carregados</span>
+            <span>💾 Fonte: ViaJovem Flash Assets</span>
+            <span>🎯 {items.length} itens • Modo {viewMode === 'focused' ? 'Focado' : 'Completo'}</span>
           </div>
         </CardContent>
       </Card>

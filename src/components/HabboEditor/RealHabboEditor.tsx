@@ -4,44 +4,43 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 import LocalClothingGrid from './LocalClothingGrid';
 import { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 import { useToast } from '@/hooks/use-toast';
 
-// Configuração das categorias baseada no ViaJovem
+// Categorias EXATAS do ViaJovem - sem FA (máscaras)
 const categoryGroups = [
   {
     id: 'head',
     name: 'Cabeça e Acessórios',
     icon: '👤',
     categories: [
-      { id: 'hd', name: 'Rosto', icon: '👤' },
+      { id: 'hd', name: 'Rostos', icon: '👤' },
       { id: 'hr', name: 'Cabelos', icon: '💇' },
       { id: 'ea', name: 'Óculos', icon: '👓' },
-      { id: 'ha', name: 'Chapéus', icon: '🎩' },
-      { id: 'fa', name: 'Máscaras', icon: '🎭' }
+      { id: 'ha', name: 'Chapéus', icon: '🎩' }
     ]
   },
   {
-    id: 'body',
+    id: 'body', 
     name: 'Corpo e Roupas',
     icon: '👕',
     categories: [
       { id: 'ch', name: 'Camisetas', icon: '👕' },
       { id: 'cc', name: 'Casacos', icon: '🧥' },
-      { id: 'ca', name: 'Bijuteria', icon: '💍' },
+      { id: 'ca', name: 'Acess. Peito', icon: '🎖️' },
       { id: 'cp', name: 'Estampas', icon: '🎨' }
     ]
   },
   {
     id: 'legs',
-    name: 'Calças e Pés',
+    name: 'Calças e Pés', 
     icon: '👖',
     categories: [
       { id: 'lg', name: 'Calças', icon: '👖' },
       { id: 'sh', name: 'Sapatos', icon: '👟' },
-      { id: 'wa', name: 'Cintos', icon: '🔗' }
+      { id: 'wa', name: 'Cintura', icon: '🔗' }
     ]
   }
 ];
@@ -54,7 +53,6 @@ interface AvatarState {
   sh?: string;
   ha?: string;
   ea?: string;
-  fa?: string;
   cc?: string;
   ca?: string;
   wa?: string;
@@ -77,6 +75,7 @@ const RealHabboEditor = () => {
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [avatarSize, setAvatarSize] = useState('l');
   const [selectedColor, setSelectedColor] = useState('1');
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
   
   const { toast } = useToast();
 
@@ -100,7 +99,6 @@ const RealHabboEditor = () => {
     if (avatarState.sh) parts.push(`sh-${avatarState.sh}`);
     if (avatarState.ha) parts.push(`ha-${avatarState.ha}`);
     if (avatarState.ea) parts.push(`ea-${avatarState.ea}`);
-    if (avatarState.fa) parts.push(`fa-${avatarState.fa}`);
     if (avatarState.cc) parts.push(`cc-${avatarState.cc}`);
     if (avatarState.ca) parts.push(`ca-${avatarState.ca}`);
     if (avatarState.wa) parts.push(`wa-${avatarState.wa}`);
@@ -110,10 +108,10 @@ const RealHabboEditor = () => {
   };
 
   const currentFigureString = generateFigureString();
-  const currentAvatarUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${currentFigureString}&gender=${selectedGender === 'U' ? 'M' : selectedGender}&direction=${currentDirection}&head_direction=${currentDirection}&img_format=png&action=gesture=nrm&size=${avatarSize}`;
+  const currentAvatarUrl = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${currentFigureString}&gender=${selectedGender === 'U' ? 'M' : selectedGender}&direction=${currentDirection}&head_direction=${currentDirection}&img_format=png&action=gesture=nrm&size=${isPreviewExpanded ? 'xl' : avatarSize}`;
 
   const handleItemSelect = (item: ViaJovemFlashItem, colorId: string = '1') => {
-    console.log('🎯 [RealHabboEditor] Item ViaJovem selecionado:', { item, colorId });
+    console.log('🎯 [RealHabboEditor] Item ViaJovem aplicado:', { item: item.name, category: item.category, colorId });
     
     const itemString = `${item.figureId}-${colorId}`;
     
@@ -125,13 +123,13 @@ const RealHabboEditor = () => {
     setSelectedColor(colorId);
     
     toast({
-      title: "✨ Roupa aplicada!",
-      description: `${item.name} foi aplicado ao seu avatar.`,
+      title: "✨ Roupa ViaJovem aplicada!",
+      description: `${item.name} foi aplicado ao avatar.`,
     });
   };
 
   const handleRemoveItem = (category: string) => {
-    console.log('🗑️ [RealHabboEditor] Removendo item da categoria:', category);
+    console.log('🗑️ [RealHabboEditor] Removendo categoria:', category);
     
     setAvatarState(prevState => {
       const newState = { ...prevState };
@@ -141,7 +139,7 @@ const RealHabboEditor = () => {
     
     toast({
       title: "🗑️ Item removido",
-      description: `Item da categoria ${category.toUpperCase()} foi removido.`,
+      description: `Item da categoria ${category.toUpperCase()} removido.`,
     });
   };
 
@@ -156,15 +154,15 @@ const RealHabboEditor = () => {
     
     toast({
       title: "🔄 Avatar resetado",
-      description: "O avatar voltou ao estado padrão.",
+      description: "Avatar voltou ao estado padrão ViaJovem.",
     });
   };
 
   const handleCopyFigureString = () => {
     navigator.clipboard.writeText(currentFigureString);
     toast({
-      title: "📋 Copiado!",
-      description: "String do avatar copiada para a área de transferência.",
+      title: "📋 Figure String copiada!",
+      description: "String copiada para área de transferência.",
     });
   };
 
@@ -177,31 +175,42 @@ const RealHabboEditor = () => {
 
   return (
     <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
-      {/* Avatar Preview (Esquerda) */}
-      <div className="lg:w-80">
+      {/* Avatar Preview Melhorado (Esquerda) */}
+      <div className={`${isPreviewExpanded ? 'lg:w-96' : 'lg:w-80'} transition-all duration-300`}>
         <Card>
-          <CardHeader>
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="w-5 h-5 text-purple-600" />
-              Preview do Avatar
-              <Badge className="ml-auto bg-purple-100 text-purple-700 text-xs">
+              <Sparkles className="w-5 h-5" />
+              Preview Avatar ViaJovem
+              <Badge className="ml-auto bg-white/20 text-white text-xs">
                 {selectedGender === 'M' ? 'Masculino' : selectedGender === 'F' ? 'Feminino' : 'Unissex'}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-4">
-            <div className="flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6">
+            <div className="flex justify-center bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6 relative">
               <img
                 src={currentAvatarUrl}
-                alt="Avatar Preview"
-                className="max-w-full h-auto"
+                alt="Avatar Preview ViaJovem"
+                className={`max-w-full h-auto transition-all duration-300 ${isPreviewExpanded ? 'scale-125' : ''}`}
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  console.error('❌ [RealHabboEditor] Erro no preview do avatar:', target.src);
+                  console.error('❌ [RealHabboEditor] Erro no preview:', target.src);
                   target.src = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=hd-190-7&gender=M&direction=2&head_direction=2&img_format=png&action=gesture=nrm&size=${avatarSize}`;
                 }}
               />
+              
+              {/* Botão de expansão */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
+                title={isPreviewExpanded ? "Minimizar" : "Expandir"}
+              >
+                {isPreviewExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -259,20 +268,12 @@ const RealHabboEditor = () => {
               </Select>
             </div>
 
-            <div className="flex gap-2">
-              <Button onClick={handleResetAvatar} variant="outline" className="flex-1">
-                🔄 Reset
-              </Button>
-              <Button onClick={handleCopyFigureString} variant="outline" className="flex-1">
-                📋 Copiar
-              </Button>
-            </div>
-
+            {/* Itens Equipados */}
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Itens Equipados:</h4>
-              <div className="space-y-1">
+              <h4 className="text-sm font-medium text-gray-700">Itens ViaJovem Equipados:</h4>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
                 {Object.entries(avatarState).map(([category, value]) => (
-                  <div key={category} className="flex items-center justify-between text-xs">
+                  <div key={category} className="flex items-center justify-between text-xs bg-gray-50 p-2 rounded">
                     <span className="font-mono">{category.toUpperCase()}: {value}</span>
                     <Button 
                       size="sm" 
@@ -287,9 +288,18 @@ const RealHabboEditor = () => {
               </div>
             </div>
 
+            <div className="flex gap-2">
+              <Button onClick={handleResetAvatar} variant="outline" className="flex-1">
+                🔄 Reset
+              </Button>
+              <Button onClick={handleCopyFigureString} variant="outline" className="flex-1">
+                📋 Copiar
+              </Button>
+            </div>
+
             <div className="bg-gray-50 rounded p-2">
-              <p className="text-xs text-gray-600 mb-1">Figure String:</p>
-              <code className="text-xs font-mono text-blue-600 break-all">
+              <p className="text-xs text-gray-600 mb-1">Figure String ViaJovem:</p>
+              <code className="text-xs font-mono text-purple-600 break-all">
                 {currentFigureString}
               </code>
             </div>
@@ -297,15 +307,15 @@ const RealHabboEditor = () => {
         </Card>
       </div>
 
-      {/* Editor Tabs (Direita) - Usando Sistema ViaJovem */}
+      {/* Editor Tabs (Direita) */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
+          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              Editor HabboHub - Sistema ViaJovem
+              Editor HabboHub - ViaJovem Flash Assets
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                Flash Assets
+                11 Categorias Padrão
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -329,9 +339,9 @@ const RealHabboEditor = () => {
               {categoryGroups.map(group => (
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
-                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
+                    <h3 className="font-bold text-base text-indigo-800">{group.name}</h3>
                     <p className="text-sm text-gray-600">
-                      Sistema ViaJovem - Gênero: {selectedGender}
+                      Sistema ViaJovem Flash Assets - Gênero: {selectedGender} - {group.categories.length} categorias
                     </p>
                   </div>
                   
