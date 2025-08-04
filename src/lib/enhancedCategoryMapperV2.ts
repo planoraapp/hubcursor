@@ -12,46 +12,54 @@ export interface EnhancedFlashAssetV2 {
   source: 'flash-assets-enhanced-v2';
 }
 
+// Interface para cores oficiais Habbo
+export interface OfficialHabboColor {
+  id: string;
+  hex: string;
+  name: string;
+  isHC?: boolean;
+}
+
 // Cores oficiais Habbo
 export const OFFICIAL_HABBO_COLORS = {
   skin: [
-    { id: '1', hex: '#F5DA88', name: 'Pele Clara' },
-    { id: '2', hex: '#FFDBC1', name: 'Pele Média' },
-    { id: '3', hex: '#FFCB98', name: 'Pele Morena' },
-    { id: '4', hex: '#F4AC54', name: 'Pele Escura' },
-    { id: '5', hex: '#FF987F', name: 'Pele Muito Escura' },
-    { id: '6', hex: '#E0BA6A', name: 'Bronzeada' },
-    { id: '7', hex: '#C68642', name: 'Chocolate' }
+    { id: '1', hex: '#F5DA88', name: 'Pele Clara', isHC: false },
+    { id: '2', hex: '#FFDBC1', name: 'Pele Média', isHC: false },
+    { id: '3', hex: '#FFCB98', name: 'Pele Morena', isHC: false },
+    { id: '4', hex: '#F4AC54', name: 'Pele Escura', isHC: false },
+    { id: '5', hex: '#FF987F', name: 'Pele Muito Escura', isHC: false },
+    { id: '6', hex: '#E0BA6A', name: 'Bronzeada', isHC: false },
+    { id: '7', hex: '#C68642', name: 'Chocolate', isHC: false }
   ],
   hair: [
-    { id: '45', hex: '#4A2F22', name: 'Castanho Escuro' },
-    { id: '44', hex: '#774F32', name: 'Castanho' },
-    { id: '43', hex: '#A3794F', name: 'Loiro Escuro' },
-    { id: '42', hex: '#D6B48B', name: 'Loiro Claro' },
-    { id: '41', hex: '#F2E2CE', name: 'Loiro Muito Claro' },
-    { id: '61', hex: '#FFB366', name: 'Laranja' },
-    { id: '92', hex: '#FF6B6B', name: 'Coral' },
-    { id: '100', hex: '#4ECDC4', name: 'Turquesa' },
-    { id: '101', hex: '#45B7D1', name: 'Azul Céu' },
-    { id: '102', hex: '#96CEB4', name: 'Verde Menta' },
-    { id: '104', hex: '#FFEAA7', name: 'Amarelo Suave' },
-    { id: '105', hex: '#DDA0DD', name: 'Lilás' },
-    { id: '143', hex: '#A8E6CF', name: 'Verde Pastel' }
+    { id: '45', hex: '#4A2F22', name: 'Castanho Escuro', isHC: false },
+    { id: '44', hex: '#774F32', name: 'Castanho', isHC: false },
+    { id: '43', hex: '#A3794F', name: 'Loiro Escuro', isHC: false },
+    { id: '42', hex: '#D6B48B', name: 'Loiro Claro', isHC: false },
+    { id: '41', hex: '#F2E2CE', name: 'Loiro Muito Claro', isHC: false },
+    { id: '61', hex: '#FFB366', name: 'Laranja', isHC: true },
+    { id: '92', hex: '#FF6B6B', name: 'Coral', isHC: true },
+    { id: '100', hex: '#4ECDC4', name: 'Turquesa', isHC: true },
+    { id: '101', hex: '#45B7D1', name: 'Azul Céu', isHC: true },
+    { id: '102', hex: '#96CEB4', name: 'Verde Menta', isHC: true },
+    { id: '104', hex: '#FFEAA7', name: 'Amarelo Suave', isHC: true },
+    { id: '105', hex: '#DDA0DD', name: 'Lilás', isHC: true },
+    { id: '143', hex: '#A8E6CF', name: 'Verde Pastel', isHC: true }
   ],
   clothing: [
-    { id: '1', hex: '#FFFFFF', name: 'Branco' },
-    { id: '2', hex: '#000000', name: 'Preto' },
-    { id: '3', hex: '#808080', name: 'Cinza' },
-    { id: '4', hex: '#A9A9A9', name: 'Cinza Escuro' },
-    { id: '5', hex: '#D3D3D3', name: 'Cinza Claro' },
-    { id: '61', hex: '#FFB366', name: 'Laranja' },
-    { id: '92', hex: '#FF6B6B', name: 'Coral' },
-    { id: '100', hex: '#4ECDC4', name: 'Turquesa' },
-    { id: '101', hex: '#45B7D1', name: 'Azul Céu' },
-    { id: '102', hex: '#96CEB4', name: 'Verde Menta' },
-    { id: '104', hex: '#FFEAA7', name: 'Amarelo Suave' },
-    { id: '105', hex: '#DDA0DD', name: 'Lilás' },
-    { id: '143', hex: '#A8E6CF', name: 'Verde Pastel' }
+    { id: '1', hex: '#FFFFFF', name: 'Branco', isHC: false },
+    { id: '2', hex: '#000000', name: 'Preto', isHC: false },
+    { id: '3', hex: '#808080', name: 'Cinza', isHC: false },
+    { id: '4', hex: '#A9A9A9', name: 'Cinza Escuro', isHC: false },
+    { id: '5', hex: '#D3D3D3', name: 'Cinza Claro', isHC: false },
+    { id: '61', hex: '#FFB366', name: 'Laranja', isHC: true },
+    { id: '92', hex: '#FF6B6B', name: 'Coral', isHC: true },
+    { id: '100', hex: '#4ECDC4', name: 'Turquesa', isHC: true },
+    { id: '101', hex: '#45B7D1', name: 'Azul Céu', isHC: true },
+    { id: '102', hex: '#96CEB4', name: 'Verde Menta', isHC: true },
+    { id: '104', hex: '#FFEAA7', name: 'Amarelo Suave', isHC: true },
+    { id: '105', hex: '#DDA0DD', name: 'Lilás', isHC: true },
+    { id: '143', hex: '#A8E6CF', name: 'Verde Pastel', isHC: true }
   ]
 };
 
@@ -80,6 +88,18 @@ export const getCategoryPalette = (category: string) => {
     default:
       return OFFICIAL_HABBO_PALETTES.clothing;
   }
+};
+
+// Função para validar se uma cor é válida para uma categoria específica
+export const isValidColorForCategory = (colorId: string, category: string): boolean => {
+  const palette = getCategoryPalette(category);
+  return palette.colors.some(color => color.id === colorId);
+};
+
+// Função para obter a primeira cor válida para uma categoria
+export const getDefaultColorForCategory = (category: string): string => {
+  const palette = getCategoryPalette(category);
+  return palette.colors[0]?.id || '1';
 };
 
 // SEÇÕES PRINCIPAIS V3 - Reorganizadas conforme solicitado

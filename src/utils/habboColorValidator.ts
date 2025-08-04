@@ -1,20 +1,15 @@
-import { OFFICIAL_HABBO_PALETTES, getCategoryPalette } from '@/lib/enhancedCategoryMapperV2';
+
+import { OFFICIAL_HABBO_PALETTES, getCategoryPalette, isValidColorForCategory as validateColorForCategory, getDefaultColorForCategory as getDefaultColor } from '@/lib/enhancedCategoryMapperV2';
 
 /**
  * Valida se uma cor é válida para uma categoria específica
  */
-export const isValidColorForCategory = (colorId: string, category: string): boolean => {
-  const palette = getCategoryPalette(category);
-  return palette.colors.some(color => color.id === colorId);
-};
+export const isValidColorForCategory = validateColorForCategory;
 
 /**
  * Obtém a primeira cor válida para uma categoria
  */
-export const getDefaultColorForCategory = (category: string): string => {
-  const palette = getCategoryPalette(category);
-  return palette.colors[0]?.id || '1';
-};
+export const getDefaultColorForCategory = getDefaultColor;
 
 /**
  * Obtém todas as cores disponíveis para uma categoria
