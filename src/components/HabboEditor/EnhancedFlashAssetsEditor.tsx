@@ -1,21 +1,20 @@
 
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useFlashAssetsViaJovem, ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
-import { CATEGORY_SECTIONS, CATEGORY_METADATA } from '@/lib/enhancedCategoryMapper';
-import FocusedClothingThumbnail from './FocusedClothingThumbnail';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Sparkles, Crown, Zap, Heart, Music } from 'lucide-react';
+import { useEnhancedFlashAssets } from '@/hooks/useEnhancedFlashAssets';
 
 interface EnhancedFlashAssetsEditorProps {
   selectedGender: 'M' | 'F';
   selectedHotel: string;
-  onItemSelect: (item: ViaJovemFlashItem, colorId: string) => void;
-  selectedItem?: string;
-  selectedColor?: string;
+  onItemSelect: (item: any, colorId: string) => void;
+  selectedItem: string;
+  selectedColor: string;
   className?: string;
 }
 
@@ -23,271 +22,203 @@ const EnhancedFlashAssetsEditor = ({
   selectedGender,
   selectedHotel,
   onItemSelect,
-  selectedItem = '',
-  selectedColor = '1',
+  selectedItem,
+  selectedColor,
   className = ''
 }: EnhancedFlashAssetsEditorProps) => {
-  const [selectedSection, setSelectedSection] = useState('head');
-  const [selectedCategory, setSelectedCategory] = useState('hd');
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentColorSelections, setCurrentColorSelections] = useState<Record<string, string>>({});
+  const [selectedCategory, setSelectedCategory] = useState('hd');
 
-  const { items, categoryStats, isLoading, error, totalItems } = useFlashAssetsViaJovem();
+  const { 
+    items, 
+    categoryStats, 
+    isLoading, 
+    error, 
+    totalItems 
+  } = useEnhancedFlashAssets({
+    category: selectedCategory,
+    gender: selectedGender,
+    search: searchTerm
+  });
 
-  // Filtrar items por categoria, gênero e busca
-  const filteredItems = items
-    .filter(item => item.category === selectedCategory)
-    .filter(item => item.gender === selectedGender || item.gender === 'U')
-    .filter(item => 
-      searchTerm === '' || 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.swfName.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .slice(0, 100); // Limite para performance
+  console.log('🎯 [EnhancedFlashAssetsEditor] Stats:', {
+    category: selectedCategory,
+    gender: selectedGender,
+    itemsCount: items.length,
+    totalItems,
+    stats: categoryStats
+  });
 
-  const handleItemClick = (item: ViaJovemFlashItem) => {
-    const colorToUse = currentColorSelections[item.id] || selectedColor || '1';
-    console.log('🎯 [EnhancedEditor] Item selecionado:', {
-      name: item.name,
-      category: item.category,
-      figureId: item.figureId,
-      colorId: colorToUse
-    });
-    onItemSelect(item, colorToUse);
+  // Categories with enhanced organization
+  const categories = [
+    { id: 'hd', name: 'Rostos', icon: '😊', color: 'bg-pink-100' },
+    { id: 'hr', name: 'Cabelos', icon: '💇', color: 'bg-purple-100' },
+    { id: 'ha', name: 'Chapéus', icon: '🎩', color: 'bg-blue-100' },
+    { id: 'ea', name: 'Óculos', icon: '🕶️', color: 'bg-gray-100' },
+    { id: 'fa', name: 'Máscaras', icon: '🎭', color: 'bg-red-100' },
+    { id: 'ch', name: 'Camisetas', icon: '👕', color: 'bg-green-100' },
+    { id: 'cc', name: 'Casacos', icon: '🧥', color: 'bg-orange-100' },
+    { id: 'ca', name: 'Acessórios', icon: '💍', color: 'bg-yellow-100' },
+    { id: 'cp', name: 'Estampas', icon: '🎨', color: 'bg-teal-100' },
+    { id: 'lg', name: 'Calças', icon: '👖', color: 'bg-indigo-100' },
+    { id: 'sh', name: 'Sapatos', icon: '👟', color: 'bg-cyan-100' },
+    { id: 'wa', name: 'Cintura', icon: '🎀', color: 'bg-rose-100' },
+    { id: 'fx', name: 'Efeitos', icon: '✨', color: 'bg-violet-100' }
+  ];
+
+  const handleItemClick = (item: any) => {
+    console.log('🎯 [EnhancedFlashAssetsEditor] Item selecionado:', item);
+    onItemSelect(item, selectedColor);
   };
 
-  const handleColorChange = (item: ViaJovemFlashItem, colorId: string) => {
-    console.log('🎨 [EnhancedEditor] Cor alterada:', {
-      item: item.name,
-      newColor: colorId
-    });
+  const getItemImageUrl = (item: any) => {
+    if (item.thumbnailUrl) return item.thumbnailUrl;
+    if (item.imageUrl) return item.imageUrl;
     
-    setCurrentColorSelections(prev => ({
-      ...prev,
-      [item.id]: colorId
-    }));
-    
-    if (selectedItem === item.figureId) {
-      onItemSelect(item, colorId);
-    }
+    // Fallback para Supabase storage
+    return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
   };
 
-  // Atualizar categoria quando a seção muda
-  useEffect(() => {
-    const currentSection = CATEGORY_SECTIONS[selectedSection as keyof typeof CATEGORY_SECTIONS];
-    if (currentSection && currentSection.categories.length > 0) {
-      setSelectedCategory(currentSection.categories[0]);
-    }
-  }, [selectedSection]);
+  const filteredItems = items.filter(item => 
+    !searchTerm || 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.figureId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (error) {
     return (
-      <Card className="p-8">
-        <div className="text-center text-red-500">
-          <p className="font-medium">Erro ao carregar assets melhorados</p>
-          <p className="text-sm text-gray-600 mt-1">Sistema Flash Assets indisponível</p>
+      <div className={`${className} flex items-center justify-center p-8`}>
+        <div className="text-center">
+          <p className="text-red-600 mb-4">❌ Erro ao carregar assets: {error.message}</p>
+          <Button onClick={() => window.location.reload()}>
+            Tentar Novamente
+          </Button>
         </div>
-      </Card>
+      </div>
     );
   }
 
-  const currentCategoryMeta = CATEGORY_METADATA[selectedCategory as keyof typeof CATEGORY_METADATA];
-
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`${className} flex flex-col h-full`}>
       {/* Header com estatísticas */}
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg py-4">
-          <CardTitle className="flex items-center gap-2">
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-t-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5" />
-            Flash Assets Melhorados - Sistema Inteligente
-            <Badge className="ml-auto bg-white/20 text-white">
-              {totalItems} assets • 13 categorias
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar assets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-                icon={<Search className="w-4 h-4" />}
-              />
-            </div>
-            <Badge variant="outline" className="text-xs">
-              Gênero: {selectedGender === 'M' ? 'Masculino' : 'Feminino'}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {filteredItems.length} itens
-            </Badge>
+            <h3 className="text-lg font-bold">Enhanced Flash Assets</h3>
           </div>
-
-          {/* Estatísticas por categoria */}
-          <div className="grid grid-cols-4 md:grid-cols-7 gap-2 text-xs">
-            {Object.entries(categoryStats).map(([cat, count]) => {
-              const meta = CATEGORY_METADATA[cat as keyof typeof CATEGORY_METADATA];
-              return (
-                <div key={cat} className="text-center p-2 bg-gray-50 rounded">
-                  <div className="text-lg">{meta?.icon || '📦'}</div>
-                  <div className="font-bold">{count}</div>
-                  <div className="text-gray-600">{meta?.name || cat}</div>
-                </div>
-              );
-            })}
+          <Badge className="bg-white/20 text-white">
+            {totalItems}+ Assets Categorizados
+          </Badge>
+        </div>
+        
+        {/* Estatísticas por categoria */}
+        <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+          <div className="text-center">
+            <div className="font-bold">{categoryStats.hd || 0}</div>
+            <div className="opacity-80">Rostos</div>
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-center">
+            <div className="font-bold">{categoryStats.hr || 0}</div>
+            <div className="opacity-80">Cabelos</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold">{categoryStats.ch || 0}</div>
+            <div className="opacity-80">Roupas</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold">{categoryStats.fx || 0}</div>
+            <div className="opacity-80">Efeitos</div>
+          </div>
+        </div>
+      </div>
 
-      {/* Tabs principais */}
-      <Card>
-        <CardContent className="p-4">
-          <Tabs value={selectedSection} onValueChange={setSelectedSection}>
-            {/* Seções principais */}
-            <TabsList className="grid w-full grid-cols-4 mb-4">
-              {Object.values(CATEGORY_SECTIONS).map(section => (
+      {/* Busca */}
+      <div className="p-4 border-b bg-gray-50">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Buscar assets..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Tabs de categorias */}
+      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col">
+        <div className="p-2 border-b bg-white">
+          <ScrollArea className="w-full">
+            <TabsList className="grid grid-cols-13 w-max gap-1">
+              {categories.map(cat => (
                 <TabsTrigger 
-                  key={section.id} 
-                  value={section.id} 
-                  className="text-xs px-3 py-2"
+                  key={cat.id} 
+                  value={cat.id} 
+                  className="flex flex-col items-center gap-1 p-2 min-w-[80px]"
                 >
-                  <div className="text-center">
-                    <div className="text-base">{section.icon}</div>
-                    <div className="text-[10px] mt-1">{section.name}</div>
-                  </div>
+                  <span className="text-lg">{cat.icon}</span>
+                  <span className="text-xs font-medium">{cat.name}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {categoryStats[cat.id] || 0}
+                  </Badge>
                 </TabsTrigger>
               ))}
             </TabsList>
+          </ScrollArea>
+        </div>
 
-            {/* Conteúdo das seções */}
-            {Object.values(CATEGORY_SECTIONS).map(section => (
-              <TabsContent key={section.id} value={section.id} className="min-h-[400px]">
-                {/* Header da seção */}
-                <div className="mb-4">
-                  <h3 className="font-bold text-lg text-purple-800 flex items-center gap-2">
-                    <span className="text-xl">{section.icon}</span>
-                    {section.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Assets categorizados com sistema inteligente
-                  </p>
-                </div>
-                
-                {/* Sub-categorias */}
-                <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <TabsList 
-                    className="grid gap-1 mb-4" 
-                    style={{ gridTemplateColumns: `repeat(${section.categories.length}, 1fr)` }}
-                  >
-                    {section.categories.map(categoryId => {
-                      const meta = CATEGORY_METADATA[categoryId as keyof typeof CATEGORY_METADATA];
-                      const count = categoryStats[categoryId] || 0;
-                      
-                      return (
-                        <TabsTrigger 
-                          key={categoryId} 
-                          value={categoryId} 
-                          className="text-xs px-2 py-2 relative"
-                          style={{ backgroundColor: meta?.color ? `${meta.color}20` : undefined }}
-                        >
-                          <div className="text-center">
-                            <div className="text-sm">{meta?.icon || '📦'}</div>
-                            <div className="text-[9px] mt-1">{meta?.name}</div>
-                            <Badge variant="secondary" className="absolute -top-2 -right-2 text-[8px] px-1">
-                              {count}
-                            </Badge>
-                          </div>
-                        </TabsTrigger>
-                      );
-                    })}
-                  </TabsList>
-
-                  {/* Grids de assets */}
-                  {section.categories.map(categoryId => (
-                    <TabsContent key={categoryId} value={categoryId}>
-                      <Card>
-                        <CardHeader className="py-3">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-base flex items-center gap-2">
-                              <span style={{ color: currentCategoryMeta?.color }}>
-                                {currentCategoryMeta?.icon}
-                              </span>
-                              {currentCategoryMeta?.name}
-                              <Badge variant="outline">{filteredItems.length} itens</Badge>
-                            </CardTitle>
-                            
-                            {searchTerm && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setSearchTerm('')}
-                              >
-                                Limpar busca
-                              </Button>
-                            )}
-                          </div>
-                        </CardHeader>
-                        
-                        <CardContent className="p-4">
-                          {isLoading ? (
-                            <div className="flex items-center justify-center p-8">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                              <span className="ml-3 text-gray-600">Carregando assets inteligentes...</span>
-                            </div>
-                          ) : filteredItems.length === 0 ? (
-                            <div className="text-center p-8">
-                              <div className="text-gray-500 font-medium">Nenhum asset encontrado</div>
-                              <div className="text-gray-400 text-sm mt-2">
-                                {searchTerm ? 'Tente outro termo de busca' : `Categoria: ${selectedCategory} - Gênero: ${selectedGender}`}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="max-h-96 overflow-y-auto p-3 bg-gradient-to-br from-gray-50 to-purple-50 rounded-xl border">
-                              <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 justify-items-center">
-                                {filteredItems.map((item) => {
-                                  const itemColor = currentColorSelections[item.id] || selectedColor || '1';
-                                  
-                                  return (
-                                    <FocusedClothingThumbnail
-                                      key={item.id}
-                                      item={item}
-                                      colorId={itemColor}
-                                      gender={selectedGender}
-                                      isSelected={selectedItem === item.figureId}
-                                      onClick={handleItemClick}
-                                      onColorChange={handleColorChange}
-                                      className="transform transition-all duration-200 hover:z-10"
-                                    />
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
+        {/* Conteúdo das categorias */}
+        {categories.map(cat => (
+          <TabsContent key={cat.id} value={cat.id} className="flex-1 p-0 m-0">
+            <ScrollArea className="h-[500px] p-4">
+              {isLoading ? (
+                <div className="grid grid-cols-4 gap-3">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
                   ))}
-                </Tabs>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* Footer com informações */}
-      <Card>
-        <CardContent className="p-3">
-          <div className="text-xs text-gray-600 flex items-center justify-between">
-            <span>🚀 Sistema Melhorado: Flash Assets Inteligentes</span>
-            <span>
-              📊 {totalItems} total • {Object.keys(categoryStats).length} categorias • 
-              90%+ precisão
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              ) : filteredItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-2">{cat.icon}</div>
+                  <p>Nenhum item encontrado em {cat.name}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-3">
+                  {filteredItems.map(item => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleItemClick(item)}
+                      className={`aspect-square ${cat.color} rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-all duration-200 p-2 flex flex-col items-center justify-center ${
+                        selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : ''
+                      }`}
+                    >
+                      <div className="w-12 h-12 mb-1 flex items-center justify-center">
+                        <img
+                          src={getItemImageUrl(item)}
+                          alt={item.name}
+                          className="max-w-full max-h-full object-contain pixelated"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <div className="text-center text-xs">
+                        <div className="font-medium truncate w-full">{item.name}</div>
+                        <div className="text-gray-500 text-xs">{item.figureId}</div>
+                        {item.club === 'hc' && (
+                          <Crown className="w-3 h-3 text-yellow-500 mx-auto" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 };

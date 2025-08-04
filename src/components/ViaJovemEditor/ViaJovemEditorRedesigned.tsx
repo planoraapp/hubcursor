@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
@@ -36,7 +37,7 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
   ];
 
   // Load figure from URL on mount
-  useState(() => {
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const figureParam = urlParams.get('figure');
     const genderParam = urlParams.get('gender') as 'M' | 'F' | 'U';
@@ -96,7 +97,6 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
               currentFigure={currentFigure}
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
               selectedHotel={selectedHotel}
-              currentDirection={currentDirection}
               hotels={hotels}
               onFigureChange={setCurrentFigure}
               onDirectionChange={setCurrentDirection}
