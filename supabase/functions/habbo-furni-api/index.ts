@@ -27,7 +27,7 @@ serve(async (req) => {
   }
 
   try {
-    const { searchTerm = '', className = '', limit = 200, category = 'all' } = await req.json().catch(() => ({}));
+    const { searchTerm = '', className = '', limit = 500, category = 'all' } = await req.json().catch(() => ({}));
     
     console.log(`🌐 [HabboFurni] Fetching furniture data - searchTerm: "${searchTerm}", className: "${className}", limit: ${limit}`);
     
@@ -36,14 +36,15 @@ serve(async (req) => {
     
     if (!apiKey) {
       console.error('❌ [HabboFurni] HABBOHUB_FURNIAPI not configured in secrets');
-      return generateFallbackResponse(searchTerm, className, limit);
+      return generateEnhancedFallbackResponse(searchTerm, className, limit);
     }
 
-    // Endpoints otimizados com timeout reduzido
+    // Endpoints otimizados com parâmetros expandidos
     const endpoints = [
-      `https://habbofurni.com/api/v1/furniture?limit=${limit}`,
-      `https://api.habbofurni.com/v1/furniture?limit=${limit}`,
-      `https://habbofurni.com/api/furniture?limit=${limit}`
+      `https://habbofurni.com/api/v1/furniture?limit=${Math.min(limit, 1000)}`,
+      `https://api.habbofurni.com/v1/furniture?limit=${Math.min(limit, 1000)}`,
+      `https://habbofurni.com/api/furniture?limit=${Math.min(limit, 1000)}&category=${category}`,
+      `https://habbofurni.com/furni/all?limit=${Math.min(limit, 1000)}`
     ];
 
     let furniData: HabboFurniItem[] = [];
@@ -55,7 +56,7 @@ serve(async (req) => {
         console.log(`📡 [HabboFurni] Trying endpoint: ${endpoint}`);
         
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduzido para 3s
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // Aumentado para 5s
         
         const response = await fetch(endpoint, {
           headers: {
@@ -87,7 +88,7 @@ serve(async (req) => {
         });
 
         // Processar diferentes formatos de resposta
-        let rawItems = data.furniture || data.data || data.items || data || [];
+        let rawItems = data.furniture || data.data || data.items || data.furni || data || [];
         
         if (!Array.isArray(rawItems) && typeof rawItems === 'object') {
           rawItems = Object.values(rawItems);
@@ -97,9 +98,9 @@ serve(async (req) => {
           console.log(`✅ [HabboFurni] Found ${rawItems.length} items from ${endpoint}`);
           
           furniData = rawItems.map((item: any, index: number) => ({
-            id: item.id || item.furni_id || item.className || `hf_${index}`,
+            id: item.id || item.furni_id || item.className || item.class_name || `hf_${index}`,
             name: item.name || item.public_name || item.furni_name || item.className || `Furniture ${index}`,
-            category: item.category || item.furni_type || item.type || 'furniture',
+            category: item.category || item.furni_type || item.type || determineCategoryFromName(item.name || item.className || ''),
             description: item.description || item.furni_line || item.name || 'Habbo furniture item',
             imageUrl: generateOptimizedImageUrl(item),
             rarity: determineFurniRarity(item),
@@ -110,12 +111,14 @@ serve(async (req) => {
             source: 'habbofurni'
           }));
 
-          // Aplicar filtros
+          // Aplicar filtros expandidos
           if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
             furniData = furniData.filter(item => 
-              item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              item.description.toLowerCase().includes(searchTerm.toLowerCase())
+              item.name.toLowerCase().includes(searchLower) ||
+              item.className.toLowerCase().includes(searchLower) ||
+              item.description.toLowerCase().includes(searchLower) ||
+              item.category.toLowerCase().includes(searchLower)
             );
           }
 
@@ -126,13 +129,27 @@ serve(async (req) => {
               item.className.toLowerCase().includes(className.toLowerCase())
             );
             console.log(`📊 [HabboFurni] Filter results: ${beforeFilter} -> ${furniData.length} items`);
-            
-            // Debug: mostrar primeiros 5 classNames encontrados
-            if (furniData.length === 0 && beforeFilter > 0) {
-              const sampleClassNames = furniData.slice(0, 5).map(item => item.className);
-              console.log(`🔍 [HabboFurni] Sample classNames in data:`, sampleClassNames);
-            }
           }
+
+          // Filtro por categoria se não for 'all'
+          if (category && category !== 'all') {
+            const categoryLower = category.toLowerCase();
+            furniData = furniData.filter(item => 
+              item.category.toLowerCase().includes(categoryLower)
+            );
+          }
+
+          // Ordenar por relevância
+          furniData = furniData.sort((a, b) => {
+            // LTDs e raros primeiro
+            if (a.rarity === 'ltd' && b.rarity !== 'ltd') return -1;
+            if (b.rarity === 'ltd' && a.rarity !== 'ltd') return 1;
+            if (a.rarity === 'rare' && b.rarity === 'common') return -1;
+            if (b.rarity === 'rare' && a.rarity === 'common') return 1;
+            
+            // Depois por nome
+            return a.name.localeCompare(b.name);
+          });
 
           successEndpoint = endpoint;
           metadata = {
@@ -140,6 +157,7 @@ serve(async (req) => {
             total: furniData.length,
             searchTerm,
             className,
+            category,
             apiStatus: 'success'
           };
 
@@ -151,7 +169,7 @@ serve(async (req) => {
       } catch (error) {
         console.log(`❌ [HabboFurni] Error with ${endpoint}:`, error.message);
         if (error.name === 'AbortError') {
-          console.log(`⏱️ [HabboFurni] Timeout (3s) reached for ${endpoint}`);
+          console.log(`⏱️ [HabboFurni] Timeout (5s) reached for ${endpoint}`);
         }
         continue;
       }
@@ -159,8 +177,8 @@ serve(async (req) => {
 
     // Se não conseguimos dados da API, usar fallback inteligente
     if (furniData.length === 0) {
-      console.log('🔄 [HabboFurni] All API endpoints failed, using intelligent fallback');
-      return generateFallbackResponse(searchTerm, className, limit);
+      console.log('🔄 [HabboFurni] All API endpoints failed, using enhanced fallback');
+      return generateEnhancedFallbackResponse(searchTerm, className, limit);
     }
 
     const result = {
@@ -183,7 +201,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ [HabboFurni] Fatal error:', error);
-    return generateFallbackResponse('', '', 50);
+    return generateEnhancedFallbackResponse('', '', 50);
   }
 });
 
@@ -210,6 +228,20 @@ function determineFurniRarity(item: any): string {
   return 'common';
 }
 
+function determineCategoryFromName(name: string): string {
+  const nameLower = name.toLowerCase();
+  
+  if (nameLower.includes('chair') || nameLower.includes('seat')) return 'seating';
+  if (nameLower.includes('table') || nameLower.includes('desk')) return 'table';
+  if (nameLower.includes('bed') || nameLower.includes('sofa')) return 'seating';
+  if (nameLower.includes('plant') || nameLower.includes('tree')) return 'plant';
+  if (nameLower.includes('light') || nameLower.includes('lamp')) return 'lighting';
+  if (nameLower.includes('wall') || nameLower.includes('poster')) return 'decoration';
+  if (nameLower.includes('rare') || nameLower.includes('ltd')) return 'rare';
+  
+  return 'furniture';
+}
+
 function extractColors(item: any): string[] {
   if (item.colors && Array.isArray(item.colors)) {
     return item.colors.map(String);
@@ -220,8 +252,8 @@ function extractColors(item: any): string[] {
   return ['1', '2', '3', '4'];
 }
 
-function generateFallbackResponse(searchTerm: string, className: string, limit: number) {
-  console.log('🔄 [HabboFurni] Generating intelligent fallback data');
+function generateEnhancedFallbackResponse(searchTerm: string, className: string, limit: number) {
+  console.log('🔄 [HabboFurni] Generating enhanced fallback data');
   
   const fallbackItems: HabboFurniItem[] = [
     {
@@ -249,14 +281,55 @@ function generateFallbackResponse(searchTerm: string, className: string, limit: 
       colors: ['1', '2'],
       club: 'FREE',
       source: 'habbofurni'
+    },
+    {
+      id: 'hf_bed_basic',
+      name: 'Bed Basic',
+      category: 'seating',
+      description: 'Basic bed furniture',
+      imageUrl: 'https://habbofurni.com/furniture_images/bed.png',
+      rarity: 'common',
+      type: 'roomitem',
+      className: 'bed_basic',
+      colors: ['1', '2', '3', '4'],
+      club: 'FREE',
+      source: 'habbofurni'
+    },
+    {
+      id: 'hf_rare_trophy',
+      name: 'Rare Trophy LTD',
+      category: 'rare',
+      description: 'Limited rare trophy',
+      imageUrl: 'https://habbofurni.com/furniture_images/trophy_ltd.png',
+      rarity: 'ltd',
+      type: 'roomitem',
+      className: 'rare_trophy_ltd',
+      colors: ['1'],
+      club: 'HC',
+      source: 'habbofurni'
+    },
+    {
+      id: 'hf_plant_basic',
+      name: 'Plant Basic',
+      category: 'plant',
+      description: 'Basic plant decoration',
+      imageUrl: 'https://habbofurni.com/furniture_images/plant.png',
+      rarity: 'common',
+      type: 'roomitem',
+      className: 'plant_basic',
+      colors: ['1', '2'],
+      club: 'FREE',
+      source: 'habbofurni'
     }
   ];
   
   // Filtrar se necessário
   let filtered = fallbackItems;
   if (searchTerm) {
+    const searchLower = searchTerm.toLowerCase();
     filtered = fallbackItems.filter(item => 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      item.name.toLowerCase().includes(searchLower) ||
+      item.category.toLowerCase().includes(searchLower)
     );
   }
   if (className) {
