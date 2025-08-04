@@ -26,7 +26,7 @@ export class MarketplaceService {
       }
       
       if (data?.items && Array.isArray(data.items)) {
-        console.log(`✅ [MarketplaceService] Loaded ${data.items.length} official items`);
+        console.log(`✅ [MarketplaceService] Loaded ${data.items.length} items (${data.metadata?.realItems || 0} real + ${data.metadata?.fallbackItems || 0} fallback)`);
         
         // Filtrar itens baseado nos parâmetros
         let filteredItems = data.items;
@@ -50,29 +50,38 @@ export class MarketplaceService {
         };
       }
       
-      console.warn('⚠️ [MarketplaceService] No items returned from official API');
-      return null;
+      console.warn('⚠️ [MarketplaceService] No items returned from official API, trying fallback...');
+      return await this.fallbackToRealMarket(params);
       
     } catch (error: any) {
       console.error('❌ [MarketplaceService] Failed to fetch official data:', error);
       
       // Fallback para a função anterior se a oficial falhar
-      console.log('🔄 [MarketplaceService] Falling back to habbo-market-real...');
+      return await this.fallbackToRealMarket(params);
+    }
+  }
+
+  private static async fallbackToRealMarket(params: FetchMarketDataParams): Promise<{ items: MarketItem[]; stats: MarketStats } | null> {
+    console.log('🔄 [MarketplaceService] Using fallback habbo-market-real...');
+    
+    try {
+      const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('habbo-market-real', {
+        body: params
+      });
       
-      try {
-        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('habbo-market-real', {
-          body: params
-        });
-        
-        if (fallbackError) {
-          throw new Error(`Erro no fallback: ${fallbackError.message}`);
-        }
-        
-        return fallbackData;
-      } catch (fallbackErr) {
-        console.error('❌ [MarketplaceService] Fallback also failed:', fallbackErr);
-        throw new Error(`Ambas as fontes de dados falharam: ${error.message}`);
+      if (fallbackError) {
+        throw new Error(`Erro no fallback: ${fallbackError.message}`);
       }
+      
+      if (fallbackData?.items && Array.isArray(fallbackData.items)) {
+        console.log(`✅ [MarketplaceService] Fallback loaded ${fallbackData.items.length} items`);
+        return fallbackData;
+      }
+      
+      return null;
+    } catch (fallbackErr) {
+      console.error('❌ [MarketplaceService] Fallback also failed:', fallbackErr);
+      throw new Error(`Todas as fontes de dados falharam`);
     }
   }
 
@@ -112,8 +121,8 @@ export class MarketplaceService {
         case 'quantity':
           return (a.openOffers || a.quantity || 999) - (b.openOffers || b.quantity || 999);
         case 'ltd':
-          const aIsLTD = a.className.toLowerCase().includes('ltd');
-          const bIsLTD = b.className.toLowerCase().includes('ltd');
+          const aIsLTD = a.className.toLowerCase().includes('ltd') || a.rarity === 'legendary';
+          const bIsLTD = b.className.toLowerCase().includes('ltd') || b.rarity === 'legendary';
           if (aIsLTD && !bIsLTD) return -1;
           if (!aIsLTD && bIsLTD) return 1;
           return b.currentPrice - a.currentPrice;
@@ -127,33 +136,43 @@ export class MarketplaceService {
     switch (type) {
       case 'topSellers':
         // Baseado em soldItems da API oficial
-        return [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
+        return [...items]
+          .filter(item => (item.soldItems || item.volume || 0) > 0)
+          .sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0))
+          .slice(0, 10);
       
       case 'biggestGainers':
-        // Itens com trend 'up' e volume significativo
-        return [...items].filter(item => 
-          item.trend === 'up' && (item.soldItems || item.volume || 0) > 0
-        ).sort((a, b) => 
-          parseFloat(b.changePercent) - parseFloat(a.changePercent)
-        ).slice(0, 10);
+        // Itens com trend 'up' e maior variação percentual
+        return [...items]
+          .filter(item => item.trend === 'up')
+          .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
+          .slice(0, 10);
       
       case 'opportunities':
-        // LTDs e itens raros com ofertas abertas
-        return [...items].filter(item => 
-          (item.className.toLowerCase().includes('ltd') || 
-           item.rarity === 'legendary' ||
-           item.name.toLowerCase().includes('rare') ||
-           item.currentPrice > 500) &&
-          (item.openOffers || 0) > 0
-        ).sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
+        // LTDs e itens raros com bom preço
+        return [...items]
+          .filter(item => 
+            (item.className.toLowerCase().includes('ltd') || 
+             item.rarity === 'legendary' ||
+             item.rarity === 'rare' ||
+             item.currentPrice > 300) &&
+            (item.openOffers || 0) >= 0
+          )
+          .sort((a, b) => {
+            // Priorizar por raridade e depois por preço
+            const rarityWeight = { legendary: 3, rare: 2, uncommon: 1, common: 0 };
+            const aWeight = (rarityWeight[a.rarity as keyof typeof rarityWeight] || 0) * 1000 + a.currentPrice;
+            const bWeight = (rarityWeight[b.rarity as keyof typeof rarityWeight] || 0) * 1000 + b.currentPrice;
+            return bWeight - aWeight;
+          })
+          .slice(0, 10);
       
       case 'todayHigh':
-        // Maiores altas baseado em dados oficiais
-        return [...items].filter(item => 
-          item.trend === 'up' && parseFloat(item.changePercent) > 0
-        ).sort((a, b) => 
-          parseFloat(b.changePercent) - parseFloat(a.changePercent)
-        ).slice(0, 10);
+        // Maiores altas baseado em dados reais
+        return [...items]
+          .filter(item => item.trend === 'up' && parseFloat(item.changePercent) > 0)
+          .sort((a, b) => parseFloat(b.changePercent) - parseFloat(a.changePercent))
+          .slice(0, 10);
       
       default:
         return [];
@@ -174,15 +193,20 @@ export class MarketplaceService {
       };
     }
     
+    const totalVolume = items.reduce((sum, item) => sum + (item.soldItems || item.volume || 0), 0);
+    const trendingUp = items.filter(item => item.trend === 'up').length;
+    const trendingDown = items.filter(item => item.trend === 'down').length;
+    const mostTradedItem = items.sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0))[0];
+    
     return {
       totalItems: items.length,
       averagePrice: Math.floor(items.reduce((sum, item) => sum + item.currentPrice, 0) / items.length),
-      totalVolume: items.reduce((sum, item) => sum + (item.soldItems || item.volume || 0), 0),
-      trendingUp: items.filter(item => item.trend === 'up').length,
-      trendingDown: items.filter(item => item.trend === 'down').length,
-      featuredItems: Math.min(items.length, 10),
+      totalVolume,
+      trendingUp,
+      trendingDown,
+      featuredItems: Math.min(items.length, 15),
       highestPrice: Math.max(...items.map(item => item.currentPrice)),
-      mostTraded: items.sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0))[0]?.name || 'N/A'
+      mostTraded: mostTradedItem?.name || 'N/A'
     };
   }
 
