@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { MarketFiltersIconOnly } from './MarketFiltersIconOnly';
 import { VerticalClubItems } from './VerticalClubItems';

@@ -1,7 +1,7 @@
 
 import { Suspense, lazy } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MarketplaceProvider, useMarketplace } from '@/contexts/MarketplaceContext';
+import { MarketplaceProvider, useMarketplace, type MarketItem } from '@/contexts/MarketplaceContext';
 import { CountryFlags } from './CountryFlags';
 import { ClubItemsDisplay } from './ClubItemsDisplay';
 import { MarketStatsFooter } from './MarketStatsFooter';
