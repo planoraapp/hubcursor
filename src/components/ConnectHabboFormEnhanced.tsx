@@ -31,6 +31,13 @@ export const ConnectHabboFormEnhanced = () => {
     setDebugLogs(prev => [...prev.slice(-10), logMessage]);
   };
 
+  // Lista de usuários admin que podem fazer bypass da verificação
+  const adminUsers = ['habbohub', 'beebop'];
+  
+  const isAdminUser = (habboName: string) => {
+    return adminUsers.includes(habboName.toLowerCase());
+  };
+
   // Case-insensitive account lookup
   const findLinkedAccountByName = async (habboName: string) => {
     try {
@@ -124,6 +131,27 @@ export const ConnectHabboFormEnhanced = () => {
     addDebugLog(`🔍 Iniciando verificação por motto para: ${currentHabboName}`);
     
     try {
+      // BYPASS PARA ADMINS: Pular verificação da API do Habbo
+      if (isAdminUser(currentHabboName)) {
+        addDebugLog(`🔑 ADMIN BYPASS: Usuário "${currentHabboName}" é admin, pulando verificação da API`);
+        
+        // Gerar um ID único para admin (usando timestamp + nome)
+        const adminHabboId = `admin_${currentHabboName.toLowerCase()}_${Date.now()}`;
+        
+        const newCode = generateVerificationCode();
+        setVerificationCode(newCode);
+        setUserHabboId(adminHabboId);
+        setStep(2);
+        
+        addDebugLog(`✅ Admin bypass ativado. Código gerado: ${newCode}`);
+        toast({
+          title: "Admin Bypass Ativo",
+          description: `Como você é admin, pode pular a verificação. Código: "${newCode}" (pode usar qualquer motto)`,
+        });
+        return;
+      }
+
+      // Verificação normal para usuários não-admin
       const habboUserCheck = await getUserByName(currentHabboName);
       if (!habboUserCheck) {
         addDebugLog(`❌ Usuário "${currentHabboName}" não encontrado na API do Habbo`);
@@ -182,7 +210,29 @@ export const ConnectHabboFormEnhanced = () => {
     addDebugLog(`🔍 Verificando motto para: ${habboNameInput}`);
     
     try {
-      const habboUser = await verifyHabboMotto(habboNameInput, verificationCode);
+      let habboUser = null;
+
+      // BYPASS PARA ADMINS: Aceitar qualquer "verificação"
+      if (isAdminUser(habboNameInput)) {
+        addDebugLog(`🔑 ADMIN BYPASS: Pulando verificação real da motto para admin "${habboNameInput}"`);
+        
+        // Criar objeto simulado para admin
+        habboUser = {
+          uniqueId: userHabboId,
+          name: habboNameInput,
+          motto: `Admin ${habboNameInput}`,
+          online: true,
+          memberSince: new Date().toISOString(),
+          selectedBadges: [],
+          badges: [],
+          figureString: 'default'
+        };
+        
+        addDebugLog(`✅ Admin bypass: Verificação "aprovada" automaticamente`);
+      } else {
+        // Verificação normal para usuários não-admin
+        habboUser = await verifyHabboMotto(habboNameInput, verificationCode);
+      }
       
       if (habboUser) {
         setUserHabboId(habboUser.uniqueId);
@@ -195,14 +245,14 @@ export const ConnectHabboFormEnhanced = () => {
           addDebugLog(`✅ Conta existente encontrada. Solicitando senha.`);
           toast({
             title: "Sucesso",
-            description: "Código verificado! Digite sua senha do Habbo Hub."
+            description: "Verificação concluída! Digite sua senha do Habbo Hub."
           });
         } else {
           setStep(3); // Create password
           addDebugLog(`✅ Nova conta. Solicitando criação de senha.`);
           toast({
             title: "Sucesso",
-            description: "Código verificado! Crie uma senha para o seu Habbo Hub."
+            description: "Verificação concluída! Crie uma senha para o seu Habbo Hub."
           });
         }
       }
@@ -301,6 +351,11 @@ export const ConnectHabboFormEnhanced = () => {
                 <div className="text-center mb-4">
                   <h3 className="text-lg font-semibold">Login por Senha</h3>
                   <p className="text-sm text-gray-600">Para contas já verificadas</p>
+                  {isAdminUser(habboNameInput.trim()) && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-blue-700 volter-font">🔑 Conta Admin Detectada</p>
+                    </div>
+                  )}
                 </div>
                 <form onSubmit={handleLoginByPassword} className="space-y-4">
                   <div>
@@ -339,6 +394,11 @@ export const ConnectHabboFormEnhanced = () => {
                 <div className="text-center mb-4">
                   <h3 className="text-lg font-semibold">Crie sua Conta / Recupere Senha</h3>
                   <p className="text-sm text-gray-600">Para novos usuários ou redefinição de senha</p>
+                  {isAdminUser(habboNameInput.trim()) && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-xs text-green-700 volter-font">🔑 Admin Bypass Disponível - Verificação Simplificada</p>
+                    </div>
+                  )}
                 </div>
                 <form onSubmit={handleInitiateMottoVerification} className="space-y-4">
                   <div>
@@ -390,36 +450,54 @@ export const ConnectHabboFormEnhanced = () => {
     return (
       <Card className="w-full max-w-md mx-auto bg-white border border-gray-900 shadow-md">
         <CardHeader className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-t-lg">
-          <CardTitle className="text-center volter-font">Verifique sua Motto</CardTitle>
+          <CardTitle className="text-center volter-font">
+            {isAdminUser(habboNameInput) ? 'Admin Bypass Ativo' : 'Verifique sua Motto'}
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <p className="text-gray-700">
-            Para vincular sua conta, defina sua motto no Habbo Hotel para o código abaixo.
-            Certifique-se de estar online no Habbo Hotel.
-          </p>
-          <div
-            className="bg-gray-100 p-4 rounded-lg border border-gray-300 text-center cursor-pointer"
-            onClick={() => {
-              navigator.clipboard.writeText(verificationCode);
-              toast({
-                title: "Copiado",
-                description: "Código copiado para a área de transferência!"
-              });
-            }}
-            title="Clique para copiar"
-          >
-            <p className="text-2xl font-bold text-blue-700 select-all volter-font">{verificationCode}</p>
-            <span className="text-sm text-gray-500">Clique no código para copiar</span>
-          </div>
-          <p className="text-gray-700">
-            Após atualizar sua motto no Habbo, clique no botão "Verificar Motto" abaixo.
-          </p>
+          {isAdminUser(habboNameInput) ? (
+            <div>
+              <p className="text-gray-700 mb-4">
+                🔑 <strong>Modo Admin:</strong> Como você é administrador, pode pular a verificação normal. 
+                Clique em "Verificar" abaixo para continuar.
+              </p>
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200 text-center">
+                <p className="text-lg font-bold text-green-700 volter-font">BYPASS ADMINISTRATIVO</p>
+                <span className="text-sm text-green-600">Verificação simplificada ativa</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="text-gray-700">
+                Para vincular sua conta, defina sua motto no Habbo Hotel para o código abaixo.
+                Certifique-se de estar online no Habbo Hotel.
+              </p>
+              <div
+                className="bg-gray-100 p-4 rounded-lg border border-gray-300 text-center cursor-pointer"
+                onClick={() => {
+                  navigator.clipboard.writeText(verificationCode);
+                  toast({
+                    title: "Copiado",
+                    description: "Código copiado para a área de transferência!"
+                  });
+                }}
+                title="Clique para copiar"
+              >
+                <p className="text-2xl font-bold text-blue-700 select-all volter-font">{verificationCode}</p>
+                <span className="text-sm text-gray-500">Clique no código para copiar</span>
+              </div>
+              <p className="text-gray-700">
+                Após atualizar sua motto no Habbo, clique no botão "Verificar Motto" abaixo.
+              </p>
+            </div>
+          )}
+          
           <Button
             onClick={handleVerifyMotto}
             className="w-full bg-green-600 hover:bg-green-700 text-white volter-font"
             disabled={isProcessing}
           >
-            {isProcessing ? 'Verificando Motto...' : 'Verificar Motto'}
+            {isProcessing ? 'Verificando...' : (isAdminUser(habboNameInput) ? 'Verificar Admin' : 'Verificar Motto')}
           </Button>
           <Button
             onClick={() => setStep(1)}
