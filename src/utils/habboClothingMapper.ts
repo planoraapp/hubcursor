@@ -1,21 +1,32 @@
-
 import { HabboEmotionClothing } from '@/hooks/useHabboEmotionAPI';
 
-// Mapeamento de categorias da API para categorias do editor
+// Mapeamento de categorias da API para categorias do editor CORRIGIDO
 const CATEGORY_MAPPING: Record<string, string> = {
+  // PRIORIDADE 1: Acessórios específicos
+  'acc_chest': 'ca',
+  'acc_face': 'fa', 
+  'acc_head': 'fa', // Padrão, mas pode ser 'ha' se for chapéu
+  'acc_waist': 'wa',
+  'acc_eye': 'ea',
+  'acc_print': 'cp',
+  
+  // PRIORIDADE 2: Palavras-chave específicas
+  'necklace': 'ca',
+  'backpack': 'ca', 
+  'tie': 'ca',
+  'badge': 'ca',
+  'medal': 'ca',
+  'face_u': 'fa',
+  
+  // PRIORIDADE 3: Categorias gerais
   'hat': 'ha',
   'hair': 'hr', 
   'shirt': 'ch',
   'trousers': 'lg',
   'shoes': 'sh',
   'jacket': 'cc',
-  'acc_eye': 'ea',
-  'acc_head': 'ha',
-  'acc_chest': 'ca',
-  'acc_waist': 'wa',
-  'acc_print': 'cp',
-  'acc_face': 'fa'
-};
+  'acc': 'ca', // Acessórios genéricos vão para peito
+} as const;
 
 // Mapear raridade para cores dos badges
 export const getRarityColor = (rarity: string): string => {
@@ -41,7 +52,81 @@ export const getRarityText = (rarity: string): string => {
   }
 };
 
-// Converter item da API para formato do editor
+// Sistema de categorização AVANÇADO sincronizado com backend
+const parseItemCategory = (swfName: string): string => {
+  if (!swfName || typeof swfName !== 'string') {
+    console.warn('⚠️ [HabboMapper] Invalid swfName:', swfName);
+    return 'ch';
+  }
+
+  const lowerSwf = swfName.toLowerCase();
+  console.log(`🔍 [HabboMapper] Analisando: ${swfName}`);
+  
+  // === FASE 1: REGRAS ESPECÍFICAS COM PRIORIDADE MÁXIMA ===
+  
+  // 1. ACESSÓRIOS DE PEITO - PRIORIDADE TOTAL
+  if (lowerSwf.includes('acc_chest') || 
+      lowerSwf.includes('necklace') || 
+      lowerSwf.includes('backpack') || 
+      lowerSwf.includes('tie') || 
+      lowerSwf.includes('badge') || 
+      lowerSwf.includes('medal')) {
+    console.log(`✅ [HabboMapper] Acessório de peito: ${swfName} -> ca`);
+    return 'ca';
+  }
+  
+  // 2. ACESSÓRIOS DE ROSTO - PRIORIDADE TOTAL
+  if (lowerSwf.includes('acc_face') || lowerSwf.includes('face_u')) {
+    console.log(`✅ [HabboMapper] Acessório de rosto: ${swfName} -> fa`);
+    return 'fa';
+  }
+  
+  // 3. ACESSÓRIOS DE CABEÇA - LÓGICA DIFERENCIADA
+  if (lowerSwf.includes('acc_head')) {
+    // Sub-regra: chapéus vão para 'ha', outros acessórios para 'fa'
+    if (lowerSwf.includes('hat') || 
+        lowerSwf.includes('cap') || 
+        lowerSwf.includes('helmet') || 
+        lowerSwf.includes('crown') || 
+        lowerSwf.includes('tiara')) {
+      console.log(`✅ [HabboMapper] Chapéu de cabeça: ${swfName} -> ha`);
+      return 'ha';
+    } else {
+      console.log(`✅ [HabboMapper] Acessório de cabeça: ${swfName} -> fa`);
+      return 'fa';
+    }
+  }
+  
+  // 4. OUTROS ACESSÓRIOS ESPECÍFICOS
+  if (lowerSwf.includes('acc_waist')) {
+    console.log(`✅ [HabboMapper] Acessório de cintura: ${swfName} -> wa`);
+    return 'wa';
+  }
+  
+  if (lowerSwf.includes('acc_eye')) {
+    console.log(`✅ [HabboMapper] Óculos: ${swfName} -> ea`);
+    return 'ea';
+  }
+  
+  if (lowerSwf.includes('acc_print')) {
+    console.log(`✅ [HabboMapper] Estampa: ${swfName} -> cp`);
+    return 'cp';
+  }
+  
+  // === FASE 2: MAPEAMENTO GERAL ===
+  for (const [pattern, category] of Object.entries(CATEGORY_MAPPING)) {
+    if (lowerSwf.includes(pattern)) {
+      console.log(`✅ [HabboMapper] Padrão geral: ${swfName} -> ${category} (padrão: ${pattern})`);
+      return category;
+    }
+  }
+  
+  // === FALLBACK ===
+  console.warn(`⚠️ [HabboMapper] Categoria não encontrada para: ${swfName}, usando 'ch'`);
+  return 'ch';
+};
+
+// Converter item da API para formato do editor COM NOVA LÓGICA
 export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
   if (!item || typeof item !== 'object') {
     console.error('❌ Invalid item passed to mapHabboEmotionItem:', item);
@@ -49,15 +134,14 @@ export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
   }
 
   try {
-    // Extrair categoria do nome do SWF
-    const swfCategory = item.swf_name?.split('_')[0] || 'shirt';
-    const editorCategory = CATEGORY_MAPPING[swfCategory] || 'ch';
+    // USAR NOVA LÓGICA DE CATEGORIZAÇÃO
+    const detectedCategory = parseItemCategory(item.swf_name || item.name || '');
     
     const mappedItem = {
       id: item.id?.toString() || Math.random().toString(),
       swfCode: item.swf_name || 'unknown',
       name: item.name || 'Item Desconhecido',
-      category: editorCategory,
+      category: detectedCategory,
       type: item.type || 'clothing',
       gender: item.gender || 'U',
       rarity: item.rarity?.toLowerCase() || 'normal',
@@ -65,7 +149,7 @@ export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
       thumbnail: item.thumbnail || ''
     };
 
-    console.log(`✅ Mapped item: ${mappedItem.name} (${mappedItem.category})`);
+    console.log(`✅ [HabboMapper] Item mapeado: ${mappedItem.name} (${mappedItem.category})`);
     return mappedItem;
   } catch (error) {
     console.error('❌ Error mapping item:', item, error);

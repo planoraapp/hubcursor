@@ -74,6 +74,161 @@ serve(async (req) => {
   }
 });
 
+// SISTEMA DE CATEGORIZAÇÃO AVANÇADO SINCRONIZADO COM FRONTEND
+const parseAssetCategory = (swfName: string): string => {
+  if (!swfName || typeof swfName !== 'string') {
+    console.warn('⚠️ [CategoryMapper] Invalid swfName:', swfName);
+    return 'fx';
+  }
+
+  const lowerSwf = swfName.toLowerCase();
+  console.log(`🔍 [CategoryMapper] Analisando: ${swfName}`);
+  
+  // === FASE 1: MAPEAMENTO ESPECÍFICO COM PRIORIDADE MÁXIMA ===
+  
+  // 1. ACESSÓRIOS DE PEITO (acc_chest) - PRIORIDADE TOTAL
+  if (lowerSwf.includes('acc_chest') || 
+      lowerSwf.includes('necklace') || 
+      lowerSwf.includes('backpack') || 
+      lowerSwf.includes('tie') || 
+      lowerSwf.includes('badge') || 
+      lowerSwf.includes('medal')) {
+    console.log(`✅ [CategoryMapper] Acessório de peito detectado: ${swfName} -> ca`);
+    return 'ca';
+  }
+  
+  // 2. ACESSÓRIOS DE ROSTO (acc_face e face_u) - PRIORIDADE TOTAL  
+  if (lowerSwf.includes('acc_face') || lowerSwf.includes('face_u')) {
+    console.log(`✅ [CategoryMapper] Acessório de rosto detectado: ${swfName} -> fa`);
+    return 'fa';
+  }
+  
+  // 3. ACESSÓRIOS DE CABEÇA (acc_head) - LÓGICA DIFERENCIADA
+  if (lowerSwf.includes('acc_head')) {
+    // Sub-regra: Se é chapéu, vai para 'ha', senão vai para 'fa'
+    if (lowerSwf.includes('hat') || 
+        lowerSwf.includes('cap') || 
+        lowerSwf.includes('helmet') || 
+        lowerSwf.includes('crown') || 
+        lowerSwf.includes('tiara')) {
+      console.log(`✅ [CategoryMapper] Chapéu de cabeça detectado: ${swfName} -> ha`);
+      return 'ha';
+    } else {
+      console.log(`✅ [CategoryMapper] Acessório de cabeça detectado: ${swfName} -> fa`);
+      return 'fa';
+    }
+  }
+  
+  // 4. OUTROS ACESSÓRIOS ESPECÍFICOS
+  if (lowerSwf.includes('acc_waist')) {
+    console.log(`✅ [CategoryMapper] Acessório de cintura detectado: ${swfName} -> wa`);
+    return 'wa';
+  }
+  
+  if (lowerSwf.includes('acc_eye')) {
+    console.log(`✅ [CategoryMapper] Óculos detectado: ${swfName} -> ea`);
+    return 'ea';
+  }
+  
+  if (lowerSwf.includes('acc_print')) {
+    console.log(`✅ [CategoryMapper] Estampa detectada: ${swfName} -> cp`);
+    return 'cp';
+  }
+
+  // === FASE 2: MAPEAMENTO GERAL EXPANDIDO ===
+  const categoryPatterns = {
+    // Cabeça e rosto
+    'hr': ['hair', 'hr_', 'cabelo', 'pelo'],
+    'hd': ['head', 'hd_', 'face', 'rosto', 'cara'],
+    'ha': ['hat', 'ha_', 'cap', 'helmet', 'crown', 'tiara', 'chapeu'],
+    'ea': ['eye', 'ea_', 'glass', 'sunglass', 'monocle', 'oculos'],
+    'fa': ['mask', 'fa_', 'beard', 'mustache', 'bigode'],
+    
+    // Corpo e roupas
+    'ch': ['shirt', 'ch_', 'top', 'blouse', 'tshirt', 'camisa'],
+    'cc': ['coat', 'cc_', 'jacket', 'blazer', 'hoodie', 'casaco'],
+    'ca': ['chest', 'ca_'],
+    'cp': ['print', 'cp_', 'logo', 'emblem', 'estampa'],
+    
+    // Pernas e pés
+    'lg': ['trouser', 'lg_', 'pant', 'jean', 'short', 'skirt', 'calca'],
+    'sh': ['shoe', 'sh_', 'boot', 'sneaker', 'sandal', 'heel', 'sapato'],
+    'wa': ['waist', 'wa_', 'belt', 'chain', 'cintura'],
+    
+    // Pets/animais
+    'pets': ['frog', 'chicken', 'bear', 'cat', 'dog', 'cow', 'croco', 'duck', 'gnome', 'haloompa', 'bunny', 'easter', 'animal', 'pet'],
+    
+    // Efeitos especiais
+    'fx': ['effect', 'fx_', 'magic', 'glow', 'ghost', 'flies', 'fireflies', 'feathers', 'freeze', 'hide', 'holo', 'wings', 'microphone', 'chupachups', 'gun', 'hammer', 'spotlight', 'torch', 'candle', 'crystal', 'executioner', 'despicable', 'disney', 'cyberpunk', 'nft', 'coolcats', 'bayc'],
+    
+    // Veículos
+    'vehicles': ['scooter', 'car', 'ambulance', 'police', 'airplane', 'ffscooter', 'vehicle', 'transport']
+  };
+  
+  for (const [category, patterns] of Object.entries(categoryPatterns)) {
+    if (patterns.some(pattern => lowerSwf.includes(pattern))) {
+      console.log(`✅ [CategoryMapper] Padrão encontrado: ${swfName} -> ${category}`);
+      return category;
+    }
+  }
+  
+  // === FASE 3: PADRÕES REGEX ESPECÍFICOS ===
+  const regexPatterns = [
+    { regex: /h[a-z]*r[0-9]|hr[0-9]/, category: 'hr' },
+    { regex: /hd[0-9]|head[0-9]/, category: 'hd' },
+    { regex: /ha[0-9]|hat[0-9]/, category: 'ha' },
+    { regex: /ch[0-9]|shirt[0-9]/, category: 'ch' },
+    { regex: /lg[0-9]|leg[0-9]/, category: 'lg' },
+    { regex: /sh[0-9]|shoe[0-9]/, category: 'sh' }
+  ];
+  
+  for (const { regex, category } of regexPatterns) {
+    if (lowerSwf.match(regex)) {
+      console.log(`✅ [CategoryMapper] Regex match: ${swfName} -> ${category}`);
+      return category;
+    }
+  }
+  
+  // === FASE 4: ANÁLISE DE PREFIXOS COMUNS ===
+  if (lowerSwf.match(/^[a-z]{2,3}_[0-9]/)) {
+    const prefix = lowerSwf.substring(0, 2);
+    const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa'];
+    if (validCategories.includes(prefix)) {
+      console.log(`✅ [CategoryMapper] Prefixo válido: ${swfName} -> ${prefix}`);
+      return prefix;
+    }
+  }
+  
+  // === FASE 5: ANÁLISE CONTEXTUAL MELHORADA ===
+  const contextRules = [
+    { keywords: ['nft', 'cyberpunk', 'coolcats', 'bayc', 'executioner', 'despicable', 'disney'], category: 'fx' },
+    { keywords: ['male', 'female', 'boy', 'girl', 'man', 'woman'], category: 'ch' },
+    { keywords: ['color', 'colour', 'skin', 'tone'], category: 'hd' },
+    { keywords: ['long', 'short', 'curly', 'straight'], category: 'hr' },
+    { keywords: ['formal', 'casual', 'sport'], category: 'ch' },
+    { keywords: ['winter', 'summer', 'warm', 'cold'], category: 'cc' },
+    { keywords: ['viking', 'knight', 'warrior', 'clown', 'goblin'], category: 'fa' },
+    { keywords: ['scooter', 'car', 'vehicle', 'transport', 'ambulance', 'police', 'airplane'], category: 'vehicles' },
+    { keywords: ['pet', 'animal', 'dog', 'cat', 'bear', 'frog', 'chicken', 'cow'], category: 'pets' }
+  ];
+  
+  for (const rule of contextRules) {
+    if (rule.keywords.some(keyword => lowerSwf.includes(keyword))) {
+      console.log(`✅ [CategoryMapper] Contexto encontrado: ${swfName} -> ${rule.category}`);
+      return rule.category;
+    }
+  }
+  
+  // === FALLBACK FINAL ===
+  if (lowerSwf.includes('_m_') || lowerSwf.includes('_f_') || lowerSwf.includes('_u_')) {
+    console.log(`⚠️ [CategoryMapper] Fallback de gênero: ${swfName} -> fx`);
+    return 'fx';
+  }
+  
+  console.warn(`⚠️ [CategoryMapper] Nenhuma categoria encontrada para: ${swfName}, usando 'fx'`);
+  return 'fx';
+};
+
 async function fetchRobustClothingData(): Promise<HabboWidgetsItem[]> {
   const allItems: HabboWidgetsItem[] = [];
   
@@ -124,8 +279,18 @@ async function fetchRobustClothingData(): Promise<HabboWidgetsItem[]> {
     console.log(`✅ [Fallback] ${uniqueFallbackItems.length} itens adicionados`);
   }
   
-  console.log(`🎯 [TOTAL] ${allItems.length} itens processados`);
-  return allItems;
+  // APLICAR NOVA CATEGORIZAÇÃO A TODOS OS ITENS
+  const recategorizedItems = allItems.map(item => {
+    const newCategory = parseAssetCategory(item.name || item.id);
+    if (newCategory !== item.category) {
+      console.log(`🔄 [Recategorização] ${item.name}: ${item.category} -> ${newCategory}`);
+      return { ...item, category: newCategory };
+    }
+    return item;
+  });
+  
+  console.log(`🎯 [TOTAL] ${recategorizedItems.length} itens processados com nova categorização`);
+  return recategorizedItems;
 }
 
 async function fetchOfficialHabboClothingData(): Promise<HabboWidgetsItem[]> {
@@ -264,7 +429,7 @@ function parseOfficialFigureData(data: string): HabboWidgetsItem[] {
         const typeMatch = setMatch.match(/type="([^"]*)"/);
         if (!typeMatch) continue;
         
-        const category = typeMatch[1];
+        const originalCategory = typeMatch[1];
         const partMatches = setMatch.match(/<part[^>]*id="([^"]*)"[^>]*(?:[^>]*gender="([^"]*)"[^>]*)?(?:[^>]*club="([^"]*)"[^>]*)?[^>]*>/g) || [];
         
         for (const partMatch of partMatches) {
@@ -277,15 +442,19 @@ function parseOfficialFigureData(data: string): HabboWidgetsItem[] {
             const gender = (genderMatch?.[1] as 'M' | 'F' | 'U') || 'U';
             const isClub = clubMatch && clubMatch[1] === '1';
             
+            // APLICAR NOVA CATEGORIZAÇÃO
+            const itemName = `${originalCategory}_${figureId}`;
+            const correctedCategory = parseAssetCategory(itemName);
+            
             items.push({
-              id: `official_${category}_${figureId}`,
-              name: `${getCategoryDisplayName(category)} ${figureId}`,
-              category: category,
+              id: `official_${correctedCategory}_${figureId}`,
+              name: `${getCategoryDisplayName(correctedCategory)} ${figureId}`,
+              category: correctedCategory,
               figureId: figureId,
-              imageUrl: generateOptimizedThumbnail(category, figureId, '1'),
+              imageUrl: generateOptimizedThumbnail(correctedCategory, figureId, '1'),
               club: isClub ? 'HC' : 'FREE',
               gender: gender,
-              colors: generateColorPalette(category)
+              colors: generateColorPalette(correctedCategory)
             });
           }
         }
@@ -340,29 +509,30 @@ function parseHabboWidgetsAdvanced(html: string, category: string): HabboWidgets
           
           const [, itemCategory, figureId] = codeMatch;
           
-          // Só aceitar itens da categoria correta
-          if (itemCategory === category) {
-            const finalImageUrl = imageUrl && imageUrl.includes('habbo') 
-              ? imageUrl 
-              : generateOptimizedThumbnail(itemCategory, figureId, '1');
-            
-            const isHC = itemName && (
-              itemName.toLowerCase().includes('hc') || 
-              itemName.toLowerCase().includes('club') ||
-              itemName.toLowerCase().includes('premium')
-            );
-            
-            items.push({
-              id: `widgets_${itemCategory}_${figureId}`,
-              name: itemName?.trim() || `${getCategoryDisplayName(itemCategory)} ${figureId}`,
-              category: itemCategory,
-              figureId: figureId,
-              imageUrl: finalImageUrl,
-              club: isHC ? 'HC' : 'FREE',
-              gender: 'U',
-              colors: generateColorPalette(itemCategory)
-            });
-          }
+          // APLICAR NOVA CATEGORIZAÇÃO baseada no nome do item
+          const fullItemName = itemName || itemCode;
+          const correctedCategory = parseAssetCategory(fullItemName);
+          
+          const finalImageUrl = imageUrl && imageUrl.includes('habbo') 
+            ? imageUrl 
+            : generateOptimizedThumbnail(correctedCategory, figureId, '1');
+          
+          const isHC = itemName && (
+            itemName.toLowerCase().includes('hc') || 
+            itemName.toLowerCase().includes('club') ||
+            itemName.toLowerCase().includes('premium')
+          );
+          
+          items.push({
+            id: `widgets_${correctedCategory}_${figureId}`,
+            name: itemName?.trim() || `${getCategoryDisplayName(correctedCategory)} ${figureId}`,
+            category: correctedCategory,
+            figureId: figureId,
+            imageUrl: finalImageUrl,
+            club: isHC ? 'HC' : 'FREE',
+            gender: 'U',
+            colors: generateColorPalette(correctedCategory)
+          });
         } catch (itemError) {
           console.log('⚠️ [ItemParse] Erro ao processar item:', itemError.message);
         }
