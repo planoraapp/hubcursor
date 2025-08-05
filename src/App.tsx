@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from './hooks/useAuth';
 import Index from './pages/Index';
 import Profile from './pages/Profile';
 import ProfileEnhanced from './pages/ProfileEnhanced';
@@ -42,36 +43,38 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/profile/:username" element={<ProfileEnhanced />} />
-            <Route path="/connect-habbo" element={<ConnectHabbo />} />
-            <Route path="/emblemas" element={<Emblemas />} />
-            <Route path="/badges" element={<BadgesPage />} />
-            <Route path="/catalogo" element={<Catalogo />} />
-            <Route path="/mercado" element={<Mercado />} />
-            <Route path="/eventos" element={<Eventos />} />
-            <Route path="/noticias" element={<Noticias />} />
-            <Route path="/ferramentas" element={<Ferramentas />} />
-            <Route path="/console" element={<Console />} />
-            <Route path="/editor" element={<Editor />} />
-            <Route path="/editor-puhekupla" element={<EditorPuhekupla />} />
-            <Route path="/emblema-puhekupla" element={<EmblemaPuhekupla />} />
-            <Route path="/furni-puhekupla" element={<FurniPuhekupla />} />
-            <Route path="/admin-hub" element={<AdminHub />} />
-            <Route path="/admin-hub-public" element={<AdminHubPublic />} />
-            <Route path="/admin-panel" element={<AdminPanelPage />} />
-            <Route path="/forum" element={<Forum />} />
-            <Route path="/forum-page" element={<ForumPage />} />
-            <Route path="/tools" element={<ToolsPage />} />
-            <Route path="/tools-new" element={<ToolsPageNew />} />
-            <Route path="/home/:username" element={<HabboHome />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/profile/:username" element={<ProfileEnhanced />} />
+              <Route path="/connect-habbo" element={<ConnectHabbo />} />
+              <Route path="/emblemas" element={<Emblemas />} />
+              <Route path="/badges" element={<BadgesPage />} />
+              <Route path="/catalogo" element={<Catalogo />} />
+              <Route path="/mercado" element={<Mercado />} />
+              <Route path="/eventos" element={<Eventos />} />
+              <Route path="/noticias" element={<Noticias />} />
+              <Route path="/ferramentas" element={<Ferramentas />} />
+              <Route path="/console" element={<Console />} />
+              <Route path="/editor" element={<Editor />} />
+              <Route path="/editor-puhekupla" element={<EditorPuhekupla />} />
+              <Route path="/emblema-puhekupla" element={<EmblemaPuhekupla />} />
+              <Route path="/furni-puhekupla" element={<FurniPuhekupla />} />
+              <Route path="/admin-hub" element={<AdminHub />} />
+              <Route path="/admin-hub-public" element={<AdminHubPublic />} />
+              <Route path="/admin-panel" element={<AdminPanelPage />} />
+              <Route path="/forum" element={<Forum />} />
+              <Route path="/forum-page" element={<ForumPage />} />
+              <Route path="/tools" element={<ToolsPage />} />
+              <Route path="/tools-new" element={<ToolsPageNew />} />
+              <Route path="/home/:username" element={<HabboHome />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
       <Toaster />
     </QueryClientProvider>
   );
