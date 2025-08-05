@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -128,8 +127,8 @@ export const useSupabaseAuth = () => {
   const createLinkedAccount = async (habboId: string, habboName: string, supabaseUserId: string) => {
     console.log(`🔗 [Auth] Creating link: habboId=${habboId}, habboName=${habboName}, supabaseUserId=${supabaseUserId}`);
     
-    // Only habbohub gets admin privileges - FIXED: precise detection
-    const isAdmin = habboName.toLowerCase() === 'habbohub';
+    // FIXED: Detecção de admin incluindo both habbohub e beebop
+    const isAdmin = ['habbohub', 'beebop'].includes(habboName.toLowerCase());
     
     const maxRetries = 5;
     let lastError: any = null;
@@ -169,6 +168,7 @@ export const useSupabaseAuth = () => {
           if (isAdmin) {
             console.log(`🔑 [Admin] User ${habboName} marked as administrator`);
           }
+          console.log(`🏠 [Home] Home will be auto-created via database trigger for user ${habboName}`);
           return data;
         }
       } catch (generalError) {
