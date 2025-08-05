@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Filter } from 'lucide-react';
 import { useEnhancedFlashAssetsV2 } from '@/hooks/useEnhancedFlashAssetsV2';
 import { getRarityColor } from '@/lib/enhancedCategoryMapperV2';
-import { SkinColorSelector } from './SkinColorSelector';
+import { SkinColorSlider } from './SkinColorSlider';
 import { OfficialHabboColorPalette } from './OfficialHabboColorPalette';
+import { AvatarHistory } from './AvatarHistory';
 import { isValidColorForCategory, getDefaultColorForCategory } from '@/utils/habboColorValidator';
 
 interface FlashAssetsV3CompleteProps {
@@ -17,10 +19,12 @@ interface FlashAssetsV3CompleteProps {
   onItemSelect: (item: any, colorId: string) => void;
   selectedItem: string;
   selectedColor: string;
+  currentFigureString?: string;
+  onRestoreFigure?: (figureString: string) => void;
   className?: string;
 }
 
-// 4 SEÇÕES PRINCIPAIS reorganizadas
+// 4 SEÇÕES PRINCIPAIS reorganizadas - SEM DANCE
 const MAIN_SECTIONS = {
   head: {
     id: 'head',
@@ -32,7 +36,7 @@ const MAIN_SECTIONS = {
     id: 'body',
     name: 'Corpo e Acessórios',
     icon: '👕',
-    categories: ['sk', 'ch', 'cc', 'cp', 'ca'] // Cor de Pele, Camisetas, Casacos, Estampas, Acessórios Peito
+    categories: ['ch', 'cc', 'cp', 'ca'] // Camisetas, Casacos, Estampas, Acessórios Peito
   },
   legs: {
     id: 'legs',
@@ -40,11 +44,11 @@ const MAIN_SECTIONS = {
     icon: '👖',
     categories: ['lg', 'sh', 'wa'] // Calças, Sapatos, Cintura
   },
-  other: {
-    id: 'other',
+  others: {
+    id: 'others',
     name: 'Outros',
     icon: '✨',
-    categories: ['fx', 'pets', 'dance'] // Efeitos especiais e não categorizados
+    categories: ['pets', 'fx', 'vehicles'] // Pets, Efeitos, Veículos
   }
 };
 
@@ -54,7 +58,6 @@ const CATEGORY_METADATA = {
   ha: { name: 'Chapéus', icon: '🎩' },
   ea: { name: 'Óculos', icon: '👓' },
   fa: { name: 'Acessórios Rosto', icon: '🎭' },
-  sk: { name: 'Cor de Pele', icon: '🤏' },
   ch: { name: 'Camisetas', icon: '👕' },
   cc: { name: 'Casacos', icon: '🧥' },
   cp: { name: 'Estampas', icon: '🎨' },
@@ -62,9 +65,9 @@ const CATEGORY_METADATA = {
   lg: { name: 'Calças', icon: '👖' },
   sh: { name: 'Sapatos', icon: '👟' },
   wa: { name: 'Cintura', icon: '🎀' },
-  fx: { name: 'Efeitos', icon: '✨' },
-  pets: { name: 'Pets', icon: '🐾' },
-  dance: { name: 'Dança', icon: '💃' }
+  pets: { name: 'Pets/Animais', icon: '🐾' },
+  fx: { name: 'Efeitos Especiais', icon: '✨' },
+  vehicles: { name: 'Veículos', icon: '🚗' }
 };
 
 const FlashAssetsV3Complete = ({
@@ -73,6 +76,8 @@ const FlashAssetsV3Complete = ({
   onItemSelect,
   selectedItem,
   selectedColor,
+  currentFigureString = '',
+  onRestoreFigure,
   className = ''
 }: FlashAssetsV3CompleteProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,13 +143,19 @@ const FlashAssetsV3Complete = ({
       gender: selectedGender,
       colors: [colorId],
       rarity: 'common',
-      source: 'skin-color-selector',
+      source: 'skin-color-slider',
       club: 'normal',
       swfName: `hd_180_skin_${colorId}`,
       thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-${colorId}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`
     };
     
     onItemSelect(skinItem, colorId);
+  };
+
+  const handleRestoreFigure = (figureString: string) => {
+    if (onRestoreFigure) {
+      onRestoreFigure(figureString);
+    }
   };
 
   const getItemImageUrl = (item: any) => {
@@ -221,7 +232,28 @@ const FlashAssetsV3Complete = ({
         </div>
       </div>
 
-      {/* 4 SEÇÕES PRINCIPAIS */}
+      {/* NOVO: Slider de Cor de Pele */}
+      <div className="p-4 border-b bg-white">
+        <SkinColorSlider
+          selectedColor={currentColor}
+          onColorSelect={handleSkinColorSelect}
+          selectedGender={selectedGender}
+        />
+      </div>
+
+      {/* NOVO: Histórico de Avatars (apenas se a função foi fornecida) */}
+      {onRestoreFigure && currentFigureString && (
+        <div className="p-4 border-b bg-gray-50">
+          <AvatarHistory
+            currentFigureString={currentFigureString}
+            selectedGender={selectedGender}
+            selectedHotel={selectedHotel}
+            onRestoreFigure={handleRestoreFigure}
+          />
+        </div>
+      )}
+
+      {/* 4 SEÇÕES PRINCIPAIS - SEM DANCE */}
       <Tabs value={selectedSection} onValueChange={setSelectedSection} className="flex-1 flex flex-col">
         <div className="p-2 border-b bg-white">
           <ScrollArea className="w-full">
@@ -244,107 +276,90 @@ const FlashAssetsV3Complete = ({
         {Object.values(MAIN_SECTIONS).map((section) => (
           <TabsContent key={section.id} value={section.id} className="flex-1 p-0 m-0 flex flex-col">
             
-            {/* ESPECIAL: Seção de Cor de Pele */}
-            {section.id === 'body' && selectedCategory === 'sk' ? (
-              <div className="flex-1 p-4">
-                <SkinColorSelector
-                  selectedColor={currentColor}
-                  onColorSelect={handleSkinColorSelect}
-                  selectedGender={selectedGender}
-                  className="max-w-md mx-auto"
-                />
-              </div>
-            ) : (
-              <>
-                {/* Sub-categorias */}
-                <div className="p-2 border-b bg-gray-50">
-                  <ScrollArea className="w-full">
-                    <div className="flex gap-1">
-                      {section.categories.map(cat => {
-                        const metadata = CATEGORY_METADATA[cat as keyof typeof CATEGORY_METADATA];
-                        const isSpecialSkin = cat === 'sk';
-                        return (
-                          <Button
-                            key={cat}
-                            variant={selectedCategory === cat ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedCategory(cat)}
-                            className={`flex flex-col items-center gap-1 h-auto py-2 px-3 min-w-[80px] ${
-                              isSpecialSkin ? 'border-orange-200 bg-orange-50 hover:bg-orange-100' : ''
-                            }`}
-                          >
-                            <span className="text-lg">{metadata?.icon}</span>
-                            <span className="text-xs">{metadata?.name}</span>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
+            {/* Sub-categorias */}
+            <div className="p-2 border-b bg-gray-50">
+              <ScrollArea className="w-full">
+                <div className="flex gap-1">
+                  {section.categories.map(cat => {
+                    const metadata = CATEGORY_METADATA[cat as keyof typeof CATEGORY_METADATA];
+                    return (
+                      <Button
+                        key={cat}
+                        variant={selectedCategory === cat ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat)}
+                        className="flex flex-col items-center gap-1 h-auto py-2 px-3 min-w-[80px]"
+                      >
+                        <span className="text-lg">{metadata?.icon}</span>
+                        <span className="text-xs">{metadata?.name}</span>
+                      </Button>
+                    );
+                  })}
                 </div>
+              </ScrollArea>
+            </div>
 
-                {/* Seletor de Cores por Categoria */}
-                <div className="p-2 border-b bg-white">
-                  <OfficialHabboColorPalette
-                    selectedCategory={selectedCategory}
-                    selectedColor={currentColor}
-                    onColorSelect={handleColorSelect}
-                    showPaletteInfo={false}
-                  />
+            {/* Seletor de Cores por Categoria */}
+            <div className="p-2 border-b bg-white">
+              <OfficialHabboColorPalette
+                selectedCategory={selectedCategory}
+                selectedColor={currentColor}
+                onColorSelect={handleColorSelect}
+                showPaletteInfo={false}
+              />
+            </div>
+
+            {/* Grid de Assets - SEM LEGENDAS, thumbnails focadas */}
+            <ScrollArea className="flex-1 p-4">
+              {isLoading ? (
+                <div className="grid grid-cols-6 gap-2">
+                  {[...Array(18)].map((_, i) => (
+                    <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  ))}
                 </div>
+              ) : filteredItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="text-4xl mb-2">{section.icon}</div>
+                  <p>Nenhum item encontrado para categoria "{selectedCategory}"</p>
+                  {searchTerm && <p className="text-sm">Tente buscar por outro termo</p>}
+                  <div className="text-xs mt-2 text-gray-400">
+                    Total de itens: {totalItems} | Categoria atual: {selectedCategory}
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 gap-2">
+                  {filteredItems.map(item => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleItemClick(item)}
+                      className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative ${
+                        selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
+                      }`}
+                      title={`${item.name} (${item.category})`}
+                    >
+                      {/* Indicador de raridade compacto */}
+                      {item.rarity !== 'common' && (
+                        <div 
+                          className="absolute top-0 right-0 w-3 h-3 rounded-full"
+                          style={{ backgroundColor: getRarityColor(item.rarity) }}
+                        />
+                      )}
 
-                {/* Grid de Assets - SEM LEGENDAS, thumbnails focadas */}
-                <ScrollArea className="flex-1 p-4">
-                  {isLoading ? (
-                    <div className="grid grid-cols-6 gap-2">
-                      {[...Array(18)].map((_, i) => (
-                        <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
-                      ))}
+                      {/* Imagem do item */}
+                      <img
+                        src={getItemImageUrl(item)}
+                        alt={item.name}
+                        className="max-w-full max-h-full object-contain pixelated"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                        }}
+                      />
                     </div>
-                  ) : filteredItems.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <div className="text-4xl mb-2">{section.icon}</div>
-                      <p>Nenhum item encontrado para categoria "{selectedCategory}"</p>
-                      {searchTerm && <p className="text-sm">Tente buscar por outro termo</p>}
-                      <div className="text-xs mt-2 text-gray-400">
-                        Total de itens: {totalItems} | Categoria atual: {selectedCategory}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-6 gap-2">
-                      {filteredItems.map(item => (
-                        <div
-                          key={item.id}
-                          onClick={() => handleItemClick(item)}
-                          className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative ${
-                            selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
-                          }`}
-                          title={`${item.name} (${item.category})`}
-                        >
-                          {/* Indicador de raridade compacto */}
-                          {item.rarity !== 'common' && (
-                            <div 
-                              className="absolute top-0 right-0 w-3 h-3 rounded-full"
-                              style={{ backgroundColor: getRarityColor(item.rarity) }}
-                            />
-                          )}
-
-                          {/* Imagem do item */}
-                          <img
-                            src={getItemImageUrl(item)}
-                            alt={item.name}
-                            className="max-w-full max-h-full object-contain pixelated"
-                            onError={(e) => {
-                              const img = e.target as HTMLImageElement;
-                              img.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </>
-            )}
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
           </TabsContent>
         ))}
       </Tabs>

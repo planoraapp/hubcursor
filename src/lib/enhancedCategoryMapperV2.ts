@@ -102,7 +102,7 @@ export const getDefaultColorForCategory = (category: string): string => {
   return palette.colors[0]?.id || '1';
 };
 
-// SEÇÕES PRINCIPAIS V3 - Reorganizadas conforme solicitado
+// SEÇÕES PRINCIPAIS V3 - Nova estrutura sem "dance"
 export const CATEGORY_SECTIONS = {
   head: {
     name: 'Cabeça',
@@ -112,21 +112,21 @@ export const CATEGORY_SECTIONS = {
   body: {
     name: 'Corpo e Acessórios', 
     icon: '👕',
-    categories: ['sk', 'ch', 'cc', 'cp', 'ca'] // Cor Pele, Camisetas, Casacos, Estampas, Acessórios Peito
+    categories: ['ch', 'cc', 'cp', 'ca'] // Camisetas, Casacos, Estampas, Acessórios Peito
   },
   legs: {
     name: 'Pernas e Pés',
     icon: '👖', 
     categories: ['lg', 'sh', 'wa'] // Calças, Sapatos, Cintura
   },
-  special: {
+  others: {
     name: 'Outros',
     icon: '✨',
-    categories: ['fx', 'pets', 'dance', 'misc'] // Efeitos, Pets, Dança, Diversos
+    categories: ['pets', 'fx', 'vehicles'] // Pets, Efeitos, Veículos
   }
 };
 
-// METADATA COMPLETA das categorias V3
+// METADATA COMPLETA das categorias V3 - Reorganizada
 export const CATEGORY_METADATA = {
   // Seção Cabeça
   hd: { name: 'Rostos', icon: '😊', color: '#FFE4E6', section: 'head' },
@@ -135,8 +135,7 @@ export const CATEGORY_METADATA = {
   ea: { name: 'Óculos', icon: '👓', color: '#F0FFF4', section: 'head' },
   fa: { name: 'Acessórios Rosto', icon: '🎭', color: '#FFF0F5', section: 'head' },
   
-  // Seção Corpo e Acessórios
-  sk: { name: 'Cor de Pele', icon: '🤏', color: '#FDF2E9', section: 'body' },
+  // Seção Corpo e Acessórios (sem sk)
   ch: { name: 'Camisetas', icon: '👕', color: '#E6F7FF', section: 'body' },
   cc: { name: 'Casacos', icon: '🧥', color: '#F6FFED', section: 'body' },
   cp: { name: 'Estampas', icon: '🎨', color: '#FFF1F0', section: 'body' },
@@ -147,14 +146,13 @@ export const CATEGORY_METADATA = {
   sh: { name: 'Sapatos', icon: '👟', color: '#F0F5FF', section: 'legs' },
   wa: { name: 'Cintura', icon: '🎀', color: '#FFF7E6', section: 'legs' },
   
-  // Seção Outros
-  fx: { name: 'Efeitos', icon: '✨', color: '#F0F0F0', section: 'special' },
-  pets: { name: 'Pets', icon: '🐾', color: '#E6F3FF', section: 'special' },
-  dance: { name: 'Dança', icon: '💃', color: '#FFE6F0', section: 'special' },
-  misc: { name: 'Diversos', icon: '📦', color: '#F5F5F5', section: 'special' }
+  // Seção Outros - Reorganizada
+  pets: { name: 'Pets/Animais', icon: '🐾', color: '#E6F3FF', section: 'others' },
+  fx: { name: 'Efeitos Especiais', icon: '✨', color: '#F0F0F0', section: 'others' },
+  vehicles: { name: 'Veículos', icon: '🚗', color: '#FFE6F0', section: 'others' }
 };
 
-// SISTEMA DE CATEGORIZAÇÃO V3 - EXPANDIDO E INTELIGENTE
+// SISTEMA DE CATEGORIZAÇÃO V3 - MELHORADO COM NOVOS PADRÕES
 const SWF_CATEGORY_MAPPING = {
   // CABEÇA E ROSTO - EXPANDIDO
   'hair': 'hr', 'hr_': 'hr', 'cabelo': 'hr', 'pelo': 'hr',
@@ -174,16 +172,27 @@ const SWF_CATEGORY_MAPPING = {
   'shoe': 'sh', 'sh_': 'sh', 'boot': 'sh', 'sneaker': 'sh', 'sandal': 'sh', 'heel': 'sh', 'sapato': 'sh',
   'waist': 'wa', 'wa_': 'wa', 'belt': 'wa', 'chain': 'wa', 'cintura': 'wa',
   
-  // ESPECIAIS
-  'effect': 'fx', 'fx_': 'fx', 'magic': 'fx', 'glow': 'fx', 'efeito': 'fx',
-  'pet': 'pets', 'animal': 'pets', 'bicho': 'pets',
-  'dance': 'dance', 'emote': 'dance', 'danca': 'dance'
+  // PETS/ANIMAIS - NOVO
+  'frog': 'pets', 'chicken': 'pets', 'bear': 'pets', 'cat': 'pets', 'dog': 'pets',
+  'cow': 'pets', 'croco': 'pets', 'duck': 'pets', 'gnome': 'pets', 'haloompa': 'pets',
+  'bunny': 'pets', 'easter': 'pets', 'animal': 'pets', 'pet': 'pets',
+  
+  // EFEITOS ESPECIAIS - NOVO  
+  'effect': 'fx', 'fx_': 'fx', 'magic': 'fx', 'glow': 'fx',
+  'ghost': 'fx', 'flies': 'fx', 'fireflies': 'fx', 'feathers': 'fx',
+  'freeze': 'fx', 'hide': 'fx', 'holo': 'fx', 'wings': 'fx',
+  'microphone': 'fx', 'chupachups': 'fx', 'gun': 'fx', 'hammer': 'fx',
+  'spotlight': 'fx', 'torch': 'fx', 'candle': 'fx', 'crystal': 'fx',
+  
+  // VEÍCULOS - NOVO
+  'scooter': 'vehicles', 'car': 'vehicles', 'ambulance': 'vehicles',
+  'police': 'vehicles', 'airplane': 'vehicles', 'ffscooter': 'vehicles'
 };
 
 export const parseAssetCategory = (swfName: string): string => {
   if (!swfName || typeof swfName !== 'string') {
     console.warn('⚠️ [CategoryMapper V3] Invalid swfName:', swfName);
-    return 'misc';
+    return 'fx';
   }
 
   const lowerSwf = swfName.toLowerCase();
@@ -207,20 +216,23 @@ export const parseAssetCategory = (swfName: string): string => {
   // 3. ANÁLISE DE PREFIXOS COMUNS
   if (lowerSwf.match(/^[a-z]{2,3}_[0-9]/)) {
     const prefix = lowerSwf.substring(0, 2);
-    const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa', 'fx'];
+    const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa'];
     if (validCategories.includes(prefix)) {
       console.log(`✅ [CategoryMapper V3] Prefixo identificado: ${swfName} -> ${prefix}`);
       return prefix;
     }
   }
   
-  // 4. ANÁLISE CONTEXTUAL POR PALAVRAS-CHAVE
+  // 4. ANÁLISE CONTEXTUAL POR PALAVRAS-CHAVE MELHORADA
   const contextAnalysis = [
+    { keywords: ['nft', 'cyberpunk', 'coolcats', 'bayc'], category: 'fx' },
     { keywords: ['male', 'female', 'boy', 'girl', 'man', 'woman'], category: 'ch' },
     { keywords: ['color', 'colour', 'skin', 'tone'], category: 'hd' },
     { keywords: ['long', 'short', 'curly', 'straight'], category: 'hr' },
     { keywords: ['formal', 'casual', 'sport'], category: 'ch' },
-    { keywords: ['winter', 'summer', 'warm', 'cold'], category: 'cc' }
+    { keywords: ['winter', 'summer', 'warm', 'cold'], category: 'cc' },
+    { keywords: ['viking', 'knight', 'warrior', 'clown', 'goblin'], category: 'fa' },
+    { keywords: ['executioner', 'despicable', 'disney'], category: 'fx' }
   ];
   
   for (const analysis of contextAnalysis) {
@@ -230,15 +242,15 @@ export const parseAssetCategory = (swfName: string): string => {
     }
   }
   
-  // 5. FALLBACK INTELIGENTE - preferir roupas comuns
+  // 5. FALLBACK INTELIGENTE - preferir efeitos para itens não reconhecidos
   if (lowerSwf.includes('_m_') || lowerSwf.includes('_f_') || lowerSwf.includes('_u_')) {
-    console.log(`⚠️ [CategoryMapper V3] Fallback por gênero: ${swfName} -> ch`);
-    return 'ch';
+    console.log(`⚠️ [CategoryMapper V3] Fallback por gênero: ${swfName} -> fx`);
+    return 'fx';
   }
   
-  // 6. Fallback final
-  console.warn(`⚠️ [CategoryMapper V3] Categoria não identificada para: ${swfName}, usando 'misc'`);
-  return 'misc';
+  // 6. Fallback final para efeitos
+  console.warn(`⚠️ [CategoryMapper V3] Categoria não identificada para: ${swfName}, usando 'fx'`);
+  return 'fx';
 };
 
 export const parseAssetGender = (swfName: string): 'M' | 'F' | 'U' => {
@@ -254,17 +266,14 @@ export const parseAssetFigureId = (swfName: string): string => {
 };
 
 export const generateCategoryColors = (category: string): string[] => {
-  // Cores específicas por categoria
   return ['1', '2', '3', '4', '5'];
 };
 
 export const generateIsolatedThumbnail = (category: string, figureId: string, color: string, gender: string): string => {
-  // Usar URLs simples como no ViaJovem original - SEM crop
   return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${figureId}-${color}&gender=${gender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
 };
 
 export const formatAssetName = (swfName: string): string => {
-  // Formatar nome do asset
   return swfName;
 };
 
@@ -286,17 +295,15 @@ export const getRarityStats = (assets: EnhancedFlashAssetV2[]): Record<string, n
 
 export const getRarityColor = (rarity: string) => {
   switch (rarity) {
-    case 'nft': return '#007bff'; // Azul
-    case 'hc': return '#ffc107'; // Amarelo
-    case 'ltd': return '#dc3545'; // Vermelho
-    case 'rare': return '#28a745'; // Verde
-    default: return '#6c757d'; // Cinza
+    case 'nft': return '#007bff';
+    case 'hc': return '#ffc107';
+    case 'ltd': return '#dc3545';
+    case 'rare': return '#28a745';
+    default: return '#6c757d';
   }
 };
 
-// NOVO: Sistema de validação de assets
 export const validateAsset = (swfName: string, detectedCategory: string): boolean => {
-  // Verificar se a categorização faz sentido
   const validationRules = {
     'hr': ['hair', 'hr_', 'cabelo'],
     'hd': ['head', 'hd_', 'face', 'rosto'],
@@ -311,5 +318,5 @@ export const validateAsset = (swfName: string, detectedCategory: string): boolea
     return rules.some(rule => swfName.toLowerCase().includes(rule));
   }
   
-  return true; // Para categorias sem regras específicas
+  return true;
 };

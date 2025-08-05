@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +85,7 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
       'hd': '😊', 'hr': '💇', 'ha': '🎩', 'ea': '👓', 'fa': '🎭',
       'ch': '👕', 'cc': '🧥', 'ca': '💍', 'cp': '🎨',
       'lg': '👖', 'sh': '👟', 'wa': '🎀',
-      'fx': '✨', 'pets': '🐾', 'dance': '💃'
+      'fx': '✨', 'pets': '🐾', 'vehicles': '🚗'
     };
     
     const emoji = categoryEmojis[item.category] || '👕';
@@ -94,6 +95,25 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
       title: `${emoji} Asset Flash aplicado!`,
       description: `${item.name}${rarityText} foi aplicado ao seu avatar.`,
     });
+  };
+
+  const handleRestoreFigure = (figureString: string) => {
+    try {
+      const figure = ViaJovemFigureManager.parseFigureString(figureString);
+      setCurrentFigure(figure);
+      
+      toast({
+        title: "🔄 Avatar restaurado!",
+        description: "Avatar foi restaurado do histórico.",
+      });
+    } catch (error) {
+      console.error('Error restoring figure:', error);
+      toast({
+        title: "❌ Erro",
+        description: "Não foi possível restaurar o avatar.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCopyUrl = () => {
@@ -173,9 +193,9 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
           <CardHeader className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white rounded-t-lg py-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5" />
-              ViaJovem Editor - Sistema Flash Assets V3 COMPLETO
+              ViaJovem Editor V3 - Sistema Flash Assets REORGANIZADO
               <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2871+ Assets • Cor de Pele • 3 Paletas • Sistema V3
+                2871+ Assets • Slider de Pele • Histórico • 4 Seções
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -186,6 +206,8 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
               onItemSelect={handleCompleteItemSelect}
               selectedItem={selectedItem}
               selectedColor={selectedColor}
+              currentFigureString={ViaJovemFigureManager.getFigureString(currentFigure)}
+              onRestoreFigure={handleRestoreFigure}
               className="h-full"
             />
           </CardContent>
