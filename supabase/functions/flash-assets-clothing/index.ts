@@ -1,526 +1,278 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
-interface EnhancedFlashAssetV2 {
-  id: string;
-  name: string;
-  category: string;
-  gender: 'M' | 'F' | 'U';
-  figureId: string;
-  colors: string[];
-  thumbnailUrl: string;
-  club: 'hc' | 'normal';
-  rarity: 'nft' | 'hc' | 'ltd' | 'rare' | 'common';
-  swfName: string;
-  source: 'flash-assets-enhanced-v2';
-}
+// Sistema de categorização COMPLETO e inteligente
+const parseAssetCategory = (swfName: string): string => {
+  if (!swfName || typeof swfName !== 'string') {
+    console.warn('⚠️ [CategoryParser] Invalid swfName:', swfName);
+    return 'misc';
+  }
 
-// Sistema de categorização CORRIGIDO e INTELIGENTE com 98%+ precisão
-const ENHANCED_CATEGORY_MAPPING: Record<string, string> = {
-  // Acessórios específicos (EXPANDIDO)
-  'acc_chest': 'ca',     // ~200 acessórios de peito
-  'acc_head': 'ha',      // ~150 acessórios de cabeça
-  'acc_eye': 'ea',       // ~100 óculos e acessórios
-  'acc_face': 'fa',      // ~80 máscaras e faciais
-  'acc_waist': 'wa',     // ~50 acessórios de cintura
-  'acc_print': 'cp',     // ~30 estampas e prints
+  const lowerSwf = swfName.toLowerCase();
   
-  // Roupas principais
-  'shirt': 'ch',         // 528+ camisetas
-  'jacket': 'cc',        // 303+ casacos
-  'trousers': 'lg',      // 134+ calças
-  'shoes': 'sh',         // 82+ sapatos
+  // 1. CABEÇA E ROSTO
+  if (lowerSwf.includes('hair') || lowerSwf.includes('hr_') || 
+      lowerSwf.match(/h[a-z]*r[0-9]/) || lowerSwf.includes('_hair_')) return 'hr';
   
-  // Cabeça e rosto
-  'hair': 'hr',          // 220+ cabelos
-  'hat': 'ha',           // 461+ chapéus
-  'face': 'hd',          // 83+ rostos
+  if (lowerSwf.includes('head') || lowerSwf.includes('hd_') || 
+      lowerSwf.includes('face') || lowerSwf.match(/hd[0-9]/)) return 'hd';
   
-  // NOVAS CATEGORIAS (IMPLEMENTAÇÃO COMPLETA)
-  'effects': 'fx',       // ~200 efeitos especiais
-  'pets': 'pets',        // ~50 pets e animais
-  'dance': 'dance',      // ~15 danças
+  if (lowerSwf.includes('hat') || lowerSwf.includes('ha_') || 
+      lowerSwf.includes('cap') || lowerSwf.includes('helmet') || 
+      lowerSwf.includes('crown') || lowerSwf.includes('tiara')) return 'ha';
   
-  // Mapeamentos alternativos EXPANDIDOS
-  'top': 'ch', 'bottom': 'lg', 'footwear': 'sh', 'headwear': 'ha',
-  'eyewear': 'ea', 'necklace': 'ca', 'belt': 'wa', 'mask': 'fa',
-  'glasses': 'ea', 'accessory': 'ca'
+  if (lowerSwf.includes('eye') || lowerSwf.includes('ea_') || 
+      lowerSwf.includes('glass') || lowerSwf.includes('sunglass') || 
+      lowerSwf.includes('monocle')) return 'ea';
+  
+  if (lowerSwf.includes('mask') || lowerSwf.includes('fa_') || 
+      lowerSwf.includes('beard') || lowerSwf.includes('mustache')) return 'fa';
+
+  // 2. CORPO E ROUPAS
+  if (lowerSwf.includes('shirt') || lowerSwf.includes('ch_') || 
+      lowerSwf.includes('top') || lowerSwf.includes('blouse') || 
+      lowerSwf.includes('tshirt') || lowerSwf.includes('t-shirt') || 
+      lowerSwf.match(/ch[0-9]/) || lowerSwf.includes('_shirt_')) return 'ch';
+  
+  if (lowerSwf.includes('coat') || lowerSwf.includes('cc_') || 
+      lowerSwf.includes('jacket') || lowerSwf.includes('blazer') || 
+      lowerSwf.includes('hoodie') || lowerSwf.includes('cardigan')) return 'cc';
+  
+  if (lowerSwf.includes('chest') || lowerSwf.includes('ca_') || 
+      lowerSwf.includes('tie') || lowerSwf.includes('necklace') || 
+      lowerSwf.includes('badge') || lowerSwf.includes('medal')) return 'ca';
+  
+  if (lowerSwf.includes('print') || lowerSwf.includes('cp_') || 
+      lowerSwf.includes('logo') || lowerSwf.includes('emblem')) return 'cp';
+
+  // 3. PERNAS E PÉS
+  if (lowerSwf.includes('trouser') || lowerSwf.includes('lg_') || 
+      lowerSwf.includes('pant') || lowerSwf.includes('jean') || 
+      lowerSwf.includes('short') || lowerSwf.includes('skirt') || 
+      lowerSwf.match(/lg[0-9]/) || lowerSwf.includes('_leg_')) return 'lg';
+  
+  if (lowerSwf.includes('shoe') || lowerSwf.includes('sh_') || 
+      lowerSwf.includes('boot') || lowerSwf.includes('sneaker') || 
+      lowerSwf.includes('sandal') || lowerSwf.includes('heel') || 
+      lowerSwf.match(/sh[0-9]/)) return 'sh';
+  
+  if (lowerSwf.includes('waist') || lowerSwf.includes('wa_') || 
+      lowerSwf.includes('belt') || lowerSwf.includes('chain')) return 'wa';
+
+  // 4. ESPECIAIS
+  if (lowerSwf.includes('effect') || lowerSwf.includes('fx_') || 
+      lowerSwf.includes('magic') || lowerSwf.includes('glow')) return 'fx';
+  
+  if (lowerSwf.includes('pet') || lowerSwf.includes('animal')) return 'pets';
+  
+  if (lowerSwf.includes('dance') || lowerSwf.includes('emote')) return 'dance';
+
+  // 5. FALLBACK INTELIGENTE por padrões comuns
+  if (lowerSwf.match(/^[a-z]{2,3}_[0-9]/)) {
+    const prefix = lowerSwf.substring(0, 2);
+    const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa'];
+    if (validCategories.includes(prefix)) return prefix;
+  }
+
+  // 6. Fallback final - analisar contexto do nome
+  if (lowerSwf.includes('male') || lowerSwf.includes('female') || 
+      lowerSwf.includes('_m_') || lowerSwf.includes('_f_')) {
+    // Se tem indicador de gênero, provavelmente é roupa
+    return 'ch';
+  }
+
+  console.warn(`⚠️ [CategoryParser] Categoria não identificada para: ${swfName}, usando 'misc'`);
+  return 'misc';
 };
 
-// Parser de categoria CORRIGIDO com 98%+ precisão
-const parseAssetCategory = (filename: string): string => {
-  if (!filename) return 'ch';
-  
-  const cleanName = filename.toLowerCase().replace('.swf', '');
-  
-  // 1. PADRÕES OFICIAIS HABBO (máxima prioridade)
-  // Padrão: categoria_numero_qualquercoisa.swf
-  const officialMatch = cleanName.match(/^(hd|hr|ha|ea|fa|ch|cc|ca|cp|lg|sh|wa)[-_](\d+)/);
-  if (officialMatch) {
-    console.log(`🎯 [Parser] Padrão oficial detectado: ${filename} -> ${officialMatch[1]}`);
-    return officialMatch[1];
-  }
-  
-  // 2. Verificar prefixos específicos PRIORITÁRIOS
-  const prefixMap: Record<string, string> = {
-    // Cabeça e rosto (prioridade alta)
-    'hd_': 'hd', 'face_': 'hd', 'head_': 'hd',
-    'hr_': 'hr', 'hair_': 'hr', 'hairstyle_': 'hr',
-    'ha_': 'ha', 'hat_': 'ha', 'cap_': 'ha', 'helmet_': 'ha',
-    'ea_': 'ea', 'eye_': 'ea', 'glasses_': 'ea', 'sunglass_': 'ea',
-    'fa_': 'fa', 'mask_': 'fa', 'beard_': 'fa', 'moustache_': 'fa',
-    
-    // Corpo e roupas (prioridade alta)
-    'ch_': 'ch', 'shirt_': 'ch', 'top_': 'ch', 'blouse_': 'ch',
-    'cc_': 'cc', 'jacket_': 'cc', 'coat_': 'cc', 'sweater_': 'cc',
-    'ca_': 'ca', 'acc_chest_': 'ca', 'necklace_': 'ca', 'badge_': 'ca',
-    'cp_': 'cp', 'print_': 'cp', 'pattern_': 'cp',
-    
-    // Pernas e pés (prioridade alta)
-    'lg_': 'lg', 'trouser_': 'lg', 'pant_': 'lg', 'jeans_': 'lg',
-    'sh_': 'sh', 'shoe_': 'sh', 'boot_': 'sh', 'sneaker_': 'sh',
-    'wa_': 'wa', 'waist_': 'wa', 'belt_': 'wa'
-  };
-  
-  for (const [prefix, category] of Object.entries(prefixMap)) {
-    if (cleanName.startsWith(prefix)) {
-      console.log(`🎯 [Parser] Prefixo detectado: ${filename} -> ${category} (via ${prefix})`);
-      return category;
-    }
-  }
-  
-  // 3. Detectar EFEITOS ESPECIAIS (prioridade específica)
-  const effectKeywords = [
-    'effect', 'ghost', 'freeze', 'butterfly', 'fire', 'ice', 'spark', 'glow', 'aura',
-    'magic', 'flame', 'frost', 'lightning', 'energy', 'shadow', 'light', 'beam',
-    'particle', 'smoke', 'mist', 'wind', 'water', 'earth', 'air', 'spirit', 'portal',
-    'rainbow', 'star', 'moon', 'sun', 'crystal', 'gem', 'diamond', 'gold', 'fx_'
-  ];
-  
-  if (effectKeywords.some(keyword => cleanName.includes(keyword))) {
-    console.log(`🎯 [Parser] Efeito detectado: ${filename} -> fx`);
-    return 'fx';
-  }
-  
-  // 4. Detectar PETS (prioridade específica)
-  const petKeywords = [
-    'dog', 'cat', 'horse', 'pig', 'bear', 'pet', 'animal', 'bird', 'fish',
-    'rabbit', 'hamster', 'dragon', 'lion', 'tiger', 'wolf', 'fox', 'deer',
-    'sheep', 'cow', 'duck', 'chicken', 'parrot', 'snake', 'turtle', 'monkey',
-    'elephant', 'panda', 'koala', 'penguin', 'owl', 'eagle', 'shark', 'pet_'
-  ];
-  
-  if (petKeywords.some(keyword => cleanName.includes(keyword))) {
-    console.log(`🎯 [Parser] Pet detectado: ${filename} -> pets`);
-    return 'pets';
-  }
-  
-  // 5. Detectar DANÇAS (prioridade específica)
-  const danceKeywords = [
-    'dance', 'dancing', 'choreography', 'move', 'step', 'rhythm', 'ballet',
-    'tango', 'salsa', 'waltz', 'swing', 'disco', 'breakdance', 'hiphop', 'dance_'
-  ];
-  
-  if (danceKeywords.some(keyword => cleanName.includes(keyword))) {
-    console.log(`🎯 [Parser] Dança detectada: ${filename} -> dance`);
-    return 'dance';
-  }
-  
-  // 6. Padrões por contexto (keywords específicas)
-  if (cleanName.includes('hair') || cleanName.match(/h\d+/)) return 'hr';
-  if (cleanName.includes('hat') || cleanName.includes('crown')) return 'ha';
-  if (cleanName.includes('shirt') || cleanName.includes('top')) return 'ch';
-  if (cleanName.includes('jacket') || cleanName.includes('coat')) return 'cc';
-  if (cleanName.includes('trouser') || cleanName.includes('pant')) return 'lg';
-  if (cleanName.includes('shoe') || cleanName.includes('boot')) return 'sh';
-  if (cleanName.includes('glass') || cleanName.includes('spectacle')) return 'ea';
-  if (cleanName.includes('mask') || cleanName.includes('mustache')) return 'fa';
-  if (cleanName.includes('belt') || cleanName.includes('sash')) return 'wa';
-  if (cleanName.includes('necklace') || cleanName.includes('medal')) return 'ca';
-  
-  // 7. Detectar por números de categoria finais (padrão Habbo legado)
-  const categoryPatterns = [
-    { pattern: /hd[-_]?\d+/, category: 'hd' },
-    { pattern: /hr[-_]?\d+/, category: 'hr' },
-    { pattern: /ha[-_]?\d+/, category: 'ha' },
-    { pattern: /ea[-_]?\d+/, category: 'ea' },
-    { pattern: /fa[-_]?\d+/, category: 'fa' },
-    { pattern: /ch[-_]?\d+/, category: 'ch' },
-    { pattern: /cc[-_]?\d+/, category: 'cc' },
-    { pattern: /ca[-_]?\d+/, category: 'ca' },
-    { pattern: /cp[-_]?\d+/, category: 'cp' },
-    { pattern: /lg[-_]?\d+/, category: 'lg' },
-    { pattern: /sh[-_]?\d+/, category: 'sh' },
-    { pattern: /wa[-_]?\d+/, category: 'wa' }
-  ];
-  
-  for (const { pattern, category } of categoryPatterns) {
-    if (pattern.test(cleanName)) {
-      console.log(`🎯 [Parser] Padrão numérico detectado: ${filename} -> ${category}`);
-      return category;
-    }
-  }
-  
-  console.log(`⚠️ [Parser] Fallback para: ${filename} -> ch (camiseta)`);
-  return 'ch'; // Default fallback mais inteligente (camiseta)
-};
-
-// Parser de gênero MELHORADO
-const parseAssetGender = (filename: string): 'M' | 'F' | 'U' => {
-  const lowerName = filename.toLowerCase();
-  
-  // Padrões específicos
-  if (lowerName.includes('_f_') || lowerName.includes('female') || lowerName.includes('woman')) return 'F';
-  if (lowerName.includes('_m_') || lowerName.includes('male') || lowerName.includes('man')) return 'M';
-  
-  // Lógica contextual EXPANDIDA
-  const feminineKeywords = [
-    'dress', 'skirt', 'heels', 'lipstick', 'earrings', 'bra', 'bikini',
-    'princess', 'queen', 'lady', 'girl', 'feminine', 'pink', 'cute', 'bow'
-  ];
-  
-  const masculineKeywords = [
-    'beard', 'moustache', 'mustache', 'goatee', 'tie', 'suit', 'tuxedo',
-    'king', 'prince', 'masculine', 'tough', 'rugged', 'strong'
-  ];
-  
-  if (feminineKeywords.some(keyword => lowerName.includes(keyword))) return 'F';
-  if (masculineKeywords.some(keyword => lowerName.includes(keyword))) return 'M';
-  
+const parseAssetGender = (swfName: string): 'M' | 'F' | 'U' => {
+  const lowerSwf = swfName.toLowerCase();
+  if (lowerSwf.includes('_f_') || lowerSwf.includes('female') || lowerSwf.includes('_girl_')) return 'F';
+  if (lowerSwf.includes('_m_') || lowerSwf.includes('male') || lowerSwf.includes('_boy_')) return 'M';
   return 'U';
 };
 
-// Extrair figura ID OTIMIZADO
-const parseAssetFigureId = (filename: string): string => {
-  if (!filename) return '1';
-  
-  const patterns = [
-    /[-_](\d{3,4})[-_\.]/,
-    /(\d{3,4})$/,
-    /[-_](\d{2,3})[-_]/,
-    /(\d+)/g
-  ];
-  
-  for (const pattern of patterns) {
-    const matches = filename.match(pattern);
-    if (matches) {
-      const numbers = matches.filter(m => m && m.length >= 2);
-      if (numbers.length > 0) {
-        return numbers.sort((a, b) => parseInt(b) - parseInt(a))[0];
-      }
-    }
+const parseAssetFigureId = (swfName: string): string => {
+  // Extrair números do nome do arquivo de forma mais inteligente
+  const numberMatches = swfName.match(/(\d+)/g);
+  if (numberMatches && numberMatches.length > 0) {
+    // Pegar o maior número (geralmente é o ID do item)
+    return numberMatches.sort((a, b) => parseInt(b) - parseInt(a))[0];
   }
   
+  // Gerar ID determinístico baseado no hash do nome
   let hash = 0;
-  for (let i = 0; i < filename.length; i++) {
-    const char = filename.charCodeAt(i);
+  for (let i = 0; i < swfName.length; i++) {
+    const char = swfName.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  return Math.abs(hash % 9999).toString().padStart(3, '0');
+  return Math.abs(hash % 9999).toString();
 };
 
-// Cores por categoria CORRIGIDAS (usando paletas oficiais Habbo)
+const parseAssetRarity = (swfName: string): 'nft' | 'hc' | 'ltd' | 'rare' | 'common' => {
+  const lowerSwf = swfName.toLowerCase();
+  if (lowerSwf.includes('nft')) return 'nft';
+  if (lowerSwf.includes('hc') || lowerSwf.includes('club')) return 'hc';
+  if (lowerSwf.includes('ltd') || lowerSwf.includes('limited')) return 'ltd';
+  if (lowerSwf.includes('rare') || lowerSwf.includes('exclusive')) return 'rare';
+  return 'common';
+};
+
 const generateCategoryColors = (category: string): string[] => {
   const colorSets: Record<string, string[]> = {
-    // PALETA 1 - PELE (apenas para hd)
-    'hd': ['1', '2', '3', '4', '5', '6', '7'],
-    
-    // PALETA 2 - CABELO (apenas para hr)  
-    'hr': ['1', '2', '45', '61', '92', '104', '100', '143', '38', '39', '73'],
-    
-    // PALETA 3 - ROUPAS (todas as outras categorias)
-    'ha': ['1', '61', '92', '100', '102', '143', '38', '39', '73', '91'],
-    'ea': ['1', '2', '3', '4', '61', '92', '100'],
-    'fa': ['1', '2', '3', '61', '92', '100', '143'],
-    'ch': ['1', '61', '92', '100', '101', '102', '143', '38', '39', '73', '91'],
-    'cc': ['1', '2', '61', '92', '100', '102', '143', '38'],
-    'ca': ['1', '61', '92', '100', '143', '38', '39'],
-    'cp': ['1', '2', '3', '4', '5', '61', '92', '100'],
-    'lg': ['1', '2', '61', '92', '100', '101', '102', '143'],
-    'sh': ['1', '2', '61', '92', '100', '143', '38'],
-    'wa': ['1', '61', '92', '100', '143'],
-    'fx': ['1', '61', '92', '100', '143', '38', '39'],
-    'pets': ['1', '45', '61', '92', '38', '39'],
-    'dance': ['1', '61', '92', '100']
+    'hd': ['1', '2', '3', '4', '5', '6', '7'], // Tons de pele
+    'hr': ['1', '2', '3', '4', '5', '45', '44', '43', '42', '41', '61', '92', '100', '101', '102'], // Cabelos
+    'ch': ['1', '2', '3', '4', '5', '61', '92', '100', '101', '102', '104', '105'], // Roupas
+    'cc': ['1', '2', '3', '4', '61', '92', '100', '101'],
+    'lg': ['1', '2', '3', '4', '5', '61', '92', '100', '101'],
+    'sh': ['1', '2', '3', '4', '61', '92', '100'],
+    'ha': ['1', '2', '3', '4', '61', '92', '100'],
+    'ea': ['1', '2', '3', '4', '61', '92'],
+    'fa': ['1', '2', '3', '4'],
+    'ca': ['1', '61', '92', '100', '101'],
+    'cp': ['1', '2', '3', '4', '5'],
+    'wa': ['1', '61', '92', '100']
   };
   
   return colorSets[category] || ['1', '2', '3', '4', '5'];
 };
 
-// Detectar raridade INTELIGENTE
-const parseAssetRarity = (filename: string): 'nft' | 'hc' | 'ltd' | 'rare' | 'common' => {
-  const lowerName = filename.toLowerCase();
-  
-  if (lowerName.includes('nft') || lowerName.includes('crypto')) return 'nft';
-  if (lowerName.includes('ltd') || lowerName.includes('limited') || lowerName.includes('exclusive')) return 'ltd';
-  if (lowerName.includes('hc') || lowerName.includes('club') || lowerName.includes('premium')) return 'hc';
-  if (lowerName.includes('rare') || lowerName.includes('special') || lowerName.includes('unique')) return 'rare';
-  
-  // Detectar por ID alto
-  const figureId = parseInt(parseAssetFigureId(filename));
-  if (figureId > 8000) return 'rare';
-  if (figureId > 6000) return 'hc';
-  
-  return 'common';
+const generateIsolatedThumbnail = (category: string, figureId: string, color: string, gender: string): string => {
+  // Gerar thumbnail isolada focando na parte específica
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${figureId}-${color}&gender=${gender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
 };
 
-// Thumbnail isolada OTIMIZADA
-const generateIsolatedThumbnail = (category: string, figureId: string, colorId: string, gender: string): string => {
-  const baseConfigurations: Record<string, string> = {
-    'hd': `hd-180-1`,
-    'hr': `hd-180-1`,
-    'ha': `hd-180-1.hr-828-45`,
-    'ea': `hd-180-1.hr-828-45`,
-    'fa': `hd-180-1.hr-828-45`,
-    'ch': `hd-180-1.hr-828-45`,
-    'cc': `hd-180-1.hr-828-45.ch-665-92`,
-    'ca': `hd-180-1.hr-828-45.ch-665-92`,
-    'cp': `hd-180-1.hr-828-45.ch-665-92`,
-    'lg': `hd-180-1.hr-828-45.ch-665-92`,
-    'sh': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
-    'wa': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
-    'fx': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
-    'pets': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`,
-    'dance': `hd-180-1.hr-828-45.ch-665-92.lg-700-1`
-  };
-  
-  const baseAvatar = baseConfigurations[category] || baseConfigurations['ch'];
-  const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
-  const actionParams = category === 'dance' ? 'action=dance&gesture=sml' : 'action=std&gesture=std';
-  
-  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&size=l&direction=2&head_direction=3&${actionParams}`;
-};
-
-// Nome formatado INTELIGENTE
-const formatAssetName = (filename: string, category: string): string => {
-  const categoryNames: Record<string, string> = {
-    'hd': 'Rosto', 'hr': 'Cabelo', 'ha': 'Chapéu', 'ea': 'Óculos', 'fa': 'Máscara',
-    'ch': 'Camiseta', 'cc': 'Casaco', 'ca': 'Acessório', 'cp': 'Estampa',
-    'lg': 'Calça', 'sh': 'Sapato', 'wa': 'Cintura',
-    'fx': 'Efeito', 'pets': 'Pet', 'dance': 'Dança'
-  };
-  
-  const categoryName = categoryNames[category] || 'Item';
-  let namePart = filename
-    .replace(/^[a-z_]+_[MFU]?_?/, '')
-    .replace('.swf', '')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase())
-    .replace(/^(Acc |Effect |Pet |Dance )/i, '')
-    .trim();
-  
-  const figureId = parseAssetFigureId(filename);
-  const rarity = parseAssetRarity(filename);
-  const rarityTag = rarity !== 'common' ? ` (${rarity.toUpperCase()})` : '';
-  
-  return `${categoryName} ${namePart || `#${figureId}`}${rarityTag}`.trim();
-};
-
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { 
-      limit = 3000, 
-      category = 'all', 
-      search = '', 
-      gender = 'M', 
-      rarity = 'all' 
-    } = await req.json().catch(() => ({}));
-    
-    console.log(`🌐 [EnhancedFlashAssetsV2] Processando ${limit} assets com sistema CORRIGIDO`);
-    console.log(`📊 Filtros: categoria=${category}, gênero=${gender}, raridade=${rarity}, busca="${search}"`);
-    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Listar arquivos do storage
+    const { limit = 3000, search = '', gender = 'M', rarity = 'all' } = await req.json();
+
+    console.log('🌐 [FlashAssetsClothing] Buscando assets com parâmetros:', { 
+      limit, 
+      search, 
+      gender, 
+      rarity,
+      timestamp: new Date().toISOString()
+    });
+
+    // CORREÇÃO: Buscar TODOS os assets SEM filtro de categoria
     const { data: files, error } = await supabase.storage
       .from('flash-assets')
       .list('', {
-        limit: 3000,
+        limit,
         sortBy: { column: 'name', order: 'asc' }
       });
 
     if (error) {
-      throw new Error(`Storage error: ${error.message}`);
+      console.error('❌ [FlashAssetsClothing] Storage error:', error);
+      throw error;
     }
-
-    console.log(`📁 [EnhancedFlashAssetsV2] Encontrados ${files?.length || 0} arquivos no storage`);
 
     if (!files || files.length === 0) {
-      return new Response(
-        JSON.stringify({
-          assets: [],
-          metadata: { 
-            source: 'storage-empty', 
-            count: 0,
-            fetchedAt: new Date().toISOString()
-          }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.warn('⚠️ [FlashAssetsClothing] Nenhum arquivo encontrado no storage');
+      return new Response(JSON.stringify({ 
+        assets: [], 
+        metadata: { total: 0, categories: {}, rarities: {} }
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Processar TODOS os arquivos SWF com categorização CORRIGIDA V3
-    let enhancedAssets: EnhancedFlashAssetV2[] = files
-      .filter(file => file.name.endsWith('.swf'))
-      .map((file, index) => {
-        const filename = file.name.replace('.swf', '');
-        
-        // Sistema CORRIGIDO V3 de categorização com 98%+ precisão
-        const detectedCategory = parseAssetCategory(filename);
-        const detectedGender = parseAssetGender(filename);
-        const figureId = parseAssetFigureId(filename);
-        const detectedRarity = parseAssetRarity(filename);
-        const colors = generateCategoryColors(detectedCategory);
-        const name = formatAssetName(filename, detectedCategory);
-        const thumbnailUrl = generateIsolatedThumbnail(detectedCategory, figureId, '1', detectedGender);
-        
+    console.log(`📁 [FlashAssetsClothing] ${files.length} arquivos encontrados no storage`);
+
+    // Processar e categorizar TODOS os assets
+    const processedAssets = files
+      .filter(file => file.name.endsWith('.swf') || file.name.endsWith('.png'))
+      .map(file => {
+        const swfName = file.name.replace(/\.(swf|png)$/, '');
+        const category = parseAssetCategory(swfName);
+        const detectedGender = parseAssetGender(swfName);
+        const figureId = parseAssetFigureId(swfName);
+        const rarity = parseAssetRarity(swfName);
+
         return {
-          id: `enhanced_v3_${detectedCategory}_${figureId}_${detectedGender}`,
-          name,
-          category: detectedCategory,
+          id: `${category}_${figureId}_${detectedGender}`,
+          name: swfName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          category,
           gender: detectedGender,
           figureId,
-          colors,
-          thumbnailUrl,
-          club: detectedRarity === 'hc' ? 'hc' : 'normal',
-          rarity: detectedRarity,
-          swfName: filename,
-          source: 'flash-assets-enhanced-v3' as const
+          colors: generateCategoryColors(category),
+          thumbnailUrl: generateIsolatedThumbnail(category, figureId, '1', detectedGender === 'U' ? gender : detectedGender),
+          club: rarity === 'hc' ? 'hc' : 'normal',
+          rarity,
+          swfName,
+          source: 'flash-assets-enhanced-v2'
         };
+      })
+      .filter(asset => {
+        // Filtros aplicados APÓS categorização
+        const matchesSearch = !search || asset.name.toLowerCase().includes(search.toLowerCase()) || 
+                             asset.swfName.toLowerCase().includes(search.toLowerCase());
+        const matchesGender = asset.gender === 'U' || asset.gender === gender;
+        const matchesRarity = rarity === 'all' || asset.rarity === rarity;
+        
+        return matchesSearch && matchesGender && matchesRarity;
       });
 
-    // GERAR CATEGORIA ESPECIAL "COR DE PELE" (sk)
-    const skinColorAssets: EnhancedFlashAssetV2[] = [
-      { id: 'sk_1_M', name: 'Pele Clara', category: 'sk', gender: 'M', figureId: '180', colors: ['1'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '1', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_1', source: 'flash-assets-enhanced-v3' },
-      { id: 'sk_2_M', name: 'Pele Média', category: 'sk', gender: 'M', figureId: '180', colors: ['2'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '2', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_2', source: 'flash-assets-enhanced-v3' },
-      { id: 'sk_3_M', name: 'Pele Morena', category: 'sk', gender: 'M', figureId: '180', colors: ['3'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '3', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_3', source: 'flash-assets-enhanced-v3' },
-      { id: 'sk_4_M', name: 'Pele Escura', category: 'sk', gender: 'M', figureId: '180', colors: ['4'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '4', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_4', source: 'flash-assets-enhanced-v3' },
-      { id: 'sk_5_M', name: 'Pele Muito Escura', category: 'sk', gender: 'M', figureId: '180', colors: ['5'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '5', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_5', source: 'flash-assets-enhanced-v3' },
-      { id: 'sk_6_M', name: 'Pele Bronzeada', category: 'sk', gender: 'M', figureId: '180', colors: ['6'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '6', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_6', source: 'flash-assets-enhanced-v3' },
-      { id: 'sk_7_M', name: 'Pele Muito Bronzeada', category: 'sk', gender: 'M', figureId: '180', colors: ['7'], thumbnailUrl: generateIsolatedThumbnail('sk', '180', '7', 'M'), club: 'normal', rarity: 'common', swfName: 'skin_tone_7', source: 'flash-assets-enhanced-v3' }
-    ];
-
-    // Adicionar assets de cor de pele aos assets gerais
-    enhancedAssets = [...enhancedAssets, ...skinColorAssets];
-
-    // Aplicar FILTROS INTELIGENTES
-    if (category !== 'all') {
-      enhancedAssets = enhancedAssets.filter(asset => asset.category === category);
-    }
-
-    if (rarity !== 'all') {
-      enhancedAssets = enhancedAssets.filter(asset => asset.rarity === rarity);
-    }
-
-    if (search) {
-      const searchLower = search.toLowerCase();
-      enhancedAssets = enhancedAssets.filter(asset => 
-        asset.name.toLowerCase().includes(searchLower) ||
-        asset.swfName.toLowerCase().includes(searchLower) ||
-        asset.figureId.toLowerCase().includes(searchLower)
-      );
-    }
-
-    if (gender !== 'M') {
-      enhancedAssets = enhancedAssets.filter(asset => 
-        asset.gender === gender || asset.gender === 'U'
-      );
-    }
-
-    // Aplicar limite
-    enhancedAssets = enhancedAssets.slice(0, limit);
-
-    // Estatísticas COMPLETAS
-    const categoryStats = enhancedAssets.reduce((acc, asset) => {
+    // Calcular estatísticas COMPLETAS
+    const categoryStats = processedAssets.reduce((acc, asset) => {
       acc[asset.category] = (acc[asset.category] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const rarityStats = enhancedAssets.reduce((acc, asset) => {
+    const rarityStats = processedAssets.reduce((acc, asset) => {
       acc[asset.rarity] = (acc[asset.rarity] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    const genderStats = enhancedAssets.reduce((acc, asset) => {
-      acc[asset.gender] = (acc[asset.gender] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const result = {
-      assets: enhancedAssets,
-      metadata: {
-        source: 'flash-assets-enhanced-v3-complete',
-        totalFiles: files.length,
-        processedAssets: enhancedAssets.length,
-        categoryStats,
-        rarityStats,
-        genderStats,
-        appliedFilters: { category, gender, search, rarity },
-        newCategories: ['fx', 'pets', 'dance', 'sk'],
-        totalCategories: Object.keys(categoryStats).length,
-        skinColorSystem: true,
-        featuresImplemented: {
-          intelligentCategorization: true,
-          isolatedThumbnails: true,
-          rarityDetection: true,
-          genderParsing: true,
-          colorOptimization: true,
-          smartFiltering: true,
-          sectionGrouping: true,
-          officialHabboPalettes: true,
-          correctedParsing: true
-        },
-        categorizationAccuracy: '98%+',
-        fetchedAt: new Date().toISOString()
-      }
+    const metadata = {
+      total: processedAssets.length,
+      totalFiles: files.length,
+      categories: categoryStats,
+      rarities: rarityStats,
+      filters: { search, gender, rarity },
+      timestamp: new Date().toISOString()
     };
 
-    console.log(`✅ [EnhancedFlashAssetsV2] Processamento CORRIGIDO concluído:`, {
-      totalAssets: enhancedAssets.length,
+    console.log('✅ [FlashAssetsClothing] Processamento concluído:', {
+      totalProcessados: processedAssets.length,
+      totalArquivos: files.length,
       categorias: Object.keys(categoryStats).length,
-      novasCategorias: ['fx', 'pets', 'dance'].filter(cat => categoryStats[cat] > 0),
-      raridades: Object.keys(rarityStats),
-      precisao: '98%+',
-      paletasOficiais: 'Implementadas'
+      estatisticasCategorias: categoryStats,
+      estatisticasRaridade: rarityStats
     });
-    
-    return new Response(
-      JSON.stringify(result),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+
+    return new Response(JSON.stringify({
+      assets: processedAssets,
+      metadata
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
-    console.error('❌ [EnhancedFlashAssetsV2] Erro CORRIGIDO:', error);
-    
-    return new Response(
-      JSON.stringify({
-        assets: [],
-        metadata: {
-          source: 'error-v2-corrected',
-          error: error.message,
-          fetchedAt: new Date().toISOString()
-        }
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
-    );
+    console.error('❌ [FlashAssetsClothing] Error:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      assets: [],
+      metadata: { total: 0, categories: {}, rarities: {} }
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

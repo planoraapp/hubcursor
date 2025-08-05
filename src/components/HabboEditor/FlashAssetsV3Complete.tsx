@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -130,16 +129,21 @@ const FlashAssetsV3Complete = ({
 
   const handleSkinColorSelect = (colorId: string) => {
     console.log('🤏 [FlashAssetsV3Complete] Cor de pele selecionada:', colorId);
+    
     const skinItem = {
-      id: `sk_${colorId}_${selectedGender}`,
-      name: `Pele Cor ${colorId}`,
-      category: 'sk',
+      id: `hd_skin_${colorId}_${selectedGender}`,
+      name: `Tom de Pele ${colorId}`,
+      category: 'hd',
       figureId: '180',
       gender: selectedGender,
       colors: [colorId],
       rarity: 'common',
-      source: 'skin-color-selector'
+      source: 'skin-color-selector',
+      club: 'normal',
+      swfName: `hd_180_skin_${colorId}`,
+      thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-${colorId}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`
     };
+    
     onItemSelect(skinItem, colorId);
   };
 
@@ -299,8 +303,11 @@ const FlashAssetsV3Complete = ({
                   ) : filteredItems.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <div className="text-4xl mb-2">{section.icon}</div>
-                      <p>Nenhum item encontrado</p>
+                      <p>Nenhum item encontrado para categoria "{selectedCategory}"</p>
                       {searchTerm && <p className="text-sm">Tente buscar por outro termo</p>}
+                      <div className="text-xs mt-2 text-gray-400">
+                        Total de itens: {totalItems} | Categoria atual: {selectedCategory}
+                      </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-6 gap-2">
@@ -311,6 +318,7 @@ const FlashAssetsV3Complete = ({
                           className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative ${
                             selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
                           }`}
+                          title={`${item.name} (${item.category})`}
                         >
                           {/* Indicador de raridade compacto */}
                           {item.rarity !== 'common' && (
@@ -320,7 +328,7 @@ const FlashAssetsV3Complete = ({
                             />
                           )}
 
-                          {/* Imagem do item - SEM legendas */}
+                          {/* Imagem do item */}
                           <img
                             src={getItemImageUrl(item)}
                             alt={item.name}

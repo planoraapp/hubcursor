@@ -154,27 +154,30 @@ export const CATEGORY_METADATA = {
   misc: { name: 'Diversos', icon: '📦', color: '#F5F5F5', section: 'special' }
 };
 
-// MAPEAMENTO INTELIGENTE SWF -> CATEGORIA V3
+// SISTEMA DE CATEGORIZAÇÃO V3 - EXPANDIDO E INTELIGENTE
 const SWF_CATEGORY_MAPPING = {
-  // Cabeça
-  'acc_head': 'ha', 'hat': 'ha', 'mask': 'fa', 'hair': 'hr', 'head': 'hd',
-  'acc_eye': 'ea', 'eyepatch': 'fa', 'glasses': 'ea',
+  // CABEÇA E ROSTO - EXPANDIDO
+  'hair': 'hr', 'hr_': 'hr', 'cabelo': 'hr', 'pelo': 'hr',
+  'head': 'hd', 'hd_': 'hd', 'face': 'hd', 'rosto': 'hd', 'cara': 'hd',
+  'hat': 'ha', 'ha_': 'ha', 'cap': 'ha', 'helmet': 'ha', 'crown': 'ha', 'tiara': 'ha', 'chapeu': 'ha',
+  'eye': 'ea', 'ea_': 'ea', 'glass': 'ea', 'sunglass': 'ea', 'monocle': 'ea', 'oculos': 'ea',
+  'mask': 'fa', 'fa_': 'fa', 'beard': 'fa', 'mustache': 'fa', 'bigode': 'fa',
   
-  // Corpo
-  'shirt': 'ch', 'top': 'ch', 'chest': 'ch', 'coat': 'cc', 'jacket': 'cc',
-  'acc_chest': 'ca', 'tie': 'ca', 'necklace': 'ca', 'bag': 'ca',
-  'print': 'cp', 'logo': 'cp',
+  // CORPO E ROUPAS - EXPANDIDO
+  'shirt': 'ch', 'ch_': 'ch', 'top': 'ch', 'blouse': 'ch', 'tshirt': 'ch', 'camisa': 'ch',
+  'coat': 'cc', 'cc_': 'cc', 'jacket': 'cc', 'blazer': 'cc', 'hoodie': 'cc', 'casaco': 'cc',
+  'chest': 'ca', 'ca_': 'ca', 'tie': 'ca', 'necklace': 'ca', 'badge': 'ca', 'medal': 'ca',
+  'print': 'cp', 'cp_': 'cp', 'logo': 'cp', 'emblem': 'cp', 'estampa': 'cp',
   
-  // Pernas e Pés
-  'trousers': 'lg', 'pants': 'lg', 'legs': 'lg', 'skirt': 'lg',
-  'shoes': 'sh', 'boots': 'sh', 'footwear': 'sh',
-  'acc_waist': 'wa', 'belt': 'wa', 'waist': 'wa',
+  // PERNAS E PÉS - EXPANDIDO
+  'trouser': 'lg', 'lg_': 'lg', 'pant': 'lg', 'jean': 'lg', 'short': 'lg', 'skirt': 'lg', 'calca': 'lg',
+  'shoe': 'sh', 'sh_': 'sh', 'boot': 'sh', 'sneaker': 'sh', 'sandal': 'sh', 'heel': 'sh', 'sapato': 'sh',
+  'waist': 'wa', 'wa_': 'wa', 'belt': 'wa', 'chain': 'wa', 'cintura': 'wa',
   
-  // Outros
-  'fx': 'fx', 'effect': 'fx', 'magic': 'fx',
-  'pet': 'pets', 'animal': 'pets',
-  'dance': 'dance', 'emote': 'dance',
-  'misc': 'misc', 'other': 'misc'
+  // ESPECIAIS
+  'effect': 'fx', 'fx_': 'fx', 'magic': 'fx', 'glow': 'fx', 'efeito': 'fx',
+  'pet': 'pets', 'animal': 'pets', 'bicho': 'pets',
+  'dance': 'dance', 'emote': 'dance', 'danca': 'dance'
 };
 
 export const parseAssetCategory = (swfName: string): string => {
@@ -185,7 +188,7 @@ export const parseAssetCategory = (swfName: string): string => {
 
   const lowerSwf = swfName.toLowerCase();
   
-  // 1. Verificar mapeamento direto
+  // 1. MAPEAMENTO DIRETO EXPANDIDO
   for (const [pattern, category] of Object.entries(SWF_CATEGORY_MAPPING)) {
     if (lowerSwf.includes(pattern)) {
       console.log(`✅ [CategoryMapper V3] Mapeamento direto: ${swfName} -> ${category} (padrão: ${pattern})`);
@@ -193,21 +196,47 @@ export const parseAssetCategory = (swfName: string): string => {
     }
   }
   
-  // 2. Análise por padrões específicos
-  if (lowerSwf.includes('hair') || lowerSwf.includes('hr_')) return 'hr';
-  if (lowerSwf.includes('hat') || lowerSwf.includes('ha_')) return 'ha';
-  if (lowerSwf.includes('shirt') || lowerSwf.includes('ch_')) return 'ch';
-  if (lowerSwf.includes('pants') || lowerSwf.includes('lg_')) return 'lg';
-  if (lowerSwf.includes('shoe') || lowerSwf.includes('sh_')) return 'sh';
-  if (lowerSwf.includes('coat') || lowerSwf.includes('cc_')) return 'cc';
-  if (lowerSwf.includes('eye') || lowerSwf.includes('ea_')) return 'ea';
-  if (lowerSwf.includes('face') || lowerSwf.includes('fa_')) return 'fa';
-  if (lowerSwf.includes('chest') || lowerSwf.includes('ca_')) return 'ca';
-  if (lowerSwf.includes('waist') || lowerSwf.includes('wa_')) return 'wa';
-  if (lowerSwf.includes('print') || lowerSwf.includes('cp_')) return 'cp';
-  if (lowerSwf.includes('effect') || lowerSwf.includes('fx_')) return 'fx';
+  // 2. PADRÕES REGEX ESPECÍFICOS
+  if (lowerSwf.match(/h[a-z]*r[0-9]/) || lowerSwf.match(/hr[0-9]/)) return 'hr';
+  if (lowerSwf.match(/hd[0-9]/) || lowerSwf.match(/head[0-9]/)) return 'hd';
+  if (lowerSwf.match(/ha[0-9]/) || lowerSwf.match(/hat[0-9]/)) return 'ha';
+  if (lowerSwf.match(/ch[0-9]/) || lowerSwf.match(/shirt[0-9]/)) return 'ch';
+  if (lowerSwf.match(/lg[0-9]/) || lowerSwf.match(/leg[0-9]/)) return 'lg';
+  if (lowerSwf.match(/sh[0-9]/) || lowerSwf.match(/shoe[0-9]/)) return 'sh';
   
-  // 3. Fallback para categoria genérica
+  // 3. ANÁLISE DE PREFIXOS COMUNS
+  if (lowerSwf.match(/^[a-z]{2,3}_[0-9]/)) {
+    const prefix = lowerSwf.substring(0, 2);
+    const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa', 'fx'];
+    if (validCategories.includes(prefix)) {
+      console.log(`✅ [CategoryMapper V3] Prefixo identificado: ${swfName} -> ${prefix}`);
+      return prefix;
+    }
+  }
+  
+  // 4. ANÁLISE CONTEXTUAL POR PALAVRAS-CHAVE
+  const contextAnalysis = [
+    { keywords: ['male', 'female', 'boy', 'girl', 'man', 'woman'], category: 'ch' },
+    { keywords: ['color', 'colour', 'skin', 'tone'], category: 'hd' },
+    { keywords: ['long', 'short', 'curly', 'straight'], category: 'hr' },
+    { keywords: ['formal', 'casual', 'sport'], category: 'ch' },
+    { keywords: ['winter', 'summer', 'warm', 'cold'], category: 'cc' }
+  ];
+  
+  for (const analysis of contextAnalysis) {
+    if (analysis.keywords.some(keyword => lowerSwf.includes(keyword))) {
+      console.log(`✅ [CategoryMapper V3] Análise contextual: ${swfName} -> ${analysis.category}`);
+      return analysis.category;
+    }
+  }
+  
+  // 5. FALLBACK INTELIGENTE - preferir roupas comuns
+  if (lowerSwf.includes('_m_') || lowerSwf.includes('_f_') || lowerSwf.includes('_u_')) {
+    console.log(`⚠️ [CategoryMapper V3] Fallback por gênero: ${swfName} -> ch`);
+    return 'ch';
+  }
+  
+  // 6. Fallback final
   console.warn(`⚠️ [CategoryMapper V3] Categoria não identificada para: ${swfName}, usando 'misc'`);
   return 'misc';
 };
@@ -263,4 +292,24 @@ export const getRarityColor = (rarity: string) => {
     case 'rare': return '#28a745'; // Verde
     default: return '#6c757d'; // Cinza
   }
+};
+
+// NOVO: Sistema de validação de assets
+export const validateAsset = (swfName: string, detectedCategory: string): boolean => {
+  // Verificar se a categorização faz sentido
+  const validationRules = {
+    'hr': ['hair', 'hr_', 'cabelo'],
+    'hd': ['head', 'hd_', 'face', 'rosto'],
+    'ha': ['hat', 'ha_', 'cap', 'helmet'],
+    'ch': ['shirt', 'ch_', 'top', 'blouse'],
+    'lg': ['trouser', 'lg_', 'pant', 'jean'],
+    'sh': ['shoe', 'sh_', 'boot', 'sneaker']
+  };
+  
+  const rules = validationRules[detectedCategory as keyof typeof validationRules];
+  if (rules) {
+    return rules.some(rule => swfName.toLowerCase().includes(rule));
+  }
+  
+  return true; // Para categorias sem regras específicas
 };
