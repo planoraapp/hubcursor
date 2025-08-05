@@ -152,8 +152,21 @@ export const CATEGORY_METADATA = {
   vehicles: { name: 'Veículos', icon: '🚗', color: '#FFE6F0', section: 'others' }
 };
 
-// SISTEMA DE CATEGORIZAÇÃO V3 - MELHORADO COM NOVOS PADRÕES
+// SISTEMA DE CATEGORIZAÇÃO V3 - CORRIGIDO COM PRECEDÊNCIA ESPECÍFICA
 const SWF_CATEGORY_MAPPING = {
+  // === MAPEAMENTO ESPECÍFICO COM PRIORIDADE ===
+  // ACESSÓRIOS ESPECÍFICOS (devem vir PRIMEIRO)
+  'acc_chest_': 'ca', 'acc_chest': 'ca',
+  'necklace': 'ca', 'backpack': 'ca', 'tie': 'ca', 'badge': 'ca', 'medal': 'ca',
+  
+  'acc_face_': 'fa', 'acc_face': 'fa', 'face_u': 'fa',
+  
+  'acc_head_': 'fa', 'acc_head': 'fa', // Padrão geral para acessórios de cabeça
+  
+  'acc_waist_': 'wa', 'acc_waist': 'wa',
+  'acc_eye_': 'ea', 'acc_eye': 'ea',
+  'acc_print_': 'cp', 'acc_print': 'cp',
+
   // CABEÇA E ROSTO - EXPANDIDO
   'hair': 'hr', 'hr_': 'hr', 'cabelo': 'hr', 'pelo': 'hr',
   'head': 'hd', 'hd_': 'hd', 'face': 'hd', 'rosto': 'hd', 'cara': 'hd',
@@ -164,7 +177,7 @@ const SWF_CATEGORY_MAPPING = {
   // CORPO E ROUPAS - EXPANDIDO
   'shirt': 'ch', 'ch_': 'ch', 'top': 'ch', 'blouse': 'ch', 'tshirt': 'ch', 'camisa': 'ch',
   'coat': 'cc', 'cc_': 'cc', 'jacket': 'cc', 'blazer': 'cc', 'hoodie': 'cc', 'casaco': 'cc',
-  'chest': 'ca', 'ca_': 'ca', 'tie': 'ca', 'necklace': 'ca', 'badge': 'ca', 'medal': 'ca',
+  'chest': 'ca', 'ca_': 'ca',
   'print': 'cp', 'cp_': 'cp', 'logo': 'cp', 'emblem': 'cp', 'estampa': 'cp',
   
   // PERNAS E PÉS - EXPANDIDO
@@ -177,16 +190,19 @@ const SWF_CATEGORY_MAPPING = {
   'cow': 'pets', 'croco': 'pets', 'duck': 'pets', 'gnome': 'pets', 'haloompa': 'pets',
   'bunny': 'pets', 'easter': 'pets', 'animal': 'pets', 'pet': 'pets',
   
-  // EFEITOS ESPECIAIS - NOVO  
+  // EFEITOS ESPECIAIS - CORRIGIDO
   'effect': 'fx', 'fx_': 'fx', 'magic': 'fx', 'glow': 'fx',
   'ghost': 'fx', 'flies': 'fx', 'fireflies': 'fx', 'feathers': 'fx',
   'freeze': 'fx', 'hide': 'fx', 'holo': 'fx', 'wings': 'fx',
   'microphone': 'fx', 'chupachups': 'fx', 'gun': 'fx', 'hammer': 'fx',
   'spotlight': 'fx', 'torch': 'fx', 'candle': 'fx', 'crystal': 'fx',
+  'executioner': 'fx', 'despicable': 'fx', 'disney': 'fx', 'cyberpunk': 'fx',
+  'nft': 'fx', 'coolcats': 'fx', 'bayc': 'fx',
   
   // VEÍCULOS - NOVO
   'scooter': 'vehicles', 'car': 'vehicles', 'ambulance': 'vehicles',
-  'police': 'vehicles', 'airplane': 'vehicles', 'ffscooter': 'vehicles'
+  'police': 'vehicles', 'airplane': 'vehicles', 'ffscooter': 'vehicles',
+  'vehicle': 'vehicles', 'transport': 'vehicles'
 };
 
 export const parseAssetCategory = (swfName: string): string => {
@@ -196,60 +212,118 @@ export const parseAssetCategory = (swfName: string): string => {
   }
 
   const lowerSwf = swfName.toLowerCase();
+  console.log(`🔍 [CategoryMapper V3] Analyzing: ${swfName}`);
   
-  // 1. MAPEAMENTO DIRETO EXPANDIDO
+  // 1. MAPEAMENTO DIRETO ESPECÍFICO COM PRIORIDADE
+  // Verificar acessórios específicos PRIMEIRO
+  if (lowerSwf.includes('acc_chest') || (lowerSwf.includes('necklace') || lowerSwf.includes('backpack') || lowerSwf.includes('tie') || lowerSwf.includes('badge') || lowerSwf.includes('medal'))) {
+    console.log(`✅ [CategoryMapper V3] Chest accessory: ${swfName} -> ca`);
+    return 'ca';
+  }
+  
+  if (lowerSwf.includes('acc_face') || lowerSwf.includes('face_u')) {
+    console.log(`✅ [CategoryMapper V3] Face accessory: ${swfName} -> fa`);
+    return 'fa';
+  }
+  
+  if (lowerSwf.includes('acc_head')) {
+    // Verificar se é chapéu ou acessório facial
+    if (lowerSwf.includes('hat') || lowerSwf.includes('cap') || lowerSwf.includes('helmet') || lowerSwf.includes('crown')) {
+      console.log(`✅ [CategoryMapper V3] Head hat: ${swfName} -> ha`);
+      return 'ha';
+    } else {
+      console.log(`✅ [CategoryMapper V3] Head accessory: ${swfName} -> fa`);
+      return 'fa';
+    }
+  }
+  
+  if (lowerSwf.includes('acc_waist')) {
+    console.log(`✅ [CategoryMapper V3] Waist accessory: ${swfName} -> wa`);
+    return 'wa';
+  }
+  
+  if (lowerSwf.includes('acc_eye')) {
+    console.log(`✅ [CategoryMapper V3] Eye accessory: ${swfName} -> ea`);
+    return 'ea';
+  }
+  
+  if (lowerSwf.includes('acc_print')) {
+    console.log(`✅ [CategoryMapper V3] Print accessory: ${swfName} -> cp`);
+    return 'cp';
+  }
+
+  // 2. MAPEAMENTO DIRETO EXPANDIDO (resto das regras)
   for (const [pattern, category] of Object.entries(SWF_CATEGORY_MAPPING)) {
     if (lowerSwf.includes(pattern)) {
-      console.log(`✅ [CategoryMapper V3] Mapeamento direto: ${swfName} -> ${category} (padrão: ${pattern})`);
+      console.log(`✅ [CategoryMapper V3] Pattern match: ${swfName} -> ${category} (pattern: ${pattern})`);
       return category;
     }
   }
   
-  // 2. PADRÕES REGEX ESPECÍFICOS
-  if (lowerSwf.match(/h[a-z]*r[0-9]/) || lowerSwf.match(/hr[0-9]/)) return 'hr';
-  if (lowerSwf.match(/hd[0-9]/) || lowerSwf.match(/head[0-9]/)) return 'hd';
-  if (lowerSwf.match(/ha[0-9]/) || lowerSwf.match(/hat[0-9]/)) return 'ha';
-  if (lowerSwf.match(/ch[0-9]/) || lowerSwf.match(/shirt[0-9]/)) return 'ch';
-  if (lowerSwf.match(/lg[0-9]/) || lowerSwf.match(/leg[0-9]/)) return 'lg';
-  if (lowerSwf.match(/sh[0-9]/) || lowerSwf.match(/shoe[0-9]/)) return 'sh';
+  // 3. PADRÕES REGEX ESPECÍFICOS
+  if (lowerSwf.match(/h[a-z]*r[0-9]/) || lowerSwf.match(/hr[0-9]/)) {
+    console.log(`✅ [CategoryMapper V3] Hair regex: ${swfName} -> hr`);
+    return 'hr';
+  }
+  if (lowerSwf.match(/hd[0-9]/) || lowerSwf.match(/head[0-9]/)) {
+    console.log(`✅ [CategoryMapper V3] Head regex: ${swfName} -> hd`);
+    return 'hd';
+  }
+  if (lowerSwf.match(/ha[0-9]/) || lowerSwf.match(/hat[0-9]/)) {
+    console.log(`✅ [CategoryMapper V3] Hat regex: ${swfName} -> ha`);
+    return 'ha';
+  }
+  if (lowerSwf.match(/ch[0-9]/) || lowerSwf.match(/shirt[0-9]/)) {
+    console.log(`✅ [CategoryMapper V3] Shirt regex: ${swfName} -> ch`);
+    return 'ch';
+  }
+  if (lowerSwf.match(/lg[0-9]/) || lowerSwf.match(/leg[0-9]/)) {
+    console.log(`✅ [CategoryMapper V3] Leg regex: ${swfName} -> lg`);
+    return 'lg';
+  }
+  if (lowerSwf.match(/sh[0-9]/) || lowerSwf.match(/shoe[0-9]/)) {
+    console.log(`✅ [CategoryMapper V3] Shoe regex: ${swfName} -> sh`);
+    return 'sh';
+  }
   
-  // 3. ANÁLISE DE PREFIXOS COMUNS
+  // 4. ANÁLISE DE PREFIXOS COMUNS
   if (lowerSwf.match(/^[a-z]{2,3}_[0-9]/)) {
     const prefix = lowerSwf.substring(0, 2);
     const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa'];
     if (validCategories.includes(prefix)) {
-      console.log(`✅ [CategoryMapper V3] Prefixo identificado: ${swfName} -> ${prefix}`);
+      console.log(`✅ [CategoryMapper V3] Prefix match: ${swfName} -> ${prefix}`);
       return prefix;
     }
   }
   
-  // 4. ANÁLISE CONTEXTUAL POR PALAVRAS-CHAVE MELHORADA
+  // 5. ANÁLISE CONTEXTUAL POR PALAVRAS-CHAVE MELHORADA
   const contextAnalysis = [
-    { keywords: ['nft', 'cyberpunk', 'coolcats', 'bayc'], category: 'fx' },
+    { keywords: ['nft', 'cyberpunk', 'coolcats', 'bayc', 'executioner', 'despicable', 'disney'], category: 'fx' },
     { keywords: ['male', 'female', 'boy', 'girl', 'man', 'woman'], category: 'ch' },
     { keywords: ['color', 'colour', 'skin', 'tone'], category: 'hd' },
     { keywords: ['long', 'short', 'curly', 'straight'], category: 'hr' },
     { keywords: ['formal', 'casual', 'sport'], category: 'ch' },
     { keywords: ['winter', 'summer', 'warm', 'cold'], category: 'cc' },
     { keywords: ['viking', 'knight', 'warrior', 'clown', 'goblin'], category: 'fa' },
-    { keywords: ['executioner', 'despicable', 'disney'], category: 'fx' }
+    { keywords: ['scooter', 'car', 'vehicle', 'transport', 'ambulance', 'police', 'airplane'], category: 'vehicles' },
+    { keywords: ['pet', 'animal', 'dog', 'cat', 'bear', 'frog', 'chicken', 'cow'], category: 'pets' }
   ];
   
   for (const analysis of contextAnalysis) {
     if (analysis.keywords.some(keyword => lowerSwf.includes(keyword))) {
-      console.log(`✅ [CategoryMapper V3] Análise contextual: ${swfName} -> ${analysis.category}`);
+      console.log(`✅ [CategoryMapper V3] Context analysis: ${swfName} -> ${analysis.category}`);
       return analysis.category;
     }
   }
   
-  // 5. FALLBACK INTELIGENTE - preferir efeitos para itens não reconhecidos
+  // 6. FALLBACK INTELIGENTE - preferir efeitos para itens não reconhecidos
   if (lowerSwf.includes('_m_') || lowerSwf.includes('_f_') || lowerSwf.includes('_u_')) {
-    console.log(`⚠️ [CategoryMapper V3] Fallback por gênero: ${swfName} -> fx`);
+    console.log(`⚠️ [CategoryMapper V3] Gender fallback: ${swfName} -> fx`);
     return 'fx';
   }
   
-  // 6. Fallback final para efeitos
-  console.warn(`⚠️ [CategoryMapper V3] Categoria não identificada para: ${swfName}, usando 'fx'`);
+  // 7. Fallback final para efeitos
+  console.warn(`⚠️ [CategoryMapper V3] No category found for: ${swfName}, using 'fx'`);
   return 'fx';
 };
 
