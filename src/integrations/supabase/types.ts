@@ -85,6 +85,36 @@ export type Database = {
         }
         Relationships: []
       }
+      guestbook_entries: {
+        Row: {
+          author_habbo_name: string
+          author_user_id: string | null
+          created_at: string
+          home_owner_user_id: string
+          id: string
+          message: string
+          moderation_status: string
+        }
+        Insert: {
+          author_habbo_name: string
+          author_user_id?: string | null
+          created_at?: string
+          home_owner_user_id: string
+          id?: string
+          message: string
+          moderation_status?: string
+        }
+        Update: {
+          author_habbo_name?: string
+          author_user_id?: string | null
+          created_at?: string
+          home_owner_user_id?: string
+          id?: string
+          message?: string
+          moderation_status?: string
+        }
+        Relationships: []
+      }
       habbo_accounts: {
         Row: {
           created_at: string
@@ -433,6 +463,132 @@ export type Database = {
           follower_habbo_name?: string
           follower_user_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      user_home_backgrounds: {
+        Row: {
+          background_type: string
+          background_value: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background_type?: string
+          background_value?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background_type?: string
+          background_value?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_home_layouts: {
+        Row: {
+          created_at: string
+          height: number | null
+          id: string
+          is_visible: boolean
+          updated_at: string
+          user_id: string
+          widget_id: string
+          width: number | null
+          x: number
+          y: number
+          z_index: number
+        }
+        Insert: {
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          user_id: string
+          widget_id: string
+          width?: number | null
+          x?: number
+          y?: number
+          z_index?: number
+        }
+        Update: {
+          created_at?: string
+          height?: number | null
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          user_id?: string
+          widget_id?: string
+          width?: number | null
+          x?: number
+          y?: number
+          z_index?: number
+        }
+        Relationships: []
+      }
+      user_home_ratings: {
+        Row: {
+          created_at: string
+          home_owner_user_id: string
+          id: string
+          rating: number
+          rating_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          home_owner_user_id: string
+          id?: string
+          rating: number
+          rating_user_id: string
+        }
+        Update: {
+          created_at?: string
+          home_owner_user_id?: string
+          id?: string
+          rating?: number
+          rating_user_id?: string
+        }
+        Relationships: []
+      }
+      user_stickers: {
+        Row: {
+          created_at: string
+          id: string
+          sticker_id: string
+          sticker_src: string
+          user_id: string
+          x: number
+          y: number
+          z_index: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sticker_id: string
+          sticker_src: string
+          user_id: string
+          x?: number
+          y?: number
+          z_index?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sticker_id?: string
+          sticker_src?: string
+          user_id?: string
+          x?: number
+          y?: number
+          z_index?: number
         }
         Relationships: []
       }

@@ -1,37 +1,40 @@
 
-import { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from './hooks/useAuth';
+import Index from './pages/Index';
+import Profile from './pages/Profile';
+import ProfileEnhanced from './pages/ProfileEnhanced';
+import ConnectHabbo from './pages/ConnectHabbo';
+import Emblemas from './pages/Emblemas';
+import BadgesPage from './pages/BadgesPage';
+import Catalogo from './pages/Catalogo';
+import Mercado from './pages/Mercado';
+import Eventos from './pages/Eventos';
+import Noticias from './pages/Noticias';
+import Ferramentas from './pages/Ferramentas';
+import Console from './pages/Console';
+import Editor from './pages/Editor';
+import EditorPuhekupla from './pages/EditorPuhekupla';
+import EmblemaPuhekupla from './pages/EmblemaPuhekupla';
+import FurniPuhekupla from './pages/FurniPuhekupla';
+import AdminHub from './pages/AdminHub';
+import AdminHubPublic from './pages/AdminHubPublic';
+import AdminPanelPage from './pages/AdminPanelPage';
+import Forum from './pages/Forum';
+import ForumPage from './pages/ForumPage';
+import ToolsPage from './pages/ToolsPage';
+import ToolsPageNew from './pages/ToolsPageNew';
+import NotFound from './pages/NotFound';
+import HabboHome from './pages/HabboHome';
 import './App.css';
 
-// Lazy load pages for better performance
-const Index = lazy(() => import('./pages/Index'));
-const Editor = lazy(() => import('./pages/Editor'));
-const EditorPuhekupla = lazy(() => import('./pages/EditorPuhekupla'));
-const Profile = lazy(() => import('./pages/Profile'));
-const ConnectHabbo = lazy(() => import('./pages/ConnectHabbo'));
-const Noticias = lazy(() => import('./pages/Noticias'));
-const Catalogo = lazy(() => import('./pages/Catalogo'));
-const Ferramentas = lazy(() => import('./pages/Ferramentas'));
-const ForumPage = lazy(() => import('./pages/ForumPage'));
-const Emblemas = lazy(() => import('./pages/Emblemas'));
-const Console = lazy(() => import('./pages/Console'));
-const Mercado = lazy(() => import('./pages/Mercado'));
-const AdminHub = lazy(() => import('./pages/AdminHub'));
-const ToolsPageNew = lazy(() => import('./pages/ToolsPageNew'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes
-      retry: 3,
+      retry: 1,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
     },
   },
 });
@@ -39,38 +42,37 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="App">
-            <Suspense fallback={
-              <div className="min-h-screen bg-gradient-to-br from-amber-50 to-blue-50 flex items-center justify-center">
-                <div className="text-lg text-gray-600">Carregando...</div>
-              </div>
-            }>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/editor" element={<Editor />} />
-                <Route path="/editor-puhekupla" element={<EditorPuhekupla />} />
-                <Route path="/profile/:username" element={<Profile />} />
-                <Route path="/connect-habbo" element={<ConnectHabbo />} />
-                <Route path="/noticias" element={<Noticias />} />
-                {/* Redirect /eventos to /noticias */}
-                <Route path="/eventos" element={<Navigate to="/noticias" replace />} />
-                <Route path="/catalogo" element={<Catalogo />} />
-                <Route path="/ferramentas" element={<Ferramentas />} />
-                <Route path="/forum" element={<ForumPage />} />
-                <Route path="/emblemas" element={<Emblemas />} />
-                <Route path="/mercado" element={<Mercado />} />
-                <Route path="/admin-hub" element={<AdminHub />} />
-                <Route path="/tools" element={<ToolsPageNew />} />
-                <Route path="/console" element={<Console />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-            <Toaster />
-          </div>
-        </Router>
-      </AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/profile/:username" element={<ProfileEnhanced />} />
+            <Route path="/connect-habbo" element={<ConnectHabbo />} />
+            <Route path="/emblemas" element={<Emblemas />} />
+            <Route path="/badges" element={<BadgesPage />} />
+            <Route path="/catalogo" element={<Catalogo />} />
+            <Route path="/mercado" element={<Mercado />} />
+            <Route path="/eventos" element={<Eventos />} />
+            <Route path="/noticias" element={<Noticias />} />
+            <Route path="/ferramentas" element={<Ferramentas />} />
+            <Route path="/console" element={<Console />} />
+            <Route path="/editor" element={<Editor />} />
+            <Route path="/editor-puhekupla" element={<EditorPuhekupla />} />
+            <Route path="/emblema-puhekupla" element={<EmblemaPuhekupla />} />
+            <Route path="/furni-puhekupla" element={<FurniPuhekupla />} />
+            <Route path="/admin-hub" element={<AdminHub />} />
+            <Route path="/admin-hub-public" element={<AdminHubPublic />} />
+            <Route path="/admin-panel" element={<AdminPanelPage />} />
+            <Route path="/forum" element={<Forum />} />
+            <Route path="/forum-page" element={<ForumPage />} />
+            <Route path="/tools" element={<ToolsPage />} />
+            <Route path="/tools-new" element={<ToolsPageNew />} />
+            <Route path="/home/:username" element={<HabboHome />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      </Router>
+      <Toaster />
     </QueryClientProvider>
   );
 }
