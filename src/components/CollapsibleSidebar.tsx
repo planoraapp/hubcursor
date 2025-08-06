@@ -108,6 +108,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
 
   const navItems = [
     { icon: Home, label: "Início", href: "/" },
+    { icon: Home, label: "Homes", href: "/homes" },
     { icon: Newspaper, label: "Notícias", href: "/noticias" },
     { icon: Gamepad2, label: "Eventos", href: "/eventos" },
     { icon: ShoppingBag, label: "Marketplace", href: "/marketplace" },
