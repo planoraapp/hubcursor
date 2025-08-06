@@ -183,7 +183,6 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
               {navItems.map((item) => (
                 <NavItem
                   key={item.href}
-                  icon={item.icon}
                   iconSrc={item.iconSrc}
                   label={item.label}
                   href={item.href}
@@ -297,7 +296,6 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
           {navItems.map((item) => (
             <NavItem
               key={item.href}
-              icon={item.icon}
               iconSrc={item.iconSrc}
               label={item.label}
               href={item.href}
