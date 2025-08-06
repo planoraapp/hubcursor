@@ -72,7 +72,7 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Verificar se usuário já existe (para determinar se é primeiro login ou não)
+  // Verificar se usuário já existe na tabela habbo_accounts
   const checkUserExists = async (habboName: string) => {
     try {
       const { data, error } = await supabase
@@ -126,6 +126,12 @@ export const useUnifiedAuth = () => {
     try {
       console.log(`📝 Registrando novo usuário: ${habboName}`);
       
+      // Primeiro verificar se já existe na tabela habbo_accounts
+      const userExists = await checkUserExists(habboName);
+      if (userExists) {
+        throw new Error('Este nome Habbo já está cadastrado. Use a aba "Login" para acessar sua conta.');
+      }
+
       // Verificar motto
       const habboUser = await verifyHabboMotto(habboName, verificationCode);
       
@@ -133,18 +139,36 @@ export const useUnifiedAuth = () => {
         throw new Error('Verificação da motto falhou');
       }
 
-      // Criar usuário no Supabase Auth
+      // Verificar se já existe uma conta auth com este email (limpeza adicional)
       const authEmail = `${habboUser.uniqueId}@habbohub.com`;
+      
+      // Tentar fazer login primeiro para ver se a conta auth já existe
+      const { data: existingAuth } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: 'test-password-that-wont-work'
+      });
+
+      // Se chegou aqui sem erro, a conta auth existe mas sem habbo_account vinculado
+      if (existingAuth?.user) {
+        await supabase.auth.signOut();
+        throw new Error('Conta detectada mas incompleta. Contate o suporte.');
+      }
+
+      // Criar usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: authEmail,
         password: password,
         options: {
-          data: { habbo_name: habboName }
+          data: { habbo_name: habboName },
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
       if (authError) {
         console.error('❌ Erro na criação do auth:', authError);
+        if (authError.message.includes('already registered')) {
+          throw new Error('Este Habbo já possui uma conta. Use a aba "Login" para acessar.');
+        }
         throw authError;
       }
 
@@ -190,12 +214,15 @@ export const useUnifiedAuth = () => {
       // Buscar a conta habbo para obter o habbo_id
       const { data: accountData, error: accountError } = await supabase
         .from('habbo_accounts')
-        .select('habbo_id')
+        .select('habbo_id, habbo_name')
         .ilike('habbo_name', habboName)
         .single();
 
       if (accountError || !accountData) {
-        throw new Error('Conta não encontrada. Verifique o nome Habbo.');
+        if (accountError?.code === 'PGRST116') {
+          throw new Error('Conta não encontrada. Use a aba "Primeiro Acesso" para se cadastrar.');
+        }
+        throw new Error('Erro ao buscar conta. Tente novamente.');
       }
 
       // Fazer login com o email construído
@@ -207,7 +234,10 @@ export const useUnifiedAuth = () => {
 
       if (error) {
         console.error('❌ Erro no login:', error);
-        throw new Error('Senha incorreta');
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Senha incorreta. Verifique sua senha e tente novamente.');
+        }
+        throw new Error('Erro no login. Verifique suas credenciais.');
       }
 
       console.log('✅ Login realizado com sucesso');
