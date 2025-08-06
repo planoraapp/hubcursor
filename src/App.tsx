@@ -8,7 +8,6 @@ import Index from './pages/Index';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import ProfileEnhanced from './pages/ProfileEnhanced';
-import ConnectHabbo from './pages/ConnectHabbo';
 import Emblemas from './pages/Emblemas';
 import BadgesPage from './pages/BadgesPage';
 import Catalogo from './pages/Catalogo';
@@ -52,7 +51,6 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/profile/:username" element={<ProfileEnhanced />} />
-              <Route path="/connect-habbo" element={<ConnectHabbo />} />
               <Route path="/emblemas" element={<Emblemas />} />
               <Route path="/badges" element={<BadgesPage />} />
               <Route path="/catalogo" element={<Catalogo />} />

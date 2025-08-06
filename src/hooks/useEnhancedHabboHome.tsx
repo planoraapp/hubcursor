@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSimplifiedAuth } from './useSimplifiedAuth';
+import { useAuth } from './useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface Widget {
   id: string;
@@ -58,7 +58,7 @@ export const useEnhancedHabboHome = (username: string) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const { habboAccount } = useSimplifiedAuth();
+  const { habboAccount } = useAuth();
 
   useEffect(() => {
     if (username) {

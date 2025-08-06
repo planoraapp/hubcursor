@@ -1,116 +1,112 @@
-
-import { User, LogIn, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '../hooks/useAuth';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { useEffect, useState } from 'react';
 import { getUserByName } from '../services/habboApi';
 
-interface UserProfileProps {
-  collapsed?: boolean;
-}
+export const UserProfile = ({ habboName }: { habboName: string }) => {
+  const [userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export const UserProfile = ({ collapsed = false }: UserProfileProps) => {
-  const { isLoggedIn, habboAccount } = useAuth();
-  const { signOut } = useSupabaseAuth();
-  const navigate = useNavigate();
-  const [habboData, setHabboData] = useState<any>(null);
-
-  // Fetch current Habbo data when logged in
   useEffect(() => {
-    if (isLoggedIn && habboAccount) {
-      getUserByName(habboAccount.habbo_name).then(data => {
-        setHabboData(data);
-      }).catch(console.error);
+    const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const user = await getUserByName(habboName);
+        setUserData(user);
+      } catch (err: any) {
+        setError(err.message || 'Erro ao carregar perfil do Habbo.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (habboName) {
+      fetchUserData();
     }
-  }, [isLoggedIn, habboAccount]);
+  }, [habboName]);
 
-  const handleProfileClick = () => {
-    if (isLoggedIn && habboAccount) {
-      navigate(`/profile/${habboAccount.habbo_name}`);
-    } else {
-      navigate('/connect-habbo');
-    }
-  };
-
-  const handleLogout = async () => {
-    await signOut();
-  };
-
-  if (collapsed) {
+  if (loading) {
     return (
-      <div className="p-2 flex justify-center">
-        <button
-          onClick={handleProfileClick}
-          className="w-12 h-12 rounded-lg bg-white/80 hover:bg-white hover:shadow-sm transition-all duration-200 flex items-center justify-center"
-          title={isLoggedIn ? 'Meu Perfil' : 'Entrar'}
-        >
-          {isLoggedIn && habboData ? (
-            <img 
-              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1`}
-              alt={habboAccount?.habbo_name || 'Avatar'}
-              className="w-8 h-8 rounded border"
-            />
-          ) : (
-            <User size={20} />
-          )}
-        </button>
-      </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Carregando Perfil...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Aguarde enquanto carregamos as informações do Habbo.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Erro ao Carregar Perfil</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-500">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Perfil Não Encontrado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Nenhum usuário Habbo encontrado com o nome: {habboName}</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="p-4 bg-white/80 backdrop-blur-sm rounded-lg mb-4 shadow-sm">
-      {isLoggedIn && habboAccount && habboData ? (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <img 
-              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&direction=2&head_direction=2&gesture=sml&size=s&frame=1&headonly=1`}
-              alt={habboAccount.habbo_name}
-              className="w-10 h-10 rounded border-2 border-gray-300"
-            />
-            <div className="flex-1">
-              <h3 className="font-bold text-gray-800 text-sm">{habboAccount.habbo_name}</h3>
-              <p className="text-xs text-gray-600 italic">"{habboData.motto}"</p>
-            </div>
-          </div>
-          
-          <div className="flex space-x-2">
-            <button
-              onClick={handleProfileClick}
-              className="flex-1 bg-blue-500 text-white text-xs py-2 px-3 rounded hover:bg-blue-600 transition-colors"
-            >
-              Ver Perfil
-            </button>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white text-xs py-2 px-3 rounded hover:bg-red-600 transition-colors"
-            >
-              Sair
-            </button>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Perfil de {userData.name}</CardTitle>
+        <div className="text-sm text-muted-foreground">
+          Última atualização: {new Date(userData.lastOnline).toLocaleDateString()}
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="flex items-center space-x-4">
+          <Avatar>
+            <AvatarImage src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&size=l&direction=2&head_direction=2&gesture=sml`} alt={userData.name} />
+            <AvatarFallback>{userData.name.substring(0, 2)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-lg font-semibold">{userData.name}</p>
+            <p className="text-sm text-muted-foreground">{userData.motto}</p>
           </div>
         </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded bg-gray-300 flex items-center justify-center">
-              <User size={20} className="text-gray-600" />
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Informações:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <span className="text-xs font-medium text-gray-700">ID:</span>
+              <Badge variant="secondary" className="ml-1">{userData.uniqueId}</Badge>
             </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-gray-800 text-sm">Visitante</h3>
-              <p className="text-xs text-gray-600">Não conectado</p>
+            <div>
+              <span className="text-xs font-medium text-gray-700">Online:</span>
+              <Badge variant="outline" className="ml-1">{userData.online ? 'Sim' : 'Não'}</Badge>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-gray-700">Conta criada:</span>
+              <span className="text-xs ml-1">{new Date(userData.memberSince).toLocaleDateString()}</span>
             </div>
           </div>
-          
-          <button
-            onClick={() => navigate('/connect-habbo')}
-            className="w-full bg-green-500 text-white text-xs py-2 px-3 rounded hover:bg-green-600 transition-colors flex items-center justify-center space-x-2"
-          >
-            <LogIn size={16} />
-            <span>Entrar com Habbo</span>
-          </button>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
+

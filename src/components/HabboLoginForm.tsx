@@ -19,6 +19,7 @@ export const HabboLoginForm = () => {
   const {
     checkUserExists,
     generateVerificationCode,
+    verifyHabboMotto,
     registerWithMotto,
     loginWithPassword
   } = useUnifiedAuth();
