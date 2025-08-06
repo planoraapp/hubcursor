@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -16,7 +16,6 @@ import {
   LayoutDashboard,
   Settings,
   User,
-  BaggageClaim,
   Newspaper,
   Gamepad2,
   ShoppingBag,
@@ -31,7 +30,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 interface SidebarProps {
-  habboName?: string;
+  habboName: string;
   activeSection?: string;
   setActiveSection?: (section: string) => void;
 }
@@ -99,8 +98,8 @@ export function Sidebar({ habboName, activeSection, setActiveSection }: SidebarP
         </SheetHeader>
         <Separator />
 
-      {/* User Profile */}
-      {habboName && <UserProfile habboName={habboName} />}
+        {/* User Profile */}
+        {habboName && <UserProfile habboName={habboName} />}
 
         <Separator />
         <div className="py-4">
