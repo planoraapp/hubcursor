@@ -173,9 +173,22 @@ export const Forum = () => {
     }
 
     try {
+      // First get the current post
+      const { data: currentPost, error: fetchError } = await supabase
+        .from('forum_posts')
+        .select('likes')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError) {
+        console.error('Erro ao buscar post:', fetchError);
+        return;
+      }
+
+      // Update with incremented likes
       const { error } = await supabase
         .from('forum_posts')
-        .update({ likes: supabase.raw('likes + 1') })
+        .update({ likes: currentPost.likes + 1 })
         .eq('id', postId);
 
       if (error) {
