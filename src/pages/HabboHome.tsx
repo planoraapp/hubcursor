@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useHabboHome } from '@/hooks/useHabboHome';
 import { DraggableWidget } from '@/components/HabboHome/DraggableWidget';
-import { AvatarWidget } from '@/components/HabboHome/AvatarWidget';
 import { GuestbookWidget } from '@/components/HabboHome/GuestbookWidget';
 import { HomeToolbar } from '@/components/HabboHome/HomeToolbar';
+import { HomeHeader } from '@/components/HabboHome/HomeHeader';
+import { UserCard } from '@/components/HabboHome/UserCard';
+import { SimpleLogin } from '@/components/HabboHome/SimpleLogin';
 import { Card } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
@@ -30,7 +32,7 @@ const HabboHome: React.FC = () => {
   } = useHabboHome(username || '');
 
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
-  const [showStickersModal, setShowStickersModal] = useState(false);
+  const [showInventoryModal, setShowInventoryModal] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Listen for sidebar state changes
@@ -49,21 +51,18 @@ const HabboHome: React.FC = () => {
     return (
       <div className="min-h-screen bg-repeat bg-cover flex" 
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <SimpleLogin />
         <CollapsibleSidebar activeSection="homes" setActiveSection={() => {}} />
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'} flex items-center justify-center`}>
-          <div className="text-center">
+          <Card className="p-8 text-center max-w-md bg-white/95 backdrop-blur-sm">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-            <p className="text-lg font-semibold text-white volter-font" style={{
-              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-            }}>
+            <p className="text-lg font-semibold text-gray-800 volter-font">
               Carregando Habbo Home...
             </p>
-            <p className="text-sm text-white volter-font" style={{
-              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-            }}>
+            <p className="text-sm text-gray-600 volter-font">
               de {username}
             </p>
-          </div>
+          </Card>
         </main>
       </div>
     );
@@ -73,6 +72,7 @@ const HabboHome: React.FC = () => {
     return (
       <div className="min-h-screen bg-repeat bg-cover flex" 
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <SimpleLogin />
         <CollapsibleSidebar activeSection="homes" setActiveSection={() => {}} />
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'} flex items-center justify-center`}>
           <Card className="p-8 text-center max-w-md bg-white/95 backdrop-blur-sm">
@@ -106,7 +106,7 @@ const HabboHome: React.FC = () => {
           backgroundPosition: 'center'
         };
       default:
-        return { backgroundColor: '#007bff' };
+        return { backgroundColor: '#f5f5f5' }; // Cinza claro padrão
     }
   };
 
@@ -127,13 +127,12 @@ const HabboHome: React.FC = () => {
 
   const getDefaultPosition = (widgetId: string) => {
     const defaults: Record<string, { x: number; y: number; width: number; height: number }> = {
-      avatar: { x: 20, y: 80, width: 300, height: 280 },
-      guestbook: { x: 350, y: 80, width: 400, height: 350 },
-      traxplayer: { x: 20, y: 380, width: 300, height: 200 },
-      rating: { x: 780, y: 80, width: 200, height: 150 },
-      tabs: { x: 350, y: 450, width: 400, height: 300 }
+      guestbook: { x: 50, y: 50, width: 400, height: 350 },
+      traxplayer: { x: 50, y: 420, width: 350, height: 200 },
+      rating: { x: 480, y: 50, width: 300, height: 150 },
+      info: { x: 480, y: 220, width: 300, height: 180 }
     };
-    return defaults[widgetId] || { x: 50, y: 50, width: 200, height: 150 };
+    return defaults[widgetId] || { x: 50, y: 50, width: 250, height: 150 };
   };
 
   const handleWidgetPositionChange = (widgetId: string, x: number, y: number) => {
@@ -147,8 +146,9 @@ const HabboHome: React.FC = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-100 p-4">
+        <SimpleLogin />
         <Card className="p-6 text-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Habbo Home</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-2 volter-font">Habbo Home</h2>
           <p className="text-gray-600 mb-4">
             A Habbo Home está disponível apenas na versão desktop para uma melhor experiência de personalização.
           </p>
@@ -163,50 +163,36 @@ const HabboHome: React.FC = () => {
   return (
     <div className="min-h-screen bg-repeat bg-cover flex" 
          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <SimpleLogin />
       <CollapsibleSidebar activeSection="homes" setActiveSection={() => {}} />
       
-      <main className={`flex-1 overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-        {/* Título da página */}
-        <div className="bg-white/95 backdrop-blur-sm shadow-sm border-b p-4">
-          <h1 className="text-2xl font-bold text-center text-gray-800 volter-font">
-            🏠 Habbo Home - {habboData.name}
-          </h1>
-        </div>
+      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <div className="p-6">
+          {/* Cabeçalho da página */}
+          <HomeHeader username={habboData.name} />
 
-        {/* Container principal da home */}
-        <div className="relative h-full">
-          <div 
-            className="relative min-h-screen overflow-hidden"
-            style={getBackgroundStyle()}
-          >
-            {/* Barra de ferramentas */}
-            <div className="relative z-50">
-              <HomeToolbar
-                isEditMode={isEditMode}
-                isOwner={isOwner || false}
-                onToggleEditMode={() => setIsEditMode(!isEditMode)}
-                onOpenBackgroundModal={() => setShowBackgroundModal(true)}
-                onOpenStickersModal={() => setShowStickersModal(true)}
-              />
-            </div>
+          {/* Card do usuário horizontal */}
+          <div className="mb-6">
+            <UserCard habboData={habboData} isOwner={isOwner} />
+          </div>
 
-            {/* Área dos widgets */}
-            <div className="relative" style={{ minHeight: '800px' }}>
-              {/* Avatar Widget (fixo, sempre visível) */}
-              <DraggableWidget
-                id="avatar"
-                x={getWidgetPosition('avatar').x}
-                y={getWidgetPosition('avatar').y}
-                width={getWidgetPosition('avatar').width}
-                height={getWidgetPosition('avatar').height}
-                zIndex={getWidgetPosition('avatar').z_index}
-                isEditMode={isEditMode}
-                isResizable={false}
-                onPositionChange={(x, y) => handleWidgetPositionChange('avatar', x, y)}
-              >
-                <AvatarWidget habboData={habboData} isOwner={isOwner} />
-              </DraggableWidget>
+          {/* Barra de ferramentas */}
+          <HomeToolbar
+            isEditMode={isEditMode}
+            isOwner={isOwner || false}
+            onToggleEditMode={() => setIsEditMode(!isEditMode)}
+            onOpenBackgroundModal={() => setShowBackgroundModal(true)}
+            onOpenInventoryModal={() => setShowInventoryModal(true)}
+          />
 
+          {/* Área principal da home com fundo cinza claro */}
+          <Card className="relative min-h-[600px] p-4 bg-gray-50/95 backdrop-blur-sm">
+            <div 
+              className="relative min-h-full rounded-lg"
+              style={{...getBackgroundStyle(), minHeight: '550px'}}
+            >
+              {/* Widgets da home */}
+              
               {/* Guestbook Widget */}
               <DraggableWidget
                 id="guestbook"
@@ -226,7 +212,7 @@ const HabboHome: React.FC = () => {
                 />
               </DraggableWidget>
 
-              {/* Placeholder widgets - TraxPlayer */}
+              {/* TraxPlayer Widget */}
               <DraggableWidget
                 id="traxplayer"
                 x={getWidgetPosition('traxplayer').x}
@@ -240,8 +226,8 @@ const HabboHome: React.FC = () => {
               >
                 <div className="w-full h-full flex flex-col bg-white/90 backdrop-blur-sm rounded-lg p-4 border-2 border-gray-200">
                   <h3 className="font-bold text-gray-800 mb-4 volter-font">🎵 Traxplayer</h3>
-                  <div className="flex-1 bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                    <p className="text-gray-500 text-sm">Player de música nostálgico</p>
+                  <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                    <p className="text-gray-600 text-center volter-font">Player de música<br />nostálgico do Habbo</p>
                   </div>
                 </div>
               </DraggableWidget>
@@ -259,17 +245,41 @@ const HabboHome: React.FC = () => {
                 onSizeChange={(w, h) => handleWidgetSizeChange('rating', w, h)}
               >
                 <div className="w-full h-full text-center bg-white/90 backdrop-blur-sm rounded-lg p-4 border-2 border-gray-200">
-                  <h3 className="font-bold text-gray-800 mb-4 volter-font">⭐ Avaliação</h3>
+                  <h3 className="font-bold text-gray-800 mb-4 volter-font">⭐ Avaliação da Home</h3>
                   <div className="flex justify-center gap-1 mb-2">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star} className="text-2xl text-yellow-400">⭐</span>
+                      <span key={star} className="text-2xl text-yellow-400 cursor-pointer hover:text-yellow-500">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">5.0 de 5 estrelas</p>
+                  <p className="text-sm text-gray-600 volter-font">5.0 de 5 estrelas</p>
+                  <p className="text-xs text-gray-500 mt-2">127 avaliações</p>
+                </div>
+              </DraggableWidget>
+
+              {/* Info Widget */}
+              <DraggableWidget
+                id="info"
+                x={getWidgetPosition('info').x}
+                y={getWidgetPosition('info').y}
+                width={getWidgetPosition('info').width}
+                height={getWidgetPosition('info').height}
+                zIndex={getWidgetPosition('info').z_index}
+                isEditMode={isEditMode}
+                onPositionChange={(x, y) => handleWidgetPositionChange('info', x, y)}
+                onSizeChange={(w, h) => handleWidgetSizeChange('info', w, h)}
+              >
+                <div className="w-full h-full bg-white/90 backdrop-blur-sm rounded-lg p-4 border-2 border-gray-200">
+                  <h3 className="font-bold text-gray-800 mb-3 volter-font">ℹ️ Sobre esta Home</h3>
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <p className="volter-font">Última atualização: Hoje</p>
+                    <p className="volter-font">Visitas hoje: 23</p>
+                    <p className="volter-font">Total de visitas: 1.245</p>
+                    <p className="volter-font">Criada em: Jan 2024</p>
+                  </div>
                 </div>
               </DraggableWidget>
             </div>
-          </div>
+          </Card>
         </div>
       </main>
     </div>
