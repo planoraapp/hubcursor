@@ -29,6 +29,7 @@ import ToolsPage from './pages/ToolsPage';
 import ToolsPageNew from './pages/ToolsPageNew';
 import NotFound from './pages/NotFound';
 import HabboHome from './pages/HabboHome';
+import HomesHub from './pages/HomesHub';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -69,6 +70,7 @@ function App() {
               <Route path="/forum-page" element={<ForumPage />} />
               <Route path="/tools" element={<ToolsPage />} />
               <Route path="/tools-new" element={<ToolsPageNew />} />
+              <Route path="/homes" element={<HomesHub />} />
               <Route path="/home/:username" element={<HabboHome />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

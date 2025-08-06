@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -26,6 +25,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
     { id: 'home', name: 'Home', icon: '/assets/home.png', path: '/' },
     { id: 'forum', name: 'Fórum', icon: '/assets/BatePapo1.png', path: '/forum' },
     { id: 'console', name: 'Console', icon: 'animated', path: '/console' },
+    { id: 'homes', name: 'Homes', icon: '/assets/home.png', path: '/homes' },
     { id: 'noticias', name: 'Notícias', icon: '/assets/news.png', path: '/noticias' },
     { id: 'mercado', name: 'Mercado', icon: '/assets/Diamante.png', path: '/mercado' },
     { id: 'catalogo', name: 'Catálogo', icon: '/assets/Carrinho.png', path: '/catalogo' },
@@ -54,6 +54,7 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
       '/': 'home',
       '/forum': 'forum',
       '/console': 'console',
+      '/homes': 'homes',
       '/noticias': 'noticias',
       '/mercado': 'mercado',
       '/catalogo': 'catalogo',
