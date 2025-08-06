@@ -1,5 +1,6 @@
 
 import { ConnectHabboFormEnhanced } from '../components/ConnectHabboFormEnhanced';
+import { DebugAuthInfo } from '../components/DebugAuthInfo';
 import { AdSpace } from '../components/AdSpace';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
@@ -21,6 +22,7 @@ const ConnectHabbo = () => {
             backgroundImage="/assets/1360__-3C7.png"
           />
           <AdSpace type="horizontal" className="mb-6" />
+          <DebugAuthInfo />
           <ConnectHabboFormEnhanced />
           <AdSpace type="wide" className="mt-6" />
         </div>
@@ -48,6 +50,8 @@ const ConnectHabbo = () => {
             />
             
             <AdSpace type="horizontal" className="mb-6" />
+            
+            <DebugAuthInfo />
             
             <div className="flex justify-center">
               <ConnectHabboFormEnhanced />

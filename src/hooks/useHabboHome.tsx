@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -67,19 +66,36 @@ export const useHabboHome = (username: string) => {
   // Buscar dados do usuário Habbo
   useEffect(() => {
     if (username) {
+      console.log('🔍 [HabboHome] Iniciando busca para username:', username);
+      
       getUserByName(username).then(data => {
+        console.log('✅ [HabboHome] Dados do Habbo API recebidos:', data);
         setHabboData(data);
-      }).catch(console.error);
+      }).catch(error => {
+        console.error('❌ [HabboHome] Erro ao buscar dados do Habbo:', error);
+        setHabboData(null);
+      });
 
       // Buscar user_id do proprietário da home
+      console.log('🔍 [HabboHome] Buscando conta vinculada para:', username);
       supabase
         .from('habbo_accounts')
         .select('supabase_user_id')
-        .eq('habbo_name', username)
-        .single()
-        .then(({ data }) => {
+        .ilike('habbo_name', username) // Case insensitive search
+        .maybeSingle()
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('❌ [HabboHome] Erro ao buscar conta vinculada:', error);
+            setHomeOwnerUserId(null);
+            return;
+          }
+
           if (data) {
+            console.log('✅ [HabboHome] Conta vinculada encontrada:', data);
             setHomeOwnerUserId(data.supabase_user_id);
+          } else {
+            console.log('⚠️ [HabboHome] Nenhuma conta vinculada encontrada para:', username);
+            setHomeOwnerUserId(null);
           }
         });
     }
@@ -88,64 +104,93 @@ export const useHabboHome = (username: string) => {
   // Carregar dados da home
   useEffect(() => {
     if (homeOwnerUserId) {
+      console.log('🏠 [HabboHome] Carregando dados da home para user_id:', homeOwnerUserId);
       loadHomeData();
+    } else if (homeOwnerUserId === null && habboData) {
+      // Se não encontramos conta vinculada mas temos dados do Habbo, finalizar loading
+      console.log('⚠️ [HabboHome] Home sem conta vinculada, finalizando loading');
+      setLoading(false);
     }
-  }, [homeOwnerUserId]);
+  }, [homeOwnerUserId, habboData]);
 
   const loadHomeData = async () => {
-    if (!homeOwnerUserId) return;
+    if (!homeOwnerUserId) {
+      console.log('❌ [HabboHome] loadHomeData chamado sem homeOwnerUserId');
+      return;
+    }
 
     try {
+      console.log('🔄 [HabboHome] Iniciando carregamento dos dados da home...');
       setLoading(true);
 
       // Carregar widgets
-      const { data: widgetsData } = await supabase
+      console.log('📦 [HabboHome] Carregando widgets...');
+      const { data: widgetsData, error: widgetsError } = await supabase
         .from('user_home_layouts')
         .select('*')
         .eq('user_id', homeOwnerUserId);
 
-      if (widgetsData) {
-        setWidgets(widgetsData);
+      if (widgetsError) {
+        console.error('❌ [HabboHome] Erro ao carregar widgets:', widgetsError);
+      } else {
+        console.log('✅ [HabboHome] Widgets carregados:', widgetsData?.length || 0, 'itens');
+        setWidgets(widgetsData || []);
       }
 
       // Carregar stickers
-      const { data: stickersData } = await supabase
+      console.log('🎨 [HabboHome] Carregando stickers...');
+      const { data: stickersData, error: stickersError } = await supabase
         .from('user_stickers')
         .select('*')
         .eq('user_id', homeOwnerUserId);
 
-      if (stickersData) {
-        setStickers(stickersData);
+      if (stickersError) {
+        console.error('❌ [HabboHome] Erro ao carregar stickers:', stickersError);
+      } else {
+        console.log('✅ [HabboHome] Stickers carregados:', stickersData?.length || 0, 'itens');
+        setStickers(stickersData || []);
       }
 
       // Carregar background
-      const { data: backgroundData } = await supabase
+      console.log('🎨 [HabboHome] Carregando background...');
+      const { data: backgroundData, error: backgroundError } = await supabase
         .from('user_home_backgrounds')
         .select('*')
         .eq('user_id', homeOwnerUserId)
-        .single();
+        .maybeSingle();
 
-      if (backgroundData) {
+      if (backgroundError) {
+        console.error('❌ [HabboHome] Erro ao carregar background:', backgroundError);
+      } else if (backgroundData) {
+        console.log('✅ [HabboHome] Background carregado:', backgroundData);
         setBackground({
           background_type: backgroundData.background_type as 'color' | 'repeat' | 'cover',
           background_value: backgroundData.background_value
         });
+      } else {
+        console.log('⚠️ [HabboHome] Nenhum background encontrado, usando padrão');
       }
 
       // Carregar guestbook
-      const { data: guestbookData } = await supabase
+      console.log('📝 [HabboHome] Carregando guestbook...');
+      const { data: guestbookData, error: guestbookError } = await supabase
         .from('guestbook_entries')
         .select('*')
         .eq('home_owner_user_id', homeOwnerUserId)
         .eq('moderation_status', 'approved')
         .order('created_at', { ascending: false });
 
-      if (guestbookData) {
-        setGuestbook(guestbookData);
+      if (guestbookError) {
+        console.error('❌ [HabboHome] Erro ao carregar guestbook:', guestbookError);
+      } else {
+        console.log('✅ [HabboHome] Guestbook carregado:', guestbookData?.length || 0, 'entradas');
+        setGuestbook(guestbookData || []);
       }
 
+      console.log('✅ [HabboHome] Carregamento completo!');
+
     } catch (error) {
-      console.error('Error loading home data:', error);
+      console.error('❌ [HabboHome] Erro geral no carregamento:', error);
     } finally {
       setLoading(false);
     }
