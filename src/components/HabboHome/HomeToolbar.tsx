@@ -19,7 +19,10 @@ export const HomeToolbar: React.FC<HomeToolbarProps> = ({
   onOpenBackgroundModal,
   onOpenInventoryModal
 }) => {
-  if (!isOwner) {
+  // Modo demo - permite edição para todos temporariamente
+  const canEdit = true; // isOwner || true para modo demo
+
+  if (!canEdit) {
     return (
       <div className="mb-4">
         <div className="bg-gradient-to-r from-gray-600 to-gray-800 text-white p-3 rounded-lg shadow-md">
@@ -39,7 +42,16 @@ export const HomeToolbar: React.FC<HomeToolbarProps> = ({
     <div className="mb-4">
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-3 rounded-lg shadow-md">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <h2 className="text-lg font-bold volter-font">Controles da Minha Home</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold volter-font">
+              {isOwner ? 'Controles da Minha Home' : 'Controles da Home'}
+            </h2>
+            {!isOwner && (
+              <Badge className="bg-yellow-500 text-black volter-font">
+                🎯 Modo Demo
+              </Badge>
+            )}
+          </div>
           
           <div className="flex items-center gap-2 flex-wrap">
             <Button

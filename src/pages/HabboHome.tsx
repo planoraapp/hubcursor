@@ -77,7 +77,7 @@ const HabboHome: React.FC = () => {
         <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'} flex items-center justify-center`}>
           <Card className="p-8 text-center max-w-md bg-white/95 backdrop-blur-sm">
             <h2 className="text-xl font-bold text-gray-800 mb-2 volter-font">Usuário não encontrado</h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-4 volter-font">
               O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
             </p>
           </Card>
@@ -127,10 +127,11 @@ const HabboHome: React.FC = () => {
 
   const getDefaultPosition = (widgetId: string) => {
     const defaults: Record<string, { x: number; y: number; width: number; height: number }> = {
-      guestbook: { x: 50, y: 50, width: 400, height: 350 },
-      traxplayer: { x: 50, y: 420, width: 350, height: 200 },
-      rating: { x: 480, y: 50, width: 300, height: 150 },
-      info: { x: 480, y: 220, width: 300, height: 180 }
+      usercard: { x: 20, y: 20, width: 500, height: 150 },
+      guestbook: { x: 50, y: 200, width: 400, height: 350 },
+      traxplayer: { x: 50, y: 570, width: 350, height: 200 },
+      rating: { x: 480, y: 200, width: 300, height: 150 },
+      info: { x: 480, y: 370, width: 300, height: 180 }
     };
     return defaults[widgetId] || { x: 50, y: 50, width: 250, height: 150 };
   };
@@ -149,10 +150,10 @@ const HabboHome: React.FC = () => {
         <SimpleLogin />
         <Card className="p-6 text-center">
           <h2 className="text-xl font-bold text-gray-800 mb-2 volter-font">Habbo Home</h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600 mb-4 volter-font">
             A Habbo Home está disponível apenas na versão desktop para uma melhor experiência de personalização.
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 volter-font">
             Acesse pelo computador para visualizar e editar sua home personalizada.
           </p>
         </Card>
@@ -171,11 +172,6 @@ const HabboHome: React.FC = () => {
           {/* Cabeçalho da página */}
           <HomeHeader username={habboData.name} />
 
-          {/* Card do usuário horizontal */}
-          <div className="mb-6">
-            <UserCard habboData={habboData} isOwner={isOwner} />
-          </div>
-
           {/* Barra de ferramentas */}
           <HomeToolbar
             isEditMode={isEditMode}
@@ -185,14 +181,27 @@ const HabboHome: React.FC = () => {
             onOpenInventoryModal={() => setShowInventoryModal(true)}
           />
 
-          {/* Área principal da home com fundo cinza claro */}
-          <Card className="relative min-h-[600px] p-4 bg-gray-50/95 backdrop-blur-sm">
+          {/* Área principal da home com bordas pretas e fundo cinza claro */}
+          <div className="habbo-panel min-h-[600px] p-4">
             <div 
               className="relative min-h-full rounded-lg"
               style={{...getBackgroundStyle(), minHeight: '550px'}}
             >
-              {/* Widgets da home */}
-              
+              {/* UserCard Widget - não pode ser removido */}
+              <DraggableWidget
+                id="usercard"
+                x={getWidgetPosition('usercard').x}
+                y={getWidgetPosition('usercard').y}
+                width={getWidgetPosition('usercard').width}
+                height={getWidgetPosition('usercard').height}
+                zIndex={getWidgetPosition('usercard').z_index}
+                isEditMode={isEditMode}
+                onPositionChange={(x, y) => handleWidgetPositionChange('usercard', x, y)}
+                onSizeChange={(w, h) => handleWidgetSizeChange('usercard', w, h)}
+              >
+                <UserCard habboData={habboData} isOwner={isOwner} />
+              </DraggableWidget>
+
               {/* Guestbook Widget */}
               <DraggableWidget
                 id="guestbook"
@@ -252,7 +261,7 @@ const HabboHome: React.FC = () => {
                     ))}
                   </div>
                   <p className="text-sm text-gray-600 volter-font">5.0 de 5 estrelas</p>
-                  <p className="text-xs text-gray-500 mt-2">127 avaliações</p>
+                  <p className="text-xs text-gray-500 mt-2 volter-font">127 avaliações</p>
                 </div>
               </DraggableWidget>
 
@@ -279,7 +288,7 @@ const HabboHome: React.FC = () => {
                 </div>
               </DraggableWidget>
             </div>
-          </Card>
+          </div>
         </div>
       </main>
     </div>

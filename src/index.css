@@ -16,11 +16,6 @@
 
 .volter-font {
   font-family: 'Volter', 'Inter', sans-serif;
-  text-shadow: 
-    1px 1px 0px black, 
-    -1px -1px 0px black, 
-    1px -1px 0px black, 
-    -1px 1px 0px black;
 }
 
 @layer base {
@@ -94,6 +89,10 @@
   
   body {
     @apply bg-background text-foreground;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: bold;
   }
 }
 
