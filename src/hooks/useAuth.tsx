@@ -1,6 +1,6 @@
 
 import { createContext, useContext, ReactNode } from 'react';
-import { useSupabaseAuth } from './useSupabaseAuth';
+import { useSimplifiedAuth } from './useSimplifiedAuth';
 
 interface AuthContextType {
   user: any;
@@ -15,7 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, loading, habboAccount, signOut } = useSupabaseAuth();
+  const { user, loading, habboAccount, logout } = useSimplifiedAuth();
   
   const isLoggedIn = !!user && !!habboAccount;
   const isAdmin = () => habboAccount?.is_admin || false;
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isLoggedIn,
       habboAccount,
       isAdmin,
-      logout: signOut
+      logout
     }}>
       {children}
     </AuthContext.Provider>

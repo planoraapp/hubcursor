@@ -1,0 +1,260 @@
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useSimplifiedAuth } from './useSimplifiedAuth';
+
+interface Widget {
+  id: string;
+  widget_id: string;
+  x: number;
+  y: number;
+  z_index: number;
+  width: number;
+  height: number;
+  is_visible: boolean;
+}
+
+interface Sticker {
+  id: string;
+  sticker_id: string;
+  sticker_src: string;
+  category: string;
+  x: number;
+  y: number;
+  z_index: number;
+  rotation?: number;
+  scale?: number;
+}
+
+interface Background {
+  background_type: 'color' | 'repeat' | 'cover';
+  background_value: string;
+}
+
+interface GuestbookEntry {
+  id: string;
+  author_habbo_name: string;
+  message: string;
+  created_at: string;
+}
+
+interface HabboData {
+  id: string;
+  habbo_name: string;
+  habbo_id: string;
+  name: string;
+}
+
+export const useEnhancedHabboHome = (username: string) => {
+  const [widgets, setWidgets] = useState<Widget[]>([]);
+  const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [background, setBackground] = useState<Background>({ 
+    background_type: 'color', 
+    background_value: '#f5f5f5'
+  });
+  const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
+  const [habboData, setHabboData] = useState<HabboData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+
+  const { habboAccount } = useSimplifiedAuth();
+
+  useEffect(() => {
+    if (username) {
+      loadHabboHome();
+    }
+  }, [username, habboAccount]);
+
+  const loadHabboHome = async () => {
+    try {
+      setLoading(true);
+      
+      // Buscar dados do usuário Habbo
+      const { data: userData, error: userError } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .ilike('habbo_name', username)
+        .single();
+
+      if (userError || !userData) {
+        console.error('Usuário não encontrado:', userError);
+        setHabboData(null);
+        setLoading(false);
+        return;
+      }
+
+      setHabboData({
+        id: userData.id,
+        habbo_name: userData.habbo_name,
+        habbo_id: userData.habbo_id,
+        name: userData.habbo_name
+      });
+
+      // Verificar se o usuário atual é o dono da home
+      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+      setIsOwner(currentUserIsOwner);
+
+      // Carregar widgets
+      const { data: layoutData, error: layoutError } = await supabase
+        .from('user_home_layouts')
+        .select('*')
+        .eq('user_id', userData.supabase_user_id);
+
+      if (!layoutError && layoutData) {
+        setWidgets(layoutData);
+      }
+
+      // Carregar stickers
+      const { data: stickerData, error: stickerError } = await supabase
+        .from('user_stickers')
+        .select('*')
+        .eq('user_id', userData.supabase_user_id);
+
+      if (!stickerError && stickerData) {
+        setStickers(stickerData);
+      }
+
+      // Carregar background
+      const { data: bgData, error: bgError } = await supabase
+        .from('user_home_backgrounds')
+        .select('*')
+        .eq('user_id', userData.supabase_user_id)
+        .single();
+
+      if (!bgError && bgData) {
+        setBackground({
+          background_type: bgData.background_type as 'color' | 'repeat' | 'cover',
+          background_value: bgData.background_value
+        });
+      }
+
+      // Carregar guestbook
+      const { data: guestbookData, error: guestbookError } = await supabase
+        .from('guestbook_entries')
+        .select('*')
+        .eq('home_owner_user_id', userData.supabase_user_id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (!guestbookError && guestbookData) {
+        setGuestbook(guestbookData);
+      }
+
+    } catch (error) {
+      console.error('Erro ao carregar Habbo Home:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addSticker = async (stickerData: { id: string; src: string; category: string }, x: number, y: number) => {
+    if (!isOwner || !habboData) return;
+
+    try {
+      const newSticker = {
+        user_id: habboData.id,
+        sticker_id: `${stickerData.id}_${Date.now()}`,
+        sticker_src: stickerData.src,
+        category: stickerData.category,
+        x,
+        y,
+        z_index: Math.max(...stickers.map(s => s.z_index), 0) + 1,
+        rotation: 0,
+        scale: 1.0
+      };
+
+      const { data, error } = await supabase
+        .from('user_stickers')
+        .insert(newSticker)
+        .select()
+        .single();
+
+      if (!error && data) {
+        setStickers(prev => [...prev, data]);
+        return data;
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar sticker:', error);
+    }
+  };
+
+  const updateStickerPosition = async (stickerId: string, x: number, y: number) => {
+    if (!isOwner) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_stickers')
+        .update({ x, y })
+        .eq('id', stickerId);
+
+      if (!error) {
+        setStickers(prev => 
+          prev.map(sticker => 
+            sticker.id === stickerId 
+              ? { ...sticker, x, y }
+              : sticker
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar posição do sticker:', error);
+    }
+  };
+
+  const removeSticker = async (stickerId: string) => {
+    if (!isOwner) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_stickers')
+        .delete()
+        .eq('id', stickerId);
+
+      if (!error) {
+        setStickers(prev => prev.filter(sticker => sticker.id !== stickerId));
+      }
+    } catch (error) {
+      console.error('Erro ao remover sticker:', error);
+    }
+  };
+
+  const addGuestbookEntry = async (message: string) => {
+    if (!habboAccount || !habboData) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('guestbook_entries')
+        .insert({
+          home_owner_user_id: habboData.id,
+          author_user_id: habboAccount.supabase_user_id,
+          author_habbo_name: habboAccount.habbo_name,
+          message
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setGuestbook(prev => [data, ...prev.slice(0, 9)]);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar entrada no guestbook:', error);
+    }
+  };
+
+  return {
+    widgets,
+    stickers,
+    background,
+    guestbook,
+    habboData,
+    loading,
+    isEditMode,
+    isOwner,
+    setIsEditMode,
+    addSticker,
+    updateStickerPosition,
+    removeSticker,
+    addGuestbookEntry
+  };
+};
