@@ -105,14 +105,26 @@ export const useEnhancedHabboHome = (username: string) => {
         setWidgets(layoutData);
       }
 
-      // Carregar stickers
+      // Carregar stickers com categoria
       const { data: stickerData, error: stickerError } = await supabase
         .from('user_stickers')
-        .select('*')
+        .select('id, sticker_id, sticker_src, category, x, y, z_index, rotation, scale')
         .eq('user_id', userData.supabase_user_id);
 
       if (!stickerError && stickerData) {
-        setStickers(stickerData);
+        // Garantir que todos os stickers tenham a propriedade category
+        const stickersWithCategory = stickerData.map(sticker => ({
+          id: sticker.id,
+          sticker_id: sticker.sticker_id,
+          sticker_src: sticker.sticker_src,
+          category: sticker.category || 'decorative',
+          x: sticker.x,
+          y: sticker.y,
+          z_index: sticker.z_index,
+          rotation: sticker.rotation || 0,
+          scale: sticker.scale || 1
+        }));
+        setStickers(stickersWithCategory);
       }
 
       // Carregar background
@@ -167,12 +179,23 @@ export const useEnhancedHabboHome = (username: string) => {
       const { data, error } = await supabase
         .from('user_stickers')
         .insert(newSticker)
-        .select()
+        .select('id, sticker_id, sticker_src, category, x, y, z_index, rotation, scale')
         .single();
 
       if (!error && data) {
-        setStickers(prev => [...prev, data]);
-        return data;
+        const stickerWithDefaults: Sticker = {
+          id: data.id,
+          sticker_id: data.sticker_id,
+          sticker_src: data.sticker_src,
+          category: data.category || 'decorative',
+          x: data.x,
+          y: data.y,
+          z_index: data.z_index,
+          rotation: data.rotation || 0,
+          scale: data.scale || 1
+        };
+        setStickers(prev => [...prev, stickerWithDefaults]);
+        return stickerWithDefaults;
       }
     } catch (error) {
       console.error('Erro ao adicionar sticker:', error);
