@@ -561,8 +561,11 @@ export type Database = {
       }
       user_stickers: {
         Row: {
+          category: string | null
           created_at: string
           id: string
+          rotation: number | null
+          scale: number | null
           sticker_id: string
           sticker_src: string
           user_id: string
@@ -571,8 +574,11 @@ export type Database = {
           z_index: number
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
+          rotation?: number | null
+          scale?: number | null
           sticker_id: string
           sticker_src: string
           user_id: string
@@ -581,8 +587,11 @@ export type Database = {
           z_index?: number
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: string
+          rotation?: number | null
+          scale?: number | null
           sticker_id?: string
           sticker_src?: string
           user_id?: string
