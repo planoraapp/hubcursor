@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Send } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 
 interface GuestbookEntry {
   id: string;
@@ -16,7 +15,7 @@ interface GuestbookEntry {
 interface GuestbookWidgetProps {
   entries: GuestbookEntry[];
   onAddEntry: (message: string) => void;
-  isOwner?: boolean;
+  isOwner: boolean;
 }
 
 export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
@@ -25,25 +24,19 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
   isOwner
 }) => {
   const [newMessage, setNewMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, habboAccount } = useSimpleAuth();
 
-  const handleSubmit = async () => {
-    if (!newMessage.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    try {
-      await onAddEntry(newMessage.trim());
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() && isLoggedIn) {
+      onAddEntry(newMessage.trim());
       setNewMessage('');
-    } catch (error) {
-      console.error('Error adding guestbook entry:', error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -53,74 +46,73 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <MessageSquare className="w-5 h-5" />
-          Livro de Visitas
-        </CardTitle>
-      </CardHeader>
-
-      <CardContent className="flex-1 flex flex-col gap-4">
-        {/* Lista de mensagens */}
-        <div className="flex-1 space-y-3 max-h-40 overflow-y-auto">
+    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200 flex flex-col">
+      <h3 className="font-bold text-blue-800 mb-3 volter-font flex items-center gap-2">
+        💬 Livro de Visitas
+        <span className="text-xs bg-blue-200 px-2 py-1 rounded">
+          {entries.length} mensagens
+        </span>
+      </h3>
+      
+      <ScrollArea className="flex-1 mb-4 pr-2">
+        <div className="space-y-3">
           {entries.length === 0 ? (
-            <div className="text-center text-gray-500 py-4">
-              <p className="text-sm">Nenhuma mensagem ainda.</p>
-              <p className="text-xs">Seja o primeiro a deixar um recado!</p>
+            <div className="text-center py-8">
+              <p className="text-blue-600 volter-font text-sm">
+                📝 Nenhuma mensagem ainda.
+              </p>
+              <p className="text-blue-500 volter-font text-xs mt-1">
+                Seja o primeiro a deixar uma mensagem!
+              </p>
             </div>
           ) : (
             entries.map((entry) => (
-              <div key={entry.id} className="bg-gray-50 p-3 rounded-lg border">
+              <div
+                key={entry.id}
+                className="bg-white rounded-lg p-3 border border-blue-100 shadow-sm"
+              >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-sm text-blue-600">
+                  <span className="font-bold text-blue-800 volter-font text-sm">
                     {entry.author_habbo_name}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-blue-500">
                     {formatDate(entry.created_at)}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 break-words">
+                <p className="text-blue-700 text-sm leading-relaxed">
                   {entry.message}
                 </p>
               </div>
             ))
           )}
         </div>
+      </ScrollArea>
 
-        {/* Formulário de nova mensagem */}
-        {isLoggedIn && (
-          <div className="space-y-2 border-t pt-3">
-            <Textarea
-              placeholder="Deixe uma mensagem..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              maxLength={200}
-              rows={3}
-              className="text-sm resize-none"
-            />
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-500">
-                {newMessage.length}/200
-              </span>
-              <Button
-                size="sm"
-                onClick={handleSubmit}
-                disabled={!newMessage.trim() || isSubmitting}
-              >
-                <Send className="w-4 h-4 mr-1" />
-                {isSubmitting ? 'Enviando...' : 'Enviar'}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!isLoggedIn && (
-          <div className="text-center text-gray-500 text-sm border-t pt-3">
-            <p>Faça login para deixar uma mensagem</p>
-          </div>
-        )}
-      </CardContent>
+      {isLoggedIn ? (
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Escreva uma mensagem..."
+            className="bg-white border-blue-200 focus:border-blue-400"
+            maxLength={200}
+          />
+          <Button
+            type="submit"
+            size="sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white volter-font"
+            disabled={!newMessage.trim()}
+          >
+            ✍️ Enviar Mensagem
+          </Button>
+        </form>
+      ) : (
+        <div className="text-center py-3 bg-blue-100 rounded-lg border border-blue-200">
+          <p className="text-blue-700 volter-font text-sm">
+            🔒 Faça login para deixar uma mensagem
+          </p>
+        </div>
+      )}
     </div>
   );
 };

@@ -21,7 +21,7 @@ interface Background {
 
 interface GuestbookEntry {
   id: string;
-  author_name: string;
+  author_habbo_name: string;
   message: string;
   created_at: string;
 }
@@ -31,7 +31,6 @@ interface HabboData {
   habbo_name: string;
   habbo_id: string;
   name: string;
-  figureString?: string;
 }
 
 export const useHabboHome = (username: string) => {
@@ -77,8 +76,7 @@ export const useHabboHome = (username: string) => {
         id: userData.id,
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
-        name: userData.habbo_name,
-        figureString: userData.figure_string || ''
+        name: userData.habbo_name
       });
 
       // Verificar se o usuário atual é o dono da home
@@ -109,11 +107,11 @@ export const useHabboHome = (username: string) => {
         });
       }
 
-      // Carregar guestbook
+      // Carregar guestbook usando a tabela correta
       const { data: guestbookData, error: guestbookError } = await supabase
-        .from('user_home_guestbook')
+        .from('guestbook_entries')
         .select('*')
-        .eq('home_owner_id', userData.supabase_user_id)
+        .eq('home_owner_user_id', userData.supabase_user_id)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -188,11 +186,11 @@ export const useHabboHome = (username: string) => {
 
     try {
       const { data, error } = await supabase
-        .from('user_home_guestbook')
+        .from('guestbook_entries')
         .insert({
-          home_owner_id: habboData.id,
-          author_id: habboAccount.supabase_user_id,
-          author_name: habboAccount.habbo_name,
+          home_owner_user_id: habboData.id,
+          author_user_id: habboAccount.supabase_user_id,
+          author_habbo_name: habboAccount.habbo_name,
           message
         })
         .select()
@@ -209,11 +207,11 @@ export const useHabboHome = (username: string) => {
   // Posições padrão otimizadas para widgets
   const getDefaultPosition = (widgetId: string) => {
     const defaults: Record<string, { x: number; y: number; width: number; height: number }> = {
-      usercard: { x: 20, y: 20, width: 520, height: 180 }, // Aumentado para melhor layout
-      guestbook: { x: 50, y: 220, width: 420, height: 380 }, // Aumentado para mais conteúdo
-      traxplayer: { x: 50, y: 620, width: 380, height: 220 }, // Melhor proporção
-      rating: { x: 500, y: 220, width: 320, height: 160 }, // Mais largo
-      info: { x: 500, y: 400, width: 320, height: 200 } // Maior para mais informações
+      usercard: { x: 20, y: 20, width: 520, height: 180 },
+      guestbook: { x: 50, y: 220, width: 420, height: 380 },
+      traxplayer: { x: 50, y: 620, width: 380, height: 220 },
+      rating: { x: 500, y: 220, width: 320, height: 160 },
+      info: { x: 500, y: 400, width: 320, height: 200 }
     };
     return defaults[widgetId] || { x: 50, y: 50, width: 280, height: 180 };
   };
