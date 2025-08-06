@@ -10,12 +10,13 @@ interface AuthContextType {
   habboAccount: any;
   isAdmin: () => boolean;
   logout: () => Promise<void>;
+  loginWithPassword: (habboName: string, password: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, loading, habboAccount, isLoggedIn, isAdmin, logout } = useUnifiedAuth();
+  const { user, loading, habboAccount, isLoggedIn, isAdmin, logout, loginWithPassword } = useUnifiedAuth();
   
   return (
     <AuthContext.Provider value={{
@@ -25,7 +26,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isLoggedIn,
       habboAccount,
       isAdmin,
-      logout
+      logout,
+      loginWithPassword
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, Share2, MapPin, Users, Calendar, Star } from 'lucide-react';
 import { HomeHeader } from '../components/HabboHome/HomeHeader';
-// Removida a importação do SimpleLogin que foi deletado
 import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
 import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
 import { EnhancedHomeToolbar } from '../components/HabboHome/EnhancedHomeToolbar';
@@ -24,15 +24,18 @@ const HabboHome = () => {
   const isMobile = useIsMobile();
 
   const {
-    homeData,
+    habboData,
     widgets,
     setWidgets,
-    isLoading,
+    loading: isLoading,
     error,
     addWidget,
     removeWidget,
     updateWidgetPosition,
-    handleSaveLayout
+    handleSaveLayout,
+    isEditMode,
+    setIsEditMode,
+    isOwner
   } = useEnhancedHabboHome(username || '');
 
   useEffect(() => {
@@ -54,7 +57,7 @@ const HabboHome = () => {
     );
   }
 
-  if (!homeData) {
+  if (!habboData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-repeat"
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
@@ -66,28 +69,29 @@ const HabboHome = () => {
   const renderDesktop = () => (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex flex-col min-h-screen">
-        <HomeHeader habboHomeData={homeData} />
+        <HomeHeader habboData={habboData} />
 
         <EnhancedHomeToolbar
-          widgets={widgets}
-          setWidgets={setWidgets}
-          addWidget={addWidget}
-          handleSaveLayout={handleSaveLayout}
+          isEditMode={isEditMode}
+          isOwner={isOwner}
+          onEditModeChange={setIsEditMode}
         />
 
         <div className="flex flex-1 p-4 gap-4">
           <div className="w-1/4 flex flex-col gap-4">
-            <AvatarWidget habboHomeData={homeData} />
-            <GuestbookWidget habboHomeData={homeData} />
+            <AvatarWidget habboData={habboData} />
+            <GuestbookWidget habboData={habboData} />
           </div>
 
           <div className="w-3/4 grid gap-4 grid-cols-3 grid-rows-3">
             {widgets.map(widget => (
               <DraggableWidget
                 key={widget.id}
-                widget={widget}
-                updateWidgetPosition={updateWidgetPosition}
-                removeWidget={removeWidget}
+                id={widget.id}
+                x={widget.x}
+                y={widget.y}
+                onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
+                onRemove={() => removeWidget(widget.id)}
               >
                 <Card className="bg-white/80 backdrop-blur-sm shadow-md h-full">
                   <CardHeader>
@@ -108,18 +112,17 @@ const HabboHome = () => {
   const renderMobile = () => (
     <MobileLayout>
       <div className="flex flex-col min-h-screen p-4">
-        <HomeHeader habboHomeData={homeData} />
+        <HomeHeader habboData={habboData} />
         
         <EnhancedHomeToolbar
-          widgets={widgets}
-          setWidgets={setWidgets}
-          addWidget={addWidget}
-          handleSaveLayout={handleSaveLayout}
+          isEditMode={isEditMode}
+          isOwner={isOwner}
+          onEditModeChange={setIsEditMode}
         />
 
         <div className="flex flex-col gap-4">
-          <AvatarWidget habboHomeData={homeData} />
-          <GuestbookWidget habboHomeData={homeData} />
+          <AvatarWidget habboData={habboData} />
+          <GuestbookWidget habboData={habboData} />
         </div>
 
         <div className="flex flex-col gap-4">

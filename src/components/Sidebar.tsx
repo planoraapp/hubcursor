@@ -1,79 +1,128 @@
-
-import { Newspaper, MessageCircle, Package, Award, Palette, ShoppingCart, Monitor } from 'lucide-react';
-import { LanguageSelector } from './LanguageSelector';
-import { UserProfile } from './UserProfile';
-import { useLanguage } from '../hooks/useLanguage';
+import React, { useState, useEffect } from 'react';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  Home,
+  LayoutDashboard,
+  Settings,
+  User,
+  BaggageClaim,
+  Newspaper,
+  Gamepad2,
+  ShoppingBag,
+  MessageSquare,
+  Image,
+  Cog6Tooth,
+  DoorOpen,
+  LucideIcon
+} from "lucide-react"
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate, Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface SidebarProps {
-  activeSection: string;
-  setActiveSection: (section: string) => void;
+  habboName?: string;
 }
 
-export const Sidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
-  const { t } = useLanguage();
+interface NavItemProps {
+  icon: LucideIcon;
+  label: string;
+  href: string;
+}
 
-  const navItems = [
-    { id: 'noticias', label: t('noticias'), icon: Newspaper },
-    { id: 'forum', label: t('forum'), icon: MessageCircle },
-    { id: 'catalogo', label: t('catalogo'), icon: Package },
-    { id: 'emblemas', label: t('emblemas'), icon: Award },
-    { id: 'editor', label: t('editor'), icon: Palette },
-    { id: 'mercado', label: t('mercado'), icon: ShoppingCart },
-    { id: 'console', label: 'Console', icon: Monitor },
-  ];
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href }) => (
+  <Link to={href} className="flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-100 transition-colors duration-200">
+    <Icon className="w-4 h-4 text-gray-500" />
+    <span className="text-sm font-medium text-gray-700">{label}</span>
+  </Link>
+);
 
-  const handleNavClick = (id: string) => {
-    setActiveSection(id);
-    if (id === 'console') {
-      window.location.href = '/console';
-    } else {
-      window.location.hash = id;
+const UserProfile: React.FC<{ habboName: string }> = ({ habboName }) => (
+  <div className="flex items-center space-x-4 py-4 px-6">
+    <Avatar>
+      <AvatarImage src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=l&user=${habboName}&action=wav&direction=2&head_direction=2&gesture=sml`} />
+      <AvatarFallback>HH</AvatarFallback>
+    </Avatar>
+    <div>
+      <h3 className="text-sm font-semibold text-gray-800">{habboName}</h3>
+      <p className="text-xs text-gray-500">Habbo Membro</p>
+    </div>
+  </div>
+);
+
+export function Sidebar({ habboName }: SidebarProps) {
+  const [open, setOpen] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+      toast({
+        title: "Sucesso",
+        description: "Logout realizado com sucesso!"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || 'Erro ao fazer logout',
+        variant: "destructive"
+      });
     }
   };
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-slate-100 to-slate-200 shadow-xl flex flex-col min-h-screen">
-      <div className="text-center mb-6 p-6">
-        <img 
-          src="/assets/habbohub.png" 
-          alt="HABBO HUB" 
-          className="mx-auto mb-4 max-w-[180px] h-auto"
-        />
-      </div>
-      
-      <UserProfile />
-      
-      <nav className="flex flex-col space-y-2 px-4 flex-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              className={`
-                flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
-                ${activeSection === item.id 
-                  ? 'bg-sky-400 text-white shadow-md' 
-                  : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-sm'
-                }
-              `}
-            >
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-      
-      <div className="p-4 bg-white/80 backdrop-blur-sm mx-4 rounded-lg mb-4 shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-2">{t('habboPremiumTitle')}</h3>
-        <p className="text-sm text-gray-600 mb-3">{t('habboPremiumDesc')}</p>
-        <button className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-200">
-          {t('subscribeNow')}
-        </button>
-      </div>
-      
-      <LanguageSelector />
-    </aside>
-  );
-};
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" className="md:hidden w-full justify-start pl-4">Abrir Menu</Button>
+      </SheetTrigger>
+      <SheetContent className="w-full sm:w-64">
+        <SheetHeader className="text-left">
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Navegue pelo Habbo Hub.
+          </SheetDescription>
+        </SheetHeader>
+        <Separator />
+
+      {/* User Profile */}
+      <UserProfile habboName={habboName || ''} />
+
+        <Separator />
+        <div className="py-4">
+          <NavItem icon={Home} label="Início" href="/" />
+          <NavItem icon={Newspaper} label="Notícias" href="/noticias" />
+          <NavItem icon={Gamepad2} label="Eventos" href="/eventos" />
+          <NavItem icon={ShoppingBag} label="Marketplace" href="/marketplace" />
+          <NavItem icon={MessageSquare} label="Fórum" href="/forum" />
+          <NavItem icon={Image} label="Emblemas" href="/emblemas" />
+        </div>
+        <Separator />
+        <div className="py-4">
+          <NavItem icon={Cog6Tooth} label="Ferramentas" href="/ferramentas" />
+          <NavItem icon={LayoutDashboard} label="Catálogo" href="/catalogo" />
+          <NavItem icon={User} label="Meu Perfil" href={`/profile/${habboName}`} />
+          <NavItem icon={Settings} label="Configurações" href="/configuracoes" />
+        </div>
+        <Separator />
+        <div className="py-4">
+          <Button variant="ghost" className="w-full justify-start pl-4" onClick={handleLogout}>
+            <DoorOpen className="w-4 h-4 mr-2 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Sair</span>
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}

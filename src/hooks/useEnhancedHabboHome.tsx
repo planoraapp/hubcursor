@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -6,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 interface Widget {
   id: string;
   widget_id: string;
+  name: string;
+  content: string;
   x: number;
   y: number;
   z_index: number;
@@ -57,6 +60,7 @@ export const useEnhancedHabboHome = (username: string) => {
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { habboAccount } = useAuth();
 
@@ -69,6 +73,7 @@ export const useEnhancedHabboHome = (username: string) => {
   const loadHabboHome = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Buscar dados do usuário Habbo
       const { data: userData, error: userError } = await supabase
@@ -79,6 +84,7 @@ export const useEnhancedHabboHome = (username: string) => {
 
       if (userError || !userData) {
         console.error('Usuário não encontrado:', userError);
+        setError('Usuário não encontrado');
         setHabboData(null);
         setLoading(false);
         return;
@@ -102,7 +108,12 @@ export const useEnhancedHabboHome = (username: string) => {
         .eq('user_id', userData.supabase_user_id);
 
       if (!layoutError && layoutData) {
-        setWidgets(layoutData);
+        const widgetsWithContent = layoutData.map(widget => ({
+          ...widget,
+          name: widget.widget_id || 'Widget',
+          content: 'Conteúdo do widget'
+        }));
+        setWidgets(widgetsWithContent);
       }
 
       // Carregar stickers com categoria
@@ -155,9 +166,36 @@ export const useEnhancedHabboHome = (username: string) => {
 
     } catch (error) {
       console.error('Erro ao carregar Habbo Home:', error);
+      setError('Erro ao carregar Habbo Home');
     } finally {
       setLoading(false);
     }
+  };
+
+  const addWidget = async (widgetType: string) => {
+    if (!isOwner || !habboData) return;
+    // Implementation for adding widgets
+  };
+
+  const removeWidget = async (widgetId: string) => {
+    if (!isOwner) return;
+    setWidgets(prev => prev.filter(w => w.id !== widgetId));
+  };
+
+  const updateWidgetPosition = async (widgetId: string, x: number, y: number) => {
+    if (!isOwner) return;
+    setWidgets(prev => 
+      prev.map(widget => 
+        widget.id === widgetId 
+          ? { ...widget, x, y }
+          : widget
+      )
+    );
+  };
+
+  const handleSaveLayout = async () => {
+    if (!isOwner) return;
+    // Implementation for saving layout
   };
 
   const addSticker = async (stickerData: { id: string; src: string; category: string }, x: number, y: number) => {
@@ -266,18 +304,37 @@ export const useEnhancedHabboHome = (username: string) => {
   };
 
   return {
+    // Data properties
     widgets,
     stickers,
     background,
     guestbook,
     habboData,
+    homeData: habboData, // Alias for backward compatibility
+    
+    // State properties  
     loading,
+    isLoading: loading, // Alias for backward compatibility
+    error,
     isEditMode,
     isOwner,
+    
+    // State setters
+    setWidgets,
     setIsEditMode,
+    
+    // Widget functions
+    addWidget,
+    removeWidget,
+    updateWidgetPosition,
+    handleSaveLayout,
+    
+    // Sticker functions
     addSticker,
     updateStickerPosition,
     removeSticker,
+    
+    // Guestbook functions
     addGuestbookEntry
   };
 };
