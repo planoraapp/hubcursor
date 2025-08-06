@@ -2,126 +2,99 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { User, Calendar } from 'lucide-react';
+import { User, Calendar, Star } from 'lucide-react';
 
-interface AvatarWidgetProps {
-  habboData: {
-    name: string;
-    figureString: string;
-    motto: string;
-    online: boolean;
-    memberSince: string;
-    selectedBadges: Array<{
-      badgeIndex: number;
-      code: string;
-      name: string;
-      description: string;
-    }>;
-  } | null;
-  isOwner?: boolean;
+interface HabboData {
+  name: string;
+  figureString?: string;
+  motto?: string;
+  online?: boolean;
+  memberSince?: string;
+  selectedBadges?: any[];
 }
 
-export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData, isOwner }) => {
-  if (!habboData) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2" />
-          <p className="text-sm text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
+interface AvatarWidgetProps {
+  habboData: HabboData;
+}
 
+export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
   const getAvatarUrl = (figureString: string) => {
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
-  };
-
-  const getBadgeUrl = (code: string) => {
-    return `https://images.habbo.com/c_images/album1584/${code}.gif`;
+    if (!figureString) {
+      return `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboData.name}&direction=2&head_direction=2&gesture=sml&size=m&action=std`;
+    }
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=m&direction=2&head_direction=3&gesture=sml&action=std`;
   };
 
   return (
-    <div className="w-full h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <img
-              src={getAvatarUrl(habboData.figureString)}
-              alt={`Avatar de ${habboData.name}`}
-              className="w-16 h-16 rounded-lg border-2 border-gray-200"
-            />
-            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              habboData.online ? 'bg-green-500' : 'bg-red-500'
-            }`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-bold text-gray-800 truncate">
-              {habboData.name}
-            </CardTitle>
-            <p className="text-sm text-gray-600 italic truncate">
-              "{habboData.motto}"
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant={habboData.online ? "default" : "secondary"} className="text-xs">
-                {habboData.online ? 'Online' : 'Offline'}
-              </Badge>
-              {isOwner && (
-                <Badge variant="outline" className="text-xs">
-                  Sua Home
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
+    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
+      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+        <CardTitle className="volter-font text-center flex items-center justify-center gap-2">
+          <User className="w-5 h-5" />
+          {habboData.name}
+        </CardTitle>
       </CardHeader>
+      <CardContent className="p-6">
+        <div className="flex flex-col items-center space-y-4">
+          {/* Avatar */}
+          <div className="relative">
+            <img 
+              src={getAvatarUrl(habboData.figureString || '')}
+              alt={`Avatar de ${habboData.name}`}
+              className="w-24 h-24 object-contain"
+              onError={(e) => {
+                // Fallback para avatar padrão se houver erro
+                e.currentTarget.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboData.name}&direction=2&head_direction=2&gesture=sml&size=m&action=std`;
+              }}
+            />
+            {habboData.online && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+            )}
+          </div>
 
-      <CardContent className="space-y-4">
-        {/* Informações básicas */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Calendar className="w-4 h-4" />
-          <span>Membro desde: {new Date(habboData.memberSince).toLocaleDateString('pt-BR')}</span>
-        </div>
+          {/* Status */}
+          <div className="text-center">
+            <Badge variant={habboData.online ? "default" : "secondary"}>
+              {habboData.online ? "Online" : "Offline"}
+            </Badge>
+          </div>
 
-        {/* Emblemas selecionados */}
-        {habboData.selectedBadges && habboData.selectedBadges.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-gray-800 mb-2">
-              Emblemas em Destaque
-            </h4>
-            <div className="grid grid-cols-3 gap-2">
-              {habboData.selectedBadges.slice(0, 6).map((badge, index) => (
-                <div 
-                  key={index} 
-                  className="relative group cursor-help"
-                  title={`${badge.name}: ${badge.description}`}
-                >
+          {/* Motto */}
+          {habboData.motto && (
+            <div className="text-center">
+              <p className="text-sm text-gray-600 italic">"{habboData.motto}"</p>
+            </div>
+          )}
+
+          {/* Member Since */}
+          {habboData.memberSince && (
+            <div className="flex items-center text-xs text-gray-500">
+              <Calendar className="w-4 h-4 mr-1" />
+              Membro desde {new Date(habboData.memberSince).getFullYear()}
+            </div>
+          )}
+
+          {/* Selected Badges */}
+          {habboData.selectedBadges && habboData.selectedBadges.length > 0 && (
+            <div className="w-full">
+              <h4 className="text-sm font-semibold mb-2 text-center">Emblemas</h4>
+              <div className="flex flex-wrap justify-center gap-1">
+                {habboData.selectedBadges.slice(0, 5).map((badge, index) => (
                   <img
-                    src={getBadgeUrl(badge.code)}
+                    key={index}
+                    src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
                     alt={badge.name}
-                    className="w-8 h-8 border border-gray-200 rounded bg-white p-1"
+                    className="w-6 h-6"
+                    title={badge.name}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Botão ver perfil completo */}
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="w-full"
-          onClick={() => window.open(`/profile/${habboData.name}`, '_blank')}
-        >
-          <User className="w-4 h-4 mr-2" />
-          Ver Perfil Completo
-        </Button>
+          )}
+        </div>
       </CardContent>
-    </div>
+    </Card>
   );
 };

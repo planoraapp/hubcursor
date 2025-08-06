@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { getUserByName } from '../lib/habboApi';
 
 interface Widget {
   id: string;
@@ -68,6 +70,7 @@ export const useEnhancedHabboHome = (username: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const { habboAccount } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (username) {
@@ -80,7 +83,13 @@ export const useEnhancedHabboHome = (username: string) => {
       setLoading(true);
       setError(null);
       
-      // Buscar dados do usuário Habbo
+      console.log('🔍 Carregando Habbo Home para usuário:', username);
+      
+      // Primeiro, buscar dados da API oficial do Habbo
+      const habboApiData = await getUserByName(username);
+      console.log('📊 Dados da API do Habbo:', habboApiData);
+      
+      // Buscar dados do usuário no banco local
       const { data: userData, error: userError } = await supabase
         .from('habbo_accounts')
         .select('*')
@@ -88,24 +97,29 @@ export const useEnhancedHabboHome = (username: string) => {
         .single();
 
       if (userError || !userData) {
-        console.error('Usuário não encontrado:', userError);
+        console.error('❌ Usuário não encontrado no banco:', userError);
         setError('Usuário não encontrado');
         setHabboData(null);
         setLoading(false);
         return;
       }
 
-      setHabboData({
+      console.log('✅ Dados do usuário encontrados:', userData);
+
+      // Combinar dados da API com dados locais
+      const combinedHabboData: HabboData = {
         id: userData.id,
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
         name: userData.habbo_name,
-        figureString: '',
-        motto: '',
-        online: false,
-        memberSince: '',
-        selectedBadges: []
-      });
+        figureString: habboApiData?.figureString || '',
+        motto: habboApiData?.motto || '',
+        online: habboApiData?.online || false,
+        memberSince: habboApiData?.memberSince || '',
+        selectedBadges: habboApiData?.selectedBadges || []
+      };
+
+      setHabboData(combinedHabboData);
 
       // Verificar se o usuário atual é o dono da home
       const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
@@ -121,20 +135,19 @@ export const useEnhancedHabboHome = (username: string) => {
         const widgetsWithContent = layoutData.map(widget => ({
           ...widget,
           name: widget.widget_id || 'Widget',
-          title: widget.widget_id || 'Widget',
-          content: 'Conteúdo do widget'
+          title: getWidgetTitle(widget.widget_id),
+          content: getWidgetContent(widget.widget_id, combinedHabboData)
         }));
         setWidgets(widgetsWithContent);
       }
 
-      // Carregar stickers com categoria
+      // Carregar stickers
       const { data: stickerData, error: stickerError } = await supabase
         .from('user_stickers')
-        .select('id, sticker_id, sticker_src, category, x, y, z_index, rotation, scale')
+        .select('*')
         .eq('user_id', userData.supabase_user_id);
 
       if (!stickerError && stickerData) {
-        // Garantir que todos os stickers tenham a propriedade category
         const stickersWithCategory = stickerData.map(sticker => ({
           id: sticker.id,
           sticker_id: sticker.sticker_id,
@@ -176,119 +189,121 @@ export const useEnhancedHabboHome = (username: string) => {
       }
 
     } catch (error) {
-      console.error('Erro ao carregar Habbo Home:', error);
+      console.error('💥 Erro ao carregar Habbo Home:', error);
       setError('Erro ao carregar Habbo Home');
     } finally {
       setLoading(false);
     }
   };
 
+  const getWidgetTitle = (widgetId: string): string => {
+    const titles: Record<string, string> = {
+      'avatar': 'Avatar',
+      'guestbook': 'Livro de Visitas',
+      'rating': 'Avaliação',
+      'info': 'Informações',
+      'traxplayer': 'Player de Música'
+    };
+    return titles[widgetId] || 'Widget';
+  };
+
+  const getWidgetContent = (widgetId: string, habboData: HabboData): string => {
+    switch (widgetId) {
+      case 'avatar':
+        return `Olá! Sou ${habboData.name}`;
+      case 'guestbook':
+        return 'Deixe uma mensagem!';
+      case 'rating':
+        return 'Avalie esta home!';
+      case 'info':
+        return habboData.motto || 'Sem missão definida';
+      default:
+        return 'Conteúdo do widget';
+    }
+  };
+
   const addWidget = async (widgetType: string) => {
     if (!isOwner || !habboData) return;
-    // Implementation for adding widgets
+    
+    try {
+      const newWidget = {
+        user_id: habboData.id,
+        widget_id: widgetType,
+        x: 50,
+        y: 50,
+        z_index: Math.max(...widgets.map(w => w.z_index), 0) + 1,
+        width: 300,
+        height: 200,
+        is_visible: true
+      };
+
+      const { data, error } = await supabase
+        .from('user_home_layouts')
+        .insert(newWidget)
+        .select()
+        .single();
+
+      if (!error && data) {
+        const widgetWithContent = {
+          ...data,
+          name: data.widget_id,
+          title: getWidgetTitle(data.widget_id),
+          content: getWidgetContent(data.widget_id, habboData)
+        };
+        setWidgets(prev => [...prev, widgetWithContent]);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar widget:', error);
+    }
   };
 
   const removeWidget = async (widgetId: string) => {
     if (!isOwner) return;
-    setWidgets(prev => prev.filter(w => w.id !== widgetId));
+    
+    try {
+      const { error } = await supabase
+        .from('user_home_layouts')
+        .delete()
+        .eq('id', widgetId);
+
+      if (!error) {
+        setWidgets(prev => prev.filter(w => w.id !== widgetId));
+      }
+    } catch (error) {
+      console.error('Erro ao remover widget:', error);
+    }
   };
 
   const updateWidgetPosition = async (widgetId: string, x: number, y: number) => {
     if (!isOwner) return;
-    setWidgets(prev => 
-      prev.map(widget => 
-        widget.id === widgetId 
-          ? { ...widget, x, y }
-          : widget
-      )
-    );
-  };
-
-  const handleSaveLayout = async () => {
-    if (!isOwner) return;
-    // Implementation for saving layout
-  };
-
-  const addSticker = async (stickerData: { id: string; src: string; category: string }, x: number, y: number) => {
-    if (!isOwner || !habboData) return;
-
-    try {
-      const newSticker = {
-        user_id: habboData.id,
-        sticker_id: `${stickerData.id}_${Date.now()}`,
-        sticker_src: stickerData.src,
-        category: stickerData.category,
-        x,
-        y,
-        z_index: Math.max(...stickers.map(s => s.z_index), 0) + 1,
-        rotation: 0,
-        scale: 1.0
-      };
-
-      const { data, error } = await supabase
-        .from('user_stickers')
-        .insert(newSticker)
-        .select('id, sticker_id, sticker_src, category, x, y, z_index, rotation, scale')
-        .single();
-
-      if (!error && data) {
-        const stickerWithDefaults: Sticker = {
-          id: data.id,
-          sticker_id: data.sticker_id,
-          sticker_src: data.sticker_src,
-          category: data.category || 'decorative',
-          x: data.x,
-          y: data.y,
-          z_index: data.z_index,
-          rotation: data.rotation || 0,
-          scale: data.scale || 1
-        };
-        setStickers(prev => [...prev, stickerWithDefaults]);
-        return stickerWithDefaults;
-      }
-    } catch (error) {
-      console.error('Erro ao adicionar sticker:', error);
-    }
-  };
-
-  const updateStickerPosition = async (stickerId: string, x: number, y: number) => {
-    if (!isOwner) return;
-
+    
     try {
       const { error } = await supabase
-        .from('user_stickers')
+        .from('user_home_layouts')
         .update({ x, y })
-        .eq('id', stickerId);
+        .eq('id', widgetId);
 
       if (!error) {
-        setStickers(prev => 
-          prev.map(sticker => 
-            sticker.id === stickerId 
-              ? { ...sticker, x, y }
-              : sticker
+        setWidgets(prev => 
+          prev.map(widget => 
+            widget.id === widgetId 
+              ? { ...widget, x, y }
+              : widget
           )
         );
       }
     } catch (error) {
-      console.error('Erro ao atualizar posição do sticker:', error);
+      console.error('Erro ao atualizar posição do widget:', error);
     }
   };
 
-  const removeSticker = async (stickerId: string) => {
+  const handleSaveLayout = async () => {
     if (!isOwner) return;
-
-    try {
-      const { error } = await supabase
-        .from('user_stickers')
-        .delete()
-        .eq('id', stickerId);
-
-      if (!error) {
-        setStickers(prev => prev.filter(sticker => sticker.id !== stickerId));
-      }
-    } catch (error) {
-      console.error('Erro ao remover sticker:', error);
-    }
+    
+    toast({
+      title: "Layout Salvo",
+      description: "Suas alterações foram salvas com sucesso!",
+    });
   };
 
   const addGuestbookEntry = async (message: string) => {
@@ -321,11 +336,11 @@ export const useEnhancedHabboHome = (username: string) => {
     background,
     guestbook,
     habboData,
-    homeData: habboData, // Alias for backward compatibility
+    homeData: habboData,
     
     // State properties  
     loading,
-    isLoading: loading, // Alias for backward compatibility
+    isLoading: loading,
     error,
     isEditMode,
     isOwner,
@@ -340,20 +355,7 @@ export const useEnhancedHabboHome = (username: string) => {
     updateWidgetPosition,
     handleSaveLayout,
     
-    // Sticker functions
-    addSticker: async (stickerData: { id: string; src: string; category: string }, x: number, y: number) => {
-      // Implementation
-    },
-    updateStickerPosition: async (stickerId: string, x: number, y: number) => {
-      // Implementation  
-    },
-    removeSticker: async (stickerId: string) => {
-      // Implementation
-    },
-    
     // Guestbook functions
-    addGuestbookEntry: async (message: string) => {
-      // Implementation
-    }
+    addGuestbookEntry
   };
 };
