@@ -10,6 +10,7 @@ import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
 import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
 import { EnhancedHomeToolbar } from '../components/HabboHome/EnhancedHomeToolbar';
 import { DraggableWidget } from '../components/HabboHome/DraggableWidget';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { useEnhancedHabboHome } from '../hooks/useEnhancedHabboHome';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +23,8 @@ const HabboHome = () => {
   const { user, habboAccount, loading, logout } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [activeSection, setActiveSection] = useState('homes');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const {
     habboData,
@@ -36,6 +39,17 @@ const HabboHome = () => {
     setIsEditMode,
     isOwner
   } = useEnhancedHabboHome(username || '');
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     if (error) {
@@ -77,43 +91,48 @@ const HabboHome = () => {
 
   const renderDesktop = () => (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex flex-col min-h-screen">
-        <HomeHeader username={habboData.name} />
+      <div className="flex min-h-screen">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+          <div className="flex flex-col min-h-full">
+            <HomeHeader username={habboData.name} />
 
-        <EnhancedHomeToolbar
-          isEditMode={isEditMode}
-          isOwner={isOwner}
-          onEditModeChange={setIsEditMode}
-        />
+            <EnhancedHomeToolbar
+              isEditMode={isEditMode}
+              isOwner={isOwner}
+              onEditModeChange={setIsEditMode}
+            />
 
-        <div className="flex flex-1 p-4 gap-4">
-          <div className="w-1/4 flex flex-col gap-4">
-            <AvatarWidget habboData={enhancedHabboData} />
-            <GuestbookWidget habboData={enhancedHabboData} />
+            <div className="flex flex-1 p-4 gap-4">
+              <div className="w-1/4 flex flex-col gap-4">
+                <AvatarWidget habboData={enhancedHabboData} />
+                <GuestbookWidget habboData={enhancedHabboData} />
+              </div>
+
+              <div className="w-3/4 grid gap-4 grid-cols-3 grid-rows-3">
+                {widgets.map(widget => (
+                  <DraggableWidget
+                    key={widget.id}
+                    id={widget.id}
+                    x={widget.x}
+                    y={widget.y}
+                    isEditMode={isEditMode}
+                    onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
+                  >
+                    <Card className="bg-white/80 backdrop-blur-sm shadow-md h-full">
+                      <CardHeader>
+                        <CardTitle>{widget.title || 'Widget'}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {widget.content || 'Widget content'}
+                      </CardContent>
+                    </Card>
+                  </DraggableWidget>
+                ))}
+              </div>
+            </div>
           </div>
-
-          <div className="w-3/4 grid gap-4 grid-cols-3 grid-rows-3">
-            {widgets.map(widget => (
-              <DraggableWidget
-                key={widget.id}
-                id={widget.id}
-                x={widget.x}
-                y={widget.y}
-                isEditMode={isEditMode}
-                onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
-              >
-                <Card className="bg-white/80 backdrop-blur-sm shadow-md h-full">
-                  <CardHeader>
-                    <CardTitle>{widget.title || 'Widget'}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {widget.content || 'Widget content'}
-                  </CardContent>
-                </Card>
-              </DraggableWidget>
-            ))}
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   );

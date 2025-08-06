@@ -261,7 +261,7 @@ const HomesHub: React.FC = () => {
                     Faça login para personalizar sua home com widgets, stickers e backgrounds únicos
                   </p>
                   <Button 
-                    onClick={() => navigate('/connect-habbo')}
+                    onClick={() => navigate('/login')}
                     className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-bold"
                   >
                     Conectar Conta Habbo

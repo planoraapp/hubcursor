@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
 import { ProfileChecker } from '../components/ProfileChecker';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
@@ -10,6 +11,19 @@ const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [activeSection, setActiveSection] = useState('profile');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
 
   const renderContent = () => (
     <div className="space-y-6">
@@ -37,7 +51,8 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex min-h-screen">
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <PageHeader 
             title={`Perfil de ${username}`}
             icon="/assets/frank.png"

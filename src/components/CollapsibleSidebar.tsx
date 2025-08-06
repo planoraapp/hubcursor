@@ -4,19 +4,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Home,
-  Newspaper,
-  Gamepad2,
-  ShoppingBag,
-  MessageSquare,
-  Image,
-  Cog,
-  LayoutDashboard,
-  User,
-  Settings,
   DoorOpen,
   Menu,
-  X
+  X,
+  User,
+  Settings
 } from "lucide-react";
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -27,14 +19,15 @@ interface CollapsibleSidebarProps {
 }
 
 interface NavItemProps {
-  icon: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string }>;
+  iconSrc?: string;
   label: string;
   href: string;
   isActive: boolean;
   isCollapsed: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, isActive, isCollapsed }) => (
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, iconSrc, label, href, isActive, isCollapsed }) => (
   <Link 
     to={href} 
     className={`
@@ -46,7 +39,15 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, isActive, is
       ${isCollapsed ? 'justify-center' : 'justify-start'}
     `}
   >
-    <Icon className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3'}`} />
+    {iconSrc ? (
+      <img 
+        src={iconSrc} 
+        alt={label}
+        className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3'}`}
+      />
+    ) : Icon && (
+      <Icon className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3'}`} />
+    )}
     {!isCollapsed && (
       <span className="text-sm font-medium">{label}</span>
     )}
@@ -107,15 +108,15 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
   };
 
   const navItems = [
-    { icon: Home, label: "Início", href: "/" },
-    { icon: Home, label: "Homes", href: "/homes" },
-    { icon: Newspaper, label: "Notícias", href: "/noticias" },
-    { icon: Gamepad2, label: "Eventos", href: "/eventos" },
-    { icon: ShoppingBag, label: "Marketplace", href: "/marketplace" },
-    { icon: MessageSquare, label: "Fórum", href: "/forum" },
-    { icon: Image, label: "Emblemas", href: "/emblemas" },
-    { icon: Cog, label: "Ferramentas", href: "/ferramentas" },
-    { icon: LayoutDashboard, label: "Catálogo", href: "/catalogo" },
+    { iconSrc: "/assets/home.png", label: "Início", href: "/" },
+    { iconSrc: "/assets/home.png", label: "Homes", href: "/homes" },
+    { iconSrc: "/assets/news.png", label: "Notícias", href: "/noticias" },
+    { iconSrc: "/assets/eventos.png", label: "Eventos", href: "/eventos" },
+    { iconSrc: "/assets/Carrinho.png", label: "Marketplace", href: "/marketplace" },
+    { iconSrc: "/assets/news.png", label: "Fórum", href: "/forum" },
+    { iconSrc: "/assets/emblemas.png", label: "Emblemas", href: "/emblemas" },
+    { iconSrc: "/assets/ferramentas.png", label: "Ferramentas", href: "/ferramentas" },
+    { iconSrc: "/assets/Carrinho.png", label: "Catálogo", href: "/catalogo" },
   ];
 
   const userItems = user ? [
@@ -183,6 +184,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
                 <NavItem
                   key={item.href}
                   icon={item.icon}
+                  iconSrc={item.iconSrc}
                   label={item.label}
                   href={item.href}
                   isActive={location.pathname === item.href}
@@ -296,6 +298,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
             <NavItem
               key={item.href}
               icon={item.icon}
+              iconSrc={item.iconSrc}
               label={item.label}
               href={item.href}
               isActive={location.pathname === item.href}
