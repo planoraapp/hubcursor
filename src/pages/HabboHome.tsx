@@ -127,20 +127,22 @@ const HabboHome: React.FC = () => {
 
   const getDefaultPosition = (widgetId: string) => {
     const defaults: Record<string, { x: number; y: number; width: number; height: number }> = {
-      usercard: { x: 20, y: 20, width: 500, height: 150 },
-      guestbook: { x: 50, y: 200, width: 400, height: 350 },
-      traxplayer: { x: 50, y: 570, width: 350, height: 200 },
-      rating: { x: 480, y: 200, width: 300, height: 150 },
-      info: { x: 480, y: 370, width: 300, height: 180 }
+      usercard: { x: 20, y: 20, width: 520, height: 180 },
+      guestbook: { x: 50, y: 220, width: 420, height: 380 },
+      traxplayer: { x: 50, y: 620, width: 380, height: 220 },
+      rating: { x: 500, y: 220, width: 320, height: 160 },
+      info: { x: 500, y: 400, width: 320, height: 200 }
     };
-    return defaults[widgetId] || { x: 50, y: 50, width: 250, height: 150 };
+    return defaults[widgetId] || { x: 50, y: 50, width: 280, height: 180 };
   };
 
   const handleWidgetPositionChange = (widgetId: string, x: number, y: number) => {
+    console.log(`🎯 Movendo widget ${widgetId} para posição:`, { x, y });
     updateWidgetPosition(widgetId, x, y);
   };
 
   const handleWidgetSizeChange = (widgetId: string, width: number, height: number) => {
+    console.log(`🔧 Redimensionando widget ${widgetId} para:`, { width, height });
     updateWidgetSize(widgetId, width, height);
   };
 
@@ -179,12 +181,15 @@ const HabboHome: React.FC = () => {
           <HomeToolbar
             isEditMode={isEditMode}
             isOwner={isOwner || false}
-            onToggleEditMode={() => setIsEditMode(!isEditMode)}
+            onToggleEditMode={() => {
+              console.log(`🔧 Alternando modo de edição: ${!isEditMode}`);
+              setIsEditMode(!isEditMode);
+            }}
             onOpenBackgroundModal={() => setShowBackgroundModal(true)}
             onOpenInventoryModal={() => setShowInventoryModal(true)}
           />
 
-          {/* Área principal da home com altura triplicada e bordas pretas */}
+          {/* Área principal da home com altura aumentada e bordas pretas */}
           <div className="habbo-panel p-4" style={{ minHeight: '1800px' }}>
             <div 
               className="relative w-full border-2 border-black rounded-lg"
@@ -236,10 +241,19 @@ const HabboHome: React.FC = () => {
                 onPositionChange={(x, y) => handleWidgetPositionChange('traxplayer', x, y)}
                 onSizeChange={(w, h) => handleWidgetSizeChange('traxplayer', w, h)}
               >
-                <div className="w-full h-full flex flex-col bg-white/90 backdrop-blur-sm rounded-lg p-4 border-2 border-gray-200">
-                  <h3 className="font-bold text-gray-800 mb-4 volter-font">🎵 Traxplayer</h3>
-                  <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                    <p className="text-gray-600 text-center volter-font">Player de música<br />nostálgico do Habbo</p>
+                <div className="w-full h-full bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
+                  <h3 className="font-bold text-purple-800 mb-3 volter-font flex items-center gap-2">
+                    🎵 Traxplayer
+                    <span className="text-xs bg-purple-200 px-2 py-1 rounded">Premium</span>
+                  </h3>
+                  <div className="flex-1 bg-gradient-to-br from-purple-100 to-blue-100 rounded border-2 border-dashed border-purple-300 flex items-center justify-center p-4">
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <span className="text-white text-xl">♪</span>
+                      </div>
+                      <p className="text-purple-700 volter-font text-sm">Player de música</p>
+                      <p className="text-purple-600 volter-font text-xs">nostálgico do Habbo</p>
+                    </div>
                   </div>
                 </div>
               </DraggableWidget>
@@ -256,15 +270,17 @@ const HabboHome: React.FC = () => {
                 onPositionChange={(x, y) => handleWidgetPositionChange('rating', x, y)}
                 onSizeChange={(w, h) => handleWidgetSizeChange('rating', w, h)}
               >
-                <div className="w-full h-full text-center bg-white/90 backdrop-blur-sm rounded-lg p-4 border-2 border-gray-200">
-                  <h3 className="font-bold text-gray-800 mb-4 volter-font">⭐ Avaliação da Home</h3>
-                  <div className="flex justify-center gap-1 mb-2">
+                <div className="w-full h-full bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border-2 border-yellow-200">
+                  <h3 className="font-bold text-yellow-800 mb-3 volter-font">⭐ Avaliação da Home</h3>
+                  <div className="flex justify-center gap-1 mb-3">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star} className="text-2xl text-yellow-400 cursor-pointer hover:text-yellow-500">⭐</span>
+                      <span key={star} className="text-2xl text-yellow-400 cursor-pointer hover:text-yellow-500 transition-colors">⭐</span>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600 volter-font">5.0 de 5 estrelas</p>
-                  <p className="text-xs text-gray-500 mt-2 volter-font">127 avaliações</p>
+                  <div className="text-center">
+                    <p className="text-lg font-bold text-yellow-800 volter-font">5.0 de 5</p>
+                    <p className="text-sm text-yellow-600 volter-font">127 avaliações</p>
+                  </div>
                 </div>
               </DraggableWidget>
 
@@ -280,13 +296,27 @@ const HabboHome: React.FC = () => {
                 onPositionChange={(x, y) => handleWidgetPositionChange('info', x, y)}
                 onSizeChange={(w, h) => handleWidgetSizeChange('info', w, h)}
               >
-                <div className="w-full h-full bg-white/90 backdrop-blur-sm rounded-lg p-4 border-2 border-gray-200">
-                  <h3 className="font-bold text-gray-800 mb-3 volter-font">ℹ️ Sobre esta Home</h3>
-                  <div className="text-sm text-gray-600 space-y-2">
-                    <p className="volter-font">Última atualização: Hoje</p>
-                    <p className="volter-font">Visitas hoje: 23</p>
-                    <p className="volter-font">Total de visitas: 1.245</p>
-                    <p className="volter-font">Criada em: Jan 2024</p>
+                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
+                  <h3 className="font-bold text-blue-800 mb-3 volter-font flex items-center gap-2">
+                    ℹ️ Sobre esta Home
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <p className="text-sm text-blue-700 volter-font">Última atualização: Hoje</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      <p className="text-sm text-blue-700 volter-font">Visitas hoje: 23</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                      <p className="text-sm text-blue-700 volter-font">Total de visitas: 1.245</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                      <p className="text-sm text-blue-700 volter-font">Criada em: Jan 2024</p>
+                    </div>
                   </div>
                 </div>
               </DraggableWidget>

@@ -39,8 +39,27 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width, height });
   const elementRef = useRef<HTMLDivElement>(null);
 
+  // Prevenir seleção de texto durante drag
+  useEffect(() => {
+    if (isDragging || isResizing) {
+      document.body.style.userSelect = 'none';
+      document.body.style.webkitUserSelect = 'none';
+    } else {
+      document.body.style.userSelect = 'auto';
+      document.body.style.webkitUserSelect = 'auto';
+    }
+
+    return () => {
+      document.body.style.userSelect = 'auto';
+      document.body.style.webkitUserSelect = 'auto';
+    };
+  }, [isDragging, isResizing]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isEditMode) return;
+    
+    // Evitar drag se clicou no resize handle
+    if ((e.target as HTMLElement).classList.contains('resize-handle')) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -53,10 +72,12 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
       elementY: y
     });
 
-    // Trazer para frente ao clicar
+    // Trazer widget para frente
     if (onZIndexChange) {
       onZIndexChange(Date.now());
     }
+
+    console.log(`🎯 Iniciando drag do widget ${id}`);
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
@@ -72,24 +93,37 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
       width,
       height
     });
+
+    console.log(`🔧 Iniciando resize do widget ${id}`);
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging && onPositionChange) {
-        const newX = Math.max(0, dragStart.elementX + (e.clientX - dragStart.x));
-        const newY = Math.max(0, dragStart.elementY + (e.clientY - dragStart.y));
+        const deltaX = e.clientX - dragStart.x;
+        const deltaY = e.clientY - dragStart.y;
+        const newX = Math.max(0, dragStart.elementX + deltaX);
+        const newY = Math.max(0, dragStart.elementY + deltaY);
         onPositionChange(newX, newY);
       }
 
       if (isResizing && onSizeChange) {
-        const newWidth = Math.max(150, resizeStart.width + (e.clientX - resizeStart.x));
-        const newHeight = Math.max(100, resizeStart.height + (e.clientY - resizeStart.y));
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        const newWidth = Math.max(200, resizeStart.width + deltaX);
+        const newHeight = Math.max(150, resizeStart.height + deltaY);
         onSizeChange(newWidth, newHeight);
       }
     };
 
     const handleMouseUp = () => {
+      if (isDragging) {
+        console.log(`✅ Drag finalizado para widget ${id}`);
+      }
+      if (isResizing) {
+        console.log(`✅ Resize finalizado para widget ${id}`);
+      }
+      
       setIsDragging(false);
       setIsResizing(false);
     };
@@ -97,34 +131,41 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'none'; // Previne seleção durante drag
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'auto';
     };
-  }, [isDragging, isResizing, dragStart, resizeStart, onPositionChange, onSizeChange]);
+  }, [isDragging, isResizing, dragStart, resizeStart, onPositionChange, onSizeChange, id]);
 
   return (
     <Card
       ref={elementRef}
       className={`absolute transition-all duration-200 ${
-        isEditMode ? 'border-2 border-dashed border-blue-400 cursor-move shadow-lg' : 'border shadow-md'
-      } ${isDragging ? 'shadow-2xl z-50' : ''} ${className}`}
+        isEditMode 
+          ? `border-2 border-dashed border-blue-400 cursor-move shadow-xl ${isDragging ? 'shadow-2xl scale-105' : ''}` 
+          : 'border shadow-md cursor-default'
+      } ${className}`}
       style={{
         left: x,
         top: y,
         width: width,
         height: height,
         zIndex: isDragging ? 9999 : zIndex,
-        userSelect: 'none'
+        backgroundColor: isEditMode ? 'rgba(255, 255, 255, 0.95)' : 'white'
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="w-full h-full p-4 overflow-hidden pointer-events-none">
-        <div className="pointer-events-auto">
+      {/* Conteúdo do widget */}
+      <div 
+        className="w-full h-full overflow-hidden"
+        style={{ 
+          pointerEvents: isEditMode ? 'none' : 'auto',
+          padding: '0px' // Remover padding extra
+        }}
+      >
+        <div style={{ pointerEvents: 'auto' }}>
           {children}
         </div>
       </div>
@@ -132,14 +173,37 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
       {/* Resize handle */}
       {isEditMode && isResizable && (
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-se-resize rounded-tl hover:bg-blue-600 transition-colors"
+          className="resize-handle absolute bottom-0 right-0 w-6 h-6 bg-blue-500 cursor-se-resize rounded-tl-lg hover:bg-blue-600 transition-colors border-2 border-white shadow-lg"
           onMouseDown={handleResizeMouseDown}
-        />
+          style={{
+            background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+            pointerEvents: 'auto'
+          }}
+        >
+          <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-white"></div>
+        </div>
       )}
 
-      {/* Edit mode indicator */}
+      {/* Indicador visual de modo de edição */}
       {isEditMode && (
-        <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
+        <>
+          {/* Ponto indicador no canto superior esquerdo */}
+          <div className="absolute -top-2 -left-2 w-5 h-5 bg-green-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+          
+          {/* Label do widget */}
+          <div className="absolute -top-8 left-0 bg-blue-600 text-white px-2 py-1 rounded text-xs volter-font shadow-lg">
+            {id.toUpperCase()}
+          </div>
+
+          {/* Overlay semi-transparente quando dragging */}
+          {isDragging && (
+            <div className="absolute inset-0 bg-blue-500/10 rounded-lg pointer-events-none">
+              <div className="absolute inset-2 border-2 border-dashed border-blue-400 rounded"></div>
+            </div>
+          )}
+        </>
       )}
     </Card>
   );

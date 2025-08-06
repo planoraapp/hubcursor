@@ -1,296 +1,222 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
-import { getUserByName } from '@/services/habboApi';
+import { useSimpleAuth } from './useSimpleAuth';
 
-interface HabboHomeWidget {
+interface Widget {
   id: string;
   widget_id: string;
   x: number;
   y: number;
   z_index: number;
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
   is_visible: boolean;
 }
 
-interface HabboHomeSticker {
-  id: string;
-  sticker_id: string;
-  sticker_src: string;
-  x: number;
-  y: number;
-  z_index: number;
-}
-
-interface HabboHomeBackground {
+interface Background {
   background_type: 'color' | 'repeat' | 'cover';
   background_value: string;
 }
 
 interface GuestbookEntry {
   id: string;
-  author_habbo_name: string;
+  author_name: string;
   message: string;
   created_at: string;
 }
 
-interface HabboUserData {
+interface HabboData {
+  id: string;
+  habbo_name: string;
+  habbo_id: string;
   name: string;
-  figureString: string;
-  motto: string;
-  online: boolean;
-  memberSince: string;
-  selectedBadges: Array<{
-    badgeIndex: number;
-    code: string;
-    name: string;
-    description: string;
-  }>;
+  figureString?: string;
 }
 
 export const useHabboHome = (username: string) => {
-  const { user } = useAuth();
-  const [widgets, setWidgets] = useState<HabboHomeWidget[]>([]);
-  const [stickers, setStickers] = useState<HabboHomeSticker[]>([]);
-  const [background, setBackground] = useState<HabboHomeBackground>({
-    background_type: 'color',
-    background_value: '#f5f5f5'
+  const [widgets, setWidgets] = useState<Widget[]>([]);
+  const [stickers, setStickers] = useState<any[]>([]);
+  const [background, setBackground] = useState<Background>({ 
+    background_type: 'color', 
+    background_value: '#f5f5f5' // Cinza claro padrão correto
   });
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
-  const [habboData, setHabboData] = useState<HabboUserData | null>(null);
-  const [homeOwnerUserId, setHomeOwnerUserId] = useState<string | null>(null);
+  const [habboData, setHabboData] = useState<HabboData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
-  // Buscar dados do usuário Habbo
+  const { habboAccount } = useSimpleAuth();
+
   useEffect(() => {
     if (username) {
-      console.log('🔍 [HabboHome] Iniciando busca para username:', username);
-      
-      getUserByName(username).then(data => {
-        console.log('✅ [HabboHome] Dados do Habbo API recebidos:', data);
-        setHabboData(data);
-      }).catch(error => {
-        console.error('❌ [HabboHome] Erro ao buscar dados do Habbo:', error);
-        setHabboData(null);
-      });
-
-      // Buscar user_id do proprietário da home
-      console.log('🔍 [HabboHome] Buscando conta vinculada para:', username);
-      supabase
-        .from('habbo_accounts')
-        .select('supabase_user_id')
-        .ilike('habbo_name', username) // Case insensitive search
-        .maybeSingle()
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('❌ [HabboHome] Erro ao buscar conta vinculada:', error);
-            setHomeOwnerUserId(null);
-            return;
-          }
-
-          if (data) {
-            console.log('✅ [HabboHome] Conta vinculada encontrada:', data);
-            setHomeOwnerUserId(data.supabase_user_id);
-          } else {
-            console.log('⚠️ [HabboHome] Nenhuma conta vinculada encontrada para:', username);
-            setHomeOwnerUserId(null);
-          }
-        });
+      loadHabboHome();
     }
-  }, [username]);
+  }, [username, habboAccount]);
 
-  // Carregar dados da home
-  useEffect(() => {
-    if (homeOwnerUserId) {
-      console.log('🏠 [HabboHome] Carregando dados da home para user_id:', homeOwnerUserId);
-      loadHomeData();
-    } else if (homeOwnerUserId === null && habboData) {
-      // Se não encontramos conta vinculada mas temos dados do Habbo, finalizar loading
-      console.log('⚠️ [HabboHome] Home sem conta vinculada, finalizando loading');
-      setLoading(false);
-    }
-  }, [homeOwnerUserId, habboData]);
-
-  const loadHomeData = async () => {
-    if (!homeOwnerUserId) {
-      console.log('❌ [HabboHome] loadHomeData chamado sem homeOwnerUserId');
-      return;
-    }
-
+  const loadHabboHome = async () => {
     try {
-      console.log('🔄 [HabboHome] Iniciando carregamento dos dados da home...');
       setLoading(true);
-
-      // Carregar widgets
-      console.log('📦 [HabboHome] Carregando widgets...');
-      const { data: widgetsData, error: widgetsError } = await supabase
-        .from('user_home_layouts')
+      
+      // Buscar dados do usuário Habbo
+      const { data: userData, error: userError } = await supabase
+        .from('habbo_accounts')
         .select('*')
-        .eq('user_id', homeOwnerUserId);
+        .ilike('habbo_name', username)
+        .single();
 
-      if (widgetsError) {
-        console.error('❌ [HabboHome] Erro ao carregar widgets:', widgetsError);
-      } else {
-        console.log('✅ [HabboHome] Widgets carregados:', widgetsData?.length || 0, 'itens');
-        setWidgets(widgetsData || []);
+      if (userError || !userData) {
+        console.error('Usuário não encontrado:', userError);
+        setHabboData(null);
+        setLoading(false);
+        return;
       }
 
-      // Carregar stickers
-      console.log('🎨 [HabboHome] Carregando stickers...');
-      const { data: stickersData, error: stickersError } = await supabase
-        .from('user_stickers')
-        .select('*')
-        .eq('user_id', homeOwnerUserId);
+      setHabboData({
+        id: userData.id,
+        habbo_name: userData.habbo_name,
+        habbo_id: userData.habbo_id,
+        name: userData.habbo_name,
+        figureString: userData.figure_string || ''
+      });
 
-      if (stickersError) {
-        console.error('❌ [HabboHome] Erro ao carregar stickers:', stickersError);
-      } else {
-        console.log('✅ [HabboHome] Stickers carregados:', stickersData?.length || 0, 'itens');
-        setStickers(stickersData || []);
+      // Verificar se o usuário atual é o dono da home
+      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+      setIsOwner(currentUserIsOwner);
+
+      // Carregar layout dos widgets
+      const { data: layoutData, error: layoutError } = await supabase
+        .from('user_home_layouts')
+        .select('*')
+        .eq('user_id', userData.supabase_user_id);
+
+      if (!layoutError && layoutData) {
+        setWidgets(layoutData);
       }
 
       // Carregar background
-      console.log('🎨 [HabboHome] Carregando background...');
-      const { data: backgroundData, error: backgroundError } = await supabase
+      const { data: bgData, error: bgError } = await supabase
         .from('user_home_backgrounds')
         .select('*')
-        .eq('user_id', homeOwnerUserId)
-        .maybeSingle();
+        .eq('user_id', userData.supabase_user_id)
+        .single();
 
-      if (backgroundError) {
-        console.error('❌ [HabboHome] Erro ao carregar background:', backgroundError);
-      } else if (backgroundData) {
-        console.log('✅ [HabboHome] Background carregado:', backgroundData);
+      if (!bgError && bgData) {
         setBackground({
-          background_type: backgroundData.background_type as 'color' | 'repeat' | 'cover',
-          background_value: backgroundData.background_value
+          background_type: bgData.background_type as 'color' | 'repeat' | 'cover',
+          background_value: bgData.background_value
         });
-      } else {
-        console.log('⚠️ [HabboHome] Nenhum background encontrado, usando padrão');
       }
 
       // Carregar guestbook
-      console.log('📝 [HabboHome] Carregando guestbook...');
       const { data: guestbookData, error: guestbookError } = await supabase
-        .from('guestbook_entries')
+        .from('user_home_guestbook')
         .select('*')
-        .eq('home_owner_user_id', homeOwnerUserId)
-        .eq('moderation_status', 'approved')
-        .order('created_at', { ascending: false });
+        .eq('home_owner_id', userData.supabase_user_id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      if (guestbookError) {
-        console.error('❌ [HabboHome] Erro ao carregar guestbook:', guestbookError);
-      } else {
-        console.log('✅ [HabboHome] Guestbook carregado:', guestbookData?.length || 0, 'entradas');
-        setGuestbook(guestbookData || []);
+      if (!guestbookError && guestbookData) {
+        setGuestbook(guestbookData);
       }
 
-      console.log('✅ [HabboHome] Carregamento completo!');
-
     } catch (error) {
-      console.error('❌ [HabboHome] Erro geral no carregamento:', error);
+      console.error('Erro ao carregar Habbo Home:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateWidgetPosition = async (widgetId: string, x: number, y: number, zIndex?: number) => {
-    if (!homeOwnerUserId || !user || user.id !== homeOwnerUserId) return;
+  const updateWidgetPosition = async (widgetId: string, x: number, y: number) => {
+    if (!isOwner || !habboData) return;
 
-    const updateData: any = { x, y };
-    if (zIndex !== undefined) {
-      updateData.z_index = zIndex;
-    }
+    try {
+      const { error } = await supabase
+        .from('user_home_layouts')
+        .upsert({
+          user_id: habboData.id,
+          widget_id: widgetId,
+          x,
+          y,
+          z_index: 1,
+          width: getDefaultPosition(widgetId).width,
+          height: getDefaultPosition(widgetId).height,
+          is_visible: true
+        });
 
-    const { error } = await supabase
-      .from('user_home_layouts')
-      .upsert({
-        user_id: homeOwnerUserId,
-        widget_id: widgetId,
-        ...updateData
-      });
-
-    if (!error) {
-      setWidgets(prev => prev.map(w => 
-        w.widget_id === widgetId ? { ...w, ...updateData } : w
-      ));
+      if (!error) {
+        setWidgets(prev => 
+          prev.map(widget => 
+            widget.widget_id === widgetId 
+              ? { ...widget, x, y }
+              : widget
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar posição do widget:', error);
     }
   };
 
   const updateWidgetSize = async (widgetId: string, width: number, height: number) => {
-    if (!homeOwnerUserId || !user || user.id !== homeOwnerUserId) return;
+    if (!isOwner || !habboData) return;
 
-    const { error } = await supabase
-      .from('user_home_layouts')
-      .upsert({
-        user_id: homeOwnerUserId,
-        widget_id: widgetId,
-        width,
-        height
-      });
+    try {
+      const { error } = await supabase
+        .from('user_home_layouts')
+        .update({ width, height })
+        .eq('user_id', habboData.id)
+        .eq('widget_id', widgetId);
 
-    if (!error) {
-      setWidgets(prev => prev.map(w => 
-        w.widget_id === widgetId ? { ...w, width, height } : w
-      ));
-    }
-  };
-
-  const addSticker = async (stickerId: string, stickerSrc: string, x: number, y: number) => {
-    if (!homeOwnerUserId || !user || user.id !== homeOwnerUserId) return;
-
-    const { error } = await supabase
-      .from('user_stickers')
-      .insert({
-        user_id: homeOwnerUserId,
-        sticker_id: stickerId,
-        sticker_src: stickerSrc,
-        x,
-        y,
-        z_index: Math.max(...stickers.map(s => s.z_index), 0) + 1
-      });
-
-    if (!error) {
-      loadHomeData();
-    }
-  };
-
-  const updateBackground = async (type: 'color' | 'repeat' | 'cover', value: string) => {
-    if (!homeOwnerUserId || !user || user.id !== homeOwnerUserId) return;
-
-    const { error } = await supabase
-      .from('user_home_backgrounds')
-      .upsert({
-        user_id: homeOwnerUserId,
-        background_type: type,
-        background_value: value
-      });
-
-    if (!error) {
-      setBackground({ background_type: type, background_value: value });
+      if (!error) {
+        setWidgets(prev => 
+          prev.map(widget => 
+            widget.widget_id === widgetId 
+              ? { ...widget, width, height }
+              : widget
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar tamanho do widget:', error);
     }
   };
 
   const addGuestbookEntry = async (message: string) => {
-    if (!homeOwnerUserId || !user) return;
+    if (!habboAccount || !habboData) return;
 
-    const { error } = await supabase
-      .from('guestbook_entries')
-      .insert({
-        home_owner_user_id: homeOwnerUserId,
-        author_user_id: user.id,
-        author_habbo_name: user.user_metadata?.habbo_name || 'Anônimo',
-        message
-      });
+    try {
+      const { data, error } = await supabase
+        .from('user_home_guestbook')
+        .insert({
+          home_owner_id: habboData.id,
+          author_id: habboAccount.supabase_user_id,
+          author_name: habboAccount.habbo_name,
+          message
+        })
+        .select()
+        .single();
 
-    if (!error) {
-      loadHomeData();
+      if (!error && data) {
+        setGuestbook(prev => [data, ...prev.slice(0, 9)]);
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar entrada no guestbook:', error);
     }
   };
 
-  const isOwner = user && homeOwnerUserId && user.id === homeOwnerUserId;
+  // Posições padrão otimizadas para widgets
+  const getDefaultPosition = (widgetId: string) => {
+    const defaults: Record<string, { x: number; y: number; width: number; height: number }> = {
+      usercard: { x: 20, y: 20, width: 520, height: 180 }, // Aumentado para melhor layout
+      guestbook: { x: 50, y: 220, width: 420, height: 380 }, // Aumentado para mais conteúdo
+      traxplayer: { x: 50, y: 620, width: 380, height: 220 }, // Melhor proporção
+      rating: { x: 500, y: 220, width: 320, height: 160 }, // Mais largo
+      info: { x: 500, y: 400, width: 320, height: 200 } // Maior para mais informações
+    };
+    return defaults[widgetId] || { x: 50, y: 50, width: 280, height: 180 };
+  };
 
   return {
     widgets,
@@ -304,9 +230,6 @@ export const useHabboHome = (username: string) => {
     setIsEditMode,
     updateWidgetPosition,
     updateWidgetSize,
-    addSticker,
-    updateBackground,
-    addGuestbookEntry,
-    refreshData: loadHomeData
+    addGuestbookEntry
   };
 };

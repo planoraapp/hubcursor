@@ -196,7 +196,7 @@ export const ConnectHabboFormEnhanced = () => {
   };
 
   const handleVerifyMotto = async () => {
-    if (!habboNameInput.trim() || !verificationCode) {
+    if (!habboNameInput.trim() || !verificationCode || !userHabboId) {
       toast({
         title: "Erro",
         description: "Erro na verificação. Por favor, reinicie o processo.",

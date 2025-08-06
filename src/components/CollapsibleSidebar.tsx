@@ -1,7 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSimpleAuth } from '../hooks/useSimpleAuth';
 import { AnimatedConsole } from './AnimatedConsole';
+import { UserLoginModal } from './UserLoginModal';
+import { Button } from './ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { User, LogOut, Settings } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SidebarProps {
   activeSection: string;
@@ -10,9 +17,10 @@ interface SidebarProps {
 
 export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoggedIn, isAdmin } = useAuth();
+  const { isLoggedIn, isAdmin, habboAccount, logout } = useSimpleAuth();
 
   useEffect(() => {
     const event = new CustomEvent('sidebarStateChange', {
@@ -20,6 +28,16 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
     });
     window.dispatchEvent(event);
   }, [isCollapsed]);
+
+  // Carregar avatar do usuário logado
+  useEffect(() => {
+    if (isLoggedIn && habboAccount) {
+      const avatarUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&direction=2&head_direction=2&gesture=sml&size=s&action=std`;
+      setUserAvatar(avatarUrl);
+    } else {
+      setUserAvatar(null);
+    }
+  }, [isLoggedIn, habboAccount]);
 
   const menuItems = [
     { id: 'home', name: 'Home', icon: '/assets/home.png', path: '/' },
@@ -69,6 +87,15 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
 
   const currentSection = getCurrentActiveSection();
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Erro no logout:', error);
+    }
+  };
+
   return (
     <div className={`fixed left-0 top-0 h-full transition-all duration-300 z-40 ${
       isCollapsed ? 'w-20' : 'w-64'
@@ -105,6 +132,87 @@ export const CollapsibleSidebar = ({ activeSection, setActiveSection }: SidebarP
             {isCollapsed ? '→' : '←'}
           </button>
         </div>
+      </div>
+
+      {/* Seção do Usuário/Login */}
+      <div className="p-4 border-b-2 border-black/20">
+        {isLoggedIn && habboAccount ? (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className={`w-full flex items-center gap-3 p-3 rounded-lg bg-white/50 hover:bg-white/70 transition-colors ${
+                isCollapsed ? 'justify-center' : ''
+              }`}>
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-black">
+                  {userAvatar ? (
+                    <img 
+                      src={userAvatar} 
+                      alt={habboAccount.habbo_name}
+                      className="w-full h-full object-cover"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <User className="w-6 h-6 text-gray-600" />
+                    </div>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <div className="flex-1 text-left">
+                    <p className="font-medium text-sm volter-font text-white" style={{
+                      textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                    }}>
+                      {habboAccount.habbo_name}
+                    </p>
+                    {habboAccount.is_admin && (
+                      <p className="text-xs text-yellow-300 volter-font" style={{
+                        textShadow: '1px 1px 0px black'
+                      }}>
+                        Admin
+                      </p>
+                    )}
+                  </div>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56" align="start">
+              <div className="space-y-2">
+                <div className="pb-2 border-b">
+                  <p className="font-medium volter-font">{habboAccount.habbo_name}</p>
+                  {habboAccount.is_admin && (
+                    <p className="text-sm text-yellow-600 volter-font">👑 Administrador</p>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start volter-font"
+                  onClick={() => navigate('/profile')}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configurações
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 volter-font"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <UserLoginModal>
+            <button className={`w-full flex items-center gap-3 p-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors ${
+              isCollapsed ? 'justify-center' : ''
+            }`}>
+              <User className="w-6 h-6 flex-shrink-0" />
+              {!isCollapsed && (
+                <span className="volter-font">Fazer Login</span>
+              )}
+            </button>
+          </UserLoginModal>
+        )}
       </div>
 
       {/* Menu Items */}
