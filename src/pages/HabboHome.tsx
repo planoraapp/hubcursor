@@ -94,19 +94,19 @@ const HabboHome: React.FC = () => {
         return { backgroundColor: background_value };
       case 'repeat':
         return {
-          backgroundImage: `url(/assets/${background_value})`,
+          backgroundImage: `url(/assets/home/backgrounds/patterns/${background_value})`,
           backgroundRepeat: 'repeat',
           backgroundSize: 'auto'
         };
       case 'cover':
         return {
-          backgroundImage: `url(/assets/${background_value})`,
+          backgroundImage: `url(/assets/home/backgrounds/images/${background_value})`,
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         };
       default:
-        return { backgroundColor: '#f5f5f5' }; // Cinza claro padrão
+        return { backgroundColor: '#f5f5f5' }; // Cinza claro padrão correto
     }
   };
 
@@ -165,9 +165,12 @@ const HabboHome: React.FC = () => {
     <div className="min-h-screen bg-repeat bg-cover flex" 
          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <SimpleLogin />
-      <CollapsibleSidebar activeSection="homes" setActiveSection={() => {}} />
+      {/* Sidebar fixo com position sticky */}
+      <div className={`fixed top-0 left-0 h-screen z-40 transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <CollapsibleSidebar activeSection="homes" setActiveSection={() => {}} />
+      </div>
       
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         <div className="p-6">
           {/* Cabeçalho da página */}
           <HomeHeader username={habboData.name} />
@@ -181,11 +184,11 @@ const HabboHome: React.FC = () => {
             onOpenInventoryModal={() => setShowInventoryModal(true)}
           />
 
-          {/* Área principal da home com bordas pretas e fundo cinza claro */}
-          <div className="habbo-panel min-h-[600px] p-4">
+          {/* Área principal da home com altura triplicada e bordas pretas */}
+          <div className="habbo-panel p-4" style={{ minHeight: '1800px' }}>
             <div 
-              className="relative min-h-full rounded-lg"
-              style={{...getBackgroundStyle(), minHeight: '550px'}}
+              className="relative w-full border-2 border-black rounded-lg"
+              style={{...getBackgroundStyle(), minHeight: '1750px'}}
             >
               {/* UserCard Widget - não pode ser removido */}
               <DraggableWidget

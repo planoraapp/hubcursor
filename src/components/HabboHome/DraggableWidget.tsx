@@ -97,39 +97,49 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'none'; // Previne seleção durante drag
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'auto';
     };
   }, [isDragging, isResizing, dragStart, resizeStart, onPositionChange, onSizeChange]);
 
   return (
     <Card
       ref={elementRef}
-      className={`absolute select-none transition-all duration-200 ${
-        isEditMode ? 'border-2 border-dashed border-blue-400 cursor-move' : 'border'
-      } ${className}`}
+      className={`absolute transition-all duration-200 ${
+        isEditMode ? 'border-2 border-dashed border-blue-400 cursor-move shadow-lg' : 'border shadow-md'
+      } ${isDragging ? 'shadow-2xl z-50' : ''} ${className}`}
       style={{
         left: x,
         top: y,
         width: width,
         height: height,
-        zIndex: zIndex
+        zIndex: isDragging ? 9999 : zIndex,
+        userSelect: 'none'
       }}
       onMouseDown={handleMouseDown}
     >
-      <div className="w-full h-full p-4 overflow-hidden">
-        {children}
+      <div className="w-full h-full p-4 overflow-hidden pointer-events-none">
+        <div className="pointer-events-auto">
+          {children}
+        </div>
       </div>
 
       {/* Resize handle */}
       {isEditMode && isResizable && (
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-se-resize rounded-tl"
+          className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 cursor-se-resize rounded-tl hover:bg-blue-600 transition-colors"
           onMouseDown={handleResizeMouseDown}
         />
+      )}
+
+      {/* Edit mode indicator */}
+      {isEditMode && (
+        <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg" />
       )}
     </Card>
   );

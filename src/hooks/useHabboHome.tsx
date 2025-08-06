@@ -55,7 +55,7 @@ export const useHabboHome = (username: string) => {
   const [stickers, setStickers] = useState<HabboHomeSticker[]>([]);
   const [background, setBackground] = useState<HabboHomeBackground>({
     background_type: 'color',
-    background_value: '#007bff'
+    background_value: '#f5f5f5'
   });
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [habboData, setHabboData] = useState<HabboUserData | null>(null);
