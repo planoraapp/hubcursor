@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './hooks/useAuth';
 import Index from './pages/Index';
+import Login from './pages/Login';
 import Profile from './pages/Profile';
 import ProfileEnhanced from './pages/ProfileEnhanced';
 import ConnectHabbo from './pages/ConnectHabbo';
@@ -49,6 +50,7 @@ function App() {
           <div className="App">
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/profile/:username" element={<ProfileEnhanced />} />
               <Route path="/connect-habbo" element={<ConnectHabbo />} />
               <Route path="/emblemas" element={<Emblemas />} />

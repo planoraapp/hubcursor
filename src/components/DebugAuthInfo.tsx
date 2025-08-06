@@ -1,10 +1,10 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useSimpleAuth } from '../hooks/useSimpleAuth';
+import { useAuth } from '../hooks/useAuth';
 
 export const DebugAuthInfo = () => {
-  const { user, habboAccount, loading, isLoggedIn, isAdmin } = useSimpleAuth();
+  const { user, habboAccount, loading, isLoggedIn, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -70,7 +70,7 @@ export const DebugAuthInfo = () => {
         )}
 
         <div className="text-xs text-gray-500 border-t pt-2">
-          Timestamp: {new Date().toLocaleString('pt-BR')}
+          Sistema: Unified Auth | Timestamp: {new Date().toLocaleString('pt-BR')}
         </div>
       </CardContent>
     </Card>

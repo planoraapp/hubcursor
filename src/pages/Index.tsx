@@ -1,72 +1,60 @@
 
-import { useState, useEffect } from 'react';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
+import React from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import { HomePage } from '../components/HomePage';
-import { Events } from '../components/Events';
-import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
+import { Button } from '@/components/ui/button';
 
-const Index = () => {
-  const [activeSection, setActiveSection] = useState('home');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+const Index: React.FC = () => {
+  const { isLoggedIn, loading, habboAccount } = useAuth();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
-    };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-repeat"
+           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <div className="text-lg volter-font text-white">Carregando...</div>
+      </div>
+    );
+  }
 
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-repeat bg-cover flex flex-col items-center justify-center p-4"
+           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <div className="text-center bg-white/90 p-8 rounded-lg shadow-lg max-w-md">
+          <h1 className="text-3xl font-bold text-gray-800 volter-font mb-4">
+            Habbo Hub
+          </h1>
+          <p className="text-gray-600 mb-6 volter-font">
+            Conecte sua conta Habbo para acessar todas as funcionalidades.
+          </p>
+          <Button
+            onClick={() => navigate('/login')}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white volter-font py-3"
+          >
+            Conectar Conta Habbo
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  const renderSection = () => {
-    const path = window.location.pathname;
-    if (path === '/eventos' || activeSection === 'eventos') {
-      return <Events />;
-    }
-    return <HomePage />;
-  };
+  // Se estiver logado, mostrar a página principal
+  const renderContent = () => <HomePage />;
 
   if (isMobile) {
     return (
       <MobileLayout>
-        {renderSection()}
+        {renderContent()}
       </MobileLayout>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          {window.location.pathname === '/eventos' ? (
-            <>
-              <PageHeader 
-                title="Eventos Habbo"
-                icon="/assets/eventos.png"
-                backgroundImage="/assets/event_bg_owner.png"
-              />
-              {renderSection()}
-            </>
-          ) : (
-            <>
-              <PageHeader 
-                title="Habbo Hub - Home"
-                icon="/assets/home.png"
-                backgroundImage="/assets/1360__-3C7.png"
-              />
-              {renderSection()}
-            </>
-          )}
-        </main>
-      </div>
-    </div>
-  );
+  return renderContent();
 };
 
 export default Index;
