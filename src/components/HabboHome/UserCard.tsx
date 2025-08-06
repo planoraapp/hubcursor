@@ -12,18 +12,19 @@ interface UserCardProps {
 }
 
 export const UserCard = ({ habboData, isOwner }: UserCardProps) => {
-  const avatarUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.name}&direction=2&head_direction=2&gesture=std&size=l&action=std`;
+  // Avatar com corpo completo e fundo transparente
+  const avatarUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.name}&direction=2&head_direction=2&gesture=std&size=b&action=std&headonly=0`;
 
   return (
     <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-blue-200 shadow-lg">
       <div className="flex items-center gap-4 h-full">
-        {/* Avatar maior e mais visível */}
+        {/* Avatar com corpo completo e sem fundo */}
         <div className="flex-shrink-0">
-          <div className="w-20 h-20 rounded-lg overflow-hidden border-3 border-white shadow-lg bg-white">
+          <div className="w-32 h-40 rounded-lg overflow-hidden shadow-lg flex items-center justify-center">
             <img 
               src={avatarUrl} 
               alt={habboData.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               style={{ imageRendering: 'pixelated' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;

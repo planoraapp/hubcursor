@@ -38,7 +38,7 @@ export const useHabboHome = (username: string) => {
   const [stickers, setStickers] = useState<any[]>([]);
   const [background, setBackground] = useState<Background>({ 
     background_type: 'color', 
-    background_value: '#f5f5f5' // Cinza claro padrão correto
+    background_value: '#c7d2dc' // Cor padrão correta do Habbo (cinza-azulado)
   });
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [habboData, setHabboData] = useState<HabboData | null>(null);
@@ -107,7 +107,7 @@ export const useHabboHome = (username: string) => {
         });
       }
 
-      // Carregar guestbook usando a tabela correta
+      // Carregar guestbook
       const { data: guestbookData, error: guestbookError } = await supabase
         .from('guestbook_entries')
         .select('*')
@@ -160,10 +160,15 @@ export const useHabboHome = (username: string) => {
   const updateWidgetSize = async (widgetId: string, width: number, height: number) => {
     if (!isOwner || !habboData) return;
 
+    // Implementar restrições de tamanho por tipo de widget
+    const restrictions = getWidgetSizeRestrictions(widgetId);
+    const constrainedWidth = Math.max(restrictions.minWidth, Math.min(restrictions.maxWidth, width));
+    const constrainedHeight = Math.max(restrictions.minHeight, Math.min(restrictions.maxHeight, height));
+
     try {
       const { error } = await supabase
         .from('user_home_layouts')
-        .update({ width, height })
+        .update({ width: constrainedWidth, height: constrainedHeight })
         .eq('user_id', habboData.id)
         .eq('widget_id', widgetId);
 
@@ -171,7 +176,7 @@ export const useHabboHome = (username: string) => {
         setWidgets(prev => 
           prev.map(widget => 
             widget.widget_id === widgetId 
-              ? { ...widget, width, height }
+              ? { ...widget, width: constrainedWidth, height: constrainedHeight }
               : widget
           )
         );
@@ -216,6 +221,18 @@ export const useHabboHome = (username: string) => {
     return defaults[widgetId] || { x: 50, y: 50, width: 280, height: 180 };
   };
 
+  // Restrições de tamanho por tipo de widget
+  const getWidgetSizeRestrictions = (widgetId: string) => {
+    const restrictions: Record<string, { minWidth: number; maxWidth: number; minHeight: number; maxHeight: number; resizable: boolean }> = {
+      usercard: { minWidth: 520, maxWidth: 520, minHeight: 180, maxHeight: 180, resizable: false }, // UserCard não é redimensionável
+      guestbook: { minWidth: 350, maxWidth: 600, minHeight: 300, maxHeight: 500, resizable: true },
+      traxplayer: { minWidth: 300, maxWidth: 500, minHeight: 180, maxHeight: 300, resizable: true },
+      rating: { minWidth: 200, maxWidth: 400, minHeight: 120, maxHeight: 200, resizable: true },
+      info: { minWidth: 250, maxWidth: 450, minHeight: 150, maxHeight: 300, resizable: true }
+    };
+    return restrictions[widgetId] || { minWidth: 200, maxWidth: 600, minHeight: 150, maxHeight: 400, resizable: true };
+  };
+
   return {
     widgets,
     stickers,
@@ -228,6 +245,7 @@ export const useHabboHome = (username: string) => {
     setIsEditMode,
     updateWidgetPosition,
     updateWidgetSize,
-    addGuestbookEntry
+    addGuestbookEntry,
+    getWidgetSizeRestrictions
   };
 };

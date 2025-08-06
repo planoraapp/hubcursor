@@ -1,7 +1,10 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { StickerCategory } from './StickerCategory';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { STICKER_ASSETS, getStickersByCategory } from '@/data/stickerAssets';
 import { DraggableSticker } from './DraggableSticker';
 
 interface StickerInventoryProps {
@@ -9,93 +12,86 @@ interface StickerInventoryProps {
   onClose: () => void;
 }
 
-const STICKER_DATA = {
-  emoticons: [
-    { id: 'heart_1', src: '/assets/home/stickers/emoticons/heart.png', name: 'Coração' },
-    { id: 'smile_1', src: '/assets/home/stickers/emoticons/smile.png', name: 'Sorriso' },
-    { id: 'star_eyes_1', src: '/assets/home/stickers/emoticons/star_eyes.png', name: 'Estrelas nos Olhos' },
-    { id: 'wink_1', src: '/assets/home/stickers/emoticons/wink.png', name: 'Piscadinha' },
-    { id: 'love_1', src: '/assets/home/stickers/emoticons/love.png', name: 'Apaixonado' },
-    { id: 'cool_1', src: '/assets/home/stickers/emoticons/cool.png', name: 'Legal' }
-  ],
-  decorative: [
-    { id: 'star_1', src: '/assets/home/stickers/decorative/star.png', name: 'Estrela' },
-    { id: 'flower_1', src: '/assets/home/stickers/decorative/flower.png', name: 'Flor' },
-    { id: 'diamond_1', src: '/assets/home/stickers/decorative/diamond.png', name: 'Diamante' },
-    { id: 'crown_1', src: '/assets/home/stickers/decorative/crown.png', name: 'Coroa' },
-    { id: 'rainbow_1', src: '/assets/home/stickers/decorative/rainbow.png', name: 'Arco-íris' },
-    { id: 'sparkles_1', src: '/assets/home/stickers/decorative/sparkles.png', name: 'Brilhos' }
-  ],
-  text: [
-    { id: 'hello_1', src: '/assets/home/stickers/text/hello.png', name: 'Olá' },
-    { id: 'wow_1', src: '/assets/home/stickers/text/wow.png', name: 'Wow' },
-    { id: 'cool_text_1', src: '/assets/home/stickers/text/cool.png', name: 'Legal' },
-    { id: 'awesome_1', src: '/assets/home/stickers/text/awesome.png', name: 'Incrível' },
-    { id: 'yeah_1', src: '/assets/home/stickers/text/yeah.png', name: 'Yeah' },
-    { id: 'party_1', src: '/assets/home/stickers/text/party.png', name: 'Festa' }
-  ]
-};
-
 export const StickerInventory = ({ isOpen, onClose }: StickerInventoryProps) => {
-  const [activeCategory, setActiveCategory] = useState<keyof typeof STICKER_DATA>('emoticons');
+  const [selectedCategory, setSelectedCategory] = useState<'emoticons' | 'decorative' | 'text'>('emoticons');
+
+  const categories = [
+    { id: 'emoticons', label: 'Emoticons', icon: '😊', count: getStickersByCategory('emoticons').length },
+    { id: 'decorative', label: 'Decorativos', icon: '✨', count: getStickersByCategory('decorative').length },
+    { id: 'text', label: 'Texto', icon: '📝', count: getStickersByCategory('text').length }
+  ] as const;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-4xl h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="volter-font text-xl text-center">
-            Inventário de Stickers
+          <DialogTitle className="flex items-center gap-2 volter-font">
+            ✨ Inventário de Stickers
+            <Badge className="bg-blue-100 text-blue-800">
+              {STICKER_ASSETS.length} stickers disponíveis
+            </Badge>
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {/* Category Tabs */}
-          <div className="flex gap-2 justify-center">
-            <StickerCategory
-              category="emoticons"
-              isActive={activeCategory === 'emoticons'}
-              onClick={() => setActiveCategory('emoticons')}
-              icon="😊"
-            />
-            <StickerCategory
-              category="decorative"
-              isActive={activeCategory === 'decorative'}
-              onClick={() => setActiveCategory('decorative')}
-              icon="✨"
-            />
-            <StickerCategory
-              category="text"
-              isActive={activeCategory === 'text'}
-              onClick={() => setActiveCategory('text')}
-              icon="💬"
-            />
-          </div>
+        <div className="flex-1 overflow-hidden">
+          <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as any)} className="h-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              {categories.map(category => (
+                <TabsTrigger 
+                  key={category.id} 
+                  value={category.id}
+                  className="flex items-center gap-2"
+                >
+                  <span>{category.icon}</span>
+                  <span className="volter-font">{category.label}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {category.count}
+                  </Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {/* Stickers Grid */}
-          <div className="grid grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg max-h-96 overflow-y-auto">
-            {STICKER_DATA[activeCategory].map((sticker) => (
-              <div
-                key={sticker.id}
-                className="flex flex-col items-center p-2 bg-white rounded-lg hover:bg-blue-50 transition-colors"
-              >
-                <DraggableSticker
-                  id={sticker.id}
-                  src={sticker.src}
-                  category={activeCategory}
-                  size="medium"
-                />
-                <span className="text-xs text-gray-600 mt-1 text-center">
-                  {sticker.name}
-                </span>
-              </div>
+            {categories.map(category => (
+              <TabsContent key={category.id} value={category.id} className="h-full">
+                <div className="mb-3">
+                  <h3 className="font-bold text-lg volter-font flex items-center gap-2">
+                    {category.icon} {category.label}
+                  </h3>
+                  <p className="text-sm text-gray-600 volter-font">
+                    Arraste os stickers para sua home • Limite: 10 por sticker
+                  </p>
+                </div>
+                
+                <ScrollArea className="h-[calc(100%-80px)]">
+                  <div className="grid grid-cols-8 gap-4 p-2">
+                    {getStickersByCategory(category.id).map(sticker => (
+                      <div key={sticker.id} className="group relative">
+                        <div className="p-3 border-2 border-gray-200 rounded-lg hover:border-blue-400 transition-colors bg-white shadow-sm">
+                          <DraggableSticker
+                            id={sticker.id}
+                            src={sticker.src}
+                            category={sticker.category}
+                            size="medium"
+                            className="mx-auto"
+                          />
+                        </div>
+                        
+                        {/* Tooltip com nome do sticker */}
+                        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 py-1 rounded text-xs volter-font opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                          {sticker.name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
             ))}
-          </div>
-
-          {/* Instructions */}
-          <div className="text-center text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-            <p className="volter-font">💡 Dica: Arraste os stickers para sua home!</p>
-            <p className="text-xs mt-1">Clique e arraste qualquer sticker para decorar sua página.</p>
-          </div>
+          </Tabs>
+        </div>
+        
+        <div className="flex items-center justify-between text-sm text-gray-600 volter-font pt-3 border-t">
+          <span>💡 Dica: Arraste os stickers diretamente para sua home</span>
+          <span>🔄 Clique em um sticker na home para removê-lo</span>
         </div>
       </DialogContent>
     </Dialog>

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 
@@ -16,6 +15,13 @@ interface DraggableWidgetProps {
   onPositionChange?: (x: number, y: number) => void;
   onSizeChange?: (width: number, height: number) => void;
   onZIndexChange?: (zIndex: number) => void;
+  sizeRestrictions?: {
+    minWidth: number;
+    maxWidth: number;
+    minHeight: number;
+    maxHeight: number;
+    resizable: boolean;
+  };
 }
 
 export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
@@ -31,13 +37,17 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
   className = '',
   onPositionChange,
   onSizeChange,
-  onZIndexChange
+  onZIndexChange,
+  sizeRestrictions
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: x, elementY: y });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width, height });
   const elementRef = useRef<HTMLDivElement>(null);
+
+  // Verificar se o widget pode ser redimensionado
+  const canResize = isResizable && sizeRestrictions?.resizable !== false;
 
   // Prevenir seleção de texto durante drag
   useEffect(() => {
@@ -81,7 +91,7 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
   };
 
   const handleResizeMouseDown = (e: React.MouseEvent) => {
-    if (!isEditMode || !isResizable) return;
+    if (!isEditMode || !canResize) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -107,11 +117,20 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
         onPositionChange(newX, newY);
       }
 
-      if (isResizing && onSizeChange) {
+      if (isResizing && onSizeChange && sizeRestrictions) {
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
-        const newWidth = Math.max(200, resizeStart.width + deltaX);
-        const newHeight = Math.max(150, resizeStart.height + deltaY);
+        
+        // Aplicar restrições de tamanho
+        const newWidth = Math.max(
+          sizeRestrictions.minWidth, 
+          Math.min(sizeRestrictions.maxWidth, resizeStart.width + deltaX)
+        );
+        const newHeight = Math.max(
+          sizeRestrictions.minHeight, 
+          Math.min(sizeRestrictions.maxHeight, resizeStart.height + deltaY)
+        );
+        
         onSizeChange(newWidth, newHeight);
       }
     };
@@ -137,7 +156,7 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, isResizing, dragStart, resizeStart, onPositionChange, onSizeChange, id]);
+  }, [isDragging, isResizing, dragStart, resizeStart, onPositionChange, onSizeChange, id, sizeRestrictions]);
 
   return (
     <Card
@@ -162,7 +181,7 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
         className="w-full h-full overflow-hidden"
         style={{ 
           pointerEvents: isEditMode ? 'none' : 'auto',
-          padding: '0px' // Remover padding extra
+          padding: '0px'
         }}
       >
         <div style={{ pointerEvents: 'auto' }}>
@@ -170,8 +189,8 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
         </div>
       </div>
 
-      {/* Resize handle */}
-      {isEditMode && isResizable && (
+      {/* Resize handle - só aparece se o widget for redimensionável */}
+      {isEditMode && canResize && (
         <div
           className="resize-handle absolute bottom-0 right-0 w-6 h-6 bg-blue-500 cursor-se-resize rounded-tl-lg hover:bg-blue-600 transition-colors border-2 border-white shadow-lg"
           onMouseDown={handleResizeMouseDown}
@@ -196,6 +215,13 @@ export const DraggableWidget: React.FC<DraggableWidgetProps> = ({
           <div className="absolute -top-8 left-0 bg-blue-600 text-white px-2 py-1 rounded text-xs volter-font shadow-lg">
             {id.toUpperCase()}
           </div>
+
+          {/* Indicador de não-redimensionável */}
+          {!canResize && (
+            <div className="absolute -top-8 right-0 bg-orange-500 text-white px-2 py-1 rounded text-xs volter-font shadow-lg">
+              FIXO
+            </div>
+          )}
 
           {/* Overlay semi-transparente quando dragging */}
           {isDragging && (
