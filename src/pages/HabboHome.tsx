@@ -26,7 +26,6 @@ const HabboHome = () => {
   const {
     habboData,
     widgets,
-    setWidgets,
     loading: isLoading,
     error,
     addWidget,

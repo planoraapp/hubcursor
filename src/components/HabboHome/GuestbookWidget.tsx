@@ -1,118 +1,60 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { Textarea } from '@/components/ui/textarea';
+import { MessageCircle, Send } from 'lucide-react';
 
-interface GuestbookEntry {
-  id: string;
-  author_habbo_name: string;
-  message: string;
-  created_at: string;
+interface HabboData {
+  name: string;
+  figureString?: string;
+  motto?: string;
+  online?: boolean;
+  memberSince?: string;
+  selectedBadges?: any[];
 }
 
 interface GuestbookWidgetProps {
-  entries: GuestbookEntry[];
-  onAddEntry: (message: string) => void;
-  isOwner: boolean;
+  habboData: HabboData;
 }
 
-export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
-  entries,
-  onAddEntry,
-  isOwner
-}) => {
-  const [newMessage, setNewMessage] = useState('');
-  const { isLoggedIn, habboAccount } = useSimpleAuth();
+export const GuestbookWidget = ({ habboData }: GuestbookWidgetProps) => {
+  const [message, setMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() && isLoggedIn) {
-      onAddEntry(newMessage.trim());
-      setNewMessage('');
+    if (message.trim()) {
+      console.log('Sending guestbook message:', message);
+      setMessage('');
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   return (
-    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200 flex flex-col">
-      <h3 className="font-bold text-blue-800 mb-3 volter-font flex items-center gap-2">
-        💬 Livro de Visitas
-        <span className="text-xs bg-blue-200 px-2 py-1 rounded">
-          {entries.length} mensagens
-        </span>
-      </h3>
-      
-      <ScrollArea className="flex-1 mb-4 pr-2">
-        <div className="space-y-3">
-          {entries.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-blue-600 volter-font text-sm">
-                📝 Nenhuma mensagem ainda.
-              </p>
-              <p className="text-blue-500 volter-font text-xs mt-1">
-                Seja o primeiro a deixar uma mensagem!
-              </p>
-            </div>
-          ) : (
-            entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="bg-white rounded-lg p-3 border border-blue-100 shadow-sm"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-bold text-blue-800 volter-font text-sm">
-                    {entry.author_habbo_name}
-                  </span>
-                  <span className="text-xs text-blue-500">
-                    {formatDate(entry.created_at)}
-                  </span>
-                </div>
-                <p className="text-blue-700 text-sm leading-relaxed">
-                  {entry.message}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-      </ScrollArea>
-
-      {isLoggedIn ? (
+    <Card className="bg-white/80 backdrop-blur-sm shadow-md">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 volter-font">
+          <MessageCircle className="w-5 h-5" />
+          Livro de Visitas
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Escreva uma mensagem..."
-            className="bg-white border-blue-200 focus:border-blue-400"
-            maxLength={200}
+          <Textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={`Deixe uma mensagem para ${habboData.name}...`}
+            className="min-h-[80px]"
           />
-          <Button
-            type="submit"
-            size="sm"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white volter-font"
-            disabled={!newMessage.trim()}
-          >
-            ✍️ Enviar Mensagem
+          <Button type="submit" size="sm" className="w-full">
+            <Send className="w-4 h-4 mr-2" />
+            Enviar Mensagem
           </Button>
         </form>
-      ) : (
-        <div className="text-center py-3 bg-blue-100 rounded-lg border border-blue-200">
-          <p className="text-blue-700 volter-font text-sm">
-            🔒 Faça login para deixar uma mensagem
-          </p>
+        
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">Mensagens recentes aparecerão aqui...</p>
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };

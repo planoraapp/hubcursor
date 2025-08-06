@@ -100,11 +100,11 @@ export const useEnhancedHabboHome = (username: string) => {
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
         name: userData.habbo_name,
-        figureString: userData.figureString || '',
-        motto: userData.motto || '',
-        online: userData.online || false,
-        memberSince: userData.memberSince || '',
-        selectedBadges: userData.selectedBadges || []
+        figureString: '',
+        motto: '',
+        online: false,
+        memberSince: '',
+        selectedBadges: []
       });
 
       // Verificar se o usuário atual é o dono da home
