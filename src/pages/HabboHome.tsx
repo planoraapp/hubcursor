@@ -79,7 +79,7 @@ const HabboHome = () => {
   const renderDesktop = () => (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex flex-col min-h-screen">
-        <HomeHeader habboData={enhancedHabboData} />
+        <HomeHeader username={habboData.name} />
 
         <EnhancedHomeToolbar
           isEditMode={isEditMode}
@@ -100,8 +100,8 @@ const HabboHome = () => {
                 id={widget.id}
                 x={widget.x}
                 y={widget.y}
+                isEditMode={isEditMode}
                 onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
-                onRemove={() => removeWidget(widget.id)}
               >
                 <Card className="bg-white/80 backdrop-blur-sm shadow-md h-full">
                   <CardHeader>
@@ -122,7 +122,7 @@ const HabboHome = () => {
   const renderMobile = () => (
     <MobileLayout>
       <div className="flex flex-col min-h-screen p-4">
-        <HomeHeader habboData={enhancedHabboData} />
+        <HomeHeader username={habboData.name} />
         
         <EnhancedHomeToolbar
           isEditMode={isEditMode}

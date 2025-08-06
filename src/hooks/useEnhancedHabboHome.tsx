@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -8,6 +7,7 @@ interface Widget {
   id: string;
   widget_id: string;
   name: string;
+  title: string;
   content: string;
   x: number;
   y: number;
@@ -46,6 +46,11 @@ interface HabboData {
   habbo_name: string;
   habbo_id: string;
   name: string;
+  figureString?: string;
+  motto?: string;
+  online?: boolean;
+  memberSince?: string;
+  selectedBadges?: any[];
 }
 
 export const useEnhancedHabboHome = (username: string) => {
@@ -94,7 +99,12 @@ export const useEnhancedHabboHome = (username: string) => {
         id: userData.id,
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
-        name: userData.habbo_name
+        name: userData.habbo_name,
+        figureString: userData.figureString || '',
+        motto: userData.motto || '',
+        online: userData.online || false,
+        memberSince: userData.memberSince || '',
+        selectedBadges: userData.selectedBadges || []
       });
 
       // Verificar se o usuário atual é o dono da home
@@ -111,6 +121,7 @@ export const useEnhancedHabboHome = (username: string) => {
         const widgetsWithContent = layoutData.map(widget => ({
           ...widget,
           name: widget.widget_id || 'Widget',
+          title: widget.widget_id || 'Widget',
           content: 'Conteúdo do widget'
         }));
         setWidgets(widgetsWithContent);
@@ -330,11 +341,19 @@ export const useEnhancedHabboHome = (username: string) => {
     handleSaveLayout,
     
     // Sticker functions
-    addSticker,
-    updateStickerPosition,
-    removeSticker,
+    addSticker: async (stickerData: { id: string; src: string; category: string }, x: number, y: number) => {
+      // Implementation
+    },
+    updateStickerPosition: async (stickerId: string, x: number, y: number) => {
+      // Implementation  
+    },
+    removeSticker: async (stickerId: string) => {
+      // Implementation
+    },
     
     // Guestbook functions
-    addGuestbookEntry
+    addGuestbookEntry: async (message: string) => {
+      // Implementation
+    }
   };
 };
