@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Sheet,
@@ -21,7 +22,7 @@ import {
   ShoppingBag,
   MessageSquare,
   Image,
-  Cog6Tooth,
+  Cog,
   DoorOpen,
   LucideIcon
 } from "lucide-react"
@@ -31,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface SidebarProps {
   habboName?: string;
+  activeSection?: string;
+  setActiveSection?: (section: string) => void;
 }
 
 interface NavItemProps {
@@ -59,7 +62,7 @@ const UserProfile: React.FC<{ habboName: string }> = ({ habboName }) => (
   </div>
 );
 
-export function Sidebar({ habboName }: SidebarProps) {
+export function Sidebar({ habboName, activeSection, setActiveSection }: SidebarProps) {
   const [open, setOpen] = useState(false);
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -97,7 +100,7 @@ export function Sidebar({ habboName }: SidebarProps) {
         <Separator />
 
       {/* User Profile */}
-      <UserProfile habboName={habboName || ''} />
+      {habboName && <UserProfile habboName={habboName} />}
 
         <Separator />
         <div className="py-4">
@@ -110,7 +113,7 @@ export function Sidebar({ habboName }: SidebarProps) {
         </div>
         <Separator />
         <div className="py-4">
-          <NavItem icon={Cog6Tooth} label="Ferramentas" href="/ferramentas" />
+          <NavItem icon={Cog} label="Ferramentas" href="/ferramentas" />
           <NavItem icon={LayoutDashboard} label="Catálogo" href="/catalogo" />
           <NavItem icon={User} label="Meu Perfil" href={`/profile/${habboName}`} />
           <NavItem icon={Settings} label="Configurações" href="/configuracoes" />

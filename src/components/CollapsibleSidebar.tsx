@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sheet,
@@ -60,7 +61,11 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
                 Navegue pelo Habbo Hub
               </SheetDescription>
             </SheetHeader>
-            <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} habboName={habboAccount?.habbo_name || ''} />
+            <Sidebar 
+              habboName={habboAccount?.habbo_name || ''} 
+              activeSection={activeSection} 
+              setActiveSection={setActiveSection} 
+            />
           </SheetContent>
         </Sheet>
       )}
@@ -73,13 +78,15 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
         >
           <div className="p-4">
             <h1 className="text-lg font-bold mb-4 volter-font">Habbo Hub</h1>
-            {user && habboAccount ? (
+            {user && habboAccount && (
               <UserProfile />
-            ) : (
-              <p className="text-sm">Faça login para ver mais.</p>
             )}
           </div>
-          <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} habboName={habboAccount?.habbo_name || ''} />
+          <Sidebar 
+            habboName={habboAccount?.habbo_name || ''} 
+            activeSection={activeSection} 
+            setActiveSection={setActiveSection} 
+          />
         </div>
       )}
     </div>

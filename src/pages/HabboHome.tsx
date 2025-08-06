@@ -66,10 +66,20 @@ const HabboHome = () => {
     );
   }
 
+  // Create the expected format for widgets
+  const enhancedHabboData = {
+    name: habboData.name,
+    figureString: habboData.figureString || '',
+    motto: habboData.motto || '',
+    online: habboData.online || false,
+    memberSince: habboData.memberSince || '',
+    selectedBadges: habboData.selectedBadges || []
+  };
+
   const renderDesktop = () => (
     <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex flex-col min-h-screen">
-        <HomeHeader habboData={habboData} />
+        <HomeHeader habboData={enhancedHabboData} />
 
         <EnhancedHomeToolbar
           isEditMode={isEditMode}
@@ -79,8 +89,8 @@ const HabboHome = () => {
 
         <div className="flex flex-1 p-4 gap-4">
           <div className="w-1/4 flex flex-col gap-4">
-            <AvatarWidget habboData={habboData} />
-            <GuestbookWidget habboData={habboData} />
+            <AvatarWidget habboData={enhancedHabboData} />
+            <GuestbookWidget habboData={enhancedHabboData} />
           </div>
 
           <div className="w-3/4 grid gap-4 grid-cols-3 grid-rows-3">
@@ -95,10 +105,10 @@ const HabboHome = () => {
               >
                 <Card className="bg-white/80 backdrop-blur-sm shadow-md h-full">
                   <CardHeader>
-                    <CardTitle>{widget.name}</CardTitle>
+                    <CardTitle>{widget.title || 'Widget'}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {widget.content}
+                    {widget.content || 'Widget content'}
                   </CardContent>
                 </Card>
               </DraggableWidget>
@@ -112,7 +122,7 @@ const HabboHome = () => {
   const renderMobile = () => (
     <MobileLayout>
       <div className="flex flex-col min-h-screen p-4">
-        <HomeHeader habboData={habboData} />
+        <HomeHeader habboData={enhancedHabboData} />
         
         <EnhancedHomeToolbar
           isEditMode={isEditMode}
@@ -121,18 +131,18 @@ const HabboHome = () => {
         />
 
         <div className="flex flex-col gap-4">
-          <AvatarWidget habboData={habboData} />
-          <GuestbookWidget habboData={habboData} />
+          <AvatarWidget habboData={enhancedHabboData} />
+          <GuestbookWidget habboData={enhancedHabboData} />
         </div>
 
         <div className="flex flex-col gap-4">
           {widgets.map(widget => (
             <Card key={widget.id} className="bg-white/80 backdrop-blur-sm shadow-md">
               <CardHeader>
-                <CardTitle>{widget.name}</CardTitle>
+                <CardTitle>{widget.title || 'Widget'}</CardTitle>
               </CardHeader>
               <CardContent>
-                {widget.content}
+                {widget.content || 'Widget content'}
               </CardContent>
             </Card>
           ))}
