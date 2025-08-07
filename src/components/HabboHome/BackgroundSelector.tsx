@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +68,9 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
               {backgroundAssets.length} fundos disponíveis
             </Badge>
           </DialogTitle>
+          <DialogDescription className="text-gray-600 volter-font">
+            Escolha uma cor sólida, padrão repetitivo ou imagem de fundo para personalizar sua Habbo Home
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex-1 overflow-hidden">

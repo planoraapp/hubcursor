@@ -9,7 +9,7 @@ import { MarketplaceProvider } from './contexts/MarketplaceContext';
 // Pages
 import Index from './pages/Index';
 import Login from './pages/Login';
-import HabboHome from './pages/HabboHome';
+import EnhancedHabboHome from './pages/EnhancedHabboHome';
 import HomesHub from './pages/HomesHub';
 import Mercado from './pages/Mercado';
 import Emblemas from './pages/Emblemas';
@@ -36,7 +36,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/home/:username" element={<HabboHome />} />
+                <Route path="/home/:username" element={<EnhancedHabboHome />} />
                 <Route path="/homes" element={<HomesHub />} />
                 <Route path="/mercado" element={<Mercado />} />
                 <Route path="/emblemas" element={<Emblemas />} />

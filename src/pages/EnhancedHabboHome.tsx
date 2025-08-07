@@ -11,6 +11,8 @@ import { OptimizedDroppedSticker } from '../components/HabboHome/OptimizedDroppe
 import { EnhancedHomeHeader } from '../components/HabboHome/EnhancedHomeHeader';
 import { BackgroundSelector } from '../components/HabboHome/BackgroundSelector';
 import { EnhancedStickerInventory } from '../components/HabboHome/EnhancedStickerInventory';
+import { WidgetSelector } from '../components/HabboHome/WidgetSelector';
+import { EditModeHelpBar } from '../components/HabboHome/EditModeHelpBar';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { useEnhancedHabboHome } from '../hooks/useEnhancedHabboHome';
 import { useAuth } from '../hooks/useAuth';
@@ -302,6 +304,9 @@ const EnhancedHabboHome = () => {
                 className="min-h-[800px] border-4 border-black rounded-lg relative overflow-hidden"
                 style={backgroundStyle}
               >
+                {/* Edit Mode Help Bar */}
+                <EditModeHelpBar isVisible={isEditMode} />
+
                 {/* Fixed Sidebar Widgets */}
                 <div className="absolute left-4 top-4 w-80 flex flex-col gap-4 z-10">
                   <div style={{ transform: 'scale(1.2)' }}>
@@ -391,10 +396,10 @@ const EnhancedHabboHome = () => {
                   )}
                 </div>
 
-                {/* Edit mode overlay */}
+                {/* Edit mode overlay with improved visibility */}
                 {isEditMode && (
                   <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute inset-4 border-2 border-dashed border-yellow-400 rounded-lg bg-yellow-400/5" />
+                    <div className="absolute inset-4 border-2 border-dashed border-yellow-400 rounded-lg bg-yellow-400/5 shadow-inner" />
                   </div>
                 )}
               </div>
@@ -415,6 +420,11 @@ const EnhancedHabboHome = () => {
         isOpen={showStickers}
         onClose={() => setShowStickers(false)}
         onStickerDrop={handleStickerDrop}
+      />
+
+      <WidgetSelector
+        isOpen={showWidgets}
+        onClose={() => setShowWidgets(false)}
       />
     </div>
   );
@@ -437,6 +447,16 @@ const EnhancedHabboHome = () => {
           className="min-h-[600px] border-4 border-black rounded-lg p-4 relative"
           style={backgroundStyle}
         >
+          {/* Edit Mode Help for Mobile */}
+          {isEditMode && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-400 rounded-lg">
+              <div className="text-xs volter-font text-center space-y-1">
+                <div>🔧 <strong>Modo Edição Ativo</strong></div>
+                <div>Use os botões do cabeçalho para personalizar</div>
+              </div>
+            </div>
+          )}
+
           <AvatarWidget habboData={enhancedHabboData} />
           <div className="mt-4">
             <GuestbookWidget 
@@ -460,6 +480,11 @@ const EnhancedHabboHome = () => {
           isOpen={showStickers}
           onClose={() => setShowStickers(false)}
           onStickerDrop={handleStickerDrop}
+        />
+
+        <WidgetSelector
+          isOpen={showWidgets}
+          onClose={() => setShowWidgets(false)}
         />
       </div>
     </MobileLayout>
