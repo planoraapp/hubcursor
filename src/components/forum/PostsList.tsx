@@ -11,6 +11,7 @@ interface PostsListProps {
   setSelectedCategory: (category: string) => void;
   onLikePost: (postId: string) => Promise<void>;
   currentUserId: string | null;
+  categories: string[];
 }
 
 export const PostsList: React.FC<PostsListProps> = ({
@@ -19,10 +20,9 @@ export const PostsList: React.FC<PostsListProps> = ({
   selectedCategory,
   setSelectedCategory,
   onLikePost,
-  currentUserId
+  currentUserId,
+  categories
 }) => {
-  const categories = ['Todos', 'Geral', 'Suporte', 'Eventos'];
-
   return (
     <Card className="bg-white border-gray-900">
       <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
