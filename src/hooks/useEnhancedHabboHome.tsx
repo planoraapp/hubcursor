@@ -87,16 +87,22 @@ export const useEnhancedHabboHome = (username: string) => {
       
       const normalizedUsername = username.trim().toLowerCase();
       
-      // Buscar dados do usuário no banco (com a nova policy pública)
-      const { data: userData, error: userError } = await supabase
-        .from('habbo_accounts')
-        .select('*')
-        .ilike('habbo_name', normalizedUsername)
-        .single();
+      // Buscar dados mínimos via RPC (compatível com RLS)
+      console.log('📦 Buscando conta pública via RPC...');
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'get_habbo_account_public_by_name',
+        { habbo_name_param: normalizedUsername }
+      );
 
-      if (userError || !userData) {
-        console.warn('⚠️ Usuário não encontrado no banco, tentando API...', userError);
-        
+      if (rpcError) {
+        console.warn('⚠️ RPC retornou erro (continuando com fallback):', rpcError);
+      }
+
+      // A função retorna uma linha no máximo; em supabase-js geralmente virá como array
+      const userData = Array.isArray(rpcData) ? rpcData?.[0] : rpcData;
+
+      if (!userData) {
+        console.warn('⚠️ Usuário não encontrado no banco (via RPC), tentando API...');
         // Fallback: tentar API do Habbo
         try {
           const habboApiData = await getUserByName(username);
@@ -104,7 +110,6 @@ export const useEnhancedHabboHome = (username: string) => {
             throw new Error(`Usuário "${username}" não encontrado`);
           }
           
-          // Usuário existe na API mas não no banco - mostrar mensagem amigável
           setError(`Usuário "${username}" encontrado no Habbo, mas ainda não possui uma conta no HabboHub. Eles precisam se cadastrar primeiro.`);
           setHabboData(null);
           setLoading(false);
@@ -118,7 +123,7 @@ export const useEnhancedHabboHome = (username: string) => {
         }
       }
 
-      console.log('✅ Dados do usuário encontrados no banco:', userData);
+      console.log('✅ Dados do usuário encontrados via RPC:', userData);
 
       // Garantir que a home existe
       console.log('🏠 Garantindo que a home existe para:', userData.supabase_user_id);
@@ -143,7 +148,6 @@ export const useEnhancedHabboHome = (username: string) => {
         console.log('📊 Dados da API do Habbo:', habboApiData ? 'Sucesso' : 'Falhou');
       } catch (apiError) {
         console.warn('⚠️ Falha na API do Habbo (usando dados básicos):', apiError);
-        // Mostrar toast informativo para o usuário
         if (userData.supabase_user_id === habboAccount?.supabase_user_id) {
           toast({
             title: "Aviso",
@@ -248,7 +252,6 @@ export const useEnhancedHabboHome = (username: string) => {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao carregar Habbo Home';
       setError(errorMessage);
       
-      // Toast apenas para erros críticos
       toast({
         title: "Erro",
         description: "Falha ao carregar a home. Tente recarregar a página.",
@@ -408,7 +411,6 @@ export const useEnhancedHabboHome = (username: string) => {
     background,
     guestbook,
     habboData,
-    homeData: habboData,
     
     loading,
     isLoading: loading,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -255,7 +254,7 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Login com senha (usuários existentes) - versão robusta
+  // Login com senha (usuários existentes) - versão robusta com fallback via RPC
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
       console.log(`🔐 Iniciando login para: ${habboName}`);
@@ -264,8 +263,8 @@ export const useUnifiedAuth = () => {
       let authEmail: string | null = null;
       let detectedHotel: string | null = null;
 
+      // 1) Tentativa principal: API Multi-Hotel (mais confiável quando disponível)
       try {
-        // Tentar obter uniqueId via API multi-hotel (mais confiável)
         console.log('🌐 Buscando dados via API do Habbo...');
         const habboUser = await getUserByName(normalizedName);
         
@@ -277,8 +276,18 @@ export const useUnifiedAuth = () => {
           throw new Error('Usuário não encontrado na API do Habbo');
         }
       } catch (apiError) {
-        console.warn('⚠️ API do Habbo indisponível, tentando fallback...', apiError);
-        throw new Error('Não foi possível verificar sua conta Habbo. Tente novamente em alguns instantes.');
+        console.warn('⚠️ API do Habbo indisponível, tentando fallback via RPC...', apiError);
+        // 2) Fallback: usar RPC no banco para obter o email de auth a partir do nome
+        const { data: rpcEmail, error: rpcError } = await supabase.rpc('get_auth_email_for_habbo', {
+          habbo_name_param: normalizedName
+        });
+        if (rpcError) {
+          console.error('❌ Falha ao obter email via RPC:', rpcError);
+        }
+        if (rpcEmail) {
+          authEmail = rpcEmail as string;
+          console.log(`📧 Email obtido via RPC: ${authEmail}`);
+        }
       }
 
       if (!authEmail) {
