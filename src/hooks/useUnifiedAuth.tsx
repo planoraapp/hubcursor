@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -277,13 +278,16 @@ export const useUnifiedAuth = () => {
         }
       } catch (apiError) {
         console.warn('⚠️ API do Habbo indisponível, tentando fallback via RPC...', apiError);
+        
         // 2) Fallback: usar RPC no banco para obter o email de auth a partir do nome
         const { data: rpcEmail, error: rpcError } = await supabase.rpc('get_auth_email_for_habbo', {
           habbo_name_param: normalizedName
         });
+        
         if (rpcError) {
           console.error('❌ Falha ao obter email via RPC:', rpcError);
         }
+        
         if (rpcEmail) {
           authEmail = rpcEmail as string;
           console.log(`📧 Email obtido via RPC: ${authEmail}`);
