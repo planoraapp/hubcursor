@@ -20,10 +20,10 @@ const generateVerificationCode = () => {
   return `HUB-${code}`;
 };
 
-// Detectar hotel do habbo_id
+// Detectar hotel do habbo_id - versão aprimorada
 const detectHotelFromHabboId = (habboId: string): string => {
   if (habboId.startsWith('hhbr-')) return 'br';
-  if (habboId.startsWith('hhcom-')) return 'com';
+  if (habboId.startsWith('hhcom-') || habboId.startsWith('hhus-')) return 'com';
   if (habboId.startsWith('hhes-')) return 'es';
   if (habboId.startsWith('hhfr-')) return 'fr';
   if (habboId.startsWith('hhde-')) return 'de';
@@ -255,14 +255,13 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Login com senha (usuários existentes) - versão robusta com fallback via RPC
+  // Login com senha (usuários existentes) - versão aprimorada com múltiplos candidatos
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
       console.log(`🔐 Iniciando login para: ${habboName}`);
       const normalizedName = habboName.trim();
 
-      let authEmail: string | null = null;
-      let detectedHotel: string | null = null;
+      const emailCandidates: string[] = [];
 
       // 1) Tentativa principal: API Multi-Hotel (mais confiável quando disponível)
       try {
@@ -270,16 +269,18 @@ export const useUnifiedAuth = () => {
         const habboUser = await getUserByName(normalizedName);
         
         if (habboUser?.uniqueId) {
-          authEmail = `${habboUser.uniqueId}@habbohub.com`;
-          detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
-          console.log(`📧 Email construído via API: ${authEmail} (${detectedHotel})`);
-        } else {
-          throw new Error('Usuário não encontrado na API do Habbo');
+          const apiEmail = `${habboUser.uniqueId}@habbohub.com`;
+          const detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
+          emailCandidates.push(apiEmail);
+          console.log(`📧 Email candidato da API: ${apiEmail} (${detectedHotel})`);
         }
       } catch (apiError) {
-        console.warn('⚠️ API do Habbo indisponível, tentando fallback via RPC...', apiError);
-        
-        // 2) Fallback: usar RPC no banco para obter o email de auth a partir do nome
+        console.warn('⚠️ API do Habbo indisponível:', apiError);
+      }
+
+      // 2) Fallback: usar RPC no banco para obter o email de auth a partir do nome
+      try {
+        console.log('💾 Buscando email via RPC no banco...');
         const { data: rpcEmail, error: rpcError } = await supabase.rpc('get_auth_email_for_habbo', {
           habbo_name_param: normalizedName
         });
@@ -288,44 +289,77 @@ export const useUnifiedAuth = () => {
           console.error('❌ Falha ao obter email via RPC:', rpcError);
         }
         
-        if (rpcEmail) {
-          authEmail = rpcEmail as string;
-          console.log(`📧 Email obtido via RPC: ${authEmail}`);
+        if (rpcEmail && !emailCandidates.includes(rpcEmail)) {
+          emailCandidates.push(rpcEmail as string);
+          console.log(`📧 Email candidato do RPC: ${rpcEmail}`);
         }
+      } catch (rpcError) {
+        console.warn('⚠️ RPC indisponível:', rpcError);
       }
 
-      if (!authEmail) {
+      if (emailCandidates.length === 0) {
         throw new Error('Conta não encontrada. Use a aba "Primeiro Acesso" para se cadastrar.');
       }
 
-      // Fazer login com o email construído
-      console.log('🔑 Tentando login com Supabase Auth...');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: password
-      });
+      console.log(`🎯 Tentando login com ${emailCandidates.length} candidato(s) de email`);
 
-      if (error) {
-        console.error('❌ Erro no login:', error);
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Senha incorreta. Verifique sua senha e tente novamente.');
+      // 3) Tentar login com cada candidato sequencialmente
+      for (let i = 0; i < emailCandidates.length; i++) {
+        const emailCandidate = emailCandidates[i];
+        console.log(`🔑 Tentativa ${i + 1}: ${emailCandidate}`);
+
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: emailCandidate,
+            password: password
+          });
+
+          if (error) {
+            console.warn(`⚠️ Falha na tentativa ${i + 1}: ${error.message}`);
+            
+            // Se não é a última tentativa, continua
+            if (i < emailCandidates.length - 1) {
+              continue;
+            }
+            
+            // Se é a última tentativa, lança erro
+            if (error.message.includes('Invalid login credentials')) {
+              throw new Error('Senha incorreta. Verifique sua senha e tente novamente.');
+            }
+            throw new Error('Erro no login. Verifique suas credenciais.');
+          }
+
+          // Login bem-sucedido!
+          console.log(`✅ Login realizado com sucesso na tentativa ${i + 1} para ${normalizedName}`);
+          
+          // Garantir Home padrão após login
+          if (data.user?.id) {
+            await ensureUserHome(data.user.id);
+          }
+
+          toast({
+            title: "Login realizado!",
+            description: `Bem-vindo de volta, ${normalizedName}!`,
+          });
+          
+          return data;
+
+        } catch (attemptError) {
+          console.error(`❌ Erro na tentativa ${i + 1}:`, attemptError);
+          
+          // Se não é a última tentativa, continua
+          if (i < emailCandidates.length - 1) {
+            continue;
+          }
+          
+          // Se é a última tentativa, propaga o erro
+          throw attemptError;
         }
-        throw new Error('Erro no login. Verifique suas credenciais.');
       }
 
-      // Garantir Home padrão após login
-      if (data.user?.id) {
-        await ensureUserHome(data.user.id);
-      }
+      // Se chegou aqui, todas as tentativas falharam
+      throw new Error('Não foi possível fazer login com nenhum dos emails candidatos.');
 
-      console.log(`✅ Login realizado com sucesso para ${normalizedName}`);
-      
-      toast({
-        title: "Login realizado!",
-        description: `Bem-vindo de volta, ${normalizedName}!`,
-      });
-      
-      return data;
     } catch (error: any) {
       console.error('❌ Erro no login:', error);
       toast({
