@@ -441,6 +441,39 @@ export type Database = {
         }
         Relationships: []
       }
+      home_assets: {
+        Row: {
+          bucket_name: string
+          category: string
+          created_at: string | null
+          file_path: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          bucket_name?: string
+          category: string
+          created_at?: string | null
+          file_path: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          bucket_name?: string
+          category?: string
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       photo_comments: {
         Row: {
           comment_text: string
@@ -621,6 +654,7 @@ export type Database = {
           scale: number | null
           sticker_id: string
           sticker_src: string
+          updated_at: string | null
           user_id: string
           x: number
           y: number
@@ -634,6 +668,7 @@ export type Database = {
           scale?: number | null
           sticker_id: string
           sticker_src: string
+          updated_at?: string | null
           user_id: string
           x?: number
           y?: number
@@ -647,6 +682,7 @@ export type Database = {
           scale?: number | null
           sticker_id?: string
           sticker_src?: string
+          updated_at?: string | null
           user_id?: string
           x?: number
           y?: number
