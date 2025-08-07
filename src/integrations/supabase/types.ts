@@ -656,6 +656,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_user_home_exists: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       initialize_user_home: {
         Args: { user_uuid: string }
         Returns: undefined

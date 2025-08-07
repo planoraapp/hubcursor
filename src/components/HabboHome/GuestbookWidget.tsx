@@ -16,31 +16,30 @@ interface HabboData {
   selectedBadges?: any[];
 }
 
-interface GuestbookWidgetProps {
-  habboData: HabboData;
+interface GuestbookEntry {
+  id: string;
+  author_habbo_name: string;
+  message: string;
+  created_at: string;
 }
 
-export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ habboData }) => {
+interface GuestbookWidgetProps {
+  habboData: HabboData;
+  guestbook?: GuestbookEntry[];
+  onAddEntry?: (message: string) => Promise<void>;
+  isOwner?: boolean;
+}
+
+export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ 
+  habboData, 
+  guestbook = [], 
+  onAddEntry,
+  isOwner = false 
+}) => {
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { habboAccount, isLoggedIn } = useAuth();
   const { toast } = useToast();
-
-  // Mock guestbook entries for demonstration
-  const mockEntries = [
-    {
-      id: '1',
-      author_habbo_name: 'Visitante1',
-      message: 'Que home incrível! Parabéns pela decoração!',
-      created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString()
-    },
-    {
-      id: '2',
-      author_habbo_name: 'Amigo123',
-      message: 'Adorei passar por aqui, sempre bem-vindo!',
-      created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString()
-    }
-  ];
 
   const handleSubmitMessage = async () => {
     if (!newMessage.trim()) {
@@ -61,16 +60,22 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ habboData }) =
       return;
     }
 
+    if (!onAddEntry) {
+      toast({
+        title: "Erro",
+        description: "Função de adicionar mensagem não disponível",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Aqui seria a implementação real com supabase
-      toast({
-        title: "Sucesso",
-        description: "Mensagem adicionada ao livro de visitas!"
-      });
+      await onAddEntry(newMessage.trim());
       setNewMessage('');
     } catch (error) {
+      console.error('Erro ao adicionar mensagem:', error);
       toast({
         title: "Erro",
         description: "Erro ao adicionar mensagem",
@@ -82,18 +87,25 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ habboData }) =
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    
-    if (minutes < 60) {
-      return `há ${minutes} minutos`;
-    } else if (hours < 24) {
-      return `há ${hours} horas`;
-    } else {
-      return date.toLocaleDateString('pt-BR');
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      
+      if (minutes < 60) {
+        return `há ${minutes} minuto${minutes !== 1 ? 's' : ''}`;
+      } else if (hours < 24) {
+        return `há ${hours} hora${hours !== 1 ? 's' : ''}`;
+      } else if (days < 30) {
+        return `há ${days} dia${days !== 1 ? 's' : ''}`;
+      } else {
+        return date.toLocaleDateString('pt-BR');
+      }
+    } catch (error) {
+      return 'Data inválida';
     }
   };
 
@@ -108,24 +120,25 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ habboData }) =
       <CardContent className="p-4">
         {/* Entries List */}
         <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-          {mockEntries.map((entry) => (
-            <div key={entry.id} className="bg-gray-50 p-3 rounded-lg border">
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-semibold text-sm text-blue-600">
-                  {entry.author_habbo_name}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {formatDate(entry.created_at)}
-                </span>
+          {guestbook && guestbook.length > 0 ? (
+            guestbook.map((entry) => (
+              <div key={entry.id} className="bg-gray-50 p-3 rounded-lg border">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-semibold text-sm text-blue-600">
+                    {entry.author_habbo_name}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {formatDate(entry.created_at)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700">{entry.message}</p>
               </div>
-              <p className="text-sm text-gray-700">{entry.message}</p>
-            </div>
-          ))}
-          
-          {mockEntries.length === 0 && (
+            ))
+          ) : (
             <div className="text-center py-6 text-gray-500">
               <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Nenhuma mensagem ainda</p>
+              <p className="text-xs">Seja o primeiro a deixar uma mensagem!</p>
             </div>
           )}
         </div>
@@ -140,6 +153,7 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ habboData }) =
               className="resize-none"
               rows={3}
               maxLength={200}
+              disabled={isSubmitting}
             />
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-500">
@@ -149,7 +163,7 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({ habboData }) =
                 onClick={handleSubmitMessage}
                 size="sm"
                 className="bg-green-600 hover:bg-green-700"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !newMessage.trim()}
               >
                 <Send className="w-4 h-4 mr-1" />
                 {isSubmitting ? 'Enviando...' : 'Enviar'}

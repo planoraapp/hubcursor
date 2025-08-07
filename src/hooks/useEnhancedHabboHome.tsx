@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { getUserByName } from '../lib/habboApi';
+import { getUserByName } from '../services/habboApi';
 
 interface Widget {
   id: string;
@@ -60,7 +60,7 @@ export const useEnhancedHabboHome = (username: string) => {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [background, setBackground] = useState<Background>({ 
     background_type: 'color', 
-    background_value: '#f5f5f5'
+    background_value: '#c7d2dc'
   });
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [habboData, setHabboData] = useState<HabboData | null>(null);
@@ -85,15 +85,11 @@ export const useEnhancedHabboHome = (username: string) => {
       
       console.log('🔍 Carregando Habbo Home para usuário:', username);
       
-      // Primeiro, buscar dados da API oficial do Habbo
-      const habboApiData = await getUserByName(username);
-      console.log('📊 Dados da API do Habbo:', habboApiData);
-      
-      // Buscar dados do usuário no banco local
+      // Buscar dados do usuário no banco local primeiro
       const { data: userData, error: userError } = await supabase
         .from('habbo_accounts')
         .select('*')
-        .ilike('habbo_name', username)
+        .ilike('habbo_name', username.trim())
         .single();
 
       if (userError || !userData) {
@@ -104,32 +100,60 @@ export const useEnhancedHabboHome = (username: string) => {
         return;
       }
 
-      console.log('✅ Dados do usuário encontrados:', userData);
+      console.log('✅ Dados do usuário encontrados no banco:', userData);
+
+      // Garantir que o usuário tenha uma home inicializada
+      console.log('🏠 Garantindo que a home existe para:', userData.supabase_user_id);
+      const { error: initError } = await supabase
+        .rpc('ensure_user_home_exists', { user_uuid: userData.supabase_user_id });
+
+      if (initError) {
+        console.error('⚠️ Erro ao inicializar home:', initError);
+      } else {
+        console.log('✅ Home inicializada com sucesso');
+      }
+
+      // Buscar dados da API oficial do Habbo com tratamento melhorado
+      let habboApiData = null;
+      try {
+        console.log('🌐 Buscando dados da API do Habbo para:', username);
+        habboApiData = await getUserByName(username);
+        console.log('📊 Dados da API do Habbo:', habboApiData);
+      } catch (apiError) {
+        console.warn('⚠️ Falha na API do Habbo, usando dados básicos:', apiError);
+        // Continuar com dados básicos se a API falhar
+      }
 
       // Combinar dados da API com dados locais
       const combinedHabboData: HabboData = {
-        id: userData.id,
+        id: userData.supabase_user_id, // Usar supabase_user_id como ID principal
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
         name: userData.habbo_name,
         figureString: habboApiData?.figureString || '',
-        motto: habboApiData?.motto || '',
+        motto: habboApiData?.motto || 'Bem-vindo ao meu perfil!',
         online: habboApiData?.online || false,
-        memberSince: habboApiData?.memberSince || '',
+        memberSince: habboApiData?.memberSince || new Date().toISOString(),
         selectedBadges: habboApiData?.selectedBadges || []
       };
 
       setHabboData(combinedHabboData);
 
-      // Verificar se o usuário atual é o dono da home
+      // Verificar se o usuário atual é o dono da home (case insensitive)
       const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
       setIsOwner(currentUserIsOwner);
+      console.log('👤 É o dono?', currentUserIsOwner, {
+        currentUser: habboAccount?.habbo_name,
+        homeOwner: username
+      });
 
-      // Carregar widgets
+      // Carregar widgets usando supabase_user_id
       const { data: layoutData, error: layoutError } = await supabase
         .from('user_home_layouts')
         .select('*')
         .eq('user_id', userData.supabase_user_id);
+
+      console.log('📐 Widgets carregados:', layoutData?.length || 0, layoutError);
 
       if (!layoutError && layoutData) {
         const widgetsWithContent = layoutData.map(widget => ({
@@ -139,9 +163,10 @@ export const useEnhancedHabboHome = (username: string) => {
           content: getWidgetContent(widget.widget_id, combinedHabboData)
         }));
         setWidgets(widgetsWithContent);
+        console.log('✅ Widgets processados:', widgetsWithContent.length);
       }
 
-      // Carregar stickers
+      // Carregar stickers usando supabase_user_id
       const { data: stickerData, error: stickerError } = await supabase
         .from('user_stickers')
         .select('*')
@@ -162,7 +187,7 @@ export const useEnhancedHabboHome = (username: string) => {
         setStickers(stickersWithCategory);
       }
 
-      // Carregar background
+      // Carregar background usando supabase_user_id
       const { data: bgData, error: bgError } = await supabase
         .from('user_home_backgrounds')
         .select('*')
@@ -176,21 +201,26 @@ export const useEnhancedHabboHome = (username: string) => {
         });
       }
 
-      // Carregar guestbook
+      // Carregar guestbook usando supabase_user_id
       const { data: guestbookData, error: guestbookError } = await supabase
         .from('guestbook_entries')
         .select('*')
         .eq('home_owner_user_id', userData.supabase_user_id)
+        .eq('moderation_status', 'approved')
         .order('created_at', { ascending: false })
         .limit(10);
+
+      console.log('📚 Guestbook carregado:', guestbookData?.length || 0, guestbookError);
 
       if (!guestbookError && guestbookData) {
         setGuestbook(guestbookData);
       }
 
+      console.log('🎉 Habbo Home carregada com sucesso!');
+
     } catch (error) {
       console.error('💥 Erro ao carregar Habbo Home:', error);
-      setError('Erro ao carregar Habbo Home');
+      setError(error instanceof Error ? error.message : 'Erro ao carregar Habbo Home');
     } finally {
       setLoading(false);
     }
@@ -316,16 +346,26 @@ export const useEnhancedHabboHome = (username: string) => {
           home_owner_user_id: habboData.id,
           author_user_id: habboAccount.supabase_user_id,
           author_habbo_name: habboAccount.habbo_name,
-          message
+          message,
+          moderation_status: 'approved'
         })
         .select()
         .single();
 
       if (!error && data) {
         setGuestbook(prev => [data, ...prev.slice(0, 9)]);
+        toast({
+          title: "Mensagem Adicionada",
+          description: "Sua mensagem foi adicionada ao livro de visitas!",
+        });
       }
     } catch (error) {
       console.error('Erro ao adicionar entrada no guestbook:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar mensagem",
+        variant: "destructive"
+      });
     }
   };
 
