@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      forum_categories: {
+        Row: {
+          bg_color: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          last_post_time: string | null
+          name: string
+          posts_count: number
+          topics_count: number
+          updated_at: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          last_post_time?: string | null
+          name: string
+          posts_count?: number
+          topics_count?: number
+          updated_at?: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          last_post_time?: string | null
+          name?: string
+          posts_count?: number
+          topics_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       forum_comments: {
         Row: {
           author_habbo_name: string
@@ -54,6 +93,7 @@ export type Database = {
           author_habbo_name: string
           author_supabase_user_id: string
           category: string | null
+          category_id: string | null
           content: string
           created_at: string
           id: string
@@ -65,6 +105,7 @@ export type Database = {
           author_habbo_name: string
           author_supabase_user_id: string
           category?: string | null
+          category_id?: string | null
           content: string
           created_at?: string
           id?: string
@@ -76,6 +117,7 @@ export type Database = {
           author_habbo_name?: string
           author_supabase_user_id?: string
           category?: string | null
+          category_id?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -83,7 +125,15 @@ export type Database = {
           likes?: number
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "forum_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       guestbook_entries: {
         Row: {

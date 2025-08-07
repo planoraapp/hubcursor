@@ -4,50 +4,57 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { ForumCategoryCard } from './forum/ForumCategoryCard';
-import { CreatePostForm } from './forum/CreatePostForm';
+import { CreatePostModal } from './forum/CreatePostModal';
 import { PostsList } from './forum/PostsList';
+import { Button } from './ui/button';
+import { Plus } from 'lucide-react';
 import type { ForumPost } from '../types/forum';
+
+interface ForumCategory {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  bg_color: string;
+  topics_count: number;
+  posts_count: number;
+  last_post_time: string;
+}
 
 export const Forum = () => {
   const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const { user, habboAccount, isLoggedIn } = useAuth();
   const { toast } = useToast();
 
-  const categories = [
-    {
-      title: 'Discussões Gerais',
-      description: 'Converse sobre o Habbo e a comunidade em geral',
-      topics: 45,
-      posts: 320,
-      lastPostTime: 'Hoje às 14:20',
-      bgColorClass: 'bg-blue-100'
-    },
-    {
-      title: 'Suporte Técnico',
-      description: 'Precisa de ajuda? Tire suas dúvidas técnicas aqui',
-      topics: 23,
-      posts: 156,
-      lastPostTime: 'Ontem às 16:45',
-      bgColorClass: 'bg-green-100'
-    },
-    {
-      title: 'Eventos e Competições',
-      description: 'Divulgue e participe de eventos da comunidade',
-      topics: 18,
-      posts: 89,
-      lastPostTime: 'Hoje às 10:15',
-      bgColorClass: 'bg-purple-100'
-    }
-  ];
-
   useEffect(() => {
+    loadCategories();
     loadPosts();
   }, [selectedCategory]);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('forum_categories')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Erro ao carregar categorias:', error);
+        return;
+      }
+
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
 
   const loadPosts = async () => {
     try {
@@ -58,7 +65,10 @@ export const Forum = () => {
         .order('created_at', { ascending: false });
 
       if (selectedCategory !== 'Todos') {
-        query = query.eq('category', selectedCategory);
+        const category = categories.find(cat => cat.name === selectedCategory);
+        if (category) {
+          query = query.eq('category_id', category.id);
+        }
       }
 
       const { data, error } = await query;
@@ -81,7 +91,7 @@ export const Forum = () => {
     }
   };
 
-  const handleCreatePost = async (title: string, content: string, image: File | null, category: string) => {
+  const handleCreatePost = async (title: string, content: string, image: File | null, categoryId: string) => {
     if (!isLoggedIn || !habboAccount) {
       toast({
         title: "Erro",
@@ -126,7 +136,7 @@ export const Forum = () => {
           title,
           content,
           image_url: imageUrl,
-          category,
+          category_id: categoryId,
           author_supabase_user_id: user?.id,
           author_habbo_name: habboAccount.habbo_name
         })
@@ -220,26 +230,40 @@ export const Forum = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {categories.map((category, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {categories.map((category) => (
             <ForumCategoryCard
-              key={index}
-              title={category.title}
+              key={category.id}
+              title={category.name}
               description={category.description}
-              topics={category.topics}
-              posts={category.posts}
-              lastPostTime={category.lastPostTime}
-              bgColorClass={category.bgColorClass}
+              topics={category.topics_count}
+              posts={category.posts_count}
+              lastPostTime={new Date(category.last_post_time || '').toLocaleDateString('pt-BR')}
+              bgColorClass={category.bg_color}
             />
           ))}
         </div>
       </div>
 
-      {/* Create Post Form */}
-      <CreatePostForm
-        isLoggedIn={isLoggedIn}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+      {/* Create Post Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={() => setCreatePostModalOpen(true)}
+          disabled={!isLoggedIn}
+          className="bg-green-600 hover:bg-green-700 text-white volter-font flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Criar Post
+        </Button>
+        {!isLoggedIn && (
+          <p className="text-sm text-gray-500 mt-2">Faça login para criar posts</p>
+        )}
+      </div>
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        open={createPostModalOpen}
+        setOpen={setCreatePostModalOpen}
         onCreatePost={handleCreatePost}
         isCreatingPost={isCreatingPost}
         uploadingImage={uploadingImage}
@@ -253,6 +277,7 @@ export const Forum = () => {
         setSelectedCategory={setSelectedCategory}
         onLikePost={handleLikePost}
         currentUserId={user?.id || null}
+        categories={['Todos', ...categories.map(cat => cat.name)]}
       />
     </div>
   );

@@ -1,12 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../integrations/supabase/client';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../hooks/use-toast';
-import { Heart, MessageCircle, Send } from 'lucide-react';
+import React from 'react';
+import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import type { ForumPost, ForumComment } from '../../types/forum';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Heart, MessageSquare, Clock } from 'lucide-react';
+import { ClickableUserName } from '../ClickableUserName';
+import type { ForumPost } from '../../types/forum';
 
 interface PostCardProps {
   post: ForumPost;
@@ -15,166 +14,99 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onLike, currentUserId }) => {
-  const [showComments, setShowComments] = useState<boolean>(false);
-  const [comments, setComments] = useState<ForumComment[]>([]);
-  const [newComment, setNewComment] = useState<string>('');
-  const [loadingComments, setLoadingComments] = useState<boolean>(false);
-  const [isCommenting, setIsCommenting] = useState<boolean>(false);
-  const { toast } = useToast();
-  const { habboAccount } = useAuth();
-
-  const handleAddComment = async (): Promise<void> => {
-    if (!newComment.trim() || !currentUserId || !habboAccount) {
-      toast({
-        title: "Erro",
-        description: "Você precisa estar logado para comentar",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsCommenting(true);
-    const { data, error } = await supabase
-      .from('forum_comments')
-      .insert({
-        post_id: post.id,
-        content: newComment.trim(),
-        author_supabase_user_id: currentUserId,
-        author_habbo_name: habboAccount.habbo_name,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error adding comment:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao adicionar comentário",
-        variant: "destructive"
-      });
-    } else {
-      setComments([...comments, data]);
-      setNewComment('');
-      toast({
-        title: "Sucesso",
-        description: "Comentário adicionado com sucesso!"
-      });
-    }
-    setIsCommenting(false);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  useEffect(() => {
-    if (showComments) {
-      const fetchComments = async (): Promise<void> => {
-        setLoadingComments(true);
-        const { data, error } = await supabase
-          .from('forum_comments')
-          .select('*')
-          .eq('post_id', post.id)
-          .order('created_at', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching comments:', error);
-        } else {
-          setComments(data || []);
-        }
-        setLoadingComments(false);
-      };
-      fetchComments();
-    }
-  }, [showComments, post.id]);
-
   return (
-    <div className="bg-white border border-gray-900 rounded-lg shadow-md overflow-hidden">
-      <div className="p-4 md:p-6 flex flex-col md:flex-row gap-4">
-        {post.image_url && (
-          <div className="flex-shrink-0 w-full md:w-48 h-48 md:h-auto overflow-hidden rounded-lg">
-            <img 
-              src={post.image_url} 
-              alt={post.title} 
-              className="w-full h-full object-cover"
+    <Card className="border-gray-900 bg-white shadow-lg hover:shadow-xl transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex items-start gap-4">
+          <Avatar className="w-12 h-12 border-2 border-gray-300">
+            <AvatarImage 
+              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-61.ch-210-66.lg-280-110.sh-305-62&size=m&direction=2&head_direction=2&gesture=sml`}
+              alt={post.author_habbo_name}
             />
-          </div>
-        )}
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xl font-bold text-gray-800 volter-font">{post.title}</h3>
-            {post.category && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                {post.category}
-              </span>
+            <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
+              {post.author_habbo_name.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <ClickableUserName habboName={post.author_habbo_name} />
+                <div className="flex items-center text-xs text-gray-500">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {formatDate(post.created_at)}
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 mb-2 volter-font">
+              {post.title}
+            </h3>
+
+            <div className="text-gray-700 mb-4 whitespace-pre-wrap">
+              {post.content}
+            </div>
+
+            {post.image_url && (
+              <div className="mb-4">
+                <img 
+                  src={post.image_url} 
+                  alt="Post" 
+                  className="max-w-full h-auto rounded-lg border border-gray-300 max-h-96 object-contain"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onLike(post.id)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
+                  disabled={!currentUserId}
+                >
+                  <Heart className="w-4 h-4" />
+                  <span>{post.likes}</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors"
+                  disabled={!currentUserId}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Comentar</span>
+                </Button>
+              </div>
+
+              {post.category && (
+                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  {post.category}
+                </div>
+              )}
+            </div>
+
+            {!currentUserId && (
+              <div className="mt-2 text-xs text-gray-500 italic">
+                Faça login para curtir e comentar
+              </div>
             )}
           </div>
-          <p className="text-gray-700 text-sm mb-3">{post.content}</p>
-          <div className="text-xs text-gray-500 mb-4">
-            Por <span className="font-semibold">{post.author_habbo_name}</span> em{' '}
-            {new Date(post.created_at).toLocaleDateString('pt-BR')}
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onLike(post.id)}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-800"
-              disabled={!currentUserId}
-            >
-              <Heart className="h-4 w-4" />
-              <span>{post.likes}</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowComments(!showComments)}
-              className="flex items-center space-x-1 text-gray-600 hover:text-gray-800"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>{comments.length}</span>
-            </Button>
-          </div>
         </div>
-      </div>
-
-      {showComments && (
-        <div className="border-t border-gray-200 p-4 md:p-6 bg-gray-50">
-          <h4 className="font-semibold mb-3 volter-font">Comentários</h4>
-          {loadingComments ? (
-            <p className="text-gray-500">Carregando comentários...</p>
-          ) : (
-            <div className="space-y-3 mb-4">
-              {comments.map(comment => (
-                <div key={comment.id} className="bg-white p-3 rounded-lg border border-gray-200">
-                  <p className="text-sm">{comment.content}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Por {comment.author_habbo_name} em{' '}
-                    {new Date(comment.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {currentUserId ? (
-            <div className="flex space-x-2">
-              <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Escreva um comentário..."
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddComment} 
-                size="sm"
-                disabled={isCommenting}
-                className="bg-green-600 hover:bg-green-700 text-white volter-font"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">Faça login para comentar</p>
-          )}
-        </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
