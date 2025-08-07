@@ -87,6 +87,7 @@ export const useEnhancedHabboHome = (username: string) => {
       
       const normalizedUsername = username.trim().toLowerCase();
       
+      // Buscar dados do usuário no banco (com a nova policy pública)
       const { data: userData, error: userError } = await supabase
         .from('habbo_accounts')
         .select('*')
@@ -94,32 +95,62 @@ export const useEnhancedHabboHome = (username: string) => {
         .single();
 
       if (userError || !userData) {
-        console.error('❌ Usuário não encontrado no banco:', userError);
-        setError(`Usuário "${username}" não encontrado`);
-        setHabboData(null);
-        setLoading(false);
-        return;
+        console.warn('⚠️ Usuário não encontrado no banco, tentando API...', userError);
+        
+        // Fallback: tentar API do Habbo
+        try {
+          const habboApiData = await getUserByName(username);
+          if (!habboApiData) {
+            throw new Error(`Usuário "${username}" não encontrado`);
+          }
+          
+          // Usuário existe na API mas não no banco - mostrar mensagem amigável
+          setError(`Usuário "${username}" encontrado no Habbo, mas ainda não possui uma conta no HabboHub. Eles precisam se cadastrar primeiro.`);
+          setHabboData(null);
+          setLoading(false);
+          return;
+        } catch (apiError) {
+          console.error('❌ API do Habbo também falhou:', apiError);
+          setError(`Usuário "${username}" não encontrado`);
+          setHabboData(null);
+          setLoading(false);
+          return;
+        }
       }
 
       console.log('✅ Dados do usuário encontrados no banco:', userData);
 
+      // Garantir que a home existe
       console.log('🏠 Garantindo que a home existe para:', userData.supabase_user_id);
-      const { error: initError } = await supabase
-        .rpc('ensure_user_home_exists', { user_uuid: userData.supabase_user_id });
+      try {
+        const { error: initError } = await supabase
+          .rpc('ensure_user_home_exists', { user_uuid: userData.supabase_user_id });
 
-      if (initError) {
-        console.error('⚠️ Erro ao inicializar home:', initError);
-      } else {
-        console.log('✅ Home inicializada com sucesso');
+        if (initError) {
+          console.error('⚠️ Erro ao inicializar home (continuando):', initError);
+        } else {
+          console.log('✅ Home inicializada com sucesso');
+        }
+      } catch (homeError) {
+        console.warn('⚠️ Falha ao garantir home (ignorado):', homeError);
       }
 
+      // Buscar dados da API do Habbo (com fallback)
       let habboApiData = null;
       try {
         console.log('🌐 Buscando dados da API do Habbo para:', username, 'Hotel:', userData.hotel);
         habboApiData = await getUserByName(username, userData.hotel as any);
-        console.log('📊 Dados da API do Habbo:', habboApiData);
+        console.log('📊 Dados da API do Habbo:', habboApiData ? 'Sucesso' : 'Falhou');
       } catch (apiError) {
-        console.warn('⚠️ Falha na API do Habbo, usando dados básicos:', apiError);
+        console.warn('⚠️ Falha na API do Habbo (usando dados básicos):', apiError);
+        // Mostrar toast informativo para o usuário
+        if (userData.supabase_user_id === habboAccount?.supabase_user_id) {
+          toast({
+            title: "Aviso",
+            description: "Alguns dados do seu perfil podem estar desatualizados devido a problemas na API do Habbo.",
+            variant: "default"
+          });
+        }
       }
 
       const combinedHabboData: HabboData = {
@@ -141,12 +172,13 @@ export const useEnhancedHabboHome = (username: string) => {
       setIsOwner(currentUserIsOwner);
       console.log('👤 É o dono?', currentUserIsOwner);
 
+      // Carregar widgets
       const { data: layoutData, error: layoutError } = await supabase
         .from('user_home_layouts')
         .select('*')
         .eq('user_id', userData.supabase_user_id);
 
-      console.log('📐 Widgets carregados:', layoutData?.length || 0, layoutError);
+      console.log('📐 Widgets carregados:', layoutData?.length || 0, layoutError ? 'com erro' : 'com sucesso');
 
       if (!layoutError && layoutData) {
         const widgetsWithContent = layoutData.map(widget => ({
@@ -156,9 +188,9 @@ export const useEnhancedHabboHome = (username: string) => {
           content: getWidgetContent(widget.widget_id, combinedHabboData)
         }));
         setWidgets(widgetsWithContent);
-        console.log('✅ Widgets processados:', widgetsWithContent.length);
       }
 
+      // Carregar stickers
       const { data: stickerData, error: stickerError } = await supabase
         .from('user_stickers')
         .select('*')
@@ -180,6 +212,7 @@ export const useEnhancedHabboHome = (username: string) => {
         console.log('✅ Stickers carregados:', stickersWithCategory.length);
       }
 
+      // Carregar background
       const { data: bgData, error: bgError } = await supabase
         .from('user_home_backgrounds')
         .select('*')
@@ -193,6 +226,7 @@ export const useEnhancedHabboHome = (username: string) => {
         });
       }
 
+      // Carregar guestbook
       const { data: guestbookData, error: guestbookError } = await supabase
         .from('guestbook_entries')
         .select('*')
@@ -201,7 +235,7 @@ export const useEnhancedHabboHome = (username: string) => {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      console.log('📚 Guestbook carregado:', guestbookData?.length || 0, guestbookError);
+      console.log('📚 Guestbook carregado:', guestbookData?.length || 0, guestbookError ? 'com erro' : 'com sucesso');
 
       if (!guestbookError && guestbookData) {
         setGuestbook(guestbookData);
@@ -211,7 +245,15 @@ export const useEnhancedHabboHome = (username: string) => {
 
     } catch (error) {
       console.error('💥 Erro ao carregar Enhanced Habbo Home:', error);
-      setError(error instanceof Error ? error.message : 'Erro ao carregar Habbo Home');
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao carregar Habbo Home';
+      setError(errorMessage);
+      
+      // Toast apenas para erros críticos
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar a home. Tente recarregar a página.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }

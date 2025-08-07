@@ -42,23 +42,54 @@ export const useUnifiedAuth = () => {
 
   // Helper: garantir Home inicializada
   const ensureUserHome = async (userId: string) => {
-    console.log('🏠 Garantindo Home padrão para usuário:', userId);
-    const { error } = await supabase.rpc('ensure_user_home_exists', { user_uuid: userId });
-    if (error) {
-      console.error('❌ Erro ao garantir Home padrão:', error);
-    } else {
-      console.log('✅ Home padrão verificada/criada com sucesso');
+    try {
+      console.log('🏠 Garantindo Home padrão para usuário:', userId);
+      const { error } = await supabase.rpc('ensure_user_home_exists', { user_uuid: userId });
+      if (error) {
+        console.error('❌ Erro ao garantir Home padrão:', error);
+        // Não propagar erro - home pode ser criada posteriormente
+      } else {
+        console.log('✅ Home padrão verificada/criada com sucesso');
+      }
+    } catch (error) {
+      console.warn('⚠️ Falha ao garantir home (ignorado):', error);
+    }
+  };
+
+  const loadHabboAccount = async (userId: string) => {
+    try {
+      console.log('📋 Carregando conta Habbo para usuário:', userId);
+      const { data, error } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .eq('supabase_user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('❌ Erro ao carregar conta habbo:', error);
+        setHabboAccount(null);
+      } else {
+        console.log('✅ Conta Habbo carregada:', data.habbo_name);
+        setHabboAccount(data);
+      }
+    } catch (error) {
+      console.error('💥 Erro geral ao carregar conta habbo:', error);
+      setHabboAccount(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    // 1) Escutar mudanças de autenticação PRIMEIRO (callback síncrono)
+    console.log('🔧 Inicializando sistema de autenticação...');
+    
+    // 1) Configurar listener de mudanças de auth PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔔 onAuthStateChange:', event);
+      console.log('🔔 Auth state changed:', event, !!session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Adiar chamadas ao Supabase para evitar deadlocks no callback
+        // Usar setTimeout para evitar deadlocks
         setTimeout(() => {
           loadHabboAccount(session.user!.id);
         }, 0);
@@ -68,9 +99,9 @@ export const useUnifiedAuth = () => {
       }
     });
 
-    // 2) Só então verificar sessão atual
+    // 2) DEPOIS verificar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🧭 Sessão atual:', !!session);
+      console.log('🧭 Sessão inicial:', !!session);
       setUser(session?.user ?? null);
       if (session?.user) {
         loadHabboAccount(session.user.id);
@@ -79,30 +110,11 @@ export const useUnifiedAuth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🧹 Limpando subscription de auth');
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const loadHabboAccount = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('habbo_accounts')
-        .select('*')
-        .eq('supabase_user_id', userId)
-        .single();
-
-      if (error) {
-        console.error('Erro ao carregar conta habbo:', error);
-        setHabboAccount(null);
-      } else {
-        setHabboAccount(data);
-      }
-    } catch (error) {
-      console.error('Erro geral ao carregar conta habbo:', error);
-      setHabboAccount(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Verificar se usuário já existe na tabela habbo_accounts (considerando hotel)
   const checkUserExists = async (habboName: string, hotel?: string) => {
@@ -124,7 +136,7 @@ export const useUnifiedAuth = () => {
 
       return data && data.length > 0 ? data[0] : null;
     } catch (error) {
-      console.error('Erro ao verificar usuário:', error);
+      console.error('❌ Erro ao verificar usuário:', error);
       return null;
     }
   };
@@ -243,43 +255,38 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Login com senha (usuários existentes) - busca resiliente por habbo_id
+  // Login com senha (usuários existentes) - versão robusta
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
-      console.log(`🔐 Login com senha para: ${habboName}`);
-
+      console.log(`🔐 Iniciando login para: ${habboName}`);
       const normalizedName = habboName.trim();
 
-      // 1) Tenta obter habbo_id pelo banco (ilike + maybeSingle para evitar PGRST116)
-      const { data: accountData, error: accountError } = await supabase
-        .from('habbo_accounts')
-        .select('habbo_id, habbo_name, hotel, created_at')
-        .ilike('habbo_name', normalizedName)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
       let authEmail: string | null = null;
+      let detectedHotel: string | null = null;
 
-      if (accountError && accountError.code !== 'PGRST116') {
-        console.warn('⚠️ Erro ao buscar conta (ignorado se não encontrado):', accountError);
-      }
-
-      if (accountData?.habbo_id) {
-        authEmail = `${accountData.habbo_id}@habbohub.com`;
-        console.log(`📧 Email construído via DB: ${authEmail} (${accountData.hotel})`);
-      } else {
-        // 2) Fallback: Descobrir uniqueId via API multi-hotel
-        console.log('🔎 Conta não encontrada no DB. Tentando API multi-hotel...');
+      try {
+        // Tentar obter uniqueId via API multi-hotel (mais confiável)
+        console.log('🌐 Buscando dados via API do Habbo...');
         const habboUser = await getUserByName(normalizedName);
-        if (!habboUser?.uniqueId) {
-          throw new Error('Conta não encontrada. Use a aba "Primeiro Acesso" para se cadastrar.');
+        
+        if (habboUser?.uniqueId) {
+          authEmail = `${habboUser.uniqueId}@habbohub.com`;
+          detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
+          console.log(`📧 Email construído via API: ${authEmail} (${detectedHotel})`);
+        } else {
+          throw new Error('Usuário não encontrado na API do Habbo');
         }
-        authEmail = `${habboUser.uniqueId}@habbohub.com`;
-        console.log(`📧 Email construído via API: ${authEmail}`);
+      } catch (apiError) {
+        console.warn('⚠️ API do Habbo indisponível, tentando fallback...', apiError);
+        throw new Error('Não foi possível verificar sua conta Habbo. Tente novamente em alguns instantes.');
       }
 
-      // 3) Fazer login com o email construído
+      if (!authEmail) {
+        throw new Error('Conta não encontrada. Use a aba "Primeiro Acesso" para se cadastrar.');
+      }
+
+      // Fazer login com o email construído
+      console.log('🔑 Tentando login com Supabase Auth...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password: password
@@ -293,34 +300,51 @@ export const useUnifiedAuth = () => {
         throw new Error('Erro no login. Verifique suas credenciais.');
       }
 
-      // 4) Garantir Home padrão após login
+      // Garantir Home padrão após login
       if (data.user?.id) {
         await ensureUserHome(data.user.id);
       }
 
       console.log(`✅ Login realizado com sucesso para ${normalizedName}`);
+      
+      toast({
+        title: "Login realizado!",
+        description: `Bem-vindo de volta, ${normalizedName}!`,
+      });
+      
       return data;
     } catch (error: any) {
       console.error('❌ Erro no login:', error);
+      toast({
+        title: "Erro no Login",
+        description: error.message || "Erro desconhecido no login",
+        variant: "destructive"
+      });
       throw error;
     }
   };
 
   // Logout
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Erro ao sair:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao sair. Tente novamente.",
-        variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Sucesso",
-        description: "Logout realizado com sucesso!"
-      });
+    try {
+      console.log('🚪 Fazendo logout...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Erro ao sair:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao sair. Tente novamente.",
+          variant: "destructive"
+        });
+      } else {
+        console.log('✅ Logout realizado com sucesso');
+        toast({
+          title: "Sucesso",
+          description: "Logout realizado com sucesso!"
+        });
+      }
+    } catch (error) {
+      console.error('💥 Erro geral no logout:', error);
     }
   };
 
