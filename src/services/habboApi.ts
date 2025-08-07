@@ -83,19 +83,25 @@ const setCachedData = (key: string, data: any) => {
   cache.set(key, { data, timestamp: Date.now() });
 };
 
-// Função auxiliar para fazer requisições à API com retry
+// Função auxiliar para fazer requisições à API com retry e timeout
 const fetchWithRetry = async (url: string, retries = 3): Promise<any> => {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`🌐 [API Request] Tentativa ${i + 1}: ${url}`);
       
+      // Implementar timeout usando AbortController
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
+      
       const response = await fetch(url, {
-        timeout: 10000, // 10 segundos de timeout
+        signal: controller.signal,
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'HabboHub/1.0'
         }
       });
+      
+      clearTimeout(timeoutId);
       
       console.log(`📡 [API Response] Status ${response.status} para ${url}`);
       
