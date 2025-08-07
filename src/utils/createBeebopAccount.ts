@@ -1,6 +1,20 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { getUserByName } from '../services/habboApi';
+import { getUserByName } from '../services/habboApiMultiHotel';
+
+// Detectar hotel do habbo_id
+const detectHotelFromHabboId = (habboId: string): string => {
+  if (habboId.startsWith('hhbr-')) return 'br';
+  if (habboId.startsWith('hhcom-')) return 'com';
+  if (habboId.startsWith('hhes-')) return 'es';
+  if (habboId.startsWith('hhfr-')) return 'fr';
+  if (habboId.startsWith('hhde-')) return 'de';
+  if (habboId.startsWith('hhit-')) return 'it';
+  if (habboId.startsWith('hhnl-')) return 'nl';
+  if (habboId.startsWith('hhfi-')) return 'fi';
+  if (habboId.startsWith('hhtr-')) return 'tr';
+  return 'com'; // fallback
+};
 
 // Função para criar a conta Beebop automaticamente
 export const createBeebopAccount = async () => {
@@ -21,14 +35,31 @@ export const createBeebopAccount = async () => {
 
     console.log('🔍 Conta Beebop não encontrada, tentando criar...');
 
-    // Buscar dados do Habbo
-    const habboUser = await getUserByName('Beebop');
+    // Buscar dados do Habbo - tentar múltiplos hotéis
+    let habboUser = null;
+    const hotelsToTry = ['br', 'com', 'es', 'fr', 'de'];
+    
+    for (const hotel of hotelsToTry) {
+      try {
+        habboUser = await getUserByName('Beebop', hotel as any);
+        if (habboUser) {
+          console.log(`📊 Dados do Beebop encontrados no hotel ${hotel}:`, habboUser.name);
+          break;
+        }
+      } catch (error) {
+        console.log(`❌ Beebop não encontrado no hotel ${hotel}`);
+        continue;
+      }
+    }
+
     if (!habboUser) {
-      console.error('❌ Usuário Beebop não encontrado no Habbo API');
+      console.error('❌ Usuário Beebop não encontrado em nenhum hotel');
       return;
     }
 
-    console.log('📊 Dados do Beebop encontrados:', habboUser.name);
+    // Detectar hotel do habbo_id
+    const detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
+    console.log(`🏨 Hotel detectado: ${detectedHotel}`);
 
     // Verificar se já existe conta auth órfã
     const authEmail = `${habboUser.uniqueId}@habbohub.com`;
@@ -38,7 +69,10 @@ export const createBeebopAccount = async () => {
       email: authEmail,
       password: '290684',
       options: {
-        data: { habbo_name: 'Beebop' },
+        data: { 
+          habbo_name: 'Beebop',
+          hotel: detectedHotel
+        },
         emailRedirectTo: `${window.location.origin}/`
       }
     });
@@ -66,6 +100,7 @@ export const createBeebopAccount = async () => {
               habbo_id: habboUser.uniqueId,
               habbo_name: 'Beebop',
               supabase_user_id: loginData.user.id,
+              hotel: detectedHotel,
               is_admin: true
             })
             .select()
@@ -96,6 +131,7 @@ export const createBeebopAccount = async () => {
           habbo_id: habboUser.uniqueId,
           habbo_name: 'Beebop',
           supabase_user_id: authData.user.id,
+          hotel: detectedHotel,
           is_admin: true
         })
         .select()
