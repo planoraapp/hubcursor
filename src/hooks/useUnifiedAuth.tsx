@@ -2,13 +2,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { getUserByName } from '../services/habboApi';
+import { getUserByName } from '../services/habboApiMultiHotel';
 
 interface HabboAccount {
   id: string;
   habbo_id: string;
   habbo_name: string;
   supabase_user_id: string;
+  hotel: string;
   is_admin: boolean;
   created_at: string;
 }
@@ -17,6 +18,20 @@ interface HabboAccount {
 const generateVerificationCode = () => {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
   return `HUB-${code}`;
+};
+
+// Detectar hotel do habbo_id
+const detectHotelFromHabboId = (habboId: string): string => {
+  if (habboId.startsWith('hhbr-')) return 'br';
+  if (habboId.startsWith('hhcom-')) return 'com';
+  if (habboId.startsWith('hhes-')) return 'es';
+  if (habboId.startsWith('hhfr-')) return 'fr';
+  if (habboId.startsWith('hhde-')) return 'de';
+  if (habboId.startsWith('hhit-')) return 'it';
+  if (habboId.startsWith('hhnl-')) return 'nl';
+  if (habboId.startsWith('hhfi-')) return 'fi';
+  if (habboId.startsWith('hhtr-')) return 'tr';
+  return 'com'; // fallback
 };
 
 export const useUnifiedAuth = () => {
@@ -72,27 +87,32 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Verificar se usuário já existe na tabela habbo_accounts
-  const checkUserExists = async (habboName: string) => {
+  // Verificar se usuário já existe na tabela habbo_accounts (considerando hotel)
+  const checkUserExists = async (habboName: string, hotel?: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('habbo_accounts')
-        .select('habbo_id')
-        .ilike('habbo_name', habboName)
-        .maybeSingle();
+        .select('habbo_id, hotel')
+        .ilike('habbo_name', habboName);
+        
+      if (hotel) {
+        query = query.eq('hotel', hotel);
+      }
+
+      const { data, error } = await query;
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
-      return !!data;
+      return data && data.length > 0 ? data[0] : null;
     } catch (error) {
       console.error('Erro ao verificar usuário:', error);
-      return false;
+      return null;
     }
   };
 
-  // Verificar motto do Habbo
+  // Verificar motto do Habbo com detecção automática de hotel
   const verifyHabboMotto = async (habboName: string, verificationCode: string) => {
     try {
       console.log(`🔍 Verificando motto para ${habboName} com código: ${verificationCode}`);
@@ -105,6 +125,7 @@ export const useUnifiedAuth = () => {
 
       const originalMotto = habboUser.motto;
       console.log(`📝 Motto encontrada: "${originalMotto}"`);
+      console.log(`🏨 Hotel detectado: ${detectHotelFromHabboId(habboUser.uniqueId)}`);
       
       const normalizedMotto = originalMotto.trim().toLowerCase();
       const normalizedCode = verificationCode.trim().toLowerCase();
@@ -121,45 +142,40 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Primeiro cadastro (via motto)
+  // Primeiro cadastro (via motto) com detecção automática de hotel
   const registerWithMotto = async (habboName: string, verificationCode: string, password: string) => {
     try {
       console.log(`📝 Registrando novo usuário: ${habboName}`);
       
-      // Primeiro verificar se já existe na tabela habbo_accounts
-      const userExists = await checkUserExists(habboName);
-      if (userExists) {
-        throw new Error('Este nome Habbo já está cadastrado. Use a aba "Login" para acessar sua conta.');
-      }
-
-      // Verificar motto
+      // Verificar motto e obter dados do usuário
       const habboUser = await verifyHabboMotto(habboName, verificationCode);
       
       if (!habboUser) {
         throw new Error('Verificação da motto falhou');
       }
 
+      // Detectar hotel automaticamente
+      const detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
+      console.log(`🏨 Hotel detectado automaticamente: ${detectedHotel}`);
+      
+      // Verificar se já existe uma conta para este usuário neste hotel específico
+      const existingUser = await checkUserExists(habboName, detectedHotel);
+      if (existingUser) {
+        throw new Error(`Este nome Habbo já está cadastrado no hotel ${detectedHotel.toUpperCase()}. Use a aba "Login" para acessar sua conta.`);
+      }
+
       // Verificar se já existe uma conta auth com este email (limpeza adicional)
       const authEmail = `${habboUser.uniqueId}@habbohub.com`;
-      
-      // Tentar fazer login primeiro para ver se a conta auth já existe
-      const { data: existingAuth } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: 'test-password-that-wont-work'
-      });
-
-      // Se chegou aqui sem erro, a conta auth existe mas sem habbo_account vinculado
-      if (existingAuth?.user) {
-        await supabase.auth.signOut();
-        throw new Error('Conta detectada mas incompleta. Contate o suporte.');
-      }
 
       // Criar usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: authEmail,
         password: password,
         options: {
-          data: { habbo_name: habboName },
+          data: { 
+            habbo_name: habboName,
+            hotel: detectedHotel
+          },
           emailRedirectTo: `${window.location.origin}/`
         }
       });
@@ -176,13 +192,14 @@ export const useUnifiedAuth = () => {
         // Determinar se é admin (beebop ou habbohub)
         const isAdmin = ['beebop', 'habbohub'].includes(habboName.toLowerCase());
 
-        // Criar registro na tabela habbo_accounts
+        // Criar registro na tabela habbo_accounts com hotel detectado
         const { data: accountData, error: accountError } = await supabase
           .from('habbo_accounts')
           .insert({
             habbo_id: habboUser.uniqueId,
             habbo_name: habboName,
             supabase_user_id: authData.user.id,
+            hotel: detectedHotel,
             is_admin: isAdmin
           })
           .select()
@@ -206,16 +223,16 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Login com senha (usuários existentes)
+  // Login com senha (usuários existentes) - busca case insensitive
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
       console.log(`🔐 Login com senha para: ${habboName}`);
       
-      // Buscar a conta habbo para obter o habbo_id
+      // Buscar a conta habbo para obter o habbo_id (case insensitive)
       const { data: accountData, error: accountError } = await supabase
         .from('habbo_accounts')
-        .select('habbo_id, habbo_name')
-        .ilike('habbo_name', habboName)
+        .select('habbo_id, habbo_name, hotel')
+        .ilike('habbo_name', habboName.trim())
         .single();
 
       if (accountError || !accountData) {
@@ -240,7 +257,7 @@ export const useUnifiedAuth = () => {
         throw new Error('Erro no login. Verifique suas credenciais.');
       }
 
-      console.log('✅ Login realizado com sucesso');
+      console.log(`✅ Login realizado com sucesso para ${accountData.habbo_name} (${accountData.hotel})`);
       return data;
     } catch (error: any) {
       console.error('❌ Erro no login:', error);

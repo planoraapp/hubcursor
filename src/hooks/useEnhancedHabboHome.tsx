@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { getUserByName } from '../services/habboApi';
+import { getUserByName } from '../services/habboApiMultiHotel';
 
 interface Widget {
   id: string;
@@ -47,6 +46,7 @@ interface HabboData {
   id: string;
   habbo_name: string;
   habbo_id: string;
+  hotel: string;
   name: string;
   figureString?: string;
   motto?: string;
@@ -85,16 +85,19 @@ export const useEnhancedHabboHome = (username: string) => {
       
       console.log('🔍 Carregando Habbo Home para usuário:', username);
       
-      // Buscar dados do usuário no banco local primeiro
+      // Normalizar o nome de usuário (case insensitive)
+      const normalizedUsername = username.trim().toLowerCase();
+      
+      // Buscar dados do usuário no banco local primeiro (case insensitive)
       const { data: userData, error: userError } = await supabase
         .from('habbo_accounts')
         .select('*')
-        .ilike('habbo_name', username.trim())
+        .ilike('habbo_name', normalizedUsername)
         .single();
 
       if (userError || !userData) {
         console.error('❌ Usuário não encontrado no banco:', userError);
-        setError('Usuário não encontrado');
+        setError(`Usuário "${username}" não encontrado`);
         setHabboData(null);
         setLoading(false);
         return;
@@ -113,11 +116,11 @@ export const useEnhancedHabboHome = (username: string) => {
         console.log('✅ Home inicializada com sucesso');
       }
 
-      // Buscar dados da API oficial do Habbo com tratamento melhorado
+      // Buscar dados da API oficial do Habbo com hotel específico
       let habboApiData = null;
       try {
-        console.log('🌐 Buscando dados da API do Habbo para:', username);
-        habboApiData = await getUserByName(username);
+        console.log('🌐 Buscando dados da API do Habbo para:', username, 'Hotel:', userData.hotel);
+        habboApiData = await getUserByName(username, userData.hotel as any);
         console.log('📊 Dados da API do Habbo:', habboApiData);
       } catch (apiError) {
         console.warn('⚠️ Falha na API do Habbo, usando dados básicos:', apiError);
@@ -126,9 +129,10 @@ export const useEnhancedHabboHome = (username: string) => {
 
       // Combinar dados da API com dados locais
       const combinedHabboData: HabboData = {
-        id: userData.supabase_user_id, // Usar supabase_user_id como ID principal
+        id: userData.supabase_user_id,
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
+        hotel: userData.hotel,
         name: userData.habbo_name,
         figureString: habboApiData?.figureString || '',
         motto: habboApiData?.motto || 'Bem-vindo ao meu perfil!',
@@ -140,11 +144,13 @@ export const useEnhancedHabboHome = (username: string) => {
       setHabboData(combinedHabboData);
 
       // Verificar se o usuário atual é o dono da home (case insensitive)
-      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === normalizedUsername && habboAccount?.hotel === userData.hotel;
       setIsOwner(currentUserIsOwner);
       console.log('👤 É o dono?', currentUserIsOwner, {
         currentUser: habboAccount?.habbo_name,
-        homeOwner: username
+        currentHotel: habboAccount?.hotel,
+        homeOwner: userData.habbo_name,
+        homeHotel: userData.hotel
       });
 
       // Carregar widgets usando supabase_user_id
@@ -240,7 +246,7 @@ export const useEnhancedHabboHome = (username: string) => {
   const getWidgetContent = (widgetId: string, habboData: HabboData): string => {
     switch (widgetId) {
       case 'avatar':
-        return `Olá! Sou ${habboData.name}`;
+        return `Olá! Sou ${habboData.name} do hotel ${habboData.hotel.toUpperCase()}`;
       case 'guestbook':
         return 'Deixe uma mensagem!';
       case 'rating':

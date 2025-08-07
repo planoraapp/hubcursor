@@ -170,6 +170,7 @@ export type Database = {
           created_at: string
           habbo_id: string
           habbo_name: string
+          hotel: string
           id: string
           is_admin: boolean
           supabase_user_id: string
@@ -178,6 +179,7 @@ export type Database = {
           created_at?: string
           habbo_id: string
           habbo_name: string
+          hotel: string
           id?: string
           is_admin?: boolean
           supabase_user_id: string
@@ -186,6 +188,7 @@ export type Database = {
           created_at?: string
           habbo_id?: string
           habbo_name?: string
+          hotel?: string
           id?: string
           is_admin?: boolean
           supabase_user_id?: string
@@ -659,6 +662,10 @@ export type Database = {
       ensure_user_home_exists: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      extract_hotel_from_habbo_id: {
+        Args: { habbo_id_param: string }
+        Returns: string
       }
       initialize_user_home: {
         Args: { user_uuid: string }

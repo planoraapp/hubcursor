@@ -2,10 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Calendar, Star } from 'lucide-react';
+import { User, Calendar, Star, Globe } from 'lucide-react';
 
 interface HabboData {
   name: string;
+  hotel?: string;
   figureString?: string;
   motto?: string;
   online?: boolean;
@@ -16,6 +17,18 @@ interface HabboData {
 interface AvatarWidgetProps {
   habboData: HabboData;
 }
+
+const hotelNames: Record<string, string> = {
+  'br': 'Brasil',
+  'com': 'Global',
+  'es': 'España', 
+  'fr': 'France',
+  'de': 'Deutschland',
+  'it': 'Italia',
+  'nl': 'Nederland',
+  'fi': 'Suomi',
+  'tr': 'Türkiye'
+};
 
 export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
   const getAvatarUrl = (figureString: string) => {
@@ -52,10 +65,16 @@ export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
           </div>
 
           {/* Status */}
-          <div className="text-center">
+          <div className="flex items-center gap-2">
             <Badge variant={habboData.online ? "default" : "secondary"}>
               {habboData.online ? "Online" : "Offline"}
             </Badge>
+            {habboData.hotel && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Globe className="w-3 h-3" />
+                {hotelNames[habboData.hotel] || habboData.hotel.toUpperCase()}
+              </Badge>
+            )}
           </div>
 
           {/* Motto */}

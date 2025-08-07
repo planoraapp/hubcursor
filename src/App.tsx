@@ -1,75 +1,61 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './hooks/useAuth';
-import { useEffect } from 'react';
-import { createBeebopAccount } from './utils/createBeebopAccount';
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
-import Emblemas from "./pages/Emblemas";
-import Noticias from "./pages/Noticias";
-import EventosPage from "./pages/Eventos";
-import Forum from "./pages/Forum";
-import Ferramentas from "./pages/Ferramentas";
-import Catalogo from "./pages/Catalogo";
-import Mercado from "./pages/Mercado";
-import Editor from "./pages/Editor";
-import HabboHome from "./pages/HabboHome";
-import HomesHub from "./pages/HomesHub";
-import Console from "./pages/Console";
-import NotFound from "./pages/NotFound";
-import AdminHub from "./pages/AdminHub";
+import { HotelProvider } from './contexts/HotelContext';
+import { MarketplaceProvider } from './contexts/MarketplaceContext';
+
+// Pages
+import Index from './pages/Index';
+import Login from './pages/Login';
+import HabboHome from './pages/HabboHome';
+import HomesHub from './pages/HomesHub';
+import Mercado from './pages/Mercado';
+import Emblemas from './pages/Emblemas';
+import Editor from './pages/Editor';
+import Catalogo from './pages/Catalogo';
+import Eventos from './pages/Eventos';
+import Ferramentas from './pages/Ferramentas';
+import Console from './pages/Console';
+import Noticias from './pages/Noticias';
+import Forum from './pages/Forum';
+import NotFound from './pages/NotFound';
+
+import './App.css';
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  // Criar conta Beebop automaticamente na inicialização
-  useEffect(() => {
-    const initBeebop = async () => {
-      try {
-        await createBeebopAccount();
-      } catch (error) {
-        console.log('Erro ao inicializar conta Beebop:', error);
-      }
-    };
-
-    initBeebop();
-  }, []);
-
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/profile/:habboName" element={<Profile />} />
-              <Route path="/emblemas" element={<Emblemas />} />
-              <Route path="/noticias" element={<Noticias />} />
-              <Route path="/eventos" element={<EventosPage />} />
-              <Route path="/forum" element={<Forum />} />
-              <Route path="/ferramentas" element={<Ferramentas />} />
-              <Route path="/catalogo" element={<Catalogo />} />
-              <Route path="/marketplace" element={<Mercado />} />
-              <Route path="/editor" element={<Editor />} />
-              <Route path="/home/:habboName" element={<HabboHome />} />
-              <Route path="/homes" element={<HomesHub />} />
-              <Route path="/console/:habboName" element={<Console />} />
-              <Route path="/admin" element={<AdminHub />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
+      <AuthProvider>
+        <HotelProvider>
+          <MarketplaceProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/home/:username" element={<HabboHome />} />
+                <Route path="/homes" element={<HomesHub />} />
+                <Route path="/mercado" element={<Mercado />} />
+                <Route path="/emblemas" element={<Emblemas />} />
+                <Route path="/editor" element={<Editor />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/eventos" element={<Eventos />} />
+                <Route path="/ferramentas" element={<Ferramentas />} />
+                <Route path="/console" element={<Console />} />
+                <Route path="/noticias" element={<Noticias />} />
+                <Route path="/forum" element={<Forum />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Router>
+          </MarketplaceProvider>
+        </HotelProvider>
+      </AuthProvider>
+      <Toaster />
     </QueryClientProvider>
   );
-};
+}
 
 export default App;

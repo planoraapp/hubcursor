@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Share2, MapPin, Users, Calendar, Star, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { HomeHeader } from '../components/HabboHome/HomeHeader';
 import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
 import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
@@ -20,11 +20,14 @@ import MobileLayout from '../layouts/MobileLayout';
 const HabboHome = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { user, habboAccount, loading, logout } = useAuth();
+  const { user, habboAccount, loading } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('homes');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Normalizar o username para garantir case insensitive
+  const normalizedUsername = username?.trim() || '';
 
   const {
     habboData,
@@ -40,7 +43,7 @@ const HabboHome = () => {
     setIsEditMode,
     isOwner,
     addGuestbookEntry
-  } = useEnhancedHabboHome(username || '');
+  } = useEnhancedHabboHome(normalizedUsername);
 
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
@@ -58,11 +61,11 @@ const HabboHome = () => {
       console.error('Erro na Habbo Home:', error);
       toast({
         title: "Erro",
-        description: `Erro ao carregar a Habbo Home de ${username}: ${error}`,
+        description: error,
         variant: "destructive"
       });
     }
-  }, [error, username, toast]);
+  }, [error, toast]);
 
   if (isLoading) {
     return (
@@ -70,8 +73,16 @@ const HabboHome = () => {
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg volter-font text-white">Carregando a Habbo Home de {username}...</div>
-          <div className="text-sm text-white/80 mt-2">Buscando dados do usuário e inicializando home...</div>
+          <div className="text-lg volter-font text-white" style={{
+            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+          }}>
+            Carregando a Habbo Home de {normalizedUsername}...
+          </div>
+          <div className="text-sm text-white/80 mt-2" style={{
+            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+          }}>
+            Buscando dados do usuário e inicializando home...
+          </div>
         </div>
       </div>
     );
@@ -86,7 +97,7 @@ const HabboHome = () => {
             <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl volter-font mb-2">Habbo Home não encontrada</h2>
             <p className="text-gray-600 mb-4">
-              O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
+              O usuário "{normalizedUsername}" não foi encontrado ou não possui uma Habbo Home.
             </p>
             <div className="space-y-2">
               <Button onClick={() => navigate('/')} className="w-full volter-font">
@@ -113,7 +124,8 @@ const HabboHome = () => {
     motto: habboData.motto || '',
     online: habboData.online || false,
     memberSince: habboData.memberSince || '',
-    selectedBadges: habboData.selectedBadges || []
+    selectedBadges: habboData.selectedBadges || [],
+    hotel: habboData.hotel
   };
 
   const renderDesktop = () => (
@@ -123,6 +135,17 @@ const HabboHome = () => {
         <main className={`flex-1 p-4 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <div className="flex flex-col min-h-full">
             <HomeHeader username={habboData.name} />
+
+            <div className="mb-4">
+              {isOwner && (
+                <Badge className="bg-green-500 text-white volter-font">
+                  Sua Home
+                </Badge>
+              )}
+              <Badge className="ml-2 bg-blue-500 text-white volter-font">
+                Hotel {habboData.hotel.toUpperCase()}
+              </Badge>
+            </div>
 
             <EnhancedHomeToolbar
               isEditMode={isEditMode}
@@ -166,7 +189,9 @@ const HabboHome = () => {
                   <div className="col-span-3 row-span-3 flex items-center justify-center">
                     <Card className="bg-white/80 backdrop-blur-sm shadow-md p-8 text-center">
                       <CardContent>
-                        <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <div className="w-12 h-12 bg-gray-400 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl">
+                          🏠
+                        </div>
                         <h3 className="text-lg volter-font mb-2">Home Vazia</h3>
                         <p className="text-gray-600 mb-4">Esta home ainda não foi personalizada.</p>
                         {isOwner && (
@@ -190,6 +215,17 @@ const HabboHome = () => {
     <MobileLayout>
       <div className="flex flex-col min-h-screen p-4">
         <HomeHeader username={habboData.name} />
+        
+        <div className="mb-4">
+          {isOwner && (
+            <Badge className="bg-green-500 text-white volter-font mr-2">
+              Sua Home
+            </Badge>
+          )}
+          <Badge className="bg-blue-500 text-white volter-font">
+            Hotel {habboData.hotel.toUpperCase()}
+          </Badge>
+        </div>
         
         <EnhancedHomeToolbar
           isEditMode={isEditMode}
@@ -222,7 +258,9 @@ const HabboHome = () => {
           {widgets.length === 0 && (
             <Card className="bg-white/80 backdrop-blur-sm shadow-md p-6 text-center">
               <CardContent>
-                <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <div className="w-8 h-8 bg-gray-400 rounded mx-auto mb-2 flex items-center justify-center text-lg">
+                  🏠
+                </div>
                 <p className="text-sm text-gray-600">Esta home ainda não foi personalizada.</p>
               </CardContent>
             </Card>

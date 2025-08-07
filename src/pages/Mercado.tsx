@@ -4,6 +4,7 @@ import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
 import { MarketplaceReal } from '../components/MarketplaceReal';
 import { MarketplaceCharts } from '../components/MarketplaceCharts';
+import { HotelSelector } from '../components/HotelSelector';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +33,11 @@ const Mercado = () => {
             title="Mercado Habbo"
             icon="/assets/Diamante.png"
           />
+          
+          <div className="flex justify-center mb-6">
+            <HotelSelector />
+          </div>
+          
           <Tabs defaultValue="marketplace" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6" style={{ backgroundColor: '#ffefd5' }}>
               <TabsTrigger value="marketplace" className="volter-font text-white" style={{
@@ -62,6 +68,10 @@ const Mercado = () => {
             title="Mercado Habbo"
             icon="/assets/Diamante.png"
           />
+          
+          <div className="flex justify-center mb-6">
+            <HotelSelector />
+          </div>
           
           <Tabs defaultValue="marketplace" className="w-full">
             <div className="flex justify-center mb-6">
