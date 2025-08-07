@@ -40,24 +40,41 @@ export const useUnifiedAuth = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  // Helper: garantir Home inicializada
+  const ensureUserHome = async (userId: string) => {
+    console.log('🏠 Garantindo Home padrão para usuário:', userId);
+    const { error } = await supabase.rpc('ensure_user_home_exists', { user_uuid: userId });
+    if (error) {
+      console.error('❌ Erro ao garantir Home padrão:', error);
+    } else {
+      console.log('✅ Home padrão verificada/criada com sucesso');
+    }
+  };
+
   useEffect(() => {
-    // Verificar sessão atual
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // 1) Escutar mudanças de autenticação PRIMEIRO (callback síncrono)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔔 onAuthStateChange:', event);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        loadHabboAccount(session.user.id);
+        // Adiar chamadas ao Supabase para evitar deadlocks no callback
+        setTimeout(() => {
+          loadHabboAccount(session.user!.id);
+        }, 0);
       } else {
+        setHabboAccount(null);
         setLoading(false);
       }
     });
 
-    // Escutar mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // 2) Só então verificar sessão atual
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🧭 Sessão atual:', !!session);
       setUser(session?.user ?? null);
       if (session?.user) {
         loadHabboAccount(session.user.id);
       } else {
-        setHabboAccount(null);
         setLoading(false);
       }
     });
@@ -212,6 +229,9 @@ export const useUnifiedAuth = () => {
           throw accountError;
         }
 
+        // Garantir Home padrão após cadastro
+        await ensureUserHome(authData.user.id);
+
         console.log('✅ Usuário registrado com sucesso:', accountData);
         return authData;
       }
@@ -223,27 +243,43 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Login com senha (usuários existentes) - busca case insensitive
+  // Login com senha (usuários existentes) - busca resiliente por habbo_id
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
       console.log(`🔐 Login com senha para: ${habboName}`);
-      
-      // Buscar a conta habbo para obter o habbo_id (case insensitive)
+
+      const normalizedName = habboName.trim();
+
+      // 1) Tenta obter habbo_id pelo banco (ilike + maybeSingle para evitar PGRST116)
       const { data: accountData, error: accountError } = await supabase
         .from('habbo_accounts')
-        .select('habbo_id, habbo_name, hotel')
-        .ilike('habbo_name', habboName.trim())
-        .single();
+        .select('habbo_id, habbo_name, hotel, created_at')
+        .ilike('habbo_name', normalizedName)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (accountError || !accountData) {
-        if (accountError?.code === 'PGRST116') {
-          throw new Error('Conta não encontrada. Use a aba "Primeiro Acesso" para se cadastrar.');
-        }
-        throw new Error('Erro ao buscar conta. Tente novamente.');
+      let authEmail: string | null = null;
+
+      if (accountError && accountError.code !== 'PGRST116') {
+        console.warn('⚠️ Erro ao buscar conta (ignorado se não encontrado):', accountError);
       }
 
-      // Fazer login com o email construído
-      const authEmail = `${accountData.habbo_id}@habbohub.com`;
+      if (accountData?.habbo_id) {
+        authEmail = `${accountData.habbo_id}@habbohub.com`;
+        console.log(`📧 Email construído via DB: ${authEmail} (${accountData.hotel})`);
+      } else {
+        // 2) Fallback: Descobrir uniqueId via API multi-hotel
+        console.log('🔎 Conta não encontrada no DB. Tentando API multi-hotel...');
+        const habboUser = await getUserByName(normalizedName);
+        if (!habboUser?.uniqueId) {
+          throw new Error('Conta não encontrada. Use a aba "Primeiro Acesso" para se cadastrar.');
+        }
+        authEmail = `${habboUser.uniqueId}@habbohub.com`;
+        console.log(`📧 Email construído via API: ${authEmail}`);
+      }
+
+      // 3) Fazer login com o email construído
       const { data, error } = await supabase.auth.signInWithPassword({
         email: authEmail,
         password: password
@@ -257,7 +293,12 @@ export const useUnifiedAuth = () => {
         throw new Error('Erro no login. Verifique suas credenciais.');
       }
 
-      console.log(`✅ Login realizado com sucesso para ${accountData.habbo_name} (${accountData.hotel})`);
+      // 4) Garantir Home padrão após login
+      if (data.user?.id) {
+        await ensureUserHome(data.user.id);
+      }
+
+      console.log(`✅ Login realizado com sucesso para ${normalizedName}`);
       return data;
     } catch (error: any) {
       console.error('❌ Erro no login:', error);
