@@ -58,7 +58,7 @@ export const useHomeAssets = () => {
         return;
       }
 
-      // Group assets by category
+      // Group assets by category with proper type casting
       const groupedAssets: GroupedAssets = {
         'Stickers': [],
         'Mockups': [],
@@ -69,8 +69,10 @@ export const useHomeAssets = () => {
       };
 
       data?.forEach((asset) => {
-        if (asset.category in groupedAssets) {
-          groupedAssets[asset.category as keyof GroupedAssets].push(asset);
+        // Type cast the category to ensure it matches our union type
+        const category = asset.category as HomeAsset['category'];
+        if (category in groupedAssets) {
+          groupedAssets[category].push(asset as HomeAsset);
         }
       });
 
