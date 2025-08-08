@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -68,13 +69,14 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
         <div className="lg:col-span-1 space-y-4">
           <Card className="p-6 text-center bg-gradient-to-br from-blue-50 to-purple-50">
             <div className="relative">
-              <HabboRenderer 
-                figure={figureString}
-                zoom={100}
-                hotel={selectedHotel}
-                gender={selectedGender}
-                className="mx-auto mb-4"
-              />
+              <div className="mx-auto mb-4">
+                <HabboRenderer 
+                  figure={figureString}
+                  zoom={100}
+                  hotel={selectedHotel}
+                  gender={selectedGender}
+                />
+              </div>
               
               <div className="absolute top-2 right-2">
                 <Badge variant="secondary" className="text-xs">
@@ -194,3 +196,4 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
 };
 
 export default ViaJovemEditorRedesigned;
+
