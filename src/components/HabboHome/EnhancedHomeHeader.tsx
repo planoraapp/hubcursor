@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,7 +49,11 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
               <Button
                 onClick={onEditModeToggle}
                 variant={isEditMode ? "secondary" : "outline"}
-                className={`volter-font habbo-outline-sm ${isEditMode ? 'bg-yellow-400 text-black' : 'bg-white text-blue-600 hover:bg-gray-100'}`}
+                className={`volter-font ${
+                  isEditMode 
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white habbo-outline-sm border-2 border-black' 
+                    : 'bg-white text-blue-600 hover:bg-gray-100 border-2 border-black'
+                }`}
               >
                 <Edit3 className="w-4 h-4 mr-1" />
                 {isEditMode ? 'Sair da Edição' : 'Editar'}
@@ -64,7 +69,7 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
             <Button
               onClick={onOpenStickers}
               variant="outline"
-              className="volter-font bg-white hover:bg-blue-50 border-2 border-blue-300"
+              className="volter-font bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white habbo-outline-sm border-2 border-black"
             >
               <Sticker className="w-4 h-4 mr-1" />
               Stickers
@@ -73,7 +78,7 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
             <Button
               onClick={onOpenBackgrounds}
               variant="outline"
-              className="volter-font bg-white hover:bg-green-50 border-2 border-green-300"
+              className="volter-font bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white habbo-outline-sm border-2 border-black"
             >
               <Palette className="w-4 h-4 mr-1" />
               Fundos
@@ -82,7 +87,7 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
             <Button
               onClick={onOpenWidgets}
               variant="outline"
-              className="volter-font bg-white hover:bg-purple-50 border-2 border-purple-300"
+              className="volter-font bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white habbo-outline-sm border-2 border-black"
             >
               <Settings className="w-4 h-4 mr-1" />
               Widgets

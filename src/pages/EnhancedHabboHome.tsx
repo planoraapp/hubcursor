@@ -28,6 +28,7 @@ const EnhancedHabboHome = () => {
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('homes');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [calculatedHeight, setCalculatedHeight] = useState(1200);
 
   // Modal states
   const [showBackgrounds, setShowBackgrounds] = useState(false);
@@ -134,13 +135,14 @@ const EnhancedHabboHome = () => {
     }
   }, [isOwner, setStickers, toast]);
 
-  // Calculate background style
+  // Calculate background style with improved positioning
   const backgroundStyle = {
     backgroundColor: background.background_type === 'color' ? background.background_value : '#c7d2dc',
     backgroundImage: background.background_type !== 'color' ? `url(${background.background_value})` : undefined,
     backgroundSize: background.background_type === 'repeat' ? 'auto' : 'cover',
     backgroundRepeat: background.background_type === 'repeat' ? 'repeat' : 'no-repeat',
-    backgroundPosition: 'center'
+    backgroundPosition: background.background_type === 'cover' ? 'top center' : 'center',
+    height: `var(--homeMaxHeight, ${calculatedHeight}px)`
   };
 
   if (isLoading) {
@@ -214,10 +216,10 @@ const EnhancedHabboHome = () => {
               isEditMode={isEditMode}
             />
 
-            {/* Home Container with Dynamic Background */}
+            {/* Home Container with Dynamic Background and Fixed Height */}
             <div className="relative">
               <div 
-                className="min-h-[800px] border-4 border-black rounded-lg relative overflow-hidden"
+                className="border-4 border-black rounded-lg relative overflow-hidden"
                 style={backgroundStyle}
               >
                 {/* Edit Mode Help Bar */}
@@ -286,7 +288,7 @@ const EnhancedHabboHome = () => {
                 </div>
 
                 {/* Dynamic Widgets Area */}
-                <div className="absolute left-96 top-4 right-4 bottom-4">
+                <div className="absolute left-96 top-4 right-4 bottom-4 overflow-hidden">
                   {widgets.map(widget => (
                     <OptimizedDraggableWidget
                       key={widget.id}

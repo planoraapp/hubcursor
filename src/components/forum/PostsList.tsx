@@ -1,72 +1,88 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { PostCard } from './PostCard';
-import type { ForumPost } from '../../types/forum';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
-interface PostsListProps {
-  posts: ForumPost[];
-  loading: boolean;
-  selectedCategory: string;
-  setSelectedCategory: (category: string) => void;
-  onLikePost: (postId: string) => Promise<void>;
-  currentUserId: string | null;
-  categories: string[];
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  author_name: string;
+  category: string;
+  created_at: string;
+  likes_count?: number;
 }
 
-export const PostsList: React.FC<PostsListProps> = ({
-  posts,
-  loading,
-  selectedCategory,
-  setSelectedCategory,
-  onLikePost,
-  currentUserId,
-  categories
-}) => {
+interface PostsListProps {
+  posts: Post[];
+}
+
+export const PostsList: React.FC<PostsListProps> = ({ posts }) => {
   return (
-    <Card className="bg-white border-gray-900">
-      <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <CardTitle className="volter-font">Tópicos Recentes</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1 rounded text-sm volter-font transition-colors ${
-                  selectedCategory === category 
-                    ? 'bg-white text-purple-600' 
-                    : 'bg-purple-600 text-white hover:bg-purple-700'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        {loading ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Carregando posts...</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Nenhum post encontrado. Seja o primeiro a criar um!</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {posts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onLike={onLikePost}
-                currentUserId={currentUserId}
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {posts.length === 0 ? (
+        <Card className="border-2 border-black">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">📭</div>
+            <h3 className="text-xl volter-font mb-2">Nenhum post encontrado</h3>
+            <p className="text-gray-600 volter-font">
+              Seja o primeiro a compartilhar algo interessante!
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        posts.map((post) => (
+          <Card key={post.id} className="forum-post hover:shadow-lg transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white volter-font habbo-outline-sm px-3 py-1">
+                      {post.category}
+                    </Badge>
+                    <span className="text-sm text-gray-500 volter-font">
+                      {formatDate(post.created_at)}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-lg volter-font font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer">
+                    {post.title}
+                  </h3>
+                  
+                  <p className="text-gray-700 volter-font text-sm mb-3">
+                    {post.content.length > 200 
+                      ? `${post.content.substring(0, 200)}...` 
+                      : post.content
+                    }
+                  </p>
+                  
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <span className="volter-font">Por: {post.author_name}</span>
+                    <span className="volter-font">👍 {post.likes_count || 0}</span>
+                    <span className="volter-font">💬 0 respostas</span>
+                  </div>
+                </div>
+                
+                <div className="ml-4 text-right">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-bold text-sm">
+                      {post.author_name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
   );
 };
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}

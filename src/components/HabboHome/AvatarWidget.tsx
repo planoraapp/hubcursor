@@ -2,111 +2,101 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { User, Calendar, Globe } from 'lucide-react';
+import { Clock, MapPin } from 'lucide-react';
 
 interface HabboData {
   name: string;
-  hotel?: string;
   figureString?: string;
   motto?: string;
   online?: boolean;
   memberSince?: string;
   selectedBadges?: any[];
+  hotel: string;
 }
 
 interface AvatarWidgetProps {
   habboData: HabboData;
 }
 
-const hotelNames: Record<string, string> = {
-  'br': 'Brasil',
-  'com': 'Global',
-  'es': 'España', 
-  'fr': 'France',
-  'de': 'Deutschland',
-  'it': 'Italia',
-  'nl': 'Nederland',
-  'fi': 'Suomi',
-  'tr': 'Türkiye'
-};
-
 export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
-  const getAvatarUrl = (figureString: string) => {
-    if (!figureString) {
-      return `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboData.name}&direction=4&head_direction=4&gesture=sml&size=m&action=std`;
-    }
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=m&direction=4&head_direction=4&gesture=sml&action=std`;
-  };
+  const avatarUrl = habboData.figureString 
+    ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&size=l&direction=2&head_direction=3&action=std&gesture=std`
+    : '/avatars/default-avatar.png';
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black max-w-xs">
-      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3">
-        <CardTitle className="volter-font text-center flex items-center justify-center gap-2 text-lg">
-          <User className="w-4 h-4" />
-          {habboData.name}
+    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
+      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-b-2 border-black">
+        <CardTitle className="text-lg volter-font habbo-outline-lg flex items-center gap-2">
+          👤 Perfil do Habbo
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="flex flex-col items-center space-y-3">
+        <div className="flex flex-col items-center space-y-4">
           {/* Avatar */}
-          <div className="relative">
+          <div className="w-24 h-32 bg-gray-200 rounded-lg overflow-hidden">
             <img 
-              src={getAvatarUrl(habboData.figureString || '')}
+              src={avatarUrl} 
               alt={`Avatar de ${habboData.name}`}
-              className="w-20 h-20 object-contain"
-              onError={(e) => {
-                e.currentTarget.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboData.name}&direction=4&head_direction=4&gesture=sml&size=m&action=std`;
-              }}
+              className="w-full h-full object-cover"
+              style={{ imageRendering: 'pixelated' }}
             />
-            {habboData.online && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-            )}
           </div>
-
-          {/* Status */}
-          <div className="flex items-center gap-2">
-            <Badge variant={habboData.online ? "default" : "secondary"} className="text-xs">
-              {habboData.online ? "Online" : "Offline"}
-            </Badge>
-            {habboData.hotel && (
-              <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                <Globe className="w-3 h-3" />
-                {hotelNames[habboData.hotel] || habboData.hotel.toUpperCase()}
+          
+          {/* Name and Status */}
+          <div className="text-center">
+            <h3 className="text-xl volter-font font-bold text-blue-600">{habboData.name}</h3>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <Badge 
+                className={`volter-font ${
+                  habboData.online 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gray-400 text-white'
+                }`}
+              >
+                {habboData.online ? '🟢 Online' : '🔴 Offline'}
               </Badge>
+            </div>
+          </div>
+          
+          {/* Motto */}
+          <div className="text-center bg-gray-50 p-3 rounded-lg w-full">
+            <p className="text-sm volter-font text-gray-700 italic">
+              "{habboData.motto || 'Sem missão definida'}"
+            </p>
+          </div>
+          
+          {/* Info */}
+          <div className="w-full space-y-2 text-sm">
+            <div className="flex items-center gap-2 text-gray-600">
+              <MapPin className="w-4 h-4" />
+              <span className="volter-font">Hotel {habboData.hotel.toUpperCase()}</span>
+            </div>
+            {habboData.memberSince && (
+              <div className="flex items-center gap-2 text-gray-600">
+                <Clock className="w-4 h-4" />
+                <span className="volter-font">Membro desde {new Date(habboData.memberSince).getFullYear()}</span>
+              </div>
             )}
           </div>
-
-          {/* Motto */}
-          {habboData.motto && (
-            <div className="text-center">
-              <p className="text-xs text-gray-600 italic">"{habboData.motto}"</p>
-            </div>
-          )}
-
-          {/* Member Since */}
-          {habboData.memberSince && (
-            <div className="flex items-center text-xs text-gray-500">
-              <Calendar className="w-3 h-3 mr-1" />
-              Membro desde {new Date(habboData.memberSince).getFullYear()}
-            </div>
-          )}
-
-          {/* Selected Badges */}
+          
+          {/* Badges */}
           {habboData.selectedBadges && habboData.selectedBadges.length > 0 && (
             <div className="w-full">
-              <h4 className="text-xs font-semibold mb-2 text-center volter-font">Emblemas</h4>
-              <div className="flex flex-wrap justify-center gap-1">
-                {habboData.selectedBadges.slice(0, 5).map((badge, index) => (
-                  <img
-                    key={index}
-                    src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
-                    alt={badge.name}
-                    className="w-5 h-5"
-                    title={badge.name}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+              <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 rounded-full mb-2">
+                <h4 className="text-sm volter-font text-white habbo-outline-sm font-bold text-center">
+                  Emblemas
+                </h4>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {habboData.selectedBadges.slice(0, 6).map((badge: any, index: number) => (
+                  <div key={index} className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
+                    <img 
+                      src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
+                      alt={badge.name}
+                      className="w-8 h-8"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
