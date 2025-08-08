@@ -28,17 +28,23 @@ export const EnhancedColorPickerModal = ({
     onClose();
   };
 
-  // Get colors for this specific item
+  // Get colors for this specific item with null safety
   const getItemColors = () => {
+    // Safety check: if item is null or undefined, return default colors
+    if (!item) {
+      console.log(`🎨 [ColorModal] No item provided, using default colors`);
+      return getDefaultColors();
+    }
+    
     // If item has a palette ID and we have that palette
-    if (item.paletteId && colorPalettes[item.paletteId]) {
-      console.log(`🎨 [ColorModal] Using palette ${item.paletteId} for ${item.name}`);
+    if (item.paletteId && colorPalettes && colorPalettes[item.paletteId]) {
+      console.log(`🎨 [ColorModal] Using palette ${item.paletteId} for ${item.name || 'unknown item'}`);
       return colorPalettes[item.paletteId];
     }
     
     // If item has specific colors defined
-    if (item.colors && item.colors.length > 0) {
-      console.log(`🎨 [ColorModal] Using item colors for ${item.name}:`, item.colors);
+    if (item.colors && Array.isArray(item.colors) && item.colors.length > 0) {
+      console.log(`🎨 [ColorModal] Using item colors for ${item.name || 'unknown item'}:`, item.colors);
       return item.colors.map((colorId: string) => ({
         id: colorId,
         hex: getDefaultColorHex(colorId)
@@ -46,7 +52,7 @@ export const EnhancedColorPickerModal = ({
     }
     
     // Default colors
-    console.log(`🎨 [ColorModal] Using default colors for ${item.name}`);
+    console.log(`🎨 [ColorModal] Using default colors for ${item.name || 'unknown item'}`);
     return getDefaultColors();
   };
 
@@ -71,7 +77,8 @@ export const EnhancedColorPickerModal = ({
   };
 
   const itemColors = getItemColors();
-  const isHC = item.club === 'HC';
+  const isHC = item?.club === 'HC';
+  const itemName = item?.name || 'Item';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -80,7 +87,7 @@ export const EnhancedColorPickerModal = ({
           <DialogTitle className="text-center flex items-center justify-center gap-2">
             🎨 Escolher Cor
             <Badge variant="outline" className="text-xs">
-              {item.name}
+              {itemName}
             </Badge>
             {isHC && (
               <Badge className="bg-yellow-500 text-black text-xs">
@@ -116,7 +123,7 @@ export const EnhancedColorPickerModal = ({
             <p>
               Cores disponíveis: <span className="font-semibold">{itemColors.length}</span>
             </p>
-            {item.paletteId && (
+            {item?.paletteId && (
               <p className="text-blue-600">
                 Paleta oficial: {item.paletteId}
               </p>
