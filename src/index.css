@@ -18,7 +18,18 @@
   font-family: 'Volter', 'Inter', sans-serif;
 }
 
-/* Pixel-style text outline utilities for titles/headers only */
+/* Habbo-style text with white text and black outlines */
+.habbo-outline-sm {
+  color: white;
+  text-shadow: 1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black;
+}
+
+.habbo-outline-lg {
+  color: white;
+  text-shadow: 2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black, 1px 1px 0px black;
+}
+
+/* Legacy pixel outline utilities - kept for compatibility */
 .pixel-outline-sm {
   text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
 }

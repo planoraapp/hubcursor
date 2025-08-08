@@ -24,9 +24,7 @@ export const PageHeader = ({
     >
       <div className="relative z-10 flex items-center space-x-4">
         {icon && <img src={icon} alt={title} className="w-12 h-12" style={{ imageRendering: 'pixelated' }} />}
-        <h1 className="text-2xl font-bold text-white volter-font" style={{
-          textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 1px 1px 0px #000'
-        }}>
+        <h1 className="text-2xl font-bold volter-font habbo-outline-lg">
           {title}
         </h1>
       </div>

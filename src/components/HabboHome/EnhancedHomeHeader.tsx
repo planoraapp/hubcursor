@@ -30,14 +30,14 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
       <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-2xl volter-font pixel-outline-lg flex items-center gap-2">
+            <CardTitle className="text-2xl volter-font habbo-outline-lg flex items-center gap-2">
               🏠 {username}'s Habbo Home
             </CardTitle>
             <div className="flex items-center gap-2 mt-2">
-              <Badge className="bg-white/20 text-white volter-font">
+              <Badge className="bg-white/20 text-white volter-font habbo-outline-sm">
                 Hotel: {hotel.toUpperCase()}
               </Badge>
-              <Badge className="bg-white/20 text-white volter-font">
+              <Badge className="bg-white/20 text-white volter-font habbo-outline-sm">
                 Enhanced Home
               </Badge>
             </div>
@@ -48,7 +48,7 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
               <Button
                 onClick={onEditModeToggle}
                 variant={isEditMode ? "secondary" : "outline"}
-                className={`volter-font ${isEditMode ? 'bg-yellow-400 text-black' : 'bg-white text-blue-600 hover:bg-gray-100'}`}
+                className={`volter-font habbo-outline-sm ${isEditMode ? 'bg-yellow-400 text-black' : 'bg-white text-blue-600 hover:bg-gray-100'}`}
               >
                 <Edit3 className="w-4 h-4 mr-1" />
                 {isEditMode ? 'Sair da Edição' : 'Editar'}
@@ -88,7 +88,7 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
               Widgets
             </Button>
 
-            <div className="text-sm text-gray-600 volter-font ml-4">
+            <div className="text-sm text-gray-800 volter-font ml-4">
               💡 Use os botões acima para personalizar sua home!
             </div>
           </div>

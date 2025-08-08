@@ -14,10 +14,10 @@ export const EditModeHelpBar: React.FC<EditModeHelpBarProps> = ({ isVisible }) =
     <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
       <Card className="bg-yellow-50 border-2 border-yellow-400 shadow-lg">
         <div className="px-4 py-3 flex items-center gap-4">
-          <Badge className="bg-yellow-500 text-black volter-font">
+          <Badge className="bg-yellow-500 text-black volter-font habbo-outline-sm">
             🔧 Modo Edição
           </Badge>
-          <div className="flex items-center gap-6 text-sm volter-font text-gray-800">
+          <div className="flex items-center gap-6 text-sm volter-font habbo-outline-sm">
             <div className="flex items-center gap-2">
               <span className="text-blue-600">✨</span>
               <span>Clique em <strong>Stickers</strong> para adicionar itens</span>

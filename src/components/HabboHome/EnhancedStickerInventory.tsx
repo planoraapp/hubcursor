@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -83,7 +82,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
               {syncing ? '🔄' : '🔄'} {syncing ? 'Sincronizando...' : 'Sincronizar'}
             </Button>
           </DialogTitle>
-          <DialogDescription className="text-gray-600 volter-font">
+          <DialogDescription className="text-slate-700 volter-font">
             Selecione stickers, mockups e outros elementos para adicionar à sua Habbo Home
           </DialogDescription>
         </DialogHeader>
@@ -176,7 +175,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
           </Tabs>
         </div>
         
-        <div className="flex items-center justify-between text-sm text-gray-600 volter-font pt-3 border-t">
+        <div className="flex items-center justify-between text-sm text-slate-700 volter-font pt-3 border-t">
           <span>💡 Dica: Clique em qualquer asset para adicioná-lo à sua home</span>
           <div className="flex gap-2">
             <span>🎯 Máximo: 50 stickers por home</span>
