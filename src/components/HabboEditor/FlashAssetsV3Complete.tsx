@@ -165,12 +165,15 @@ const FlashAssetsV3Complete = ({
     return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
   };
 
-  const filteredItems = items.filter(item => 
-    !searchTerm || 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.figureId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.swfName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredItems = items
+    .filter(item => item && item.category === selectedCategory)
+    .filter(item => !searchTerm ||
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.figureId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.swfName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(item => selectedRarity === 'all' || item.rarity === selectedRarity)
+    .filter(item => item.gender === selectedGender || item.gender === 'U');
 
   const handleRarityChange = (value: string) => {
     setSelectedRarity(value as 'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common');
@@ -328,9 +331,9 @@ const FlashAssetsV3Complete = ({
                 </div>
               ) : (
                 <div className="grid grid-cols-6 gap-2">
-                  {filteredItems.map(item => (
+                  {filteredItems.map((item, idx) => (
                     <div
-                      key={item.id}
+                      key={`${item.swfName || item.id || item.figureId || 'item'}_${idx}`}
                       onClick={() => handleItemClick(item)}
                       className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative ${
                         selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'

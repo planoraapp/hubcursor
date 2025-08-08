@@ -14,9 +14,9 @@ const EditorShell = ({ className = '' }: EditorShellProps) => {
       const params = new URLSearchParams(window.location.search);
       const qp = params.get('tab');
       const stored = localStorage.getItem('editor.activeTab');
-      return (qp || stored || 'widgets');
+      return (qp || stored || 'viajovem');
     } catch {
-      return 'widgets';
+      return 'viajovem';
     }
   });
 
@@ -29,22 +29,12 @@ const EditorShell = ({ className = '' }: EditorShellProps) => {
   return (
     <div className={`w-full h-full ${className}`}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
-        <TabsList className="grid grid-cols-3 w-full">
-          <TabsTrigger value="oficial" className="habbo-text">Oficial</TabsTrigger>
+        <TabsList className="grid grid-cols-1 w-full">
           <TabsTrigger value="viajovem" className="habbo-text">ViaJovem</TabsTrigger>
-          <TabsTrigger value="widgets" className="habbo-text">Widgets</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="oficial" className="h-full">
-          <OfficialHabboEditor />
-        </TabsContent>
 
         <TabsContent value="viajovem" className="h-full">
           <ViaJovemEditorRedesigned />
-        </TabsContent>
-
-        <TabsContent value="widgets" className="h-full">
-          <HabboWidgetsEditor />
         </TabsContent>
       </Tabs>
     </div>
