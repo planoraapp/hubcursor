@@ -194,8 +194,15 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       return normalized;
     });
 
+    // Limpar itens inválidos e restringir às categorias de roupa
+    const allowedCategories = new Set(['hd','hr','ha','ea','fa','ch','cc','cp','ca','lg','sh','wa']);
+    const cleaned = mapped.filter(it => {
+      const validCat = allowedCategories.has(it.category);
+      const validFig = /^\d+$/.test(String(it.figureId)) && it.figureId !== '0';
+      return validCat && validFig;
+    });
     // Se houver categoria no filtro, garantir consistência
-    const finalList = params?.category ? mapped.filter(it => it.category === params.category) : mapped;
+    const finalList = params?.category ? cleaned.filter(it => it.category === params.category) : cleaned;
     return finalList;
   }, [query.data, official.data, params?.category]);
 

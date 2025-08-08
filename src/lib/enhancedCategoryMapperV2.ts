@@ -358,12 +358,13 @@ export const generateIsolatedThumbnail = (category: string, figureId: string, co
     fa: `hd-180-1.hr-828-45`,            // Base para acessórios faciais
     ca: `hd-180-1.hr-828-45.ch-665-92`,  // Base para acessórios de peito
     wa: `hd-180-1.hr-828-45.ch-665-92.lg-700-1`, // Base para cintura
-    cp: `hd-180-1.hr-828-45`             // Base para estampas
+    cp: `hd-180-1.hr-828-45.ch-665-92`             // Base para estampas precisa de camisa base
   };
 
   const baseAvatar = baseComponents[category] || baseComponents['ch'];
   const fullFigure = `${baseAvatar}.${category}-${figureId}-${color}`;
-  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+  const actualGender = (gender === 'M' || gender === 'F') ? gender : 'M';
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${actualGender}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
 };
 
 export const formatAssetName = (swfName: string): string => {

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter } from 'lucide-react';
 import { useEnhancedFlashAssetsV2 } from '@/hooks/useEnhancedFlashAssetsV2';
-import { getRarityColor } from '@/lib/enhancedCategoryMapperV2';
+import { getRarityColor, generateIsolatedThumbnail } from '@/lib/enhancedCategoryMapperV2';
 import { SkinColorSlider } from './SkinColorSlider';
 import { OfficialHabboColorPalette } from './OfficialHabboColorPalette';
 import { AvatarHistory } from './AvatarHistory';
@@ -160,17 +160,21 @@ const FlashAssetsV3Complete = ({
   };
 
   const getItemImageUrl = (item: any) => {
-    // Prefer Puhekupla focused thumbs if we can parse swfName
-    if (item?.swfName) {
-      const puhek = getPuhekuplaThumbFromSwf(String(item.swfName));
-      if (puhek) return puhek;
+    const color = isValidColorForCategory(currentColor, item.category)
+      ? currentColor
+      : getDefaultColorForCategory(item.category);
+    if (item?.figureId && item?.category) {
+      return generateIsolatedThumbnail(String(item.category), String(item.figureId), String(color), selectedGender);
     }
     // Fallbacks
+    const puhek = item?.swfName ? getPuhekuplaThumbFromSwf(String(item.swfName)) : null;
+    if (puhek) return puhek;
     if (item.thumbnailUrl) return item.thumbnailUrl;
     return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
   };
   const filteredItems = items
     .filter(item => item && item.category === selectedCategory)
+    .filter(item => /^\d+$/.test(String(item.figureId)) && String(item.figureId) !== '0')
     .filter(item => !searchTerm ||
       String(item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(item.figureId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -359,10 +363,12 @@ const FlashAssetsV3Complete = ({
                         className="max-w-full max-h-full object-contain pixelated"
                         onError={(e) => {
                           const img = e.currentTarget as HTMLImageElement;
-                          // Try fallback to isolated Habbo imaging thumbnail if Puhekupla fails
-                          const fallback = item.thumbnailUrl || `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
-                          if (img.src !== fallback) {
-                            img.src = fallback;
+                          const puhek = item?.swfName ? getPuhekuplaThumbFromSwf(String(item.swfName)) : null;
+                          const supa = `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
+                          const fallbacks = [puhek, item.thumbnailUrl, supa].filter(Boolean) as string[];
+                          const next = fallbacks.find(url => url && img.src !== url);
+                          if (next) {
+                            img.src = next;
                           } else {
                             img.style.display = 'none';
                           }
