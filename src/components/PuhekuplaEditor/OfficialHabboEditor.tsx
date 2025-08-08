@@ -1,215 +1,128 @@
-
-import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import EnhancedAvatarPreview from '../HabboEditor/EnhancedAvatarPreview';
+import React, { useState, useCallback } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Habbo হোটেলSelect } from '../HabboHotelSelect';
+import { GenderButtons } from '../GenderButtons';
+import { Button } from '@/components/ui/button';
+import { AvatarImage } from '@/components/ui/avatar';
+import { Slider } from "@/components/ui/slider"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ChevronsUpDown } from "lucide-react"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command"
+import { cn } from "@/lib/utils"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
+import { useFlashAssetsViaJovem } from '@/hooks/useFlashAssetsViaJovem';
 import FlashAssetsV3Complete from '../HabboEditor/FlashAssetsV3Complete';
-import { useToast } from '@/hooks/use-toast';
+import ViaJovemClothingGrid from './ViaJovemClothingGrid';
+import OfficialHabboClothingGrid from './OfficialHabboClothingGrid';
 
-interface AvatarState extends Record<string, string> {
-  hd?: string;
-  hr?: string;
-  ch?: string;
-  lg?: string;
-  sh?: string;
-  ha?: string;
-  ea?: string;
-  cc?: string;
-  ca?: string;
-  wa?: string;
-  cp?: string;
-  sk?: string;
-}
+export default function OfficialHabboEditor() {
+  const [selectedHotel, setSelectedHotel] = useState('br');
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("habbo");
+  const [currentFigureString, setCurrentFigureString] = useState('ch-210-66.lg-270-82.sh-305-62.hr-100-61.hd-180-1');
 
-const OfficialHabboEditor = () => {
-  // Avatar inicial randomizado com roupas clássicas do Habbo
-  const [avatarState, setAvatarState] = useState<AvatarState>({
-    hd: '180-2', // Cor de pele clara (ID 2)
-    hr: '828-45', // Cabelo clássico masculino castanho
-    ch: '665-92', // Camiseta clássica azul
-    lg: '700-1', // Calça clássica preta
-    sh: '705-1' // Sapato clássico preto
-  });
-  
-  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
-  const [selectedHotel, setSelectedHotel] = useState('com');
-  const [selectedColor, setSelectedColor] = useState('1');
-  const [selectedItem, setSelectedItem] = useState('');
+	const restoreFigure = useCallback((figureString: string) => {
+		setCurrentFigureString(figureString);
+	}, []);
 
-  const { toast } = useToast();
-
-  // Randomizar avatar inicial com roupas clássicas
-  useEffect(() => {
-    const classicItems = {
-      M: {
-        hr: ['828', '1001', '205', '830'], // Cabelos masculinos clássicos
-        ch: ['665', '1001', '255', '600'], // Camisetas clássicas
-        lg: ['700', '280', '285', '290'], // Calças clássicas
-        sh: ['705', '300', '310', '320'] // Sapatos clássicos
-      },
-      F: {
-        hr: ['595', '600', '605', '830'], // Cabelos femininos clássicos
-        ch: ['667', '1002', '256', '601'], // Camisetas femininas clássicas
-        lg: ['701', '281', '286', '291'], // Calças femininas clássicas
-        sh: ['705', '301', '311', '321'] // Sapatos femininos clássicos
-      }
-    };
-
-    const genderItems = classicItems[selectedGender === 'U' ? 'M' : selectedGender];
-    const randomAvatar = {
-      hd: '180-2', // Sempre cor de pele clara
-      hr: `${genderItems.hr[Math.floor(Math.random() * genderItems.hr.length)]}-${Math.floor(Math.random() * 10) + 40}`,
-      ch: `${genderItems.ch[Math.floor(Math.random() * genderItems.ch.length)]}-${Math.floor(Math.random() * 20) + 60}`,
-      lg: `${genderItems.lg[Math.floor(Math.random() * genderItems.lg.length)]}-${Math.floor(Math.random() * 10) + 1}`,
-      sh: `${genderItems.sh[Math.floor(Math.random() * genderItems.sh.length)]}-${Math.floor(Math.random() * 10) + 1}`
-    };
-
-    setAvatarState(randomAvatar);
-  }, [selectedGender]);
-
-  const generateFigureString = (): string => {
-    const parts: string[] = [];
-    const categoryOrder = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'ca', 'wa', 'cp'];
-    
-    categoryOrder.forEach(category => {
-      if (avatarState[category as keyof AvatarState]) {
-        parts.push(`${category}-${avatarState[category as keyof AvatarState]}`);
-      }
-    });
-    
-    return parts.join('.');
+  const handleItemSelect = (item: any, colorId?: string) => {
+    setSelectedItem(item.id);
+    setSelectedColor(colorId || '1');
+    console.log('Selected Item:', item);
+    console.log('Selected Color:', colorId);
   };
 
-  // Sistema V3 COMPLETO: Handler para Flash Assets V3
-  const handleItemSelect = (item: any, colorId: string = '1') => {
-    console.log('🎯 [OfficialHabboEditor V3] Flash Asset V3 selecionado:', { 
-      item: item.name, 
-      category: item.category, 
-      figureId: item.figureId,
-      colorId,
-      swfName: item.swfName,
-      source: item.source
-    });
-    
-    // CORREÇÃO V3: Aplicação melhorada com suporte a 'sk' (skin color)
-    const itemString = `${item.figureId}-${colorId}`;
-    
-    setAvatarState(prevState => {
-      const newState = { ...prevState };
-      
-      // ESPECIAL V3: Categoria 'sk' (skin) altera apenas a cor do 'hd'
-      if (item.category === 'sk') {
-        if (newState.hd) {
-          const hdParts = newState.hd.split('-');
-          newState.hd = `${hdParts[0]}-${colorId}`;
-        } else {
-          newState.hd = `180-${colorId}`;
-        }
-        console.log('🤏 [OfficialHabboEditor V3] Cor de pele aplicada:', newState.hd);
-        
-        toast({
-          title: "🤏 Cor de pele aplicada!",
-          description: `Tom ${colorId} aplicado com sucesso.`,
-        });
-        
-        return newState;
-      }
-      
-      // Aplicar item normal na categoria correta
-      newState[item.category as keyof AvatarState] = itemString;
-      
-      console.log('✅ [OfficialHabboEditor V3] Estado do avatar atualizado:', {
-        categoria: item.category,
-        novoValor: itemString,
-        figuraCompleta: Object.entries(newState)
-          .filter(([_, value]) => value)
-          .map(([cat, value]) => `${cat}-${value}`)
-          .join('.')
-      });
-      
-      return newState;
-    });
-
+  const handleViaJovemItemSelect = (item: any, colorId: string) => {
+    setSelectedItem(item.id);
     setSelectedColor(colorId);
-    setSelectedItem(item.figureId);
-    
-    // Toast melhorado V3 com info de raridade
-    const rarityEmoji = {
-      'nft': '⭐',
-      'ltd': '👑', 
-      'hc': '⚡',
-      'rare': '💎',
-      'common': '📦'
-    };
-    
-    const clubBadge = item.club === 'hc' ? '🟨 HC' : item.rarity !== 'common' ? `${rarityEmoji[item.rarity]} ${item.rarity.toUpperCase()}` : '⭐ FREE';
-    
-    toast({
-      title: "✨ Item aplicado!",
-      description: `${item.name} (${clubBadge}) aplicado na categoria ${item.category.toUpperCase()}.`,
-    });
-  };
-
-  const handleRemoveItem = (category: string) => {
-    setAvatarState(prevState => {
-      const newState = { ...prevState };
-      delete newState[category as keyof AvatarState];
-      return newState;
-    });
-    
-    toast({
-      title: "🗑️ Item removido",
-      description: `Item da categoria ${category.toUpperCase()} removido.`,
-    });
-  };
-
-  const handleResetAvatar = () => {
-    setAvatarState({
-      hd: '180-2',
-      hr: '828-45', 
-      ch: '665-92',
-      lg: '700-1',
-      sh: '705-1'
-    });
-    
-    toast({
-      title: "🔄 Avatar resetado",
-      description: "Avatar voltou ao estado padrão.",
-    });
   };
 
   return (
-    <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
-      {/* Enhanced Avatar Preview V3 */}
-      <div className="lg:w-80">
-        <EnhancedAvatarPreview
-          figureString={generateFigureString()}
-          selectedGender={selectedGender}
-          selectedHotel={selectedHotel}
-          avatarState={avatarState}
-          onGenderChange={setSelectedGender}
-          onHotelChange={setSelectedHotel}
-          onRemoveItem={handleRemoveItem}
-          onResetAvatar={handleResetAvatar}
-        />
+    <div className="flex h-full bg-white">
+      {/* Left Panel - Avatar Preview and Controls */}
+      <div className="w-80 p-4 border-r border-gray-300">
+        <h2 className="text-lg font-semibold mb-4 volter-font">Editor de Avatar</h2>
+
+        <Habbo হোটেলSelect selectedHotel={selectedHotel} onHotelChange={setSelectedHotel} />
+
+        <GenderButtons selectedGender={selectedGender} onGenderChange={setSelectedGender} />
+
+        <div className="mb-4">
+          <AvatarImage
+            src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${currentFigureString}&size=l&direction=2&head_direction=2&gesture=sml`}
+            alt="Avatar Preview"
+            className="w-full h-auto rounded-lg"
+          />
+        </div>
+
+        <div className="mb-4">
+          <Label htmlFor="figureString" className="block text-sm font-medium text-gray-700">
+            Figure String
+          </Label>
+          <Input
+            type="text"
+            id="figureString"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            value={currentFigureString}
+            onChange={(e) => setCurrentFigureString(e.target.value)}
+          />
+        </div>
       </div>
 
-      {/* SISTEMA V3 COMPLETO - Interface Limpa sem Headers */}
-      <div className="flex-1">
-        <Card className="h-full">
-          <CardContent className="p-0 h-full">
-            <FlashAssetsV3Complete
-              selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
+      {/* Right Panel - Asset Selection */}
+      <div className="flex-1 flex flex-col border-l border-gray-300">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 border-b border-gray-300">
+            <TabsTrigger value="habbo" className="volter-font text-xs">Habbo Oficial</TabsTrigger>
+            <TabsTrigger value="viajovem" className="volter-font text-xs">ViaJovem</TabsTrigger>
+            <TabsTrigger value="flash" className="volter-font text-xs">Flash Assets</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="habbo" className="flex-1 overflow-hidden">
+            <OfficialHabboClothingGrid
+              selectedGender={selectedGender}
               selectedHotel={selectedHotel}
               onItemSelect={handleItemSelect}
               selectedItem={selectedItem}
               selectedColor={selectedColor}
               className="h-full"
             />
-          </CardContent>
-        </Card>
+          </TabsContent>
+
+          <TabsContent value="viajovem" className="flex-1 overflow-hidden">
+            <ViaJovemClothingGrid
+              selectedGender={selectedGender}
+              selectedHotel={selectedHotel}
+              onItemSelect={handleViaJovemItemSelect}
+              selectedItem={selectedItem}
+              selectedColor={selectedColor}
+              currentFigureString={currentFigureString}
+              onRestoreFigure={restoreFigure}
+              className="h-full"
+            />
+          </TabsContent>
+
+          <TabsContent value="flash" className="flex-1 overflow-hidden">
+            <FlashAssetsV3Complete />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
-};
-
-export default OfficialHabboEditor;
+}

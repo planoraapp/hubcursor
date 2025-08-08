@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
-import { useFlashAssets } from '@/hooks/useFlashAssets';
+import { useFlashAssetsViaJovem } from '@/hooks/useFlashAssetsViaJovem';
 import ImprovedAvatarPreview from './ImprovedAvatarPreview';
 import SkinToneBar from './SkinToneBar';
 import ColorPickerPopover from './ColorPickerPopover';
@@ -18,7 +18,7 @@ const FlashAssetsV3Complete: React.FC = () => {
   const [figureString, setFigureString] = useState('hd-180-1.hr-100-61.ch-210-66.lg-270-82.sh-305-62.ha-1012-110.wa-2007-62');
   const [skinTone, setSkinTone] = useState('1');
 
-  const { data: assets, isLoading, error } = useFlashAssets();
+  const { items, isLoading, error } = useFlashAssetsViaJovem();
 
   // Category configuration with icons from editor_images bucket
   const categories = [
@@ -37,14 +37,14 @@ const FlashAssetsV3Complete: React.FC = () => {
 
   // Filter assets based on current tab, search term, and gender
   const filteredAssets = useMemo(() => {
-    if (!assets) return [];
+    if (!items) return [];
     
-    let filtered = assets.filter(asset => asset.category === currentTab);
+    let filtered = items.filter(asset => asset.category === currentTab);
     
     if (searchTerm) {
       filtered = filtered.filter(asset => 
         asset.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.id.toString().includes(searchTerm)
+        asset.figureId.toString().includes(searchTerm)
       );
     }
 
@@ -56,7 +56,7 @@ const FlashAssetsV3Complete: React.FC = () => {
     }
 
     return filtered;
-  }, [assets, currentTab, searchTerm, selectedGender]);
+  }, [items, currentTab, searchTerm, selectedGender]);
 
   const handleRandomize = useCallback(() => {
     const randomParts = [
@@ -73,7 +73,7 @@ const FlashAssetsV3Complete: React.FC = () => {
     // Update figure string with the selected asset
     const parts = figureString.split('.');
     const categoryIndex = parts.findIndex(part => part.startsWith(asset.category));
-    const newPart = `${asset.category}-${asset.id}-${asset.colors?.[0] || '1'}`;
+    const newPart = `${asset.category}-${asset.figureId}-${asset.colors?.[0] || '1'}`;
     
     if (categoryIndex >= 0) {
       parts[categoryIndex] = newPart;
@@ -87,7 +87,7 @@ const FlashAssetsV3Complete: React.FC = () => {
   const handleColorSelect = (asset: any, color: string) => {
     const parts = figureString.split('.');
     const categoryIndex = parts.findIndex(part => part.startsWith(asset.category));
-    const newPart = `${asset.category}-${asset.id}-${color}`;
+    const newPart = `${asset.category}-${asset.figureId}-${color}`;
     
     if (categoryIndex >= 0) {
       parts[categoryIndex] = newPart;
@@ -202,22 +202,22 @@ const FlashAssetsV3Complete: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-6 gap-2">
             {filteredAssets.map((asset) => (
-              <div key={`${asset.category}-${asset.id}`} className="relative group">
+              <div key={`${asset.category}-${asset.figureId}`} className="relative group">
                 <Card 
                   className="p-2 cursor-pointer hover:shadow-md transition-shadow border-black aspect-square"
                   onClick={() => handleAssetClick(asset)}
                 >
                   <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                    {asset.thumbnail_url ? (
+                    {asset.thumbnail ? (
                       <img
-                        src={asset.thumbnail_url}
-                        alt={asset.name || `Asset ${asset.id}`}
+                        src={asset.thumbnail}
+                        alt={asset.name || `Asset ${asset.figureId}`}
                         className="max-w-full max-h-full object-contain"
                         style={{ imageRendering: 'pixelated' }}
                       />
                     ) : (
                       <div className="text-xs text-gray-500 text-center p-1">
-                        {asset.id}
+                        {asset.figureId}
                       </div>
                     )}
                   </div>
@@ -229,7 +229,7 @@ const FlashAssetsV3Complete: React.FC = () => {
                     <ColorPickerPopover
                       colors={asset.colors}
                       onColorSelect={(color) => handleColorSelect(asset, color)}
-                      itemName={asset.name || `Asset ${asset.id}`}
+                      itemName={asset.name || `Asset ${asset.figureId}`}
                     />
                   </div>
                 )}
