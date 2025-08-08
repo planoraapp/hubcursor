@@ -13,64 +13,64 @@ export interface FlashAssetItem {
   figureId: string;
   club: 'HC' | 'FREE';
   colors: string[];
-  source: 'official-assets';
+  source: string;
 }
 
-interface UseFlashAssetsClothingProps {
+interface FlashAssetsResponse {
+  assets: FlashAssetItem[];
+  metadata: {
+    totalCount: number;
+    source: string;
+    fetchedAt: string;
+    filters: {
+      category: string;
+      search: string;
+      gender: string;
+      limit: number;
+    };
+  };
+}
+
+interface UseFlashAssetsClothingOptions {
   limit?: number;
   category?: string;
   search?: string;
-  enabled?: boolean;
+  gender?: 'M' | 'F' | 'U';
 }
 
-const fetchFlashAssetsClothing = async ({
-  limit = 300,
-  category = 'all',
-  search = ''
-}: UseFlashAssetsClothingProps): Promise<FlashAssetItem[]> => {
-  console.log(`🌐 [FlashAssetsClothing] Fetching assets with limit: ${limit}, category: ${category}, search: "${search}"`);
-  
-  try {
-    const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
-      body: { limit, category, search }
-    });
+export const useFlashAssetsClothing = (options: UseFlashAssetsClothingOptions = {}) => {
+  const { limit = 300, category = 'all', search = '', gender = 'U' } = options;
 
-    if (error) {
-      console.error('❌ [FlashAssetsClothing] Supabase function error:', error);
-      throw error;
-    }
+  return useQuery<FlashAssetItem[], Error>({
+    queryKey: ['flash-assets-clothing', { limit, category, search, gender }],
+    queryFn: async (): Promise<FlashAssetItem[]> => {
+      console.log('🔄 [useFlashAssetsClothing] Fetching Flash Assets from database');
+      
+      const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
+        body: {
+          limit,
+          category,
+          search,
+          gender
+        }
+      });
 
-    if (!data || !data.assets || !Array.isArray(data.assets)) {
-      console.error('❌ [FlashAssetsClothing] Invalid response format:', data);
-      throw new Error('Invalid response format from flash assets');
-    }
+      if (error) {
+        console.error('❌ [useFlashAssetsClothing] Error calling function:', error);
+        throw error;
+      }
 
-    console.log(`✅ [FlashAssetsClothing] Successfully fetched ${data.assets.length} assets`);
-    console.log(`📊 [FlashAssetsClothing] Metadata:`, data.metadata);
-    
-    return data.assets;
-    
-  } catch (error) {
-    console.error('❌ [FlashAssetsClothing] Error:', error);
-    throw error;
-  }
-};
+      const response = data as FlashAssetsResponse;
+      
+      if (!response || !response.assets) {
+        console.warn('⚠️ [useFlashAssetsClothing] Invalid response format');
+        return [];
+      }
 
-export const useFlashAssetsClothing = ({
-  limit = 300,
-  category = 'all',
-  search = '',
-  enabled = true
-}: UseFlashAssetsClothingProps = {}) => {
-  console.log(`🔧 [FlashAssetsClothing] Hook called with limit: ${limit}, category: ${category}, search: "${search}", enabled: ${enabled}`);
-  
-  return useQuery({
-    queryKey: ['flash-assets-clothing', limit, category, search],
-    queryFn: () => fetchFlashAssetsClothing({ limit, category, search }),
-    enabled,
-    staleTime: 1000 * 60 * 60 * 2, // 2 hours
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      console.log(`✅ [useFlashAssetsClothing] Loaded ${response.assets.length} Flash Assets from database`);
+      return response.assets;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 };

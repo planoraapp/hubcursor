@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { HotelSelector } from '@/components/HotelSelector';
 import { useHotel } from '@/contexts/HotelContext';
+import { LatestHomesCards } from '@/components/LatestHomesCards';
 import MobileLayout from '@/layouts/MobileLayout';
 
 const HomesHub: React.FC = () => {
@@ -35,7 +35,6 @@ const HomesHub: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchUsername.trim()) {
-      // Normalizar o nome para lowercase para evitar problemas de case sensitivity
       const normalizedUsername = searchUsername.trim().toLowerCase();
       navigate(`/home/${normalizedUsername}`);
     }
@@ -43,7 +42,6 @@ const HomesHub: React.FC = () => {
 
   const goToMyHome = () => {
     if (habboAccount?.habbo_name) {
-      // Usar o nome exato do banco, mas navegar para lowercase
       const normalizedUsername = habboAccount.habbo_name.toLowerCase();
       navigate(`/home/${normalizedUsername}`);
     }
@@ -139,6 +137,21 @@ const HomesHub: React.FC = () => {
                   💡 Digite o nome do usuário para encontrar sua home. Visualizando contexto: Hotel {currentHotel.toUpperCase()}
                 </p>
               </form>
+            </Card>
+
+            {/* Últimas Homes Atualizadas */}
+            <Card className="p-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                  <Home className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 volter-font">Últimas Homes Atualizadas</h2>
+                  <p className="text-gray-600">Veja as homes mais recentemente personalizadas</p>
+                </div>
+              </div>
+              
+              <LatestHomesCards />
             </Card>
 
             {/* Informações para usuários não logados */}
@@ -272,7 +285,22 @@ const HomesHub: React.FC = () => {
               </form>
             </Card>
 
-            {/* Rest of existing code for mobile info and tips cards... */}
+            {/* Últimas Homes Atualizadas */}
+            <Card className="p-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                  <Home className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 volter-font">Últimas Homes Atualizadas</h2>
+                  <p className="text-gray-600">Veja as homes mais recentemente personalizadas</p>
+                </div>
+              </div>
+              
+              <LatestHomesCards />
+            </Card>
+
+            {/* Informações para usuários não logados */}
             {!isLoggedIn && (
               <Card className="p-6 bg-yellow-50 border-2 border-yellow-300">
                 <div className="text-center">
@@ -293,6 +321,7 @@ const HomesHub: React.FC = () => {
               </Card>
             )}
 
+            {/* Dicas */}
             <Card className="p-6 bg-blue-50 border-2 border-blue-300">
               <h3 className="text-lg font-bold text-blue-800 mb-3 volter-font">💡 Como funcionam as Homes?</h3>
               <div className="space-y-2 text-blue-700 text-sm">
