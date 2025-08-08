@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,10 +10,10 @@ import { useTemplariosFigure } from '@/hooks/useTemplariosFigure';
 import { useTemplariosData } from '@/hooks/useTemplariosData';
 import { useTemplariosPreview } from '@/hooks/useTemplariosPreview';
 import { fixInvalidColors } from '@/utils/habboColorValidator';
-import { figureStringGenerator } from '@/lib/figureStringGenerator';
+import { generateFigureString } from '@/lib/figureStringGenerator';
 import { HabboRenderer } from '../HabboRenderer';
 import { OfficialHabboClothingGrid } from './OfficialHabboClothingGrid';
-import { ViaJovemClothingGrid } from './ViaJovemClothingGrid';
+import ViaJovemClothingGrid from './ViaJovemClothingGrid';
 
 interface ViaJovemEditorRedesignedProps {
   className?: string;
@@ -68,10 +69,10 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
           <Card className="p-6 text-center bg-gradient-to-br from-blue-50 to-purple-50">
             <div className="relative">
               <HabboRenderer 
-                figureString={figureString}
-                gender={selectedGender}
+                figure={figureString}
+                zoom={100}
                 hotel={selectedHotel}
-                size="l"
+                gender={selectedGender}
                 className="mx-auto mb-4"
               />
               
@@ -165,11 +166,25 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
             </TabsList>
 
             <TabsContent value="official" className="h-full">
-              <OfficialHabboClothingGrid />
+              <OfficialHabboClothingGrid 
+                selectedGender={selectedGender}
+                selectedHotel={selectedHotel}
+                onItemSelect={handleItemSelect}
+                selectedItem={selectedItem}
+                selectedColor={selectedColor}
+              />
             </TabsContent>
 
             <TabsContent value="viajovem" className="h-full">
-              <ViaJovemClothingGrid />
+              <ViaJovemClothingGrid 
+                selectedGender={selectedGender}
+                selectedHotel={selectedHotel}
+                onItemSelect={handleItemSelect}
+                selectedItem={selectedItem}
+                selectedColor={selectedColor}
+                currentFigureString={currentFigureString}
+                onRestoreFigure={handleRestoreFigure}
+              />
             </TabsContent>
           </Tabs>
         </div>
