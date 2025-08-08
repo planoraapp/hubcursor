@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,11 @@ const EnhancedHabboHome = () => {
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
+
+  // Canvas ref and size for centering stickers and bounds
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
   const normalizedUsername = username?.trim() || '';
   const {
     habboData,
@@ -85,32 +90,52 @@ const EnhancedHabboHome = () => {
     }
   }, [error, toast]);
 
+  // Measure canvas size for centering and bounds
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const update = () => setCanvasSize({ width: el.clientWidth, height: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+
   // Enhanced sticker drop handler with proper error handling
-  const handleStickerDropWithFeedback = useCallback(async (stickerData: any) => {
+  const handleStickerDropWithFeedback = useCallback(async (incoming: any) => {
     try {
-      await handleStickerDrop(stickerData);
+      const offset = 64;
+      const { width, height } = canvasSize;
+      const x = Math.max(0, Math.round(width / 2 - offset));
+      const y = Math.max(0, Math.round(height / 2 - offset));
+      const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0)) + 1;
+      const payload = { ...incoming, x, y, z_index: nextZ };
+      await handleStickerDrop(payload);
     } catch (error) {
       console.error('Failed to add sticker:', error);
     }
-  }, [handleStickerDrop]);
+  }, [handleStickerDrop, canvasSize, stickers]);
   const handleStickerZIndexChange = useCallback(async (stickerId: string, zIndex: number) => {
     if (!isOwner) return;
     try {
-      const {
-        error
-      } = await supabase.from('user_stickers').update({
-        z_index: Math.round(zIndex)
-      }).eq('id', stickerId);
+      const currentMax = Math.max(0, ...stickers.filter(s => s.id !== stickerId).map(s => s.z_index || 0));
+      const proposed = Math.round(zIndex);
+      const chosen = (proposed > 2147483647 || proposed <= 0) ? currentMax + 1 : proposed;
+      const { error } = await supabase
+        .from('user_stickers')
+        .update({ z_index: chosen })
+        .eq('id', stickerId);
       if (!error) {
         setStickers(prev => prev.map(sticker => sticker.id === stickerId ? {
           ...sticker,
-          z_index: Math.round(zIndex)
+          z_index: chosen
         } : sticker));
       }
     } catch (error) {
       console.error('Error updating sticker z-index:', error);
     }
-  }, [isOwner, setStickers]);
+  }, [isOwner, setStickers, stickers]);
   const handleStickerRemove = useCallback(async (stickerId: string) => {
     if (!isOwner) return;
     try {
@@ -202,7 +227,7 @@ const EnhancedHabboHome = () => {
                 
 
                 {/* Dynamic Widgets & Stickers Canvas (full area) */}
-                <div className="absolute left-4 top-4 right-4 bottom-4 overflow-hidden">
+                <div ref={canvasRef} className="absolute left-4 top-4 right-4 bottom-4 overflow-hidden">
                   {widgets.map(widget => {
                   const isCore = widget.widget_id === 'avatar' || widget.widget_id === 'guestbook';
                   return <OptimizedDraggableWidget key={widget.id} id={widget.id} x={widget.x} y={widget.y} width={widget.width} height={widget.height} zIndex={widget.z_index} isEditMode={isEditMode} onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)} {...!isCore && {

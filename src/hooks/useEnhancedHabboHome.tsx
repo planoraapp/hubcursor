@@ -430,30 +430,35 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
     if (!isOwner || !habboData) return;
 
     try {
+      const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0)) + 1;
+      const safeZ = Number.isFinite(stickerData?.z_index)
+        ? Math.min(Math.max(1, Math.round(stickerData.z_index)), 2147483647)
+        : nextZ;
+
+      const payload = {
+        user_id: habboData.id,
+        sticker_id: stickerData.sticker_id,
+        sticker_src: stickerData.sticker_src,
+        category: stickerData.category || 'decorative',
+        x: Math.round(stickerData.x ?? 100),
+        y: Math.round(stickerData.y ?? 100),
+        z_index: safeZ,
+        rotation: Math.round(stickerData.rotation ?? 0),
+        scale: parseFloat((stickerData.scale ?? 1).toString())
+      };
+
       const { data, error } = await supabase
         .from('user_stickers')
-        .insert({
-          user_id: habboData.id,
-          sticker_id: stickerData.sticker_id,
-          sticker_src: stickerData.sticker_src,
-          category: stickerData.category,
-          x: Math.round(stickerData.x || 100),
-          y: Math.round(stickerData.y || 100),
-          z_index: Math.round(stickerData.z_index || Date.now()),
-          rotation: Math.round(stickerData.rotation || 0),
-          scale: parseFloat((stickerData.scale || 1).toString())
-        })
+        .insert(payload)
         .select()
         .single();
 
       if (!error && data) {
         setStickers(prev => [...prev, data]);
-        
         toast({
           title: "Sticker Adicionado",
           description: "Sticker adicionado à sua home!",
         });
-        
         return data;
       } else {
         console.error('Error adding sticker:', error);

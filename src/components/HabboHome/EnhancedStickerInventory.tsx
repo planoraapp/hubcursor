@@ -38,18 +38,15 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
 
   const handleStickerClick = (asset: any) => {
     const stickerData = {
-      id: `${asset.category}-${asset.id}-${Date.now()}`,
       sticker_id: asset.id,
       sticker_src: getAssetUrl(asset),
-      category: asset.category.toLowerCase(),
-      x: Math.random() * 400 + 100,
-      y: Math.random() * 300 + 100,
-      z_index: Date.now(),
+      category: asset.category?.toLowerCase() || 'decorative',
       rotation: 0,
       scale: 1
     };
-    
+
     onStickerDrop(stickerData);
+    onClose();
   };
 
   const handleSync = async () => {
