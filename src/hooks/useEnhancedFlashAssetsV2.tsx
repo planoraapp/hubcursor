@@ -55,15 +55,29 @@ const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<Enhanced
       throw error;
     }
 
-    if (!data || !data.assets || !Array.isArray(data.assets)) {
+    // Tolerate multiple response shapes
+    let assets: any[] | undefined;
+    if (data) {
+      if (Array.isArray(data)) {
+        assets = data as any[];
+      } else if (Array.isArray((data as any).assets)) {
+        assets = (data as any).assets as any[];
+      } else if (Array.isArray((data as any).items)) {
+        assets = (data as any).items as any[];
+      }
+    }
+
+    if (!assets) {
       console.error('❌ [EnhancedFlashAssetsV2] Invalid response format:', data);
       throw new Error('Invalid response format from enhanced flash assets V2');
     }
 
-    console.log(`✅ [EnhancedFlashAssetsV2] Successfully fetched ${data.assets.length} enhanced assets`);
-    console.log(`📊 [EnhancedFlashAssetsV2] Metadata:`, data.metadata);
+    console.log(`✅ [EnhancedFlashAssetsV2] Successfully fetched ${assets.length} enhanced assets`);
+    if ((data as any)?.metadata) {
+      console.log(`📊 [EnhancedFlashAssetsV2] Metadata:`, (data as any).metadata);
+    }
     
-    return data.assets;
+    return assets;
     
   } catch (error) {
     console.error('❌ [EnhancedFlashAssetsV2] Error:', error);
