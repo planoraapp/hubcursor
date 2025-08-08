@@ -20,93 +20,60 @@ interface AvatarWidgetProps {
 }
 
 export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
-  // Usar a função getAvatarUrl com o hotel correto
-  const avatarUrl = getAvatarUrl(habboData.name, habboData.figureString, habboData.hotel);
+  const hotel = habboData.hotel;
+  const baseUrl = `https://www.${hotel === 'com' ? 'habbo.com' : hotel === 'br' ? 'habbo.com.br' : hotel}.`;
+  const apiUrl = `https://www.${hotel === 'br' ? 'habbo.com.br' : hotel === 'com' ? 'habbo.com' : `${hotel}`}`;
+  const imageBase = `https://www.${hotel === 'br' ? 'habbo.com.br' : hotel === 'com' ? 'habbo.com' : `${hotel}`}`;
+  const avatarUrl = habboData.figureString
+    ? `${imageBase}/habbo-imaging/avatarimage?figure=${encodeURIComponent(habboData.figureString)}&direction=4&head_direction=4&size=l`
+    : `${imageBase}/habbo-imaging/avatarimage?user=${encodeURIComponent(habboData.name)}&direction=4&head_direction=4&size=l`;
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-b-2 border-black">
-        <CardTitle className="text-lg volter-font habbo-outline-lg flex items-center gap-2">
-          👤 Perfil do Habbo
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex flex-col items-center space-y-4">
-          {/* Avatar */}
-          <div className="w-24 h-32 bg-gray-200 rounded-lg overflow-hidden">
-            <img 
-              src={avatarUrl} 
-              alt={`Avatar de ${habboData.name}`}
-              className="w-full h-full object-cover"
-              style={{ imageRendering: 'pixelated' }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/assets/frank.png';
-              }}
-            />
+    <Card className="bg-white shadow-xl border rounded-xl overflow-hidden">
+      <div className="flex items-stretch">
+        {/* Avatar à esquerda, virado para a esquerda */}
+        <div className="w-28 bg-slate-100 border-r flex items-center justify-center">
+          <img 
+            src={avatarUrl} 
+            alt={`Avatar de ${habboData.name}`}
+            className="w-24 h-28 object-contain"
+            style={{ imageRendering: 'pixelated' }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = '/assets/frank.png';
+            }}
+          />
+        </div>
+
+        {/* Conteúdo do card */}
+        <div className="flex-1 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg volter-font text-slate-800">{habboData.name}</h3>
+            <Badge 
+              className={`volter-font ${habboData.online ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'}`}
+            >
+              {habboData.online ? 'Online' : 'Offline'}
+            </Badge>
           </div>
-          
-          {/* Name and Status */}
-          <div className="text-center">
-            <h3 className="text-xl volter-font font-bold text-blue-600">{habboData.name}</h3>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              <Badge 
-                className={`volter-font ${
-                  habboData.online 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-gray-400 text-white'
-                }`}
-              >
-                {habboData.online ? '🟢 Online' : '🔴 Offline'}
-              </Badge>
-            </div>
-          </div>
-          
-          {/* Motto */}
-          <div className="text-center bg-gray-50 p-3 rounded-lg w-full">
-            <p className="text-sm volter-font text-gray-700 italic">
-              "{habboData.motto || 'Sem missão definida'}"
-            </p>
-          </div>
-          
-          {/* Info */}
-          <div className="w-full space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
-              <MapPin className="w-4 h-4" />
-              <span className="volter-font">Hotel {habboData.hotel.toUpperCase()}</span>
-            </div>
+
+          <p className="text-sm volter-font text-slate-700 italic truncate">
+            “{habboData.motto || 'Sem missão definida'}”
+          </p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 volter-font">
             {habboData.memberSince && (
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                <span className="volter-font">Membro desde {new Date(habboData.memberSince).getFullYear()}</span>
+                <span>Membro desde {new Date(habboData.memberSince).getFullYear()}</span>
               </div>
             )}
-          </div>
-          
-          {/* Badges */}
-          {habboData.selectedBadges && habboData.selectedBadges.length > 0 && (
-            <div className="w-full">
-              <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 px-3 py-1 rounded-full mb-2">
-                <h4 className="text-sm volter-font text-white habbo-outline-sm font-bold text-center">
-                  Emblemas
-                </h4>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {habboData.selectedBadges.slice(0, 6).map((badge: any, index: number) => (
-                  <div key={index} className="w-12 h-12 bg-gray-100 rounded border flex items-center justify-center">
-                    <img 
-                      src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
-                      alt={badge.name}
-                      className="w-8 h-8"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              <span>Hotel {hotel.toUpperCase()}</span>
             </div>
-          )}
+          </div>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 };

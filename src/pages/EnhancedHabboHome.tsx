@@ -287,38 +287,53 @@ const EnhancedHabboHome = () => {
                   )}
                 </div>
 
-                {/* Dynamic Widgets Area */}
-                <div className="absolute left-96 top-4 right-4 bottom-4 overflow-hidden">
-                  {widgets.map(widget => (
-                    <OptimizedDraggableWidget
-                      key={widget.id}
-                      id={widget.id}
-                      x={widget.x}
-                      y={widget.y}
-                      width={widget.width}
-                      height={widget.height}
-                      zIndex={widget.z_index}
-                      isEditMode={isEditMode}
-                      onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
-                      onRemove={() => removeWidget(widget.id)}
-                      sizeRestrictions={{
-                        minWidth: 200,
-                        maxWidth: 600,
-                        minHeight: 150,
-                        maxHeight: 400,
-                        resizable: true
-                      }}
-                    >
-                      <Card className="bg-white/90 backdrop-blur-sm shadow-md h-full">
-                        <CardHeader>
-                          <CardTitle className="volter-font">{widget.title || 'Widget'}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm volter-font">{widget.content || 'Widget content'}</p>
-                        </CardContent>
-                      </Card>
-                    </OptimizedDraggableWidget>
-                  ))}
+                {/* Dynamic Widgets & Stickers Canvas (full area) */}
+                <div className="absolute left-4 top-4 right-4 bottom-4 overflow-hidden">
+                  {widgets.map(widget => {
+                    const isCore = widget.widget_id === 'avatar' || widget.widget_id === 'guestbook';
+
+                    return (
+                      <OptimizedDraggableWidget
+                        key={widget.id}
+                        id={widget.id}
+                        x={widget.x}
+                        y={widget.y}
+                        width={widget.width}
+                        height={widget.height}
+                        zIndex={widget.z_index}
+                        isEditMode={isEditMode}
+                        onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
+                        {...(!isCore && { onRemove: () => removeWidget(widget.id) })}
+                        sizeRestrictions={{
+                          minWidth: isCore ? 280 : 200,
+                          maxWidth: isCore ? 450 : 600,
+                          minHeight: isCore ? 250 : 150,
+                          maxHeight: isCore ? 400 : 400,
+                          resizable: !isCore
+                        }}
+                      >
+                        {widget.widget_id === 'avatar' ? (
+                          <AvatarWidget habboData={enhancedHabboData} />
+                        ) : widget.widget_id === 'guestbook' ? (
+                          <GuestbookWidget 
+                            habboData={enhancedHabboData}
+                            guestbook={guestbook}
+                            onAddEntry={addGuestbookEntry}
+                            isOwner={isOwner}
+                          />
+                        ) : (
+                          <Card className="bg-white/90 backdrop-blur-sm shadow-md h-full">
+                            <CardHeader>
+                              <CardTitle className="volter-font">{widget.title || 'Widget'}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-sm volter-font">{widget.content || 'Widget content'}</p>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </OptimizedDraggableWidget>
+                    );
+                  })}
                   
                   {/* Stickers */}
                   {stickers.map(sticker => (

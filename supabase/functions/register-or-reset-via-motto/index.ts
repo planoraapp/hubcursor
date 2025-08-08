@@ -128,7 +128,25 @@ serve(async (req) => {
     const detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
     console.log(`🏨 Hotel detectado: ${detectedHotel}`);
 
-    if (action === 'register') {
+    // Verificar existência da conta para definir modo automaticamente quando action não for informado
+    const { data: existingAccount } = await supabase
+      .from('habbo_accounts')
+      .select('supabase_user_id')
+      .ilike('habbo_name', habboName)
+      .eq('hotel', detectedHotel)
+      .maybeSingle();
+
+    const mode = action || (existingAccount ? 'reset' : 'register');
+
+    // Validar senha para ambos os modos
+    if (!newPassword || String(newPassword).length < 6) {
+      return new Response(
+        JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (mode === 'register') {
       // Verificar se já existe conta para este usuário neste hotel
       const { data: existingAccount } = await supabase
         .from('habbo_accounts')
@@ -193,7 +211,7 @@ serve(async (req) => {
       }
 
       console.log(`✅ Registro bem-sucedido para ${habboName} no hotel ${detectedHotel}`);
-    } else if (action === 'reset') {
+    } else if (mode === 'reset') {
       if (!newPassword || String(newPassword).length < 6) {
         return new Response(
           JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
