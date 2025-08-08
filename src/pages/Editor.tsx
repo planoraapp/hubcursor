@@ -5,12 +5,13 @@ import { PageHeader } from '../components/PageHeader';
 import EditorShell from '../components/Editor/EditorShell';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
+import HabboTemplariosEditor from '../components/HabboEditor/HabboTemplariosEditor';
 
 const Editor = () => {
   const [activeSection, setActiveSection] = useState('editor');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
-
+  const [activeTab, setActiveTab] = useState<'original' | 'templarios'>('original');
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -30,8 +31,16 @@ const Editor = () => {
             title="Editor de Avatar - HabboHub"
             icon="/assets/editorvisuais.png"
           />
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200 shadow-lg overflow-hidden">
-            <EditorShell />
+          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200 shadow-lg overflow-hidden p-3">
+            <div className="flex gap-2 mb-3">
+              <button className={`px-3 py-2 rounded border ${activeTab === 'original' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('original')}>Editor Atual</button>
+              <button className={`px-3 py-2 rounded border ${activeTab === 'templarios' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('templarios')}>HabboTemplarios</button>
+            </div>
+            {activeTab === 'original' ? (
+              <EditorShell />
+            ) : (
+              <HabboTemplariosEditor />
+            )}
           </div>
         </div>
       </MobileLayout>
@@ -48,7 +57,15 @@ const Editor = () => {
             icon="/assets/editorvisuais.png"
           />
           <div className="bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm rounded-lg border-2 border-purple-200 shadow-xl p-4 md:p-6 h-full overflow-hidden">
-            <EditorShell />
+            <div className="flex gap-2 mb-4">
+              <button className={`px-3 py-2 rounded border ${activeTab === 'original' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('original')}>Editor Atual</button>
+              <button className={`px-3 py-2 rounded border ${activeTab === 'templarios' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('templarios')}>HabboTemplarios</button>
+            </div>
+            {activeTab === 'original' ? (
+              <EditorShell />
+            ) : (
+              <HabboTemplariosEditor />
+            )}
           </div>
         </main>
       </div>
