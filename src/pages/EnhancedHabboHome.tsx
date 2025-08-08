@@ -1,9 +1,9 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
 import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
 import { OptimizedDraggableWidget } from '../components/HabboHome/OptimizedDraggableWidget';
@@ -34,10 +34,6 @@ const EnhancedHabboHome = () => {
   const [showStickers, setShowStickers] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
 
-  // Undo/Redo system
-  const [actionHistory, setActionHistory] = useState<any[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-
   const normalizedUsername = username?.trim() || '';
 
   const {
@@ -56,7 +52,10 @@ const EnhancedHabboHome = () => {
     setIsEditMode,
     isOwner,
     addGuestbookEntry,
-    setStickers
+    setStickers,
+    handleStickerDrop,
+    handleStickerPositionChange,
+    handleBackgroundChange
   } = useEnhancedHabboHome(normalizedUsername);
 
   useEffect(() => {
@@ -81,95 +80,14 @@ const EnhancedHabboHome = () => {
     }
   }, [error, toast]);
 
-  // Background management
-  const handleBackgroundChange = useCallback(async (newBackground: { type: 'color' | 'repeat' | 'cover'; value: string }) => {
-    if (!isOwner || !habboData) return;
-
+  // Enhanced sticker drop handler with proper error handling
+  const handleStickerDropWithFeedback = useCallback(async (stickerData: any) => {
     try {
-      const { error } = await supabase
-        .from('user_home_backgrounds')
-        .upsert({
-          user_id: habboData.id,
-          background_type: newBackground.type,
-          background_value: newBackground.value
-        });
-
-      if (error) {
-        console.error('Error updating background:', error);
-        toast({
-          title: "Erro",
-          description: "Erro ao alterar background",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Background Alterado",
-          description: "O fundo da sua home foi alterado com sucesso!",
-        });
-      }
+      await handleStickerDrop(stickerData);
     } catch (error) {
-      console.error('Error in handleBackgroundChange:', error);
+      console.error('Failed to add sticker:', error);
     }
-  }, [isOwner, habboData, toast]);
-
-  // Sticker management
-  const handleStickerDrop = useCallback(async (stickerData: any) => {
-    if (!isOwner || !habboData) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('user_stickers')
-        .insert({
-          user_id: habboData.id,
-          sticker_id: stickerData.sticker_id,
-          sticker_src: stickerData.sticker_src,
-          category: stickerData.category,
-          x: stickerData.x,
-          y: stickerData.y,
-          z_index: stickerData.z_index,
-          rotation: stickerData.rotation || 0,
-          scale: stickerData.scale || 1
-        })
-        .select()
-        .single();
-
-      if (!error && data) {
-        setStickers(prev => [...prev, data]);
-        
-        toast({
-          title: "Sticker Adicionado",
-          description: "Sticker adicionado à sua home!",
-        });
-      } else {
-        console.error('Error adding sticker:', error);
-      }
-    } catch (error) {
-      console.error('Error in handleStickerDrop:', error);
-    }
-  }, [isOwner, habboData, setStickers, toast]);
-
-  const handleStickerPositionChange = useCallback(async (stickerId: string, x: number, y: number) => {
-    if (!isOwner) return;
-
-    try {
-      const { error } = await supabase
-        .from('user_stickers')
-        .update({ x, y })
-        .eq('id', stickerId);
-
-      if (!error) {
-        setStickers(prev => 
-          prev.map(sticker => 
-            sticker.id === stickerId 
-              ? { ...sticker, x, y }
-              : sticker
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error updating sticker position:', error);
-    }
-  }, [isOwner, setStickers]);
+  }, [handleStickerDrop]);
 
   const handleStickerZIndexChange = useCallback(async (stickerId: string, zIndex: number) => {
     if (!isOwner) return;
@@ -177,14 +95,14 @@ const EnhancedHabboHome = () => {
     try {
       const { error } = await supabase
         .from('user_stickers')
-        .update({ z_index: zIndex })
+        .update({ z_index: Math.round(zIndex) })
         .eq('id', stickerId);
 
       if (!error) {
         setStickers(prev => 
           prev.map(sticker => 
             sticker.id === stickerId 
-              ? { ...sticker, z_index: zIndex }
+              ? { ...sticker, z_index: Math.round(zIndex) }
               : sticker
           )
         );
@@ -231,9 +149,7 @@ const EnhancedHabboHome = () => {
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg volter-font text-white" style={{
-            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-          }}>
+          <div className="text-lg volter-font text-white pixel-outline-lg">
             Carregando Enhanced Habbo Home de {normalizedUsername}...
           </div>
         </div>
@@ -249,7 +165,7 @@ const EnhancedHabboHome = () => {
           <CardContent className="pt-6">
             <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl volter-font mb-2">Enhanced Habbo Home não encontrada</h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-4 volter-font">
               O usuário "{normalizedUsername}" não foi encontrado ou não possui uma Habbo Home.
             </p>
             <div className="space-y-2">
@@ -307,17 +223,66 @@ const EnhancedHabboHome = () => {
                 {/* Edit Mode Help Bar */}
                 <EditModeHelpBar isVisible={isEditMode} />
 
-                {/* Fixed Sidebar Widgets */}
+                {/* Fixed Sidebar Widgets - now draggable */}
                 <div className="absolute left-4 top-4 w-80 flex flex-col gap-4 z-10">
-                  <div style={{ transform: 'scale(1.2)' }}>
-                    <AvatarWidget habboData={enhancedHabboData} />
-                  </div>
-                  <GuestbookWidget 
-                    habboData={enhancedHabboData}
-                    guestbook={guestbook}
-                    onAddEntry={addGuestbookEntry}
-                    isOwner={isOwner}
-                  />
+                  {isEditMode ? (
+                    <>
+                      <OptimizedDraggableWidget
+                        id="avatar-widget"
+                        x={20}
+                        y={20}
+                        width={320}
+                        height={280}
+                        zIndex={10}
+                        isEditMode={isEditMode}
+                        onPositionChange={(x, y) => console.log('Avatar widget moved to:', x, y)}
+                        sizeRestrictions={{
+                          minWidth: 280,
+                          maxWidth: 400,
+                          minHeight: 250,
+                          maxHeight: 350,
+                          resizable: false
+                        }}
+                      >
+                        <AvatarWidget habboData={enhancedHabboData} />
+                      </OptimizedDraggableWidget>
+                      
+                      <OptimizedDraggableWidget
+                        id="guestbook-widget"
+                        x={20}
+                        y={320}
+                        width={380}
+                        height={320}
+                        zIndex={10}
+                        isEditMode={isEditMode}
+                        onPositionChange={(x, y) => console.log('Guestbook widget moved to:', x, y)}
+                        sizeRestrictions={{
+                          minWidth: 340,
+                          maxWidth: 450,
+                          minHeight: 280,
+                          maxHeight: 400,
+                          resizable: false
+                        }}
+                      >
+                        <GuestbookWidget 
+                          habboData={enhancedHabboData}
+                          guestbook={guestbook}
+                          onAddEntry={addGuestbookEntry}
+                          isOwner={isOwner}
+                        />
+                      </OptimizedDraggableWidget>
+                    </>
+                  ) : (
+                    <>
+                      <AvatarWidget habboData={enhancedHabboData} />
+                      <GuestbookWidget 
+                        habboData={enhancedHabboData}
+                        guestbook={guestbook}
+                        onAddEntry={addGuestbookEntry}
+                        isOwner={isOwner}
+                      />
+                    </>
+                  )}
                 </div>
 
                 {/* Dynamic Widgets Area */}
@@ -347,7 +312,7 @@ const EnhancedHabboHome = () => {
                           <CardTitle className="volter-font">{widget.title || 'Widget'}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-sm">{widget.content || 'Widget content'}</p>
+                          <p className="text-sm volter-font">{widget.content || 'Widget content'}</p>
                         </CardContent>
                       </Card>
                     </OptimizedDraggableWidget>
@@ -382,7 +347,7 @@ const EnhancedHabboHome = () => {
                             🏠
                           </div>
                           <h3 className="text-xl volter-font mb-2">Área Livre para Personalização</h3>
-                          <p className="text-gray-600 mb-4">
+                          <p className="text-gray-600 mb-4 volter-font">
                             Esta área está pronta para seus widgets e stickers!
                           </p>
                           {isOwner && (
@@ -419,7 +384,7 @@ const EnhancedHabboHome = () => {
       <EnhancedStickerInventory
         isOpen={showStickers}
         onClose={() => setShowStickers(false)}
-        onStickerDrop={handleStickerDrop}
+        onStickerDrop={handleStickerDropWithFeedback}
       />
 
       <WidgetSelector
@@ -450,7 +415,7 @@ const EnhancedHabboHome = () => {
           {/* Edit Mode Help for Mobile */}
           {isEditMode && (
             <div className="mb-4 p-3 bg-yellow-50 border border-yellow-400 rounded-lg">
-              <div className="text-xs volter-font text-center space-y-1">
+              <div className="text-xs volter-font text-center space-y-1 text-gray-800">
                 <div>🔧 <strong>Modo Edição Ativo</strong></div>
                 <div>Use os botões do cabeçalho para personalizar</div>
               </div>
@@ -479,7 +444,7 @@ const EnhancedHabboHome = () => {
         <EnhancedStickerInventory
           isOpen={showStickers}
           onClose={() => setShowStickers(false)}
-          onStickerDrop={handleStickerDrop}
+          onStickerDrop={handleStickerDropWithFeedback}
         />
 
         <WidgetSelector

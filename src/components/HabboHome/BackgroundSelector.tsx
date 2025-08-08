@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +20,16 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
   onSelectBackground,
   currentBackground
 }) => {
-  const { assets, loading, getAssetUrl } = useHomeAssets();
+  const { assets, loading, getAssetUrl, syncAssets } = useHomeAssets();
   const [selectedTab, setSelectedTab] = useState<'colors' | 'patterns' | 'images'>('colors');
+  const [syncing, setSyncing] = useState(false);
+
+  // Auto-sync assets when modal opens if no background assets are available
+  useEffect(() => {
+    if (isOpen && !assets['Papel de Parede']?.length && !loading) {
+      handleSync();
+    }
+  }, [isOpen, assets, loading]);
 
   // Predefined color palette
   const colors = [
@@ -47,6 +55,17 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
     onSelectBackground({ type: 'cover', value: imageUrl });
   };
 
+  const handleSync = async () => {
+    try {
+      setSyncing(true);
+      await syncAssets();
+    } catch (error) {
+      console.error('Error syncing assets:', error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const backgroundAssets = assets['Papel de Parede'] || [];
   
   // Separate patterns (small, repeatable) from full images
@@ -67,6 +86,17 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
             <Badge className="bg-blue-100 text-blue-800">
               {backgroundAssets.length} fundos disponíveis
             </Badge>
+            {backgroundAssets.length === 0 && (
+              <Button
+                onClick={handleSync}
+                disabled={syncing}
+                size="sm"
+                variant="outline"
+                className="ml-auto volter-font"
+              >
+                {syncing ? '🔄' : '🔄'} {syncing ? 'Carregando...' : 'Carregar Fundos'}
+              </Button>
+            )}
           </DialogTitle>
           <DialogDescription className="text-gray-600 volter-font">
             Escolha uma cor sólida, padrão repetitivo ou imagem de fundo para personalizar sua Habbo Home
@@ -76,18 +106,18 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
         <div className="flex-1 overflow-hidden">
           <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as any)} className="h-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
-              <TabsTrigger value="colors" className="flex items-center gap-2">
+              <TabsTrigger value="colors" className="flex items-center gap-2 volter-font">
                 <span>🎨</span>
-                <span className="volter-font">Cores Sólidas</span>
+                <span>Cores Sólidas</span>
               </TabsTrigger>
-              <TabsTrigger value="patterns" className="flex items-center gap-2">
+              <TabsTrigger value="patterns" className="flex items-center gap-2 volter-font">
                 <span>🔄</span>
-                <span className="volter-font">Padrões</span>
+                <span>Padrões</span>
                 <Badge variant="secondary">{patterns.length}</Badge>
               </TabsTrigger>
-              <TabsTrigger value="images" className="flex items-center gap-2">
+              <TabsTrigger value="images" className="flex items-center gap-2 volter-font">
                 <span>🖼️</span>
-                <span className="volter-font">Imagens</span>
+                <span>Imagens</span>
                 <Badge variant="secondary">{images.length}</Badge>
               </TabsTrigger>
             </TabsList>
@@ -96,7 +126,7 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
             <TabsContent value="colors" className="h-[calc(100%-60px)]">
               <div className="mb-3">
                 <h3 className="font-bold text-lg volter-font mb-2">Cores Sólidas</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 volter-font">
                   Selecione uma cor sólida para o fundo da sua home
                 </p>
               </div>
@@ -130,15 +160,16 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
             <TabsContent value="patterns" className="h-[calc(100%-60px)]">
               <div className="mb-3">
                 <h3 className="font-bold text-lg volter-font mb-2">Padrões Repetitivos</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 volter-font">
                   Padrões pequenos que se repetem por toda a home
                 </p>
               </div>
               
               <ScrollArea className="h-[calc(100%-80px)]">
-                {loading ? (
+                {loading || syncing ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 volter-font">Carregando padrões...</span>
                   </div>
                 ) : (
                   <div className="grid grid-cols-6 gap-4 p-2">
@@ -181,15 +212,16 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
             <TabsContent value="images" className="h-[calc(100%-60px)]">
               <div className="mb-3">
                 <h3 className="font-bold text-lg volter-font mb-2">Imagens de Fundo</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 volter-font">
                   Imagens completas que cobrem toda a área da home
                 </p>
               </div>
               
               <ScrollArea className="h-[calc(100%-80px)]">
-                {loading ? (
+                {loading || syncing ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 volter-font">Carregando imagens...</span>
                   </div>
                 ) : (
                   <div className="grid grid-cols-4 gap-4 p-2">
@@ -233,7 +265,7 @@ export const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
         
         <div className="flex items-center justify-between text-sm text-gray-600 volter-font pt-3 border-t">
           <span>💡 Dica: Use padrões para texturas sutis e imagens para fundos temáticos</span>
-          <Button onClick={onClose} variant="outline">
+          <Button onClick={onClose} variant="outline" className="volter-font">
             Fechar
           </Button>
         </div>

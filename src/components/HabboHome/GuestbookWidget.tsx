@@ -110,21 +110,21 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
   };
 
   return (
-    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-      <CardHeader className="bg-gradient-to-r from-green-500 to-teal-500 text-white">
-        <CardTitle className="volter-font text-center flex items-center justify-center gap-2">
-          <MessageSquare className="w-5 h-5" />
+    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black max-w-md">
+      <CardHeader className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-3">
+        <CardTitle className="volter-font text-center flex items-center justify-center gap-2 text-lg">
+          <MessageSquare className="w-4 h-4" />
           Livro de Visitas
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         {/* Entries List */}
-        <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+        <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
           {guestbook && guestbook.length > 0 ? (
             guestbook.map((entry) => (
-              <div key={entry.id} className="bg-gray-50 p-3 rounded-lg border">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-semibold text-sm text-blue-600">
+              <div key={entry.id} className="bg-gray-50 p-2 rounded-lg border">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="font-semibold text-xs text-blue-600 volter-font">
                     {entry.author_habbo_name}
                   </span>
                   <span className="text-xs text-gray-500">
@@ -135,9 +135,9 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
               </div>
             ))
           ) : (
-            <div className="text-center py-6 text-gray-500">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhuma mensagem ainda</p>
+            <div className="text-center py-4 text-gray-500">
+              <MessageSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
+              <p className="text-sm volter-font">Nenhuma mensagem ainda</p>
               <p className="text-xs">Seja o primeiro a deixar uma mensagem!</p>
             </div>
           )}
@@ -145,34 +145,34 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
 
         {/* Add Message Form */}
         {isLoggedIn ? (
-          <div className="space-y-3 border-t pt-4">
+          <div className="space-y-2 border-t pt-3">
             <Textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Deixe uma mensagem para este usuário..."
-              className="resize-none"
-              rows={3}
+              placeholder="Deixe uma mensagem..."
+              className="resize-none text-sm"
+              rows={2}
               maxLength={200}
               disabled={isSubmitting}
             />
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-500">
-                {newMessage.length}/200 caracteres
+                {newMessage.length}/200
               </span>
               <Button 
                 onClick={handleSubmitMessage}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 volter-font"
                 disabled={isSubmitting || !newMessage.trim()}
               >
-                <Send className="w-4 h-4 mr-1" />
+                <Send className="w-3 h-3 mr-1" />
                 {isSubmitting ? 'Enviando...' : 'Enviar'}
               </Button>
             </div>
           </div>
         ) : (
-          <div className="text-center py-4 border-t">
-            <p className="text-sm text-gray-500 mb-2">
+          <div className="text-center py-3 border-t">
+            <p className="text-sm text-gray-500 volter-font">
               Faça login para deixar uma mensagem
             </p>
           </div>

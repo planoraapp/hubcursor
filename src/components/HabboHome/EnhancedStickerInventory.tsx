@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,13 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
   const { assets, loading, getAssetUrl, syncAssets } = useHomeAssets();
   const [selectedCategory, setSelectedCategory] = useState<'Stickers' | 'Mockups' | 'Montáveis' | 'Ícones' | 'Animados'>('Stickers');
   const [syncing, setSyncing] = useState(false);
+
+  // Auto-sync assets when modal opens if no assets are available
+  useEffect(() => {
+    if (isOpen && Object.values(assets).flat().length === 0 && !loading) {
+      handleSync();
+    }
+  }, [isOpen, assets, loading]);
 
   const categories = [
     { id: 'Stickers', label: 'Stickers', icon: '✨', count: assets.Stickers?.length || 0 },
@@ -71,7 +78,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
               disabled={syncing}
               size="sm"
               variant="outline"
-              className="ml-auto"
+              className="ml-auto volter-font"
             >
               {syncing ? '🔄' : '🔄'} {syncing ? 'Sincronizando...' : 'Sincronizar'}
             </Button>
@@ -88,10 +95,10 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
                 <TabsTrigger 
                   key={category.id} 
                   value={category.id}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 volter-font"
                 >
                   <span>{category.icon}</span>
-                  <span className="volter-font">{category.label}</span>
+                  <span>{category.label}</span>
                   <Badge variant="secondary" className="text-xs">
                     {category.count}
                   </Badge>
@@ -111,7 +118,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
                 </div>
                 
                 <ScrollArea className="h-[calc(100%-80px)]">
-                  {loading ? (
+                  {loading || syncing ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="ml-2 volter-font">Carregando {category.label.toLowerCase()}...</span>
@@ -155,7 +162,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
                             onClick={handleSync}
                             disabled={syncing}
                             size="sm"
-                            className="mt-4"
+                            className="mt-4 volter-font"
                           >
                             {syncing ? 'Sincronizando...' : 'Sincronizar Assets'}
                           </Button>
@@ -173,7 +180,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
           <span>💡 Dica: Clique em qualquer asset para adicioná-lo à sua home</span>
           <div className="flex gap-2">
             <span>🎯 Máximo: 50 stickers por home</span>
-            <Button onClick={onClose} variant="outline">
+            <Button onClick={onClose} variant="outline" className="volter-font">
               Fechar
             </Button>
           </div>

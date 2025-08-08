@@ -17,7 +17,7 @@ export const EditModeHelpBar: React.FC<EditModeHelpBarProps> = ({ isVisible }) =
           <Badge className="bg-yellow-500 text-black volter-font">
             🔧 Modo Edição
           </Badge>
-          <div className="flex items-center gap-6 text-sm volter-font">
+          <div className="flex items-center gap-6 text-sm volter-font text-gray-800">
             <div className="flex items-center gap-2">
               <span className="text-blue-600">✨</span>
               <span>Clique em <strong>Stickers</strong> para adicionar itens</span>

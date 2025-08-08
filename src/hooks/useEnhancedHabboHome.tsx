@@ -347,14 +347,14 @@ export const useEnhancedHabboHome = (username: string) => {
     try {
       const { error } = await supabase
         .from('user_home_layouts')
-        .update({ x, y })
+        .update({ x: Math.round(x), y: Math.round(y) })
         .eq('id', widgetId);
 
       if (!error) {
         setWidgets(prev => 
           prev.map(widget => 
             widget.id === widgetId 
-              ? { ...widget, x, y }
+              ? { ...widget, x: Math.round(x), y: Math.round(y) }
               : widget
           )
         );
@@ -406,6 +406,118 @@ export const useEnhancedHabboHome = (username: string) => {
     }
   };
 
+  // Fixed sticker drop with proper number handling
+  const handleStickerDrop = async (stickerData: any) => {
+    if (!isOwner || !habboData) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_stickers')
+        .insert({
+          user_id: habboData.id,
+          sticker_id: stickerData.sticker_id,
+          sticker_src: stickerData.sticker_src,
+          category: stickerData.category,
+          x: Math.round(stickerData.x || 100),
+          y: Math.round(stickerData.y || 100),
+          z_index: Math.round(stickerData.z_index || Date.now()),
+          rotation: Math.round(stickerData.rotation || 0),
+          scale: parseFloat((stickerData.scale || 1).toString())
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setStickers(prev => [...prev, data]);
+        
+        toast({
+          title: "Sticker Adicionado",
+          description: "Sticker adicionado à sua home!",
+        });
+        
+        return data;
+      } else {
+        console.error('Error adding sticker:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error in handleStickerDrop:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar sticker",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  // Fixed sticker position update
+  const handleStickerPositionChange = async (stickerId: string, x: number, y: number) => {
+    if (!isOwner) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_stickers')
+        .update({ x: Math.round(x), y: Math.round(y) })
+        .eq('id', stickerId);
+
+      if (!error) {
+        setStickers(prev => 
+          prev.map(sticker => 
+            sticker.id === stickerId 
+              ? { ...sticker, x: Math.round(x), y: Math.round(y) }
+              : sticker
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating sticker position:', error);
+    }
+  };
+
+  // Fixed background change with proper conflict handling
+  const handleBackgroundChange = async (newBackground: { type: 'color' | 'repeat' | 'cover'; value: string }) => {
+    if (!isOwner || !habboData) return;
+
+    try {
+      // Optimistic update
+      setBackground({
+        background_type: newBackground.type,
+        background_value: newBackground.value
+      });
+
+      const { error } = await supabase
+        .from('user_home_backgrounds')
+        .upsert({
+          user_id: habboData.id,
+          background_type: newBackground.type,
+          background_value: newBackground.value
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        console.error('Error updating background:', error);
+        // Revert on error
+        setBackground(prev => prev);
+        toast({
+          title: "Erro",
+          description: "Erro ao alterar background",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Background Alterado",
+          description: "O fundo da sua home foi alterado com sucesso!",
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleBackgroundChange:', error);
+      // Revert on error
+      setBackground(prev => prev);
+    }
+  };
+
   return {
     widgets,
     stickers,
@@ -422,12 +534,16 @@ export const useEnhancedHabboHome = (username: string) => {
     setWidgets,
     setStickers,
     setIsEditMode,
+    setBackground,
     
     addWidget,
     removeWidget,
     updateWidgetPosition,
     handleSaveLayout,
     
-    addGuestbookEntry
+    addGuestbookEntry,
+    handleStickerDrop,
+    handleStickerPositionChange,
+    handleBackgroundChange
   };
 };
