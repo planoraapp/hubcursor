@@ -1,16 +1,15 @@
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Crown } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { useFlashAssetsClothing } from '@/hooks/useFlashAssetsClothing';
-import { EnhancedColorPickerModal } from './EnhancedColorPickerModal';
-import { SkinColorBar } from './SkinColorBar';
-import { AvatarPreviewWithControls } from './AvatarPreviewWithControls';
-import { CloseButton } from '@/components/ui/close-button';
+import { ImprovedAvatarPreview } from './ImprovedAvatarPreview';
+import { SkinToneBar } from './SkinToneBar';
+import { ColorPickerPopover } from './ColorPickerPopover';
+import { GenderFilterButtons } from './GenderFilterButtons';
 
 interface FlashAssetsV3CompleteProps {
   selectedGender: 'M' | 'F';
@@ -24,7 +23,7 @@ interface FlashAssetsV3CompleteProps {
 }
 
 const FlashAssetsV3Complete = ({
-  selectedGender,
+  selectedGender: initialGender,
   selectedHotel,
   onItemSelect,
   selectedItem,
@@ -34,8 +33,8 @@ const FlashAssetsV3Complete = ({
 }: FlashAssetsV3CompleteProps) => {
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [searchTerm, setSearchTerm] = useState('');
-  const [colorModalOpen, setColorModalOpen] = useState(false);
-  const [colorModalItem, setColorModalItem] = useState<any>(null);
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>(initialGender);
+  const [skinTone, setSkinTone] = useState('1');
 
   const { data: flashData, isLoading, error } = useFlashAssetsClothing({ 
     limit: 500, 
@@ -43,76 +42,77 @@ const FlashAssetsV3Complete = ({
     search: searchTerm 
   });
 
-  // Category configuration with new editor images
+  // Category configuration with editor images
   const categories = {
     'hd': { 
       name: 'Rostos', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/head.png',
-      items: flashData?.filter(item => item.category === 'hd') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/head.png'
     },
     'hr': { 
       name: 'Cabelos', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/hair.png',
-      items: flashData?.filter(item => item.category === 'hr') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/hair.png'
     },
     'ch': { 
       name: 'Camisetas', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/shirt.png',
-      items: flashData?.filter(item => item.category === 'ch') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/shirt.png'
     },
     'lg': { 
       name: 'Calças', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/pants.png',
-      items: flashData?.filter(item => item.category === 'lg') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/pants.png'
     },
     'sh': { 
       name: 'Sapatos', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/shoes.png',
-      items: flashData?.filter(item => item.category === 'sh') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/shoes.png'
     },
     'ha': { 
       name: 'Chapéus', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/hat.png',
-      items: flashData?.filter(item => item.category === 'ha') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/hat.png'
     },
     'ea': { 
       name: 'Óculos', 
-      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/glasses.png',
-      items: flashData?.filter(item => item.category === 'ea') || []
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/glasses.png'
     }
   };
 
   const categoryList = Object.keys(categories);
-  const currentCategory = categories[selectedCategory as keyof typeof categories];
 
-  // Filter items by search term
+  // Filter items by search term and gender
   const filteredItems = useMemo(() => {
-    if (!currentCategory) return [];
+    if (!flashData) return [];
     
-    return currentCategory.items.filter(item =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.figureId.includes(searchTerm)
-    );
-  }, [currentCategory, searchTerm]);
+    return flashData.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.figureId.includes(searchTerm);
+      const matchesGender = selectedGender === 'U' || 
+                           item.gender === 'U' || 
+                           item.gender === selectedGender;
+      return matchesSearch && matchesGender;
+    });
+  }, [flashData, searchTerm, selectedGender]);
 
   const getItemThumbnailUrl = (item: any) => {
-    return item.imageUrl || `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&direction=2&head_direction=2&size=l`;
+    // Focus on individual piece without full avatar
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&direction=2&head_direction=2&size=s`;
   };
 
-  const handleItemClick = (item: any) => {
-    if (item.colors.length > 1) {
-      // Open color modal if item has multiple colors
-      setColorModalItem(item);
-      setColorModalOpen(true);
-    } else {
-      // Apply item with default color
-      onItemSelect(item, item.colors[0] || '1');
-    }
+  const handleItemClick = (item: any, colorId: string = selectedColor) => {
+    onItemSelect(item, colorId);
   };
 
-  const handleColorSelect = (colorId: string) => {
-    if (colorModalItem) {
-      onItemSelect(colorModalItem, colorId);
+  const handleSkinToneChange = (newTone: string) => {
+    setSkinTone(newTone);
+    // Apply skin tone to current figure
+    const currentParts = currentFigureString.split('.');
+    const updatedParts = currentParts.map(part => {
+      if (part.startsWith('hd-')) {
+        const [category, id] = part.split('-');
+        return `${category}-${id}-${newTone}`;
+      }
+      return part;
+    });
+    
+    if (onRestoreFigure) {
+      onRestoreFigure(updatedParts.join('.'));
     }
   };
 
@@ -121,7 +121,7 @@ const FlashAssetsV3Complete = ({
       <div className={`flex items-center justify-center h-full ${className}`}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-600">Carregando assets flash...</p>
+          <p className="text-sm text-gray-600">Carregando assets...</p>
         </div>
       </div>
     );
@@ -132,13 +132,12 @@ const FlashAssetsV3Complete = ({
       <div className={`flex items-center justify-center h-full ${className}`}>
         <div className="text-center text-red-500">
           <img 
-            src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/erro 404.png"
+            src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/erro%20404.png"
             alt="Erro"
             className="w-16 h-16 mx-auto mb-2"
             style={{ imageRendering: 'pixelated' }}
           />
           <p>❌ Erro ao carregar assets</p>
-          <p className="text-sm">Flash assets indisponíveis</p>
         </div>
       </div>
     );
@@ -146,40 +145,37 @@ const FlashAssetsV3Complete = ({
 
   return (
     <div className={`h-full flex flex-col ${className}`}>
-      {/* Enhanced Avatar Preview */}
+      {/* Avatar Preview */}
       <div className="mb-4">
-        <AvatarPreviewWithControls
+        <ImprovedAvatarPreview
           figureString={currentFigureString}
-          selectedGender={selectedGender}
+          selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
           selectedHotel={selectedHotel}
+          onRandomize={() => console.log('Randomize')}
+          onCopy={() => navigator.clipboard.writeText(currentFigureString)}
+          onDownload={() => console.log('Download')}
         />
       </div>
 
+      {/* Skin Tone Bar */}
+      <SkinToneBar
+        selectedSkinTone={skinTone}
+        onSkinToneSelect={handleSkinToneChange}
+        selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
+        selectedHotel={selectedHotel}
+      />
+
+      {/* Gender Filter */}
+      <GenderFilterButtons
+        selectedGender={selectedGender}
+        onGenderSelect={setSelectedGender}
+      />
+
       {/* Main Content */}
       <Card className="flex-1 flex flex-col">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <img 
-                src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/flash.png"
-                alt="Flash Assets"
-                className="w-6 h-6"
-                style={{ imageRendering: 'pixelated' }}
-              />
-              Flash Assets ViaJovem
-            </CardTitle>
-            <div className="flex gap-2">
-              <Badge variant="outline">
-                {categoryList.length} categorias
-              </Badge>
-              <Badge variant="secondary">
-                {flashData?.length || 0} itens
-              </Badge>
-            </div>
-          </div>
-          
+        <CardContent className="flex-1 flex flex-col p-4">
           {/* Search */}
-          <div className="relative">
+          <div className="relative mb-4">
             <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Buscar itens..."
@@ -188,25 +184,21 @@ const FlashAssetsV3Complete = ({
               className="pl-10"
             />
           </div>
-        </CardHeader>
-        
-        <CardContent className="flex-1 flex flex-col">
+          
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col">
-            {/* Category Tabs with Images */}
+            {/* Category Tabs with Icons Only */}
             <TabsList className="grid grid-cols-7 mb-4">
               {categoryList.map(categoryId => {
                 const category = categories[categoryId as keyof typeof categories];
                 return (
-                  <TabsTrigger key={categoryId} value={categoryId} className="text-xs p-2">
-                    <div className="flex flex-col items-center gap-1">
-                      <img 
-                        src={category.icon}
-                        alt={category.name}
-                        className="w-6 h-6"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
-                      <span className="text-[10px]">{category.name}</span>
-                    </div>
+                  <TabsTrigger key={categoryId} value={categoryId} className="p-2">
+                    <img 
+                      src={category.icon}
+                      alt={category.name}
+                      className="w-6 h-6"
+                      style={{ imageRendering: 'pixelated' }}
+                      title={category.name}
+                    />
                   </TabsTrigger>
                 );
               })}
@@ -215,97 +207,67 @@ const FlashAssetsV3Complete = ({
             {/* Items Grid */}
             {categoryList.map(categoryId => (
               <TabsContent key={categoryId} value={categoryId} className="flex-1">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium flex items-center gap-2">
-                      <img 
-                        src={categories[categoryId as keyof typeof categories].icon}
-                        alt=""
-                        className="w-5 h-5"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
-                      {categories[categoryId as keyof typeof categories].name}
-                    </h3>
-                    <Badge variant="outline">
-                      {filteredItems.length} itens
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-8 gap-2 max-h-80 overflow-y-auto">
-                    {filteredItems.map((item) => (
-                      <div key={item.id} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={`w-12 h-12 p-0 relative border-2 transition-all duration-200 ${
-                            selectedItem === item.figureId 
-                              ? 'border-blue-500 ring-2 ring-blue-300 scale-105 bg-blue-50' 
-                              : 'border-gray-200 hover:border-gray-400'
-                          }`}
-                          onClick={() => handleItemClick(item)}
-                          title={`${item.name} (${item.colors.length} cores)`}
-                        >
-                          <img
-                            src={getItemThumbnailUrl(item)}
-                            alt={item.name}
-                            className="w-full h-full object-contain rounded"
-                            style={{ imageRendering: 'pixelated' }}
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              target.style.display = 'none';
-                              const parent = target.parentElement;
-                              if (parent && !parent.querySelector('.fallback-text')) {
-                                const span = document.createElement('span');
-                                span.className = 'text-xs font-bold text-gray-600 fallback-text';
-                                span.textContent = item.figureId;
-                                parent.appendChild(span);
-                              }
-                            }}
-                          />
-                        </Button>
+                <div className="grid grid-cols-8 gap-2 max-h-80 overflow-y-auto">
+                  {filteredItems.map((item) => (
+                    <ColorPickerPopover
+                      key={item.id}
+                      item={item}
+                      selectedColor={selectedColor}
+                      onColorSelect={(colorId) => handleItemClick(item, colorId)}
+                    >
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`w-12 h-12 p-0 relative border-2 transition-all duration-200 ${
+                          selectedItem === item.figureId 
+                            ? 'border-blue-500 ring-2 ring-blue-300 scale-105 bg-blue-50' 
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                        onClick={() => handleItemClick(item)}
+                        title={item.name}
+                      >
+                        <img
+                          src={getItemThumbnailUrl(item)}
+                          alt={item.name}
+                          className="w-full h-full object-contain rounded"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent && !parent.querySelector('.fallback-text')) {
+                              const span = document.createElement('span');
+                              span.className = 'text-xs font-bold text-gray-600 fallback-text';
+                              span.textContent = item.figureId;
+                              parent.appendChild(span);
+                            }
+                          }}
+                        />
                         
-                        {/* HC Badge */}
-                        {item.club === 'HC' && (
-                          <div className="absolute -bottom-1 -left-1 bg-yellow-500 text-black text-xs px-1 rounded flex items-center">
-                            <Crown className="w-2 h-2 mr-0.5" />
-                            HC
-                          </div>
-                        )}
-                        
-                        {/* Color indicator */}
-                        {item.colors.length > 1 && (
+                        {/* Color indicator for multi-color items */}
+                        {item.colors && item.colors.length > 1 && (
                           <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs px-1 rounded">
                             {item.colors.length}
                           </div>
                         )}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {filteredItems.length === 0 && (
-                    <div className="text-center text-gray-500 py-8">
-                      <p>Nenhum item encontrado</p>
-                      {searchTerm && (
-                        <p className="text-sm">para "{searchTerm}"</p>
-                      )}
-                    </div>
-                  )}
+                      </Button>
+                    </ColorPickerPopover>
+                  ))}
                 </div>
+                
+                {filteredItems.length === 0 && (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>Nenhum item encontrado</p>
+                    {searchTerm && (
+                      <p className="text-sm">para "{searchTerm}"</p>
+                    )}
+                  </div>
+                )}
               </TabsContent>
             ))}
           </Tabs>
         </CardContent>
       </Card>
-
-      {/* Enhanced Color Picker Modal */}
-      <EnhancedColorPickerModal
-        isOpen={colorModalOpen}
-        onClose={() => setColorModalOpen(false)}
-        onColorSelect={handleColorSelect}
-        item={colorModalItem}
-        selectedColor={selectedColor}
-        colorPalettes={{}}
-      />
     </div>
   );
 };

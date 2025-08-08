@@ -46,7 +46,7 @@ const Homes = () => {
         </div>
       </div>
 
-      {/* Latest Homes */}
+      {/* Latest Homes - moved here between buttons and features */}
       <LatestHomesCards />
 
       {/* How it Works Section */}

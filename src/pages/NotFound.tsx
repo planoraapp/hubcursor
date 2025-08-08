@@ -1,3 +1,4 @@
+
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
@@ -14,10 +15,27 @@ const NotFound = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center">
+        <img
+          src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/erro%20404.png"
+          alt="Erro 404"
+          className="w-64 h-64 mx-auto mb-4"
+          style={{ imageRendering: 'pixelated' }}
+          onError={(e) => {
+            const target = e.currentTarget;
+            target.style.display = 'none';
+            const parent = target.parentElement;
+            if (parent && !parent.querySelector('.fallback-text')) {
+              const div = document.createElement('div');
+              div.className = 'fallback-text text-center';
+              div.innerHTML = '<h1 class="text-4xl font-bold mb-4">404</h1><p class="text-xl text-gray-600 mb-4">Oops! Page not found</p>';
+              parent.appendChild(div);
+            }
+          }}
+        />
         <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+        <p className="text-xl text-gray-600 mb-4">Oops! Página não encontrada</p>
         <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
+          Voltar ao Início
         </a>
       </div>
     </div>
