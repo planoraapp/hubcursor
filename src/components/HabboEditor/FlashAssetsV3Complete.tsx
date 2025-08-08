@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Search, Crown } from 'lucide-react';
-import { useOfficialClothingIndex } from '@/hooks/useOfficialClothingIndex';
+import { useFlashAssetsClothing } from '@/hooks/useFlashAssetsClothing';
 import { EnhancedColorPickerModal } from './EnhancedColorPickerModal';
 import { SkinColorBar } from './SkinColorBar';
 import { AvatarPreviewWithControls } from './AvatarPreviewWithControls';
+import { CloseButton } from '@/components/ui/close-button';
 
 interface FlashAssetsV3CompleteProps {
   selectedGender: 'M' | 'F';
@@ -36,10 +37,53 @@ const FlashAssetsV3Complete = ({
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [colorModalItem, setColorModalItem] = useState<any>(null);
 
-  const { categories, colorPalettes, isLoading, error, totalCategories, totalItems } = useOfficialClothingIndex(selectedGender);
+  const { data: flashData, isLoading, error } = useFlashAssetsClothing({ 
+    limit: 500, 
+    category: selectedCategory,
+    search: searchTerm 
+  });
+
+  // Category configuration with new editor images
+  const categories = {
+    'hd': { 
+      name: 'Rostos', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/head.png',
+      items: flashData?.filter(item => item.category === 'hd') || []
+    },
+    'hr': { 
+      name: 'Cabelos', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/hair.png',
+      items: flashData?.filter(item => item.category === 'hr') || []
+    },
+    'ch': { 
+      name: 'Camisetas', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/shirt.png',
+      items: flashData?.filter(item => item.category === 'ch') || []
+    },
+    'lg': { 
+      name: 'Calças', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/pants.png',
+      items: flashData?.filter(item => item.category === 'lg') || []
+    },
+    'sh': { 
+      name: 'Sapatos', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/shoes.png',
+      items: flashData?.filter(item => item.category === 'sh') || []
+    },
+    'ha': { 
+      name: 'Chapéus', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/hat.png',
+      items: flashData?.filter(item => item.category === 'ha') || []
+    },
+    'ea': { 
+      name: 'Óculos', 
+      icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/glasses.png',
+      items: flashData?.filter(item => item.category === 'ea') || []
+    }
+  };
 
   const categoryList = Object.keys(categories);
-  const currentCategory = categories[selectedCategory];
+  const currentCategory = categories[selectedCategory as keyof typeof categories];
 
   // Filter items by search term
   const filteredItems = useMemo(() => {
@@ -52,15 +96,7 @@ const FlashAssetsV3Complete = ({
   }, [currentCategory, searchTerm]);
 
   const getItemThumbnailUrl = (item: any) => {
-    const hotel = selectedHotel.includes('.') 
-      ? selectedHotel 
-      : selectedHotel === 'com' ? 'habbo.com' : `habbo.${selectedHotel}`;
-    
-    // Use headonly for head-related categories
-    const headOnlyCategories = ['hd', 'hr', 'ha', 'he', 'ea', 'fa'];
-    const headOnly = headOnlyCategories.includes(item.category) ? '&headonly=1' : '';
-    
-    return `https://www.${hotel}/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&direction=2&head_direction=2&size=l${headOnly}`;
+    return item.imageUrl || `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&direction=2&head_direction=2&size=l`;
   };
 
   const handleItemClick = (item: any) => {
@@ -80,24 +116,12 @@ const FlashAssetsV3Complete = ({
     }
   };
 
-  const handleSkinColorSelect = (colorId: string) => {
-    // Create a skin color item for the handler
-    const skinItem = {
-      category: 'hd',
-      figureId: '180',
-      name: 'Cor da Pele',
-      colors: [colorId],
-      club: 'FREE'
-    };
-    onItemSelect(skinItem, colorId);
-  };
-
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center h-full ${className}`}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-          <p className="text-sm text-gray-600">Carregando assets oficiais...</p>
+          <p className="text-sm text-gray-600">Carregando assets flash...</p>
         </div>
       </div>
     );
@@ -107,8 +131,14 @@ const FlashAssetsV3Complete = ({
     return (
       <div className={`flex items-center justify-center h-full ${className}`}>
         <div className="text-center text-red-500">
+          <img 
+            src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/erro 404.png"
+            alt="Erro"
+            className="w-16 h-16 mx-auto mb-2"
+            style={{ imageRendering: 'pixelated' }}
+          />
           <p>❌ Erro ao carregar assets</p>
-          <p className="text-sm">Dados oficiais indisponíveis</p>
+          <p className="text-sm">Flash assets indisponíveis</p>
         </div>
       </div>
     );
@@ -125,29 +155,25 @@ const FlashAssetsV3Complete = ({
         />
       </div>
 
-      {/* Skin Color Bar */}
-      <div className="mb-4">
-        <SkinColorBar
-          selectedColor={selectedColor}
-          onColorSelect={handleSkinColorSelect}
-          selectedGender={selectedGender}
-          selectedHotel={selectedHotel}
-        />
-      </div>
-
       {/* Main Content */}
       <Card className="flex-1 flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">
-              🎮 Assets Oficiais Habbo
+            <CardTitle className="text-base flex items-center gap-2">
+              <img 
+                src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/editor_images/flash.png"
+                alt="Flash Assets"
+                className="w-6 h-6"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              Flash Assets ViaJovem
             </CardTitle>
             <div className="flex gap-2">
               <Badge variant="outline">
-                {totalCategories} categorias
+                {categoryList.length} categorias
               </Badge>
               <Badge variant="secondary">
-                {totalItems} itens
+                {flashData?.length || 0} itens
               </Badge>
             </div>
           </div>
@@ -166,31 +192,25 @@ const FlashAssetsV3Complete = ({
         
         <CardContent className="flex-1 flex flex-col">
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col">
-            {/* Category Tabs */}
+            {/* Category Tabs with Images */}
             <TabsList className="grid grid-cols-7 mb-4">
-              {categoryList.slice(0, 7).map(categoryId => {
-                const category = categories[categoryId];
+              {categoryList.map(categoryId => {
+                const category = categories[categoryId as keyof typeof categories];
                 return (
-                  <TabsTrigger key={categoryId} value={categoryId} className="text-xs">
-                    {category.icon}
+                  <TabsTrigger key={categoryId} value={categoryId} className="text-xs p-2">
+                    <div className="flex flex-col items-center gap-1">
+                      <img 
+                        src={category.icon}
+                        alt={category.name}
+                        className="w-6 h-6"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                      <span className="text-[10px]">{category.name}</span>
+                    </div>
                   </TabsTrigger>
                 );
               })}
             </TabsList>
-            
-            {/* Second row of tabs if needed */}
-            {categoryList.length > 7 && (
-              <TabsList className="grid grid-cols-6 mb-4">
-                {categoryList.slice(7).map(categoryId => {
-                  const category = categories[categoryId];
-                  return (
-                    <TabsTrigger key={categoryId} value={categoryId} className="text-xs">
-                      {category.icon}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            )}
 
             {/* Items Grid */}
             {categoryList.map(categoryId => (
@@ -198,7 +218,13 @@ const FlashAssetsV3Complete = ({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium flex items-center gap-2">
-                      {categories[categoryId].icon} {categories[categoryId].name}
+                      <img 
+                        src={categories[categoryId as keyof typeof categories].icon}
+                        alt=""
+                        className="w-5 h-5"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                      {categories[categoryId as keyof typeof categories].name}
                     </h3>
                     <Badge variant="outline">
                       {filteredItems.length} itens
@@ -278,7 +304,7 @@ const FlashAssetsV3Complete = ({
         onColorSelect={handleColorSelect}
         item={colorModalItem}
         selectedColor={selectedColor}
-        colorPalettes={colorPalettes}
+        colorPalettes={{}}
       />
     </div>
   );
