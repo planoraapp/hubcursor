@@ -1,395 +1,285 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter } from 'lucide-react';
-import { useEnhancedFlashAssetsV2 } from '@/hooks/useEnhancedFlashAssetsV2';
-import { getRarityColor } from '@/lib/enhancedCategoryMapperV2';
-import { SkinColorSlider } from './SkinColorSlider';
-import { ColorPickerModal } from './ColorPickerModal';
-import { AvatarHistory } from './AvatarHistory';
-import { getClothingSpriteUrl, getFallbackThumbnail } from '@/utils/clothingSpriteGenerator';
+import { Loader2, Search, Crown } from 'lucide-react';
+import { useOfficialClothingIndex } from '@/hooks/useOfficialClothingIndex';
+import { EnhancedColorPickerModal } from './EnhancedColorPickerModal';
+import { SkinColorBar } from './SkinColorBar';
+import { AvatarPreviewWithControls } from './AvatarPreviewWithControls';
 
 interface FlashAssetsV3CompleteProps {
   selectedGender: 'M' | 'F';
   selectedHotel: string;
   onItemSelect: (item: any, colorId: string) => void;
-  selectedItem: string;
-  selectedColor: string;
+  selectedItem?: string;
+  selectedColor?: string;
   currentFigureString?: string;
   onRestoreFigure?: (figureString: string) => void;
   className?: string;
 }
-
-// 4 SEÇÕES PRINCIPAIS - Sem cores inline
-const MAIN_SECTIONS = {
-  head: {
-    id: 'head',
-    name: 'Cabeça',
-    icon: '👤',
-    categories: ['hd', 'hr', 'ha', 'ea', 'fa']
-  },
-  body: {
-    id: 'body',
-    name: 'Corpo',
-    icon: '👕',
-    categories: ['ch', 'cc', 'cp', 'ca']
-  },
-  legs: {
-    id: 'legs',
-    name: 'Pernas',
-    icon: '👖',
-    categories: ['lg', 'sh', 'wa']
-  }
-};
-
-const CATEGORY_METADATA = {
-  hd: { name: 'Rostos', icon: '😊' },
-  hr: { name: 'Cabelos', icon: '💇' },
-  ha: { name: 'Chapéus', icon: '🎩' },
-  ea: { name: 'Óculos', icon: '👓' },
-  fa: { name: 'Acessórios', icon: '🎭' },
-  ch: { name: 'Camisetas', icon: '👕' },
-  cc: { name: 'Casacos', icon: '🧥' },
-  cp: { name: 'Estampas', icon: '🎨' },
-  ca: { name: 'Peito', icon: '💍' },
-  lg: { name: 'Calças', icon: '👖' },
-  sh: { name: 'Sapatos', icon: '👟' },
-  wa: { name: 'Cintura', icon: '🎀' }
-};
 
 const FlashAssetsV3Complete = ({
   selectedGender,
   selectedHotel,
   onItemSelect,
   selectedItem,
-  selectedColor,
-  currentFigureString = '',
-  onRestoreFigure,
+  selectedColor = '1',
+  currentFigureString = 'hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1',
   className = ''
 }: FlashAssetsV3CompleteProps) => {
+  const [selectedCategory, setSelectedCategory] = useState('hd');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('hd');
-  const [selectedSection, setSelectedSection] = useState<string>('head');
-  const [selectedRarity, setSelectedRarity] = useState<'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common'>('all');
-  
-  // Color picker modal state
   const [colorModalOpen, setColorModalOpen] = useState(false);
-  const [pendingItem, setPendingItem] = useState<any>(null);
+  const [colorModalItem, setColorModalItem] = useState<any>(null);
 
-  const { 
-    items, 
-    isLoading, 
-    error, 
-    totalItems
-  } = useEnhancedFlashAssetsV2({
-    category: selectedCategory,
-    gender: selectedGender,
-    search: searchTerm,
-    rarity: selectedRarity === 'all' ? undefined : selectedRarity
-  });
+  const { categories, colorPalettes, isLoading, error, totalCategories, totalItems } = useOfficialClothingIndex(selectedGender);
 
-  const currentSection = MAIN_SECTIONS[selectedSection as keyof typeof MAIN_SECTIONS];
+  const categoryList = Object.keys(categories);
+  const currentCategory = categories[selectedCategory];
 
-  // Update category when section changes
-  useEffect(() => {
-    if (currentSection && currentSection.categories.length > 0 && !currentSection.categories.includes(selectedCategory)) {
-      setSelectedCategory(currentSection.categories[0]);
-    }
-  }, [selectedSection, currentSection, selectedCategory]);
+  // Filter items by search term
+  const filteredItems = useMemo(() => {
+    if (!currentCategory) return [];
+    
+    return currentCategory.items.filter(item =>
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.figureId.includes(searchTerm)
+    );
+  }, [currentCategory, searchTerm]);
 
-  const handleItemClick = (item: any) => {
-    console.log('🎯 [FlashAssetsV3Complete] Item clicked for color selection:', {
-      name: item.name,
-      category: item.category,
-      figureId: item.figureId,
-      swfName: item.swfName
-    });
-    setPendingItem(item);
-    setColorModalOpen(true);
+  const getItemThumbnailUrl = (item: any) => {
+    const hotel = selectedHotel.includes('.') 
+      ? selectedHotel 
+      : selectedHotel === 'com' ? 'habbo.com' : `habbo.${selectedHotel}`;
+    
+    // Use headonly for head-related categories
+    const headOnlyCategories = ['hd', 'hr', 'ha', 'he', 'ea', 'fa'];
+    const headOnly = headOnlyCategories.includes(item.category) ? '&headonly=1' : '';
+    
+    return `https://www.${hotel}/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&direction=2&head_direction=2&size=l${headOnly}`;
   };
 
-  const handleColorModalSelect = (colorId: string) => {
-    if (pendingItem) {
-      console.log('🎨 [FlashAssetsV3Complete] Color selected:', { item: pendingItem.name, colorId });
-      onItemSelect(pendingItem, colorId);
-      setPendingItem(null);
+  const handleItemClick = (item: any) => {
+    if (item.colors.length > 1) {
+      // Open color modal if item has multiple colors
+      setColorModalItem(item);
+      setColorModalOpen(true);
+    } else {
+      // Apply item with default color
+      onItemSelect(item, item.colors[0] || '1');
+    }
+  };
+
+  const handleColorSelect = (colorId: string) => {
+    if (colorModalItem) {
+      onItemSelect(colorModalItem, colorId);
     }
   };
 
   const handleSkinColorSelect = (colorId: string) => {
-    console.log('🤏 [FlashAssetsV3Complete] Cor de pele selecionada:', colorId);
-    
+    // Create a skin color item for the handler
     const skinItem = {
-      id: `hd_skin_${colorId}_${selectedGender}`,
-      name: `Tom de Pele ${colorId}`,
       category: 'hd',
       figureId: '180',
-      gender: selectedGender,
+      name: 'Cor da Pele',
       colors: [colorId],
-      rarity: 'common',
-      source: 'skin-color-slider',
-      club: 'normal',
-      swfName: `hd_180_skin_${colorId}`
+      club: 'FREE'
     };
-    
     onItemSelect(skinItem, colorId);
   };
 
-  const handleRestoreFigure = (figureString: string) => {
-    if (onRestoreFigure) {
-      onRestoreFigure(figureString);
-    }
-  };
-
-  const getItemImageUrl = (item: any) => {
-    // Enhanced sprite URL generation with swfName priority
-    const spriteUrl = getClothingSpriteUrl(
-      item.category, 
-      item.figureId, 
-      '1', 
-      selectedGender, 
-      item.swfName
+  if (isLoading) {
+    return (
+      <div className={`flex items-center justify-center h-full ${className}`}>
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+          <p className="text-sm text-gray-600">Carregando assets oficiais...</p>
+        </div>
+      </div>
     );
-    
-    console.log('🖼️ [FlashAssetsV3Complete] Generated sprite URL:', {
-      category: item.category,
-      figureId: item.figureId,
-      swfName: item.swfName,
-      url: spriteUrl.substring(0, 80) + '...'
-    });
-    
-    return spriteUrl;
-  };
-
-  const filteredItems = items
-    .filter(item => item && item.category === selectedCategory)
-    .filter(item => /^\d+$/.test(String(item.figureId)) && String(item.figureId) !== '0')
-    .filter(item => !searchTerm ||
-      String(item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(item.figureId || '').toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(item => selectedRarity === 'all' || item.rarity === selectedRarity);
-
-  const handleRarityChange = (value: string) => {
-    setSelectedRarity(value as 'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common');
-  };
+  }
 
   if (error) {
     return (
-      <div className={`${className} flex items-center justify-center p-8`}>
-        <div className="text-center">
-          <p className="text-red-600 mb-4">❌ Erro ao carregar assets: {error.message}</p>
-          <Button onClick={() => window.location.reload()}>
-            Tentar Novamente
-          </Button>
+      <div className={`flex items-center justify-center h-full ${className}`}>
+        <div className="text-center text-red-500">
+          <p>❌ Erro ao carregar assets</p>
+          <p className="text-sm">Dados oficiais indisponíveis</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`${className} flex flex-col h-full`}>
-      {/* Color Picker Modal */}
-      <ColorPickerModal
-        isOpen={colorModalOpen}
-        onClose={() => {
-          setColorModalOpen(false);
-          setPendingItem(null);
-        }}
-        onColorSelect={handleColorModalSelect}
-        category={pendingItem?.category || 'ch'}
-        itemName={pendingItem?.name || ''}
-        selectedColor={selectedColor}
-      />
-
-      {/* Search and Filters */}
-      <div className="p-4 border-b bg-gray-50 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Buscar itens..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <Select value={selectedRarity} onValueChange={handleRarityChange}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Raridade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">🌟 Todas</SelectItem>
-              <SelectItem value="nft">⭐ NFT</SelectItem>
-              <SelectItem value="ltd">👑 Limitados</SelectItem>
-              <SelectItem value="hc">⚡ HC Premium</SelectItem>
-              <SelectItem value="rare">💎 Raros</SelectItem>
-              <SelectItem value="common">📦 Comuns</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setSearchTerm('');
-              setSelectedRarity('all');
-            }}
-          >
-            <Filter className="w-4 h-4 mr-1" />
-            Limpar
-          </Button>
-        </div>
-      </div>
-
-      {/* Skin Color Slider */}
-      <div className="p-4 border-b bg-white">
-        <SkinColorSlider
-          selectedColor={selectedColor}
-          onColorSelect={handleSkinColorSelect}
+    <div className={`h-full flex flex-col ${className}`}>
+      {/* Enhanced Avatar Preview */}
+      <div className="mb-4">
+        <AvatarPreviewWithControls
+          figureString={currentFigureString}
           selectedGender={selectedGender}
+          selectedHotel={selectedHotel}
         />
       </div>
 
-      {/* Avatar History */}
-      {onRestoreFigure && currentFigureString && (
-        <div className="p-4 border-b bg-gray-50">
-          <AvatarHistory
-            currentFigureString={currentFigureString}
-            selectedGender={selectedGender}
-            selectedHotel={selectedHotel}
-            onRestoreFigure={handleRestoreFigure}
-          />
-        </div>
-      )}
+      {/* Skin Color Bar */}
+      <div className="mb-4">
+        <SkinColorBar
+          selectedColor={selectedColor}
+          onColorSelect={handleSkinColorSelect}
+          selectedGender={selectedGender}
+          selectedHotel={selectedHotel}
+        />
+      </div>
 
-      {/* 3 Main Sections */}
-      <Tabs value={selectedSection} onValueChange={setSelectedSection} className="flex-1 flex flex-col">
-        <div className="p-2 border-b bg-white">
-          <ScrollArea className="w-full">
-            <TabsList className="grid grid-cols-3 w-full gap-1">
-              {Object.values(MAIN_SECTIONS).map((section) => (
-                <TabsTrigger 
-                  key={section.id} 
-                  value={section.id} 
-                  className="flex flex-col items-center gap-1 p-3"
-                >
-                  <span className="text-xl">{section.icon}</span>
-                  <span className="text-xs font-medium">{section.name}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </ScrollArea>
-        </div>
-
-        {/* Section Content */}
-        {Object.values(MAIN_SECTIONS).map((section) => (
-          <TabsContent key={section.id} value={section.id} className="flex-1 p-0 m-0 flex flex-col">
-            
-            {/* Sub-categories */}
-            <div className="p-2 border-b bg-gray-50">
-              <ScrollArea className="w-full">
-                <div className="flex gap-1">
-                  {section.categories.map(cat => {
-                    const metadata = CATEGORY_METADATA[cat as keyof typeof CATEGORY_METADATA];
-                    return (
-                      <Button
-                        key={cat}
-                        variant={selectedCategory === cat ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedCategory(cat)}
-                        className="flex flex-col items-center gap-1 h-auto py-2 px-3 min-w-[80px]"
-                      >
-                        <span className="text-lg">{metadata?.icon}</span>
-                        <span className="text-xs">{metadata?.name}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+      {/* Main Content */}
+      <Card className="flex-1 flex flex-col">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">
+              🎮 Assets Oficiais Habbo
+            </CardTitle>
+            <div className="flex gap-2">
+              <Badge variant="outline">
+                {totalCategories} categorias
+              </Badge>
+              <Badge variant="secondary">
+                {totalItems} itens
+              </Badge>
             </div>
+          </div>
+          
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar itens..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardHeader>
+        
+        <CardContent className="flex-1 flex flex-col">
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1 flex flex-col">
+            {/* Category Tabs */}
+            <TabsList className="grid grid-cols-7 mb-4">
+              {categoryList.slice(0, 7).map(categoryId => {
+                const category = categories[categoryId];
+                return (
+                  <TabsTrigger key={categoryId} value={categoryId} className="text-xs">
+                    {category.icon}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            
+            {/* Second row of tabs if needed */}
+            {categoryList.length > 7 && (
+              <TabsList className="grid grid-cols-6 mb-4">
+                {categoryList.slice(7).map(categoryId => {
+                  const category = categories[categoryId];
+                  return (
+                    <TabsTrigger key={categoryId} value={categoryId} className="text-xs">
+                      {category.icon}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            )}
 
-            {/* Enhanced Items Grid with sprite fallback handling */}
-            <ScrollArea className="flex-1 p-4">
-              {isLoading ? (
-                <div className="grid grid-cols-6 gap-2">
-                  {[...Array(18)].map((_, i) => (
-                    <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
-                  ))}
-                </div>
-              ) : filteredItems.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-2">{section.icon}</div>
-                  <p>Nenhum item encontrado</p>
-                  {searchTerm && <p className="text-sm">Tente outro termo</p>}
-                </div>
-              ) : (
-                <div className="grid grid-cols-6 gap-2">
-                  {filteredItems.map((item, idx) => (
-                    <div
-                      key={`${String(item.swfName || item.id || item.figureId)}_${idx}`}
-                      onClick={() => handleItemClick(item)}
-                      className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative bg-white ${
-                        selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
-                      }`}
-                      title={`${item.name} - Clique para escolher cor`}
-                      data-cat={item.category}
-                    >
-                      {/* Rarity indicator */}
-                      {item.rarity !== 'common' && (
-                        <div 
-                          className="absolute top-0 right-0 w-3 h-3 rounded-full"
-                          style={{ backgroundColor: getRarityColor(item.rarity) }}
-                        />
+            {/* Items Grid */}
+            {categoryList.map(categoryId => (
+              <TabsContent key={categoryId} value={categoryId} className="flex-1">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium flex items-center gap-2">
+                      {categories[categoryId].icon} {categories[categoryId].name}
+                    </h3>
+                    <Badge variant="outline">
+                      {filteredItems.length} itens
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-8 gap-2 max-h-80 overflow-y-auto">
+                    {filteredItems.map((item) => (
+                      <div key={item.id} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`w-12 h-12 p-0 relative border-2 transition-all duration-200 ${
+                            selectedItem === item.figureId 
+                              ? 'border-blue-500 ring-2 ring-blue-300 scale-105 bg-blue-50' 
+                              : 'border-gray-200 hover:border-gray-400'
+                          }`}
+                          onClick={() => handleItemClick(item)}
+                          title={`${item.name} (${item.colors.length} cores)`}
+                        >
+                          <img
+                            src={getItemThumbnailUrl(item)}
+                            alt={item.name}
+                            className="w-full h-full object-contain rounded"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent && !parent.querySelector('.fallback-text')) {
+                                const span = document.createElement('span');
+                                span.className = 'text-xs font-bold text-gray-600 fallback-text';
+                                span.textContent = item.figureId;
+                                parent.appendChild(span);
+                              }
+                            }}
+                          />
+                        </Button>
+                        
+                        {/* HC Badge */}
+                        {item.club === 'HC' && (
+                          <div className="absolute -bottom-1 -left-1 bg-yellow-500 text-black text-xs px-1 rounded flex items-center">
+                            <Crown className="w-2 h-2 mr-0.5" />
+                            HC
+                          </div>
+                        )}
+                        
+                        {/* Color indicator */}
+                        {item.colors.length > 1 && (
+                          <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs px-1 rounded">
+                            {item.colors.length}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {filteredItems.length === 0 && (
+                    <div className="text-center text-gray-500 py-8">
+                      <p>Nenhum item encontrado</p>
+                      {searchTerm && (
+                        <p className="text-sm">para "{searchTerm}"</p>
                       )}
-
-                      {/* Enhanced sprite loading with multiple fallbacks */}
-                      <img
-                        src={getItemImageUrl(item)}
-                        alt={item.name}
-                        className="max-w-full max-h-full object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                        onError={(e) => {
-                          const img = e.currentTarget as HTMLImageElement;
-                          const currentSrc = img.src;
-                          
-                          // Try Habbo Imaging fallback if Puhekupla fails
-                          if (currentSrc.includes('puhekupla.com')) {
-                            const fallback = getFallbackThumbnail(item.category, item.figureId, '1', selectedGender);
-                            console.log('🔄 [Sprite] Puhekupla failed, trying Habbo Imaging:', fallback);
-                            img.src = fallback;
-                          } else {
-                            // Final fallback: hide image and show ID
-                            console.error('💥 [Sprite] All image sources failed for:', item.name);
-                            img.style.display = 'none';
-                            
-                            // Create fallback text element
-                            const parent = img.parentElement;
-                            if (parent && !parent.querySelector('.fallback-text')) {
-                              const fallbackDiv = document.createElement('div');
-                              fallbackDiv.className = 'fallback-text text-xs font-bold text-gray-600 text-center';
-                              fallbackDiv.textContent = item.figureId;
-                              parent.appendChild(fallbackDiv);
-                            }
-                          }
-                        }}
-                        onLoad={() => {
-                          console.log(`✅ [Sprite] Successfully loaded: ${item.name}`);
-                        }}
-                      />
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-        ))}
-      </Tabs>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Enhanced Color Picker Modal */}
+      <EnhancedColorPickerModal
+        isOpen={colorModalOpen}
+        onClose={() => setColorModalOpen(false)}
+        onColorSelect={handleColorSelect}
+        item={colorModalItem}
+        selectedColor={selectedColor}
+        colorPalettes={colorPalettes}
+      />
     </div>
   );
 };

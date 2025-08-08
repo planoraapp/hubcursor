@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔄 [FigureData] Fetching official Habbo figuredata...');
+    console.log('🔄 [FigureData] Fetching official Habbo figuredata with colors...');
     
     // Try multiple Habbo hotels for figuredata
     const figuredataUrls = [
@@ -35,7 +35,7 @@ serve(async (req) => {
             'Accept': 'text/xml, application/xml, */*',
             'Cache-Control': 'no-cache'
           },
-          signal: AbortSignal.timeout(10000) // 10 second timeout
+          signal: AbortSignal.timeout(15000) // 15 second timeout
         });
         
         if (response.ok) {
@@ -57,11 +57,12 @@ serve(async (req) => {
     
     console.log(`📄 [FigureData] Processing XML data (${xmlData.length} characters)`);
     
-    // Parse XML and convert to structured JSON
-    const figureData = await parseXMLToJSON(xmlData);
+    // Parse XML and convert to structured JSON with colors
+    const { figureData, colorPalettes } = await parseXMLToJSONWithColors(xmlData);
     
     const categoryCount = Object.keys(figureData).length;
-    console.log(`✅ [FigureData] Processed ${categoryCount} categories:`, Object.keys(figureData));
+    const colorCount = Object.keys(colorPalettes).length;
+    console.log(`✅ [FigureData] Processed ${categoryCount} categories and ${colorCount} color palettes`);
     
     if (categoryCount === 0) {
       console.error('❌ [FigureData] No valid categories found after parsing');
@@ -71,10 +72,12 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         figureParts: figureData,
+        colorPalettes: colorPalettes,
         metadata: {
           source: usedUrl,
           fetchedAt: new Date().toISOString(),
           totalCategories: categoryCount,
+          totalColors: colorCount,
           categories: Object.keys(figureData)
         }
       }), 
@@ -94,7 +97,8 @@ serve(async (req) => {
       JSON.stringify({ 
         error: error.message || 'Failed to fetch figuredata',
         success: false,
-        figureParts: {} // Retornar objeto vazio para forçar fallback no frontend
+        figureParts: {},
+        colorPalettes: {}
       }), 
       { 
         status: 500, 
@@ -104,33 +108,52 @@ serve(async (req) => {
   }
 });
 
-async function parseXMLToJSON(xmlString: string) {
+async function parseXMLToJSONWithColors(xmlString: string) {
   try {
-    console.log('🔍 [FigureData] Starting XML parsing...');
+    console.log('🔍 [FigureData] Starting enhanced XML parsing with colors...');
     
-    // Enhanced XML parsing for better structure
     const figureData: Record<string, any[]> = {};
+    const colorPalettes: Record<string, any[]> = {};
     
-    // Valid clothing categories only - expanded list
+    // Valid clothing categories
     const VALID_CATEGORIES = new Set([
-      'hd', // Head/Face
-      'hr', // Hair
-      'ha', // Hat/Head accessories
-      'he', // Head extras
-      'ea', // Eye accessories
-      'fa', // Face accessories
-      'ch', // Chest/Shirt
-      'cc', // Coat/Jacket
-      'cp', // Chest print
-      'ca', // Chest accessories
-      'lg', // Legs/Pants
-      'sh', // Shoes
-      'wa'  // Waist/Belt
+      'hd', 'hr', 'ha', 'he', 'ea', 'fa', 
+      'ch', 'cc', 'cp', 'ca', 'lg', 'sh', 'wa'
     ]);
     
     console.log('📋 [FigureData] Valid categories:', Array.from(VALID_CATEGORIES));
     
-    // Find all <set> elements using more robust regex
+    // First, parse color palettes
+    const paletteRegex = /<palette[^>]+id="([^"]+)"[^>]*>(.*?)<\/palette>/gs;
+    let paletteMatch;
+    let totalPalettes = 0;
+    
+    while ((paletteMatch = paletteRegex.exec(xmlString)) !== null) {
+      const paletteId = paletteMatch[1];
+      const paletteContent = paletteMatch[2];
+      
+      colorPalettes[paletteId] = [];
+      
+      // Find all color elements within this palette
+      const colorRegex = /<color[^>]+id="([^"]+)"[^>]*(?:value="([^"]*)")?[^>]*\/?>/g;
+      let colorMatch;
+      
+      while ((colorMatch = colorRegex.exec(paletteContent)) !== null) {
+        const colorId = colorMatch[1];
+        const colorValue = colorMatch[2] || '#FFFFFF';
+        
+        colorPalettes[paletteId].push({
+          id: colorId,
+          hex: colorValue.startsWith('#') ? colorValue : `#${colorValue}`
+        });
+      }
+      
+      totalPalettes++;
+    }
+    
+    console.log(`🎨 [FigureData] Parsed ${totalPalettes} color palettes`);
+    
+    // Parse figure sets with enhanced part information
     const setRegex = /<set[^>]+id="([^"]+)"[^>]*>(.*?)<\/set>/gs;
     let setMatch;
     let totalSetsFound = 0;
@@ -143,7 +166,6 @@ async function parseXMLToJSON(xmlString: string) {
       
       // Only process valid clothing categories
       if (!VALID_CATEGORIES.has(setId)) {
-        console.log(`🚫 [FigureData] Skipping non-clothing category: ${setId}`);
         continue;
       }
       
@@ -152,8 +174,8 @@ async function parseXMLToJSON(xmlString: string) {
       
       figureData[setId] = [];
       
-      // Find all <part> elements within this set using more specific regex
-      const partRegex = /<part[^>]+id="([^"]+)"[^>]*(?:gender="([^"]*)")?[^>]*(?:club="([^"]*)")?[^>]*(?:colorable="([^"]*)")?[^>]*\/?>/g;
+      // Enhanced part parsing with palette information
+      const partRegex = /<part[^>]+id="([^"]+)"[^>]*(?:gender="([^"]*)")?[^>]*(?:club="([^"]*)")?[^>]*(?:colorable="([^"]*)")?[^>]*(?:palette="([^"]*)")?[^>]*\/?>/g;
       let partMatch;
       let partsInCategory = 0;
       
@@ -162,11 +184,18 @@ async function parseXMLToJSON(xmlString: string) {
         const gender = partMatch[2] || 'U';
         const club = partMatch[3] || '0';
         const colorable = partMatch[4] === '1';
+        const paletteId = partMatch[5];
         
         // Validate numeric ID
         if (!/^\d+$/.test(partId)) {
-          console.warn(`⚠️ [FigureData] Invalid part ID: ${partId} in category ${setId}`);
           continue;
+        }
+        
+        // Get available colors for this part
+        let availableColors = ['1', '2', '3', '4', '5']; // Default colors
+        
+        if (colorable && paletteId && colorPalettes[paletteId]) {
+          availableColors = colorPalettes[paletteId].map(color => color.id);
         }
         
         const partData = {
@@ -174,7 +203,8 @@ async function parseXMLToJSON(xmlString: string) {
           gender: gender as 'M' | 'F' | 'U',
           club: club,
           colorable: colorable,
-          colors: ['1', '2', '3', '4', '5'] // Default colors
+          colors: availableColors,
+          paletteId: paletteId || null
         };
         
         figureData[setId].push(partData);
@@ -188,24 +218,18 @@ async function parseXMLToJSON(xmlString: string) {
     const totalItems = Object.values(figureData).reduce((sum, items) => sum + items.length, 0);
     const finalCategories = Object.keys(figureData);
     
-    console.log(`📈 [FigureData] XML Parsing Complete:`);
+    console.log(`📈 [FigureData] Enhanced XML Parsing Complete:`);
     console.log(`   - Total sets found: ${totalSetsFound}`);
     console.log(`   - Valid sets processed: ${validSetsProcessed}`);
     console.log(`   - Final categories: ${finalCategories.length}`);
     console.log(`   - Total items: ${totalItems}`);
+    console.log(`   - Color palettes: ${totalPalettes}`);
     console.log(`   - Categories: ${finalCategories.join(', ')}`);
     
-    if (finalCategories.length === 0) {
-      console.error('❌ [FigureData] No valid categories found after parsing');
-      console.log('🔍 [FigureData] Sample XML content:', xmlString.substring(0, 1000));
-    }
-    
-    return figureData;
+    return { figureData, colorPalettes };
     
   } catch (error) {
     console.error('❌ [FigureData] XML parsing error:', error);
-    console.log('🔍 [FigureData] XML length:', xmlString?.length || 'undefined');
-    console.log('🔍 [FigureData] XML sample:', xmlString?.substring(0, 500) || 'no data');
     throw new Error('Failed to parse figuredata XML: ' + error.message);
   }
 }
