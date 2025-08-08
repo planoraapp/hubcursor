@@ -132,10 +132,10 @@ serve(async (req) => {
       // Verificar se já existe conta para este usuário neste hotel
       const { data: existingAccount } = await supabase
         .from('habbo_accounts')
-        .select('habbo_id, hotel')
+        .select('habbo_id, hotel, supabase_user_id')
         .ilike('habbo_name', habboName)
         .eq('hotel', detectedHotel)
-        .single();
+        .maybeSingle();
 
       if (existingAccount) {
         return new Response(
@@ -144,10 +144,91 @@ serve(async (req) => {
         );
       }
 
-      // Criar nova conta... (resto da lógica de registro)
+      if (!newPassword || String(newPassword).length < 6) {
+        return new Response(
+          JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Criar usuário de autenticação
+      const email = `${habboUser.uniqueId}@habbohub.com`;
+      const { data: created, error: createErr } = await supabase.auth.admin.createUser({
+        email,
+        password: newPassword,
+        email_confirm: true,
+        user_metadata: {
+          habbo_name: habboUser.name,
+          hotel: detectedHotel,
+        },
+      });
+
+      if (createErr || !created?.user) {
+        console.error('❌ Erro ao criar usuário auth:', createErr);
+        return new Response(
+          JSON.stringify({ error: 'Falha ao criar usuário. Tente novamente.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabaseUserId = created.user.id;
+
+      // Vincular conta Habbo
+      const { error: insertErr } = await supabase
+        .from('habbo_accounts')
+        .insert({
+          supabase_user_id: supabaseUserId,
+          habbo_id: habboUser.uniqueId,
+          habbo_name: habboUser.name,
+          hotel: detectedHotel,
+          is_admin: false,
+        });
+
+      if (insertErr) {
+        console.error('❌ Erro ao inserir habbo_accounts:', insertErr);
+        return new Response(
+          JSON.stringify({ error: 'Conta criada, mas falhou vincular Habbo. Contate o suporte.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       console.log(`✅ Registro bem-sucedido para ${habboName} no hotel ${detectedHotel}`);
     } else if (action === 'reset') {
-      // Reset de senha... (resto da lógica de reset)
+      if (!newPassword || String(newPassword).length < 6) {
+        return new Response(
+          JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Descobrir o usuário pelo vínculo habbo_accounts
+      const { data: account, error: accErr } = await supabase
+        .from('habbo_accounts')
+        .select('supabase_user_id')
+        .ilike('habbo_name', habboName)
+        .eq('hotel', detectedHotel)
+        .maybeSingle();
+
+      if (accErr || !account?.supabase_user_id) {
+        return new Response(
+          JSON.stringify({ error: 'Conta não encontrada para reset de senha.' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const { error: updErr } = await supabase.auth.admin.updateUserById(
+        account.supabase_user_id,
+        { password: newPassword }
+      );
+
+      if (updErr) {
+        console.error('❌ Erro ao atualizar senha:', updErr);
+        return new Response(
+          JSON.stringify({ error: 'Falha ao atualizar a senha. Tente novamente.' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       console.log(`✅ Reset de senha bem-sucedido para ${habboName}`);
     }
 
