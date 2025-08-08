@@ -35,21 +35,16 @@ export const createBeebopAccount = async () => {
 
     console.log('🔍 Conta Beebop não encontrada, tentando criar...');
 
-    // Buscar dados do Habbo - tentar múltiplos hotéis
+    // Buscar dados do Habbo usando a nova função que tenta múltiplos hotéis automaticamente
     let habboUser = null;
-    const hotelsToTry = ['br', 'com', 'es', 'fr', 'de'];
     
-    for (const hotel of hotelsToTry) {
-      try {
-        habboUser = await getUserByName('Beebop', hotel as any);
-        if (habboUser) {
-          console.log(`📊 Dados do Beebop encontrados no hotel ${hotel}:`, habboUser.name);
-          break;
-        }
-      } catch (error) {
-        console.log(`❌ Beebop não encontrado no hotel ${hotel}`);
-        continue;
+    try {
+      habboUser = await getUserByName('Beebop');
+      if (habboUser) {
+        console.log(`📊 Dados do Beebop encontrados:`, habboUser.name);
       }
+    } catch (error) {
+      console.log(`❌ Beebop não encontrado em nenhum hotel`);
     }
 
     if (!habboUser) {
@@ -142,7 +137,7 @@ export const createBeebopAccount = async () => {
         return;
       }
 
-      console.log('✅ Conta Beebop criada com sucesso:', accountData);
+      console.log('✅ Conta Beebop criada with sucesso:', accountData);
       
       // Fazer logout após criar a conta (para não ficar logado automaticamente)
       await supabase.auth.signOut();

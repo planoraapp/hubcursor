@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -144,8 +143,8 @@ export const useEnhancedHabboHome = (username: string) => {
       // Buscar dados da API do Habbo (com fallback)
       let habboApiData = null;
       try {
-        console.log('🌐 Buscando dados da API do Habbo para:', username, 'Hotel:', userData.hotel);
-        habboApiData = await getUserByName(username, userData.hotel as any);
+        console.log('🌐 Buscando dados da API do Habbo para:', username);
+        habboApiData = await getUserByName(username);
         console.log('📊 Dados da API do Habbo:', habboApiData ? 'Sucesso' : 'Falhou');
       } catch (apiError) {
         console.warn('⚠️ Falha na API do Habbo (usando dados básicos):', apiError);
