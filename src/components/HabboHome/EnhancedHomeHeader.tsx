@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit3, Palette, Stickers, Settings, Save } from 'lucide-react';
+import { Edit3, Palette, Sticker, Settings, Save } from 'lucide-react';
 
 interface EnhancedHomeHeaderProps {
   username: string;
@@ -67,7 +66,7 @@ export const EnhancedHomeHeader: React.FC<EnhancedHomeHeaderProps> = ({
               variant="outline"
               className="volter-font bg-white hover:bg-blue-50 border-2 border-blue-300"
             >
-              <Stickers className="w-4 h-4 mr-1" />
+              <Sticker className="w-4 h-4 mr-1" />
               Stickers
             </Button>
             

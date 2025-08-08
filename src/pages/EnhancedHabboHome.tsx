@@ -1,9 +1,9 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
 import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
 import { OptimizedDraggableWidget } from '../components/HabboHome/OptimizedDraggableWidget';
