@@ -1,230 +1,181 @@
-
-import React, { useState, useCallback } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Avatar } from "@/components/ui/avatar"
-import { AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Slider } from "@/components/ui/slider"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Copy, Check, RefreshCw } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { detectHotelFromHabboId } from '@/utils/habboDomains';
-import { generateFigureString } from '@/lib/figureStringGenerator';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Download, Upload, RotateCcw, Palette, User, Shirt, Crown, Eye } from 'lucide-react';
+import { useHabboHomeMigration } from '@/hooks/useHabboHomeMigration';
+import { useTemplariosFigure } from '@/hooks/useTemplariosFigure';
+import { useTemplariosData } from '@/hooks/useTemplariosData';
+import { useTemplariosPreview } from '@/hooks/useTemplariosPreview';
+import { fixInvalidColors } from '@/utils/habboColorValidator';
+import { figureStringGenerator } from '@/lib/figureStringGenerator';
 import { HabboRenderer } from '../HabboRenderer';
 import { OfficialHabboClothingGrid } from './OfficialHabboClothingGrid';
-import ViaJovemClothingGrid from './ViaJovemClothingGrid';
-import FlashAssetsV3Complete from '../HabboEditor/FlashAssetsV3Complete';
+import { ViaJovemClothingGrid } from './ViaJovemClothingGrid';
 
-export default function ViaJovemEditorRedesigned() {
-  const [activeTab, setActiveTab] = useState("habbo");
+interface ViaJovemEditorRedesignedProps {
+  className?: string;
+}
+
+const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedProps) => {
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
-  const [selectedHotel, setSelectedHotel] = useState(detectHotelFromHabboId('hhbr-'));
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [selectedColor, setSelectedColor] = useState<string>('1');
-  const [zoom, setZoom] = useState(100);
-  const [currentFigureString, setCurrentFigureString] = useState('hr-100-0.ch-210-0.lg-270-0.sh-305-0.hd-180-0');
-  const [isCopied, setIsCopied] = React.useState(false)
-  const { toast } = useToast()
+  const [selectedHotel, setSelectedHotel] = useState('com');
+  const [selectedItem, setSelectedItem] = useState('');
+  const [selectedColor, setSelectedColor] = useState('1');
+  const [currentFigureString, setCurrentFigureString] = useState('');
+  const [activeTab, setActiveTab] = useState('official');
 
-  const handleZoomChange = (value: number[]) => {
-    setZoom(value[0]);
-  };
+  const { figureString, updateSelection, resetSelection } = useTemplariosFigure();
+  const { getFullAvatarUrl } = useTemplariosPreview();
 
-  const handleItemSelect = (item: any, colorId?: string) => {
-    setSelectedItem(item);
-    setSelectedColor(colorId || '1');
-    
-    if (item) {
-      const newFigure = generateFigureString(currentFigureString, item, colorId || '1');
-      setCurrentFigureString(newFigure);
-    }
-  };
-
-  const handleViaJovemItemSelect = (item: any, colorId: string) => {
-    setSelectedItem(item);
+  const handleItemSelect = (item: any, colorId: string = '1') => {
+    setSelectedItem(item.id);
     setSelectedColor(colorId);
+    updateSelection(item.category, item.id, colorId);
+  };
+
+  const handleRestoreFigure = (figureString: string) => {
+    const correctedFigure = fixInvalidColors(figureString);
+    setCurrentFigureString(correctedFigure);
+  };
+
+  const handleDownload = () => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
     
-    if (item) {
-      const newFigure = generateFigureString(currentFigureString, item, colorId);
-      setCurrentFigureString(newFigure);
-    }
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx?.drawImage(img, 0, 0);
+      
+      const link = document.createElement('a');
+      link.download = `habbo-avatar-${Date.now()}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+    
+    img.src = getFullAvatarUrl(figureString, selectedGender, selectedHotel);
   };
-
-  const restoreFigure = (figureString: string) => {
-    setCurrentFigureString(figureString);
-  };
-
-  const handleCopyClick = () => {
-    navigator.clipboard.writeText(currentFigureString)
-    setIsCopied(true)
-    toast({
-      description: "Figuredata copiada para a área de transferência.",
-    })
-    setTimeout(() => setIsCopied(false), 2000)
-  }
-
-  const handleRandomizeFigure = useCallback(() => {
-    const randomHair = Math.floor(Math.random() * 150) + 1;
-    const randomShirt = Math.floor(Math.random() * 150) + 1;
-    const randomLegs = Math.floor(Math.random() * 150) + 1;
-    const randomShoes = Math.floor(Math.random() * 150) + 1;
-    const randomHead = Math.floor(Math.random() * 20) + 1;
-
-    const newFigure = `hr-${randomHair}-0.ch-${randomShirt}-0.lg-${randomLegs}-0.sh-${randomShoes}-0.hd-${randomHead}-0`;
-    setCurrentFigureString(newFigure);
-  }, []);
 
   return (
-    <div className="flex h-full bg-white">
-      {/* Left Panel - Avatar Preview and Controls */}
-      <div className="w-80 p-4 border-r border-gray-300 flex flex-col">
-        <div className="flex-1 flex flex-col">
-          <div className="flex justify-center items-center mb-4">
-            <HabboRenderer
-              figure={currentFigureString}
-              zoom={zoom}
-              hotel={selectedHotel}
-              gender={selectedGender}
-            />
-          </div>
-
-          <div className="mb-4">
-            <Label htmlFor="figure-string" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Figuredata
-            </Label>
+    <div className={`via-jovem-editor-redesigned ${className}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+        {/* Left Panel - Avatar Preview */}
+        <div className="lg:col-span-1 space-y-4">
+          <Card className="p-6 text-center bg-gradient-to-br from-blue-50 to-purple-50">
             <div className="relative">
-              <Input
-                type="text"
-                id="figure-string"
-                value={currentFigureString}
-                readOnly
-                className="mt-1 bg-gray-50 border-gray-300 text-sm"
+              <HabboRenderer 
+                figureString={figureString}
+                gender={selectedGender}
+                hotel={selectedHotel}
+                size="l"
+                className="mx-auto mb-4"
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-md p-0"
-                onClick={handleCopyClick}
-                disabled={isCopied}
+              
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className="text-xs">
+                  {selectedGender === 'M' ? 'Masculino' : 'Feminino'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2 justify-center mt-4">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleDownload}
+                className="flex items-center gap-1"
               >
-                {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                <span className="sr-only">Copy</span>
+                <Download className="w-4 h-4" />
+                Baixar
+              </Button>
+              
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={resetSelection}
+                className="flex items-center gap-1"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Limpar
               </Button>
             </div>
-          </div>
+          </Card>
 
-          <div className="mb-4">
-            <Label htmlFor="zoom" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Zoom
-            </Label>
-            <Slider
-              id="zoom"
-              defaultValue={[zoom]}
-              min={50}
-              max={200}
-              step={1}
-              onValueChange={handleZoomChange}
-              className="mt-2"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div>
-            <Label htmlFor="hotel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Hotel
-            </Label>
-            <Select value={selectedHotel} onValueChange={setSelectedHotel}>
-              <SelectTrigger className="w-full mt-1 text-sm">
-                <SelectValue placeholder="Selecione o Hotel" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="br">Habbo BR/PT</SelectItem>
-                <SelectItem value="com">Habbo USA</SelectItem>
-                <SelectItem value="es">Habbo ES</SelectItem>
-                <SelectItem value="fr">Habbo FR</SelectItem>
-                <SelectItem value="de">Habbo DE</SelectItem>
-                <SelectItem value="it">Habbo IT</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Gênero
-            </Label>
-            <div className="flex items-center space-x-2 mt-1">
-              <Button
-                variant={selectedGender === 'M' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedGender('M')}
-              >
-                Masculino
-              </Button>
-              <Button
-                variant={selectedGender === 'F' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedGender('F')}
-              >
-                Feminino
-              </Button>
+          {/* Gender & Hotel Selection */}
+          <Card className="p-4">
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Gênero</label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={selectedGender === 'M' ? 'default' : 'outline'}
+                    onClick={() => setSelectedGender('M')}
+                    className="flex-1"
+                  >
+                    <User className="w-4 h-4 mr-1" />
+                    Masculino
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={selectedGender === 'F' ? 'default' : 'outline'}
+                    onClick={() => setSelectedGender('F')}
+                    className="flex-1"
+                  >
+                    <User className="w-4 h-4 mr-1" />
+                    Feminino
+                  </Button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Hotel</label>
+                <select 
+                  className="w-full p-2 border rounded-md text-sm"
+                  value={selectedHotel}
+                  onChange={(e) => setSelectedHotel(e.target.value)}
+                >
+                  <option value="com">Habbo.com</option>
+                  <option value="com.br">Habbo.com.br</option>
+                  <option value="es">Habbo.es</option>
+                  <option value="fr">Habbo.fr</option>
+                </select>
+              </div>
             </div>
-          </div>
-
-          <Button variant="secondary" className="w-full mt-4 volter-font text-xs" onClick={handleRandomizeFigure}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Randomizar Roupa
-          </Button>
+          </Card>
         </div>
-      </div>
 
-      {/* Right Panel - Asset Selection */}
-      <div className="flex-1 flex flex-col border-l border-gray-300">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-100 border-b border-gray-300">
-            <TabsTrigger value="habbo" className="volter-font text-xs">Habbo Oficial</TabsTrigger>
-            <TabsTrigger value="viajovem" className="volter-font text-xs">ViaJovem</TabsTrigger>
-            <TabsTrigger value="flash" className="volter-font text-xs">Flash Assets</TabsTrigger>
-          </TabsList>
+        {/* Right Panel - Clothing Selection */}
+        <div className="lg:col-span-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="official" className="flex items-center gap-2">
+                <Crown className="w-4 h-4" />
+                Oficial Habbo
+              </TabsTrigger>
+              <TabsTrigger value="viajovem" className="flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                ViaJovem
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="habbo" className="flex-1 overflow-hidden">
-            <OfficialHabboClothingGrid
-              selectedGender={selectedGender}
-              selectedHotel={selectedHotel}
-              onItemSelect={handleItemSelect}
-              selectedItem={selectedItem}
-              selectedColor={selectedColor}
-              className="h-full"
-            />
-          </TabsContent>
+            <TabsContent value="official" className="h-full">
+              <OfficialHabboClothingGrid />
+            </TabsContent>
 
-          <TabsContent value="viajovem" className="flex-1 overflow-hidden">
-            <ViaJovemClothingGrid
-              selectedGender={selectedGender}
-              selectedHotel={selectedHotel}
-              onItemSelect={handleViaJovemItemSelect}
-              selectedItem={selectedItem}
-              selectedColor={selectedColor}
-              currentFigureString={currentFigureString}
-              onRestoreFigure={restoreFigure}
-              className="h-full"
-            />
-          </TabsContent>
-
-          <TabsContent value="flash" className="flex-1 overflow-hidden">
-            <FlashAssetsV3Complete />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="viajovem" className="h-full">
+              <ViaJovemClothingGrid />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default ViaJovemEditorRedesigned;
