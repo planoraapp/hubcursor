@@ -12,6 +12,7 @@ import { SkinColorSlider } from './SkinColorSlider';
 import { OfficialHabboColorPalette } from './OfficialHabboColorPalette';
 import { AvatarHistory } from './AvatarHistory';
 import { isValidColorForCategory, getDefaultColorForCategory } from '@/utils/habboColorValidator';
+import { getPuhekuplaThumbFromSwf } from '@/utils/puhekupla';
 
 interface FlashAssetsV3CompleteProps {
   selectedGender: 'M' | 'F';
@@ -159,12 +160,15 @@ const FlashAssetsV3Complete = ({
   };
 
   const getItemImageUrl = (item: any) => {
+    // Prefer Puhekupla focused thumbs if we can parse swfName
+    if (item?.swfName) {
+      const puhek = getPuhekuplaThumbFromSwf(String(item.swfName));
+      if (puhek) return puhek;
+    }
+    // Fallbacks
     if (item.thumbnailUrl) return item.thumbnailUrl;
-    if (item.imageUrl) return item.imageUrl;
-    
     return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
   };
-
   const filteredItems = items
     .filter(item => item && item.category === selectedCategory)
     .filter(item => !searchTerm ||
@@ -354,8 +358,14 @@ const FlashAssetsV3Complete = ({
                         alt={item.name}
                         className="max-w-full max-h-full object-contain pixelated"
                         onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = 'none';
+                          const img = e.currentTarget as HTMLImageElement;
+                          // Try fallback to isolated Habbo imaging thumbnail if Puhekupla fails
+                          const fallback = item.thumbnailUrl || `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
+                          if (img.src !== fallback) {
+                            img.src = fallback;
+                          } else {
+                            img.style.display = 'none';
+                          }
                         }}
                       />
                     </div>
