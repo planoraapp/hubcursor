@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Habbo হোটেলSelect } from '../HabboHotelSelect';
+import { HabboHotelSelect } from '../HabboHotelSelect';
 import { GenderButtons } from '../GenderButtons';
 import { Button } from '@/components/ui/button';
 import { AvatarImage } from '@/components/ui/avatar';
@@ -59,7 +59,7 @@ export default function OfficialHabboEditor() {
       <div className="w-80 p-4 border-r border-gray-300">
         <h2 className="text-lg font-semibold mb-4 volter-font">Editor de Avatar</h2>
 
-        <Habbo হোটেলSelect selectedHotel={selectedHotel} onHotelChange={setSelectedHotel} />
+        <HabboHotelSelect selectedHotel={selectedHotel} onHotelChange={setSelectedHotel} />
 
         <GenderButtons selectedGender={selectedGender} onGenderChange={setSelectedGender} />
 
