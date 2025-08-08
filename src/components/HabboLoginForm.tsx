@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useUnifiedAuth } from '../hooks/useUnifiedAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, Check, Info } from 'lucide-react';
+import { Copy, Check, Info, KeyRound, Search } from 'lucide-react';
+import { PasswordResetModal } from './auth/PasswordResetModal';
+import { AccountStatusChecker } from './auth/AccountStatusChecker';
 
 export const HabboLoginForm = () => {
   const { 
@@ -32,6 +33,8 @@ export const HabboLoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   // Se já estiver logado, redirecionar
   if (isLoggedIn) {
@@ -121,6 +124,7 @@ export const HabboLoginForm = () => {
     }
 
     setIsLoading(true);
+    setLoginError('');
     
     try {
       await loginWithPassword(habboName, password);
@@ -131,11 +135,23 @@ export const HabboLoginForm = () => {
       navigate('/');
     } catch (error: any) {
       console.error('Erro no login:', error);
-      toast({
-        title: "Erro no login",
-        description: error.message || 'Verifique suas credenciais',
-        variant: "destructive"
-      });
+      const errorMessage = error.message || 'Verifique suas credenciais';
+      setLoginError(errorMessage);
+      
+      // Show different error messages based on the error
+      if (errorMessage.includes('Conta não encontrada')) {
+        toast({
+          title: "Conta não encontrada",
+          description: "Use a aba 'Primeiro Acesso' para se cadastrar ou verifique se digitou o nome corretamente.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro no login",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +160,7 @@ export const HabboLoginForm = () => {
   return (
     <div className="min-h-screen bg-repeat flex items-center justify-center p-4"
          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
+      <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img src="/assets/habbohub.gif" alt="Habbo Hub" className="h-16" />
@@ -159,9 +175,10 @@ export const HabboLoginForm = () => {
 
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Primeiro Acesso</TabsTrigger>
+              <TabsTrigger value="check">Verificar Conta</TabsTrigger>
             </TabsList>
 
             {/* Tab de Login */}
@@ -195,6 +212,14 @@ export const HabboLoginForm = () => {
                   />
                 </div>
 
+                {loginError && (
+                  <Alert className="border-red-200 bg-red-50">
+                    <AlertDescription className="text-red-700">
+                      {loginError}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2"
@@ -203,10 +228,23 @@ export const HabboLoginForm = () => {
                   {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
 
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => setShowPasswordReset(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    <KeyRound className="w-4 h-4 mr-1" />
+                    Esqueci minha senha
+                  </Button>
+                </div>
+
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    Já tem conta? Use seu nome Habbo e a senha que criou no primeiro acesso.
+                    <strong>Primeira vez aqui?</strong> Use a aba "Primeiro Acesso" para se cadastrar.<br/>
+                    <strong>Já tem conta?</strong> Digite seu nome Habbo e a senha que criou.
                   </AlertDescription>
                 </Alert>
               </form>
@@ -292,9 +330,21 @@ export const HabboLoginForm = () => {
                 </Button>
               </form>
             </TabsContent>
+
+            {/* Tab de Verificar Conta */}
+            <TabsContent value="check">
+              <div className="flex justify-center">
+                <AccountStatusChecker />
+              </div>
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      <PasswordResetModal 
+        isOpen={showPasswordReset}
+        onClose={() => setShowPasswordReset(false)}
+      />
     </div>
   );
 };
