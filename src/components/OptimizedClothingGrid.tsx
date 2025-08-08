@@ -58,8 +58,7 @@ export const OptimizedClothingGrid = ({
   const { data: clothing, isLoading, error } = useFlashAssetsClothing({
     limit: 500,
     category: selectedCategory === 'all' ? '' : selectedCategory,
-    search,
-    enabled: true
+    search
   });
 
   // Filter and organize clothing
