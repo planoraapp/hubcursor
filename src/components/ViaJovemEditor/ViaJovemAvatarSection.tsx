@@ -40,6 +40,14 @@ const hotels: Hotel[] = [
   { code: 'tr', name: 'Türkiye', flag: '🇹🇷', url: 'habbo.com.tr' }
 ];
 
+// Avatar directions for rotation
+const AVATAR_DIRECTIONS = [
+  { direction: '2', headDirection: '3', name: 'Front Right' },
+  { direction: '4', headDirection: '4', name: 'Back Right' },
+  { direction: '6', headDirection: '6', name: 'Back Left' },
+  { direction: '0', headDirection: '0', name: 'Front Left' }
+];
+
 export const ViaJovemAvatarSection = ({
   currentFigure,
   selectedHotel,
@@ -55,11 +63,26 @@ export const ViaJovemAvatarSection = ({
 }: ViaJovemAvatarSectionProps) => {
   const { toast } = useToast();
   const [hotelPopoverOpen, setHotelPopoverOpen] = useState(false);
+  const [currentDirectionIndex, setCurrentDirectionIndex] = useState(0);
+
+  const getCurrentDirection = () => AVATAR_DIRECTIONS[currentDirectionIndex];
+
+  const handleAvatarClick = () => {
+    const nextIndex = (currentDirectionIndex + 1) % AVATAR_DIRECTIONS.length;
+    setCurrentDirectionIndex(nextIndex);
+    
+    toast({
+      title: "Avatar rotacionado!",
+      description: `Direção: ${AVATAR_DIRECTIONS[nextIndex].name}`,
+    });
+  };
 
   const getAvatarUrl = () => {
     const hotel = hotels.find(h => h.code === selectedHotel);
     const baseUrl = hotel?.url || 'habbo.com';
-    return `https://www.${baseUrl}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+    const { direction, headDirection } = getCurrentDirection();
+    
+    return `https://www.${baseUrl}/habbo-imaging/avatarimage?figure=${currentFigure}&size=l&direction=${direction}&head_direction=${headDirection}&action=std&gesture=std`;
   };
 
   const selectedHotelData = hotels.find(h => h.code === selectedHotel);
@@ -68,9 +91,13 @@ export const ViaJovemAvatarSection = ({
     <div className="flex flex-col space-y-4">
       {/* Avatar e Botões */}
       <div className="flex gap-4">
-        {/* Avatar - Aumentado */}
+        {/* Avatar - Clickable for rotation */}
         <div className="relative">
-          <div className="w-32 h-40 bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg border-2 border-gray-200 flex items-end justify-center p-2">
+          <div 
+            className="w-32 h-40 bg-gradient-to-b from-blue-100 to-purple-100 rounded-lg border-2 border-gray-200 flex items-end justify-center p-2 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={handleAvatarClick}
+            title="Clique para rotacionar o avatar"
+          >
             <img
               src={getAvatarUrl()}
               alt="Avatar Preview"
@@ -78,7 +105,8 @@ export const ViaJovemAvatarSection = ({
               style={{ imageRendering: 'pixelated' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+                const { direction, headDirection } = getCurrentDirection();
+                target.src = `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-665-92.lg-700-1.sh-705-1&size=l&direction=${direction}&head_direction=${headDirection}&action=std&gesture=std`;
               }}
             />
           </div>
@@ -119,14 +147,14 @@ export const ViaJovemAvatarSection = ({
       {/* Seleção de Gênero - Apenas ícones */}
       <div className="flex justify-center gap-2">
         <button 
-          className={`p-2 rounded text-2xl ${selectedGender === 'M' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          className={`p-2 rounded text-2xl transition-all ${selectedGender === 'M' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
           onClick={() => onGenderChange('M')}
           title="Masculino"
         >
           ♂️
         </button>
         <button 
-          className={`p-2 rounded text-2xl ${selectedGender === 'F' ? 'bg-pink-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+          className={`p-2 rounded text-2xl transition-all ${selectedGender === 'F' ? 'bg-pink-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
           onClick={() => onGenderChange('F')}
           title="Feminino"
         >

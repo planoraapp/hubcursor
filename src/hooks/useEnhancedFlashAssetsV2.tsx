@@ -104,24 +104,33 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
   const query = useQuery({
     queryKey: ['enhanced-flash-assets-v2', params],
     queryFn: () => fetchEnhancedFlashAssetsV2(params),
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60 * 2, // 2 hours
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60 * 2,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
+  
   const official = useOfficialFigureData();
 
   const normalizedItems = useMemo<EnhancedFlashAssetV2[]>(() => {
     const assets: any[] = (query.data as any[]) || [];
     const officialData: Record<string, any[]> = (official.data as any) || {};
 
-    // Mapa de id -> categoria a partir da fonte oficial
+    // Valid clothing categories ONLY - no fx/pets/vehicles
+    const VALID_CLOTHING_CATEGORIES = new Set([
+      'hd', 'hr', 'ha', 'ea', 'fa', // Head section
+      'ch', 'cc', 'cp', 'ca',       // Body section  
+      'lg', 'sh', 'wa'              // Legs section
+    ]);
+
     const idToCategory = new Map<string, string>();
     Object.entries(officialData).forEach(([cat, items]) => {
-      (items as any[]).forEach((it: any) => {
-        const id = String(it.id);
-        if (!idToCategory.has(id)) idToCategory.set(id, cat);
-      });
+      if (VALID_CLOTHING_CATEGORIES.has(cat)) {
+        (items as any[]).forEach((it: any) => {
+          const id = String(it.id);
+          if (!idToCategory.has(id)) idToCategory.set(id, cat);
+        });
+      }
     });
 
     const mapped = assets.map((a: any) => {
@@ -133,23 +142,19 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
           return String(a?.figureId ?? '');
         }
       })();
+      
       const figureId = parsedFigureId && parsedFigureId !== 'undefined' && parsedFigureId !== ''
         ? parsedFigureId
         : String(a?.figureId ?? a?.id ?? '');
 
+      // Get category from official data first, then fallback to parsing
       let category = idToCategory.get(figureId)
         || (typeof parseAssetCategory === 'function' ? parseAssetCategory(swf) : String(a?.category || 'ch'));
 
-      // Correção heurística: evitar cair em 'fx' (ou outros) quando parecer peça de roupa
-      const heuristicCategory = getCategoryFromSwfName(swf);
-      const validCategories = new Set(['hd','hr','ha','ea','fa','ch','cc','cp','ca','lg','sh','wa']);
-      if (!validCategories.has(category)) {
-        console.log(`🔄 [Normalize] Categoria inválida '${category}' para ${swf} -> usando heurística '${heuristicCategory}'`);
-        category = heuristicCategory;
-      }
-      if ((category === 'fx' || category === 'pets' || category === 'vehicles') && validCategories.has(heuristicCategory)) {
-        console.log(`🔄 [Normalize] Recategorizando ${swf}: ${category} -> ${heuristicCategory}`);
-        category = heuristicCategory;
+      // STRICT FILTER: Only allow valid clothing categories
+      if (!VALID_CLOTHING_CATEGORIES.has(category)) {
+        console.log(`🚫 [Normalize] Rejecting non-clothing category '${category}' for ${swf}`);
+        return null; // Will be filtered out
       }
 
       let gender: 'M' | 'F' | 'U' = (typeof parseAssetGender === 'function' 
@@ -157,7 +162,13 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
         : (a?.gender)) as any;
       if (gender !== 'M' && gender !== 'F') gender = 'U';
 
-      // Cores – priorizar oficiais
+      // STRICT FILTER: Only numeric figureId, not '0'
+      if (!/^\d+$/.test(String(figureId)) || String(figureId) === '0') {
+        console.log(`🚫 [Normalize] Rejecting invalid figureId '${figureId}' for ${swf}`);
+        return null; // Will be filtered out
+      }
+
+      // Colors from official data or fallback
       const officialItems = (officialData as any)[category] as any[] | undefined;
       const officialMatch = officialItems?.find((it: any) => String(it.id) === figureId);
       let colors: string[] = [];
@@ -192,17 +203,12 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       };
 
       return normalized;
-    });
+    }).filter(Boolean); // Remove null items
 
-    // Limpar itens inválidos e restringir às categorias de roupa
-    const allowedCategories = new Set(['hd','hr','ha','ea','fa','ch','cc','cp','ca','lg','sh','wa']);
-    const cleaned = mapped.filter(it => {
-      const validCat = allowedCategories.has(it.category);
-      const validFig = /^\d+$/.test(String(it.figureId)) && it.figureId !== '0';
-      return validCat && validFig;
-    });
-    // Se houver categoria no filtro, garantir consistência
-    const finalList = params?.category ? cleaned.filter(it => it.category === params.category) : cleaned;
+    // Apply category filter if specified
+    const finalList = params?.category ? mapped.filter(it => it.category === params.category) : mapped;
+    
+    console.log(`✅ [EnhancedFlashAssetsV2] Normalized ${finalList.length} valid clothing items`);
     return finalList;
   }, [query.data, official.data, params?.category]);
 

@@ -7,12 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter } from 'lucide-react';
 import { useEnhancedFlashAssetsV2 } from '@/hooks/useEnhancedFlashAssetsV2';
-import { getRarityColor, generateIsolatedThumbnail } from '@/lib/enhancedCategoryMapperV2';
+import { getRarityColor } from '@/lib/enhancedCategoryMapperV2';
 import { SkinColorSlider } from './SkinColorSlider';
-import { OfficialHabboColorPalette } from './OfficialHabboColorPalette';
+import { ColorPickerModal } from './ColorPickerModal';
 import { AvatarHistory } from './AvatarHistory';
-import { isValidColorForCategory, getDefaultColorForCategory } from '@/utils/habboColorValidator';
-import { getPuhekuplaThumbFromSwf } from '@/utils/puhekupla';
+import { getClothingSpriteUrl, getFallbackThumbnail } from '@/utils/clothingSpriteGenerator';
 
 interface FlashAssetsV3CompleteProps {
   selectedGender: 'M' | 'F';
@@ -25,31 +24,25 @@ interface FlashAssetsV3CompleteProps {
   className?: string;
 }
 
-// 4 SEÇÕES PRINCIPAIS reorganizadas - SEM DANCE
+// 4 SEÇÕES PRINCIPAIS - Sem cores inline
 const MAIN_SECTIONS = {
   head: {
     id: 'head',
     name: 'Cabeça',
     icon: '👤',
-    categories: ['hd', 'hr', 'ha', 'ea', 'fa'] // Rosto, Cabelo, Chapéus, Óculos, Acessórios de Rosto
+    categories: ['hd', 'hr', 'ha', 'ea', 'fa']
   },
   body: {
     id: 'body',
-    name: 'Corpo e Acessórios',
+    name: 'Corpo',
     icon: '👕',
-    categories: ['ch', 'cc', 'cp', 'ca'] // Camisetas, Casacos, Estampas, Acessórios Peito
+    categories: ['ch', 'cc', 'cp', 'ca']
   },
   legs: {
     id: 'legs',
-    name: 'Pernas e Pés',
+    name: 'Pernas',
     icon: '👖',
-    categories: ['lg', 'sh', 'wa'] // Calças, Sapatos, Cintura
-  },
-  others: {
-    id: 'others',
-    name: 'Outros',
-    icon: '✨',
-    categories: ['pets', 'fx', 'vehicles'] // Pets, Efeitos, Veículos
+    categories: ['lg', 'sh', 'wa']
   }
 };
 
@@ -58,17 +51,14 @@ const CATEGORY_METADATA = {
   hr: { name: 'Cabelos', icon: '💇' },
   ha: { name: 'Chapéus', icon: '🎩' },
   ea: { name: 'Óculos', icon: '👓' },
-  fa: { name: 'Acessórios Rosto', icon: '🎭' },
+  fa: { name: 'Acessórios', icon: '🎭' },
   ch: { name: 'Camisetas', icon: '👕' },
   cc: { name: 'Casacos', icon: '🧥' },
   cp: { name: 'Estampas', icon: '🎨' },
-  ca: { name: 'Acessórios Peito', icon: '💍' },
+  ca: { name: 'Peito', icon: '💍' },
   lg: { name: 'Calças', icon: '👖' },
   sh: { name: 'Sapatos', icon: '👟' },
-  wa: { name: 'Cintura', icon: '🎀' },
-  pets: { name: 'Pets/Animais', icon: '🐾' },
-  fx: { name: 'Efeitos Especiais', icon: '✨' },
-  vehicles: { name: 'Veículos', icon: '🚗' }
+  wa: { name: 'Cintura', icon: '🎀' }
 };
 
 const FlashAssetsV3Complete = ({
@@ -85,12 +75,13 @@ const FlashAssetsV3Complete = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('hd');
   const [selectedSection, setSelectedSection] = useState<string>('head');
   const [selectedRarity, setSelectedRarity] = useState<'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common'>('all');
-  const [currentColor, setCurrentColor] = useState<string>('1');
+  
+  // Color picker modal state
+  const [colorModalOpen, setColorModalOpen] = useState(false);
+  const [pendingItem, setPendingItem] = useState<any>(null);
 
   const { 
     items, 
-    categoryStats, 
-    rarityStats,
     isLoading, 
     error, 
     totalItems
@@ -103,34 +94,25 @@ const FlashAssetsV3Complete = ({
 
   const currentSection = MAIN_SECTIONS[selectedSection as keyof typeof MAIN_SECTIONS];
 
-  // Atualizar categoria quando mudar seção
+  // Update category when section changes
   useEffect(() => {
     if (currentSection && currentSection.categories.length > 0 && !currentSection.categories.includes(selectedCategory)) {
       setSelectedCategory(currentSection.categories[0]);
     }
   }, [selectedSection, currentSection, selectedCategory]);
 
-  // Validar cor quando mudar categoria
-  useEffect(() => {
-    if (!isValidColorForCategory(currentColor, selectedCategory)) {
-      const defaultColor = getDefaultColorForCategory(selectedCategory);
-      setCurrentColor(defaultColor);
-    }
-  }, [selectedCategory, currentColor]);
-
   const handleItemClick = (item: any) => {
-    console.log('🎯 [FlashAssetsV3Complete] Item selecionado:', item);
-    
-    const validColor = isValidColorForCategory(currentColor, item.category) 
-      ? currentColor 
-      : getDefaultColorForCategory(item.category);
-    
-    onItemSelect(item, validColor);
+    console.log('🎯 [FlashAssetsV3Complete] Item clicado para seleção de cor:', item);
+    setPendingItem(item);
+    setColorModalOpen(true);
   };
 
-  const handleColorSelect = (colorId: string) => {
-    console.log('🎨 [FlashAssetsV3Complete] Cor selecionada:', { category: selectedCategory, colorId });
-    setCurrentColor(colorId);
+  const handleColorModalSelect = (colorId: string) => {
+    if (pendingItem) {
+      console.log('🎨 [FlashAssetsV3Complete] Cor selecionada:', { item: pendingItem.name, colorId });
+      onItemSelect(pendingItem, colorId);
+      setPendingItem(null);
+    }
   };
 
   const handleSkinColorSelect = (colorId: string) => {
@@ -146,8 +128,7 @@ const FlashAssetsV3Complete = ({
       rarity: 'common',
       source: 'skin-color-slider',
       club: 'normal',
-      swfName: `hd_180_skin_${colorId}`,
-      thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-${colorId}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`
+      swfName: `hd_180_skin_${colorId}`
     };
     
     onItemSelect(skinItem, colorId);
@@ -160,28 +141,19 @@ const FlashAssetsV3Complete = ({
   };
 
   const getItemImageUrl = (item: any) => {
-    const color = isValidColorForCategory(currentColor, item.category)
-      ? currentColor
-      : getDefaultColorForCategory(item.category);
-    if (item?.figureId && item?.category) {
-      return generateIsolatedThumbnail(String(item.category), String(item.figureId), String(color), selectedGender);
-    }
-    // Fallbacks
-    const puhek = item?.swfName ? getPuhekuplaThumbFromSwf(String(item.swfName)) : null;
-    if (puhek) return puhek;
-    if (item.thumbnailUrl) return item.thumbnailUrl;
-    return `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
+    // Use focused clothing sprite
+    const spriteUrl = getClothingSpriteUrl(item.category, item.figureId, '1', selectedGender);
+    return spriteUrl;
   };
+
   const filteredItems = items
     .filter(item => item && item.category === selectedCategory)
     .filter(item => /^\d+$/.test(String(item.figureId)) && String(item.figureId) !== '0')
     .filter(item => !searchTerm ||
       String(item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(item.figureId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(item.swfName || '').toLowerCase().includes(searchTerm.toLowerCase())
+      String(item.figureId || '').toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(item => selectedRarity === 'all' || item.rarity === selectedRarity)
-    .filter(item => item.gender === selectedGender || item.gender === 'U');
+    .filter(item => selectedRarity === 'all' || item.rarity === selectedRarity);
 
   const handleRarityChange = (value: string) => {
     setSelectedRarity(value as 'all' | 'nft' | 'hc' | 'ltd' | 'rare' | 'common');
@@ -202,7 +174,20 @@ const FlashAssetsV3Complete = ({
 
   return (
     <div className={`${className} flex flex-col h-full`}>
-      {/* Controles de Busca e Filtros */}
+      {/* Color Picker Modal */}
+      <ColorPickerModal
+        isOpen={colorModalOpen}
+        onClose={() => {
+          setColorModalOpen(false);
+          setPendingItem(null);
+        }}
+        onColorSelect={handleColorModalSelect}
+        category={pendingItem?.category || 'ch'}
+        itemName={pendingItem?.name || ''}
+        selectedColor={selectedColor}
+      />
+
+      {/* Search and Filters */}
       <div className="p-4 border-b bg-gray-50 space-y-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -243,16 +228,16 @@ const FlashAssetsV3Complete = ({
         </div>
       </div>
 
-      {/* NOVO: Slider de Cor de Pele */}
+      {/* Skin Color Slider */}
       <div className="p-4 border-b bg-white">
         <SkinColorSlider
-          selectedColor={currentColor}
+          selectedColor={selectedColor}
           onColorSelect={handleSkinColorSelect}
           selectedGender={selectedGender}
         />
       </div>
 
-      {/* NOVO: Histórico de Avatars (apenas se a função foi fornecida) */}
+      {/* Avatar History */}
       {onRestoreFigure && currentFigureString && (
         <div className="p-4 border-b bg-gray-50">
           <AvatarHistory
@@ -264,11 +249,11 @@ const FlashAssetsV3Complete = ({
         </div>
       )}
 
-      {/* 4 SEÇÕES PRINCIPAIS - SEM DANCE */}
+      {/* 3 Main Sections */}
       <Tabs value={selectedSection} onValueChange={setSelectedSection} className="flex-1 flex flex-col">
         <div className="p-2 border-b bg-white">
           <ScrollArea className="w-full">
-            <TabsList className="grid grid-cols-4 w-full gap-1">
+            <TabsList className="grid grid-cols-3 w-full gap-1">
               {Object.values(MAIN_SECTIONS).map((section) => (
                 <TabsTrigger 
                   key={section.id} 
@@ -283,11 +268,11 @@ const FlashAssetsV3Complete = ({
           </ScrollArea>
         </div>
 
-        {/* Conteúdo das SEÇÕES */}
+        {/* Section Content */}
         {Object.values(MAIN_SECTIONS).map((section) => (
           <TabsContent key={section.id} value={section.id} className="flex-1 p-0 m-0 flex flex-col">
             
-            {/* Sub-categorias */}
+            {/* Sub-categories */}
             <div className="p-2 border-b bg-gray-50">
               <ScrollArea className="w-full">
                 <div className="flex gap-1">
@@ -310,17 +295,7 @@ const FlashAssetsV3Complete = ({
               </ScrollArea>
             </div>
 
-            {/* Seletor de Cores por Categoria */}
-            <div className="p-2 border-b bg-white">
-              <OfficialHabboColorPalette
-                selectedCategory={selectedCategory}
-                selectedColor={currentColor}
-                onColorSelect={handleColorSelect}
-                showPaletteInfo={false}
-              />
-            </div>
-
-            {/* Grid de Assets - SEM LEGENDAS, thumbnails focadas */}
+            {/* Items Grid - Focused sprites */}
             <ScrollArea className="flex-1 p-4">
               {isLoading ? (
                 <div className="grid grid-cols-6 gap-2">
@@ -331,24 +306,22 @@ const FlashAssetsV3Complete = ({
               ) : filteredItems.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <div className="text-4xl mb-2">{section.icon}</div>
-                  <p>Nenhum item encontrado para categoria "{selectedCategory}"</p>
-                  {searchTerm && <p className="text-sm">Tente buscar por outro termo</p>}
-                  <div className="text-xs mt-2 text-gray-400">
-                    Total de itens: {totalItems} | Categoria atual: {selectedCategory}
-                  </div>
+                  <p>Nenhum item encontrado</p>
+                  {searchTerm && <p className="text-sm">Tente outro termo</p>}
                 </div>
               ) : (
                 <div className="grid grid-cols-6 gap-2">
                   {filteredItems.map((item, idx) => (
                     <div
-                      key={`${String(item.swfName || item.id || item.figureId || 'item')}_${idx}`}
+                      key={`${String(item.swfName || item.id || item.figureId)}_${idx}`}
                       onClick={() => handleItemClick(item)}
-                      className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative ${
+                      className={`aspect-square rounded-lg border-2 hover:border-blue-400 cursor-pointer transition-all duration-200 p-1 flex items-center justify-center relative bg-white ${
                         selectedItem === item.figureId ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-200'
                       }`}
-                      title={`${item.name} (${item.category})`}
+                      title={`${item.name} - Clique para escolher cor`}
+                      data-cat={item.category}
                     >
-                      {/* Indicador de raridade compacto */}
+                      {/* Rarity indicator */}
                       {item.rarity !== 'common' && (
                         <div 
                           className="absolute top-0 right-0 w-3 h-3 rounded-full"
@@ -356,19 +329,17 @@ const FlashAssetsV3Complete = ({
                         />
                       )}
 
-                      {/* Imagem do item */}
+                      {/* Focused clothing sprite */}
                       <img
                         src={getItemImageUrl(item)}
                         alt={item.name}
-                        className="max-w-full max-h-full object-contain pixelated"
+                        className="max-w-full max-h-full object-contain"
+                        style={{ imageRendering: 'pixelated' }}
                         onError={(e) => {
                           const img = e.currentTarget as HTMLImageElement;
-                          const puhek = item?.swfName ? getPuhekuplaThumbFromSwf(String(item.swfName)) : null;
-                          const supa = `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/flash-assets/${item.swfName || item.id}.png`;
-                          const fallbacks = [puhek, item.thumbnailUrl, supa].filter(Boolean) as string[];
-                          const next = fallbacks.find(url => url && img.src !== url);
-                          if (next) {
-                            img.src = next;
+                          const fallback = getFallbackThumbnail(item.category, item.figureId, '1', selectedGender);
+                          if (img.src !== fallback) {
+                            img.src = fallback;
                           } else {
                             img.style.display = 'none';
                           }

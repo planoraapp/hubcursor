@@ -1,8 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { ViaJovemAvatarSection } from './ViaJovemAvatarSection';
 import { ViaJovemFigureManager, ViaJovemFigure } from '@/lib/viaJovemFigureManager';
 import { useToast } from '@/hooks/use-toast';
@@ -84,15 +81,14 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
     const categoryEmojis: Record<string, string> = {
       'hd': '😊', 'hr': '💇', 'ha': '🎩', 'ea': '👓', 'fa': '🎭',
       'ch': '👕', 'cc': '🧥', 'ca': '💍', 'cp': '🎨',
-      'lg': '👖', 'sh': '👟', 'wa': '🎀',
-      'fx': '✨', 'pets': '🐾', 'vehicles': '🚗'
+      'lg': '👖', 'sh': '👟', 'wa': '🎀'
     };
     
     const emoji = categoryEmojis[item.category] || '👕';
     const rarityText = item.rarity !== 'common' ? ` ${item.rarity.toUpperCase()}` : '';
     
     toast({
-      title: `${emoji} Asset Flash aplicado!`,
+      title: `${emoji} Item aplicado!`,
       description: `${item.name}${rarityText} foi aplicado ao seu avatar.`,
     });
   };
@@ -187,18 +183,9 @@ const ViaJovemEditorRedesigned = ({ className = '' }: ViaJovemEditorRedesignedPr
         </Card>
       </div>
 
-      {/* Editor COMPLETO (Direita) */}
+      {/* Editor COMPLETO (Direita) - Banner Removido */}
       <div className="flex-1">
         <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white rounded-t-lg py-4">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="w-5 h-5" />
-              ViaJovem Editor V3 - Sistema Flash Assets REORGANIZADO
-              <Badge className="ml-auto bg-white/20 text-white text-xs">
-                2871+ Assets • Slider de Pele • Histórico • 4 Seções
-              </Badge>
-            </CardTitle>
-          </CardHeader>
           <CardContent className="p-4 h-full">
             <FlashAssetsV3Complete
               selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
