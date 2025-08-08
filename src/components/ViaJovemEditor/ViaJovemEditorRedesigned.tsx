@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Avatar } from "@/components/ui/avatar"
@@ -20,7 +21,7 @@ import { detectHotelFromHabboId } from '@/utils/habboDomains';
 import { generateFigureString } from '@/lib/figureStringGenerator';
 import { HabboRenderer } from '../HabboRenderer';
 import { OfficialHabboClothingGrid } from './OfficialHabboClothingGrid';
-import { ViaJovemClothingGrid } from './ViaJovemClothingGrid';
+import ViaJovemClothingGrid from './ViaJovemClothingGrid';
 import FlashAssetsV3Complete from '../HabboEditor/FlashAssetsV3Complete';
 
 export default function ViaJovemEditorRedesigned() {
