@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +17,7 @@ import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
 const HabboHome = () => {
-  const { username } = useParams<{ username: string }>();
+  const { username, hotel } = useParams<{ username: string; hotel?: string }>();
   const navigate = useNavigate();
   const { user, habboAccount, loading } = useAuth();
   const { toast } = useToast();
@@ -43,7 +42,16 @@ const HabboHome = () => {
     setIsEditMode,
     isOwner,
     addGuestbookEntry
-  } = useEnhancedHabboHome(normalizedUsername);
+  } = useEnhancedHabboHome(normalizedUsername, hotel);
+
+  // Redirecionar para rota canônica se necessário
+  useEffect(() => {
+    if (habboData && !hotel) {
+      // Se temos dados do usuário mas não especificamos o hotel na URL, redirecionar
+      console.log('🔄 Redirecionando para rota canônica com hotel:', habboData.hotel);
+      navigate(`/home/${habboData.hotel}/${normalizedUsername}`, { replace: true });
+    }
+  }, [habboData, hotel, normalizedUsername, navigate]);
 
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
@@ -81,7 +89,7 @@ const HabboHome = () => {
           <div className="text-sm text-white/80 mt-2" style={{
             textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
           }}>
-            Buscando dados do usuário e inicializando home...
+            {hotel ? `Buscando no hotel ${hotel.toUpperCase()}...` : 'Detectando hotel...'}
           </div>
         </div>
       </div>
@@ -97,7 +105,7 @@ const HabboHome = () => {
             <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl volter-font mb-2">Habbo Home não encontrada</h2>
             <p className="text-gray-600 mb-4">
-              O usuário "{normalizedUsername}" não foi encontrado ou não possui uma Habbo Home.
+              O usuário "{normalizedUsername}" não foi encontrado {hotel ? `no hotel ${hotel.toUpperCase()}` : ''} ou não possui uma Habbo Home.
             </p>
             <div className="space-y-2">
               <Button onClick={() => navigate('/')} className="w-full volter-font">

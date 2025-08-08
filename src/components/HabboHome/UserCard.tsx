@@ -1,19 +1,22 @@
 
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getAvatarUrl } from '../../services/habboApiMultiHotel';
 
 interface UserCardProps {
   habboData: {
     name: string;
     habbo_id: string;
     figureString?: string;
+    hotel?: string;
   };
   isOwner?: boolean;
 }
 
 export const UserCard = ({ habboData, isOwner }: UserCardProps) => {
-  // Avatar com corpo completo e fundo transparente
-  const avatarUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.name}&direction=2&head_direction=2&gesture=std&size=b&action=std&headonly=0`;
+  // Usar a função getAvatarUrl com o hotel correto (se disponível)
+  const hotel = habboData.hotel || 'com';
+  const avatarUrl = getAvatarUrl(habboData.name, habboData.figureString, hotel);
 
   return (
     <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-blue-200 shadow-lg">
@@ -58,6 +61,11 @@ export const UserCard = ({ habboData, isOwner }: UserCardProps) => {
             <p className="text-sm text-gray-600 volter-font">
               ⭐ Reputação: Excelente
             </p>
+            {habboData.hotel && (
+              <p className="text-sm text-gray-600 volter-font">
+                🏨 Hotel: {habboData.hotel.toUpperCase()}
+              </p>
+            )}
           </div>
 
           {/* Status online */}

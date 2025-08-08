@@ -707,8 +707,21 @@ export type Database = {
         Args: { habbo_name_param: string }
         Returns: string
       }
+      get_auth_email_for_habbo_with_hotel: {
+        Args: { habbo_name_param: string; hotel_param?: string }
+        Returns: string
+      }
       get_habbo_account_public_by_name: {
         Args: { habbo_name_param: string }
+        Returns: {
+          supabase_user_id: string
+          habbo_name: string
+          habbo_id: string
+          hotel: string
+        }[]
+      }
+      get_habbo_account_public_by_name_and_hotel: {
+        Args: { habbo_name_param: string; hotel_param: string }
         Returns: {
           supabase_user_id: string
           habbo_name: string

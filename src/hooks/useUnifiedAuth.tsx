@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getUserByName } from '../services/habboApiMultiHotel';
+import { detectHotelFromHabboId } from '../utils/habboDomains';
 
 interface HabboAccount {
   id: string;
@@ -255,7 +255,7 @@ export const useUnifiedAuth = () => {
     }
   };
 
-  // Login com senha (usuários existentes) - versão aprimorada com múltiplos candidatos
+  // Login com senha (usuários existentes) - versão aprimorada com hotel-aware RPC
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
       console.log(`🔐 Iniciando login para: ${habboName}`);
@@ -269,32 +269,40 @@ export const useUnifiedAuth = () => {
         const habboUser = await getUserByName(normalizedName);
         
         if (habboUser?.uniqueId) {
-          const apiEmail = `${habboUser.uniqueId}@habbohub.com`;
           const detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
-          emailCandidates.push(apiEmail);
-          console.log(`📧 Email candidato da API: ${apiEmail} (${detectedHotel})`);
+          
+          // Usar a nova RPC que é hotel-aware
+          console.log('💾 Buscando email via RPC hotel-aware...');
+          const { data: rpcEmail, error: rpcError } = await supabase.rpc('get_auth_email_for_habbo_with_hotel', {
+            habbo_name_param: normalizedName,
+            hotel_param: detectedHotel
+          });
+          
+          if (!rpcError && rpcEmail) {
+            emailCandidates.push(rpcEmail as string);
+            console.log(`📧 Email candidato específico do hotel ${detectedHotel}: ${rpcEmail}`);
+          }
         }
       } catch (apiError) {
         console.warn('⚠️ API do Habbo indisponível:', apiError);
       }
 
-      // 2) Fallback: usar RPC no banco para obter o email de auth a partir do nome
-      try {
-        console.log('💾 Buscando email via RPC no banco...');
-        const { data: rpcEmail, error: rpcError } = await supabase.rpc('get_auth_email_for_habbo', {
-          habbo_name_param: normalizedName
-        });
-        
-        if (rpcError) {
-          console.error('❌ Falha ao obter email via RPC:', rpcError);
+      // 2) Fallback: usar RPC no banco para obter o email de auth a partir do nome (sem hotel específico)
+      if (emailCandidates.length === 0) {
+        try {
+          console.log('💾 Buscando email via RPC geral...');
+          const { data: rpcEmail, error: rpcError } = await supabase.rpc('get_auth_email_for_habbo_with_hotel', {
+            habbo_name_param: normalizedName,
+            hotel_param: null
+          });
+          
+          if (!rpcError && rpcEmail) {
+            emailCandidates.push(rpcEmail as string);
+            console.log(`📧 Email candidato geral: ${rpcEmail}`);
+          }
+        } catch (rpcError) {
+          console.warn('⚠️ RPC indisponível:', rpcError);
         }
-        
-        if (rpcEmail && !emailCandidates.includes(rpcEmail)) {
-          emailCandidates.push(rpcEmail as string);
-          console.log(`📧 Email candidato do RPC: ${rpcEmail}`);
-        }
-      } catch (rpcError) {
-        console.warn('⚠️ RPC indisponível:', rpcError);
       }
 
       if (emailCandidates.length === 0) {

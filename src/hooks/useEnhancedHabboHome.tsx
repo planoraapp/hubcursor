@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { getUserByName } from '../services/habboApiMultiHotel';
+import { getUserByName, getAvatarUrl } from '../services/habboApiMultiHotel';
 
 interface Widget {
   id: string;
@@ -55,7 +55,7 @@ interface HabboData {
   selectedBadges?: any[];
 }
 
-export const useEnhancedHabboHome = (username: string) => {
+export const useEnhancedHabboHome = (username: string, hotel?: string) => {
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [background, setBackground] = useState<Background>({ 
@@ -76,34 +76,54 @@ export const useEnhancedHabboHome = (username: string) => {
     if (username) {
       loadHabboHome();
     }
-  }, [username, habboAccount]);
+  }, [username, hotel, habboAccount]);
 
   const loadHabboHome = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Carregando Enhanced Habbo Home para usuário:', username);
+      console.log('🔍 Carregando Enhanced Habbo Home para usuário:', username, hotel ? `no hotel ${hotel}` : '(qualquer hotel)');
       
       const normalizedUsername = username.trim().toLowerCase();
       
-      // Buscar dados mínimos via RPC (compatível com RLS)
-      console.log('📦 Buscando conta pública via RPC...');
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        'get_habbo_account_public_by_name',
-        { habbo_name_param: normalizedUsername }
-      );
+      // Buscar dados via RPC com ou sem hotel específico
+      let userData = null;
+      
+      if (hotel) {
+        console.log('📦 Buscando conta específica do hotel via RPC...');
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_habbo_account_public_by_name_and_hotel',
+          { 
+            habbo_name_param: normalizedUsername,
+            hotel_param: hotel 
+          }
+        );
 
-      if (rpcError) {
-        console.warn('⚠️ RPC retornou erro (continuando com fallback):', rpcError);
+        if (rpcError) {
+          console.warn('⚠️ RPC específico do hotel retornou erro:', rpcError);
+        }
+
+        userData = Array.isArray(rpcData) ? rpcData?.[0] : rpcData;
+      }
+      
+      // Fallback para busca geral se não encontrou no hotel específico
+      if (!userData) {
+        console.log('📦 Buscando conta geral via RPC...');
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_habbo_account_public_by_name',
+          { habbo_name_param: normalizedUsername }
+        );
+
+        if (rpcError) {
+          console.warn('⚠️ RPC geral retornou erro:', rpcError);
+        }
+
+        userData = Array.isArray(rpcData) ? rpcData?.[0] : rpcData;
       }
 
-      // A função retorna uma linha no máximo; em supabase-js geralmente virá como array
-      const userData = Array.isArray(rpcData) ? rpcData?.[0] : rpcData;
-
       if (!userData) {
-        console.warn('⚠️ Usuário não encontrado no banco (via RPC), tentando API...');
-        // Fallback: tentar API do Habbo
+        console.warn('⚠️ Usuário não encontrado no banco, tentando API...');
         try {
           const habboApiData = await getUserByName(username);
           if (!habboApiData) {

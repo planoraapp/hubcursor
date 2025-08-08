@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin } from 'lucide-react';
+import { getAvatarUrl } from '../../services/habboApiMultiHotel';
 
 interface HabboData {
   name: string;
@@ -19,9 +20,8 @@ interface AvatarWidgetProps {
 }
 
 export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
-  const avatarUrl = habboData.figureString 
-    ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboData.figureString}&size=l&direction=2&head_direction=3&action=std&gesture=std`
-    : '/avatars/default-avatar.png';
+  // Usar a função getAvatarUrl com o hotel correto
+  const avatarUrl = getAvatarUrl(habboData.name, habboData.figureString, habboData.hotel);
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
@@ -39,6 +39,10 @@ export const AvatarWidget: React.FC<AvatarWidgetProps> = ({ habboData }) => {
               alt={`Avatar de ${habboData.name}`}
               className="w-full h-full object-cover"
               style={{ imageRendering: 'pixelated' }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/assets/frank.png';
+              }}
             />
           </div>
           

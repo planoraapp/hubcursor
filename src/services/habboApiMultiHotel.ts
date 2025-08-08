@@ -1,4 +1,6 @@
 
+import { getHabboApiUrl, HABBO_HOTEL_DOMAINS } from '../utils/habboDomains';
+
 // Multi-hotel Habbo API service
 interface HabboUser {
   uniqueId: string;
@@ -10,7 +12,7 @@ interface HabboUser {
   selectedBadges: any[];
 }
 
-const HOTELS = ['br', 'com', 'es', 'fr', 'de', 'it', 'nl', 'fi', 'tr'];
+const HOTELS = Object.keys(HABBO_HOTEL_DOMAINS);
 
 export const getUserByName = async (username: string): Promise<HabboUser | null> => {
   if (!username || !username.trim()) {
@@ -21,10 +23,11 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
 
   for (const hotel of HOTELS) {
     try {
-      console.log(`🔍 Buscando ${normalizedUsername} no hotel ${hotel}`);
+      const apiUrl = getHabboApiUrl(hotel);
+      console.log(`🔍 Buscando ${normalizedUsername} no hotel ${hotel} (${apiUrl})`);
       
       const response = await fetch(
-        `https://www.habbo.${hotel}/api/public/users?name=${encodeURIComponent(normalizedUsername)}`,
+        `${apiUrl}/api/public/users?name=${encodeURIComponent(normalizedUsername)}`,
         {
           headers: {
             'Accept': 'application/json',
@@ -37,7 +40,7 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
         const data = await response.json();
         
         if (data && data.name && data.uniqueId) {
-          console.log(`✅ Usuário ${normalizedUsername} encontrado no hotel ${hotel}`);
+          console.log(`✅ Usuário ${normalizedUsername} encontrado no hotel ${hotel} (${apiUrl})`);
           return {
             uniqueId: data.uniqueId,
             name: data.name,
@@ -59,9 +62,11 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
   return null;
 };
 
-export const getAvatarUrl = (username: string, figureString?: string) => {
+export const getAvatarUrl = (username: string, figureString?: string, hotel: string = 'com') => {
+  const imageUrl = getHabboApiUrl(hotel);
+  
   if (figureString) {
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=3&size=m`;
+    return `${imageUrl}/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=3&size=m`;
   }
-  return `https://www.habbo.com/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&size=m`;
+  return `${imageUrl}/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&size=m`;
 };
