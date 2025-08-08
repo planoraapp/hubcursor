@@ -8,7 +8,8 @@ import {
   Menu,
   X,
   User,
-  Settings
+  Settings,
+  Palette
 } from "lucide-react";
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -33,8 +34,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, iconSrc, label, href, isA
     className={`
       flex items-center px-3 py-2 rounded-md transition-all duration-200 group
       ${isActive 
-        ? 'bg-yellow-400 text-black font-bold shadow-lg' 
-        : 'text-black hover:bg-yellow-300 hover:text-black'
+        ? 'bg-yellow-400 font-bold shadow-lg' 
+        : 'hover:bg-yellow-300'
       }
       ${isCollapsed ? 'justify-center' : 'justify-start'}
     `}
@@ -49,7 +50,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, iconSrc, label, href, isA
       <Icon className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3'}`} />
     )}
     {!isCollapsed && (
-      <span className="text-sm font-medium">{label}</span>
+      <span className="habbo-text text-sm font-medium">{label}</span>
     )}
   </Link>
 );
@@ -116,6 +117,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
     { iconSrc: "/assets/news.png", label: "Fórum", href: "/forum" },
     { iconSrc: "/assets/emblemas.png", label: "Emblemas", href: "/emblemas" },
     { iconSrc: "/assets/ferramentas.png", label: "Ferramentas", href: "/ferramentas" },
+    { icon: Palette, label: "Editor", href: "/editor" },
     { iconSrc: "/assets/Carrinho.png", label: "Catálogo", href: "/catalogo" },
   ];
 
@@ -183,6 +185,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
               {navItems.map((item) => (
                 <NavItem
                   key={item.href}
+                  icon={item.icon}
                   iconSrc={item.iconSrc}
                   label={item.label}
                   href={item.href}
@@ -216,7 +219,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
                 onClick={handleLogout}
               >
                 <DoorOpen className="w-4 h-4 mr-3" />
-                <span className="text-sm font-medium">Sair</span>
+                <span className="habbo-text text-sm font-medium">Sair</span>
               </Button>
             )}
 
@@ -260,7 +263,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
           onClick={toggleSidebar}
         >
           {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
-          {!isCollapsed && <span className="ml-2">Recolher</span>}
+          {!isCollapsed && <span className="ml-2 habbo-text">Recolher</span>}
         </Button>
 
         {/* User Profile */}
@@ -296,6 +299,7 @@ export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSe
           {navItems.map((item) => (
             <NavItem
               key={item.href}
+              icon={item.icon}
               iconSrc={item.iconSrc}
               label={item.label}
               href={item.href}
