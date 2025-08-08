@@ -102,14 +102,19 @@ const FlashAssetsV3Complete = ({
   }, [selectedSection, currentSection, selectedCategory]);
 
   const handleItemClick = (item: any) => {
-    console.log('🎯 [FlashAssetsV3Complete] Item clicado para seleção de cor:', item);
+    console.log('🎯 [FlashAssetsV3Complete] Item clicked for color selection:', {
+      name: item.name,
+      category: item.category,
+      figureId: item.figureId,
+      swfName: item.swfName
+    });
     setPendingItem(item);
     setColorModalOpen(true);
   };
 
   const handleColorModalSelect = (colorId: string) => {
     if (pendingItem) {
-      console.log('🎨 [FlashAssetsV3Complete] Cor selecionada:', { item: pendingItem.name, colorId });
+      console.log('🎨 [FlashAssetsV3Complete] Color selected:', { item: pendingItem.name, colorId });
       onItemSelect(pendingItem, colorId);
       setPendingItem(null);
     }
@@ -141,8 +146,22 @@ const FlashAssetsV3Complete = ({
   };
 
   const getItemImageUrl = (item: any) => {
-    // Use focused clothing sprite
-    const spriteUrl = getClothingSpriteUrl(item.category, item.figureId, '1', selectedGender);
+    // Enhanced sprite URL generation with swfName priority
+    const spriteUrl = getClothingSpriteUrl(
+      item.category, 
+      item.figureId, 
+      '1', 
+      selectedGender, 
+      item.swfName
+    );
+    
+    console.log('🖼️ [FlashAssetsV3Complete] Generated sprite URL:', {
+      category: item.category,
+      figureId: item.figureId,
+      swfName: item.swfName,
+      url: spriteUrl.substring(0, 80) + '...'
+    });
+    
     return spriteUrl;
   };
 
@@ -295,7 +314,7 @@ const FlashAssetsV3Complete = ({
               </ScrollArea>
             </div>
 
-            {/* Items Grid - Focused sprites */}
+            {/* Enhanced Items Grid with sprite fallback handling */}
             <ScrollArea className="flex-1 p-4">
               {isLoading ? (
                 <div className="grid grid-cols-6 gap-2">
@@ -329,7 +348,7 @@ const FlashAssetsV3Complete = ({
                         />
                       )}
 
-                      {/* Focused clothing sprite */}
+                      {/* Enhanced sprite loading with multiple fallbacks */}
                       <img
                         src={getItemImageUrl(item)}
                         alt={item.name}
@@ -337,12 +356,30 @@ const FlashAssetsV3Complete = ({
                         style={{ imageRendering: 'pixelated' }}
                         onError={(e) => {
                           const img = e.currentTarget as HTMLImageElement;
-                          const fallback = getFallbackThumbnail(item.category, item.figureId, '1', selectedGender);
-                          if (img.src !== fallback) {
+                          const currentSrc = img.src;
+                          
+                          // Try Habbo Imaging fallback if Puhekupla fails
+                          if (currentSrc.includes('puhekupla.com')) {
+                            const fallback = getFallbackThumbnail(item.category, item.figureId, '1', selectedGender);
+                            console.log('🔄 [Sprite] Puhekupla failed, trying Habbo Imaging:', fallback);
                             img.src = fallback;
                           } else {
+                            // Final fallback: hide image and show ID
+                            console.error('💥 [Sprite] All image sources failed for:', item.name);
                             img.style.display = 'none';
+                            
+                            // Create fallback text element
+                            const parent = img.parentElement;
+                            if (parent && !parent.querySelector('.fallback-text')) {
+                              const fallbackDiv = document.createElement('div');
+                              fallbackDiv.className = 'fallback-text text-xs font-bold text-gray-600 text-center';
+                              fallbackDiv.textContent = item.figureId;
+                              parent.appendChild(fallbackDiv);
+                            }
                           }
+                        }}
+                        onLoad={() => {
+                          console.log(`✅ [Sprite] Successfully loaded: ${item.name}`);
                         }}
                       />
                     </div>

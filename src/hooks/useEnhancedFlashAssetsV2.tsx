@@ -17,6 +17,7 @@ import {
 } from '@/lib/enhancedCategoryMapperV2';
 import { getCategoryFromSwfName } from '@/lib/improvedCategoryMapper';
 import { useOfficialFigureData } from '@/hooks/useFigureDataOfficial';
+import { getClothingSpriteUrl, getFallbackThumbnail } from '@/utils/clothingSpriteGenerator';
 
 export interface EnhancedFlashAssetV2 {
   id: string;
@@ -41,7 +42,7 @@ interface FetchParams {
 }
 
 const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<EnhancedFlashAssetV2[]> => {
-  console.log('🌐 [EnhancedFlashAssetsV2] Buscando assets com sistema COMPLETO', params);
+  console.log('🌐 [EnhancedFlashAssetsV2] Fetching with enhanced categorization', params);
   
   try {
     const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
@@ -76,7 +77,7 @@ const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<Enhanced
       throw new Error('Invalid response format from enhanced flash assets V2');
     }
 
-    console.log(`✅ [EnhancedFlashAssetsV2] Successfully fetched ${assets.length} enhanced assets`);
+    console.log(`✅ [EnhancedFlashAssetsV2] Successfully fetched ${assets.length} raw assets`);
     if ((data as any)?.metadata) {
       console.log(`📊 [EnhancedFlashAssetsV2] Metadata:`, (data as any).metadata);
     }
@@ -123,73 +124,120 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       'lg', 'sh', 'wa'              // Legs section
     ]);
 
+    console.log('🔧 [Normalization] Starting enhanced normalization process');
+    console.log('📊 [Normalization] Official data structure:', Object.keys(officialData));
+    
+    // Build enhanced ID-to-category mapping from official data
     const idToCategory = new Map<string, string>();
+    const categoryStats = new Map<string, number>();
+    
     Object.entries(officialData).forEach(([cat, items]) => {
-      if (VALID_CLOTHING_CATEGORIES.has(cat)) {
-        (items as any[]).forEach((it: any) => {
-          const id = String(it.id);
-          if (!idToCategory.has(id)) idToCategory.set(id, cat);
+      if (VALID_CLOTHING_CATEGORIES.has(cat) && Array.isArray(items)) {
+        categoryStats.set(cat, items.length);
+        items.forEach((item: any) => {
+          const id = String(item.id);
+          if (/^\d+$/.test(id) && !idToCategory.has(id)) {
+            idToCategory.set(id, cat);
+          }
         });
       }
     });
+    
+    console.log('📈 [Normalization] Official mapping built:', {
+      totalMappings: idToCategory.size,
+      categoryStats: Object.fromEntries(categoryStats),
+      sampleMappings: Array.from(idToCategory.entries()).slice(0, 5)
+    });
 
-    const mapped = assets.map((a: any) => {
-      const swf = String(a?.swfName ?? a?.name ?? a?.id ?? '');
+    const normalized = assets.map((asset: any, index: number) => {
+      const swf = String(asset?.swfName ?? asset?.name ?? asset?.id ?? '');
+      
+      // Enhanced figure ID parsing
       const parsedFigureId = (() => {
         try {
-          return typeof parseAssetFigureId === 'function' ? String(parseAssetFigureId(swf)) : String(a?.figureId ?? '');
+          const parsed = typeof parseAssetFigureId === 'function' ? String(parseAssetFigureId(swf)) : '';
+          return parsed && parsed !== 'undefined' ? parsed : '';
         } catch {
-          return String(a?.figureId ?? '');
+          return '';
         }
       })();
       
-      const figureId = parsedFigureId && parsedFigureId !== 'undefined' && parsedFigureId !== ''
-        ? parsedFigureId
-        : String(a?.figureId ?? a?.id ?? '');
+      const figureId = parsedFigureId || String(asset?.figureId ?? asset?.id ?? '');
 
-      // Get category from official data first, then fallback to parsing
-      let category = idToCategory.get(figureId)
-        || (typeof parseAssetCategory === 'function' ? parseAssetCategory(swf) : String(a?.category || 'ch'));
-
-      // STRICT FILTER: Only allow valid clothing categories
-      if (!VALID_CLOTHING_CATEGORIES.has(category)) {
-        console.log(`🚫 [Normalize] Rejecting non-clothing category '${category}' for ${swf}`);
-        return null; // Will be filtered out
+      // Enhanced category detection with official data priority
+      let category = '';
+      let categorySource = '';
+      
+      // Strategy 1: Official data mapping (highest priority)
+      if (figureId && /^\d+$/.test(figureId)) {
+        const officialCategory = idToCategory.get(figureId);
+        if (officialCategory) {
+          category = officialCategory;
+          categorySource = 'official';
+        }
+      }
+      
+      // Strategy 2: Fallback to parsing (lower priority)
+      if (!category) {
+        try {
+          category = typeof parseAssetCategory === 'function' ? parseAssetCategory(swf) : (asset?.category || '');
+          categorySource = 'parsed';
+        } catch {
+          category = String(asset?.category || 'ch');
+          categorySource = 'default';
+        }
       }
 
+      // STRICT VALIDATION: Only valid clothing categories
+      if (!VALID_CLOTHING_CATEGORIES.has(category)) {
+        console.log(`🚫 [Normalization] Rejecting invalid category '${category}' for ${swf} (source: ${categorySource})`);
+        return null;
+      }
+
+      // STRICT VALIDATION: Only numeric figureId, not '0'
+      if (!/^\d+$/.test(String(figureId)) || String(figureId) === '0') {
+        console.log(`🚫 [Normalization] Rejecting invalid figureId '${figureId}' for ${swf}`);
+        return null;
+      }
+
+      // Enhanced gender parsing
       let gender: 'M' | 'F' | 'U' = (typeof parseAssetGender === 'function' 
         ? parseAssetGender(swf)
-        : (a?.gender)) as any;
+        : (asset?.gender)) as any;
       if (gender !== 'M' && gender !== 'F') gender = 'U';
 
-      // STRICT FILTER: Only numeric figureId, not '0'
-      if (!/^\d+$/.test(String(figureId)) || String(figureId) === '0') {
-        console.log(`🚫 [Normalize] Rejecting invalid figureId '${figureId}' for ${swf}`);
-        return null; // Will be filtered out
-      }
-
-      // Colors from official data or fallback
+      // Enhanced color handling
       const officialItems = (officialData as any)[category] as any[] | undefined;
       const officialMatch = officialItems?.find((it: any) => String(it.id) === figureId);
       let colors: string[] = [];
       if (officialMatch?.colors?.length) {
         colors = officialMatch.colors.map((c: any) => String(c));
-      } else if (Array.isArray(a?.colors) && a.colors.length) {
-        colors = a.colors.map((c: any) => String(c));
+      } else if (Array.isArray(asset?.colors) && asset.colors.length) {
+        colors = asset.colors.map((c: any) => String(c));
+      } else {
+        colors = ['1']; // Default
       }
+      
       const colorId = colors[0] || '1';
       const finalColorId = isValidColorForCategory(colorId, category) ? colorId : getDefaultColorForCategory(category);
 
-      const name = (typeof formatAssetName === 'function' ? formatAssetName(String(a?.name ?? swf)) : String(a?.name ?? swf));
-      const rarity = (typeof parseAssetRarity === 'function' ? parseAssetRarity(swf) : a?.rarity) || 'common';
-      const club: 'hc' | 'normal' = (a?.club === 'hc' || a?.club === 'HC' || a?.club === 1 || a?.club === '1') ? 'hc' : 'normal';
-      const swfName = a?.swfName || `${category}_${figureId}`;
-      const thumbnailUrl = typeof generateIsolatedThumbnail === 'function'
-        ? generateIsolatedThumbnail(category, figureId, finalColorId, gender)
-        : (a?.thumbnailUrl || '');
+      // Enhanced metadata
+      const name = (typeof formatAssetName === 'function' ? formatAssetName(String(asset?.name ?? swf)) : String(asset?.name ?? swf));
+      const rarity = (typeof parseAssetRarity === 'function' ? parseAssetRarity(swf) : asset?.rarity) || 'common';
+      const club: 'hc' | 'normal' = (asset?.club === 'hc' || asset?.club === 'HC' || asset?.club === 1 || asset?.club === '1') ? 'hc' : 'normal';
+      const swfName = asset?.swfName || swf || `${category}_${figureId}`;
+      
+      // Enhanced thumbnail generation with sprite priority
+      const thumbnailUrl = getClothingSpriteUrl(
+        category, 
+        figureId, 
+        finalColorId, 
+        gender === 'U' ? 'M' : gender,
+        swfName
+      );
 
-      const normalized: EnhancedFlashAssetV2 = {
-        id: String(a?.id ?? `${category}_${figureId}_${gender}`),
+      const normalizedItem: EnhancedFlashAssetV2 = {
+        id: String(asset?.id ?? `${category}_${figureId}_${gender}`),
         name,
         category,
         gender,
@@ -202,19 +250,36 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
         source: 'flash-assets-enhanced-v2'
       };
 
-      return normalized;
+      // Log successful normalization details
+      if (index < 5) { // Log first 5 for debugging
+        console.log(`✅ [Normalization] Asset ${index + 1}:`, {
+          swf: swfName,
+          category: `${category} (${categorySource})`,
+          figureId,
+          gender,
+          thumbnailUrl: thumbnailUrl.substring(0, 80) + '...'
+        });
+      }
+
+      return normalizedItem;
     }).filter(Boolean); // Remove null items
 
     // Apply category filter if specified
-    const finalList = params?.category ? mapped.filter(it => it.category === params.category) : mapped;
+    const finalList = params?.category ? normalized.filter(it => it.category === params.category) : normalized;
     
-    console.log(`✅ [EnhancedFlashAssetsV2] Normalized ${finalList.length} valid clothing items`);
+    console.log(`🎯 [Normalization] Final results:`, {
+      totalNormalized: normalized.length,
+      afterCategoryFilter: finalList.length,
+      rejectedCount: assets.length - normalized.length,
+      categories: [...new Set(normalized.map(it => it.category))].sort()
+    });
+    
     return finalList;
   }, [query.data, official.data, params?.category]);
 
   useEffect(() => {
     if (normalizedItems.length) {
-      // Calcular estatísticas COMPLETAS com itens normalizados
+      // Calculate COMPLETE statistics with normalized items
       const catStats = normalizedItems.reduce((acc, asset) => {
         acc[asset.category] = (acc[asset.category] || 0) + 1;
         return acc;
@@ -222,7 +287,7 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       
       const rarStats = getRarityStats(normalizedItems);
       
-      // Calcular estatísticas por seção
+      // Calculate section statistics
       const secStats = Object.entries(CATEGORY_SECTIONS).reduce((acc, [sectionId, section]) => {
         acc[sectionId] = section.categories.reduce((sum, cat) => sum + (catStats[cat] || 0), 0);
         return acc;
@@ -232,7 +297,7 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       setRarityStats(rarStats);
       setSectionStats(secStats);
 
-      console.log('📊 [EnhancedFlashAssetsV2] Estatísticas NORMALIZADAS:', {
+      console.log('📊 [EnhancedFlashAssetsV2] Enhanced statistics:', {
         totalAssets: normalizedItems.length,
         categorias: Object.keys(catStats).length,
         categoryStats: catStats,
@@ -251,14 +316,13 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
     isLoading: query.isLoading || official.isLoading,
     error: (query.error as any) || (official.error as any),
     isSuccess: query.isSuccess && official.isSuccess,
-    // Métodos auxiliares
+    // Helper methods
     getCategoryMetadata: (category: string) => CATEGORY_METADATA[category as keyof typeof CATEGORY_METADATA],
     getSectionMetadata: (sectionId: string) => CATEGORY_SECTIONS[sectionId as keyof typeof CATEGORY_SECTIONS],
     getAllSections: () => CATEGORY_SECTIONS
   };
 };
 
-// Hook específico por categoria
 export const useEnhancedFlashCategoryV2 = (categoryId: string, gender: 'M' | 'F') => {
   return useEnhancedFlashAssetsV2({
     category: categoryId,
@@ -266,7 +330,6 @@ export const useEnhancedFlashCategoryV2 = (categoryId: string, gender: 'M' | 'F'
   });
 };
 
-// Hook específico por seção
 export const useEnhancedFlashSectionV2 = (sectionId: string, gender: 'M' | 'F') => {
   const section = CATEGORY_SECTIONS[sectionId as keyof typeof CATEGORY_SECTIONS];
   const [allItems, setAllItems] = useState<EnhancedFlashAssetV2[]>([]);

@@ -1,7 +1,7 @@
 
 /**
- * Generates focused clothing sprite URLs that show only the clothing piece
- * Similar to Puhekupla's approach but using Habbo's official imaging system
+ * Enhanced clothing sprite generator that prioritizes swfName slugs for Puhekupla
+ * Falls back gracefully to figureId and then Habbo Imaging
  */
 
 const CLOTHING_SPRITE_MAPPING: Record<string, { prefix: string; baseDirection?: string }> = {
@@ -28,24 +28,29 @@ export const getClothingSpriteUrl = (
   category: string, 
   figureId: string, 
   colorId: string = '1',
-  gender: 'M' | 'F' = 'M'
+  gender: 'M' | 'F' = 'M',
+  swfName?: string
 ): string => {
   const mapping = CLOTHING_SPRITE_MAPPING[category];
   if (!mapping) {
     console.warn(`[ClothingSpriteGenerator] No mapping found for category: ${category}`);
-    return '';
+    return getFallbackThumbnail(category, figureId, colorId, gender);
   }
 
   const actualGender = gender === 'F' ? 'F' : 'M';
-  const genderSuffix = actualGender === 'F' ? '_f' : '_m';
   const direction = mapping.baseDirection || 'front_right';
   
-  // Try to generate a focused sprite URL (fallback approach)
-  const spriteUrl = `https://content.puhekupla.com/img/clothes/${mapping.prefix}_${actualGender}_${figureId}_${direction}.png`;
+  // Strategy 1: Try swfName slug (preferred for Puhekupla)
+  if (swfName && swfName !== figureId) {
+    const slugUrl = `https://content.puhekupla.com/img/clothes/${mapping.prefix}_${actualGender}_${swfName}_${direction}.png`;
+    console.log(`🎯 [ClothingSpriteGenerator] Trying slug URL: ${slugUrl}`);
+    return slugUrl;
+  }
   
-  console.log(`🎨 [ClothingSpriteGenerator] Generated sprite URL: ${spriteUrl} for ${category}-${figureId}-${colorId}`);
-  
-  return spriteUrl;
+  // Strategy 2: Try figureId (fallback)
+  const figureUrl = `https://content.puhekupla.com/img/clothes/${mapping.prefix}_${actualGender}_${figureId}_${direction}.png`;
+  console.log(`🔄 [ClothingSpriteGenerator] Trying figureId URL: ${figureUrl}`);
+  return figureUrl;
 };
 
 export const getFallbackThumbnail = (
@@ -54,9 +59,33 @@ export const getFallbackThumbnail = (
   colorId: string = '1',
   gender: 'M' | 'F' = 'M'
 ): string => {
-  // Fallback to minimal Habbo Imaging URL showing just the piece
+  // Generate isolated Habbo Imaging URL
   const actualGender = gender === 'F' ? 'F' : 'M';
   const figure = `${category}-${figureId}-${colorId}`;
   
-  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figure}&gender=${actualGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
+  const fallbackUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figure}&gender=${actualGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
+  console.log(`🚨 [ClothingSpriteGenerator] Using fallback URL: ${fallbackUrl}`);
+  return fallbackUrl;
+};
+
+// Enhanced function that tries multiple strategies
+export const getOptimalSpriteUrl = (item: {
+  category: string;
+  figureId: string;
+  swfName?: string;
+}, colorId: string = '1', gender: 'M' | 'F' = 'M'): string[] => {
+  const urls: string[] = [];
+  
+  // Primary: swfName slug
+  if (item.swfName && item.swfName !== item.figureId) {
+    urls.push(getClothingSpriteUrl(item.category, item.figureId, colorId, gender, item.swfName));
+  }
+  
+  // Secondary: figureId
+  urls.push(getClothingSpriteUrl(item.category, item.figureId, colorId, gender));
+  
+  // Tertiary: Habbo Imaging fallback
+  urls.push(getFallbackThumbnail(item.category, item.figureId, colorId, gender));
+  
+  return urls;
 };

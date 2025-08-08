@@ -98,21 +98,33 @@ serve(async (req) => {
 
 async function parseXMLToJSON(xmlString: string) {
   try {
-    // Simple XML parsing using regex patterns
-    // This is a basic implementation for figuredata structure
-    
+    // Enhanced XML parsing for better structure
     const figureData: Record<string, any[]> = {};
+    
+    // Valid clothing categories only
+    const VALID_CATEGORIES = new Set([
+      'hd', 'hr', 'ha', 'ea', 'fa', // Head section
+      'ch', 'cc', 'cp', 'ca',       // Body section  
+      'lg', 'sh', 'wa'              // Legs section
+    ]);
     
     // Find all <set> elements
     const setMatches = xmlString.match(/<set[^>]*>([\s\S]*?)<\/set>/g);
     
     if (setMatches) {
       for (const setMatch of setMatches) {
-        // Extract set id
+        // Extract set id (category)
         const setIdMatch = setMatch.match(/id="([^"]+)"/);
         if (!setIdMatch) continue;
         
         const setId = setIdMatch[1];
+        
+        // Only process valid clothing categories
+        if (!VALID_CATEGORIES.has(setId)) {
+          console.log(`🚫 [FigureData] Skipping non-clothing category: ${setId}`);
+          continue;
+        }
+        
         figureData[setId] = [];
         
         // Find all <part> elements within this set
@@ -127,22 +139,37 @@ async function parseXMLToJSON(xmlString: string) {
             const colorableMatch = partMatch.match(/colorable="([^"]+)"/);
             
             if (partIdMatch) {
+              const partId = partIdMatch[1];
+              
+              // Validate numeric ID
+              if (!/^\d+$/.test(partId)) {
+                console.warn(`⚠️ [FigureData] Invalid part ID: ${partId} in category ${setId}`);
+                continue;
+              }
+              
               const partData = {
-                id: partIdMatch[1],
+                id: partId,
                 gender: genderMatch ? genderMatch[1] : 'U',
                 club: clubMatch ? clubMatch[1] : '0',
                 colorable: colorableMatch ? colorableMatch[1] === '1' : false,
-                colors: ['1'] // Default color, will be enhanced later if needed
+                colors: ['1'] // Default color, enhanced later if needed
               };
               
               figureData[setId].push(partData);
+              
+              console.log(`✅ [FigureData] Added ${setId}-${partId} (gender: ${partData.gender}, club: ${partData.club})`);
             }
           }
         }
+        
+        console.log(`📊 [FigureData] Category ${setId}: ${figureData[setId].length} items`);
       }
     }
     
-    console.log(`📊 [FigureData] Parsed categories: ${Object.keys(figureData).join(', ')}`);
+    // Log final structure
+    const totalItems = Object.values(figureData).reduce((sum, items) => sum + items.length, 0);
+    console.log(`📈 [FigureData] Final structure: ${Object.keys(figureData).length} categories, ${totalItems} total items`);
+    console.log(`📋 [FigureData] Categories: ${Object.keys(figureData).join(', ')}`);
     
     return figureData;
     
