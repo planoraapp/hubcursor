@@ -37,7 +37,7 @@
 
 /* Volter Font Styling - Updated */
 .volter-font {
-  font-family: 'Volter (Goldfish)', 'Press Start 2P', 'Courier New', monospace;
+  font-family: 'Orbitron', 'Press Start 2P', 'Courier New', monospace;
 }
 
 /* Ensure all widget text has proper Habbo styling */
@@ -48,16 +48,31 @@
 .widget-container h4,
 .widget-container p,
 .widget-container span {
-  @apply habbo-text;
+  color: white;
+  text-shadow: 
+    1px 1px 0px black,
+    -1px -1px 0px black,
+    1px -1px 0px black,
+    -1px 1px 0px black;
 }
 
 /* Sidebar text weight enhancement */
 .sidebar-text {
   font-weight: 600;
-  @apply habbo-text;
+  color: white;
+  text-shadow: 
+    1px 1px 0px black,
+    -1px -1px 0px black,
+    1px -1px 0px black,
+    -1px 1px 0px black;
 }
 
 /* Menu items styling */
 .menu-item {
-  @apply habbo-text;
+  color: white;
+  text-shadow: 
+    1px 1px 0px black,
+    -1px -1px 0px black,
+    1px -1px 0px black,
+    -1px 1px 0px black;
 }

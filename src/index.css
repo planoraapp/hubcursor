@@ -1,5 +1,5 @@
 
-@import url('https://fonts.cdnfonts.com/css/volter-goldfish');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -70,51 +70,53 @@
   }
 }
 
-/* Volter Font Styling - Fixed */
-.volter-font {
-  font-family: 'Volter (Goldfish)', 'Press Start 2P', 'Courier New', monospace;
-  font-weight: 400;
-}
+@layer components {
+  /* Volter Font Styling - Fixed */
+  .volter-font {
+    font-family: 'Orbitron', 'Press Start 2P', 'Courier New', monospace;
+    font-weight: 400;
+  }
 
-/* Habbo-style text outlines */
-.habbo-outline-sm {
-  text-shadow: 
-    1px 1px 0px black,
-    -1px -1px 0px black,
-    1px -1px 0px black,
-    -1px 1px 0px black;
-}
+  /* Habbo-style text outlines */
+  .habbo-outline-sm {
+    text-shadow: 
+      1px 1px 0px black,
+      -1px -1px 0px black,
+      1px -1px 0px black,
+      -1px 1px 0px black;
+  }
 
-.habbo-outline-md {
-  text-shadow: 
-    2px 2px 0px black,
-    -2px -2px 0px black,
-    2px -2px 0px black,
-    -2px 2px 0px black,
-    1px 1px 0px black,
-    -1px -1px 0px black,
-    1px -1px 0px black,
-    -1px 1px 0px black;
-}
+  .habbo-outline-md {
+    text-shadow: 
+      2px 2px 0px black,
+      -2px -2px 0px black,
+      2px -2px 0px black,
+      -2px 2px 0px black,
+      1px 1px 0px black,
+      -1px -1px 0px black,
+      1px -1px 0px black,
+      -1px 1px 0px black;
+  }
 
-/* White text with black outline - Habbo style */
-.habbo-text {
-  @apply text-white;
-  text-shadow: 
-    1px 1px 0px black,
-    -1px -1px 0px black,
-    1px -1px 0px black,
-    -1px 1px 0px black;
-}
+  /* White text with black outline - Habbo style */
+  .habbo-text {
+    @apply text-white;
+    text-shadow: 
+      1px 1px 0px black,
+      -1px -1px 0px black,
+      1px -1px 0px black,
+      -1px 1px 0px black;
+  }
 
-/* Sidebar text weight enhancement */
-.sidebar-text {
-  font-weight: 600;
-}
+  /* Sidebar text weight enhancement */
+  .sidebar-text {
+    font-weight: 600;
+  }
 
-/* Additional utility classes for consistency */
-.pixelated {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+  /* Additional utility classes for consistency */
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
 }
