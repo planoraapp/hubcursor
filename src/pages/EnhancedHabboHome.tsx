@@ -19,12 +19,21 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
-
 const EnhancedHabboHome = () => {
-  const { username } = useParams<{ username: string }>();
+  const {
+    username
+  } = useParams<{
+    username: string;
+  }>();
   const navigate = useNavigate();
-  const { user, habboAccount, loading } = useAuth();
-  const { toast } = useToast();
+  const {
+    user,
+    habboAccount,
+    loading
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('homes');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -34,9 +43,7 @@ const EnhancedHabboHome = () => {
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
-
   const normalizedUsername = username?.trim() || '';
-
   const {
     habboData,
     widgets,
@@ -58,18 +65,15 @@ const EnhancedHabboHome = () => {
     handleStickerPositionChange,
     handleBackgroundChange
   } = useEnhancedHabboHome(normalizedUsername);
-
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
     };
-
     window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
     return () => {
       window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
     };
   }, []);
-
   useEffect(() => {
     if (error) {
       console.error('Error in Enhanced Habbo Home:', error);
@@ -89,45 +93,35 @@ const EnhancedHabboHome = () => {
       console.error('Failed to add sticker:', error);
     }
   }, [handleStickerDrop]);
-
   const handleStickerZIndexChange = useCallback(async (stickerId: string, zIndex: number) => {
     if (!isOwner) return;
-
     try {
-      const { error } = await supabase
-        .from('user_stickers')
-        .update({ z_index: Math.round(zIndex) })
-        .eq('id', stickerId);
-
+      const {
+        error
+      } = await supabase.from('user_stickers').update({
+        z_index: Math.round(zIndex)
+      }).eq('id', stickerId);
       if (!error) {
-        setStickers(prev => 
-          prev.map(sticker => 
-            sticker.id === stickerId 
-              ? { ...sticker, z_index: Math.round(zIndex) }
-              : sticker
-          )
-        );
+        setStickers(prev => prev.map(sticker => sticker.id === stickerId ? {
+          ...sticker,
+          z_index: Math.round(zIndex)
+        } : sticker));
       }
     } catch (error) {
       console.error('Error updating sticker z-index:', error);
     }
   }, [isOwner, setStickers]);
-
   const handleStickerRemove = useCallback(async (stickerId: string) => {
     if (!isOwner) return;
-
     try {
-      const { error } = await supabase
-        .from('user_stickers')
-        .delete()
-        .eq('id', stickerId);
-
+      const {
+        error
+      } = await supabase.from('user_stickers').delete().eq('id', stickerId);
       if (!error) {
         setStickers(prev => prev.filter(sticker => sticker.id !== stickerId));
-        
         toast({
           title: "Sticker Removido",
-          description: "Sticker removido da sua home!",
+          description: "Sticker removido da sua home!"
         });
       }
     } catch (error) {
@@ -144,25 +138,22 @@ const EnhancedHabboHome = () => {
     backgroundPosition: background.background_type === 'cover' ? 'top center' : 'center',
     height: `var(--homeMaxHeight, ${calculatedHeight}px)`
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    return <div className="min-h-screen flex items-center justify-center bg-repeat" style={{
+      backgroundImage: 'url(/assets/bghabbohub.png)'
+    }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <div className="text-lg volter-font text-white pixel-outline-lg">
             Carregando Enhanced Habbo Home de {normalizedUsername}...
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!habboData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    return <div className="min-h-screen flex items-center justify-center bg-repeat" style={{
+      backgroundImage: 'url(/assets/bghabbohub.png)'
+    }}>
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg p-6 text-center max-w-md">
           <CardContent className="pt-6">
             <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
@@ -174,20 +165,14 @@ const EnhancedHabboHome = () => {
               <Button onClick={() => navigate('/')} className="w-full volter-font">
                 Voltar ao Início
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.reload()} 
-                className="w-full volter-font"
-              >
+              <Button variant="outline" onClick={() => window.location.reload()} className="w-full volter-font">
                 Tentar Novamente
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
   const enhancedHabboData = {
     name: habboData.name,
     figureString: habboData.figureString || '',
@@ -197,167 +182,54 @@ const EnhancedHabboHome = () => {
     selectedBadges: habboData.selectedBadges || [],
     hotel: habboData.hotel
   };
-
-  const renderDesktop = () => (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+  const renderDesktop = () => <div className="min-h-screen bg-repeat" style={{
+    backgroundImage: 'url(/assets/bghabbohub.png)'
+  }}>
       <div className="flex min-h-screen">
         <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className={`flex-1 p-4 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
           <div className="max-w-[1400px] mx-auto">
             {/* Enhanced Header */}
-            <EnhancedHomeHeader
-              username={habboData.name}
-              isOwner={isOwner}
-              hotel={habboData.hotel}
-              onEditModeToggle={() => setIsEditMode(!isEditMode)}
-              onOpenStickers={() => setShowStickers(true)}
-              onOpenBackgrounds={() => setShowBackgrounds(true)}
-              onOpenWidgets={() => setShowWidgets(true)}
-              isEditMode={isEditMode}
-            />
+            <EnhancedHomeHeader username={habboData.name} isOwner={isOwner} hotel={habboData.hotel} onEditModeToggle={() => setIsEditMode(!isEditMode)} onOpenStickers={() => setShowStickers(true)} onOpenBackgrounds={() => setShowBackgrounds(true)} onOpenWidgets={() => setShowWidgets(true)} isEditMode={isEditMode} />
 
             {/* Home Container with Dynamic Background and Fixed Height */}
             <div className="relative">
-              <div 
-                className="border-4 border-black rounded-lg relative overflow-hidden"
-                style={backgroundStyle}
-              >
+              <div className="border-4 border-black rounded-lg relative overflow-hidden" style={backgroundStyle}>
                 {/* Edit Mode Help Bar */}
                 <EditModeHelpBar isVisible={isEditMode} />
 
                 {/* Fixed Sidebar Widgets - now draggable */}
-                <div className="absolute left-4 top-4 w-80 flex flex-col gap-4 z-10">
-                  {isEditMode ? (
-                    <>
-                      <OptimizedDraggableWidget
-                        id="avatar-widget"
-                        x={20}
-                        y={20}
-                        width={320}
-                        height={280}
-                        zIndex={10}
-                        isEditMode={isEditMode}
-                        onPositionChange={(x, y) => console.log('Avatar widget moved to:', x, y)}
-                        sizeRestrictions={{
-                          minWidth: 280,
-                          maxWidth: 400,
-                          minHeight: 250,
-                          maxHeight: 350,
-                          resizable: false
-                        }}
-                      >
-                        <AvatarWidget habboData={enhancedHabboData} />
-                      </OptimizedDraggableWidget>
-                      
-                      <OptimizedDraggableWidget
-                        id="guestbook-widget"
-                        x={20}
-                        y={320}
-                        width={380}
-                        height={320}
-                        zIndex={10}
-                        isEditMode={isEditMode}
-                        onPositionChange={(x, y) => console.log('Guestbook widget moved to:', x, y)}
-                        sizeRestrictions={{
-                          minWidth: 340,
-                          maxWidth: 450,
-                          minHeight: 280,
-                          maxHeight: 400,
-                          resizable: false
-                        }}
-                      >
-                        <GuestbookWidget 
-                          habboData={enhancedHabboData}
-                          guestbook={guestbook}
-                          onAddEntry={addGuestbookEntry}
-                          isOwner={isOwner}
-                        />
-                      </OptimizedDraggableWidget>
-                    </>
-                  ) : (
-                    <>
-                      <AvatarWidget habboData={enhancedHabboData} />
-                      <GuestbookWidget 
-                        habboData={enhancedHabboData}
-                        guestbook={guestbook}
-                        onAddEntry={addGuestbookEntry}
-                        isOwner={isOwner}
-                      />
-                    </>
-                  )}
-                </div>
+                
 
                 {/* Dynamic Widgets & Stickers Canvas (full area) */}
                 <div className="absolute left-4 top-4 right-4 bottom-4 overflow-hidden">
                   {widgets.map(widget => {
-                    const isCore = widget.widget_id === 'avatar' || widget.widget_id === 'guestbook';
-
-                    return (
-                      <OptimizedDraggableWidget
-                        key={widget.id}
-                        id={widget.id}
-                        x={widget.x}
-                        y={widget.y}
-                        width={widget.width}
-                        height={widget.height}
-                        zIndex={widget.z_index}
-                        isEditMode={isEditMode}
-                        onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
-                        {...(!isCore && { onRemove: () => removeWidget(widget.id) })}
-                        sizeRestrictions={{
-                          minWidth: isCore ? 280 : 200,
-                          maxWidth: isCore ? 450 : 600,
-                          minHeight: isCore ? 250 : 150,
-                          maxHeight: isCore ? 400 : 400,
-                          resizable: !isCore
-                        }}
-                      >
-                        {widget.widget_id === 'avatar' ? (
-                          <AvatarWidget habboData={enhancedHabboData} />
-                        ) : widget.widget_id === 'guestbook' ? (
-                          <GuestbookWidget 
-                            habboData={enhancedHabboData}
-                            guestbook={guestbook}
-                            onAddEntry={addGuestbookEntry}
-                            isOwner={isOwner}
-                          />
-                        ) : (
-                          <Card className="bg-white/90 backdrop-blur-sm shadow-md h-full">
+                  const isCore = widget.widget_id === 'avatar' || widget.widget_id === 'guestbook';
+                  return <OptimizedDraggableWidget key={widget.id} id={widget.id} x={widget.x} y={widget.y} width={widget.width} height={widget.height} zIndex={widget.z_index} isEditMode={isEditMode} onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)} {...!isCore && {
+                    onRemove: () => removeWidget(widget.id)
+                  }} sizeRestrictions={{
+                    minWidth: isCore ? 280 : 200,
+                    maxWidth: isCore ? 450 : 600,
+                    minHeight: isCore ? 250 : 150,
+                    maxHeight: isCore ? 400 : 400,
+                    resizable: !isCore
+                  }}>
+                        {widget.widget_id === 'avatar' ? <AvatarWidget habboData={enhancedHabboData} /> : widget.widget_id === 'guestbook' ? <GuestbookWidget habboData={enhancedHabboData} guestbook={guestbook} onAddEntry={addGuestbookEntry} isOwner={isOwner} /> : <Card className="bg-white/90 backdrop-blur-sm shadow-md h-full">
                             <CardHeader>
                               <CardTitle className="volter-font">{widget.title || 'Widget'}</CardTitle>
                             </CardHeader>
                             <CardContent>
                               <p className="text-sm volter-font">{widget.content || 'Widget content'}</p>
                             </CardContent>
-                          </Card>
-                        )}
-                      </OptimizedDraggableWidget>
-                    );
-                  })}
+                          </Card>}
+                      </OptimizedDraggableWidget>;
+                })}
                   
                   {/* Stickers */}
-                  {stickers.map(sticker => (
-                    <OptimizedDroppedSticker
-                      key={sticker.id}
-                      id={sticker.id}
-                      stickerId={sticker.sticker_id}
-                      src={sticker.sticker_src}
-                      category={sticker.category}
-                      x={sticker.x}
-                      y={sticker.y}
-                      zIndex={sticker.z_index}
-                      scale={sticker.scale || 1}
-                      rotation={sticker.rotation || 0}
-                      isEditMode={isEditMode}
-                      onPositionChange={handleStickerPositionChange}
-                      onZIndexChange={handleStickerZIndexChange}
-                      onRemove={handleStickerRemove}
-                    />
-                  ))}
+                  {stickers.map(sticker => <OptimizedDroppedSticker key={sticker.id} id={sticker.id} stickerId={sticker.sticker_id} src={sticker.sticker_src} category={sticker.category} x={sticker.x} y={sticker.y} zIndex={sticker.z_index} scale={sticker.scale || 1} rotation={sticker.rotation || 0} isEditMode={isEditMode} onPositionChange={handleStickerPositionChange} onZIndexChange={handleStickerZIndexChange} onRemove={handleStickerRemove} />)}
 
                   {/* Empty state */}
-                  {widgets.length === 0 && stickers.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                  {widgets.length === 0 && stickers.length === 0 && <div className="absolute inset-0 flex items-center justify-center">
                       <Card className="bg-white/90 backdrop-blur-sm shadow-lg p-8 text-center max-w-md">
                         <CardContent>
                           <div className="w-16 h-16 bg-gray-400 rounded-lg mx-auto mb-4 flex items-center justify-center text-4xl">
@@ -367,23 +239,18 @@ const EnhancedHabboHome = () => {
                           <p className="text-gray-600 mb-4 volter-font">
                             Esta área está pronta para seus widgets e stickers!
                           </p>
-                          {isOwner && (
-                            <Button onClick={() => setIsEditMode(true)} className="volter-font">
+                          {isOwner && <Button onClick={() => setIsEditMode(true)} className="volter-font">
                               Começar a Personalizar
-                            </Button>
-                          )}
+                            </Button>}
                         </CardContent>
                       </Card>
-                    </div>
-                  )}
+                    </div>}
                 </div>
 
                 {/* Edit mode overlay with improved visibility */}
-                {isEditMode && (
-                  <div className="absolute inset-0 pointer-events-none">
+                {isEditMode && <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute inset-4 border-2 border-dashed border-yellow-400 rounded-lg bg-yellow-400/5 shadow-inner" />
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
           </div>
@@ -391,88 +258,39 @@ const EnhancedHabboHome = () => {
       </div>
 
       {/* Modals */}
-      <BackgroundSelector
-        isOpen={showBackgrounds}
-        onClose={() => setShowBackgrounds(false)}
-        onSelectBackground={handleBackgroundChange}
-        currentBackground={background}
-      />
+      <BackgroundSelector isOpen={showBackgrounds} onClose={() => setShowBackgrounds(false)} onSelectBackground={handleBackgroundChange} currentBackground={background} />
 
-      <EnhancedStickerInventory
-        isOpen={showStickers}
-        onClose={() => setShowStickers(false)}
-        onStickerDrop={handleStickerDropWithFeedback}
-      />
+      <EnhancedStickerInventory isOpen={showStickers} onClose={() => setShowStickers(false)} onStickerDrop={handleStickerDropWithFeedback} />
 
-      <WidgetSelector
-        isOpen={showWidgets}
-        onClose={() => setShowWidgets(false)}
-      />
-    </div>
-  );
-
-  const renderMobile = () => (
-    <MobileLayout>
+      <WidgetSelector isOpen={showWidgets} onClose={() => setShowWidgets(false)} />
+    </div>;
+  const renderMobile = () => <MobileLayout>
       <div className="p-4">
-        <EnhancedHomeHeader
-          username={habboData.name}
-          isOwner={isOwner}
-          hotel={habboData.hotel}
-          onEditModeToggle={() => setIsEditMode(!isEditMode)}
-          onOpenStickers={() => setShowStickers(true)}
-          onOpenBackgrounds={() => setShowBackgrounds(true)}
-          onOpenWidgets={() => setShowWidgets(true)}
-          isEditMode={isEditMode}
-        />
+        <EnhancedHomeHeader username={habboData.name} isOwner={isOwner} hotel={habboData.hotel} onEditModeToggle={() => setIsEditMode(!isEditMode)} onOpenStickers={() => setShowStickers(true)} onOpenBackgrounds={() => setShowBackgrounds(true)} onOpenWidgets={() => setShowWidgets(true)} isEditMode={isEditMode} />
         
-        <div 
-          className="min-h-[600px] border-4 border-black rounded-lg p-4 relative"
-          style={backgroundStyle}
-        >
+        <div className="min-h-[600px] border-4 border-black rounded-lg p-4 relative" style={backgroundStyle}>
           {/* Edit Mode Help for Mobile */}
-          {isEditMode && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-400 rounded-lg">
+          {isEditMode && <div className="mb-4 p-3 bg-yellow-50 border border-yellow-400 rounded-lg">
               <div className="text-xs volter-font text-center space-y-1 text-gray-800">
                 <div>🔧 <strong>Modo Edição Ativo</strong></div>
                 <div>Use os botões do cabeçalho para personalizar</div>
               </div>
-            </div>
-          )}
+            </div>}
 
           <AvatarWidget habboData={enhancedHabboData} />
           <div className="mt-4">
-            <GuestbookWidget 
-              habboData={enhancedHabboData}
-              guestbook={guestbook}
-              onAddEntry={addGuestbookEntry}
-              isOwner={isOwner}
-            />
+            <GuestbookWidget habboData={enhancedHabboData} guestbook={guestbook} onAddEntry={addGuestbookEntry} isOwner={isOwner} />
           </div>
         </div>
 
         {/* Mobile Modals */}
-        <BackgroundSelector
-          isOpen={showBackgrounds}
-          onClose={() => setShowBackgrounds(false)}
-          onSelectBackground={handleBackgroundChange}
-          currentBackground={background}
-        />
+        <BackgroundSelector isOpen={showBackgrounds} onClose={() => setShowBackgrounds(false)} onSelectBackground={handleBackgroundChange} currentBackground={background} />
 
-        <EnhancedStickerInventory
-          isOpen={showStickers}
-          onClose={() => setShowStickers(false)}
-          onStickerDrop={handleStickerDropWithFeedback}
-        />
+        <EnhancedStickerInventory isOpen={showStickers} onClose={() => setShowStickers(false)} onStickerDrop={handleStickerDropWithFeedback} />
 
-        <WidgetSelector
-          isOpen={showWidgets}
-          onClose={() => setShowWidgets(false)}
-        />
+        <WidgetSelector isOpen={showWidgets} onClose={() => setShowWidgets(false)} />
       </div>
-    </MobileLayout>
-  );
-
+    </MobileLayout>;
   return isMobile ? renderMobile() : renderDesktop();
 };
-
 export default EnhancedHabboHome;
