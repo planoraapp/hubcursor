@@ -11,8 +11,11 @@ import {
   parseAssetRarity,
   getRarityStats,
   CATEGORY_METADATA,
-  CATEGORY_SECTIONS
+  CATEGORY_SECTIONS,
+  isValidColorForCategory,
+  getDefaultColorForCategory
 } from '@/lib/enhancedCategoryMapperV2';
+import { getCategoryFromSwfName } from '@/lib/improvedCategoryMapper';
 import { useOfficialFigureData } from '@/hooks/useFigureDataOfficial';
 
 export interface EnhancedFlashAssetV2 {
@@ -137,6 +140,18 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       let category = idToCategory.get(figureId)
         || (typeof parseAssetCategory === 'function' ? parseAssetCategory(swf) : String(a?.category || 'ch'));
 
+      // Correção heurística: evitar cair em 'fx' (ou outros) quando parecer peça de roupa
+      const heuristicCategory = getCategoryFromSwfName(swf);
+      const validCategories = new Set(['hd','hr','ha','ea','fa','ch','cc','cp','ca','lg','sh','wa']);
+      if (!validCategories.has(category)) {
+        console.log(`🔄 [Normalize] Categoria inválida '${category}' para ${swf} -> usando heurística '${heuristicCategory}'`);
+        category = heuristicCategory;
+      }
+      if ((category === 'fx' || category === 'pets' || category === 'vehicles') && validCategories.has(heuristicCategory)) {
+        console.log(`🔄 [Normalize] Recategorizando ${swf}: ${category} -> ${heuristicCategory}`);
+        category = heuristicCategory;
+      }
+
       let gender: 'M' | 'F' | 'U' = (typeof parseAssetGender === 'function' 
         ? parseAssetGender(swf)
         : (a?.gender)) as any;
@@ -152,13 +167,14 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
         colors = a.colors.map((c: any) => String(c));
       }
       const colorId = colors[0] || '1';
+      const finalColorId = isValidColorForCategory(colorId, category) ? colorId : getDefaultColorForCategory(category);
 
       const name = (typeof formatAssetName === 'function' ? formatAssetName(String(a?.name ?? swf)) : String(a?.name ?? swf));
       const rarity = (typeof parseAssetRarity === 'function' ? parseAssetRarity(swf) : a?.rarity) || 'common';
       const club: 'hc' | 'normal' = (a?.club === 'hc' || a?.club === 'HC' || a?.club === 1 || a?.club === '1') ? 'hc' : 'normal';
       const swfName = a?.swfName || `${category}_${figureId}`;
       const thumbnailUrl = typeof generateIsolatedThumbnail === 'function'
-        ? generateIsolatedThumbnail(category, figureId, colorId, gender)
+        ? generateIsolatedThumbnail(category, figureId, finalColorId, gender)
         : (a?.thumbnailUrl || '');
 
       const normalized: EnhancedFlashAssetV2 = {

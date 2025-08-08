@@ -208,7 +208,7 @@ const SWF_CATEGORY_MAPPING = {
 export const parseAssetCategory = (swfName: string): string => {
   if (!swfName || typeof swfName !== 'string') {
     console.warn('⚠️ [CategoryMapper V3] Invalid swfName:', swfName);
-    return 'fx';
+    return 'ch';
   }
 
   const lowerSwf = swfName.toLowerCase();
@@ -316,15 +316,15 @@ export const parseAssetCategory = (swfName: string): string => {
     }
   }
   
-  // 6. FALLBACK INTELIGENTE - preferir efeitos para itens não reconhecidos
+  // 6. FALLBACK INTELIGENTE - preferir roupas básicas para itens não reconhecidos
   if (lowerSwf.includes('_m_') || lowerSwf.includes('_f_') || lowerSwf.includes('_u_')) {
-    console.log(`⚠️ [CategoryMapper V3] Gender fallback: ${swfName} -> fx`);
-    return 'fx';
+    console.log(`⚠️ [CategoryMapper V3] Gender fallback: ${swfName} -> ch`);
+    return 'ch';
   }
   
-  // 7. Fallback final para efeitos
-  console.warn(`⚠️ [CategoryMapper V3] No category found for: ${swfName}, using 'fx'`);
-  return 'fx';
+  // 7. Fallback final para roupas (evitar jogar em efeitos)
+  console.warn(`⚠️ [CategoryMapper V3] No category found for: ${swfName}, using 'ch'`);
+  return 'ch';
 };
 
 export const parseAssetGender = (swfName: string): 'M' | 'F' | 'U' => {
@@ -344,8 +344,26 @@ export const generateCategoryColors = (category: string): string[] => {
   return ['1', '2', '3', '4', '5'];
 };
 
-export const generateIsolatedThumbnail = (category: string, figureId: string, color: string, gender: string): string => {
-  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${category}-${figureId}-${color}&gender=${gender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
+export const generateIsolatedThumbnail = (category: string, figureId: string, color: string = '1', gender: string = 'M'): string => {
+  // Figura base minimalista por categoria para destacar a peça de interesse
+  const baseComponents: Record<string, string> = {
+    hd: `hd-180-1`,                      // Cabeça básica
+    hr: `hd-180-1`,                      // Cabeça + foco no cabelo
+    ch: `hd-180-1.hr-828-45`,            // Cabeça + cabelo básico
+    cc: `hd-180-1.hr-828-45.ch-665-92`,  // Base + camisa básica
+    lg: `hd-180-1.hr-828-45.ch-665-92`,  // Base sem calça para destacar pernas
+    sh: `hd-180-1.hr-828-45.ch-665-92.lg-700-1`, // Base completa para destacar sapatos
+    ha: `hd-180-1.hr-828-45`,            // Base para chapéu
+    ea: `hd-180-1.hr-828-45`,            // Base para óculos
+    fa: `hd-180-1.hr-828-45`,            // Base para acessórios faciais
+    ca: `hd-180-1.hr-828-45.ch-665-92`,  // Base para acessórios de peito
+    wa: `hd-180-1.hr-828-45.ch-665-92.lg-700-1`, // Base para cintura
+    cp: `hd-180-1.hr-828-45`             // Base para estampas
+  };
+
+  const baseAvatar = baseComponents[category] || baseComponents['ch'];
+  const fullFigure = `${baseAvatar}.${category}-${figureId}-${color}`;
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
 };
 
 export const formatAssetName = (swfName: string): string => {
