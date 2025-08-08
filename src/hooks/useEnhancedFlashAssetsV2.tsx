@@ -122,19 +122,23 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
     });
 
     const mapped = assets.map((a: any) => {
-      const swf = a?.swfName || a?.id || '';
-      const parsedFigureId = String(
-        typeof parseAssetFigureId === 'function' ? parseAssetFigureId(a) : (a?.figureId ?? '').toString()
-      );
+      const swf = String(a?.swfName ?? a?.name ?? a?.id ?? '');
+      const parsedFigureId = (() => {
+        try {
+          return typeof parseAssetFigureId === 'function' ? String(parseAssetFigureId(swf)) : String(a?.figureId ?? '');
+        } catch {
+          return String(a?.figureId ?? '');
+        }
+      })();
       const figureId = parsedFigureId && parsedFigureId !== 'undefined' && parsedFigureId !== ''
         ? parsedFigureId
         : String(a?.figureId ?? a?.id ?? '');
 
       let category = idToCategory.get(figureId)
-        || (typeof parseAssetCategory === 'function' ? parseAssetCategory(swf) : (a?.category || 'ch'));
+        || (typeof parseAssetCategory === 'function' ? parseAssetCategory(swf) : String(a?.category || 'ch'));
 
       let gender: 'M' | 'F' | 'U' = (typeof parseAssetGender === 'function' 
-        ? parseAssetGender(a?.gender || swf) 
+        ? parseAssetGender(swf)
         : (a?.gender)) as any;
       if (gender !== 'M' && gender !== 'F') gender = 'U';
 
@@ -149,8 +153,8 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       }
       const colorId = colors[0] || '1';
 
-      const name = (typeof formatAssetName === 'function' ? formatAssetName(a?.name || swf) : (a?.name || swf));
-      const rarity = (typeof parseAssetRarity === 'function' ? parseAssetRarity(a) : a?.rarity) || 'common';
+      const name = (typeof formatAssetName === 'function' ? formatAssetName(String(a?.name ?? swf)) : String(a?.name ?? swf));
+      const rarity = (typeof parseAssetRarity === 'function' ? parseAssetRarity(swf) : a?.rarity) || 'common';
       const club: 'hc' | 'normal' = (a?.club === 'hc' || a?.club === 'HC' || a?.club === 1 || a?.club === '1') ? 'hc' : 'normal';
       const swfName = a?.swfName || `${category}_${figureId}`;
       const thumbnailUrl = typeof generateIsolatedThumbnail === 'function'

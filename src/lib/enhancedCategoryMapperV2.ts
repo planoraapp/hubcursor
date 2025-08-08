@@ -335,6 +335,7 @@ export const parseAssetGender = (swfName: string): 'M' | 'F' | 'U' => {
 };
 
 export const parseAssetFigureId = (swfName: string): string => {
+  if (!swfName || typeof swfName !== 'string') return '0';
   const match = swfName.match(/(\d+)/);
   return match ? match[1] : '0';
 };
