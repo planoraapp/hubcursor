@@ -113,6 +113,7 @@ export function getAvatarUrl(username, figureString) {
   return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&gesture=sml&size=m&action=std`;
 }
 
+// Função para gerar URL do emblema - FIXED
 export function getBadgeUrl(badgeCode) {
-  return `https://www.habbo.com.br/habbo-imaging/badge/b_${badgeCode}.gif`;
+  return `https://images.habbo.com/c_images/album1584/${badgeCode}.gif`;
 }

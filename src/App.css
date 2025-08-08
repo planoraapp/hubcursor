@@ -35,17 +35,29 @@
   color: #888;
 }
 
-/* Volter Font Styling */
+/* Volter Font Styling - Updated */
 .volter-font {
-  font-family: 'Volter Bold', 'Inter', sans-serif;
-  text-shadow: 
-    1px 1px 0px black,   /* Top-left */
-    -1px -1px 0px black, /* Bottom-right */
-    1px -1px 0px black,  /* Top-right */
-    -1px 1px 0px black;  /* Bottom-left */
+  font-family: 'Volter (Goldfish)', 'Press Start 2P', 'Courier New', monospace;
+}
+
+/* Ensure all widget text has proper Habbo styling */
+.widget-container .volter-font,
+.widget-container h1,
+.widget-container h2,
+.widget-container h3,
+.widget-container h4,
+.widget-container p,
+.widget-container span {
+  @apply habbo-text;
 }
 
 /* Sidebar text weight enhancement */
 .sidebar-text {
   font-weight: 600;
+  @apply habbo-text;
+}
+
+/* Menu items styling */
+.menu-item {
+  @apply habbo-text;
 }

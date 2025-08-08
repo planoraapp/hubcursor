@@ -274,69 +274,69 @@ export const discoverRooms = async (): Promise<HabboRoom[]> => {
   return rooms;
 };
 
-// Função para buscar dados do usuário por ID
+// Função para buscar dados do usuário por ID - FIXED
 export const getUserById = async (userId: string): Promise<HabboUser | null> => {
-  return await fetchWithRetry(`/users/${userId}`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}`);
 };
 
-// Função para buscar perfil detalhado do usuário
+// Função para buscar perfil detalhado do usuário - FIXED
 export const getUserProfile = async (userId: string): Promise<HabboUser | null> => {
-  return await fetchWithRetry(`/users/${userId}/profile`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/profile`);
 };
 
-// Função para buscar emblemas do usuário
+// Função para buscar emblemas do usuário - FIXED
 export const getUserBadges = async (userId: string): Promise<HabboBadge[] | null> => {
-  return await fetchWithRetry(`/users/${userId}/badges`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/badges`);
 };
 
-// Função para buscar amigos do usuário
+// Função para buscar amigos do usuário - FIXED
 export const getUserFriends = async (userId: string): Promise<HabboUser[] | null> => {
-  return await fetchWithRetry(`/users/${userId}/friends`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/friends`);
 };
 
-// Função para buscar grupos do usuário
+// Função para buscar grupos do usuário - FIXED
 export const getUserGroups = async (userId: string): Promise<HabboGroup[] | null> => {
-  return await fetchWithRetry(`/users/${userId}/groups`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/groups`);
 };
 
-// Função para buscar quartos do usuário
+// Função para buscar quartos do usuário - FIXED
 export const getUserRooms = async (userId: string): Promise<HabboRoom[] | null> => {
-  return await fetchWithRetry(`/users/${userId}/rooms`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/rooms`);
 };
 
-// Função para buscar detalhes de um quarto
+// Função para buscar detalhes de um quarto - FIXED
 export const getRoomDetails = async (roomId: string): Promise<HabboRoom | null> => {
-  return await fetchWithRetry(`/rooms/${roomId}`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/rooms/${roomId}`);
 };
 
-// Função para buscar todos os emblemas disponíveis
+// Função para buscar todos os emblemas disponíveis - FIXED
 export const getAchievements = async (): Promise<HabboBadge[] | null> => {
-  return await fetchWithRetry('/achievements');
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/achievements`);
 };
 
-// Função para buscar emblema específico
+// Função para buscar emblema específico - FIXED
 export const getAchievementById = async (achievementId: string): Promise<HabboBadge | null> => {
-  return await fetchWithRetry(`/achievements/${achievementId}`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/achievements/${achievementId}`);
 };
 
-// Função para buscar detalhes de um grupo
+// Função para buscar detalhes de um grupo - FIXED
 export const getGroupDetails = async (groupId: string): Promise<HabboGroup | null> => {
-  return await fetchWithRetry(`/groups/${groupId}`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/groups/${groupId}`);
 };
 
-// Função para buscar membros de um grupo
+// Função para buscar membros de um grupo - FIXED
 export const getGroupMembers = async (groupId: string): Promise<HabboUser[] | null> => {
-  return await fetchWithRetry(`/groups/${groupId}/members`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/groups/${groupId}/members`);
 };
 
-// Função para buscar estatísticas do marketplace para room items
+// Função para buscar estatísticas do marketplace para room items - FIXED
 export const getMarketplaceStatsRoomItem = async (itemName: string): Promise<MarketplaceStats | null> => {
-  return await fetchWithRetry(`/marketplace/stats/roomItem/${encodeURIComponent(itemName)}`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/marketplace/stats/roomItem/${encodeURIComponent(itemName)}`);
 };
 
-// Função para buscar estatísticas do marketplace para wall items
+// Função para buscar estatísticas do marketplace para wall items - FIXED
 export const getMarketplaceStatsWallItem = async (itemName: string): Promise<MarketplaceStats | null> => {
-  return await fetchWithRetry(`/marketplace/stats/wallItem/${encodeURIComponent(itemName)}`);
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/marketplace/stats/wallItem/${encodeURIComponent(itemName)}`);
 };
 
 // Função para calcular estatísticas em tempo real

@@ -1,2 +1,4 @@
 
-/* Placeholder para o arquivo de fonte - você precisa baixar de https://github.com/eonu/goldfish */
+This is a placeholder comment. The actual font file needs to be downloaded from: https://fonts.cdnfonts.com/css/volter-goldfish
+
+For now, we'll use a system font fallback in the CSS.

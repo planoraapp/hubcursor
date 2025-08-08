@@ -20,20 +20,6 @@ const generateVerificationCode = () => {
   return `HUB-${code}`;
 };
 
-// Detectar hotel do habbo_id - versão aprimorada
-const detectHotelFromHabboId = (habboId: string): string => {
-  if (habboId.startsWith('hhbr-')) return 'br';
-  if (habboId.startsWith('hhcom-') || habboId.startsWith('hhus-')) return 'com';
-  if (habboId.startsWith('hhes-')) return 'es';
-  if (habboId.startsWith('hhfr-')) return 'fr';
-  if (habboId.startsWith('hhde-')) return 'de';
-  if (habboId.startsWith('hhit-')) return 'it';
-  if (habboId.startsWith('hhnl-')) return 'nl';
-  if (habboId.startsWith('hhfi-')) return 'fi';
-  if (habboId.startsWith('hhtr-')) return 'tr';
-  return 'com'; // fallback
-};
-
 export const useUnifiedAuth = () => {
   const [user, setUser] = useState<any>(null);
   const [habboAccount, setHabboAccount] = useState<HabboAccount | null>(null);
