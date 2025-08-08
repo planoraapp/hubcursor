@@ -82,7 +82,7 @@ serve(async (req) => {
     
     console.log(`🚀 Edge Function iniciada - Action: ${action}, Habbo: ${habboName}`);
 
-    if (!habboName || !verificationCode || (action === 'reset' && !newPassword)) {
+    if (!habboName || !verificationCode) {
       return new Response(
         JSON.stringify({ error: 'Campos obrigatórios não fornecidos' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

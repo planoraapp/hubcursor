@@ -231,16 +231,18 @@ export const OptimizedDraggableWidget: React.FC<OptimizedDraggableWidgetProps> =
             >
               ↓
             </button>
-            <button
-              className="w-6 h-6 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemove();
-              }}
-              title="Remover"
-            >
-              ×
-            </button>
+            {onRemove && (
+              <button
+                className="w-6 h-6 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove();
+                }}
+                title="Remover"
+              >
+                ×
+              </button>
+            )}
           </div>
 
           {/* Resize handle */}
@@ -262,9 +264,6 @@ export const OptimizedDraggableWidget: React.FC<OptimizedDraggableWidgetProps> =
             <div className="w-2 h-2 bg-white rounded-full"></div>
           </div>
           
-          <div className="absolute -top-8 left-0 bg-blue-600 text-white px-2 py-1 rounded text-xs volter-font shadow-lg">
-            {id.toUpperCase()} (Z: {zIndex})
-          </div>
 
           {!canResize && (
             <div className="absolute -top-8 right-0 bg-orange-500 text-white px-2 py-1 rounded text-xs volter-font shadow-lg">
