@@ -28,8 +28,15 @@ const fetchOfficialFigureData = async (): Promise<OfficialFigureData> => {
       throw new Error('No figure parts data received');
     }
     
+    // Verificar se há categorias válidas
+    const categoryCount = Object.keys(response.data.figureParts).length;
+    if (categoryCount === 0) {
+      console.warn('⚠️ [OfficialFigureData] Edge Function returned 0 categories, forcing fallback');
+      throw new Error('Empty figureParts data, falling back to local data');
+    }
+    
     console.log('✅ [OfficialFigureData] Data loaded from official source:', {
-      categories: Object.keys(response.data.figureParts).length,
+      categories: categoryCount,
       source: response.data.metadata?.source,
       fetchedAt: response.data.metadata?.fetchedAt
     });
@@ -46,7 +53,14 @@ const fetchOfficialFigureData = async (): Promise<OfficialFigureData> => {
       if (fallbackResponse.ok) {
         const fallbackData = await fallbackResponse.json();
         const { _metadata, ...figureData } = fallbackData;
-        console.log('✅ [OfficialFigureData] Fallback data loaded');
+        
+        const fallbackCategoryCount = Object.keys(figureData).length;
+        console.log('✅ [OfficialFigureData] Fallback data loaded:', {
+          categories: fallbackCategoryCount,
+          source: 'local fallback',
+          availableCategories: Object.keys(figureData)
+        });
+        
         return figureData;
       }
     } catch (fallbackError) {

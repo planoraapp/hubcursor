@@ -60,7 +60,13 @@ serve(async (req) => {
     // Parse XML and convert to structured JSON
     const figureData = await parseXMLToJSON(xmlData);
     
-    console.log(`✅ [FigureData] Processed ${Object.keys(figureData).length} categories`);
+    const categoryCount = Object.keys(figureData).length;
+    console.log(`✅ [FigureData] Processed ${categoryCount} categories:`, Object.keys(figureData));
+    
+    if (categoryCount === 0) {
+      console.error('❌ [FigureData] No valid categories found after parsing');
+      throw new Error('No valid categories found in XML data');
+    }
     
     return new Response(
       JSON.stringify({ 
@@ -68,7 +74,8 @@ serve(async (req) => {
         metadata: {
           source: usedUrl,
           fetchedAt: new Date().toISOString(),
-          totalCategories: Object.keys(figureData).length
+          totalCategories: categoryCount,
+          categories: Object.keys(figureData)
         }
       }), 
       { 
@@ -86,7 +93,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message || 'Failed to fetch figuredata',
-        success: false 
+        success: false,
+        figureParts: {} // Retornar objeto vazio para forçar fallback no frontend
       }), 
       { 
         status: 500, 
@@ -98,83 +106,106 @@ serve(async (req) => {
 
 async function parseXMLToJSON(xmlString: string) {
   try {
+    console.log('🔍 [FigureData] Starting XML parsing...');
+    
     // Enhanced XML parsing for better structure
     const figureData: Record<string, any[]> = {};
     
-    // Valid clothing categories only
+    // Valid clothing categories only - expanded list
     const VALID_CATEGORIES = new Set([
-      'hd', 'hr', 'ha', 'ea', 'fa', // Head section
-      'ch', 'cc', 'cp', 'ca',       // Body section  
-      'lg', 'sh', 'wa'              // Legs section
+      'hd', // Head/Face
+      'hr', // Hair
+      'ha', // Hat/Head accessories
+      'he', // Head extras
+      'ea', // Eye accessories
+      'fa', // Face accessories
+      'ch', // Chest/Shirt
+      'cc', // Coat/Jacket
+      'cp', // Chest print
+      'ca', // Chest accessories
+      'lg', // Legs/Pants
+      'sh', // Shoes
+      'wa'  // Waist/Belt
     ]);
     
-    // Find all <set> elements
-    const setMatches = xmlString.match(/<set[^>]*>([\s\S]*?)<\/set>/g);
+    console.log('📋 [FigureData] Valid categories:', Array.from(VALID_CATEGORIES));
     
-    if (setMatches) {
-      for (const setMatch of setMatches) {
-        // Extract set id (category)
-        const setIdMatch = setMatch.match(/id="([^"]+)"/);
-        if (!setIdMatch) continue;
+    // Find all <set> elements using more robust regex
+    const setRegex = /<set[^>]+id="([^"]+)"[^>]*>(.*?)<\/set>/gs;
+    let setMatch;
+    let totalSetsFound = 0;
+    let validSetsProcessed = 0;
+    
+    while ((setMatch = setRegex.exec(xmlString)) !== null) {
+      totalSetsFound++;
+      const setId = setMatch[1];
+      const setContent = setMatch[2];
+      
+      // Only process valid clothing categories
+      if (!VALID_CATEGORIES.has(setId)) {
+        console.log(`🚫 [FigureData] Skipping non-clothing category: ${setId}`);
+        continue;
+      }
+      
+      validSetsProcessed++;
+      console.log(`✅ [FigureData] Processing valid category: ${setId}`);
+      
+      figureData[setId] = [];
+      
+      // Find all <part> elements within this set using more specific regex
+      const partRegex = /<part[^>]+id="([^"]+)"[^>]*(?:gender="([^"]*)")?[^>]*(?:club="([^"]*)")?[^>]*(?:colorable="([^"]*)")?[^>]*\/?>/g;
+      let partMatch;
+      let partsInCategory = 0;
+      
+      while ((partMatch = partRegex.exec(setContent)) !== null) {
+        const partId = partMatch[1];
+        const gender = partMatch[2] || 'U';
+        const club = partMatch[3] || '0';
+        const colorable = partMatch[4] === '1';
         
-        const setId = setIdMatch[1];
-        
-        // Only process valid clothing categories
-        if (!VALID_CATEGORIES.has(setId)) {
-          console.log(`🚫 [FigureData] Skipping non-clothing category: ${setId}`);
+        // Validate numeric ID
+        if (!/^\d+$/.test(partId)) {
+          console.warn(`⚠️ [FigureData] Invalid part ID: ${partId} in category ${setId}`);
           continue;
         }
         
-        figureData[setId] = [];
+        const partData = {
+          id: partId,
+          gender: gender as 'M' | 'F' | 'U',
+          club: club,
+          colorable: colorable,
+          colors: ['1', '2', '3', '4', '5'] // Default colors
+        };
         
-        // Find all <part> elements within this set
-        const partMatches = setMatch.match(/<part[^>]*\/>/g);
-        
-        if (partMatches) {
-          for (const partMatch of partMatches) {
-            // Extract part attributes
-            const partIdMatch = partMatch.match(/id="([^"]+)"/);
-            const genderMatch = partMatch.match(/gender="([^"]+)"/);
-            const clubMatch = partMatch.match(/club="([^"]+)"/);
-            const colorableMatch = partMatch.match(/colorable="([^"]+)"/);
-            
-            if (partIdMatch) {
-              const partId = partIdMatch[1];
-              
-              // Validate numeric ID
-              if (!/^\d+$/.test(partId)) {
-                console.warn(`⚠️ [FigureData] Invalid part ID: ${partId} in category ${setId}`);
-                continue;
-              }
-              
-              const partData = {
-                id: partId,
-                gender: genderMatch ? genderMatch[1] : 'U',
-                club: clubMatch ? clubMatch[1] : '0',
-                colorable: colorableMatch ? colorableMatch[1] === '1' : false,
-                colors: ['1'] // Default color, enhanced later if needed
-              };
-              
-              figureData[setId].push(partData);
-              
-              console.log(`✅ [FigureData] Added ${setId}-${partId} (gender: ${partData.gender}, club: ${partData.club})`);
-            }
-          }
-        }
-        
-        console.log(`📊 [FigureData] Category ${setId}: ${figureData[setId].length} items`);
+        figureData[setId].push(partData);
+        partsInCategory++;
       }
+      
+      console.log(`📊 [FigureData] Category ${setId}: ${partsInCategory} items added`);
     }
     
     // Log final structure
     const totalItems = Object.values(figureData).reduce((sum, items) => sum + items.length, 0);
-    console.log(`📈 [FigureData] Final structure: ${Object.keys(figureData).length} categories, ${totalItems} total items`);
-    console.log(`📋 [FigureData] Categories: ${Object.keys(figureData).join(', ')}`);
+    const finalCategories = Object.keys(figureData);
+    
+    console.log(`📈 [FigureData] XML Parsing Complete:`);
+    console.log(`   - Total sets found: ${totalSetsFound}`);
+    console.log(`   - Valid sets processed: ${validSetsProcessed}`);
+    console.log(`   - Final categories: ${finalCategories.length}`);
+    console.log(`   - Total items: ${totalItems}`);
+    console.log(`   - Categories: ${finalCategories.join(', ')}`);
+    
+    if (finalCategories.length === 0) {
+      console.error('❌ [FigureData] No valid categories found after parsing');
+      console.log('🔍 [FigureData] Sample XML content:', xmlString.substring(0, 1000));
+    }
     
     return figureData;
     
   } catch (error) {
     console.error('❌ [FigureData] XML parsing error:', error);
-    throw new Error('Failed to parse figuredata XML');
+    console.log('🔍 [FigureData] XML length:', xmlString?.length || 'undefined');
+    console.log('🔍 [FigureData] XML sample:', xmlString?.substring(0, 500) || 'no data');
+    throw new Error('Failed to parse figuredata XML: ' + error.message);
   }
 }

@@ -19,7 +19,7 @@ export interface CategoryData {
   items: OfficialClothingItem[];
 }
 
-// Mapeamento oficial das categorias baseado nos exemplos
+// Mapeamento oficial das categorias baseado nos dados reais do Habbo
 const OFFICIAL_CATEGORIES = {
   'hd': { name: 'Rostos', icon: '👤' },
   'hr': { name: 'Cabelos', icon: '💇' },
@@ -40,18 +40,35 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
   const { data: figureData, isLoading, error } = useOfficialFigureData();
 
   const categorizedItems = useMemo(() => {
-    if (!figureData) return {};
+    if (!figureData) {
+      console.log('📋 [OfficialClothingIndex] No figure data available yet');
+      return {};
+    }
+
+    console.log('📋 [OfficialClothingIndex] Processing figure data:', {
+      availableCategories: Object.keys(figureData),
+      selectedGender
+    });
 
     const result: Record<string, CategoryData> = {};
 
     Object.entries(figureData).forEach(([categoryId, items]) => {
       // Filtrar apenas categorias oficiais conhecidas
       const categoryInfo = OFFICIAL_CATEGORIES[categoryId as keyof typeof OFFICIAL_CATEGORIES];
-      if (!categoryInfo) return;
+      if (!categoryInfo) {
+        console.log(`⚠️ [OfficialClothingIndex] Skipping unknown category: ${categoryId}`);
+        return;
+      }
 
       // Filtrar itens por gênero
       const filteredItems = items
-        .filter(item => item.gender === selectedGender || item.gender === 'U')
+        .filter(item => {
+          const genderMatch = item.gender === selectedGender || item.gender === 'U';
+          if (!genderMatch) {
+            console.log(`🚫 [OfficialClothingIndex] Filtering out ${categoryId}-${item.id} (gender: ${item.gender})`);
+          }
+          return genderMatch;
+        })
         .map(item => ({
           id: `${categoryId}_${item.id}`,
           category: categoryId,
@@ -69,10 +86,23 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
           icon: categoryInfo.icon,
           items: filteredItems
         };
+        
+        console.log(`✅ [OfficialClothingIndex] Category ${categoryId} (${categoryInfo.name}): ${filteredItems.length} items`);
+      } else {
+        console.log(`📋 [OfficialClothingIndex] Category ${categoryId} has no items for gender ${selectedGender}`);
       }
     });
 
-    console.log('✅ [OfficialClothingIndex] Categorias organizadas:', Object.keys(result));
+    const totalCategories = Object.keys(result).length;
+    const totalItems = Object.values(result).reduce((sum, cat) => sum + cat.items.length, 0);
+    
+    console.log('✅ [OfficialClothingIndex] Final categorized data:', {
+      totalCategories,
+      totalItems,
+      categories: Object.keys(result),
+      gender: selectedGender
+    });
+    
     return result;
   }, [figureData, selectedGender]);
 
