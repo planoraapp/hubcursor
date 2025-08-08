@@ -1,86 +1,54 @@
 
+import React from 'react';
 import { Button } from '@/components/ui/button';
 
 interface SkinToneBarProps {
-  selectedSkinTone: string;
-  onSkinToneSelect: (toneId: string) => void;
-  selectedGender: 'M' | 'F';
-  selectedHotel: string;
+  currentSkinTone: string;
+  onSkinToneChange: (skinTone: string) => void;
 }
 
-const SKIN_TONES = [
-  { id: '1', hex: '#FFDBAC', name: 'Pele Clara' },
-  { id: '2', hex: '#F5C2A5', name: 'Pele Rosada' },
-  { id: '3', hex: '#E8A775', name: 'Pele Média' },
-  { id: '4', hex: '#D4965A', name: 'Pele Morena' },
-  { id: '5', hex: '#BB7748', name: 'Pele Escura' },
-  { id: '7', hex: '#A0845C', name: 'Pele Bronzeada' }
-];
-
-export const SkinToneBar = ({
-  selectedSkinTone,
-  onSkinToneSelect,
-  selectedGender,
-  selectedHotel
-}: SkinToneBarProps) => {
-
-  const getPreviewUrl = (toneId: string) => {
-    const hotel = selectedHotel.includes('.') 
-      ? selectedHotel 
-      : selectedHotel === 'com' ? 'habbo.com' : `habbo.${selectedHotel}`;
-    
-    return `https://www.${hotel}/habbo-imaging/avatarimage?figure=hd-180-${toneId}&gender=${selectedGender}&direction=2&head_direction=2&size=s&headonly=1`;
-  };
+const SkinToneBar: React.FC<SkinToneBarProps> = ({
+  currentSkinTone,
+  onSkinToneChange
+}) => {
+  const skinTones = [
+    { id: '1', color: '#FFE0C6', name: 'Tom 1' },
+    { id: '2', color: '#FFDBBA', name: 'Tom 2' },
+    { id: '3', color: '#F5C99B', name: 'Tom 3' },
+    { id: '4', color: '#E6AC7C', name: 'Tom 4' },
+    { id: '5', color: '#D4926B', name: 'Tom 5' },
+    { id: '6', color: '#C17D5D', name: 'Tom 6' },
+    { id: '7', color: '#A66B50', name: 'Tom 7' },
+    { id: '8', color: '#8B5A42', name: 'Tom 8' }
+  ];
 
   return (
-    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 mb-4">
-      <div className="text-xs font-medium text-gray-700 mb-2 text-center">Tom de Pele</div>
-      <div className="flex items-center justify-center gap-2">
-        {SKIN_TONES.map((tone, index) => (
-          <div key={tone.id} className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`w-10 h-10 p-0 rounded-full border-2 transition-all duration-300 ${
-                selectedSkinTone === tone.id 
-                  ? 'border-orange-400 scale-110 shadow-lg ring-2 ring-orange-200' 
-                  : 'border-orange-200 hover:border-orange-300 hover:scale-105'
-              }`}
-              style={{ backgroundColor: tone.hex }}
-              onClick={() => onSkinToneSelect(tone.id)}
-              title={tone.name}
-            >
-              <img
-                src={getPreviewUrl(tone.id)}
-                alt={tone.name}
-                className="w-6 h-6 rounded-full object-contain"
-                style={{ imageRendering: 'pixelated' }}
-                onError={(e) => {
-                  const target = e.currentTarget;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent && !parent.querySelector('.emoji-fallback')) {
-                    const span = document.createElement('span');
-                    span.className = 'emoji-fallback text-xs';
-                    span.textContent = '😊';
-                    parent.appendChild(span);
-                  }
-                }}
-              />
-            </Button>
-            
-            {/* Gradient connector */}
-            {index < SKIN_TONES.length - 1 && (
-              <div 
-                className="absolute top-1/2 left-full w-1 h-2 transform -translate-y-1/2"
-                style={{
-                  background: `linear-gradient(to right, ${tone.hex}, ${SKIN_TONES[index + 1].hex})`
-                }}
-              />
-            )}
-          </div>
+    <div className="bg-white border-2 border-black p-3">
+      <div className="text-sm font-bold mb-2 text-center">Tom de Pele</div>
+      
+      {/* Color Slider Visual */}
+      <div className="mb-3">
+        <div className="h-4 bg-gradient-to-r rounded border border-gray-300" style={{
+          background: `linear-gradient(to right, ${skinTones.map(tone => tone.color).join(', ')})`
+        }} />
+      </div>
+
+      {/* Color Buttons */}
+      <div className="grid grid-cols-4 gap-2">
+        {skinTones.map((tone) => (
+          <Button
+            key={tone.id}
+            onClick={() => onSkinToneChange(tone.id)}
+            className={`w-8 h-8 p-0 border-2 rounded-full ${
+              currentSkinTone === tone.id ? 'border-blue-500' : 'border-gray-400'
+            }`}
+            style={{ backgroundColor: tone.color }}
+            title={tone.name}
+          />
         ))}
       </div>
     </div>
   );
 };
+
+export default SkinToneBar;

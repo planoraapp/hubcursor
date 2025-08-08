@@ -46,8 +46,14 @@ const Homes = () => {
         </div>
       </div>
 
-      {/* Latest Homes - moved here between buttons and features */}
-      <LatestHomesCards />
+      {/* Latest Homes - positioned between buttons and features */}
+      <div className="mb-8">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Últimas Homes Atualizadas</h2>
+          <p className="text-gray-600">Descubra as homes que foram modificadas recentemente</p>
+        </div>
+        <LatestHomesCards />
+      </div>
 
       {/* How it Works Section */}
       <Card>
