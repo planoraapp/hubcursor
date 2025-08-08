@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
@@ -11,7 +10,7 @@ const Editor = () => {
   const [activeSection, setActiveSection] = useState('editor');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<'original' | 'templarios'>('original');
+  const [activeTab, setActiveTab] = useState<'original' | 'templarios'>('templarios');
   useEffect(() => {
     const handleSidebarStateChange = (event: CustomEvent) => {
       setSidebarCollapsed(event.detail.isCollapsed);
@@ -33,8 +32,22 @@ const Editor = () => {
           />
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200 shadow-lg overflow-hidden p-3">
             <div className="flex gap-2 mb-3">
-              <button className={`px-3 py-2 rounded border ${activeTab === 'original' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('original')}>Editor Atual</button>
-              <button className={`px-3 py-2 rounded border ${activeTab === 'templarios' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('templarios')}>HabboTemplarios</button>
+              <button 
+                className={`px-3 py-2 rounded border transition-colors ${
+                  activeTab === 'original' ? 'bg-white/70 border-purple-300' : 'bg-white/30 border-gray-300'
+                }`} 
+                onClick={() => setActiveTab('original')}
+              >
+                Editor Atual
+              </button>
+              <button 
+                className={`px-3 py-2 rounded border transition-colors ${
+                  activeTab === 'templarios' ? 'bg-white/70 border-purple-300' : 'bg-white/30 border-gray-300'
+                }`} 
+                onClick={() => setActiveTab('templarios')}
+              >
+                HabboTemplarios
+              </button>
             </div>
             {activeTab === 'original' ? (
               <EditorShell />
@@ -58,8 +71,22 @@ const Editor = () => {
           />
           <div className="bg-gradient-to-br from-white/90 to-purple-50/90 backdrop-blur-sm rounded-lg border-2 border-purple-200 shadow-xl p-4 md:p-6 h-full overflow-hidden">
             <div className="flex gap-2 mb-4">
-              <button className={`px-3 py-2 rounded border ${activeTab === 'original' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('original')}>Editor Atual</button>
-              <button className={`px-3 py-2 rounded border ${activeTab === 'templarios' ? 'bg-white/70' : 'bg-white/30'}`} onClick={() => setActiveTab('templarios')}>HabboTemplarios</button>
+              <button 
+                className={`px-4 py-2 rounded border transition-colors ${
+                  activeTab === 'original' ? 'bg-white/70 border-purple-300' : 'bg-white/30 border-gray-300 hover:bg-white/50'
+                }`} 
+                onClick={() => setActiveTab('original')}
+              >
+                Editor Atual
+              </button>
+              <button 
+                className={`px-4 py-2 rounded border transition-colors ${
+                  activeTab === 'templarios' ? 'bg-white/70 border-purple-300' : 'bg-white/30 border-gray-300 hover:bg-white/50'
+                }`} 
+                onClick={() => setActiveTab('templarios')}
+              >
+                HabboTemplarios
+              </button>
             </div>
             {activeTab === 'original' ? (
               <EditorShell />
