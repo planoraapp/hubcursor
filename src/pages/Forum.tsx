@@ -6,22 +6,13 @@ import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 import { PostsList } from '../components/forum/PostsList';
+import type { ForumPost } from '../types/forum';
 
 interface ForumCategory {
   id: number;
   name: string;
   description: string;
   icon: string;
-}
-
-interface ForumPost {
-  id: number;
-  title: string;
-  content: string;
-  author_name: string;
-  category: string;
-  created_at: string;
-  likes_count: number;
 }
 
 const forumCategories: ForumCategory[] = [
@@ -57,11 +48,38 @@ const Forum = () => {
     const fetchPosts = async () => {
       setLoading(true);
       try {
-        // Mock data for demonstration
+        // Mock data for demonstration - using ForumPost type
         const mockPosts: ForumPost[] = [
-          { id: 1, title: 'Bem-vindos ao novo fórum!', content: 'Este é o primeiro post do nosso novo fórum da comunidade Habbo Hub. Compartilhe suas ideias e sugestões!', author_name: 'Admin', category: 'Geral', created_at: '2023-11-21T10:00:00', likes_count: 15 },
-          { id: 2, title: 'Evento: Concurso de дизайна de quartos', content: 'Participe do nosso concurso de design de quartos com tema natalino e concorra a prêmios incríveis!', author_name: 'EventosHabbo', category: 'Eventos', created_at: '2023-11-20T16:45:00', likes_count: 8 },
-          { id: 3, title: 'Dúvidas frequentes sobre o Habbo Hub', content: 'Confira a lista de dúvidas frequentes e encontre respostas para as suas perguntas sobre o Habbo Hub.', author_name: 'SuporteHabbo', category: 'Suporte', created_at: '2023-11-19T09:20:00', likes_count: 12 },
+          { 
+            id: '1', 
+            title: 'Bem-vindos ao novo fórum!', 
+            content: 'Este é o primeiro post do nosso novo fórum da comunidade Habbo Hub. Compartilhe suas ideias e sugestões!', 
+            author_supabase_user_id: 'admin-id',
+            author_habbo_name: 'Admin', 
+            category: 'Geral', 
+            created_at: '2023-11-21T10:00:00', 
+            likes: 15 
+          },
+          { 
+            id: '2', 
+            title: 'Evento: Concurso de дизayna de quartos', 
+            content: 'Participe do nosso concurso de design de quartos com tema natalino e concorra a prêmios incríveis!', 
+            author_supabase_user_id: 'eventos-id',
+            author_habbo_name: 'EventosHabbo', 
+            category: 'Eventos', 
+            created_at: '2023-11-20T16:45:00', 
+            likes: 8 
+          },
+          { 
+            id: '3', 
+            title: 'Dúvidas frequentes sobre o Habbo Hub', 
+            content: 'Confira a lista de dúvidas frequentes e encontre respostas para as suas perguntas sobre o Habbo Hub.', 
+            author_supabase_user_id: 'suporte-id',
+            author_habbo_name: 'SuporteHabbo', 
+            category: 'Suporte', 
+            created_at: '2023-11-19T09:20:00', 
+            likes: 12 
+          },
         ];
         setPosts(mockPosts);
       } catch (err: any) {
@@ -140,7 +158,7 @@ const Forum = () => {
                   </Card>
                 </div>
                 
-                <PostsList posts={posts} />
+                <PostsList posts={posts} loading={loading} />
               </div>
 
               {/* Sidebar */}
@@ -247,7 +265,7 @@ const Forum = () => {
           {/* Posts Section */}
           <div>
             <h2 className="text-xl volter-font font-bold mb-3">📰 Tópicos Recentes</h2>
-            <PostsList posts={posts} />
+            <PostsList posts={posts} loading={loading} />
           </div>
 
           {/* Recent Topics */}
