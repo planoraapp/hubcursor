@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      console_profile_comments: {
+        Row: {
+          author_habbo_name: string
+          comment_text: string
+          created_at: string | null
+          id: string
+          target_habbo_id: string | null
+          target_habbo_name: string
+          user_id: string | null
+        }
+        Insert: {
+          author_habbo_name: string
+          comment_text: string
+          created_at?: string | null
+          id?: string
+          target_habbo_id?: string | null
+          target_habbo_name: string
+          user_id?: string | null
+        }
+        Update: {
+          author_habbo_name?: string
+          comment_text?: string
+          created_at?: string | null
+          id?: string
+          target_habbo_id?: string | null
+          target_habbo_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      console_profile_follows: {
+        Row: {
+          created_at: string | null
+          follower_habbo_name: string
+          follower_user_id: string | null
+          id: string
+          target_habbo_id: string | null
+          target_habbo_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_habbo_name: string
+          follower_user_id?: string | null
+          id?: string
+          target_habbo_id?: string | null
+          target_habbo_name: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_habbo_name?: string
+          follower_user_id?: string | null
+          id?: string
+          target_habbo_id?: string | null
+          target_habbo_name?: string
+        }
+        Relationships: []
+      }
+      console_profile_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          target_habbo_id: string | null
+          target_habbo_name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          target_habbo_id?: string | null
+          target_habbo_name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          target_habbo_id?: string | null
+          target_habbo_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       forum_categories: {
         Row: {
           bg_color: string
