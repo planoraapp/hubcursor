@@ -10,7 +10,7 @@ export interface ViaJovemFlashItem {
   thumbnail?: string;
   thumbnailUrl: string;
   colors: string[]; // Made required to match OfficialHabboAsset
-  club?: 'FREE' | 'HC'; // Updated to match OfficialHabboAsset
+  club: 'FREE' | 'HC'; // Made required to match OfficialHabboAsset
   swfName?: string;
   source?: string;
 }

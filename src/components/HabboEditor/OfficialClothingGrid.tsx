@@ -32,7 +32,7 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       colors: ['1', '2', '3'],
       thumbnail: 'https://via.placeholder.com/64',
       thumbnailUrl: 'https://via.placeholder.com/64',
-      club: 'normal',
+      club: 'FREE',
       swfName: 'hd-180.swf',
       source: 'official'
     },
@@ -46,7 +46,7 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       colors: ['1', '2', '3'],
       thumbnail: 'https://via.placeholder.com/64',
       thumbnailUrl: 'https://via.placeholder.com/64',
-      club: 'hc',
+      club: 'HC',
       swfName: 'ch-255.swf',
       source: 'official'
     }
