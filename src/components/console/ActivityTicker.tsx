@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Trophy, Users, Loader2 } from 'lucide-react';
+import { Activity, Trophy, Users, Loader2, Hotel } from 'lucide-react';
 import { TickerActivity } from '@/services/habboProxyService';
 
 interface ActivityTickerProps {
@@ -14,30 +14,23 @@ export const ActivityTicker: React.FC<ActivityTickerProps> = ({
   activities, 
   isLoading = false 
 }) => {
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'login':
-        return <Activity className="w-4 h-4 text-green-500" />;
-      case 'achievement':
-        return <Trophy className="w-4 h-4 text-yellow-500" />;
-      case 'friend':
-        return <Users className="w-4 h-4 text-blue-500" />;
-      default:
-        return <Activity className="w-4 h-4 text-gray-500" />;
+  const getActivityIcon = (description: string) => {
+    if (!description) return <Activity className="w-4 h-4 text-gray-500" />;
+    
+    const desc = description.toLowerCase();
+    if (desc.includes('amigo') || desc.includes('friend')) {
+      return <Users className="w-4 h-4 text-blue-500" />;
     }
-  };
-
-  const getActivityText = (activity: TickerActivity) => {
-    switch (activity.type) {
-      case 'login':
-        return `${activity.username} entrou no hotel`;
-      case 'achievement':
-        return `${activity.username} conquistou "${activity.achievement}"`;
-      case 'friend':
-        return `${activity.username} fez amizade com ${activity.friend}`;
-      default:
-        return `${activity.username} fez uma atividade`;
+    if (desc.includes('emblema') || desc.includes('badge') || desc.includes('achievement')) {
+      return <Trophy className="w-4 h-4 text-yellow-500" />;
     }
+    if (desc.includes('grupo') || desc.includes('quarto') || desc.includes('group') || desc.includes('room')) {
+      return <Hotel className="w-4 h-4 text-purple-500" />;
+    }
+    if (desc.includes('entrou') || desc.includes('login')) {
+      return <Activity className="w-4 h-4 text-green-500" />;
+    }
+    return <Activity className="w-4 h-4 text-gray-500" />;
   };
 
   const formatTime = (timeString: string) => {
@@ -71,11 +64,11 @@ export const ActivityTicker: React.FC<ActivityTickerProps> = ({
             activities.map((activity, index) => (
               <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                 <div className="flex-shrink-0 mt-0.5">
-                  {getActivityIcon(activity.type)}
+                  {getActivityIcon(activity.description)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {getActivityText(activity)}
+                    <span className="font-semibold">{activity.username}</span> {activity.description}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="secondary" className="text-xs">
