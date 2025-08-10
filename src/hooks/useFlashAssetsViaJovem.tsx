@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 export interface ViaJovemFlashItem {
@@ -11,7 +10,7 @@ export interface ViaJovemFlashItem {
   thumbnail?: string;
   thumbnailUrl: string;
   colors: string[]; // Made required to match OfficialHabboAsset
-  club?: 'hc' | 'normal' | boolean;
+  club?: 'FREE' | 'HC'; // Updated to match OfficialHabboAsset
   swfName?: string;
   source?: string;
 }
@@ -38,7 +37,7 @@ export const useFlashAssetsViaJovem = () => {
           thumbnail: 'https://via.placeholder.com/64',
           thumbnailUrl: 'https://via.placeholder.com/64',
           colors: ['1', '2', '3'], // Now required
-          club: false,
+          club: 'FREE',
           swfName: 'test-1.swf',
           source: 'viajovem'
         },
@@ -52,7 +51,7 @@ export const useFlashAssetsViaJovem = () => {
           thumbnail: 'https://via.placeholder.com/64',
           thumbnailUrl: 'https://via.placeholder.com/64',
           colors: ['1', '2', '3'], // Now required
-          club: 'hc',
+          club: 'HC',
           swfName: 'test-2.swf',
           source: 'viajovem'
         }
@@ -109,7 +108,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             thumbnail: 'https://via.placeholder.com/64',
             thumbnailUrl: 'https://via.placeholder.com/64',
             colors: ['1', '2', '3'], // Now required
-            club: false,
+            club: 'FREE',
             swfName: `${categoryId}-1.swf`,
             source: 'viajovem'
           },
@@ -123,7 +122,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             thumbnail: 'https://via.placeholder.com/64',
             thumbnailUrl: 'https://via.placeholder.com/64',
             colors: ['1', '2', '3'], // Now required
-            club: 'hc',
+            club: 'HC',
             swfName: `${categoryId}-2.swf`,
             source: 'viajovem'
           }
