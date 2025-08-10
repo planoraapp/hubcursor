@@ -4,6 +4,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface HabboAccount {
   habbo_name: string;
   id: string;
+  habbo_id?: string;
+  is_admin?: boolean;
+  hotel?: string;
+  supabase_user_id?: string;
 }
 
 interface AuthContextType {
@@ -32,9 +36,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Mock login for now
       setIsLoggedIn(true);
-      const mockAccount = {
+      const mockAccount: HabboAccount = {
         habbo_name: username,
-        id: 'mock-id'
+        id: 'mock-id',
+        habbo_id: 'mock-habbo-id',
+        is_admin: false,
+        hotel: 'br',
+        supabase_user_id: 'mock-supabase-id'
       };
       setHabboAccount(mockAccount);
       setUser(mockAccount);
@@ -57,7 +65,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const isAdmin = () => {
-    return false; // Mock implementation
+    return habboAccount?.is_admin || false;
   };
 
   return (
