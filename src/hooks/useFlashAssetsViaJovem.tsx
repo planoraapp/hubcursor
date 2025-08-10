@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 export interface ViaJovemFlashItem {
@@ -9,6 +8,7 @@ export interface ViaJovemFlashItem {
   gender: 'M' | 'F' | 'U';
   figureId: string;
   thumbnail?: string;
+  thumbnailUrl?: string;
   colors?: string[];
   club?: 'hc' | 'normal' | boolean;
   swfName?: string;
@@ -35,6 +35,7 @@ export const useFlashAssetsViaJovem = () => {
           gender: gender,
           figureId: 'test-1',
           thumbnail: 'https://via.placeholder.com/64',
+          thumbnailUrl: 'https://via.placeholder.com/64',
           colors: ['#FF0000', '#00FF00'],
           club: false,
           swfName: 'test-1.swf',
@@ -48,6 +49,7 @@ export const useFlashAssetsViaJovem = () => {
           gender: gender,
           figureId: 'test-2',
           thumbnail: 'https://via.placeholder.com/64',
+          thumbnailUrl: 'https://via.placeholder.com/64',
           colors: ['#0000FF', '#FFFF00'],
           club: 'hc',
           swfName: 'test-2.swf',
@@ -104,6 +106,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             gender: gender,
             figureId: `${categoryId}-1`,
             thumbnail: 'https://via.placeholder.com/64',
+            thumbnailUrl: 'https://via.placeholder.com/64',
             colors: ['1', '2', '3'],
             club: false,
             swfName: `${categoryId}-1.swf`,
@@ -117,6 +120,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             gender: gender,
             figureId: `${categoryId}-2`,
             thumbnail: 'https://via.placeholder.com/64',
+            thumbnailUrl: 'https://via.placeholder.com/64',
             colors: ['1', '2', '3'],
             club: 'hc',
             swfName: `${categoryId}-2.swf`,

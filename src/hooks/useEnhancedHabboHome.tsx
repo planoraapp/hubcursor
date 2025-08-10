@@ -1,12 +1,12 @@
 
 import { useState } from 'react';
 
-export const useEnhancedHabboHome = () => {
+export const useEnhancedHabboHome = (username?: string, hotel?: string) => {
   const [loading, setLoading] = useState(false);
   const [habboData, setHabboData] = useState<any>(null);
   const [widgets, setWidgets] = useState<any[]>([]);
   const [stickers, setStickers] = useState<any[]>([]);
-  const [background, setBackground] = useState<any>(null);
+  const [background, setBackground] = useState<any>({ background_type: 'color', background_value: '#c7d2dc' });
   const [guestbook, setGuestbook] = useState<any[]>([]);
   const [error, setError] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -34,7 +34,7 @@ export const useEnhancedHabboHome = () => {
 
   const updateWidgetPosition = (id: string, x: number, y: number) => {
     setWidgets(prev => prev.map(widget => 
-      widget.id === id ? { ...widget, position: { x, y } } : widget
+      widget.id === id ? { ...widget, x, y } : widget
     ));
   };
 
@@ -56,21 +56,36 @@ export const useEnhancedHabboHome = () => {
     console.log('Handling sticker move...');
   };
 
-  const handleStickerDrop = (stickerId: string, position: { x: number; y: number }) => {
-    updateSticker(stickerId, { position });
+  const handleStickerDrop = (stickerId: string, position?: { x: number; y: number }) => {
+    const newSticker = {
+      id: Date.now().toString(),
+      sticker_id: stickerId,
+      sticker_src: 'https://via.placeholder.com/64',
+      category: 'test',
+      x: position?.x || 100,
+      y: position?.y || 100,
+      z_index: 1,
+      scale: 1,
+      rotation: 0
+    };
+    setStickers(prev => [...prev, newSticker]);
   };
 
-  const handleStickerPositionChange = (stickerId: string, position: { x: number; y: number }) => {
-    updateSticker(stickerId, { position });
+  const handleStickerPositionChange = (stickerId: string, x: number, y: number) => {
+    setStickers(prev => prev.map(sticker => 
+      sticker.id === stickerId ? { ...sticker, x, y } : sticker
+    ));
   };
 
   const handleBackgroundChange = (background: { type: 'repeat' | 'color' | 'cover'; value: string }) => {
-    setBackground(background);
+    setBackground({
+      background_type: background.type,
+      background_value: background.value
+    });
   };
 
   const addGuestbookEntry = async (message: string) => {
     console.log('Adding guestbook entry:', message);
-    // Mock implementation
     const newEntry = {
       id: Date.now().toString(),
       message,
@@ -84,14 +99,17 @@ export const useEnhancedHabboHome = () => {
     setGuestbook(prev => prev.filter(entry => entry.id !== id));
   };
 
-  const loadHabboData = (username: string) => {
+  const loadHabboData = () => {
     setLoading(true);
-    // Mock loading
     setTimeout(() => {
       setHabboData({
-        name: username,
+        name: username || 'Test User',
         motto: 'Welcome to my home!',
-        figureString: 'hd-180-1.ch-255-66.lg-270-82.sh-305-62'
+        figureString: 'hd-180-1.ch-255-66.lg-270-82.sh-305-62',
+        hotel: hotel || 'com',
+        online: true,
+        memberSince: '2024-01-01',
+        selectedBadges: []
       });
       setLoading(false);
     }, 1000);
@@ -108,7 +126,7 @@ export const useEnhancedHabboHome = () => {
   const resetChanges = () => {
     setWidgets([]);
     setStickers([]);
-    setBackground(null);
+    setBackground({ background_type: 'color', background_value: '#c7d2dc' });
     setGuestbook([]);
   };
 

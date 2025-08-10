@@ -20,17 +20,18 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
   selectedColor,
   className
 }) => {
-  // Mock data with all required properties
+  // Mock data with all required properties including thumbnailUrl
   const mockItems: ViaJovemFlashItem[] = [
     {
       id: '1',
       name: 'Test Hair',
-      type: 'hd', // Add required type property
+      type: 'hd',
       category: 'hair',
       gender: selectedGender,
       figureId: 'hd-180',
       colors: ['1', '2', '3'],
       thumbnail: 'https://via.placeholder.com/64',
+      thumbnailUrl: 'https://via.placeholder.com/64',
       club: 'normal',
       swfName: 'hd-180.swf',
       source: 'official'
@@ -38,12 +39,13 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
     {
       id: '2',
       name: 'Test Shirt',
-      type: 'ch', // Add required type property
+      type: 'ch',
       category: 'shirt',
       gender: selectedGender,
       figureId: 'ch-255',
       colors: ['1', '2', '3'],
       thumbnail: 'https://via.placeholder.com/64',
+      thumbnailUrl: 'https://via.placeholder.com/64',
       club: 'hc',
       swfName: 'ch-255.swf',
       source: 'official'
