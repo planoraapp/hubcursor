@@ -24,11 +24,10 @@ export interface HabboPhoto {
 }
 
 export interface TickerActivity {
-  type: 'login' | 'achievement' | 'friend';
   username: string;
-  achievement?: string;
-  friend?: string;
+  description: string;
   time: string;
+  timestamp?: string;
 }
 
 export interface HabboFriend {
@@ -130,8 +129,35 @@ class HabboProxyService {
 
   async getHotelTicker(hotel: string = 'com.br'): Promise<TickerActivity[]> {
     try {
-      const data = await this.callProxy('getHotelTicker', { hotel });
-      return data?.activities || [];
+      console.log(`[HabboProxyService] Fetching real hotel ticker from widgets proxy`);
+      
+      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
+        body: {
+          username: 'hotel-ticker'
+        },
+        method: 'POST',
+      });
+
+      if (error) {
+        console.error(`[HabboProxyService] Error calling widgets proxy:`, error);
+        return [];
+      }
+
+      if (!data || !data.activities) {
+        console.warn(`[HabboProxyService] No activities returned from widgets proxy`);
+        return [];
+      }
+
+      // Normalize the data structure
+      const activities: TickerActivity[] = data.activities.map((activity: any) => ({
+        username: activity.username || 'Unknown',
+        description: activity.activity || activity.description || 'fez uma atividade',
+        time: activity.time || new Date().toISOString(),
+        timestamp: activity.timestamp || new Date().toISOString()
+      }));
+
+      console.log(`[HabboProxyService] Processed ${activities.length} real ticker activities`);
+      return activities;
     } catch (error) {
       console.error(`[HabboProxyService] Error fetching hotel ticker:`, error);
       return [];
@@ -139,13 +165,7 @@ class HabboProxyService {
   }
 
   async getTicker(): Promise<TickerActivity[]> {
-    try {
-      const data = await this.callProxy('getTicker');
-      return data?.activities || [];
-    } catch (error) {
-      console.error(`[HabboProxyService] Error fetching ticker:`, error);
-      return [];
-    }
+    return this.getHotelTicker();
   }
 
   getAvatarUrl(figureString: string, size: 'xs' | 's' | 'm' | 'l' = 'm'): string {

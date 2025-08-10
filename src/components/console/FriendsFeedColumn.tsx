@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Users, Activity, Loader2, UserPlus } from 'lucide-react';
 import { useFriendsFeed } from '@/hooks/useFriendsFeed';
@@ -98,7 +97,7 @@ export const FriendsFeedColumn: React.FC = () => {
                       <div key={actIndex} className="flex items-start gap-2 text-sm">
                         <Activity className="w-4 h-4 text-green-500 mt-0.5" />
                         <span className="text-white/90 flex-1">
-                          {activity.type === 'login' ? 'entrou no hotel' : 'fez uma atividade'}
+                          {activity.description}
                         </span>
                         <span className="text-xs text-white/60 ml-2">
                           {formatTime(activity.time)}

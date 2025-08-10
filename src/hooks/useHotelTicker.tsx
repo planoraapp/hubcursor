@@ -29,7 +29,10 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
 
     // Group activities by username within the last 30 minutes
     rawActivities.forEach(activity => {
-      const activityTime = new Date(activity.time).getTime();
+      const activityTime = activity.timestamp ? 
+        new Date(activity.timestamp).getTime() : 
+        new Date(activity.time).getTime();
+        
       if (activityTime >= thirtyMinutesAgo) {
         if (!userGroups[activity.username]) {
           userGroups[activity.username] = [];
@@ -41,10 +44,18 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
     // Convert to aggregated format
     return Object.entries(userGroups).map(([username, activities]) => ({
       username,
-      activities: activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()),
-      lastActivityTime: activities[0]?.time || '',
+      activities: activities.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : new Date(a.time).getTime();
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : new Date(b.time).getTime();
+        return timeB - timeA;
+      }),
+      lastActivityTime: activities[0]?.timestamp || activities[0]?.time || '',
       activityCount: activities.length,
-    })).sort((a, b) => new Date(b.lastActivityTime).getTime() - new Date(a.lastActivityTime).getTime());
+    })).sort((a, b) => {
+      const timeA = new Date(a.lastActivityTime).getTime();
+      const timeB = new Date(b.lastActivityTime).getTime();
+      return timeB - timeA;
+    });
   }, [rawActivities]);
 
   return {

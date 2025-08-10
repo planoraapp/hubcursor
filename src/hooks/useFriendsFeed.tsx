@@ -44,10 +44,14 @@ export const useFriendsFeed = () => {
     const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
 
     // Filter ticker activities for friends only
-    const friendsTickerActivities = hotelTicker.filter(activity => 
-      friendNames.includes(activity.username) &&
-      new Date(activity.time).getTime() >= thirtyMinutesAgo
-    );
+    const friendsTickerActivities = hotelTicker.filter(activity => {
+      const activityTime = activity.timestamp ? 
+        new Date(activity.timestamp).getTime() : 
+        new Date(activity.time).getTime();
+      
+      return friendNames.includes(activity.username) && 
+             activityTime >= thirtyMinutesAgo;
+    });
 
     // Group activities by friend
     const friendGroups: { [friendName: string]: TickerActivity[] } = {};
@@ -63,21 +67,25 @@ export const useFriendsFeed = () => {
       const friend = friends.find(f => f.name === friendName);
       if (!friend) return null;
 
-      const sortedActivities = activities.sort((a, b) => 
-        new Date(b.time).getTime() - new Date(a.time).getTime()
-      );
+      const sortedActivities = activities.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : new Date(a.time).getTime();
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : new Date(b.time).getTime();
+        return timeB - timeA;
+      });
 
       return {
         friend,
         activities: sortedActivities,
-        lastActivityTime: sortedActivities[0]?.time || '',
+        lastActivityTime: sortedActivities[0]?.timestamp || sortedActivities[0]?.time || '',
       };
     }).filter(Boolean) as FriendActivity[];
 
     // Sort by most recent activity
-    return result.sort((a, b) => 
-      new Date(b.lastActivityTime).getTime() - new Date(a.lastActivityTime).getTime()
-    );
+    return result.sort((a, b) => {
+      const timeA = new Date(a.lastActivityTime).getTime();
+      const timeB = new Date(b.lastActivityTime).getTime();
+      return timeB - timeA;
+    });
   }, [friends, hotelTicker]);
 
   return {

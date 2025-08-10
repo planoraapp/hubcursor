@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User, LogIn } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { habboProxyService } from '@/services/habboProxyService';
@@ -53,7 +52,7 @@ export const MyAccountColumn: React.FC = () => {
           </CardHeader>
           <CardContent className="py-8">
             <div className="animate-pulse space-y-4">
-              <div className="w-20 h-20 bg-white/20 rounded-none mx-auto"></div>
+              <div className="w-20 h-[110px] bg-white/20 rounded-none mx-auto"></div>
               <div className="h-4 bg-white/20 rounded mx-auto w-3/4"></div>
               <div className="h-3 bg-white/20 rounded mx-auto w-1/2"></div>
             </div>
@@ -101,23 +100,18 @@ export const MyAccountColumn: React.FC = () => {
         <CardContent>
           {/* Top section with avatar and user info */}
           <div className="flex gap-4 mb-4">
-            {/* Avatar on the left */}
-            <Avatar 
-              className="w-20 h-20 rounded-none border-0 bg-transparent cursor-pointer" 
-              onClick={() => setOpenProfileModal(true)}
-            >
-              <AvatarImage 
-                className="rounded-none"
+            {/* Full-body Avatar on the left */}
+            <div className="flex-shrink-0">
+              <img 
                 src={habboProxyService.getAvatarUrl(myProfile.figureString, 'l')} 
-                alt={myProfile.name} 
+                alt={myProfile.name}
+                className="h-[110px] w-auto object-contain bg-transparent cursor-pointer"
+                onClick={() => setOpenProfileModal(true)}
               />
-              <AvatarFallback className="text-lg font-bold rounded-none">
-                {myProfile.name[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            </div>
             
             {/* User info on the right */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
                 {myProfile.name}
                 <div className={`w-3 h-3 rounded-full ${myProfile.online ? 'bg-green-500' : 'bg-gray-400'}`}></div>

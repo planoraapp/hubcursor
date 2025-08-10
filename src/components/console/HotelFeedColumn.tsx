@@ -2,25 +2,30 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Activity, Trophy, Users, Loader2, Hotel } from 'lucide-react';
 import { useHotelTicker } from '@/hooks/useHotelTicker';
+import { useUserFigures } from '@/hooks/useUserFigures';
 import { habboProxyService } from '@/services/habboProxyService';
 
 export const HotelFeedColumn: React.FC = () => {
   const { aggregatedActivities, isLoading, error } = useHotelTicker();
+  
+  // Get unique usernames for figure fetching
+  const usernames = aggregatedActivities.map(group => group.username);
+  const { figureMap } = useUserFigures(usernames);
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'login':
-        return <Activity className="w-4 h-4 text-green-500" />;
-      case 'achievement':
-        return <Trophy className="w-4 h-4 text-yellow-500" />;
-      case 'friend':
-        return <Users className="w-4 h-4 text-blue-500" />;
-      default:
-        return <Activity className="w-4 h-4 text-gray-500" />;
+  const getActivityIcon = (description: string) => {
+    const desc = description.toLowerCase();
+    if (desc.includes('amigo') || desc.includes('friend')) {
+      return <Users className="w-4 h-4 text-blue-500" />;
     }
+    if (desc.includes('emblema') || desc.includes('badge') || desc.includes('achievement')) {
+      return <Trophy className="w-4 h-4 text-yellow-500" />;
+    }
+    if (desc.includes('grupo') || desc.includes('quarto') || desc.includes('group') || desc.includes('room')) {
+      return <Hotel className="w-4 h-4 text-purple-500" />;
+    }
+    return <Activity className="w-4 h-4 text-green-500" />;
   };
 
   const formatTime = (timeString: string) => {
@@ -28,19 +33,6 @@ export const HotelFeedColumn: React.FC = () => {
       hour: '2-digit', 
       minute: '2-digit' 
     });
-  };
-
-  const getActivityText = (activity: any) => {
-    switch (activity.type) {
-      case 'login':
-        return 'entrou no hotel';
-      case 'achievement':
-        return `conquistou "${activity.achievement}"`;
-      case 'friend':
-        return `fez amizade com ${activity.friend}`;
-      default:
-        return 'fez uma atividade';
-    }
   };
 
   return (
@@ -63,20 +55,25 @@ export const HotelFeedColumn: React.FC = () => {
             ) : aggregatedActivities.length > 0 ? (
               aggregatedActivities.map((userGroup, index) => (
                 <div key={`${userGroup.username}-${index}`} className="p-4 mb-3 bg-transparent">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar className="w-10 h-10 rounded-none border-0 bg-transparent">
-                      <AvatarImage 
-                        className="rounded-none"
-                        src={habboProxyService.getAvatarUrl('', 'm')} 
-                        alt={userGroup.username} 
-                      />
-                      <AvatarFallback className="text-sm font-bold rounded-none bg-transparent">
-                        {userGroup.username[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-blue-200">{userGroup.username}</h4>
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-shrink-0">
+                      {figureMap[userGroup.username] ? (
+                        <img 
+                          src={habboProxyService.getAvatarUrl(figureMap[userGroup.username], 'l')} 
+                          alt={userGroup.username}
+                          className="h-[110px] w-auto object-contain bg-transparent"
+                        />
+                      ) : (
+                        <div className="h-[110px] w-16 bg-white/10 rounded-none flex items-center justify-center">
+                          <span className="text-2xl font-bold">
+                            {userGroup.username[0]?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-blue-200 mb-1">{userGroup.username}</h4>
+                      <div className="flex items-center gap-2 mb-2">
                         <Badge variant="secondary" className="text-xs bg-white/20 text-white">
                           {userGroup.activityCount} atividade{userGroup.activityCount !== 1 ? 's' : ''}
                         </Badge>
@@ -84,12 +81,12 @@ export const HotelFeedColumn: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="space-y-2 ml-13">
+                  <div className="space-y-2 ml-[4.5rem]">
                     {userGroup.activities.slice(0, 3).map((activity, actIndex) => (
                       <div key={actIndex} className="flex items-start gap-2 text-sm">
-                        {getActivityIcon(activity.type)}
+                        {getActivityIcon(activity.description)}
                         <span className="text-white/90 flex-1">
-                          {getActivityText(activity)}
+                          {activity.description}
                         </span>
                         <span className="text-xs text-white/60 ml-2">
                           {formatTime(activity.time)}
