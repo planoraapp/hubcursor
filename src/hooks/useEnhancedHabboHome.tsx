@@ -23,11 +23,11 @@ export const useEnhancedHabboHome = () => {
     isOwner: false,
     addGuestbookEntry: async (message: string) => {},
     setStickers: () => {},
-    handleStickerAdd: () => {},
-    handleStickerRemove: () => {},
+    handleStickerAdd: (stickerId: string) => {},
+    handleStickerRemove: (stickerId: string) => {},
     handleStickerMove: () => {},
     handleStickerDrop: () => {},
     handleStickerPositionChange: () => {},
-    handleBackgroundChange: () => {},
+    handleBackgroundChange: (backgroundId: string) => {},
   };
 };

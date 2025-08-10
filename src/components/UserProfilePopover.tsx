@@ -1,22 +1,12 @@
 
-import { ReactNode } from 'react';
+import React from 'react';
 
 export interface UserProfilePopoverProps {
-  children: ReactNode;
-  username?: string;
+  children: React.ReactNode;
 }
 
-const UserProfilePopover = ({ children, username }: UserProfilePopoverProps) => {
-  return (
-    <div>
-      {children}
-      {username && (
-        <div className="text-sm text-gray-600">
-          Profile: {username}
-        </div>
-      )}
-    </div>
-  );
+export const UserProfilePopover = ({ children }: UserProfilePopoverProps) => {
+  return <div>{children}</div>;
 };
 
 export default UserProfilePopover;

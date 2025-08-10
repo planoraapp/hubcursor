@@ -10,13 +10,14 @@ export interface HabboUser {
   online: boolean;
   lastAccessTime: string;
   memberSince: string;
-  selectedBadges?: HabboBadge[];
+  selectedBadges?: { badgeIndex: number; code: string; name: string; description: string; }[];
 }
 
 export interface HabboBadge {
   code: string;
   name: string;
   description: string;
+  badgeIndex?: number;
 }
 
 export interface HabboRoom {
@@ -27,11 +28,11 @@ export interface HabboRoom {
   owner: string;
   userCount: number;
   maxUsers: number;
-  maxUserCount?: number; // Added alias
+  maxUserCount?: number;
   room?: string;
   score?: number;
   rating?: number;
-  creationTime?: string; // Added missing property
+  creationTime?: string;
 }
 
 export interface HabboGroup {
@@ -71,8 +72,8 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
     lastAccessTime: new Date().toISOString(),
     memberSince: "2020-01-01T00:00:00.000Z",
     selectedBadges: [
-      { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' },
-      { code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement' },
+      { badgeIndex: 1, code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' },
+      { badgeIndex: 2, code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement' },
     ]
   };
   
@@ -81,8 +82,8 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
 
 export const getAchievements = async (): Promise<HabboBadge[]> => {
   return [
-    { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' },
-    { code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement' },
+    { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement', badgeIndex: 1 },
+    { code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement', badgeIndex: 2 },
   ];
 };
 
