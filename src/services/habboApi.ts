@@ -27,9 +27,11 @@ export interface HabboRoom {
   owner: string;
   userCount: number;
   maxUsers: number;
+  maxUserCount?: number; // Added alias
   room?: string;
   score?: number;
   rating?: number;
+  creationTime?: string; // Added missing property
 }
 
 export interface HabboGroup {
@@ -89,14 +91,16 @@ export const discoverRooms = async (): Promise<HabboRoom[]> => {
     {
       id: '1',
       name: 'Test Room 1',
-      description: 'A test room',
+      description: 'A test room description',
       ownerName: 'TestUser',
       owner: 'TestUser',
       userCount: 5,
       maxUsers: 25,
+      maxUserCount: 25,
       room: 'Test Room 1',
       score: 4.5,
-      rating: 4.5
+      rating: 4.5,
+      creationTime: new Date().toISOString()
     }
   ];
 };
@@ -153,7 +157,7 @@ export const getUserGroups = async (username: string): Promise<HabboGroup[]> => 
     { 
       id: '1', 
       name: 'Test Group', 
-      description: 'A test group', 
+      description: 'A test group description', 
       badgeCode: 'GRP001',
       memberCount: 50
     }

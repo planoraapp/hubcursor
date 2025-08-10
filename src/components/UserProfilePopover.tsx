@@ -1,17 +1,22 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { ReactNode } from 'react';
 
 export interface UserProfilePopoverProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  username?: string;
 }
 
-export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({ children }) => {
+const UserProfilePopover = ({ children, username }: UserProfilePopoverProps) => {
   return (
-    <Card className="w-64">
-      <CardContent className="p-4">
-        {children}
-      </CardContent>
-    </Card>
+    <div>
+      {children}
+      {username && (
+        <div className="text-sm text-gray-600">
+          Profile: {username}
+        </div>
+      )}
+    </div>
   );
 };
+
+export default UserProfilePopover;

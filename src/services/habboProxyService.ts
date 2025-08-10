@@ -1,66 +1,58 @@
 
-// Mock Habbo Proxy Service
 export interface HabboUser {
   name: string;
   motto: string;
+  id: string;
   uniqueId: string;
-  figureString: string;
-  online: boolean;
   profileVisible: boolean;
-  lastAccessTime: string;
-}
-
-export interface HabboFriend {
-  name: string;
   figureString: string;
   online: boolean;
+  lastAccessTime: string;
+  memberSince: string;
+  selectedBadges?: HabboBadge[];
 }
 
-export interface TickerActivity {
-  username: string;
-  activity: string;
-  time: string;
-  timestamp?: string;
+export interface HabboBadge {
+  code: string;
+  name: string;
+  description: string;
+}
+
+export interface HabboPhoto {
+  id: string;
+  url: string;
+  timestamp: string;
+  roomName?: string;
 }
 
 export const habboProxyService = {
   getUserProfile: async (username: string): Promise<HabboUser> => {
+    // Mock implementation
     return {
       name: username,
-      motto: 'Test motto',
-      uniqueId: 'test-id',
-      figureString: 'hd-180-1.ch-255-66',
-      online: true,
+      motto: "Mock user motto",
+      id: `mock-id-${username}`,
+      uniqueId: `mock-unique-${username}`,
       profileVisible: true,
-      lastAccessTime: new Date().toISOString()
+      figureString: "hd-180-1.ch-255-66.lg-270-82.sh-305-62",
+      online: Math.random() > 0.5,
+      lastAccessTime: new Date().toISOString(),
+      memberSince: "2020-01-01T00:00:00.000Z",
+      selectedBadges: [
+        { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' }
+      ]
     };
   },
 
-  getUserBadges: async (username: string): Promise<any[]> => {
-    return [];
-  },
-
-  getUserPhotos: async (username: string): Promise<any[]> => {
-    return [];
-  },
-
-  getTicker: async (): Promise<TickerActivity[]> => {
-    return [];
-  },
-
-  getHotelTicker: async (): Promise<TickerActivity[]> => {
-    return [];
-  },
-
-  getUserFriends: async (username: string): Promise<HabboFriend[]> => {
-    return [];
-  },
-
-  getAvatarUrl: (figureString: string, size?: 'xs' | 's' | 'm' | 'l'): string => {
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=${size || 'm'}`;
-  },
-
-  getBadgeUrl: (badgeCode: string): string => {
-    return `https://images.habbo.com/c_images/album1584/${badgeCode}.gif`;
-  },
+  getUserPhotos: async (username: string): Promise<HabboPhoto[]> => {
+    // Mock implementation
+    return [
+      {
+        id: '1',
+        url: 'https://via.placeholder.com/150',
+        timestamp: new Date().toISOString(),
+        roomName: 'Test Room'
+      }
+    ];
+  }
 };
