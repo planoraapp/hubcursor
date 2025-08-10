@@ -9,6 +9,8 @@ export interface HabboUser {
   figureString: string;
   online: boolean;
   lastAccessTime: string;
+  memberSince: string;
+  selectedBadges?: HabboBadge[];
 }
 
 export interface HabboBadge {
@@ -22,8 +24,12 @@ export interface HabboRoom {
   name: string;
   description: string;
   ownerName: string;
+  owner: string;
   userCount: number;
   maxUsers: number;
+  room?: string;
+  score?: number;
+  rating?: number;
 }
 
 export interface HabboGroup {
@@ -31,15 +37,46 @@ export interface HabboGroup {
   name: string;
   description: string;
   badgeCode: string;
+  memberCount?: number;
 }
 
 export interface HabboFriend {
   name: string;
   figureString: string;
   online: boolean;
+  motto?: string;
+  id?: string;
+  uniqueId?: string;
+  profileVisible?: boolean;
+  lastAccessTime?: string;
+  memberSince?: string;
 }
 
 // Mock functions for development
+export const getUserByName = async (username: string): Promise<HabboUser | null> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Mock user data
+  const mockUser: HabboUser = {
+    name: username,
+    motto: "Welcome to Habbo Hotel!",
+    id: "mock-id-" + username,
+    uniqueId: "mock-unique-" + username,
+    profileVisible: true,
+    figureString: "hd-180-1.ch-255-66.lg-270-82.sh-305-62",
+    online: Math.random() > 0.5,
+    lastAccessTime: new Date().toISOString(),
+    memberSince: "2020-01-01T00:00:00.000Z",
+    selectedBadges: [
+      { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' },
+      { code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement' },
+    ]
+  };
+  
+  return mockUser;
+};
+
 export const getAchievements = async (): Promise<HabboBadge[]> => {
   return [
     { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' },
@@ -54,8 +91,12 @@ export const discoverRooms = async (): Promise<HabboRoom[]> => {
       name: 'Test Room 1',
       description: 'A test room',
       ownerName: 'TestUser',
+      owner: 'TestUser',
       userCount: 5,
-      maxUsers: 25
+      maxUsers: 25,
+      room: 'Test Room 1',
+      score: 4.5,
+      rating: 4.5
     }
   ];
 };
@@ -82,14 +123,40 @@ export const getUserBadges = async (username: string): Promise<HabboBadge[]> => 
 
 export const getUserFriends = async (username: string): Promise<HabboFriend[]> => {
   return [
-    { name: 'Friend1', figureString: 'hd-180-1.ch-255-66', online: true },
-    { name: 'Friend2', figureString: 'hd-180-2.ch-255-66', online: false },
+    { 
+      name: 'Friend1', 
+      figureString: 'hd-180-1.ch-255-66', 
+      online: true,
+      motto: "Hello!",
+      id: "friend1-id",
+      uniqueId: "friend1-unique",
+      profileVisible: true,
+      lastAccessTime: new Date().toISOString(),
+      memberSince: "2020-01-01T00:00:00.000Z"
+    },
+    { 
+      name: 'Friend2', 
+      figureString: 'hd-180-2.ch-255-66', 
+      online: false,
+      motto: "Offline now",
+      id: "friend2-id",
+      uniqueId: "friend2-unique",
+      profileVisible: true,
+      lastAccessTime: new Date().toISOString(),
+      memberSince: "2020-01-01T00:00:00.000Z"
+    },
   ];
 };
 
 export const getUserGroups = async (username: string): Promise<HabboGroup[]> => {
   return [
-    { id: '1', name: 'Test Group', description: 'A test group', badgeCode: 'GRP001' }
+    { 
+      id: '1', 
+      name: 'Test Group', 
+      description: 'A test group', 
+      badgeCode: 'GRP001',
+      memberCount: 50
+    }
   ];
 };
 

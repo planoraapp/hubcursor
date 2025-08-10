@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Search, User, Shield, AlertCircle, Users, Home, Award } from 'lucide-react';
 import { PanelCard } from './PanelCard';
@@ -13,7 +12,8 @@ import {
   type HabboUser,
   type HabboBadge,
   type HabboGroup,
-  type HabboRoom
+  type HabboRoom,
+  type HabboFriend
 } from '../services/habboApi';
 
 export const ProfileChecker = () => {
@@ -21,7 +21,7 @@ export const ProfileChecker = () => {
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<HabboUser | null>(null);
   const [userBadges, setUserBadges] = useState<HabboBadge[] | null>(null);
-  const [userFriends, setUserFriends] = useState<HabboUser[] | null>(null);
+  const [userFriends, setUserFriends] = useState<HabboFriend[] | null>(null);
   const [userGroups, setUserGroups] = useState<HabboGroup[] | null>(null);
   const [userRooms, setUserRooms] = useState<HabboRoom[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -249,7 +249,7 @@ export const ProfileChecker = () => {
                     />
                     <div className="flex-1">
                       <h4 className="font-bold text-gray-800">{group.name}</h4>
-                      <p className="text-sm text-gray-600">{group.memberCount} membros</p>
+                      <p className="text-sm text-gray-600">{group.memberCount || 0} membros</p>
                     </div>
                   </div>
                 ))}
@@ -270,7 +270,7 @@ export const ProfileChecker = () => {
                     <p className="text-sm text-gray-600 mb-2">{room.description}</p>
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-500">{room.userCount} usuários</span>
-                      <span className="text-yellow-600">⭐ {room.rating}</span>
+                      <span className="text-yellow-600">⭐ {room.rating || 0}</span>
                     </div>
                   </div>
                 ))}
