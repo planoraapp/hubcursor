@@ -1,24 +1,17 @@
 
 import React from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Card, CardContent } from '@/components/ui/card';
 
-interface UserProfilePopoverProps {
+export interface UserProfilePopoverProps {
   children: React.ReactNode;
-  habboAccount?: any;
 }
 
-export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({ children, habboAccount }) => {
+export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({ children }) => {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Card className="w-64">
+      <CardContent className="p-4">
         {children}
-      </PopoverTrigger>
-      <PopoverContent>
-        <div className="space-y-2">
-          <p className="font-bold">{habboAccount?.habbo_name || 'Usuario'}</p>
-          <p className="text-sm text-gray-600">ID: {habboAccount?.habbo_id || 'N/A'}</p>
-        </div>
-      </PopoverContent>
-    </Popover>
+      </CardContent>
+    </Card>
   );
 };
