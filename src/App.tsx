@@ -13,7 +13,7 @@ import Mercado from "./pages/Mercado";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
