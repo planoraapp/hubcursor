@@ -15,29 +15,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user, loading, habboAccount, isLoggedIn, isAdmin, logout, loginWithPassword } = useUnifiedAuth();
-  
-  return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      isAuthenticated: !!user,
-      isLoggedIn,
-      habboAccount,
-      isAdmin,
-      logout,
-      loginWithPassword
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const authData = useUnifiedAuth();
+  
+  return {
+    user: authData.user,
+    loading: authData.loading,
+    isAuthenticated: !!authData.user,
+    isLoggedIn: authData.isLoggedIn,
+    habboAccount: authData.habboAccount,
+    isAdmin: authData.isAdmin,
+    logout: authData.logout,
+    loginWithPassword: authData.loginWithPassword
+  };
 };
