@@ -1,130 +1,129 @@
 
-import React, { useState } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import {
-  Home,
-  LayoutDashboard,
-  Settings,
-  User,
-  Newspaper,
-  Gamepad2,
-  ShoppingBag,
-  MessageSquare,
-  Image,
-  Cog,
-  DoorOpen,
-  LucideIcon
-} from "lucide-react"
-import { useAuth } from '../hooks/useAuth';
-import { useNavigate, Link } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
+import { AuthModal } from "./AuthModal";
+import { 
+  Home, 
+  User, 
+  Settings, 
+  LogOut, 
+  ShoppingCart,
+  Monitor,
+  Menu,
+  X
+} from "lucide-react";
 
-interface SidebarProps {
-  habboName: string;
-  activeSection?: string;
-  setActiveSection?: (section: string) => void;
-}
-
-interface NavItemProps {
-  icon: LucideIcon;
-  label: string;
-  href: string;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href }) => (
-  <Link to={href} className="flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-100 transition-colors duration-200">
-    <Icon className="w-4 h-4 text-gray-500" />
-    <span className="text-sm font-medium text-gray-700">{label}</span>
-  </Link>
-);
-
-const UserProfile: React.FC<{ habboName: string }> = ({ habboName }) => (
-  <div className="flex items-center space-x-4 py-4 px-6">
-    <Avatar>
-      <AvatarImage src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=l&user=${habboName}&action=wav&direction=2&head_direction=2&gesture=sml`} />
-      <AvatarFallback>HH</AvatarFallback>
-    </Avatar>
-    <div>
-      <h3 className="text-sm font-semibold text-gray-800">{habboName}</h3>
-      <p className="text-xs text-gray-500">Habbo Membro</p>
-    </div>
-  </div>
-);
-
-export function Sidebar({ habboName, activeSection, setActiveSection }: SidebarProps) {
-  const [open, setOpen] = useState(false);
-  const { logout } = useAuth();
+export const Sidebar = () => {
+  const { isLoggedIn, habboAccount, logout } = useUnifiedAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-      toast({
-        title: "Sucesso",
-        description: "Logout realizado com sucesso!"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || 'Erro ao fazer logout',
-        variant: "destructive"
-      });
-    }
+    await logout();
+    navigate('/');
   };
 
+  const menuItems = [
+    { icon: Home, label: "Início", path: "/" },
+    { icon: Monitor, label: "Console", path: "/console" },
+    { icon: ShoppingCart, label: "Mercado", path: "/mercado" },
+  ];
+
+  if (isLoggedIn && habboAccount) {
+    menuItems.push({
+      icon: User,
+      label: "Meu Perfil",
+      path: `/profile/${habboAccount.habbo_name}`
+    });
+  }
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" className="md:hidden w-full justify-start pl-4">Abrir Menu</Button>
-      </SheetTrigger>
-      <SheetContent className="w-full sm:w-64">
-        <SheetHeader className="text-left">
-          <SheetTitle>Menu</SheetTitle>
-          <SheetDescription>
-            Navegue pelo Habbo Hub.
-          </SheetDescription>
-        </SheetHeader>
-        <Separator />
+    <>
+      <div className={`fixed left-0 top-0 h-full bg-slate-900 text-white transition-all duration-300 z-50 ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}>
+        {/* Header */}
+        <div className="p-4 border-b border-slate-700">
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <h1 className="text-xl font-bold text-blue-400">HabboHub</h1>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="text-white hover:bg-slate-800"
+            >
+              {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            </Button>
+          </div>
+        </div>
 
-        {/* User Profile */}
-        {habboName && <UserProfile habboName={habboName} />}
+        {/* Navigation */}
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {menuItems.map((item) => (
+              <li key={item.path}>
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    }`
+                  }
+                >
+                  <item.icon className="w-5 h-5" />
+                  {!isCollapsed && <span>{item.label}</span>}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        <Separator />
-        <div className="py-4">
-          <NavItem icon={Home} label="Início" href="/" />
-          <NavItem icon={Newspaper} label="Notícias" href="/noticias" />
-          <NavItem icon={Gamepad2} label="Eventos" href="/eventos" />
-          <NavItem icon={ShoppingBag} label="Marketplace" href="/marketplace" />
-          <NavItem icon={MessageSquare} label="Fórum" href="/forum" />
-          <NavItem icon={Image} label="Emblemas" href="/emblemas" />
+        {/* User Section */}
+        <div className="p-4 border-t border-slate-700">
+          {isLoggedIn && habboAccount ? (
+            <div className="space-y-2">
+              {!isCollapsed && (
+                <div className="text-sm text-slate-400">
+                  Conectado como <span className="text-blue-400">{habboAccount.habbo_name}</span>
+                </div>
+              )}
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                className="w-full justify-start text-red-400 hover:bg-slate-800 hover:text-red-300"
+              >
+                <LogOut className="w-4 h-4" />
+                {!isCollapsed && <span className="ml-2">Sair</span>}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <User className="w-4 h-4" />
+              {!isCollapsed && <span className="ml-2">Entrar</span>}
+            </Button>
+          )}
         </div>
-        <Separator />
-        <div className="py-4">
-          <NavItem icon={Cog} label="Ferramentas" href="/ferramentas" />
-          <NavItem icon={LayoutDashboard} label="Catálogo" href="/catalogo" />
-          <NavItem icon={User} label="Meu Perfil" href={`/profile/${habboName}`} />
-          <NavItem icon={Settings} label="Configurações" href="/configuracoes" />
-        </div>
-        <Separator />
-        <div className="py-4">
-          <Button variant="ghost" className="w-full justify-start pl-4" onClick={handleLogout}>
-            <DoorOpen className="w-4 h-4 mr-2 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Sair</span>
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
-}
+      </div>
+
+      {/* Main content offset */}
+      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+        {/* Content goes here */}
+      </div>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+    </>
+  );
+};
