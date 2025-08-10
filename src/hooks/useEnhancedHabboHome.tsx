@@ -9,6 +9,8 @@ export const useEnhancedHabboHome = () => {
   const [background, setBackground] = useState<any>(null);
   const [guestbook, setGuestbook] = useState<any[]>([]);
   const [error, setError] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isOwner, setIsOwner] = useState(true);
 
   const addWidget = () => {
     console.log('Adding widget...');
@@ -27,6 +29,12 @@ export const useEnhancedHabboHome = () => {
   const moveWidget = (id: string, position: { x: number; y: number }) => {
     setWidgets(prev => prev.map(widget => 
       widget.id === id ? { ...widget, position } : widget
+    ));
+  };
+
+  const updateWidgetPosition = (id: string, x: number, y: number) => {
+    setWidgets(prev => prev.map(widget => 
+      widget.id === id ? { ...widget, position: { x, y } } : widget
     ));
   };
 
@@ -93,6 +101,10 @@ export const useEnhancedHabboHome = () => {
     console.log('Saving changes...');
   };
 
+  const handleSaveLayout = () => {
+    console.log('Saving layout...');
+  };
+
   const resetChanges = () => {
     setWidgets([]);
     setStickers([]);
@@ -106,13 +118,18 @@ export const useEnhancedHabboHome = () => {
     habboData,
     widgets,
     stickers,
+    setStickers,
     background,
     guestbook,
     error,
+    isEditMode,
+    setIsEditMode,
+    isOwner,
     addWidget,
     removeWidget,
     updateWidget,
     moveWidget,
+    updateWidgetPosition,
     addSticker,
     removeSticker,
     updateSticker,
@@ -124,6 +141,7 @@ export const useEnhancedHabboHome = () => {
     removeGuestbookEntry,
     loadHabboData,
     saveChanges,
+    handleSaveLayout,
     resetChanges
   };
 };

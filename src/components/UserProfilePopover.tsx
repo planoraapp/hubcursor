@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import type { HabboAccount } from '@/types/auth';
 
 export interface UserProfilePopoverProps {
   children: React.ReactNode;
@@ -20,9 +21,9 @@ export const UserProfilePopover = ({ children, side = 'bottom', align = 'center'
   }
 
   // Use fallback values for missing properties
-  const figureString = habboAccount.figure_string || habboAccount.figureString || 'hd-180-1.ch-255-66.lg-270-82.sh-305-62';
-  const motto = habboAccount.motto || 'Sem motto';
-  const isOnline = habboAccount.online ?? true;
+  const figureString = (habboAccount as HabboAccount).figure_string || (habboAccount as HabboAccount).figureString || 'hd-180-1.ch-255-66.lg-270-82.sh-305-62';
+  const motto = (habboAccount as HabboAccount).motto || 'Sem motto';
+  const isOnline = (habboAccount as HabboAccount).online ?? true;
 
   return (
     <Popover>
