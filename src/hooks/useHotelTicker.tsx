@@ -1,59 +1,67 @@
 
-import { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { habboProxyService, TickerActivity } from '@/services/habboProxyService';
 
-export interface TickerActivity {
-  id: string;
-  type: string;
-  message: string;
-  description?: string;
-  timestamp: string;
-  user?: string;
-  room?: string;
+interface AggregatedActivity {
+  username: string;
+  activities: TickerActivity[];
+  lastActivityTime: string;
+  activityCount: number;
 }
 
-export const useHotelTicker = () => {
-  const [activities, setActivities] = useState<TickerActivity[]>([]);
-  const [loading, setLoading] = useState(false);
+export const useHotelTicker = (hotel: string = 'com.br') => {
+  const { 
+    data: rawActivities = [], 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['hotel-ticker', hotel],
+    queryFn: () => habboProxyService.getHotelTicker(hotel),
+    refetchInterval: 30 * 1000, // 30 seconds
+    staleTime: 15 * 1000, // 15 seconds
+  });
 
-  const fetchActivities = async () => {
-    setLoading(true);
-    try {
-      // Mock ticker activities
-      const mockActivities: TickerActivity[] = [
-        {
-          id: '1',
-          type: 'login',
-          message: 'User joined the hotel',
-          description: 'A new user has entered the hotel',
-          timestamp: new Date().toISOString(),
-          user: 'TestUser'
-        },
-        {
-          id: '2',
-          type: 'room',
-          message: 'New room created',
-          description: 'A user created a new room',
-          timestamp: new Date().toISOString(),
-          user: 'TestUser',
-          room: 'Test Room'
+  // Aggregate activities by user within 30-minute windows
+  const aggregatedActivities: AggregatedActivity[] = React.useMemo(() => {
+    const userGroups: { [username: string]: TickerActivity[] } = {};
+    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+
+    // Group activities by username within the last 30 minutes
+    rawActivities.forEach(activity => {
+      const activityTime = activity.timestamp ? 
+        new Date(activity.timestamp).getTime() : 
+        new Date(activity.time).getTime();
+        
+      if (activityTime >= thirtyMinutesAgo) {
+        if (!userGroups[activity.username]) {
+          userGroups[activity.username] = [];
         }
-      ];
-      
-      setActivities(mockActivities);
-    } catch (error) {
-      console.error('Error fetching ticker activities:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        userGroups[activity.username].push(activity);
+      }
+    });
 
-  useEffect(() => {
-    fetchActivities();
-  }, []);
+    // Convert to aggregated format
+    return Object.entries(userGroups).map(([username, activities]) => ({
+      username,
+      activities: activities.sort((a, b) => {
+        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : new Date(a.time).getTime();
+        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : new Date(b.time).getTime();
+        return timeB - timeA;
+      }),
+      lastActivityTime: activities[0]?.timestamp || activities[0]?.time || '',
+      activityCount: activities.length,
+    })).sort((a, b) => {
+      const timeA = new Date(a.lastActivityTime).getTime();
+      const timeB = new Date(b.lastActivityTime).getTime();
+      return timeB - timeA;
+    });
+  }, [rawActivities]);
 
   return {
-    activities,
-    loading,
-    refetch: fetchActivities
+    activities: rawActivities,
+    aggregatedActivities,
+    isLoading,
+    error,
   };
 };

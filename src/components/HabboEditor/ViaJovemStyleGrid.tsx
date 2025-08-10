@@ -100,7 +100,7 @@ const ViaJovemStyleGrid = ({
       {/* Header simplificado */}
       <div className="mb-4 text-center">
         <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-          {optimizedItems.length} peças • {optimizedItems.filter(i => i.club === 'HC').length} HC
+          {optimizedItems.length} peças • {optimizedItems.filter(i => i.club === 'hc').length} HC
         </span>
       </div>
 

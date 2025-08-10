@@ -101,7 +101,7 @@ const FocusedClothingThumbnail = ({
         />
 
         {/* Badge HC */}
-        {item.club === 'HC' && (
+        {item.club === 'hc' && (
           <div className="absolute top-1 right-1 bg-yellow-500 text-black text-xs px-1 py-0.5 rounded font-bold shadow-sm">
             HC
           </div>

@@ -1,45 +1,86 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
+import { PageHeader } from '../components/PageHeader';
+import { MyAccountColumn } from '../components/console/MyAccountColumn';
+import { HotelFeedColumn } from '../components/console/HotelFeedColumn';
+import { FriendsFeedColumn } from '../components/console/FriendsFeedColumn';
+import { useIsMobile } from '../hooks/use-mobile';
+import MobileLayout from '../layouts/MobileLayout';
 
 const Console = () => {
-  return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+  const [activeSection, setActiveSection] = useState('console');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
+  }, []);
+
+  const renderMainContent = () => {
+    return (
+      <section className="bg-[#4B5563] p-4 md:p-6 rounded-xl shadow-inner">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Column 1: My Account */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Account</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">Account information will appear here.</p>
-              </CardContent>
-            </Card>
+            <MyAccountColumn />
           </div>
-          
+
+          {/* Column 2: Hotel Feed */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Hotel Feed</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">Hotel activities will appear here.</p>
-              </CardContent>
-            </Card>
+            <HotelFeedColumn />
           </div>
-          
+
+          {/* Column 3: Friends Feed */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Friends Feed</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">Friends activities will appear here.</p>
-              </CardContent>
-            </Card>
+            <FriendsFeedColumn />
           </div>
         </div>
+      </section>
+    );
+  };
+
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        <div className="p-4">
+          <PageHeader 
+            title="Console Habbo"
+            icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          {/* Mobile: Stack columns vertically in the styled container */}
+          <section className="bg-[#4B5563] p-4 rounded-xl shadow-inner">
+            <div className="space-y-6">
+              <MyAccountColumn />
+              <HotelFeedColumn />
+              <FriendsFeedColumn />
+            </div>
+          </section>
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="flex min-h-screen">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+          <PageHeader 
+            title="Console Habbo"
+            icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
+            backgroundImage="/assets/1360__-3C7.png"
+          />
+          {renderMainContent()}
+        </main>
       </div>
     </div>
   );

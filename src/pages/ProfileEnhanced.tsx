@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/PageHeader';
@@ -11,7 +12,7 @@ import { getUserByName, getAvatarUrl, getBadgeUrl } from '../services/habboApi';
 import { supabase } from '../integrations/supabase/client';
 import MobileLayout from '../layouts/MobileLayout';
 
-interface LocalHabboUser {
+interface HabboUser {
   uniqueId: string;
   name: string;
   figureString: string;
@@ -43,7 +44,7 @@ const ProfileEnhanced: React.FC = () => {
   const isMobile = useIsMobile();
   const { isLoggedIn, habboAccount } = useAuth();
   
-  const [userData, setUserData] = useState<LocalHabboUser | null>(null);
+  const [userData, setUserData] = useState<HabboUser | null>(null);
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,13 +85,7 @@ const ProfileEnhanced: React.FC = () => {
         return;
       }
       
-      // Convert to local interface with required selectedBadges
-      const localUser: LocalHabboUser = {
-        ...habboUser,
-        selectedBadges: habboUser.selectedBadges || []
-      };
-      
-      setUserData(localUser);
+      setUserData(habboUser);
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError('Erro ao carregar dados do usuário');

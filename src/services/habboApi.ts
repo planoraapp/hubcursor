@@ -1,23 +1,21 @@
+// Base URL para Habbo BR API
+const HABBO_API_BASE_URL = 'https://www.habbo.com.br/api/public';
 
-// Mock Habbo API service for development
 export interface HabboUser {
-  name: string;
-  motto: string;
-  id: string;
   uniqueId: string;
-  profileVisible: boolean;
+  name: string;
   figureString: string;
+  motto: string;
   online: boolean;
   lastAccessTime: string;
   memberSince: string;
-  selectedBadges?: { badgeIndex: number; code: string; name: string; description: string; }[];
-}
-
-export interface HabboBadge {
-  code: string;
-  name: string;
-  description: string;
-  badgeIndex?: number;
+  profileVisible: boolean;
+  selectedBadges: Array<{
+    badgeIndex: number;
+    code: string;
+    name: string;
+    description: string;
+  }>;
 }
 
 export interface HabboRoom {
@@ -25,154 +23,386 @@ export interface HabboRoom {
   name: string;
   description: string;
   ownerName: string;
-  owner: string;
+  ownerUniqueId: string;
+  rating: number;
   userCount: number;
-  maxUsers: number;
-  maxUserCount?: number;
-  room?: string;
-  score?: number;
-  rating?: number;
-  creationTime?: string;
+  maxUserCount: number;
+  tags: string[];
+  thumbnailUrl: string;
+  imageUrl: string;
+  habboGroupId: string;
+  categoryId: number;
+  creationTime: string;
+}
+
+export interface HabboBadge {
+  code: string;
+  name: string;
+  description: string;
 }
 
 export interface HabboGroup {
   id: string;
   name: string;
   description: string;
+  ownerName: string;
+  ownerUniqueId: string;
+  memberCount: number;
   badgeCode: string;
-  memberCount?: number;
+  roomId: string;
+  roomName: string;
+  type: string;
+  createdAt: string;
 }
 
-export interface HabboFriend {
-  name: string;
-  figureString: string;
-  online: boolean;
-  motto?: string;
-  id?: string;
-  uniqueId?: string;
-  profileVisible?: boolean;
-  lastAccessTime?: string;
-  memberSince?: string;
+export interface MarketplaceStats {
+  furniTypeName: string;
+  averagePrice: number;
+  offerCount: number;
+  historicalPrices: Array<{
+    averagePrice: number;
+    date: string;
+  }>;
 }
 
-// Mock functions for development
-export const getUserByName = async (username: string): Promise<HabboUser | null> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Mock user data
-  const mockUser: HabboUser = {
-    name: username,
-    motto: "Welcome to Habbo Hotel!",
-    id: "mock-id-" + username,
-    uniqueId: "mock-unique-" + username,
-    profileVisible: true,
-    figureString: "hd-180-1.ch-255-66.lg-270-82.sh-305-62",
-    online: Math.random() > 0.5,
-    lastAccessTime: new Date().toISOString(),
-    memberSince: "2020-01-01T00:00:00.000Z",
-    selectedBadges: [
-      { badgeIndex: 1, code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement' },
-      { badgeIndex: 2, code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement' },
-    ]
-  };
-  
-  return mockUser;
+// Cache local para evitar muitas requisições
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// Função auxiliar para cache
+const getCachedData = (key: string) => {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`📦 [API Cache] Hit for ${key}`);
+    return cached.data;
+  }
+  return null;
 };
 
-export const getAchievements = async (): Promise<HabboBadge[]> => {
-  return [
-    { code: 'ACH_Badge1', name: 'Achievement 1', description: 'First achievement', badgeIndex: 1 },
-    { code: 'ACH_Badge2', name: 'Achievement 2', description: 'Second achievement', badgeIndex: 2 },
-  ];
+const setCachedData = (key: string, data: any) => {
+  cache.set(key, { data, timestamp: Date.now() });
 };
 
-export const discoverRooms = async (): Promise<HabboRoom[]> => {
-  return [
-    {
-      id: '1',
-      name: 'Test Room 1',
-      description: 'A test room description',
-      ownerName: 'TestUser',
-      owner: 'TestUser',
-      userCount: 5,
-      maxUsers: 25,
-      maxUserCount: 25,
-      room: 'Test Room 1',
-      score: 4.5,
-      rating: 4.5,
-      creationTime: new Date().toISOString()
+// Função auxiliar para fazer requisições à API com retry e timeout
+const fetchWithRetry = async (url: string, retries = 3): Promise<any> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`🌐 [API Request] Tentativa ${i + 1}: ${url}`);
+      
+      // Implementar timeout usando AbortController
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
+      
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'HabboHub/1.0'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log(`📡 [API Response] Status ${response.status} para ${url}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn(`⚠️ [API] Usuário não encontrado (404): ${url}`);
+          return null;
+        }
+        if (response.status === 403) {
+          console.warn(`⚠️ [API] Perfil privado (403): ${url}`);
+          return null;
+        }
+        throw new Error(`HTTP Error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`📊 [API Data] Dados recebidos para ${url}:`, data ? 'OK' : 'Empty');
+      return data;
+      
+    } catch (error) {
+      console.error(`❌ [API Error] Tentativa ${i + 1} falhou:`, error);
+      
+      if (i === retries - 1) {
+        throw error; // Última tentativa, propagar o erro
+      }
+      
+      // Esperar antes da próxima tentativa (backoff exponencial)
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
     }
-  ];
+  }
 };
 
-export const getTopBadgeCollectors = async (): Promise<any[]> => {
-  return [];
-};
+// Função para buscar usuário por nome - MELHORADA com robustez
+export const getUserByName = async (name: string): Promise<HabboUser | null> => {
+  try {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      console.warn('❌ Nome do usuário está vazio');
+      return null;
+    }
 
-export const getTopRooms = async (): Promise<HabboRoom[]> => {
-  return await discoverRooms();
-};
+    console.log(`🔍 [API] Procurando usuário: ${trimmedName}`);
+    
+    const cacheKey = `user-${trimmedName.toLowerCase()}`;
+    const cached = getCachedData(cacheKey);
+    
+    if (cached) {
+      console.log(`📦 [API Cache] Retornando dados em cache para: ${trimmedName}`);
+      return cached;
+    }
 
-export const getRealtimeStats = async (): Promise<any> => {
-  return {
-    onlineUsers: 1000,
-    roomsWithUsers: 500,
-    totalRooms: 2000
-  };
-};
+    const data = await fetchWithRetry(`${HABBO_API_BASE_URL}/users?name=${encodeURIComponent(trimmedName)}`);
+    
+    if (!data) {
+      console.warn('❌ Nenhum dado retornado da API para usuário:', trimmedName);
+      return null;
+    }
 
-export const getUserBadges = async (username: string): Promise<HabboBadge[]> => {
-  return await getAchievements();
-};
+    // A API do Habbo pode retornar um objeto diretamente ou um array
+    let user;
+    if (Array.isArray(data)) {
+      if (data.length === 0) {
+        console.warn('❌ Array vazio retornado - usuário não encontrado:', trimmedName);
+        return null;
+      }
+      user = data[0]; // Pegar o primeiro usuário se for array
+    } else {
+      user = data;
+    }
 
-export const getUserFriends = async (username: string): Promise<HabboFriend[]> => {
-  return [
-    { 
-      name: 'Friend1', 
-      figureString: 'hd-180-1.ch-255-66', 
-      online: true,
-      motto: "Hello!",
-      id: "friend1-id",
-      uniqueId: "friend1-unique",
-      profileVisible: true,
-      lastAccessTime: new Date().toISOString(),
-      memberSince: "2020-01-01T00:00:00.000Z"
-    },
-    { 
-      name: 'Friend2', 
-      figureString: 'hd-180-2.ch-255-66', 
+    // Verificar se o objeto do usuário tem as propriedades essenciais
+    if (!user || typeof user !== 'object') {
+      console.warn('❌ Dados do usuário inválidos:', user);
+      return null;
+    }
+
+    // Verificar se o perfil é privado
+    if (user.profileVisible === false) {
+      console.warn('❌ Perfil do usuário é privado:', trimmedName);
+      return null;
+    }
+
+    // Construir objeto do usuário com fallbacks seguros
+    const processedUser: HabboUser = {
+      uniqueId: user.uniqueId || user.id || `unknown-${Date.now()}`,
+      name: user.name || trimmedName,
+      figureString: user.figureString || '',
+      motto: user.motto ? String(user.motto).trim() : '',
+      online: Boolean(user.online),
+      lastAccessTime: user.lastAccessTime || new Date().toISOString(),
+      memberSince: user.memberSince || new Date().toISOString(),
+      profileVisible: user.profileVisible !== false,
+      selectedBadges: Array.isArray(user.selectedBadges) ? user.selectedBadges : []
+    };
+
+    console.log('✅ Usuário processado com sucesso:');
+    console.log('👤 Nome:', processedUser.name);
+    console.log('💬 Motto:', `"${processedUser.motto}"`);
+    console.log('🟢 Online:', processedUser.online);
+    console.log('👁️ Perfil Visível:', processedUser.profileVisible);
+    console.log('🆔 ID Único:', processedUser.uniqueId);
+
+    // Salvar no cache
+    setCachedData(cacheKey, processedUser);
+    
+    return processedUser;
+    
+  } catch (error) {
+    console.error('❌ Erro em getUserByName:', error);
+    
+    // Retornar dados básicos como fallback
+    return {
+      uniqueId: `fallback-${Date.now()}`,
+      name: name.trim(),
+      figureString: '',
+      motto: 'Perfil temporariamente indisponível',
       online: false,
-      motto: "Offline now",
-      id: "friend2-id",
-      uniqueId: "friend2-unique",
-      profileVisible: true,
       lastAccessTime: new Date().toISOString(),
-      memberSince: "2020-01-01T00:00:00.000Z"
-    },
-  ];
+      memberSince: new Date().toISOString(),
+      profileVisible: true,
+      selectedBadges: []
+    };
+  }
 };
 
-export const getUserGroups = async (username: string): Promise<HabboGroup[]> => {
-  return [
-    { 
-      id: '1', 
-      name: 'Test Group', 
-      description: 'A test group description', 
-      badgeCode: 'GRP001',
-      memberCount: 50
-    }
-  ];
+// Função para gerar URL do avatar do usuário com fallback
+export const getAvatarUrl = (figureString: string, size: 's' | 'm' | 'l' = 'm', username?: string): string => {
+  if (figureString) {
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=${size}&direction=2&head_direction=3&gesture=sml&action=std`;
+  }
+  
+  // Fallback para avatar por nome de usuário
+  if (username) {
+    return `https://www.habbo.com/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&gesture=sml&size=${size}&action=std`;
+  }
+  
+  // Avatar padrão se nada mais funcionar
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=lg-3023-1335.sh-300-64.hd-180-1.hr-831-49.ch-255-66.ca-1813-62&size=${size}&direction=2&head_direction=3&gesture=sml&action=std`;
 };
 
-export const getUserRooms = async (username: string): Promise<HabboRoom[]> => {
-  return await discoverRooms();
-};
-
-export const getAvatarUrl = (figureString: string, size: 'xs' | 's' | 'm' | 'l' = 'm'): string => {
-  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=${size}`;
-};
-
+// Função para gerar URL do emblema
 export const getBadgeUrl = (badgeCode: string): string => {
   return `https://images.habbo.com/c_images/album1584/${badgeCode}.gif`;
+};
+
+// Usuários conhecidos populares do Habbo BR para descobrir quartos
+const POPULAR_USERS = [
+  'joao123', 'maria456', 'pedro789', 'ana321', 'carlos654',
+  'fernanda987', 'ricardo123', 'julia456', 'bruno789', 'carla321'
+];
+
+// Função para descobrir quartos através de usuários populares
+export const discoverRooms = async (): Promise<HabboRoom[]> => {
+  const rooms: HabboRoom[] = [];
+  
+  for (const username of POPULAR_USERS.slice(0, 5)) { // Limitar para evitar muitas requisições
+    try {
+      const user = await getUserByName(username);
+      if (user) {
+        const userRooms = await getUserRooms(user.uniqueId);
+        if (userRooms) {
+          rooms.push(...userRooms.slice(0, 3)); // Pegar apenas os primeiros 3 quartos de cada usuário
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar quartos do usuário ${username}:`, error);
+    }
+  }
+  
+  return rooms;
+};
+
+// Função para buscar dados do usuário por ID - FIXED
+export const getUserById = async (userId: string): Promise<HabboUser | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}`);
+};
+
+// Função para buscar perfil detalhado do usuário - FIXED
+export const getUserProfile = async (userId: string): Promise<HabboUser | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/profile`);
+};
+
+// Função para buscar emblemas do usuário - FIXED
+export const getUserBadges = async (userId: string): Promise<HabboBadge[] | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/badges`);
+};
+
+// Função para buscar amigos do usuário - FIXED
+export const getUserFriends = async (userId: string): Promise<HabboUser[] | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/friends`);
+};
+
+// Função para buscar grupos do usuário - FIXED
+export const getUserGroups = async (userId: string): Promise<HabboGroup[] | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/groups`);
+};
+
+// Função para buscar quartos do usuário - FIXED
+export const getUserRooms = async (userId: string): Promise<HabboRoom[] | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/users/${userId}/rooms`);
+};
+
+// Função para buscar detalhes de um quarto - FIXED
+export const getRoomDetails = async (roomId: string): Promise<HabboRoom | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/rooms/${roomId}`);
+};
+
+// Função para buscar todos os emblemas disponíveis - FIXED
+export const getAchievements = async (): Promise<HabboBadge[] | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/achievements`);
+};
+
+// Função para buscar emblema específico - FIXED
+export const getAchievementById = async (achievementId: string): Promise<HabboBadge | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/achievements/${achievementId}`);
+};
+
+// Função para buscar detalhes de um grupo - FIXED
+export const getGroupDetails = async (groupId: string): Promise<HabboGroup | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/groups/${groupId}`);
+};
+
+// Função para buscar membros de um grupo - FIXED
+export const getGroupMembers = async (groupId: string): Promise<HabboUser[] | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/groups/${groupId}/members`);
+};
+
+// Função para buscar estatísticas do marketplace para room items - FIXED
+export const getMarketplaceStatsRoomItem = async (itemName: string): Promise<MarketplaceStats | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/marketplace/stats/roomItem/${encodeURIComponent(itemName)}`);
+};
+
+// Função para buscar estatísticas do marketplace para wall items - FIXED
+export const getMarketplaceStatsWallItem = async (itemName: string): Promise<MarketplaceStats | null> => {
+  return await fetchWithRetry(`${HABBO_API_BASE_URL}/marketplace/stats/wallItem/${encodeURIComponent(itemName)}`);
+};
+
+// Função para calcular estatísticas em tempo real
+export const getRealtimeStats = async () => {
+  try {
+    const achievements = await getAchievements();
+    const rooms = await discoverRooms();
+    
+    return {
+      totalBadges: achievements?.length || 0,
+      totalRooms: rooms?.length || 0,
+      activeUsers: rooms?.reduce((acc, room) => acc + (room.userCount || 0), 0) || 0,
+      averageRating: rooms?.length ? rooms.reduce((acc, room) => acc + (room.rating || 0), 0) / rooms.length : 0
+    };
+  } catch (error) {
+    console.error('Erro ao calcular estatísticas em tempo real:', error);
+    return {
+      totalBadges: 0,
+      totalRooms: 0,
+      activeUsers: 0,
+      averageRating: 0
+    };
+  }
+};
+
+// Função para buscar rankings de usuários com mais emblemas
+export const getTopBadgeCollectors = async (): Promise<Array<{ name: string; score: number; user: HabboUser }>> => {
+  const collectors: Array<{ name: string; score: number; user: HabboUser }> = [];
+  
+  for (const username of POPULAR_USERS.slice(0, 10)) {
+    try {
+      const user = await getUserByName(username);
+      if (user) {
+        const badges = await getUserBadges(user.uniqueId);
+        if (badges) {
+          collectors.push({
+            name: user.name,
+            score: badges.length,
+            user: user
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar emblemas do usuário ${username}:`, error);
+    }
+  }
+  
+  return collectors.sort((a, b) => b.score - a.score).slice(0, 5);
+};
+
+// Função para buscar quartos mais populares
+export const getTopRooms = async (): Promise<Array<{ name: string; owner: string; score: number; room: HabboRoom }>> => {
+  const rooms = await discoverRooms();
+  
+  if (!rooms || rooms.length === 0) {
+    return [];
+  }
+  
+  return rooms
+    .filter(room => room && room.name && room.ownerName) // Filter out invalid rooms
+    .map(room => ({
+      name: room.name,
+      owner: room.ownerName,
+      score: room.userCount || 0, // Ensure score is always a number
+      room: room
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
 };

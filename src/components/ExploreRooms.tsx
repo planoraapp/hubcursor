@@ -1,62 +1,65 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { HabboRoom } from '@/services/habboApi';
+import { useState } from 'react';
+import { Search, Users, Eye, MapPin, Star } from 'lucide-react';
+import { PanelCard } from './PanelCard';
+import { RoomsChart } from './RoomsChart';
+import { useTopRooms } from '../hooks/useHabboData';
+import { useLanguage } from '../hooks/useLanguage';
 
-const ExploreRooms: React.FC = () => {
-  // Mock room data with proper structure
-  const mockRooms: HabboRoom[] = [
-    {
-      id: '1',
-      name: 'Test Room 1',
-      description: 'A test room description',
-      ownerName: 'TestUser',
-      owner: 'TestUser',
-      userCount: 5,
-      maxUsers: 25,
-      maxUserCount: 25,
-      room: 'Test Room 1',
-      score: 4.5,
-      rating: 4.5,
-      creationTime: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'Test Room 2',
-      description: 'Another test room',
-      ownerName: 'TestUser2',
-      owner: 'TestUser2',
-      userCount: 3,
-      maxUsers: 20,
-      maxUserCount: 20,
-      room: 'Test Room 2',
-      score: 4.0,
-      rating: 4.0,
-      creationTime: new Date().toISOString()
-    }
-  ];
+export const ExploreRooms = () => {
+  const { t } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState('');
+  const { data: topRooms, isLoading, error } = useTopRooms();
+
+  const filteredRooms = topRooms?.filter(room =>
+    room.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    room.owner.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Explore Rooms</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {mockRooms.map((room) => (
-            <div key={room.id} className="p-4 border rounded-lg">
-              <h3 className="font-bold">{room.name}</h3>
-              <p className="text-sm text-gray-600">{room.description}</p>
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-sm">Owner: {room.ownerName}</span>
-                <span className="text-sm">{room.userCount}/{room.maxUsers} users</span>
+    <div className="space-y-8">
+      <PanelCard title={t('exploreRoomsTitle')}>
+        <p className="text-lg text-gray-600 mb-6">
+          {t('exploreRoomsSubtitle')}
+        </p>
+        
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+          <input
+            type="text"
+            id="room-search"
+            placeholder="Pesquisar por nome do quarto ou proprietário..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-white border-2 border-[#5a5a5a] border-r-[#888888] border-b-[#888888] rounded-lg shadow-[inset_1px_1px_0px_0px_#cccccc] focus:outline-none focus:border-[#007bff] focus:shadow-[inset_1px_1px_0px_0px_#cccccc,_0_0_0_2px_rgba(0,123,255,0.25)]"
+          />
+        </div>
+      </PanelCard>
+
+      <PanelCard title={t('topRoomsByVisitors')}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRooms.slice(0, 6).map((room, index) => (
+            <PanelCard key={room.room.id || index}>
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-gray-100">
+                  <Users className="text-blue-500" size={32} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800">{room.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    <Eye className="inline-block mr-1" size={14} />
+                    {room.score} online
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    <MapPin className="inline-block mr-1" size={14} />
+                    {room.owner}
+                  </p>
+                </div>
               </div>
-            </div>
+            </PanelCard>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </PanelCard>
+    </div>
   );
 };
-
-export default ExploreRooms;

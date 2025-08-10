@@ -98,7 +98,7 @@ const ViaJovemStyleThumbnail = ({
       )}
 
       {/* Club badge (minimal) */}
-      {item.club === 'HC' && (
+      {item.club === 'hc' && (
         <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-1 rounded font-bold">
           HC
         </div>

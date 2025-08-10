@@ -1,41 +1,59 @@
 
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./hooks/useUnifiedAuth";
-import Index from "./pages/Index";
-import Profile from "./pages/Profile";
-import Mercado from "./pages/Mercado";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from './hooks/useAuth';
+import { HotelProvider } from './contexts/HotelContext';
+import { MarketplaceProvider } from './contexts/MarketplaceContext';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 5 * 60 * 1000,
-    },
-  },
-});
+// Pages
+import Index from './pages/Index';
+import Login from './pages/Login';
+import EnhancedHabboHome from './pages/EnhancedHabboHome';
+import HomesHub from './pages/HomesHub';
+import Mercado from './pages/Mercado';
+import Emblemas from './pages/Emblemas';
+import Editor from './pages/Editor';
+import Catalogo from './pages/Catalogo';
+import Eventos from './pages/Eventos';
+import Ferramentas from './pages/Ferramentas';
+import Console from './pages/Console';
+import Noticias from './pages/Noticias';
+import Forum from './pages/Forum';
+import NotFound from './pages/NotFound';
+
+import './App.css';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/profile/:username" element={<Profile />} />
-              <Route path="/mercado" element={<Mercado />} />
-              <Route path="/marketplace" element={<Mercado />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <HotelProvider>
+          <MarketplaceProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/home/:username" element={<EnhancedHabboHome />} />
+                <Route path="/homes" element={<HomesHub />} />
+                <Route path="/mercado" element={<Mercado />} />
+                <Route path="/emblemas" element={<Emblemas />} />
+                <Route path="/editor" element={<Editor />} />
+                <Route path="/catalogo" element={<Catalogo />} />
+                <Route path="/eventos" element={<Eventos />} />
+                <Route path="/ferramentas" element={<Ferramentas />} />
+                <Route path="/console" element={<Console />} />
+                <Route path="/noticias" element={<Noticias />} />
+                <Route path="/forum" element={<Forum />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Router>
+          </MarketplaceProvider>
+        </HotelProvider>
       </AuthProvider>
+      <Toaster />
     </QueryClientProvider>
   );
 }
