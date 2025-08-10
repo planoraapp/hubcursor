@@ -1,17 +1,26 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { User, LogIn } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { habboProxyService } from '@/services/habboProxyService';
-import { Link } from 'react-router-dom';
 
 export const MyAccountColumn: React.FC = () => {
-  const { isLoggedIn, habboAccount, myProfile, photos, followers, following, isLoading, error } = useMyConsoleProfile();
-  const [openProfileModal, setOpenProfileModal] = useState(false);
+  const { 
+    isLoggedIn, 
+    habboAccount, 
+    myProfile, 
+    photos, 
+    myLikes, 
+    myComments, 
+    followers, 
+    following, 
+    isLoading 
+  } = useMyConsoleProfile();
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !habboAccount) {
     return (
       <div className="space-y-4">
         <Card className="bg-[#5A6573] text-white border-0 shadow-none">
@@ -22,65 +31,12 @@ export const MyAccountColumn: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center py-8">
-            <LogIn className="w-16 h-16 mx-auto mb-4 opacity-50 text-gray-400" />
+            <User className="w-16 h-16 mx-auto mb-4 opacity-50 text-gray-400" />
             <h3 className="text-lg font-semibold text-white mb-2">
-              Conecte sua conta Habbo
+              Login necessário
             </h3>
-            <p className="text-white/70 mb-4">
-              Faça login para ver seu perfil e interagir com outros usuários
-            </p>
-            <Link to="/login">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                Conectar Conta Habbo
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Card className="bg-[#5A6573] text-white border-0 shadow-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Minha Conta
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="py-8">
-            <div className="animate-pulse space-y-4">
-              <div className="w-20 h-[110px] bg-white/20 rounded-none mx-auto"></div>
-              <div className="h-4 bg-white/20 rounded mx-auto w-3/4"></div>
-              <div className="h-3 bg-white/20 rounded mx-auto w-1/2"></div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error || !myProfile) {
-    return (
-      <div className="space-y-4">
-        <Card className="bg-[#5A6573] text-white border-0 shadow-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Minha Conta
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center py-8">
-            <div className="text-red-400 mb-4">
-              <User className="w-16 h-16 mx-auto mb-2" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Erro ao carregar perfil
-            </h3>
-            <p className="text-white/70 mb-4">
-              Não foi possível carregar os dados do perfil "{habboAccount?.habbo_name}"
+            <p className="text-white/70">
+              Conecte sua conta Habbo para ver seu perfil
             </p>
           </CardContent>
         </Card>
@@ -94,84 +50,126 @@ export const MyAccountColumn: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            Perfil do Habbo
+            Minha Conta
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Top section with avatar and user info */}
-          <div className="flex gap-4 mb-4">
-            {/* Full-body Avatar on the left */}
-            <div className="flex-shrink-0">
-              <img 
-                src={habboProxyService.getAvatarUrl(myProfile.figureString, 'l')} 
-                alt={myProfile.name}
-                className="h-[110px] w-auto object-contain bg-transparent cursor-pointer"
-                onClick={() => setOpenProfileModal(true)}
-              />
-            </div>
-            
-            {/* User info on the right */}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                {myProfile.name}
-                <div className={`w-3 h-3 rounded-full ${myProfile.online ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-              </h3>
-              
-              {/* Counters line */}
-              <div className="flex gap-4 text-sm mb-2">
-                <button className="text-white/90 hover:text-white underline-offset-2 hover:underline cursor-pointer">
-                  {photos.length} Fotos
-                </button>
-                <button className="text-white/90 hover:text-white underline-offset-2 hover:underline cursor-pointer">
-                  {followers.length} Seguidores
-                </button>
-                <button className="text-white/90 hover:text-white underline-offset-2 hover:underline cursor-pointer">
-                  {following.length} Seguindo
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Motto */}
-          <p className="text-white/90 italic mb-3">"{myProfile.motto}"</p>
-          
-          {/* Divider */}
-          <div className="h-px bg-white/20 my-3" />
-
-          {/* Photos grid */}
-          {photos.length > 0 && (
-            <div className="grid grid-cols-3 gap-0">
-              {photos.slice(0, 9).map((photo, index) => (
-                <img 
-                  key={index}
-                  src={photo.url} 
-                  alt={`Foto ${index + 1}`}
-                  className="w-full h-full object-cover rounded-none aspect-square"
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Selected Badges */}
-          {myProfile.selectedBadges && myProfile.selectedBadges.length > 0 && (
-            <div className="mt-4">
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <span>🏆</span>
-                Emblemas Destacados
-              </h4>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {myProfile.selectedBadges.slice(0, 6).map((badge, index) => (
+          <div className="space-y-6">
+            {/* Profile Section */}
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                {myProfile?.figureString ? (
                   <img 
-                    key={index}
-                    src={habboProxyService.getBadgeUrl(badge.code)} 
-                    alt={badge.name}
-                    className="w-8 h-8"
-                    title={badge.name}
+                    src={habboProxyService.getAvatarUrl(myProfile.figureString, 'l')} 
+                    alt={habboAccount.habbo_name}
+                    className="h-[130px] w-auto object-contain bg-transparent"
                   />
-                ))}
+                ) : (
+                  <div className="h-[130px] w-16 bg-white/10 flex items-center justify-center">
+                    <span className="text-2xl font-bold">
+                      {habboAccount.habbo_name[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-blue-200 text-lg mb-1">
+                  {habboAccount.habbo_name}
+                </h3>
+                {myProfile?.motto && (
+                  <p className="text-white/80 text-sm italic mb-2">
+                    "{myProfile.motto}"
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    myProfile?.online ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className="text-xs text-white/60">
+                    {myProfile?.online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+                {myProfile?.selectedBadges && myProfile.selectedBadges.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {myProfile.selectedBadges.slice(0, 3).map((badge, index) => (
+                      <img
+                        key={index}
+                        src={habboProxyService.getBadgeUrl(badge.code)}
+                        alt={badge.name}
+                        className="w-6 h-6 border border-white/20 bg-white/10 p-0.5"
+                        title={badge.description}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          )}
+
+            {/* Stats Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Heart className="w-4 h-4 text-red-400" />
+                  <span className="text-lg font-semibold">{myLikes.length}</span>
+                </div>
+                <p className="text-xs text-white/60">Curtidas</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <MessageCircle className="w-4 h-4 text-blue-400" />
+                  <span className="text-lg font-semibold">{myComments.length}</span>
+                </div>
+                <p className="text-xs text-white/60">Comentários</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Users className="w-4 h-4 text-green-400" />
+                  <span className="text-lg font-semibold">{followers.length}</span>
+                </div>
+                <p className="text-xs text-white/60">Seguidores</p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Users className="w-4 h-4 text-purple-400" />
+                  <span className="text-lg font-semibold">{following.length}</span>
+                </div>
+                <p className="text-xs text-white/60">Seguindo</p>
+              </div>
+            </div>
+
+            {/* Photos Section */}
+            {photos.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Camera className="w-4 h-4 text-white/80" />
+                  <h4 className="text-sm font-medium text-white/80">
+                    Minhas Fotos ({photos.length})
+                  </h4>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {photos.slice(0, 6).map((photo, index) => (
+                    <div key={photo.id || index} className="aspect-square relative">
+                      <img
+                        src={photo.url}
+                        alt={`Foto ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors" />
+                    </div>
+                  ))}
+                </div>
+                {photos.length > 6 && (
+                  <p className="text-xs text-white/60 mt-2 text-center">
+                    +{photos.length - 6} fotos
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

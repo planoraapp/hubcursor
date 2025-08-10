@@ -55,31 +55,46 @@ serve(async (req) => {
         if (!username) {
           throw new Error('Username is required for getUserBadges');
         }
-        apiUrl = `https://www.habbo.${hotel}/api/public/users/${encodeURIComponent(username)}/profile`;
+        // First get user profile to get uniqueId
+        const userProfileForBadges = await fetchUserProfile(username, hotel);
+        if (!userProfileForBadges) {
+          throw new Error('User not found');
+        }
+        apiUrl = `https://www.habbo.${hotel}/api/public/users/${userProfileForBadges.uniqueId}/profile`;
         break;
 
       case 'getUserPhotos':
         if (!username) {
           throw new Error('Username is required for getUserPhotos');
         }
-        apiUrl = `https://www.habbo.${hotel}/api/public/users/${encodeURIComponent(username)}/photos`;
+        // First get user profile to get uniqueId
+        const userProfileForPhotos = await fetchUserProfile(username, hotel);
+        if (!userProfileForPhotos) {
+          throw new Error('User not found');
+        }
+        apiUrl = `https://www.habbo.${hotel}/api/public/users/${userProfileForPhotos.uniqueId}/photos`;
         break;
 
       case 'getUserFriends':
         if (!username) {
           throw new Error('Username is required for getUserFriends');
         }
-        apiUrl = `https://www.habbo.${hotel}/api/public/users/${encodeURIComponent(username)}/friends`;
+        // First get user profile to get uniqueId
+        const userProfileForFriends = await fetchUserProfile(username, hotel);
+        if (!userProfileForFriends) {
+          throw new Error('User not found');
+        }
+        apiUrl = `https://www.habbo.${hotel}/api/public/users/${userProfileForFriends.uniqueId}/friends`;
         break;
 
       case 'getHotelTicker':
-        // Mock hotel ticker data - replace with real API when available
+        // Mock hotel ticker data - fallback when widgets proxy fails
         const mockHotelActivities = [
-          { type: 'login', username: 'Beebop', time: new Date().toISOString() },
-          { type: 'achievement', username: 'HabboFan', achievement: 'Primeira semana!', time: new Date(Date.now() - 300000).toISOString() },
-          { type: 'friend', username: 'GameMaster', friend: 'NewPlayer', time: new Date(Date.now() - 600000).toISOString() },
-          { type: 'login', username: 'StarPlayer', time: new Date(Date.now() - 900000).toISOString() },
-          { type: 'achievement', username: 'ProGamer', achievement: 'Mestre dos jogos!', time: new Date(Date.now() - 1200000).toISOString() },
+          { username: 'Beebop', description: 'entrou no hotel', time: new Date().toISOString() },
+          { username: 'HabboFan', description: 'conquistou o emblema "Primeira semana!"', time: new Date(Date.now() - 300000).toISOString() },
+          { username: 'GameMaster', description: 'fez amizade com NewPlayer', time: new Date(Date.now() - 600000).toISOString() },
+          { username: 'StarPlayer', description: 'entrou no hotel', time: new Date(Date.now() - 900000).toISOString() },
+          { username: 'ProGamer', description: 'conquistou o emblema "Mestre dos jogos!"', time: new Date(Date.now() - 1200000).toISOString() },
         ];
         
         return new Response(JSON.stringify({
@@ -92,9 +107,9 @@ serve(async (req) => {
         // Mock ticker data for general use
         return new Response(JSON.stringify({
           activities: [
-            { type: 'login', username: 'Beebop', time: new Date().toISOString() },
-            { type: 'achievement', username: 'HabboFan', achievement: 'Primeira semana!', time: new Date(Date.now() - 300000).toISOString() },
-            { type: 'friend', username: 'GameMaster', friend: 'NewPlayer', time: new Date(Date.now() - 600000).toISOString() }
+            { username: 'Beebop', description: 'entrou no hotel', time: new Date().toISOString() },
+            { username: 'HabboFan', description: 'conquistou o emblema "Primeira semana!"', time: new Date(Date.now() - 300000).toISOString() },
+            { username: 'GameMaster', description: 'fez amizade com NewPlayer', time: new Date(Date.now() - 600000).toISOString() }
           ]
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,3 +159,25 @@ serve(async (req) => {
     });
   }
 });
+
+async function fetchUserProfile(username: string, hotel: string) {
+  try {
+    const apiUrl = `https://www.habbo.${hotel}/api/public/users?name=${encodeURIComponent(username)}`;
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'HabboHub/1.0 (Mozilla/5.0 compatible)',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`[Habbo API Proxy] Error fetching user profile for ${username}:`, error);
+    return null;
+  }
+}

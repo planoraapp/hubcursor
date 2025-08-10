@@ -61,10 +61,10 @@ export const HotelFeedColumn: React.FC = () => {
                         <img 
                           src={habboProxyService.getAvatarUrl(figureMap[userGroup.username], 'l')} 
                           alt={userGroup.username}
-                          className="h-[110px] w-auto object-contain bg-transparent"
+                          className="h-[130px] w-auto object-contain bg-transparent"
                         />
                       ) : (
-                        <div className="h-[110px] w-16 bg-white/10 rounded-none flex items-center justify-center">
+                        <div className="h-[130px] w-16 bg-white/10 flex items-center justify-center">
                           <span className="text-2xl font-bold">
                             {userGroup.username[0]?.toUpperCase()}
                           </span>
