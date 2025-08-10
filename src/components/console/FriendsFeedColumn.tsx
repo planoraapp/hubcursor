@@ -13,20 +13,16 @@ export const FriendsFeedColumn: React.FC = () => {
   const { friends, friendsActivities, isLoading, hasFriends } = useFriendsFeed();
 
   const formatTime = (timeString: string) => {
-    const now = new Date();
-    const activityTime = new Date(timeString);
-    const diffInMinutes = Math.floor((now.getTime() - activityTime.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'agora mesmo';
-    if (diffInMinutes < 60) return `${diffInMinutes}min atrás`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h atrás`;
-    return activityTime.toLocaleDateString('pt-BR');
+    return new Date(timeString).toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   };
 
   if (!isLoggedIn) {
     return (
       <div className="space-y-4">
-        <Card>
+        <Card className="bg-[#5A6573] text-white border-0 shadow-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
@@ -35,10 +31,10 @@ export const FriendsFeedColumn: React.FC = () => {
           </CardHeader>
           <CardContent className="text-center py-8">
             <UserPlus className="w-16 h-16 mx-auto mb-4 opacity-50 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+            <h3 className="text-lg font-semibold text-white mb-2">
               Login necessário
             </h3>
-            <p className="text-gray-500">
+            <p className="text-white/70">
               Conecte sua conta Habbo para ver as atividades dos seus amigos
             </p>
           </CardContent>
@@ -49,7 +45,7 @@ export const FriendsFeedColumn: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="bg-[#5A6573] text-white border-0 shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -60,42 +56,40 @@ export const FriendsFeedColumn: React.FC = () => {
         <CardContent>
           <div className="space-y-4 max-h-[600px] overflow-y-auto">
             {isLoading ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-white/70 py-8">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                 <p>Carregando atividades dos amigos...</p>
               </div>
             ) : !hasFriends ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-white/70 py-8">
                 <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Nenhum amigo encontrado</p>
                 <p className="text-xs mt-1">Adicione amigos no Habbo para ver suas atividades aqui</p>
               </div>
             ) : friendsActivities.length > 0 ? (
               friendsActivities.map((friendActivity, index) => (
-                <div key={`${friendActivity.friend.name}-${index}`} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12">
+                <div key={`${friendActivity.friend.name}-${index}`} className="p-4 mb-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar className="w-12 h-12 rounded-none border-0 bg-transparent">
                       <AvatarImage 
+                        className="rounded-none"
                         src={habboProxyService.getAvatarUrl(friendActivity.friend.figureString, 'm')} 
                         alt={friendActivity.friend.name} 
                       />
-                      <AvatarFallback className="text-sm font-bold">
+                      <AvatarFallback className="text-sm font-bold rounded-none bg-transparent">
                         {friendActivity.friend.name[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-blue-600">{friendActivity.friend.name}</h4>
+                        <h4 className="font-semibold text-blue-200">{friendActivity.friend.name}</h4>
                         <div className={`w-2 h-2 rounded-full ${
                           friendActivity.friend.online ? 'bg-green-500' : 'bg-gray-400'
                         }`}></div>
                       </div>
-                      <p className="text-sm text-gray-600 italic mb-2">
+                      <p className="text-sm text-white/70 italic mb-2">
                         "{friendActivity.friend.motto}"
                       </p>
-                      <Badge variant="secondary" className="text-xs">
-                        {formatTime(friendActivity.lastActivityTime)}
-                      </Badge>
                     </div>
                   </div>
                   
@@ -103,8 +97,11 @@ export const FriendsFeedColumn: React.FC = () => {
                     {friendActivity.activities.map((activity, actIndex) => (
                       <div key={actIndex} className="flex items-start gap-2 text-sm">
                         <Activity className="w-4 h-4 text-green-500 mt-0.5" />
-                        <span className="text-gray-700">
+                        <span className="text-white/90 flex-1">
                           {activity.type === 'login' ? 'entrou no hotel' : 'fez uma atividade'}
+                        </span>
+                        <span className="text-xs text-white/60 ml-2">
+                          {formatTime(activity.time)}
                         </span>
                       </div>
                     ))}
@@ -112,7 +109,7 @@ export const FriendsFeedColumn: React.FC = () => {
                 </div>
               ))
             ) : (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Nenhuma atividade recente</p>
                 <p className="text-xs mt-1">As atividades dos seus amigos aparecerão aqui</p>

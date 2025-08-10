@@ -26,22 +26,24 @@ const Console = () => {
 
   const renderMainContent = () => {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Column 1: My Account */}
-        <div className="lg:col-span-1">
-          <MyAccountColumn />
-        </div>
+      <section className="bg-[#4B5563] p-4 md:p-6 rounded-xl shadow-inner">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Column 1: My Account */}
+          <div className="lg:col-span-1">
+            <MyAccountColumn />
+          </div>
 
-        {/* Column 2: Hotel Feed */}
-        <div className="lg:col-span-1">
-          <HotelFeedColumn />
-        </div>
+          {/* Column 2: Hotel Feed */}
+          <div className="lg:col-span-1">
+            <HotelFeedColumn />
+          </div>
 
-        {/* Column 3: Friends Feed */}
-        <div className="lg:col-span-1">
-          <FriendsFeedColumn />
+          {/* Column 3: Friends Feed */}
+          <div className="lg:col-span-1">
+            <FriendsFeedColumn />
+          </div>
         </div>
-      </div>
+      </section>
     );
   };
 
@@ -54,12 +56,14 @@ const Console = () => {
             icon="/assets/2367_HabboFriendBarCom_icon_friendlist_notify_1_png.png"
             backgroundImage="/assets/1360__-3C7.png"
           />
-          {/* Mobile: Stack columns vertically */}
-          <div className="space-y-6">
-            <MyAccountColumn />
-            <HotelFeedColumn />
-            <FriendsFeedColumn />
-          </div>
+          {/* Mobile: Stack columns vertically in the styled container */}
+          <section className="bg-[#4B5563] p-4 rounded-xl shadow-inner">
+            <div className="space-y-6">
+              <MyAccountColumn />
+              <HotelFeedColumn />
+              <FriendsFeedColumn />
+            </div>
+          </section>
         </div>
       </MobileLayout>
     );

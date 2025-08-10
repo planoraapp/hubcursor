@@ -1,8 +1,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useUnifiedAuth } from './useUnifiedAuth';
-import { habboProxyService, HabboUser } from '@/services/habboProxyService';
-import { consoleInteractionsService } from '@/services/consoleInteractionsService';
+import { habboProxyService, HabboUser, HabboPhoto } from '@/services/habboProxyService';
+import { consoleInteractionsService, ConsoleFollow } from '@/services/consoleInteractionsService';
 
 export const useMyConsoleProfile = () => {
   const { habboAccount, isLoggedIn } = useUnifiedAuth();
@@ -17,6 +17,17 @@ export const useMyConsoleProfile = () => {
     queryFn: () => habboProxyService.getUserProfile(habboAccount!.habbo_name),
     enabled: !!habboAccount?.habbo_name,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch my photos
+  const { 
+    data: photos = [], 
+    isLoading: photosLoading 
+  } = useQuery({
+    queryKey: ['my-console-photos', habboAccount?.habbo_name],
+    queryFn: () => habboProxyService.getUserPhotos(habboAccount!.habbo_name),
+    enabled: !!habboAccount?.habbo_name,
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Fetch my profile interactions
@@ -41,11 +52,21 @@ export const useMyConsoleProfile = () => {
   });
 
   const { 
-    data: myFollows = [], 
-    isLoading: followsLoading 
+    data: followers = [], 
+    isLoading: followersLoading 
   } = useQuery({
-    queryKey: ['my-console-follows', habboAccount?.habbo_name],
+    queryKey: ['my-console-followers', habboAccount?.habbo_name],
     queryFn: () => consoleInteractionsService.getFollows(habboAccount!.habbo_name),
+    enabled: !!habboAccount?.habbo_name,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+
+  const { 
+    data: following = [], 
+    isLoading: followingLoading 
+  } = useQuery({
+    queryKey: ['my-console-following', habboAccount?.habbo_name],
+    queryFn: () => consoleInteractionsService.getFollowing(habboAccount!.habbo_name),
     enabled: !!habboAccount?.habbo_name,
     staleTime: 1 * 60 * 1000, // 1 minute
   });
@@ -54,10 +75,12 @@ export const useMyConsoleProfile = () => {
     isLoggedIn,
     habboAccount,
     myProfile,
+    photos,
     myLikes,
     myComments,
-    myFollows,
-    isLoading: profileLoading || likesLoading || commentsLoading || followsLoading,
+    followers,
+    following,
+    isLoading: profileLoading || photosLoading || likesLoading || commentsLoading || followersLoading || followingLoading,
     error: profileError,
   };
 };

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ConsoleLike {
@@ -174,6 +173,22 @@ class ConsoleInteractionsService {
       return data || [];
     } catch (error) {
       console.error('Error fetching follows:', error);
+      return [];
+    }
+  }
+
+  async getFollowing(habboName: string): Promise<ConsoleFollow[]> {
+    try {
+      const { data, error } = await supabase
+        .from('console_profile_follows')
+        .select('*')
+        .eq('follower_habbo_name', habboName)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching following:', error);
       return [];
     }
   }
