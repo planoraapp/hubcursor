@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,7 +12,7 @@ import Mercado from "./pages/Mercado";
 
 const queryClient = new QueryClient();
 
-const App: React.FC = () => {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -33,6 +32,6 @@ const App: React.FC = () => {
       </AuthProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
