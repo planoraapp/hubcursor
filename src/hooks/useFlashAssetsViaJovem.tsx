@@ -12,6 +12,7 @@ export interface ViaJovemFlashItem {
   colors?: string[];
   club?: 'hc' | 'normal' | boolean;
   swfName?: string;
+  source?: string;
 }
 
 export const useFlashAssetsViaJovem = () => {
@@ -36,7 +37,8 @@ export const useFlashAssetsViaJovem = () => {
           thumbnail: 'https://via.placeholder.com/64',
           colors: ['#FF0000', '#00FF00'],
           club: false,
-          swfName: 'test-1.swf'
+          swfName: 'test-1.swf',
+          source: 'viajovem'
         },
         {
           id: '2',
@@ -48,7 +50,8 @@ export const useFlashAssetsViaJovem = () => {
           thumbnail: 'https://via.placeholder.com/64',
           colors: ['#0000FF', '#FFFF00'],
           club: 'hc',
-          swfName: 'test-2.swf'
+          swfName: 'test-2.swf',
+          source: 'viajovem'
         }
       ];
       
@@ -103,7 +106,8 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             thumbnail: 'https://via.placeholder.com/64',
             colors: ['1', '2', '3'],
             club: false,
-            swfName: `${categoryId}-1.swf`
+            swfName: `${categoryId}-1.swf`,
+            source: 'viajovem'
           },
           {
             id: `${categoryId}_2`,
@@ -115,7 +119,8 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             thumbnail: 'https://via.placeholder.com/64',
             colors: ['1', '2', '3'],
             club: 'hc',
-            swfName: `${categoryId}-2.swf`
+            swfName: `${categoryId}-2.swf`,
+            source: 'viajovem'
           }
         ];
         

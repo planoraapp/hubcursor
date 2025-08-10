@@ -1,211 +1,151 @@
 
-import { useState } from 'react';
-import { Trophy, Award, MapPin, Users } from 'lucide-react';
-import { PanelCard } from './PanelCard';
-import { useTopBadgeCollectors, useTopRooms } from '../hooks/useHabboData';
-import { getAvatarUrl } from '../services/habboApi';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Trophy, Users, Star, TrendingUp } from 'lucide-react';
+import { getTopRooms, getTopBadgeCollectors, HabboRoom } from '@/services/habboApi';
 
 export const Rankings = () => {
-  const [activeTab, setActiveTab] = useState('emblemas');
-  const { data: topCollectors, isLoading: collectorsLoading, error: collectorsError } = useTopBadgeCollectors();
-  const { data: topRooms, isLoading: roomsLoading, error: roomsError } = useTopRooms();
+  const [topRooms, setTopRooms] = useState<HabboRoom[]>([]);
+  const [topBadgeCollectors, setTopBadgeCollectors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const tabs = [
-    { id: 'emblemas', label: 'Top Colecionadores de Emblemas', icon: Award },
-    { id: 'quartos', label: 'Quartos Mais Visitados', icon: MapPin },
-  ];
+  useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        setLoading(true);
+        const [roomsData, badgeData] = await Promise.all([
+          getTopRooms(),
+          getTopBadgeCollectors()
+        ]);
+        setTopRooms(roomsData);
+        setTopBadgeCollectors(badgeData);
+      } catch (error) {
+        console.error('Error fetching rankings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const isLoading = collectorsLoading || roomsLoading;
-  const hasError = collectorsError || roomsError;
+    fetchRankings();
+  }, []);
 
-  if (isLoading) {
+  const getRankingIcon = (position: number) => {
+    switch (position) {
+      case 1:
+        return '🥇';
+      case 2:
+        return '🥈';
+      case 3:
+        return '🥉';
+      default:
+        return `${position}º`;
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="space-y-8">
-        <PanelCard title="Rankings Habbo BR">
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando rankings do Habbo BR...</p>
-            </div>
-          </div>
-        </PanelCard>
-      </div>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <div className="space-y-8">
-        <PanelCard title="Rankings Habbo BR">
-          <div className="text-center py-8">
-            <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="font-bold text-gray-800 mb-2">Erro ao carregar rankings</h3>
-            <p className="text-gray-600 mb-4">
-              Não foi possível carregar os rankings do Habbo BR.
-            </p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-[#008800] text-white px-6 py-2 rounded-lg font-medium border-2 border-[#005500] border-r-[#00bb00] border-b-[#00bb00] shadow-[1px_1px_0px_0px_#5a5a5a] hover:bg-[#00bb00] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none transition-all duration-100"
-            >
-              Tentar Novamente
-            </button>
-          </div>
-        </PanelCard>
-      </div>
+      <Card className="bg-white border-2 border-black shadow-lg">
+        <CardContent className="p-6 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando rankings...</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <PanelCard title="Rankings Habbo BR">
-        <p className="text-lg text-gray-600">
-          Veja os Habbos e quartos em destaque nos rankings oficiais do Habbo Hotel BR.
-        </p>
-      </PanelCard>
+    <Card className="bg-white border-2 border-black shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white border-b-2 border-black">
+        <CardTitle className="volter-font flex items-center gap-2">
+          <Trophy className="w-5 h-5" />
+          Rankings Habbo
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <Tabs defaultValue="rooms" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="rooms" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Top Salas
+            </TabsTrigger>
+            <TabsTrigger value="badges" className="flex items-center gap-2">
+              <Star className="w-4 h-4" />
+              Emblemas
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Atividade
+            </TabsTrigger>
+          </TabsList>
 
-      <PanelCard>
-        <div className="flex space-x-1 mb-6">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 font-bold border-2 border-[#5a5a5a] rounded-t-lg transition-all duration-100 ${
-                  activeTab === tab.id
-                    ? 'bg-white border-b-white text-[#38332c]'
-                    : 'bg-[#d1d1d1] text-[#38332c] hover:bg-[#e1e1e1]'
-                }`}
-              >
-                <Icon size={16} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="space-y-4">
-          {activeTab === 'emblemas' && (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-800">Top Colecionadores de Emblemas</h3>
-                <div className="text-sm text-gray-500">
-                  📊 Baseado em dados reais da API
-                </div>
-              </div>
-
-              {topCollectors && topCollectors.length > 0 ? (
-                <div className="space-y-3">
-                  {topCollectors.map((collector, index) => (
-                    <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg border">
-                      <div className="flex items-center space-x-3">
-                        <span className="font-bold text-2xl text-gray-700 w-8">
-                          {index + 1}.
-                        </span>
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300">
-                          <img
-                            src={getAvatarUrl(collector.user.figureString, 's')}
-                            alt={collector.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.parentElement!.innerHTML = 
-                                `<div class="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">${collector.name.substring(0, 2).toUpperCase()}</div>`;
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-gray-800">{collector.name}</p>
-                        <p className="text-sm text-gray-600">{collector.score} Emblemas</p>
-                        {collector.user.motto && (
-                          <p className="text-xs text-gray-500 italic">"{collector.user.motto}"</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg text-[#008800]">{collector.score}</div>
-                        <div className="text-sm text-gray-500">emblemas</div>
-                        <div className="text-xs text-gray-400">
-                          {collector.user.online ? '🟢 Online' : '🔴 Offline'}
-                        </div>
-                      </div>
+          <TabsContent value="rooms" className="space-y-4">
+            <div className="space-y-3">
+              {topRooms.map((room, index) => (
+                <div 
+                  key={room.id} 
+                  className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-2xl font-bold text-gray-600 w-12 text-center">
+                      {getRankingIcon(index + 1)}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Award className="mx-auto mb-4 text-gray-400" size={48} />
-                  <p className="text-gray-600">Nenhum colecionador encontrado no momento.</p>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTab === 'quartos' && (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-800">Quartos Mais Visitados</h3>
-                <div className="text-sm text-gray-500">
-                  📊 Baseado em dados reais da API
-                </div>
-              </div>
-
-              {topRooms && topRooms.length > 0 ? (
-                <div className="space-y-3">
-                  {topRooms.map((room, index) => (
-                    <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg border">
-                      <div className="flex items-center space-x-3">
-                        <span className="font-bold text-2xl text-gray-700 w-8">
-                          {index + 1}.
-                        </span>
-                        <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-bold">
-                          🏠
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-gray-800">{room.name}</p>
-                        <p className="text-sm text-gray-600">Por: {room.owner}</p>
-                        {room.room.description && (
-                          <p className="text-xs text-gray-500 line-clamp-1">{room.room.description}</p>
-                        )}
-                        <div className="flex items-center space-x-2 mt-1">
-                          <span className="text-xs text-gray-500">⭐ {room.room.rating || 0}</span>
-                          <span className="text-xs text-gray-500">
-                            📅 {new Date(room.room.creationTime).toLocaleDateString('pt-BR')}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg text-[#008800]">{room.score}</div>
-                        <div className="text-sm text-gray-500">visitantes</div>
-                        <div className="text-xs text-gray-400">
-                          Max: {room.room.maxUserCount || 'N/A'}
-                        </div>
-                      </div>
+                    <div>
+                      <h3 className="font-bold text-gray-800">{room.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        {room.description || 'Sem descrição'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Proprietário: {room.ownerName}
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="mb-2">
+                      <Users className="w-3 h-3 mr-1" />
+                      {room.userCount}
+                    </Badge>
+                    {room.rating && (
+                      <div className="flex items-center gap-1 text-sm">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        {room.rating}
+                      </div>
+                    )}
+                    {room.creationTime && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(room.creationTime).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <MapPin className="mx-auto mb-4 text-gray-400" size={48} />
-                  <p className="text-gray-600">Nenhum quarto encontrado no momento.</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </PanelCard>
+              ))}
+            </div>
+            
+            {topRooms.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                <p>Nenhuma sala rankeada disponível no momento.</p>
+              </div>
+            )}
+          </TabsContent>
 
-      <PanelCard title="Novatos em Destaque">
-        <div className="text-center py-8">
-          <Users className="mx-auto mb-4 text-gray-400" size={48} />
-          <h3 className="font-bold text-gray-800 mb-2">Em Desenvolvimento</h3>
-          <p className="text-gray-600">
-            Esta seção mostrará novos usuários ativos do Habbo BR em breve!
-          </p>
-        </div>
-      </PanelCard>
-    </div>
+          <TabsContent value="badges" className="space-y-4">
+            <div className="text-center text-gray-500 py-8">
+              <Star className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Rankings de emblemas em desenvolvimento...</p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="activity" className="space-y-4">
+            <div className="text-center text-gray-500 py-8">
+              <TrendingUp className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Rankings de atividade em desenvolvimento...</p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
+
+export default Rankings;

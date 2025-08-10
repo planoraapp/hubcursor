@@ -1,6 +1,11 @@
 
 import { useState } from 'react';
 
+export interface BackgroundOption {
+  type: 'repeat' | 'color' | 'cover';
+  value: string;
+}
+
 export const useEnhancedHabboHome = () => {
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -14,20 +19,20 @@ export const useEnhancedHabboHome = () => {
     background: null,
     guestbook: [],
     error: null,
-    addWidget: () => {},
-    removeWidget: () => {},
-    updateWidgetPosition: () => {},
+    addWidget: (widgetType: string) => {},
+    removeWidget: (widgetId: string) => {},
+    updateWidgetPosition: (widgetId: string, x: number, y: number) => {},
     handleSaveLayout: () => Promise.resolve(),
     isEditMode,
     setIsEditMode,
     isOwner: false,
     addGuestbookEntry: async (message: string) => {},
-    setStickers: () => {},
+    setStickers: (stickers: any[]) => {},
     handleStickerAdd: (stickerId: string) => {},
     handleStickerRemove: (stickerId: string) => {},
-    handleStickerMove: () => {},
-    handleStickerDrop: () => {},
-    handleStickerPositionChange: () => {},
-    handleBackgroundChange: (backgroundId: string) => {},
+    handleStickerMove: (stickerId: string, x: number, y: number) => {},
+    handleStickerDrop: (stickerId: string, x: number, y: number) => {},
+    handleStickerPositionChange: (stickerId: string, x: number, y: number) => {},
+    handleBackgroundChange: (background: BackgroundOption) => {},
   };
 };
