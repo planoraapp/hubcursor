@@ -13,12 +13,32 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const action = url.searchParams.get('action');
-    const username = url.searchParams.get('username');
-    const hotel = url.searchParams.get('hotel') || 'com.br';
+    let action: string | null = null;
+    let username: string | null = null;
+    let hotel: string = 'com.br';
+
+    // Handle both GET (with URL params) and POST (with JSON body)
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      action = url.searchParams.get('action');
+      username = url.searchParams.get('username');
+      hotel = url.searchParams.get('hotel') || 'com.br';
+    } else if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        action = body.action;
+        username = body.username;
+        hotel = body.hotel || 'com.br';
+      } catch (e) {
+        console.error('[Habbo API Proxy] Error parsing JSON body:', e);
+      }
+    }
 
     console.log(`[Habbo API Proxy] Action: ${action}, Username: ${username}, Hotel: ${hotel}`);
+
+    if (!action) {
+      throw new Error('Action parameter is required');
+    }
 
     let apiUrl = '';
     let response;
@@ -45,8 +65,31 @@ serve(async (req) => {
         apiUrl = `https://www.habbo.${hotel}/api/public/users/${encodeURIComponent(username)}/photos`;
         break;
 
+      case 'getUserFriends':
+        if (!username) {
+          throw new Error('Username is required for getUserFriends');
+        }
+        apiUrl = `https://www.habbo.${hotel}/api/public/users/${encodeURIComponent(username)}/friends`;
+        break;
+
+      case 'getHotelTicker':
+        // Mock hotel ticker data - replace with real API when available
+        const mockHotelActivities = [
+          { type: 'login', username: 'Beebop', time: new Date().toISOString() },
+          { type: 'achievement', username: 'HabboFan', achievement: 'Primeira semana!', time: new Date(Date.now() - 300000).toISOString() },
+          { type: 'friend', username: 'GameMaster', friend: 'NewPlayer', time: new Date(Date.now() - 600000).toISOString() },
+          { type: 'login', username: 'StarPlayer', time: new Date(Date.now() - 900000).toISOString() },
+          { type: 'achievement', username: 'ProGamer', achievement: 'Mestre dos jogos!', time: new Date(Date.now() - 1200000).toISOString() },
+        ];
+        
+        return new Response(JSON.stringify({
+          activities: mockHotelActivities
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
       case 'getTicker':
-        // Mock ticker data for now - replace with real API when available
+        // Mock ticker data for general use
         return new Response(JSON.stringify({
           activities: [
             { type: 'login', username: 'Beebop', time: new Date().toISOString() },

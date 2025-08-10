@@ -31,17 +31,23 @@ export interface TickerActivity {
   time: string;
 }
 
+export interface HabboFriend {
+  name: string;
+  figureString: string;
+  motto: string;
+  online: boolean;
+  lastAccessTime: string;
+}
+
 class HabboProxyService {
   private async callProxy(action: string, params: Record<string, string> = {}) {
     try {
-      const searchParams = new URLSearchParams({
-        action,
-        ...params
-      });
-
       const { data, error } = await supabase.functions.invoke('habbo-api-proxy', {
-        body: null,
-        method: 'GET',
+        body: {
+          action,
+          ...params
+        },
+        method: 'POST',
       });
 
       if (error) {
@@ -108,6 +114,26 @@ class HabboProxyService {
       return data || [];
     } catch (error) {
       console.error(`[HabboProxyService] Error fetching photos:`, error);
+      return [];
+    }
+  }
+
+  async getUserFriends(username: string, hotel: string = 'com.br'): Promise<HabboFriend[]> {
+    try {
+      const data = await this.callProxy('getUserFriends', { username, hotel });
+      return data || [];
+    } catch (error) {
+      console.error(`[HabboProxyService] Error fetching friends:`, error);
+      return [];
+    }
+  }
+
+  async getHotelTicker(hotel: string = 'com.br'): Promise<TickerActivity[]> {
+    try {
+      const data = await this.callProxy('getHotelTicker', { hotel });
+      return data?.activities || [];
+    } catch (error) {
+      console.error(`[HabboProxyService] Error fetching hotel ticker:`, error);
       return [];
     }
   }
