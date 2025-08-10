@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
@@ -34,7 +35,7 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       thumbnailUrl: 'https://via.placeholder.com/64',
       club: 'FREE',
       swfName: 'hd-180.swf',
-      source: 'official'
+      source: 'official-habbo'
     },
     {
       id: '2',
@@ -48,7 +49,7 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       thumbnailUrl: 'https://via.placeholder.com/64',
       club: 'HC',
       swfName: 'ch-255.swf',
-      source: 'official'
+      source: 'official-habbo'
     }
   ];
 
@@ -84,3 +85,4 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
 };
 
 export default OfficialClothingGrid;
+
