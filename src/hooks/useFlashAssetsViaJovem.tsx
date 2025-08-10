@@ -12,7 +12,7 @@ export interface ViaJovemFlashItem {
   colors: string[]; // Made required to match OfficialHabboAsset
   club: 'FREE' | 'HC'; // Made required to match OfficialHabboAsset
   swfName?: string;
-  source?: string;
+  source: 'official-habbo' | 'viajovem' | string; // Made compatible with OfficialHabboAsset
 }
 
 export const useFlashAssetsViaJovem = () => {
