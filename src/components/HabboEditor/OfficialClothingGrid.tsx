@@ -34,9 +34,9 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       colors: ['1', '2', '3'],
       thumbnail: 'https://via.placeholder.com/64',
       thumbnailUrl: 'https://via.placeholder.com/64',
-      club: 'FREE',
+      club: 'FREE' as const,
       swfName: 'hd-180.swf',
-      source: 'official-habbo'
+      source: 'official-habbo' as const
     },
     {
       id: '2',
@@ -48,9 +48,9 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       colors: ['1', '2', '3'],
       thumbnail: 'https://via.placeholder.com/64',
       thumbnailUrl: 'https://via.placeholder.com/64',
-      club: 'HC',
+      club: 'HC' as const,
       swfName: 'ch-255.swf',
-      source: 'official-habbo'
+      source: 'official-habbo' as const
     }
   ].filter(item => item.category === selectedCategory);
 
