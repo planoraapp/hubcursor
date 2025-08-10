@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName } from '../services/habboApi';
 import { News } from './News';
-import { Rankings } from './Rankings';
+import Rankings from './Rankings';
 
 export const HomePage = () => {
   const { isLoggedIn, habboAccount } = useAuth();

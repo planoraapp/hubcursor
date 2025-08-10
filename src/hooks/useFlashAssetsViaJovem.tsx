@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 
 export interface ViaJovemFlashItem {
@@ -8,8 +9,8 @@ export interface ViaJovemFlashItem {
   gender: 'M' | 'F' | 'U';
   figureId: string;
   thumbnail?: string;
-  thumbnailUrl?: string;
-  colors?: string[];
+  thumbnailUrl: string;
+  colors: string[]; // Made required to match OfficialHabboAsset
   club?: 'hc' | 'normal' | boolean;
   swfName?: string;
   source?: string;
@@ -36,7 +37,7 @@ export const useFlashAssetsViaJovem = () => {
           figureId: 'test-1',
           thumbnail: 'https://via.placeholder.com/64',
           thumbnailUrl: 'https://via.placeholder.com/64',
-          colors: ['#FF0000', '#00FF00'],
+          colors: ['1', '2', '3'], // Now required
           club: false,
           swfName: 'test-1.swf',
           source: 'viajovem'
@@ -50,7 +51,7 @@ export const useFlashAssetsViaJovem = () => {
           figureId: 'test-2',
           thumbnail: 'https://via.placeholder.com/64',
           thumbnailUrl: 'https://via.placeholder.com/64',
-          colors: ['#0000FF', '#FFFF00'],
+          colors: ['1', '2', '3'], // Now required
           club: 'hc',
           swfName: 'test-2.swf',
           source: 'viajovem'
@@ -107,7 +108,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             figureId: `${categoryId}-1`,
             thumbnail: 'https://via.placeholder.com/64',
             thumbnailUrl: 'https://via.placeholder.com/64',
-            colors: ['1', '2', '3'],
+            colors: ['1', '2', '3'], // Now required
             club: false,
             swfName: `${categoryId}-1.swf`,
             source: 'viajovem'
@@ -121,7 +122,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
             figureId: `${categoryId}-2`,
             thumbnail: 'https://via.placeholder.com/64',
             thumbnailUrl: 'https://via.placeholder.com/64',
-            colors: ['1', '2', '3'],
+            colors: ['1', '2', '3'], // Now required
             club: 'hc',
             swfName: `${categoryId}-2.swf`,
             source: 'viajovem'
