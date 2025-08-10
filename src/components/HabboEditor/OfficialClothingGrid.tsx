@@ -1,10 +1,10 @@
 
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ViaJovemFlashItem } from '@/hooks/useFlashAssetsViaJovem';
 
 interface OfficialClothingGridProps {
+  selectedCategory: string;
   selectedGender: 'M' | 'F';
   selectedHotel: string;
   onItemSelect: (item: ViaJovemFlashItem, colorId?: string) => void;
@@ -14,6 +14,7 @@ interface OfficialClothingGridProps {
 }
 
 const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
+  selectedCategory,
   selectedGender,
   selectedHotel,
   onItemSelect,
@@ -27,7 +28,7 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       id: '1',
       name: 'Test Hair',
       type: 'hd',
-      category: 'hair',
+      category: 'hd',
       gender: selectedGender,
       figureId: 'hd-180',
       colors: ['1', '2', '3'],
@@ -41,7 +42,7 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       id: '2',
       name: 'Test Shirt',
       type: 'ch',
-      category: 'shirt',
+      category: 'ch',
       gender: selectedGender,
       figureId: 'ch-255',
       colors: ['1', '2', '3'],
@@ -51,13 +52,13 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
       swfName: 'ch-255.swf',
       source: 'official-habbo'
     }
-  ];
+  ].filter(item => item.category === selectedCategory);
 
   return (
     <div className={className}>
       <Card>
         <CardHeader>
-          <CardTitle>Official Habbo Assets</CardTitle>
+          <CardTitle>Official Habbo Assets - {selectedCategory.toUpperCase()}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-2">
@@ -85,4 +86,3 @@ const OfficialClothingGrid: React.FC<OfficialClothingGridProps> = ({
 };
 
 export default OfficialClothingGrid;
-
