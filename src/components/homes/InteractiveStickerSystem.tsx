@@ -1,196 +1,98 @@
-
-import React, { useState, useCallback } from 'react';
-import { useHomeAssets } from '@/hooks/useHomeAssets';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Stickers, X, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
-
-interface Sticker {
-  id: string;
-  sticker_id: string;
-  sticker_src: string;
-  category: string;
-  x: number;
-  y: number;
-  z_index: number;
-  rotation?: number;
-  scale?: number;
-}
+import { Card } from '@/components/ui/card';
+import { Trash2, Move, RotateCw, Palette, Sticker } from 'lucide-react';
 
 interface InteractiveStickerSystemProps {
-  stickers: Sticker[];
-  isEditMode: boolean;
-  isOwner: boolean;
-  canvasSize: { width: number; height: number };
-  onStickerAdd?: (stickerData: any) => void;
-  onStickerMove?: (stickerId: string, x: number, y: number) => void;
-  onStickerRemove?: (stickerId: string) => void;
+  className?: string;
 }
 
-export const InteractiveStickerSystem: React.FC<InteractiveStickerSystemProps> = ({
-  stickers,
-  isEditMode,
-  isOwner,
-  canvasSize,
-  onStickerAdd,
-  onStickerMove,
-  onStickerRemove
-}) => {
-  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [showStickerPanel, setShowStickerPanel] = useState(false);
-  const { assets, getAssetUrl } = useHomeAssets();
+export const InteractiveStickerSystem: React.FC<InteractiveStickerSystemProps> = ({ className }) => {
+  const [stickers, setStickers] = useState<any[]>([]);
+  const [selectedSticker, setSelectedSticker] = useState<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleStickerClick = useCallback((stickerId: string, e: React.MouseEvent) => {
-    if (!isEditMode) return;
-    
-    e.stopPropagation();
-    setSelectedSticker(stickerId);
-  }, [isEditMode]);
+  const addSticker = (sticker: any) => {
+    setStickers([...stickers, { ...sticker, id: Date.now(), x: 50, y: 50, rotation: 0 }]);
+  };
 
-  const handleStickerDrag = useCallback((stickerId: string, e: React.MouseEvent) => {
-    if (!isEditMode || !isOwner) return;
-    
-    setIsDragging(true);
-    
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const sticker = stickers.find(s => s.id === stickerId);
-    if (!sticker) return;
-    
-    const startStickerX = sticker.x;
-    const startStickerY = sticker.y;
+  const handleSelect = (stickerId: number) => {
+    setSelectedSticker(stickers.find(sticker => sticker.id === stickerId));
+  };
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
-      
-      const newX = Math.max(0, Math.min(canvasSize.width - 64, startStickerX + deltaX));
-      const newY = Math.max(0, Math.min(canvasSize.height - 64, startStickerY + deltaY));
-      
-      onStickerMove?.(stickerId, newX, newY);
-    };
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!selectedSticker) return;
 
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
+    const container = containerRef.current;
+    if (!container) return;
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [isEditMode, isOwner, stickers, canvasSize, onStickerMove]);
+    const containerRect = container.getBoundingClientRect();
+    const x = e.clientX - containerRect.left - selectedSticker.width / 2;
+    const y = e.clientY - containerRect.top - selectedSticker.height / 2;
 
-  const handleAddSticker = useCallback((asset: any) => {
-    if (!onStickerAdd) return;
-    
-    const stickerData = {
-      sticker_id: asset.id,
-      sticker_src: getAssetUrl(asset),
-      category: asset.category,
-      x: Math.random() * (canvasSize.width - 100),
-      y: Math.random() * (canvasSize.height - 100),
-      z_index: Math.max(...stickers.map(s => s.z_index), 0) + 1,
-      rotation: 0,
-      scale: 1
-    };
-    
-    onStickerAdd(stickerData);
-    setShowStickerPanel(false);
-  }, [onStickerAdd, getAssetUrl, canvasSize, stickers]);
+    setStickers(stickers.map(sticker =>
+      sticker.id === selectedSticker.id ? { ...sticker, x, y } : sticker
+    ));
+  };
+
+  const handleRotate = () => {
+    if (!selectedSticker) return;
+    setStickers(stickers.map(sticker =>
+      sticker.id === selectedSticker.id ? { ...sticker, rotation: sticker.rotation + 15 } : sticker
+    ));
+  };
+
+  const handleRemove = () => {
+    if (!selectedSticker) return;
+    setStickers(stickers.filter(sticker => sticker.id !== selectedSticker.id));
+    setSelectedSticker(null);
+  };
 
   return (
-    <>
-      {/* Stickers on Canvas */}
-      {stickers.map((sticker) => (
-        <div
-          key={sticker.id}
-          className={`absolute cursor-pointer transition-all duration-200 ${
-            isEditMode ? 'hover:scale-110' : ''
-          } ${selectedSticker === sticker.id ? 'ring-2 ring-blue-500' : ''}`}
-          style={{
-            left: sticker.x,
-            top: sticker.y,
-            zIndex: sticker.z_index,
-            transform: `scale(${sticker.scale || 1}) rotate(${sticker.rotation || 0}deg)`,
-            transformOrigin: 'center'
-          }}
-          onClick={(e) => handleStickerClick(sticker.id, e)}
-          onMouseDown={(e) => isEditMode && handleStickerDrag(sticker.id, e)}
-        >
-          <img
-            src={sticker.sticker_src}
-            alt={`Sticker ${sticker.sticker_id}`}
-            className="max-w-16 max-h-16 object-contain pointer-events-none"
-            draggable={false}
-          />
-          
-          {/* Edit Controls */}
-          {isEditMode && selectedSticker === sticker.id && (
-            <div className="absolute -top-2 -right-2 flex gap-1">
-              <Button
-                size="sm"
-                variant="destructive"
-                className="w-6 h-6 p-0"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onStickerRemove?.(sticker.id);
-                  setSelectedSticker(null);
-                }}
-              >
-                <X className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-        </div>
-      ))}
-
-      {/* Sticker Panel */}
-      {isEditMode && isOwner && (
-        <div className="absolute top-4 right-4 z-50">
-          {!showStickerPanel ? (
-            <Button
-              onClick={() => setShowStickerPanel(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <Stickers className="w-4 h-4 mr-2" />
-              Adicionar Stickers
+    <div className={className}>
+      <Card>
+        <div className="flex items-center justify-between p-4">
+          <h2 className="text-lg font-semibold">Interactive Sticker System</h2>
+          <div className="space-x-2">
+            <Button size="sm" variant="outline" onClick={handleRotate} disabled={!selectedSticker}>
+              <RotateCw className="w-4 h-4 mr-2" />
+              Rotate
             </Button>
-          ) : (
-            <Card className="w-80 max-h-96 overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-sm">Escolher Sticker</CardTitle>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowStickerPanel(false)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-2">
-                <div className="grid grid-cols-4 gap-2 max-h-60 overflow-y-auto">
-                  {assets.Stickers?.map((asset) => (
-                    <button
-                      key={asset.id}
-                      onClick={() => handleAddSticker(asset)}
-                      className="aspect-square bg-gray-100 rounded border-2 border-transparent hover:border-purple-400 transition-all p-1"
-                    >
-                      <img
-                        src={getAssetUrl(asset)}
-                        alt={asset.name}
-                        className="w-full h-full object-contain"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            <Button size="sm" variant="destructive" onClick={handleRemove} disabled={!selectedSticker}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remove
+            </Button>
+          </div>
         </div>
-      )}
-    </>
+        <Card className="relative h-80 border-2 border-dashed border-gray-400 overflow-hidden">
+          <div
+            className="absolute inset-0"
+            ref={containerRef}
+            onMouseMove={handleMove}
+          >
+            {stickers.map(sticker => (
+              <img
+                key={sticker.id}
+                src={sticker.src}
+                alt={sticker.name}
+                className="absolute cursor-move"
+                style={{
+                  width: sticker.width + 'px',
+                  height: sticker.height + 'px',
+                  left: sticker.x + 'px',
+                  top: sticker.y + 'px',
+                  transform: `rotate(${sticker.rotation}deg)`,
+                  userSelect: 'none',
+                }}
+                onClick={() => handleSelect(sticker.id)}
+              />
+            ))}
+          </div>
+        </Card>
+        <div className="p-4">
+          <Button onClick={() => addSticker({ id: 'habbo_logo', name: 'Habbo Logo', src: '/assets/LogoHabbo.png', width: 80, height: 40 })}>Add Habbo Logo</Button>
+        </div>
+      </Card>
+    </div>
   );
 };

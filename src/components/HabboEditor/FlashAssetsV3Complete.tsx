@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, X } from 'lucide-react';
 import { useFlashAssetsViaJovem } from '@/hooks/useFlashAssetsViaJovem';
-import ImprovedAvatarPreview from './ImprovedAvatarPreview';
+import { ImprovedAvatarPreview } from './ImprovedAvatarPreview';
 import SkinToneBar from './SkinToneBar';
 import ColorPickerPopover from './ColorPickerPopover';
 import GenderFilterButtons from './GenderFilterButtons';

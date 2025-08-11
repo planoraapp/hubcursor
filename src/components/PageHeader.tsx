@@ -5,17 +5,26 @@ interface PageHeaderProps {
   title: string;
   subtitle?: string;
   icon?: string;
+  backgroundImage?: string;
   children?: React.ReactNode;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ 
   title, 
   subtitle, 
-  icon, 
+  icon,
+  backgroundImage,
   children 
 }) => {
+  const headerStyle = backgroundImage ? {
+    backgroundImage: `url(${backgroundImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat'
+  } : {};
+
   return (
-    <div className="mb-6">
+    <div className="mb-6" style={headerStyle}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {icon && (
