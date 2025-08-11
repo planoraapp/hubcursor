@@ -1,43 +1,88 @@
+
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Copy, User, Palette } from 'lucide-react';
+import { User, Palette, Zap } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FlashAssetsTab } from '@/components/HabboEditor/FlashAssetsTab';
-import { getAvatarUrl } from '@/services/habboApiMultiHotel';
-import { toast } from 'sonner';
+import { ImprovedAvatarPreview } from '@/components/HabboEditor/ImprovedAvatarPreview';
+import { generateFigureString } from '@/lib/figureStringGenerator';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const OfficialHabboEditor: React.FC = () => {
-  const [figureString, setFigureString] = useState('hr-100-40.ch-210-66.lg-270-82.sh-290-81.hd-180-1.fa-1201');
+  const [figureString, setFigureString] = useState('hr-100-40.ch-210-66.lg-270-82.sh-290-81.hd-180-1');
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
+  const [selectedHotel, setSelectedHotel] = useState('com');
   const [activeTab, setActiveTab] = useState('flash-assets');
+  const { toast } = useToast();
 
-  const copyFigureString = useCallback(() => {
-    navigator.clipboard.writeText(figureString);
-    toast.success('Código do avatar copiado!');
-  }, [figureString]);
-
-  const handleItemSelect = (item: any) => {
-    if (!item) return;
-
-    let newFigureString = figureString;
-
-    // Extract the category (e.g., "hd", "ch", "lg") from the item
-    const category = item.part.substring(0, 2);
-
-    // Create a regex to find the existing part in the figureString
-    const regex = new RegExp(`${category}-\\d+`, 'g');
-
-    // Replace the existing part with the new item
-    if (newFigureString.match(regex)) {
-      newFigureString = newFigureString.replace(regex, `${item.part}`);
-    } else {
-      // If the category doesn't exist, append it
-      newFigureString += `.${item.part}`;
+  const handleItemSelect = useCallback((item: any) => {
+    if (!item) {
+      console.warn('⚠️ No item provided to handleItemSelect');
+      return;
     }
 
-    setFigureString(newFigureString);
+    console.log('🎨 [OfficialHabboEditor] Item selected:', item);
+
+    try {
+      // Use the first available color as default
+      const colorId = Array.isArray(item.colors) && item.colors.length > 0 ? item.colors[0] : '1';
+      
+      const newFigureString = generateFigureString(figureString, item, colorId);
+      setFigureString(newFigureString);
+      
+      toast({
+        title: "✨ Item aplicado!",
+        description: `${item.name || item.category} foi aplicado ao avatar`,
+      });
+      
+      console.log('✅ [OfficialHabboEditor] Figure updated:', newFigureString);
+    } catch (error) {
+      console.error('❌ [OfficialHabboEditor] Error applying item:', error);
+      toast({
+        title: "❌ Erro",
+        description: "Não foi possível aplicar o item",
+        variant: "destructive"
+      });
+    }
+  }, [figureString, toast]);
+
+  const handleReset = useCallback(() => {
+    const defaultFigure = selectedGender === 'F' 
+      ? 'hr-515-45.ch-210-66.lg-270-82.sh-290-1.hd-180-1'
+      : 'hr-100-40.ch-210-66.lg-270-82.sh-290-81.hd-180-1';
+    
+    setFigureString(defaultFigure);
+    toast({
+      title: "🔄 Avatar resetado",
+      description: "Avatar voltou ao padrão",
+    });
+  }, [selectedGender, toast]);
+
+  const handlePopulateCache = async () => {
+    try {
+      toast({
+        title: "🔄 Iniciando",
+        description: "Populando cache de roupas...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('populate-clothing-cache');
+      
+      if (error) throw error;
+      
+      toast({
+        title: "✅ Sucesso!",
+        description: `Cache populado com ${data.totalInserted} itens`,
+      });
+    } catch (error) {
+      console.error('❌ Error populating cache:', error);
+      toast({
+        title: "❌ Erro",
+        description: "Falha ao popular cache de roupas",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -45,52 +90,32 @@ export const OfficialHabboEditor: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-gray-800 volter-font">
-          Editor de Avatar Habbo
+          🎨 Editor de Avatar Habbo
         </h1>
         <p className="text-lg text-gray-600">
           Crie e personalize seu avatar usando nossa base completa de roupas e acessórios
         </p>
+        
+        {/* Quick Actions */}
+        <div className="flex justify-center gap-2">
+          <Button onClick={handlePopulateCache} variant="outline" size="sm">
+            <Zap className="w-4 h-4 mr-1" />
+            Popular Cache
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Avatar Preview */}
         <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Preview do Avatar
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-8 flex items-center justify-center min-h-[300px]">
-                <img
-                  src={getAvatarUrl(figureString)}
-                  alt="Preview do Avatar"
-                  className="max-w-full max-h-full object-contain"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Código do Avatar:</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={figureString}
-                    onChange={(e) => setFigureString(e.target.value)}
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    onClick={copyFigureString}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ImprovedAvatarPreview
+            figureString={figureString}
+            selectedGender={selectedGender}
+            selectedHotel={selectedHotel}
+            onGenderChange={setSelectedGender}
+            onHotelChange={setSelectedHotel}
+            onReset={handleReset}
+          />
         </div>
 
         {/* Editor Tabs */}
@@ -105,7 +130,7 @@ export const OfficialHabboEditor: React.FC = () => {
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="flash-assets">Flash Assets - Database</TabsTrigger>
+                  <TabsTrigger value="flash-assets">Database de Roupas</TabsTrigger>
                   <TabsTrigger value="official-api">API Oficial</TabsTrigger>
                 </TabsList>
                 
@@ -114,9 +139,15 @@ export const OfficialHabboEditor: React.FC = () => {
                 </TabsContent>
                 
                 <TabsContent value="official-api" className="mt-4">
-                  <div className="text-center p-8 text-gray-500">
-                    <p>API Oficial em desenvolvimento</p>
-                    <p className="text-sm mt-2">Esta aba utilizará dados direto da API oficial do Habbo</p>
+                  <div className="text-center p-8 text-gray-500 space-y-4">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                      <User className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-700">API Oficial</h3>
+                      <p className="text-sm mt-2">Esta aba utilizará dados direto da API oficial do Habbo</p>
+                      <p className="text-xs text-gray-400 mt-1">Em desenvolvimento</p>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -127,3 +158,5 @@ export const OfficialHabboEditor: React.FC = () => {
     </div>
   );
 };
+
+export default OfficialHabboEditor;

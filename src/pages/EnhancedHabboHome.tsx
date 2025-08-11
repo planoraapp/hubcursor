@@ -1,18 +1,21 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEnhancedHabboHome } from '@/hooks/useEnhancedHabboHome';
 import { UserCard } from '@/components/homes/UserCard';
 import { GuestbookWidget } from '@/components/homes/GuestbookWidget';
 import { RatingWidget } from '@/components/homes/RatingWidget';
 import { EditModeToggle } from '@/components/homes/EditModeToggle';
-import { StickerSystem } from '@/components/homes/StickerSystem';
+import { InteractiveStickerSystem } from '@/components/homes/InteractiveStickerSystem';
 import { BackgroundCustomizer } from '@/components/homes/BackgroundCustomizer';
+import { PageHeader } from '@/components/PageHeader';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const EnhancedHabboHome: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 900, height: 600 });
   const { toast } = useToast();
@@ -30,8 +33,20 @@ const EnhancedHabboHome: React.FC = () => {
     updateWidgetPosition,
     updateWidgetSize,
     addGuestbookEntry,
-    getWidgetSizeRestrictions
+    getWidgetSizeRestrictions,
+    handleStickerDrop,
+    handleStickerPositionChange,
+    handleBackgroundChange
   } = useEnhancedHabboHome(username || '');
+
+  // Canonical redirect based on hotel detection
+  useEffect(() => {
+    if (habboData && !window.location.pathname.includes(`/${habboData.hotel}/`)) {
+      const canonicalPath = `/enhanced-home/${habboData.hotel}/${habboData.habbo_name}`;
+      console.log('🔄 Redirecting to canonical URL:', canonicalPath);
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [habboData, navigate]);
 
   // Canvas resize observer
   useEffect(() => {
@@ -41,7 +56,10 @@ const EnhancedHabboHome: React.FC = () => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setCanvasSize({ width: Math.max(800, width), height: Math.max(500, height) });
+        setCanvasSize({ 
+          width: Math.max(800, Math.min(1200, width)), 
+          height: Math.max(500, Math.min(800, height))
+        });
       }
     });
 
@@ -51,10 +69,16 @@ const EnhancedHabboHome: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
+      <div className="min-h-screen flex items-center justify-center bg-repeat"
+           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Carregando Habbo Home...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+          <p className="text-white text-lg volter-font"
+             style={{
+               textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+             }}>
+            Carregando Habbo Home Enhanced...
+          </p>
         </div>
       </div>
     );
@@ -62,37 +86,56 @@ const EnhancedHabboHome: React.FC = () => {
 
   if (!habboData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            Usuário não encontrado
+      <div className="min-h-screen flex items-center justify-center bg-repeat"
+           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <div className="text-center bg-white/90 backdrop-blur-sm rounded-lg p-8 shadow-lg max-w-md">
+          <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
+            Habbo Home não encontrada
           </h1>
-          <p className="text-gray-600">
-            O usuário "{username}" não foi encontrado.
+          <p className="text-gray-600 mb-4">
+            O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
           </p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-blue-600 text-white px-6 py-2 rounded volter-font hover:bg-blue-700 transition-colors"
+          >
+            Voltar ao Início
+          </button>
         </div>
       </div>
     );
   }
 
   const getBackgroundStyle = () => {
-    switch (background.background_type) {
-      case 'color':
-        return { backgroundColor: background.background_value };
-      case 'repeat':
-        return { 
-          backgroundImage: `url(${background.background_value})`,
-          backgroundRepeat: 'repeat'
-        };
-      case 'cover':
-        return { 
-          backgroundImage: `url(${background.background_value})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        };
-      default:
-        return { backgroundColor: '#c7d2dc' };
+    const baseStyle = {
+      minHeight: '100vh',
+      backgroundImage: 'url(/assets/bghabbohub.png)',
+      backgroundRepeat: 'repeat'
+    };
+
+    if (background.background_type === 'color') {
+      return {
+        ...baseStyle,
+        background: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), ${background.background_value}`
+      };
+    } else if (background.background_type === 'repeat') {
+      return {
+        ...baseStyle,
+        background: `url(${background.background_value})`,
+        backgroundRepeat: 'repeat'
+      };
+    } else if (background.background_type === 'cover') {
+      return {
+        ...baseStyle,
+        background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${background.background_value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      };
     }
+
+    return baseStyle;
   };
 
   const renderWidget = (widget: any) => {
@@ -108,7 +151,7 @@ const EnhancedHabboHome: React.FC = () => {
         zIndex: widget.z_index,
         cursor: isEditMode ? 'move' : 'default'
       },
-      className: `${isEditMode ? 'border-2 border-dashed border-blue-400' : ''}`
+      className: `${isEditMode ? 'border-2 border-dashed border-blue-400 bg-white/5' : ''} transition-all duration-200`
     };
 
     switch (widget.widget_id) {
@@ -130,7 +173,7 @@ const EnhancedHabboHome: React.FC = () => {
               entries={guestbook}
               onAddEntry={addGuestbookEntry}
               isOwner={isOwner}
-              homeOwnerName={habboData.name}
+              homeOwnerName={habboData.habbo_name}
             />
           </div>
         );
@@ -140,7 +183,7 @@ const EnhancedHabboHome: React.FC = () => {
           <div key={widget.id} {...commonProps}>
             <RatingWidget
               homeOwnerUserId={habboData.id}
-              homeOwnerName={habboData.name}
+              homeOwnerName={habboData.habbo_name}
             />
           </div>
         );
@@ -148,8 +191,8 @@ const EnhancedHabboHome: React.FC = () => {
       default:
         return (
           <div key={widget.id} {...commonProps}>
-            <div className="w-full h-full bg-white/90 border border-gray-300 rounded p-2 flex items-center justify-center">
-              <span className="text-gray-500 text-sm">
+            <div className="w-full h-full bg-white/90 border border-gray-300 rounded-lg p-4 flex items-center justify-center shadow-sm">
+              <span className="text-gray-500 text-sm volter-font">
                 Widget: {widget.widget_id}
               </span>
             </div>
@@ -159,65 +202,88 @@ const EnhancedHabboHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen" style={getBackgroundStyle()}>
-      {/* Header with user info and edit controls */}
-      <div className="bg-white/90 backdrop-blur-sm border-b border-gray-200 p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              🏠 {habboData.name}'s Home
-            </h1>
-            <p className="text-gray-600 text-sm">
-              {isOwner ? 'Sua Habbo Home pessoal' : `Visitando a home de ${habboData.name}`}
-            </p>
+    <div style={getBackgroundStyle()}>
+      {/* Header */}
+      <div className="p-6">
+        <PageHeader 
+          title={`🏠 ${habboData.habbo_name}'s Enhanced Home`}
+          subtitle={isOwner ? 'Sua Habbo Home pessoal' : `Visitando a home de ${habboData.habbo_name}`}
+          icon="/assets/casahabbo.png"
+        >
+          <div className="flex items-center gap-3">
+            <Badge className="bg-blue-500 text-white volter-font">
+              Hotel {habboData.hotel.toUpperCase()}
+            </Badge>
+            {isOwner && (
+              <>
+                <BackgroundCustomizer onBackgroundChange={handleBackgroundChange} />
+                <EditModeToggle 
+                  isEditMode={isEditMode}
+                  onToggle={setIsEditMode}
+                />
+              </>
+            )}
           </div>
-          
-          {isOwner && (
-            <div className="flex items-center gap-4">
-              <BackgroundCustomizer />
-              <EditModeToggle 
-                isEditMode={isEditMode}
-                onToggle={setIsEditMode}
-              />
+        </PageHeader>
+      </div>
+
+      {/* Main canvas area */}
+      <div className="px-6 pb-6">
+        <div 
+          ref={canvasRef}
+          className="relative mx-auto bg-white/10 backdrop-blur-sm rounded-xl border-2 border-white/20 overflow-hidden shadow-2xl"
+          style={{ 
+            width: '95%', 
+            maxWidth: '1200px', 
+            minHeight: '600px',
+            height: 'auto'
+          }}
+        >
+          {/* Widgets */}
+          {widgets.map(renderWidget)}
+
+          {/* Interactive Sticker System */}
+          <InteractiveStickerSystem 
+            stickers={stickers}
+            isEditMode={isEditMode}
+            isOwner={isOwner}
+            canvasSize={canvasSize}
+            onStickerAdd={handleStickerDrop}
+            onStickerMove={handleStickerPositionChange}
+            onStickerRemove={(stickerId) => {
+              // Implementation for removing stickers
+              console.log('Remove sticker:', stickerId);
+            }}
+          />
+
+          {/* Edit mode overlay */}
+          {isEditMode && (
+            <div className="absolute top-4 left-4 bg-blue-600/90 text-white px-4 py-2 rounded-lg text-sm font-medium volter-font backdrop-blur-sm">
+              🎨 Modo de Edição Ativo
+            </div>
+          )}
+
+          {/* Empty state */}
+          {widgets.length === 0 && !isEditMode && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center bg-white/90 backdrop-blur-sm rounded-lg p-8 shadow-lg">
+                <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl volter-font mb-2 text-gray-700">Home Vazia</h3>
+                <p className="text-gray-600">Esta home ainda não foi personalizada.</p>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Main canvas area */}
-      <div 
-        ref={canvasRef}
-        className="relative mx-auto mt-8 border-2 border-gray-300 bg-white/10 backdrop-blur-sm rounded-lg overflow-hidden"
-        style={{ 
-          width: '90%', 
-          maxWidth: '1200px', 
-          minHeight: '600px',
-          height: 'auto'
-        }}
-      >
-        {/* Widgets */}
-        {widgets.map(renderWidget)}
-
-        {/* Stickers */}
-        <StickerSystem 
-          stickers={stickers}
-          isEditMode={isEditMode}
-          canvasSize={canvasSize}
-        />
-
-        {/* Edit mode overlay */}
-        {isEditMode && (
-          <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium">
-            🎨 Modo de Edição Ativo
-          </div>
-        )}
-      </div>
-
       {/* Footer info */}
-      <div className="text-center py-8">
-        <p className="text-gray-600 text-sm">
+      <div className="text-center py-6">
+        <p className="text-white/80 text-sm volter-font"
+           style={{
+             textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+           }}>
           {isOwner 
-            ? 'Arraste e redimensione os widgets no modo de edição para personalizar sua home!'
+            ? 'Arraste widgets e stickers no modo de edição para personalizar sua home!'
             : `Gostou desta home? Deixe um comentário no guestbook!`
           }
         </p>

@@ -1,99 +1,210 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { RotateCw, Shuffle, User, MessageCircle, HandMetal, Camera } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Copy, RotateCcw, Eye, Download } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface ImprovedAvatarPreviewProps {
+interface AvatarPreviewProps {
   figureString: string;
-  onRandomize: () => void;
+  selectedGender: 'M' | 'F' | 'U';
+  selectedHotel: string;
+  onGenderChange: (gender: 'M' | 'F' | 'U') => void;
+  onHotelChange: (hotel: string) => void;
+  onReset: () => void;
 }
 
-const ImprovedAvatarPreview: React.FC<ImprovedAvatarPreviewProps> = ({
+export const ImprovedAvatarPreview: React.FC<AvatarPreviewProps> = ({
   figureString,
-  onRandomize
+  selectedGender,
+  selectedHotel,
+  onGenderChange,
+  onHotelChange,
+  onReset
 }) => {
-  const [direction, setDirection] = useState(2); // 0-7 directions (8 total)
-  const [action, setAction] = useState('std'); // std, wav, spk, etc.
+  const [previewSize, setPreviewSize] = useState<'s' | 'l'>('l');
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const { toast } = useToast();
 
-  const directions = [0, 1, 2, 3, 4, 5, 6, 7];
-  const actions = [
-    { id: 'std', icon: <User className="w-4 h-4" />, name: 'Parado' },
-    { id: 'wav', icon: <HandMetal className="w-4 h-4" />, name: 'Acenar' },
-    { id: 'spk', icon: <MessageCircle className="w-4 h-4" />, name: 'Falar' },
-    { id: 'sit', icon: <User className="w-4 h-4" />, name: 'Sentar' }
-  ];
+  const avatarImageUrl = useMemo(() => {
+    const hotelDomain = selectedHotel === 'com.br' ? 'com.br' : selectedHotel;
+    const baseUrl = `https://www.habbo.${hotelDomain}`;
+    const actualGender = selectedGender === 'U' ? 'M' : selectedGender;
+    
+    return `${baseUrl}/habbo-imaging/avatarimage?figure=${figureString}&gender=${actualGender}&direction=2&head_direction=2&size=${previewSize}&action=std&gesture=std`;
+  }, [figureString, selectedGender, selectedHotel, previewSize]);
 
-  const rotateAvatar = () => {
-    setDirection((prev) => (prev + 1) % 8);
+  const handleCopyFigure = () => {
+    navigator.clipboard.writeText(figureString);
+    toast({
+      title: "📋 Figure copiada!",
+      description: `Figure string: ${figureString}`,
+    });
   };
 
-  const changeAction = (newAction: string) => {
-    setAction(newAction);
+  const handleDownloadAvatar = () => {
+    const link = document.createElement('a');
+    link.href = avatarImageUrl;
+    link.download = `habbo-avatar-${figureString.slice(0, 20)}.png`;
+    link.click();
+    
+    toast({
+      title: "⬇️ Download iniciado!",
+      description: "Imagem do avatar salva",
+    });
   };
 
-  const getAvatarUrl = () => {
-    const baseUrl = 'https://www.habbo.com/habbo-imaging/avatarimage';
-    return `${baseUrl}?figure=${figureString}&direction=${direction}&head_direction=${direction}&action=${action}&size=l`;
-  };
+  const figureParts = useMemo(() => {
+    return figureString.split('.').map(part => {
+      const [category, id, color] = part.split('-');
+      return { category, id, color };
+    }).filter(part => part.category && part.id);
+  }, [figureString]);
 
   return (
-    <div className="bg-white border-2 border-black p-4 space-y-4">
-      {/* Avatar Display */}
-      <div 
-        className="bg-gray-100 border border-gray-300 h-64 flex items-center justify-center cursor-pointer"
-        onClick={rotateAvatar}
-      >
-        <img
-          src={getAvatarUrl()}
-          alt="Avatar Preview"
-          className="max-h-full max-w-full"
-          style={{ imageRendering: 'pixelated' }}
-        />
-      </div>
+    <Card className="w-full h-fit">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-bold flex items-center gap-2">
+            <Eye className="w-5 h-5" />
+            Preview do Avatar
+          </CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            {figureParts.length} peças
+          </Badge>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        {/* Avatar Display */}
+        <div className="flex justify-center">
+          <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-dashed border-gray-300">
+            <div className="relative">
+              <img
+                src={avatarImageUrl}
+                alt="Avatar Preview"
+                className={`w-24 h-32 object-contain transition-opacity duration-300 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-50'
+                }`}
+                style={{ imageRendering: 'pixelated' }}
+                onLoad={() => setImageLoaded(true)}
+                onError={(e) => {
+                  console.error('❌ Avatar image failed to load:', avatarImageUrl);
+                  setImageLoaded(false);
+                }}
+              />
+              
+              {!imageLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+            
+            {/* Size Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewSize(previewSize === 's' ? 'l' : 's')}
+              className="absolute top-2 right-2 text-xs px-2 py-1"
+            >
+              {previewSize.toUpperCase()}
+            </Button>
+          </div>
+        </div>
 
-      {/* Control Buttons Row */}
-      <div className="flex gap-2 justify-center flex-wrap">
-        {/* Randomize Button */}
-        <Button
-          onClick={onRandomize}
-          size="sm"
-          variant="outline"
-          className="border-black hover:bg-gray-100"
-        >
-          <Shuffle className="w-4 h-4" />
-        </Button>
+        {/* Controls */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Gênero</label>
+            <Select value={selectedGender} onValueChange={onGenderChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="M">👨 Masculino</SelectItem>
+                <SelectItem value="F">👩 Feminino</SelectItem>
+                <SelectItem value="U">👤 Unissex</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Rotate Button */}
-        <Button
-          onClick={rotateAvatar}
-          size="sm"
-          variant="outline"
-          className="border-black hover:bg-gray-100"
-        >
-          <RotateCw className="w-4 h-4" />
-        </Button>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Hotel</label>
+            <Select value={selectedHotel} onValueChange={onHotelChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="com">🇺🇸 .com</SelectItem>
+                <SelectItem value="com.br">🇧🇷 .com.br</SelectItem>
+                <SelectItem value="es">🇪🇸 .es</SelectItem>
+                <SelectItem value="fr">🇫🇷 .fr</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Figure Parts Display */}
+        <div>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">Peças Aplicadas</label>
+          <div className="space-y-1 max-h-32 overflow-y-auto bg-gray-50 rounded p-2">
+            {figureParts.length > 0 ? (
+              figureParts.map((part, index) => (
+                <div key={index} className="flex items-center justify-between text-xs bg-white rounded px-2 py-1">
+                  <span className="font-medium">{part.category.toUpperCase()}</span>
+                  <span className="text-gray-600">{part.id}-{part.color}</span>
+                </div>
+              ))
+            ) : (
+              <div className="text-xs text-gray-500 text-center py-2">
+                Nenhuma peça aplicada
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Action Buttons */}
-        {actions.map((actionItem) => (
+        <div className="grid grid-cols-3 gap-2">
           <Button
-            key={actionItem.id}
-            onClick={() => changeAction(actionItem.id)}
-            size="sm"
-            variant={action === actionItem.id ? "default" : "outline"}
-            className={`border-black ${action === actionItem.id ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'}`}
-            title={actionItem.name}
+            variant="outline"
+            size="sm" 
+            onClick={handleCopyFigure}
+            className="text-xs"
           >
-            {actionItem.icon}
+            <Copy className="w-3 h-3 mr-1" />
+            Copiar
           </Button>
-        ))}
-      </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadAvatar}
+            className="text-xs"
+          >
+            <Download className="w-3 h-3 mr-1" />
+            Baixar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onReset}
+            className="text-xs text-orange-600 hover:text-orange-700"
+          >
+            <RotateCcw className="w-3 h-3 mr-1" />
+            Reset
+          </Button>
+        </div>
 
-      {/* Direction Indicator */}
-      <div className="text-center text-sm text-gray-600">
-        Direção: {direction + 1}/8 | Ação: {actions.find(a => a.id === action)?.name}
-      </div>
-    </div>
+        {/* Figure String Display */}
+        <div className="border-t pt-3">
+          <label className="text-sm font-medium text-gray-700 mb-1 block">Figure String</label>
+          <div className="bg-gray-100 p-2 rounded text-xs font-mono break-all text-gray-800">
+            {figureString}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
-
-export default ImprovedAvatarPreview;
