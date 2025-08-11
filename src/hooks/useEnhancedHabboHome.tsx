@@ -383,6 +383,40 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
     }
   };
 
+  const updateWidgetSize = async (widgetId: string, width: number, height: number) => {
+    if (!isOwner) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_home_layouts')
+        .update({ width: Math.round(width), height: Math.round(height) })
+        .eq('id', widgetId);
+
+      if (!error) {
+        setWidgets(prev => 
+          prev.map(widget => 
+            widget.id === widgetId 
+              ? { ...widget, width: Math.round(width), height: Math.round(height) }
+              : widget
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar tamanho do widget:', error);
+    }
+  };
+
+  const getWidgetSizeRestrictions = (widgetId: string) => {
+    const restrictions: Record<string, { minWidth: number; maxWidth: number; minHeight: number; maxHeight: number; resizable: boolean }> = {
+      usercard: { minWidth: 520, maxWidth: 520, minHeight: 180, maxHeight: 180, resizable: false },
+      avatar: { minWidth: 520, maxWidth: 520, minHeight: 180, maxHeight: 180, resizable: false },
+      guestbook: { minWidth: 350, maxWidth: 600, minHeight: 300, maxHeight: 500, resizable: true },
+      rating: { minWidth: 200, maxWidth: 400, minHeight: 120, maxHeight: 200, resizable: true },
+      info: { minWidth: 250, maxWidth: 450, minHeight: 150, maxHeight: 300, resizable: true }
+    };
+    return restrictions[widgetId] || { minWidth: 200, maxWidth: 600, minHeight: 150, maxHeight: 400, resizable: true };
+  };
+
   const handleSaveLayout = async () => {
     if (!isOwner) return;
     
@@ -563,6 +597,8 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
     addWidget,
     removeWidget,
     updateWidgetPosition,
+    updateWidgetSize,
+    getWidgetSizeRestrictions,
     handleSaveLayout,
     
     addGuestbookEntry,

@@ -1,255 +1,201 @@
-
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, X, ImageOff } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFlashAssetsClothing } from '@/hooks/useFlashAssetsClothing';
-import ImprovedAvatarPreview from './ImprovedAvatarPreview';
-import SkinToneBar from './SkinToneBar';
+import { Search, Palette, Loader2 } from 'lucide-react';
 import ColorPickerPopover from './ColorPickerPopover';
-import GenderFilterButtons from './GenderFilterButtons';
 
 interface FlashAssetsTabProps {
-  figureString: string;
-  onFigureChange: (figure: string) => void;
+  onItemSelect: (itemId: string, part: string, color?: string) => void;
 }
 
-const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ figureString, onFigureChange }) => {
-  const [currentTab, setCurrentTab] = useState('hr');
+interface ClothingItem {
+  item_id: string;
+  part: string;
+  gender: string;
+  colors: string[];
+  image_url: string | null;
+}
+
+const categories = ['head', 'chest', 'legs', 'feet'];
+const genders = ['M', 'F'];
+
+const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('U');
-  const [skinTone, setSkinTone] = useState('1');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedGender, setSelectedGender] = useState<string | null>(null);
+  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedColors, setSelectedColors] = useState<{ [itemId: string]: string }>({});
+  
+  const { fetchClothing } = useFlashAssetsClothing();
 
-  const { data: items, isLoading, error } = useFlashAssetsClothing({
-    category: currentTab,
-    search: searchTerm,
-    gender: selectedGender,
-    limit: 100
-  });
+  useEffect(() => {
+    loadClothingItems();
+  }, [searchTerm, selectedCategory, selectedGender]);
 
-  // Category configuration
-  const categories = [
-    { id: 'hr', name: 'Cabelo', icon: '💇' },
-    { id: 'hd', name: 'Cabeça', icon: '👤' },
-    { id: 'ch', name: 'Camisa', icon: '👕' },
-    { id: 'lg', name: 'Calça', icon: '👖' },
-    { id: 'sh', name: 'Sapato', icon: '👟' },
-    { id: 'ha', name: 'Chapéu', icon: '🎩' },
-    { id: 'wa', name: 'Acessório', icon: '🎖️' }
-  ];
-
-  const handleAssetClick = (asset: any) => {
-    // Update figure string with the selected asset
-    const parts = figureString.split('.');
-    const categoryIndex = parts.findIndex(part => part.startsWith(asset.category));
-    const newPart = `${asset.category}-${asset.figureId}-${asset.colors?.[0] || '1'}`;
-    
-    if (categoryIndex >= 0) {
-      parts[categoryIndex] = newPart;
-    } else {
-      parts.push(newPart);
-    }
-    
-    onFigureChange(parts.join('.'));
-  };
-
-  const handleColorSelect = (asset: any, color: string) => {
-    const parts = figureString.split('.');
-    const categoryIndex = parts.findIndex(part => part.startsWith(asset.category));
-    const newPart = `${asset.category}-${asset.figureId}-${color}`;
-    
-    if (categoryIndex >= 0) {
-      parts[categoryIndex] = newPart;
-    } else {
-      parts.push(newPart);
-    }
-    
-    onFigureChange(parts.join('.'));
-  };
-
-  const handleRandomize = () => {
-    const randomParts = [
-      `hd-180-${Math.floor(Math.random() * 8) + 1}`,
-      `hr-${Math.floor(Math.random() * 1000) + 100}-${Math.floor(Math.random() * 100) + 1}`,
-      `ch-${Math.floor(Math.random() * 500) + 210}-${Math.floor(Math.random() * 100) + 1}`,
-      `lg-${Math.floor(Math.random() * 500) + 270}-${Math.floor(Math.random() * 100) + 1}`,
-      `sh-${Math.floor(Math.random() * 500) + 300}-${Math.floor(Math.random() * 100) + 1}`
-    ];
-    onFigureChange(randomParts.join('.'));
-  };
-
-  const handleSkinToneChange = (newSkinTone: string) => {
-    setSkinTone(newSkinTone);
-    const parts = figureString.split('.');
-    const hdIndex = parts.findIndex(part => part.startsWith('hd'));
-    if (hdIndex >= 0) {
-      const hdParts = parts[hdIndex].split('-');
-      hdParts[2] = newSkinTone;
-      parts[hdIndex] = hdParts.join('-');
-      onFigureChange(parts.join('.'));
+  const loadClothingItems = async () => {
+    setLoading(true);
+    try {
+      const items = await fetchClothing(searchTerm, selectedCategory, selectedGender);
+      setClothingItems(items);
+    } catch (error) {
+      console.error('Erro ao carregar itens de roupa:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Improved placeholder component for failed images
-  const AssetPlaceholder = ({ asset }: { asset: any }) => (
-    <div className="w-full h-full bg-gray-100 rounded flex flex-col items-center justify-center p-2 border-2 border-dashed border-gray-300">
-      <ImageOff size={16} className="text-gray-400 mb-1" />
-      <span className="text-xs text-gray-500 text-center font-mono">
-        {asset.figureId || asset.swfName || 'Item'}
-      </span>
-    </div>
-  );
+  const handleColorSelect = (itemId: string, color: string) => {
+    setSelectedColors(prevColors => ({
+      ...prevColors,
+      [itemId]: color
+    }));
+  };
 
-  if (isLoading) {
+  const renderClothingGrid = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" />
+          <span>Carregando itens...</span>
+        </div>
+      );
+    }
+
+    if (clothingItems.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          <p>Nenhum item encontrado para os filtros selecionados.</p>
+        </div>
+      );
+    }
+
     return (
-      <div className="p-4 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-        <p className="text-gray-600">Carregando Flash Assets...</p>
+      <div className="grid grid-cols-4 gap-2">
+        {clothingItems.map((item) => (
+          <div key={item.item_id} className="border rounded-lg p-2 hover:bg-gray-50 cursor-pointer">
+            <div className="aspect-square bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.item_id}
+                  className="max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const placeholder = target.nextElementSibling as HTMLElement;
+                    if (placeholder) placeholder.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className="w-full h-full flex items-center justify-center text-xs text-gray-400 bg-gray-100"
+                style={{ display: item.image_url ? 'none' : 'flex' }}
+              >
+                <div className="text-center">
+                  <div className="text-2xl mb-1">👔</div>
+                  <div>{item.item_id}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-xs font-medium truncate">{item.item_id}</p>
+              <Badge variant="secondary" className="text-xs">
+                {item.part}
+              </Badge>
+              
+              {item.colors && item.colors.length > 0 && (
+                <ColorPickerPopover
+                  key={item.item_id}
+                  colors={item.colors.map(c => `#${c}`)}
+                  selectedColor={selectedColors[item.item_id]}
+                  onColorSelect={(color) => handleColorSelect(item.item_id, color)}
+                  itemName={item.item_id}
+                />
+              )}
+              
+              <Button
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => onItemSelect(item.item_id, item.part, selectedColors[item.item_id])}
+              >
+                Usar
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 text-center">
-        <div className="text-red-600 mb-2">Erro ao carregar Flash Assets</div>
-        <p className="text-sm text-gray-600">Tente recarregar a página</p>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="flex gap-4 h-full">
-      {/* Left Panel - Avatar Preview and Controls */}
-      <div className="w-80 space-y-4">
-        <ImprovedAvatarPreview 
-          figureString={figureString}
-          onRandomize={handleRandomize}
-        />
-        
-        <SkinToneBar 
-          currentSkinTone={skinTone}
-          onSkinToneChange={handleSkinToneChange}
-        />
-      </div>
-
-      {/* Right Panel - Flash Assets Selection */}
-      <div className="flex-1 flex flex-col">
-        {/* Category Tabs */}
-        <div className="flex gap-1 mb-4 flex-wrap">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              onClick={() => setCurrentTab(category.id)}
-              variant={currentTab === category.id ? "default" : "outline"}
-              className={`border-black ${
-                currentTab === category.id 
-                  ? 'bg-blue-500 text-white' 
-                  : 'hover:bg-gray-100'
-              }`}
-              size="sm"
-            >
-              <span className="mr-1">{category.icon}</span>
-              {category.name}
-            </Button>
-          ))}
-        </div>
-
-        {/* Controls Row */}
-        <div className="flex gap-2 mb-4 items-center">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Pesquisar Flash Assets..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-black"
-            />
-            {searchTerm && (
-              <Button
-                onClick={() => setSearchTerm('')}
-                size="sm"
-                variant="ghost"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-          
-          <GenderFilterButtons 
-            currentGender={selectedGender}
-            onGenderChange={setSelectedGender}
+    <Card className="border-2 border-black">
+      <CardHeader className="pb-3">
+        <CardTitle className="volter-font text-lg">Flash Assets - Database</CardTitle>
+        <p className="text-sm text-gray-600">
+          Itens de roupas do banco de dados com fallback para Habbo Imaging
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Buscar por item ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
           />
         </div>
 
-        {/* Flash Assets Grid */}
-        <div className="flex-1 overflow-y-auto">
-          {items && items.length > 0 ? (
-            <div className="grid grid-cols-6 gap-2">
-              {items.map((asset) => (
-                <div key={`${asset.category}-${asset.figureId}`} className="relative group">
-                  <div 
-                    className="p-2 cursor-pointer hover:shadow-md transition-shadow border border-black aspect-square bg-white rounded"
-                    onClick={() => handleAssetClick(asset)}
-                  >
-                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                      {asset.imageUrl ? (
-                        <img
-                          src={asset.imageUrl}
-                          alt={asset.name || `Asset ${asset.figureId}`}
-                          className="max-w-full max-h-full object-contain"
-                          style={{ imageRendering: 'pixelated' }}
-                          onError={(e) => {
-                            // Replace failed image with placeholder
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const placeholder = target.nextElementSibling as HTMLElement;
-                            if (placeholder) placeholder.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div style={{ display: asset.imageUrl ? 'none' : 'flex' }} className="w-full h-full">
-                        <AssetPlaceholder asset={asset} />
-                      </div>
-                    </div>
-                    
-                    {asset.club === 'HC' && (
-                      <Badge className="absolute top-1 left-1 bg-yellow-400 text-yellow-800 text-xs">
-                        HC
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Color picker on hover */}
-                  {asset.colors && asset.colors.length > 1 && (
-                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <div className="flex flex-wrap gap-1">
-                        {asset.colors.slice(0, 6).map((color: string) => (
-                          <ColorPickerPopover
-                            key={color}
-                            colorId={color}
-                            onColorSelect={(selectedColor) => handleColorSelect(asset, selectedColor)}
-                            category={asset.category}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+        {/* Filters */}
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Categoria:</label>
+            <div className="flex gap-2 flex-wrap">
+              {categories.map(cat => (
+                <Button
+                  key={cat}
+                  size="sm"
+                  variant={selectedCategory === cat ? "default" : "outline"}
+                  onClick={() => setSelectedCategory(cat)}
+                  className="volter-font text-xs"
+                >
+                  {cat}
+                </Button>
               ))}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-              <ImageOff size={48} className="mb-4" />
-              <p className="text-lg font-medium">Nenhum item encontrado</p>
-              <p className="text-sm">Tente ajustar os filtros ou busca</p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Gênero:</label>
+            <div className="flex gap-2">
+              {genders.map(gender => (
+                <Button
+                  key={gender}
+                  size="sm"
+                  variant={selectedGender === gender ? "default" : "outline"}
+                  onClick={() => setSelectedGender(gender)}
+                  className="volter-font text-xs"
+                >
+                  {gender}
+                </Button>
+              ))}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </div>
+
+        {/* Results */}
+        <ScrollArea className="h-[400px]">
+          {renderClothingGrid()}
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 };
 
