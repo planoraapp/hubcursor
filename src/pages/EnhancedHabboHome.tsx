@@ -13,6 +13,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Home } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+interface PlacedSticker {
+  id: string;
+  stickerId: string;
+  x: number;
+  y: number;
+  zIndex: number;
+  createdAt: string;
+}
+
 const EnhancedHabboHome: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
@@ -38,6 +47,16 @@ const EnhancedHabboHome: React.FC = () => {
     handleStickerPositionChange,
     handleBackgroundChange
   } = useEnhancedHabboHome(username || '');
+
+  // Convert stickers to the expected format for InteractiveStickerSystem
+  const placedStickers: PlacedSticker[] = stickers.map(sticker => ({
+    id: sticker.id,
+    stickerId: sticker.sticker_id,
+    x: sticker.x,
+    y: sticker.y,
+    zIndex: sticker.z_index || 1,
+    createdAt: sticker.created_at
+  }));
 
   // Canonical redirect based on hotel detection
   useEffect(() => {
@@ -244,7 +263,7 @@ const EnhancedHabboHome: React.FC = () => {
 
           {/* Interactive Sticker System */}
           <InteractiveStickerSystem 
-            stickers={stickers}
+            stickers={placedStickers}
             isEditMode={isEditMode}
             isOwner={isOwner}
             canvasSize={canvasSize}

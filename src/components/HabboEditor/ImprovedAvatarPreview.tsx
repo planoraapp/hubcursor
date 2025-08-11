@@ -10,13 +10,19 @@ interface AvatarPreviewProps {
   onRandomize?: () => void;
   selectedGender?: 'M' | 'F' | 'U';
   selectedHotel?: string;
+  onGenderChange?: (gender: 'M' | 'F' | 'U') => void;
+  onHotelChange?: (hotel: string) => void;
+  onReset?: () => void;
 }
 
 export const ImprovedAvatarPreview: React.FC<AvatarPreviewProps> = ({
   figureString,
   onRandomize,
   selectedGender = 'U',
-  selectedHotel = 'com'
+  selectedHotel = 'com',
+  onGenderChange,
+  onHotelChange,
+  onReset
 }) => {
   const { toast } = useToast();
 
@@ -39,6 +45,43 @@ export const ImprovedAvatarPreview: React.FC<AvatarPreviewProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Gender Selection */}
+        {onGenderChange && (
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-700">Gênero:</label>
+            <div className="flex gap-1">
+              {(['M', 'F'] as const).map((gender) => (
+                <Button
+                  key={gender}
+                  variant={selectedGender === gender ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onGenderChange(gender)}
+                  className="flex-1 text-xs"
+                >
+                  {gender === 'M' ? '♂️' : '♀️'}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hotel Selection */}
+        {onHotelChange && (
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-gray-700">Hotel:</label>
+            <select
+              value={selectedHotel}
+              onChange={(e) => onHotelChange(e.target.value)}
+              className="w-full text-xs p-1 border rounded"
+            >
+              <option value="com">Habbo.com</option>
+              <option value="com.br">Habbo.com.br</option>
+              <option value="es">Habbo.es</option>
+              <option value="fr">Habbo.fr</option>
+            </select>
+          </div>
+        )}
+
         {/* Avatar Image */}
         <div className="flex justify-center">
           <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
@@ -75,6 +118,16 @@ export const ImprovedAvatarPreview: React.FC<AvatarPreviewProps> = ({
             >
               <Shuffle className="w-3 h-3 mr-1" />
               Randomizar
+            </Button>
+          )}
+          {onReset && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onReset}
+              className="flex-1 text-xs"
+            >
+              🔄 Reset
             </Button>
           )}
         </div>
