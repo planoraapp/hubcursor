@@ -4,7 +4,7 @@ import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
 import { PageHeader } from '../components/PageHeader';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
-import OfficialHabboEditor from '../components/HabboEditor/OfficialHabboEditor';
+import { OfficialHabboEditor } from '../components/HabboEditor/OfficialHabboEditor';
 import HabboTemplariosEditor from '../components/HabboEditor/HabboTemplariosEditor';
 
 const Editor = () => {

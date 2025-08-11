@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useFlashAssetsClothing } from '@/hooks/useFlashAssetsClothing';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Search, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface FlashAssetItem {
+  id: string;
+  category: string;
+  gender: 'M' | 'F' | 'U';
+  club: 'HC' | 'FREE';
+  part: string;
+  item_id: string;
+  image_url?: string;
+}
+
 interface FlashAssetsTabProps {
   onItemSelect?: (item: any) => void;
 }
@@ -16,7 +27,7 @@ interface FlashAssetsTabProps {
 export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedGender, setSelectedGender] = useState('all');
+  const [selectedGender, setSelectedGender] = useState<'all' | 'M' | 'F' | 'U'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -33,26 +44,26 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
   });
 
   const filteredItems = useMemo(() => {
-    return clothingItems.filter(item => {
+    return clothingItems.filter((item: FlashAssetItem) => {
       const matchesSearch = !searchTerm || 
         item.part?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.item_id?.toString().includes(searchTerm);
       
-      const matchesCategory = selectedCategory === 'all' || item.part === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       const matchesGender = selectedGender === 'all' || item.gender === selectedGender;
       
       return matchesSearch && matchesCategory && matchesGender;
     });
   }, [clothingItems, searchTerm, selectedCategory, selectedGender]);
 
-  const handleItemClick = (item: any) => {
+  const handleItemClick = (item: FlashAssetItem) => {
     if (onItemSelect) {
       onItemSelect(item);
     }
     toast.success(`Item ${item.part} ${item.item_id} selecionado!`);
   };
 
-  const getImageUrl = (item: any) => {
+  const getImageUrl = (item: FlashAssetItem) => {
     if (item.image_url) {
       return item.image_url;
     }
@@ -64,7 +75,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
   };
 
   const categories = ['all', 'hd', 'hr', 'ch', 'lg', 'sh', 'ca', 'wa', 'fa', 'ea', 'ha'];
-  const genders = ['all', 'M', 'F', 'U'];
+  const genders: ('all' | 'M' | 'F' | 'U')[] = ['all', 'M', 'F', 'U'];
 
   if (error) {
     return (
@@ -106,7 +117,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
           </SelectContent>
         </Select>
 
-        <Select value={selectedGender} onValueChange={setSelectedGender}>
+        <Select value={selectedGender} onValueChange={(value: 'all' | 'M' | 'F' | 'U') => setSelectedGender(value)}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Gênero" />
           </SelectTrigger>
@@ -128,7 +139,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {filteredItems.map((item, index) => (
+          {filteredItems.map((item: FlashAssetItem, index) => (
             <Card 
               key={`${item.part}-${item.item_id}-${index}`}
               className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
@@ -157,9 +168,9 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
                     <Badge variant="outline" className="text-xs">
                       {item.gender || 'U'}
                     </Badge>
-                    {item.club && item.club !== 'normal' && (
+                    {item.club && item.club !== 'FREE' && (
                       <Badge variant="secondary" className="text-xs">
-                        {item.club.toUpperCase()}
+                        {item.club}
                       </Badge>
                     )}
                   </div>
