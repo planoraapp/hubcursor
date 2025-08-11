@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { useFlashAssetsClothing } from '@/hooks/useFlashAssetsClothing';
+import { useFlashAssetsClothing, FlashAssetItem } from '@/hooks/useFlashAssetsClothing';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,16 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Search, Palette } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface FlashAssetItem {
-  id: string;
-  category: string;
-  gender: 'M' | 'F' | 'U';
-  club: 'HC' | 'FREE';
-  part: string;
-  item_id: string;
-  image_url?: string;
-}
 
 interface FlashAssetsTabProps {
   onItemSelect?: (item: any) => void;
@@ -39,15 +29,14 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
     category: selectedCategory === 'all' ? undefined : selectedCategory,
     gender: selectedGender === 'all' ? undefined : selectedGender,
     search: searchTerm || undefined,
-    limit: itemsPerPage,
-    offset: (currentPage - 1) * itemsPerPage
+    limit: itemsPerPage
   });
 
   const filteredItems = useMemo(() => {
     return clothingItems.filter((item: FlashAssetItem) => {
       const matchesSearch = !searchTerm || 
-        item.part?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.item_id?.toString().includes(searchTerm);
+        item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.figureId?.toString().includes(searchTerm);
       
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       const matchesGender = selectedGender === 'all' || item.gender === selectedGender;
@@ -58,19 +47,25 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
 
   const handleItemClick = (item: FlashAssetItem) => {
     if (onItemSelect) {
-      onItemSelect(item);
+      // Convert the item to the format expected by the parent component
+      const convertedItem = {
+        part: item.category,
+        item_id: item.figureId,
+        ...item
+      };
+      onItemSelect(convertedItem);
     }
-    toast.success(`Item ${item.part} ${item.item_id} selecionado!`);
+    toast.success(`Item ${item.name} selecionado!`);
   };
 
   const getImageUrl = (item: FlashAssetItem) => {
-    if (item.image_url) {
-      return item.image_url;
+    if (item.imageUrl) {
+      return item.imageUrl;
     }
     
     // Fallback to Habbo Imaging API
     const baseUrl = 'https://www.habbo.com/habbo-imaging/avatarimage';
-    const figureParam = `${item.part}=${item.item_id}`;
+    const figureParam = `${item.category}=${item.figureId}`;
     return `${baseUrl}?figure=${figureParam}&direction=2&head_direction=2&size=s`;
   };
 
@@ -96,7 +91,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Buscar por parte ou ID..."
+              placeholder="Buscar por nome ou ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -141,7 +136,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredItems.map((item: FlashAssetItem, index) => (
             <Card 
-              key={`${item.part}-${item.item_id}-${index}`}
+              key={`${item.category}-${item.figureId}-${index}`}
               className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
               onClick={() => handleItemClick(item)}
             >
@@ -149,7 +144,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
                 <div className="aspect-square bg-gray-100 rounded-lg mb-2 flex items-center justify-center overflow-hidden">
                   <img
                     src={getImageUrl(item)}
-                    alt={`${item.part} ${item.item_id}`}
+                    alt={`${item.category} ${item.figureId}`}
                     className="w-full h-full object-contain"
                     style={{ imageRendering: 'pixelated' }}
                     onError={(e) => {
@@ -161,7 +156,7 @@ export const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ onItemSelect }) 
                 
                 <div className="text-center">
                   <p className="text-xs font-medium text-gray-700 mb-1">
-                    {item.part?.toUpperCase()} {item.item_id}
+                    {item.category?.toUpperCase()} {item.figureId}
                   </p>
                   
                   <div className="flex flex-wrap gap-1 justify-center">
