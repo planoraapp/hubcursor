@@ -1,352 +1,112 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DoorOpen,
-  Menu,
-  X,
-  User,
-  Settings,
-  Palette
-} from "lucide-react";
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Home, Users, Settings, ShoppingCart, Edit, Camera, Gamepad2, User, MessageSquare, Heart, Trophy, Newspaper } from 'lucide-react';
+import { useSimpleAuth } from '../hooks/useSimpleAuth';
 
 interface CollapsibleSidebarProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
 }
 
-interface NavItemProps {
-  icon?: React.ComponentType<{ className?: string }>;
-  iconSrc?: string;
-  label: string;
-  href: string;
-  isActive: boolean;
-  isCollapsed: boolean;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, iconSrc, label, href, isActive, isCollapsed }) => (
-  <Link 
-    to={href} 
-    className={`
-      flex items-center px-3 py-2 rounded-md transition-all duration-200 group
-      ${isActive 
-        ? 'bg-yellow-400 font-bold shadow-lg' 
-        : 'hover:bg-yellow-300'
-      }
-      ${isCollapsed ? 'justify-center' : 'justify-start'}
-    `}
-  >
-    {iconSrc ? (
-      <img 
-        src={iconSrc} 
-        alt={label}
-        className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3'}`}
-      />
-    ) : Icon && (
-      <Icon className={`${isCollapsed ? 'w-5 h-5' : 'w-4 h-4 mr-3'}`} />
-    )}
-    {!isCollapsed && (
-      <span className="habbo-text text-sm font-medium">{label}</span>
-    )}
-  </Link>
-);
-
-export const CollapsibleSidebar: React.FC<CollapsibleSidebarProps> = ({ activeSection, setActiveSection }) => {
+export const CollapsibleSidebar = ({ activeSection, setActiveSection }: CollapsibleSidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const { user, habboAccount, logout } = useAuth();
-  const { toast } = useToast();
+  const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const handleResize = () => {
-      const shouldCollapse = window.innerWidth < 768;
-      if (shouldCollapse) {
-        setIsCollapsed(true);
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    const event = new CustomEvent('sidebarStateChange', { detail: { isCollapsed } });
-    window.dispatchEvent(event);
-  }, [isCollapsed]);
+  const { isLoggedIn } = useSimpleAuth();
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    
+    // Dispatch custom event for other components to listen
+    window.dispatchEvent(new CustomEvent('sidebarStateChange', {
+      detail: { isCollapsed: newState }
+    }));
   };
 
-  const toggleMobileSidebar = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        title: "Sucesso",
-        description: "Logout realizado com sucesso!"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error.message || 'Erro ao fazer logout',
-        variant: "destructive"
-      });
-    }
-  };
-
-  const navItems = [
-    { iconSrc: "/assets/home.png", label: "Início", href: "/" },
-    { iconSrc: "/assets/home.png", label: "Homes", href: "/homes" },
-    { iconSrc: "/assets/news.png", label: "Notícias", href: "/noticias" },
-    { iconSrc: "/assets/eventos.png", label: "Eventos", href: "/eventos" },
-    { iconSrc: "/assets/Carrinho.png", label: "Marketplace", href: "/marketplace" },
-    { iconSrc: "/assets/news.png", label: "Fórum", href: "/forum" },
-    { iconSrc: "/assets/emblemas.png", label: "Emblemas", href: "/emblemas" },
-    { iconSrc: "/assets/ferramentas.png", label: "Ferramentas", href: "/ferramentas" },
-    { icon: Palette, label: "Editor", href: "/editor" },
-    { iconSrc: "/assets/Carrinho.png", label: "Catálogo", href: "/catalogo" },
+  const menuItems = [
+    { id: 'home', name: 'Início', icon: Home, path: '/' },
+    { id: 'console', name: 'Console Habbo', icon: Gamepad2, path: '/console' },
+    { id: 'editor', name: 'Editor', icon: Edit, path: '/editor' },
+    { id: 'catalogo', name: 'Catálogo', icon: ShoppingCart, path: '/catalogo' },
+    { id: 'mercado', name: 'Marketplace', icon: Trophy, path: '/mercado' }, // Corrigido para /mercado
+    { id: 'news', name: 'Notícias', icon: Newspaper, path: '/news' },
+    { id: 'forum', name: 'Fórum', icon: MessageSquare, path: '/forum' },
+    { id: 'photos', name: 'Galeria', icon: Camera, path: '/photos' },
+    // Links removidos até terem rotas definidas:
+    // { id: 'profile', name: 'Meu Perfil', icon: User, path: `/profile/${habboAccount?.habbo_name}` },
+    // { id: 'settings', name: 'Configurações', icon: Settings, path: '/configuracoes' },
   ];
 
-  const userItems = user ? [
-    { icon: User, label: "Meu Perfil", href: `/profile/${habboAccount?.habbo_name}` },
-    { icon: Settings, label: "Configurações", href: "/configuracoes" },
-  ] : [];
+  const handleNavigation = (item: any) => {
+    setActiveSection(item.id);
+    navigate(item.path);
+  };
 
-  // Mobile view
-  if (window.innerWidth < 768) {
-    return (
-      <>
-        {/* Mobile toggle button */}
-        <Button
-          variant="ghost"
-          className="fixed top-4 left-4 z-50 md:hidden bg-white/90 backdrop-blur-sm"
-          onClick={toggleMobileSidebar}
-        >
-          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </Button>
+  // Update active section based on current path
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const currentItem = menuItems.find(item => item.path === currentPath);
+    if (currentItem) {
+      setActiveSection(currentItem.id);
+    }
+  }, [location.pathname]);
 
-        {/* Mobile sidebar overlay */}
-        {isMobileOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setIsMobileOpen(false)}
-          />
-        )}
-
-        {/* Mobile sidebar */}
-        <div
-          className={`
-            fixed top-0 left-0 h-full w-64 bg-[#f5f5dc] border-r-2 border-black z-50 transform transition-transform duration-300 md:hidden
-            ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-          `}
-        >
-          <div className="p-4">
-            {/* Logo */}
-            <div className="flex justify-center mb-6">
-              <img
-                src="/assets/habbohub.gif"
-                alt="Habbo Hub"
-                className="h-12"
-              />
-            </div>
-
-            {/* User Profile */}
-            {user && habboAccount && (
-              <div className="flex items-center space-x-3 mb-6 p-3 bg-white/50 rounded-lg">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage 
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=m&user=${habboAccount.habbo_name}&action=wav&direction=2&head_direction=2&gesture=sml`} 
-                  />
-                  <AvatarFallback>HH</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="text-sm font-bold text-black">{habboAccount.habbo_name}</h3>
-                  <p className="text-xs text-gray-600">Habbo Membro</p>
-                </div>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div className="space-y-2 mb-6">
-              {navItems.map((item) => (
-                <NavItem
-                  key={item.href}
-                  icon={item.icon}
-                  iconSrc={item.iconSrc}
-                  label={item.label}
-                  href={item.href}
-                  isActive={location.pathname === item.href}
-                  isCollapsed={false}
-                />
-              ))}
-            </div>
-
-            {/* User items */}
-            {userItems.length > 0 && (
-              <div className="space-y-2 border-t border-gray-300 pt-4 mb-4">
-                {userItems.map((item) => (
-                  <NavItem
-                    key={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    href={item.href}
-                    isActive={location.pathname === item.href}
-                    isCollapsed={false}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Logout button */}
-            {user && (
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-black hover:bg-red-200 hover:text-red-800"
-                onClick={handleLogout}
-              >
-                <DoorOpen className="w-4 h-4 mr-3" />
-                <span className="habbo-text text-sm font-medium">Sair</span>
-              </Button>
-            )}
-
-            {/* Login button for non-authenticated users */}
-            {!user && (
-              <Link to="/login">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                  Conectar Conta Habbo
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Desktop view
   return (
-    <div
-      ref={sidebarRef}
-      className={`
-        fixed top-0 left-0 h-full bg-[#f5f5dc] border-r-2 border-black shadow-lg z-40 transition-all duration-300
-        ${isCollapsed ? 'w-20' : 'w-64'}
-      `}
+    <div 
+      className={`fixed left-0 top-0 h-full bg-gradient-to-b from-blue-600 to-blue-800 text-white shadow-lg transition-all duration-300 z-50 ${
+        isCollapsed ? 'w-20' : 'w-64'
+      }`}
     >
-      <div className="p-4">
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <img
-            src={isCollapsed ? "/assets/hub.gif" : "/assets/habbohub.gif"}
-            alt="Habbo Hub"
-            className={`${isCollapsed ? 'h-8' : 'h-12'} transition-all duration-300`}
-          />
-        </div>
-
-        {/* Toggle button */}
-        <Button
-          variant="ghost"
-          className="w-full mb-4 text-black hover:bg-yellow-300"
-          onClick={toggleSidebar}
-        >
-          {isCollapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
-          {!isCollapsed && <span className="ml-2 habbo-text">Recolher</span>}
-        </Button>
-
-        {/* User Profile */}
-        {user && habboAccount && !isCollapsed && (
-          <div className="flex items-center space-x-3 mb-6 p-3 bg-white/50 rounded-lg">
-            <Avatar className="w-10 h-10">
-              <AvatarImage 
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=m&user=${habboAccount.habbo_name}&action=wav&direction=2&head_direction=2&gesture=sml`} 
-              />
-              <AvatarFallback>HH</AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="text-sm font-bold text-black">{habboAccount.habbo_name}</h3>
-              <p className="text-xs text-gray-600">Habbo Membro</p>
+      {/* Header */}
+      <div className="p-4 border-b border-blue-500/30">
+        <div className="flex items-center justify-between">
+          {!isCollapsed && (
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-sm">HH</span>
+              </div>
+              <span className="font-bold text-lg">HabboHub</span>
             </div>
-          </div>
-        )}
-
-        {/* Collapsed user avatar */}
-        {user && habboAccount && isCollapsed && (
-          <div className="flex justify-center mb-6">
-            <Avatar className="w-8 h-8">
-              <AvatarImage 
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=m&user=${habboAccount.habbo_name}&action=wav&direction=2&head_direction=2&gesture=sml`} 
-              />
-              <AvatarFallback>HH</AvatarFallback>
-            </Avatar>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div className="space-y-2 mb-6">
-          {navItems.map((item) => (
-            <NavItem
-              key={item.href}
-              icon={item.icon}
-              iconSrc={item.iconSrc}
-              label={item.label}
-              href={item.href}
-              isActive={location.pathname === item.href}
-              isCollapsed={isCollapsed}
-            />
-          ))}
-        </div>
-
-        {/* User items */}
-        {userItems.length > 0 && (
-          <div className="space-y-2 border-t border-gray-300 pt-4 mb-4">
-            {userItems.map((item) => (
-              <NavItem
-                key={item.href}
-                icon={item.icon}
-                label={item.label}
-                href={item.href}
-                isActive={location.pathname === item.href}
-                isCollapsed={isCollapsed}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Logout button */}
-        {user && (
-          <Button
-            variant="ghost"
-            className={`
-              w-full text-black hover:bg-red-200 hover:text-red-800
-              ${isCollapsed ? 'justify-center px-2' : 'justify-start'}
-            `}
-            onClick={handleLogout}
+          )}
+          <button
+            onClick={toggleSidebar}
+            className="p-2 hover:bg-blue-500/30 rounded-lg transition-colors"
           >
-            <DoorOpen className={`${isCollapsed ? 'w-4 h-4' : 'w-4 h-4 mr-3'}`} />
-            {!isCollapsed && <span className="text-sm font-medium">Sair</span>}
-          </Button>
-        )}
+            {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
+        </div>
+      </div>
 
-        {/* Login button for non-authenticated users */}
-        {!user && !isCollapsed && (
-          <Link to="/login">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">
-              Conectar Conta Habbo
-            </Button>
-          </Link>
+      {/* Navigation */}
+      <nav className="p-4 space-y-2">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleNavigation(item)}
+            className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 ${
+              activeSection === item.id
+                ? 'bg-blue-500/50 border-l-4 border-white shadow-md'
+                : 'hover:bg-blue-500/30'
+            }`}
+            title={isCollapsed ? item.name : ''}
+          >
+            <item.icon size={20} className="flex-shrink-0" />
+            {!isCollapsed && (
+              <span className="font-medium">{item.name}</span>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="absolute bottom-4 left-4 right-4">
+        {!isCollapsed && (
+          <div className="text-xs text-blue-200 text-center">
+            <p>HabboHub v2.0</p>
+            <p>© 2024</p>
+          </div>
         )}
       </div>
     </div>

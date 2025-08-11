@@ -1,269 +1,233 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-// Mapeamento correto de domínios dos hotéis
-const HABBO_HOTEL_DOMAINS: Record<string, string> = {
-  'br': 'habbo.com.br',
-  'com': 'habbo.com',
-  'es': 'habbo.es',
-  'fr': 'habbo.fr',
-  'de': 'habbo.de',
-  'it': 'habbo.it',
-  'nl': 'habbo.nl',
-  'fi': 'habbo.fi',
-  'tr': 'habbo.com.tr'
-};
+interface HabboAPIResponse {
+  name: string;
+  figureString: string;
+  motto: string;
+  memberSince: string;
+  profileVisible: boolean;
+  selectedBadges: Array<{
+    badgeIndex: number;
+    code: string;
+    name: string;
+    description: string;
+  }>;
+}
 
-const getHotelDomain = (hotel: string): string => {
-  return HABBO_HOTEL_DOMAINS[hotel] || 'habbo.com';
-};
-
-const detectHotelFromHabboId = (habboId: string): string => {
-  if (habboId.startsWith('hhbr-')) return 'br';
-  if (habboId.startsWith('hhcom-') || habboId.startsWith('hhus-')) return 'com';
-  if (habboId.startsWith('hhes-')) return 'es';
-  if (habboId.startsWith('hhfr-')) return 'fr';
-  if (habboId.startsWith('hhde-')) return 'de';
-  if (habboId.startsWith('hhit-')) return 'it';
-  if (habboId.startsWith('hhnl-')) return 'nl';
-  if (habboId.startsWith('hhfi-')) return 'fi';
-  if (habboId.startsWith('hhtr-')) return 'tr';
-  return 'com'; // fallback
-};
-
-const fetchHabboUser = async (habboName: string) => {
-  const hotels = Object.keys(HABBO_HOTEL_DOMAINS);
-  
-  for (const hotel of hotels) {
-    try {
-      const domain = getHotelDomain(hotel);
-      const habboApiUrl = `https://www.${domain}/api/public/users?name=${encodeURIComponent(habboName)}`;
-      
-      console.log(`🔍 Tentando buscar ${habboName} no hotel ${hotel} (${domain})`);
-      
-      const response = await fetch(habboApiUrl, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'HabboHub/1.0'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.name && data.uniqueId) {
-          console.log(`✅ Usuário ${habboName} encontrado no hotel ${hotel}`);
-          return data;
-        }
-      }
-    } catch (error) {
-      console.warn(`⚠️ Erro ao buscar no hotel ${hotel}:`, error);
-      continue;
-    }
-  }
-
-  console.log(`❌ Usuário ${habboName} não encontrado em nenhum hotel`);
-  return null;
-};
-
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response('Method not allowed', { 
+      status: 405, 
+      headers: corsHeaders 
+    });
+  }
+
   try {
-    const { action, habboName, verificationCode, newPassword } = await req.json();
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { habboName, newPassword, hotel = 'br' } = await req.json();
+
+    console.log(`🔍 [RegisterOrReset] Processing request for: ${habboName} on hotel: ${hotel}`);
+
+    if (!habboName || !newPassword) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Nome Habbo e nova senha são obrigatórios'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate password strength
+    if (newPassword.length < 6) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'A senha deve ter pelo menos 6 caracteres'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Step 1: Fetch user from Habbo API
+    const hotelDomain = hotel === 'br' ? 'com.br' : 'com';
+    const habboApiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(habboName)}`;
     
-    console.log(`🚀 Edge Function iniciada - Action: ${action}, Habbo: ${habboName}`);
-
-    if (!habboName || !verificationCode) {
-      return new Response(
-        JSON.stringify({ error: 'Campos obrigatórios não fornecidos' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    console.log(`🌐 [RegisterOrReset] Fetching from: ${habboApiUrl}`);
     
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Missing Supabase configuration');
-      throw new Error('Configuração do Supabase ausente');
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Buscar usuário no Habbo usando a nova função multi-hotel
-    console.log(`🔍 Buscando usuário ${habboName} no Habbo...`);
-    const habboUser = await fetchHabboUser(habboName);
-
-    if (!habboUser || !habboUser.motto) {
-      return new Response(
-        JSON.stringify({ error: 'Usuário não encontrado ou perfil privado no Habbo Hotel' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verificar código na motto
-    const normalizedMotto = habboUser.motto.trim().toLowerCase();
-    const normalizedCode = verificationCode.trim().toLowerCase();
+    const habboResponse = await fetch(habboApiUrl);
     
-    if (!normalizedMotto.includes(normalizedCode)) {
-      return new Response(
-        JSON.stringify({ 
-          error: `Código de verificação não encontrado na motto. Motto atual: "${habboUser.motto}"`
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!habboResponse.ok) {
+      console.error(`❌ [RegisterOrReset] Habbo API error: ${habboResponse.status}`);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Usuário não encontrado no Habbo Hotel'
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // Detectar hotel automaticamente
-    const detectedHotel = detectHotelFromHabboId(habboUser.uniqueId);
-    console.log(`🏨 Hotel detectado: ${detectedHotel}`);
+    const habboData: HabboAPIResponse = await habboResponse.json();
+    console.log(`✅ [RegisterOrReset] Found user: ${habboData.name}`);
 
-    // Verificar existência da conta para definir modo automaticamente quando action não for informado
+    // Step 2: Check motto for secret code
+    const motto = habboData.motto || '';
+    const secretCode = 'HabboHub2024';
+    
+    if (!motto.includes(secretCode)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Para continuar, altere sua missão no Habbo para incluir: ${secretCode}`,
+        requiresMottoChange: true,
+        secretCode
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log(`🔑 [RegisterOrReset] Secret code verified in motto`);
+
+    // Step 3: Extract Habbo ID from figureString or use name-based ID
+    const extractHabboId = (figureString: string, name: string, hotel: string): string => {
+      // For most hotels, we can create a deterministic ID
+      const prefix = hotel === 'br' ? 'hhbr-' : 'hhcom-';
+      
+      // Create a simple hash from the name for consistent ID generation
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        const char = name.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      // Use absolute value and convert to hex for a clean ID
+      const hashHex = Math.abs(hash).toString(16);
+      return `${prefix}${hashHex}`;
+    };
+
+    const habboId = extractHabboId(habboData.figureString, habboData.name, hotel);
+    const authEmail = `${habboId}@habbohub.com`;
+
+    console.log(`🆔 [RegisterOrReset] Generated ID: ${habboId}, Email: ${authEmail}`);
+
+    // Step 4: Check if account exists
     const { data: existingAccount } = await supabase
       .from('habbo_accounts')
-      .select('supabase_user_id')
-      .ilike('habbo_name', habboName)
-      .eq('hotel', detectedHotel)
-      .maybeSingle();
+      .select('*')
+      .eq('habbo_id', habboId)
+      .single();
 
-    const mode = action || (existingAccount ? 'reset' : 'register');
+    let authResult;
+    let isNewAccount = false;
 
-    // Validar senha para ambos os modos
-    if (!newPassword || String(newPassword).length < 6) {
-      return new Response(
-        JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (mode === 'register') {
-      // Verificar se já existe conta para este usuário neste hotel
-      const { data: existingAccount } = await supabase
-        .from('habbo_accounts')
-        .select('habbo_id, hotel, supabase_user_id')
-        .ilike('habbo_name', habboName)
-        .eq('hotel', detectedHotel)
-        .maybeSingle();
-
-      if (existingAccount) {
-        return new Response(
-          JSON.stringify({ error: `Este nome Habbo já está cadastrado no hotel ${detectedHotel.toUpperCase()}. Use a funcionalidade "Reset de Senha" se esqueceu sua senha.` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (!newPassword || String(newPassword).length < 6) {
-        return new Response(
-          JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Criar usuário de autenticação
-      const email = `${habboUser.uniqueId}@habbohub.com`;
-      const { data: created, error: createErr } = await supabase.auth.admin.createUser({
-        email,
-        password: newPassword,
-        email_confirm: true,
-        user_metadata: {
-          habbo_name: habboUser.name,
-          hotel: detectedHotel,
-        },
-      });
-
-      if (createErr || !created?.user) {
-        console.error('❌ Erro ao criar usuário auth:', createErr);
-        return new Response(
-          JSON.stringify({ error: 'Falha ao criar usuário. Tente novamente.' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const supabaseUserId = created.user.id;
-
-      // Vincular conta Habbo
-      const { error: insertErr } = await supabase
-        .from('habbo_accounts')
-        .insert({
-          supabase_user_id: supabaseUserId,
-          habbo_id: habboUser.uniqueId,
-          habbo_name: habboUser.name,
-          hotel: detectedHotel,
-          is_admin: false,
-        });
-
-      if (insertErr) {
-        console.error('❌ Erro ao inserir habbo_accounts:', insertErr);
-        return new Response(
-          JSON.stringify({ error: 'Conta criada, mas falhou vincular Habbo. Contate o suporte.' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      console.log(`✅ Registro bem-sucedido para ${habboName} no hotel ${detectedHotel}`);
-    } else if (mode === 'reset') {
-      if (!newPassword || String(newPassword).length < 6) {
-        return new Response(
-          JSON.stringify({ error: 'Senha inválida. Use ao menos 6 caracteres.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Descobrir o usuário pelo vínculo habbo_accounts
-      const { data: account, error: accErr } = await supabase
-        .from('habbo_accounts')
-        .select('supabase_user_id')
-        .ilike('habbo_name', habboName)
-        .eq('hotel', detectedHotel)
-        .maybeSingle();
-
-      if (accErr || !account?.supabase_user_id) {
-        return new Response(
-          JSON.stringify({ error: 'Conta não encontrada para reset de senha.' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const { error: updErr } = await supabase.auth.admin.updateUserById(
-        account.supabase_user_id,
+    if (existingAccount) {
+      // Account exists - reset password
+      console.log(`🔄 [RegisterOrReset] Resetting password for existing account`);
+      
+      const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
+        existingAccount.supabase_user_id,
         { password: newPassword }
       );
 
-      if (updErr) {
-        console.error('❌ Erro ao atualizar senha:', updErr);
-        return new Response(
-          JSON.stringify({ error: 'Falha ao atualizar a senha. Tente novamente.' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      if (updateError) {
+        console.error(`❌ [RegisterOrReset] Password reset error:`, updateError);
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Erro ao redefinir senha'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
-      console.log(`✅ Reset de senha bem-sucedido para ${habboName}`);
+      authResult = updateData;
+    } else {
+      // New account - create user
+      console.log(`➕ [RegisterOrReset] Creating new account`);
+      isNewAccount = true;
+      
+      const { data: createData, error: createError } = await supabase.auth.admin.createUser({
+        email: authEmail,
+        password: newPassword,
+        email_confirm: true
+      });
+
+      if (createError) {
+        console.error(`❌ [RegisterOrReset] Account creation error:`, createError);
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Erro ao criar conta'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      authResult = createData;
+
+      // Create habbo_accounts record
+      const { error: accountError } = await supabase
+        .from('habbo_accounts')
+        .insert({
+          supabase_user_id: createData.user.id,
+          habbo_name: habboData.name,
+          habbo_id: habboId,
+          hotel: hotel
+        });
+
+      if (accountError) {
+        console.error(`❌ [RegisterOrReset] Habbo account creation error:`, accountError);
+        // Try to clean up the auth user
+        await supabase.auth.admin.deleteUser(createData.user.id);
+        
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Erro ao vincular conta Habbo'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      console.log(`✅ [RegisterOrReset] Habbo account linked successfully`);
     }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: action === 'register' ? 'Conta criada com sucesso!' : 'Senha atualizada com sucesso!',
-        hotel: detectedHotel
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({
+      success: true,
+      message: isNewAccount ? 'Conta criada com sucesso!' : 'Senha redefinida com sucesso!',
+      isNewAccount,
+      habboName: habboData.name,
+      authEmail
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
   } catch (error) {
-    console.error('💥 Erro na Edge Function:', error);
-    return new Response(
-      JSON.stringify({ error: 'Erro interno do servidor' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error('❌ [RegisterOrReset] Unexpected error:', error);
+    
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Erro interno do servidor'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });

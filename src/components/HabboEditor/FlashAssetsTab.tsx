@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, X } from 'lucide-react';
+import { Search, X, ImageOff } from 'lucide-react';
 import { useFlashAssetsClothing } from '@/hooks/useFlashAssetsClothing';
 import ImprovedAvatarPreview from './ImprovedAvatarPreview';
 import SkinToneBar from './SkinToneBar';
@@ -91,6 +91,16 @@ const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ figureString, onFigureC
     }
   };
 
+  // Improved placeholder component for failed images
+  const AssetPlaceholder = ({ asset }: { asset: any }) => (
+    <div className="w-full h-full bg-gray-100 rounded flex flex-col items-center justify-center p-2 border-2 border-dashed border-gray-300">
+      <ImageOff size={16} className="text-gray-400 mb-1" />
+      <span className="text-xs text-gray-500 text-center font-mono">
+        {asset.figureId || asset.swfName || 'Item'}
+      </span>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="p-4 text-center">
@@ -176,52 +186,65 @@ const FlashAssetsTab: React.FC<FlashAssetsTabProps> = ({ figureString, onFigureC
 
         {/* Flash Assets Grid */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-6 gap-2">
-            {items?.map((asset) => (
-              <div key={`${asset.category}-${asset.figureId}`} className="relative group">
-                <div 
-                  className="p-2 cursor-pointer hover:shadow-md transition-shadow border border-black aspect-square bg-white rounded"
-                  onClick={() => handleAssetClick(asset)}
-                >
-                  <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                    {asset.imageUrl ? (
-                      <img
-                        src={asset.imageUrl}
-                        alt={asset.name || `Asset ${asset.figureId}`}
-                        className="max-w-full max-h-full object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
-                    ) : (
-                      <div className="text-xs text-gray-500 text-center p-1">
-                        {asset.figureId}
+          {items && items.length > 0 ? (
+            <div className="grid grid-cols-6 gap-2">
+              {items.map((asset) => (
+                <div key={`${asset.category}-${asset.figureId}`} className="relative group">
+                  <div 
+                    className="p-2 cursor-pointer hover:shadow-md transition-shadow border border-black aspect-square bg-white rounded"
+                    onClick={() => handleAssetClick(asset)}
+                  >
+                    <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                      {asset.imageUrl ? (
+                        <img
+                          src={asset.imageUrl}
+                          alt={asset.name || `Asset ${asset.figureId}`}
+                          className="max-w-full max-h-full object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            // Replace failed image with placeholder
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const placeholder = target.nextElementSibling as HTMLElement;
+                            if (placeholder) placeholder.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div style={{ display: asset.imageUrl ? 'none' : 'flex' }} className="w-full h-full">
+                        <AssetPlaceholder asset={asset} />
                       </div>
+                    </div>
+                    
+                    {asset.club === 'HC' && (
+                      <Badge className="absolute top-1 left-1 bg-yellow-400 text-yellow-800 text-xs">
+                        HC
+                      </Badge>
                     )}
                   </div>
-                  
-                  {asset.club === 'HC' && (
-                    <Badge className="absolute top-1 left-1 bg-yellow-400 text-yellow-800 text-xs">
-                      HC
-                    </Badge>
+
+                  {/* Color picker on hover */}
+                  {asset.colors && asset.colors.length > 1 && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded mt-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <div className="flex flex-wrap gap-1">
+                        {asset.colors.slice(0, 6).map((color: string) => (
+                          <ColorPickerPopover
+                            key={color}
+                            colorId={color}
+                            onColorSelect={(selectedColor) => handleColorSelect(asset, selectedColor)}
+                            category={asset.category}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-                
-                {/* Color Picker - appears on hover */}
-                {asset.colors && asset.colors.length > 1 && (
-                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ColorPickerPopover
-                      colors={asset.colors}
-                      onColorSelect={(color) => handleColorSelect(asset, color)}
-                      itemName={asset.name || `Asset ${asset.figureId}`}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          {!items || items.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              Nenhum Flash Asset encontrado para esta categoria
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+              <ImageOff size={48} className="mb-4" />
+              <p className="text-lg font-medium">Nenhum item encontrado</p>
+              <p className="text-sm">Tente ajustar os filtros ou busca</p>
             </div>
           )}
         </div>
