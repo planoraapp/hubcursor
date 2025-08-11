@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getHabboImageUrl } from '@/services/habboApiMultiHotel';
+import { getAvatarUrl } from '@/services/habboApiMultiHotel';
 
 interface UserCardProps {
   habboData: {
@@ -19,12 +19,7 @@ interface UserCardProps {
 }
 
 export const UserCard: React.FC<UserCardProps> = ({ habboData, isEditMode }) => {
-  const avatarUrl = getHabboImageUrl(habboData.hotel, 'avatarimage', {
-    figure: habboData.figureString || '',
-    size: 'l',
-    direction: 2,
-    head_direction: 2
-  });
+  const avatarUrl = getAvatarUrl(habboData.habbo_name, habboData.figureString, habboData.hotel);
 
   return (
     <Card className={`w-full h-full ${isEditMode ? 'border-dashed border-blue-400' : 'border-gray-300'}`}>

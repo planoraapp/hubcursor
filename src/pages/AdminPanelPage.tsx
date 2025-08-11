@@ -1,271 +1,362 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
-import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, FileText, Activity } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { MoreVertical, Edit, Trash2, Copy } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useToast } from "@/components/ui/use-toast"
+
+interface HabboAccount {
+  id: string;
+  habbo_name: string;
+  habbo_id: string;
+  hotel: string;
+  figureString: string;
+  motto: string;
+  email: string;
+  ip_register: string;
+  ip_current: string;
+  last_login: string;
+  referral_code: string;
+  referrer_code: string;
+  account_created: string;
+  is_banned: boolean;
+  is_staff: boolean;
+  is_hc: boolean;
+  role: string;
+}
+
+const HOTELS = ['com', 'com.br', 'de', 'es', 'fr', 'it', 'nl', 'fi', 'se', 'com.tr'];
 
 const AdminPanelPage = () => {
-  const [activeTab, setActiveTab] = useState('users');
-  const [users, setUsers] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [comments, setComments] = useState([]);
-  const [logs, setLogs] = useState([]);
+  const [users, setUsers] = useState<HabboAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [newRole, setNewRole] = useState('');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { user, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const [selectedHotel, setSelectedHotel] = useState('com');
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<HabboAccount>>({});
+  const { toast } = useToast();
 
   useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
-    };
-
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isAdmin()) {
-      navigate('/');
-    }
-  }, [isAdmin, navigate]);
-
-  useEffect(() => {
-    if (isAdmin()) {
-      fetchUsers();
-      fetchPosts();
-      fetchComments();
-      fetchLogs();
-    }
-  }, [isAdmin]);
+    fetchUsers();
+  }, [selectedHotel]);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from('habbo_accounts')
-      .select('*');
+    setLoading(true);
+    try {
+      let query = supabase
+        .from('habbo_accounts')
+        .select('*')
+        .eq('hotel', selectedHotel);
 
-    if (error) {
-      console.error('Error fetching users:', error);
-    } else {
-      setUsers(data);
+      if (searchTerm) {
+        query = query.ilike('habbo_name', `%${searchTerm}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      setUsers(data || []);
+    } catch (error: any) {
+      console.error('Erro ao buscar usuários:', error);
+      toast({
+        title: "Error!",
+        description: "Failed to fetch users.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchPosts = async () => {
-    const { data, error } = await supabase
-      .from('forum_posts')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching posts:', error);
-    } else {
-      setPosts(data);
-    }
-  };
-
-  const fetchComments = async () => {
-    const { data, error } = await supabase
-      .from('forum_comments')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching comments:', error);
-    } else {
-      setComments(data);
-    }
-  };
-
-  const fetchLogs = async () => {
-    // Implement your log fetching logic here
-    setLogs([]);
-  };
-
-  const handleSearch = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const filteredUsers = users.filter(user =>
-    user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
+  const handleHotelChange = (hotel: string) => {
+    setSelectedHotel(hotel);
+    setSearchTerm(''); // Reset search term when hotel changes
   };
 
-  const handleRoleChange = async () => {
-    if (!selectedUser || !newRole) return;
+  const handleEditClick = (user: HabboAccount) => {
+    setEditUserId(user.id);
+    setEditFormData({ ...user });
+  };
 
-    const { error } = await supabase
-      .from('habbo_accounts')
-      .update({ role: newRole })
-      .eq('id', selectedUser.id);
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
-    if (error) {
-      console.error('Error updating role:', error);
-    } else {
-      fetchUsers();
-      setSelectedUser({ ...selectedUser, role: newRole });
+  const handleUserUpdate = async (userId: string, updates: any) => {
+    try {
+      // Remove the 'role' property from updates if it exists
+      const { role, ...validUpdates } = updates;
+      
+      const { data, error } = await supabase
+        .from('habbo_accounts')
+        .update(validUpdates)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      setUsers(users.map(user => 
+        user.id === userId ? { ...user, ...validUpdates } : user
+      ));
+
+      toast.success('Usuário atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      toast.error('Erro ao atualizar usuário');
     }
   };
 
-  const handleDeletePost = async (postId) => {
-    const { error } = await supabase
-      .from('forum_posts')
-      .delete()
-      .eq('id', postId);
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUserId) return;
 
-    if (error) {
-      console.error('Error deleting post:', error);
-    } else {
-      fetchPosts();
+    await handleUserUpdate(editUserId, editFormData);
+    setEditUserId(null); // Close the edit form
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('habbo_accounts')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Update local state
+      setUsers(users.filter(user => user.id !== userId));
+      toast.success('Usuário deletado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao deletar usuário:', error);
+      toast.error('Erro ao deletar usuário');
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    const { error } = await supabase
-      .from('forum_comments')
-      .delete()
-      .eq('id', commentId);
-
-    if (error) {
-      console.error('Error deleting comment:', error);
-    } else {
-      fetchComments();
-    }
+  const handleCopyReferralCode = (referralCode: string) => {
+    navigator.clipboard.writeText(referralCode);
+    toast.success('Código de referral copiado!');
   };
-
-  if (!isAdmin()) {
-    return <div className="text-center mt-10">Você não tem permissão para acessar esta página.</div>;
-  }
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection="admin" setActiveSection={() => {}} />
-        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="container mx-auto">
-            <Card className="border-2 border-black">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-2xl font-bold volter-font">Painel Administrativo</CardTitle>
-                <Badge variant="secondary">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin
-                </Badge>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="users" className="space-y-4">
-                  <TabsList>
-                    <TabsTrigger value="users" onClick={() => setActiveTab('users')}>
-                      <Users className="mr-2 h-4 w-4" />
-                      Usuários
-                    </TabsTrigger>
-                    <TabsTrigger value="posts" onClick={() => setActiveTab('posts')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Posts
-                    </TabsTrigger>
-                    <TabsTrigger value="comments" onClick={() => setActiveTab('comments')}>
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Comentários
-                    </TabsTrigger>
-                    <TabsTrigger value="logs" onClick={() => setActiveTab('logs')}>
-                      <Activity className="mr-2 h-4 w-4" />
-                      Logs
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="users">
-                    <div className="mb-4">
-                      <Input
-                        type="text"
-                        placeholder="Buscar usuário..."
-                        value={searchTerm}
-                        onChange={handleSearch}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="text-xl font-semibold mb-2">Lista de Usuários</h3>
-                        <div className="max-h-80 overflow-y-auto">
-                          {filteredUsers.map(user => (
-                            <div
-                              key={user.id}
-                              className={`p-2 rounded-md cursor-pointer ${selectedUser?.id === user.id ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-                              onClick={() => handleUserSelect(user)}
-                            >
-                              {user.habbo_name}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {selectedUser && (
-                        <div>
-                          <h3 className="text-xl font-semibold mb-2">Editar Usuário</h3>
-                          <div className="mb-2">
-                            <p>Nome: {selectedUser.habbo_name}</p>
-                            <p>Email: {selectedUser.email}</p>
-                            <p>ID: {selectedUser.id}</p>
-                          </div>
-                          <div className="mb-2">
-                            <Input
-                              type="text"
-                              placeholder="Novo Role"
-                              value={newRole}
-                              onChange={(e) => setNewRole(e.target.value)}
-                            />
-                            <Button onClick={handleRoleChange} className="mt-2">
-                              Alterar Role
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="posts">
-                    <h3 className="text-xl font-semibold mb-2">Lista de Posts</h3>
-                    <div className="max-h-80 overflow-y-auto">
-                      {posts.map(post => (
-                        <div key={post.id} className="p-2 rounded-md hover:bg-gray-50 flex justify-between items-center">
-                          <span>{post.title} - {post.author_habbo_name}</span>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeletePost(post.id)}>
-                            Deletar
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="comments">
-                    <h3 className="text-xl font-semibold mb-2">Lista de Comentários</h3>
-                    <div className="max-h-80 overflow-y-auto">
-                      {comments.map(comment => (
-                        <div key={comment.id} className="p-2 rounded-md hover:bg-gray-50 flex justify-between items-center">
-                          <span>{comment.content} - {comment.author_habbo_name}</span>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteComment(comment.id)}>
-                            Deletar
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="logs">
-                    <h3 className="text-xl font-semibold mb-2">Logs</h3>
-                    <div>Em breve</div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-semibold mb-6">Painel de Administração</h1>
+
+      {/* Search and Hotel Filter */}
+      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="search">Buscar Usuário:</Label>
+          <Input
+            type="text"
+            id="search"
+            placeholder="Nome do Habbo"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label htmlFor="hotel">Selecionar Hotel:</Label>
+          <Select value={selectedHotel} onValueChange={handleHotelChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Hotel" />
+            </SelectTrigger>
+            <SelectContent>
+              {HOTELS.map(hotel => (
+                <SelectItem key={hotel} value={hotel}>{hotel}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* User Table */}
+      {loading ? (
+        <p>Carregando usuários...</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableCaption>Lista de usuários do hotel {selectedHotel}.</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[150px]">Habbo Name</TableHead>
+                <TableHead>Habbo ID</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>IP Registro</TableHead>
+                <TableHead>Banido?</TableHead>
+                <TableHead>Staff?</TableHead>
+                <TableHead>HC?</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.habbo_name}</TableCell>
+                  <TableCell>{user.habbo_id}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.ip_register}</TableCell>
+                  <TableCell>{user.is_banned ? 'Sim' : 'Não'}</TableCell>
+                  <TableCell>{user.is_staff ? 'Sim' : 'Não'}</TableCell>
+                  <TableCell>{user.is_hc ? 'Sim' : 'Não'}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleEditClick(user)}>
+                          <Edit className="mr-2 h-4 w-4" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleCopyReferralCode(user.referral_code)}>
+                          <Copy className="mr-2 h-4 w-4" /> Copiar Referral
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                              <Trash2 className="mr-2 h-4 w-4" /> Deletar
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação irá deletar o usuário permanentemente.
+                                Tem certeza que deseja continuar?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>
+                                Cancelar
+                              </AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* Edit User Form */}
+      {editUserId && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Editar Usuário</h3>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="habbo_name">Habbo Name</Label>
+                <Input
+                  type="text"
+                  id="habbo_name"
+                  name="habbo_name"
+                  value={(editFormData.habbo_name || '') as string}
+                  onChange={handleEditFormChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={(editFormData.email || '') as string}
+                  onChange={handleEditFormChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="is_banned">Banido?</Label>
+                <Checkbox
+                  id="is_banned"
+                  name="is_banned"
+                  checked={editFormData.is_banned || false}
+                  onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, is_banned: checked }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="is_staff">Staff?</Label>
+                <Checkbox
+                  id="is_staff"
+                  name="is_staff"
+                  checked={editFormData.is_staff || false}
+                  onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, is_staff: checked }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="is_hc">HC?</Label>
+                <Checkbox
+                  id="is_hc"
+                  name="is_hc"
+                  checked={editFormData.is_hc || false}
+                  onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, is_hc: checked }))}
+                />
+              </div>
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="secondary" onClick={() => setEditUserId(null)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  Salvar
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
