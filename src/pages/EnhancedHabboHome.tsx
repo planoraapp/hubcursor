@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEnhancedHabboHome } from '@/hooks/useEnhancedHabboHome';
@@ -55,7 +54,7 @@ const EnhancedHabboHome: React.FC = () => {
     x: sticker.x,
     y: sticker.y,
     zIndex: sticker.z_index || 1,
-    createdAt: sticker.created_at
+    createdAt: new Date().toISOString() // Use current date as fallback since created_at doesn't exist
   }));
 
   // Canonical redirect based on hotel detection
@@ -94,7 +93,7 @@ const EnhancedHabboHome: React.FC = () => {
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
           <p className="text-white text-lg volter-font"
              style={{
-               textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+               textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black'
              }}>
             Carregando Habbo Home Enhanced...
           </p>
