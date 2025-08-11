@@ -8,7 +8,7 @@ import { RatingWidget } from '@/components/homes/RatingWidget';
 import { EditModeToggle } from '@/components/homes/EditModeToggle';
 import { StickerSystem } from '@/components/homes/StickerSystem';
 import { BackgroundCustomizer } from '@/components/homes/BackgroundCustomizer';
-import { useToast } = from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const EnhancedHabboHome: React.FC = () => {
