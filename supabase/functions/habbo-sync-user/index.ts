@@ -26,6 +26,7 @@ interface HabboPhoto {
   id: string;
   caption: string;
   timestamp: string;
+  url?: string;
 }
 
 interface HabboFriend {
@@ -68,10 +69,18 @@ Deno.serve(async (req) => {
 
     // Get user badges
     let badges: HabboBadge[] = [];
+    let selectedBadges: HabboBadge[] = [];
     try {
       const badgesResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/badges`);
       if (badgesResponse.ok) {
         badges = await badgesResponse.json();
+        
+        // Get profile to see selected badges
+        const profileDetailResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/profile`);
+        if (profileDetailResponse.ok) {
+          const profileDetail = await profileDetailResponse.json();
+          selectedBadges = profileDetail.selectedBadges || [];
+        }
       }
     } catch (error) {
       console.warn(`⚠️ [habbo-sync-user] Failed to fetch badges for ${habbo_name}:`, error);
@@ -82,7 +91,13 @@ Deno.serve(async (req) => {
     try {
       const photosResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/photos`);
       if (photosResponse.ok) {
-        photos = await photosResponse.json();
+        const photosData = await photosResponse.json();
+        photos = photosData.map((photo: any) => ({
+          id: photo.id,
+          caption: photo.caption || '',
+          timestamp: photo.timestamp || new Date().toISOString(),
+          url: photo.url || `https://www.habbo.${hotel}/habbo-imaging/photo/${photo.id}.png`
+        }));
       }
     } catch (error) {
       console.warn(`⚠️ [habbo-sync-user] Failed to fetch photos for ${habbo_name}:`, error);
@@ -125,6 +140,7 @@ Deno.serve(async (req) => {
       raw_data: {
         user: userData,
         badges,
+        selectedBadges,
         photos,
         friends
       }
@@ -146,6 +162,11 @@ Deno.serve(async (req) => {
     const activities = [];
 
     if (previousSnapshot) {
+      const prevRawData = previousSnapshot.raw_data || {};
+      const prevFriends = prevRawData.friends || [];
+      const prevBadges = prevRawData.badges || [];
+      const prevPhotos = prevRawData.photos || [];
+
       // Check for motto change
       if (previousSnapshot.motto !== userData.motto) {
         activities.push({
@@ -178,52 +199,61 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check for new badges
-      if (badges.length > previousSnapshot.badges_count) {
-        const badgeDiff = badges.length - previousSnapshot.badges_count;
+      // Check for new badges (compare by badge name)
+      const prevBadgeNames = new Set(prevBadges.map((b: any) => b.name));
+      const newBadges = badges.filter(badge => !prevBadgeNames.has(badge.name));
+      
+      if (newBadges.length > 0) {
         activities.push({
           habbo_name: userData.name,
           habbo_id: userData.uniqueId,
           hotel,
           activity_type: 'new_badge',
-          description: `${userData.name} conquistou ${badgeDiff} novo${badgeDiff > 1 ? 's' : ''} emblema${badgeDiff > 1 ? 's' : ''}`,
+          description: `${userData.name} conquistou ${newBadges.length} novo${newBadges.length > 1 ? 's' : ''} emblema${newBadges.length > 1 ? 's' : ''}`,
           details: {
+            new_badges: newBadges,
             badges_count: badges.length,
-            previous_badges_count: previousSnapshot.badges_count
+            previous_badges_count: prevBadges.length
           },
           snapshot_id: insertedSnapshot.id
         });
       }
 
-      // Check for new photos
-      if (photos.length > previousSnapshot.photos_count) {
-        const photoDiff = photos.length - previousSnapshot.photos_count;
+      // Check for new photos (compare by ID)
+      const prevPhotoIds = new Set(prevPhotos.map((p: any) => p.id));
+      const newPhotos = photos.filter(photo => !prevPhotoIds.has(photo.id));
+      
+      if (newPhotos.length > 0) {
         activities.push({
           habbo_name: userData.name,
           habbo_id: userData.uniqueId,
           hotel,
           activity_type: 'new_photo',
-          description: `${userData.name} postou ${photoDiff} nova${photoDiff > 1 ? 's' : ''} foto${photoDiff > 1 ? 's' : ''}`,
+          description: `${userData.name} postou ${newPhotos.length} nova${newPhotos.length > 1 ? 's' : ''} foto${newPhotos.length > 1 ? 's' : ''}`,
           details: {
+            new_photos: newPhotos,
             photos_count: photos.length,
-            previous_photos_count: previousSnapshot.photos_count
+            previous_photos_count: prevPhotos.length
           },
           snapshot_id: insertedSnapshot.id
         });
       }
 
-      // Check for new friends
-      if (friends.length > previousSnapshot.friends_count) {
-        const friendDiff = friends.length - previousSnapshot.friends_count;
+      // Check for new friends (compare by name)
+      const prevFriendNames = new Set(prevFriends.map((f: any) => f.name));
+      const newFriends = friends.filter(friend => !prevFriendNames.has(friend.name));
+      
+      if (newFriends.length > 0) {
         activities.push({
           habbo_name: userData.name,
           habbo_id: userData.uniqueId,
           hotel,
           activity_type: 'new_friend',
-          description: `${userData.name} fez ${friendDiff} novo${friendDiff > 1 ? 's' : ''} amigo${friendDiff > 1 ? 's' : ''}`,
+          description: `${userData.name} fez ${newFriends.length} novo${newFriends.length > 1 ? 's' : ''} amigo${newFriends.length > 1 ? 's' : ''}`,
           details: {
+            new_friends: newFriends,
             friends_count: friends.length,
-            previous_friends_count: previousSnapshot.friends_count
+            previous_friends_count: prevFriends.length
           },
           snapshot_id: insertedSnapshot.id
         });
@@ -255,7 +285,10 @@ Deno.serve(async (req) => {
         details: {
           badges_count: badges.length,
           photos_count: photos.length,
-          friends_count: friends.length
+          friends_count: friends.length,
+          initial_friends: friends.slice(0, 5),
+          initial_badges: selectedBadges || badges.slice(0, 8),
+          initial_photos: photos.slice(0, 6)
         },
         snapshot_id: insertedSnapshot.id
       });

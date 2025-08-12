@@ -4,9 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Camera, UserPlus, Trophy, Palette } from 'lucide-react';
 import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { habboFeedService } from '@/services/habboFeedService';
 
 export const OfficialHotelTickerColumn: React.FC = () => {
+  const { habboAccount } = useUnifiedAuth();
+  
   const { 
     activities, 
     isLoading, 
@@ -31,9 +34,23 @@ export const OfficialHotelTickerColumn: React.FC = () => {
       console.log('🎯 [Feed Hotel] Inicializando feed do hotel...');
       
       try {
+        // Ensure current user is tracked first
+        if (habboAccount?.habbo_name && habboAccount?.habbo_id) {
+          console.log(`🧭 [Feed Hotel] Ensuring user ${habboAccount.habbo_name} is tracked`);
+          await habboFeedService.ensureTrackedAndSynced({
+            habbo_name: habboAccount.habbo_name,
+            habbo_id: habboAccount.habbo_id,
+            hotel: hotel === 'com.br' ? 'br' : hotel
+          });
+        }
+
+        // Start data discovery and sync
         await discoverOnlineUsers();
         await habboFeedService.triggerBatchSync(hotel);
-        setTimeout(() => refetch(), 2000);
+        
+        // Refresh feed after sync
+        setTimeout(() => refetch(), 3000);
+        
         console.log('✅ [Feed Hotel] Inicialização concluída');
       } catch (error) {
         console.warn('⚠️ [Feed Hotel] Erro na inicialização:', error);
@@ -42,6 +59,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
       // Set up periodic sync every 4 minutes
       syncIntervalRef.current = setInterval(async () => {
         try {
+          console.log('🔄 [Feed Hotel] Sync periódico iniciado');
           await habboFeedService.triggerBatchSync(hotel);
           setTimeout(() => refetch(), 2000);
         } catch (error) {
@@ -50,20 +68,23 @@ export const OfficialHotelTickerColumn: React.FC = () => {
       }, 4 * 60 * 1000);
     };
 
-    initializeFeed();
+    if (habboAccount && hotel) {
+      initializeFeed();
+    }
 
     return () => {
       if (syncIntervalRef.current) {
         clearInterval(syncIntervalRef.current);
       }
     };
-  }, [hotel, discoverOnlineUsers, refetch]);
+  }, [hotel, habboAccount, discoverOnlineUsers, refetch]);
 
   const handleRefresh = async () => {
     try {
+      console.log('🔄 [Feed Hotel] Refresh manual iniciado');
       await discoverOnlineUsers();
       await habboFeedService.triggerBatchSync(hotel);
-      setTimeout(() => refetch(), 2000);
+      setTimeout(() => refetch(), 3000);
     } catch (error) {
       console.error('❌ [Feed Hotel] Erro na atualização:', error);
     }
@@ -204,12 +225,12 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-white/70 text-sm mb-3">atividade recente</p>
+                            <p className="text-white/70 text-sm mb-3">{activity.description}</p>
                           )}
                           
                           {/* Time */}
                           <div className="text-xs text-white/50">
-                            Atividade {habboFeedService.formatTimeAgo(activity.lastUpdate)}
+                            {habboFeedService.formatTimeAgo(activity.lastUpdate)}
                           </div>
                         </div>
                       </div>
@@ -221,7 +242,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                           <div>
                             <h5 className="text-sm font-medium text-white/80 mb-2">Novos Amigos</h5>
                             <div className="space-y-1">
-                              {activity.friends.slice(0, 3).map((friend: any, idx: number) => (
+                              {activity.friends.slice(0, 5).map((friend: any, idx: number) => (
                                 <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-white/5 rounded">
                                   {friend.figureString ? (
                                     <img 

@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.habbo-official-ticker]
 verify_jwt = false
+
+[functions.habbo-discover-online]
+verify_jwt = false

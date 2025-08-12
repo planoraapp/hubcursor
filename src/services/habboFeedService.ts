@@ -1,3 +1,4 @@
+
 interface FeedActivity {
   username: string;
   lastUpdate: string;
@@ -31,7 +32,7 @@ interface FeedResponse {
   hotel: string;
   activities: FeedActivity[];
   meta: {
-    source: 'official' | 'database' | 'live' | 'cached';
+    source: 'official' | 'database' | 'live' | 'cached' | 'hybrid';
     timestamp: string;
     count: number;
     onlineCount: number;
@@ -52,7 +53,14 @@ interface DiscoverResponse {
 }
 
 class HabboFeedService {
-  private baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1';
+  private supabase: any;
+
+  constructor() {
+    // Import supabase client for function invocation
+    import('@/integrations/supabase/client').then(module => {
+      this.supabase = module.supabase;
+    });
+  }
 
   async getHotelFeed(
     hotel: string = 'com.br', 
@@ -65,29 +73,28 @@ class HabboFeedService {
   ): Promise<FeedResponse> {
     console.log(`🎯 [HabboFeedService] Fetching ${options?.mode || 'hybrid'} feed for hotel: ${hotel}`);
     
-    const params = new URLSearchParams({ 
+    const params = { 
       hotel: hotel, 
       limit: String(limit),
       mode: options?.mode || 'hybrid'
-    });
+    };
     
     if (options?.onlineWithinSeconds) {
-      params.set('onlineWithinSeconds', String(options.onlineWithinSeconds));
+      (params as any).onlineWithinSeconds = String(options.onlineWithinSeconds);
     }
     
     if (options?.offsetHours) {
-      params.set('offsetHours', String(options.offsetHours));
+      (params as any).offsetHours = String(options.offsetHours);
     }
     
-    const response = await fetch(`${this.baseUrl}/habbo-feed?${params.toString()}`, {
-      method: 'GET',
+    const { data, error } = await this.supabase.functions.invoke('habbo-feed', {
+      body: params
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    if (error) {
+      throw new Error(`Failed to fetch feed: ${error.message}`);
     }
 
-    const data = await response.json();
     console.log(`✅ [HabboFeedService] Received ${data.activities?.length || 0} activities (${data.meta?.source}) for ${hotel}`);
     return data;
   }
@@ -95,16 +102,14 @@ class HabboFeedService {
   async discoverAndSyncOnlineUsers(hotel: string = 'com.br', limit: number = 50): Promise<DiscoverResponse> {
     console.log(`🔍 [HabboFeedService] Discovering online users for hotel: ${hotel}`);
     
-    const params = new URLSearchParams({ hotel: hotel, limit: String(limit) });
-    const response = await fetch(`${this.baseUrl}/habbo-discover-online?${params.toString()}`, {
-      method: 'GET',
+    const { data, error } = await this.supabase.functions.invoke('habbo-discover-online', {
+      body: { hotel: hotel, limit: String(limit) }
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    if (error) {
+      throw new Error(`Failed to discover users: ${error.message}`);
     }
 
-    const data = await response.json();
     console.log(`✅ [HabboFeedService] Discovered ${data.discovered || 0} users for ${hotel}`);
     return data;
   }
@@ -112,15 +117,14 @@ class HabboFeedService {
   async getUserFeed(hotel: string = 'com.br', username: string): Promise<FeedResponse> {
     console.log(`🎯 [HabboFeedService] Fetching feed for user: ${username} (${hotel})`);
     
-    const response = await fetch(`${this.baseUrl}/habbo-feed?hotel=${encodeURIComponent(hotel)}&username=${encodeURIComponent(username)}&limit=10`, {
-      method: 'GET',
+    const { data, error } = await this.supabase.functions.invoke('habbo-feed', {
+      body: { hotel: hotel, username: username, limit: '10' }
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    if (error) {
+      throw new Error(`Failed to fetch user feed: ${error.message}`);
     }
 
-    const data = await response.json();
     console.log(`✅ [HabboFeedService] Received ${data.activities?.length || 0} activities for ${username}`);
     
     return data;
@@ -129,19 +133,12 @@ class HabboFeedService {
   async triggerUserSync(habboName: string, hotel: string = 'com.br'): Promise<void> {
     console.log(`🔄 [HabboFeedService] Triggering sync for ${habboName} (${hotel})`);
     
-    const response = await fetch(`${this.baseUrl}/habbo-sync-user`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        habbo_name: habboName,
-        hotel: hotel
-      }),
+    const { error } = await this.supabase.functions.invoke('habbo-sync-user', {
+      body: { habbo_name: habboName, hotel: hotel }
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to sync user: ${response.status}`);
+    if (error) {
+      throw new Error(`Failed to sync user: ${error.message}`);
     }
 
     console.log(`✅ [HabboFeedService] Sync triggered for ${habboName}`);
@@ -149,14 +146,15 @@ class HabboFeedService {
 
   async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<void> {
     console.log(`🧭 [HabboFeedService] Ensure tracked + sync for ${payload.habbo_name} (${payload.hotel})`);
-    const response = await fetch(`${this.baseUrl}/habbo-ensure-tracked`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+    
+    const { error } = await this.supabase.functions.invoke('habbo-ensure-tracked', {
+      body: payload
     });
-    if (!response.ok) {
-      throw new Error(`Failed to ensure tracked: ${response.status}`);
+    
+    if (error) {
+      throw new Error(`Failed to ensure tracked: ${error.message}`);
     }
+    
     console.log('✅ [HabboFeedService] ensureTracked succeeded');
   }
 
@@ -178,18 +176,12 @@ class HabboFeedService {
   async triggerBatchSync(hotel: string = 'com.br'): Promise<void> {
     console.log(`🔄 [HabboFeedService] Triggering batch sync for ${hotel}`);
     
-    const response = await fetch(`${this.baseUrl}/habbo-sync-batch`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        hotel: hotel
-      }),
+    const { error } = await this.supabase.functions.invoke('habbo-sync-batch', {
+      body: { hotel: hotel }
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to sync batch: ${response.status}`);
+    if (error) {
+      throw new Error(`Failed to sync batch: ${error.message}`);
     }
 
     console.log(`✅ [HabboFeedService] Batch sync triggered for ${hotel}`);
