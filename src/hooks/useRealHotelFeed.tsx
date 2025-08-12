@@ -20,7 +20,7 @@ export const useRealHotelFeed = (options?: {
 
   // Use official mode by default for live ticker behavior
   const mode = options?.mode || 'official';
-  const baseLimit = 50; // Increased base limit for ticker
+  const baseLimit = 50; // Base limit for initial load
   const onlineWithinSeconds = options?.onlineWithinSeconds || 1800; // 30 minutes default
 
   // Function to discover and sync online users (background operation)
@@ -34,7 +34,7 @@ export const useRealHotelFeed = (options?: {
     }
   }, [hotel]);
 
-  // Fetch real feed data with official ticker integration
+  // Fetch real feed data with official community ticker integration
   const { 
     data: feedResponse, 
     isLoading, 
@@ -66,19 +66,39 @@ export const useRealHotelFeed = (options?: {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  // Function to load older data (for infinite scroll)
-  const loadMoreData = useCallback(async (offsetHours: number) => {
-    console.log(`📈 [useRealHotelFeed] Loading more data with ${offsetHours}h offset`);
+  // Function to load older data (for infinite scroll) - uses increased limit instead of offsetHours for official mode
+  const loadMoreData = useCallback(async (page: number) => {
+    console.log(`📈 [useRealHotelFeed] Loading more data for page ${page}`);
     
-    return habboFeedService.getHotelFeed(
-      hotel,
-      baseLimit,
-      { 
-        onlineWithinSeconds: onlineWithinSeconds + (offsetHours * 3600),
-        mode,
-        offsetHours
-      }
-    );
+    if (mode === 'official') {
+      // For official mode, increase the limit to get more items from the community ticker
+      const newLimit = baseLimit * (page + 1); // page 0: 50, page 1: 100, page 2: 150, etc.
+      console.log(`📈 [useRealHotelFeed] Official mode: requesting ${newLimit} items total`);
+      
+      return habboFeedService.getHotelFeed(
+        hotel,
+        newLimit,
+        { 
+          onlineWithinSeconds,
+          mode,
+          offsetHours: 0 // Keep at 0 for official mode
+        }
+      );
+    } else {
+      // For database/hybrid mode, use offsetHours as before
+      const offsetHours = page * 2; // 0h, 2h, 4h, etc.
+      console.log(`📈 [useRealHotelFeed] Database mode: using ${offsetHours}h offset`);
+      
+      return habboFeedService.getHotelFeed(
+        hotel,
+        baseLimit,
+        { 
+          onlineWithinSeconds: onlineWithinSeconds + (offsetHours * 3600),
+          mode,
+          offsetHours
+        }
+      );
+    }
   }, [hotel, baseLimit, onlineWithinSeconds, mode]);
 
   // Transform activities for compatibility with existing interfaces

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +10,7 @@ import { useUserFigures } from '@/hooks/useUserFigures';
 export const RealHotelFeedColumn: React.FC = () => {
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [offsetHours, setOffsetHours] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [allActivities, setAllActivities] = useState<any[]>([]);
   
   // Use official mode by default for live ticker behavior like HabboWidgets
@@ -24,10 +23,10 @@ export const RealHotelFeedColumn: React.FC = () => {
 
   // Update allActivities when activities change
   useEffect(() => {
-    if (activities.length > 0 && offsetHours === 0) {
+    if (activities.length > 0 && currentPage === 0) {
       setAllActivities(activities);
     }
-  }, [activities, offsetHours]);
+  }, [activities, currentPage]);
 
   useEffect(() => {
     if (activities.length > 0) {
@@ -40,7 +39,7 @@ export const RealHotelFeedColumn: React.FC = () => {
   useEffect(() => {
     const handler = () => {
       console.log('🔄 [RealHotelFeedColumn] feed:refresh received -> refetch');
-      setOffsetHours(0);
+      setCurrentPage(0);
       setAllActivities([]);
       refetch();
     };
@@ -62,20 +61,34 @@ export const RealHotelFeedColumn: React.FC = () => {
         !isLoading && !isLoadingMore && !isDiscovering) {
       
       setIsLoadingMore(true);
-      const newOffsetHours = offsetHours + 2; // Load 2 more hours of data
+      const nextPage = currentPage + 1;
       
       try {
-        console.log(`📈 [RealHotelFeedColumn] Loading more data with ${newOffsetHours}h offset`);
-        const olderData = await loadMoreData(newOffsetHours);
+        console.log(`📈 [RealHotelFeedColumn] Loading more data for page ${nextPage}`);
+        const olderData = await loadMoreData(nextPage);
         
         if (olderData.activities.length > 0) {
-          // Filter out duplicates and append new data
-          const existingUsernames = new Set(allActivities.map(a => a.username));
-          const newActivities = olderData.activities.filter(a => !existingUsernames.has(a.username));
-          
-          setAllActivities(prev => [...prev, ...newActivities]);
-          setOffsetHours(newOffsetHours);
-          console.log(`✅ [RealHotelFeedColumn] Added ${newActivities.length} more activities`);
+          if (metadata.source === 'official') {
+            // For official mode, we get a larger set including previous items
+            // Extract only the new items (those not already in allActivities)
+            const existingUsernames = new Set(allActivities.map(a => a.username));
+            const newActivities = olderData.activities.filter(a => !existingUsernames.has(a.username));
+            
+            if (newActivities.length > 0) {
+              setAllActivities(prev => [...prev, ...newActivities]);
+              setCurrentPage(nextPage);
+              console.log(`✅ [RealHotelFeedColumn] Added ${newActivities.length} more activities (official mode)`);
+            } else {
+              console.log(`📄 [RealHotelFeedColumn] No new activities found on page ${nextPage}`);
+            }
+          } else {
+            // For database mode, append all new activities
+            setAllActivities(prev => [...prev, ...olderData.activities]);
+            setCurrentPage(nextPage);
+            console.log(`✅ [RealHotelFeedColumn] Added ${olderData.activities.length} more activities (database mode)`);
+          }
+        } else {
+          console.log(`📄 [RealHotelFeedColumn] No more activities available`);
         }
       } catch (error) {
         console.error('❌ [RealHotelFeedColumn] Failed to load more data:', error);
@@ -83,7 +96,7 @@ export const RealHotelFeedColumn: React.FC = () => {
         setIsLoadingMore(false);
       }
     }
-  }, [offsetHours, allActivities, isLoading, isLoadingMore, isDiscovering, loadMoreData]);
+  }, [currentPage, allActivities, isLoading, isLoadingMore, isDiscovering, loadMoreData, metadata.source]);
 
   const handleDiscoverUsers = useCallback(async () => {
     setIsDiscovering(true);
@@ -189,7 +202,7 @@ export const RealHotelFeedColumn: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  setOffsetHours(0);
+                  setCurrentPage(0);
                   setAllActivities([]);
                   refetch();
                 }}
@@ -207,8 +220,8 @@ export const RealHotelFeedColumn: React.FC = () => {
             {metadata.count > 0 && (
               <span>• {metadata.count} atividades</span>
             )}
-            {offsetHours > 0 && (
-              <span>• janela: {offsetHours}h expandida</span>
+            {currentPage > 0 && (
+              <span>• página {currentPage + 1}</span>
             )}
             {(isDiscovering || isLoadingMore) && (
               <span className="text-yellow-300">
@@ -402,7 +415,6 @@ export const RealHotelFeedColumn: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Photos section */}
                       {activity.photos && activity.photos.length > 0 && (
                         <div>
                           <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
@@ -442,7 +454,7 @@ export const RealHotelFeedColumn: React.FC = () => {
                 <p className="text-xs mt-1">Conectando com o ticker oficial do Habbo...</p>
                 <Button 
                   onClick={() => {
-                    setOffsetHours(0);
+                    setCurrentPage(0);
                     setAllActivities([]);
                     refetch();
                   }}
