@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Grid, List } from 'lucide-react';
 import { useUnifiedClothing, UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
-import { EnhancedClothingThumbnail } from '@/components/HabboEditor/EnhancedClothingThumbnail';
+import EnhancedClothingThumbnail from '@/components/HabboEditor/EnhancedClothingThumbnail';
 
 interface UnifiedCatalogGridProps {
   onItemSelect?: (item: UnifiedClothingItem) => void;

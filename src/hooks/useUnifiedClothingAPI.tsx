@@ -48,7 +48,7 @@ export const useUnifiedClothing = (options: UseUnifiedClothingOptions = {}) => {
             code: item.swfName || item.name,
             gender: item.gender,
             club: item.club,
-            colors: item.colors,
+            colors: Array.isArray(item.colors) ? item.colors.map(String) : ['1'],
             image_url: item.imageUrl,
             source: 'flash-assets',
             figureId: item.figureId,
@@ -62,7 +62,6 @@ export const useUnifiedClothing = (options: UseUnifiedClothingOptions = {}) => {
         let query = supabase
           .from('habbo_clothing_cache')
           .select('*')
-          .eq('is_active', true)
           .limit(limit);
 
         if (category !== 'all') {
@@ -91,7 +90,7 @@ export const useUnifiedClothing = (options: UseUnifiedClothingOptions = {}) => {
           code: item.code,
           gender: item.gender as 'M' | 'F' | 'U',
           club: item.club === 'HC' ? 'HC' : 'FREE',
-          colors: Array.isArray(item.colors) ? item.colors : ['1'],
+          colors: Array.isArray(item.colors) ? item.colors.map(String) : ['1'],
           image_url: item.image_url,
           source: 'database',
           figureId: item.item_id.toString(),
