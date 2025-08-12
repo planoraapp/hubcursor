@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.habbo-ensure-tracked]
 verify_jwt = false
+
+[functions.habbo-official-ticker]
+verify_jwt = false
