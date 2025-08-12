@@ -159,17 +159,19 @@ export const FriendsFeedColumn: React.FC = () => {
                       <div key={index} className="flex items-center gap-3 p-2 bg-white rounded border border-gray-100">
                         <Avatar className="w-8 h-8">
                           <AvatarImage 
-                            src={habboProxyService.getAvatarUrl(activity.figureString || '')} 
-                            alt={activity.username}
+                            src={habboProxyService.getAvatarUrl(activity.friend.figureString || '')} 
+                            alt={activity.friend.name}
                           />
-                          <AvatarFallback>{activity.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>{activity.friend.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">{activity.username}</p>
-                          <p className="text-xs text-gray-600 truncate">{activity.action}</p>
+                          <p className="text-xs font-medium truncate">{activity.friend.name}</p>
+                          <p className="text-xs text-gray-600 truncate">
+                            {activity.activities[0]?.action || 'Atividade recente'}
+                          </p>
                           <div className="flex items-center gap-1 mt-1">
                             <Clock className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs text-gray-500">{activity.timestamp}</span>
+                            <span className="text-xs text-gray-500">{activity.lastActivityTime}</span>
                           </div>
                         </div>
                       </div>
