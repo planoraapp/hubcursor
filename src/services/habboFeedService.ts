@@ -13,6 +13,7 @@ interface FeedActivity {
   friends: Array<{ name: string; figureString?: string }>;
   badges: Array<{ code: string; name?: string }>;
   description: string;
+  photos?: Array<{ url: string; caption?: string; id?: string }>;
   profile?: {
     figureString?: string;
     motto?: string;

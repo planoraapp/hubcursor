@@ -23,7 +23,11 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     refetch
   } = useQuery({
     queryKey: ['real-hotel-feed', hotel, options?.onlineWithinSeconds ?? null],
-    queryFn: () => habboFeedService.getHotelFeed(hotel, 20, { onlineWithinSeconds: options?.onlineWithinSeconds }),
+    queryFn: () => habboFeedService.getHotelFeed(
+      hotel,
+      Math.min(200, 50 * Math.ceil(((options?.onlineWithinSeconds || 1800) / 1800))),
+      { onlineWithinSeconds: options?.onlineWithinSeconds }
+    ),
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
     retry: 3,
@@ -65,8 +69,13 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     count: 0
   };
 
+  const activitiesSorted = useMemo(() => {
+    const list = feedResponse?.activities || [];
+    return [...list].sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
+  }, [feedResponse?.activities]);
+
   return {
-    activities: feedResponse?.activities || [],
+    activities: activitiesSorted,
     aggregatedActivities,
     isLoading,
     error,

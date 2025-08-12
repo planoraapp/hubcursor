@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { habboFeedService } from '@/services/habboFeedService';
 import { useUserFigures } from '@/hooks/useUserFigures';
 
 export const RealHotelFeedColumn: React.FC = () => {
-  const [onlineWindowSec, setOnlineWindowSec] = useState<number | null>(3600);
+  const [onlineWindowSec, setOnlineWindowSec] = useState<number | null>(1800);
   const { activities, aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useRealHotelFeed(
     onlineWindowSec ? { onlineWithinSeconds: onlineWindowSec } : undefined
   );
@@ -37,6 +37,18 @@ export const RealHotelFeedColumn: React.FC = () => {
       window.removeEventListener('feed:refresh', handler);
     };
   }, [refetch]);
+
+  // Handle infinite scroll to expand time window in 30min steps
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const handleScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
+    const target = e.currentTarget;
+    const threshold = 120; // px from bottom
+    if (target.scrollHeight - target.scrollTop - target.clientHeight < threshold && !isLoading) {
+      setOnlineWindowSec((prev) => (prev ? prev + 1800 : 1800));
+      // slight delay to allow refetch
+      setTimeout(() => refetch(), 50);
+    }
+  };
 
   const getSourceIcon = () => {
     switch (metadata.source) {
@@ -100,26 +112,6 @@ export const RealHotelFeedColumn: React.FC = () => {
                 </Badge>
               )}
               
-              <div className="flex items-center rounded bg-white/10 overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`text-white px-2 ${onlineWindowSec === null ? 'bg-white/20' : 'hover:bg-white/20'}`}
-                  onClick={() => setOnlineWindowSec(null)}
-                  title="Mostrar todos"
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`text-white px-2 ${onlineWindowSec === 3600 ? 'bg-white/20' : 'hover:bg-white/20'}`}
-                  onClick={() => setOnlineWindowSec(3600)}
-                  title="Mostrar online na última hora"
-                >
-                  Online (1h)
-                </Button>
-              </div>
               
               <Button
                 variant="ghost"
@@ -151,12 +143,12 @@ export const RealHotelFeedColumn: React.FC = () => {
               <span>• {metadata.count} atividades</span>
             )}
             {onlineWindowSec && (
-              <span>• filtro: online em {Math.floor((onlineWindowSec || 0) / 60)}min</span>
+              <span>• janela: {Math.floor((onlineWindowSec || 0) / 60)}min</span>
             )}
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-stealth">
+          <div ref={scrollRef} onScroll={handleScroll} className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-stealth">
             {isLoading && activities.length === 0 ? (
               <div className="text-center text-white/70 py-8">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
@@ -330,6 +322,28 @@ export const RealHotelFeedColumn: React.FC = () => {
                                 {badge.code}
                               </span>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fotos recentes */}
+                    {Array.isArray((activity as any).photos) && (activity as any).photos.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
+                          <Camera className="w-4 h-4" />
+                          Fotos recentes
+                        </h3>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(activity as any).photos.slice(0, 6).map((photo: any, idx: number) => (
+                            <img
+                              key={idx}
+                              src={photo.url}
+                              alt={photo.caption || `${activity.username} photo ${idx+1}`}
+                              className="w-full h-24 object-cover rounded bg-white/5"
+                              loading="lazy"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                            />
                           ))}
                         </div>
                       </div>
