@@ -35,6 +35,7 @@ interface FeedResponse {
     source: 'live' | 'cached';
     timestamp: string;
     count: number;
+    onlineCount: number;
   };
 }
 
