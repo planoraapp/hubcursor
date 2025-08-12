@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 import { PuhekuplaAvatarPreviewClean } from './PuhekuplaAvatarPreviewClean';
-import { HabboEmotionClothingGrid } from './HabboEmotionClothingGrid';
+import HabboEmotionClothingGrid from './HabboEmotionClothingGrid';
 import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
 import { useToast } from '@/hooks/use-toast';
 import { useOfficialHabboFigureData } from '@/hooks/useOfficialHabboFigureData';

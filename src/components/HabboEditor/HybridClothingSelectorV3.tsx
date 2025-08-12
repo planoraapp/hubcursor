@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Shirt, Palette, Zap, Database, Sparkles } from 'lucide-react';
 import { OptimizedClothingGrid } from '../OptimizedClothingGrid';
 import { HybridClothingItemV2 } from '@/hooks/useHybridClothingDataV2';
-import { HabboEmotionClothingGrid } from '../PuhekuplaEditor/HabboEmotionClothingGrid';
+import HabboEmotionClothingGrid from '../PuhekuplaEditor/HabboEmotionClothingGrid';
 import { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
 
 interface HybridClothingSelectorV3Props {
