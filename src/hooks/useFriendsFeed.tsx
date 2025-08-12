@@ -13,6 +13,14 @@ interface FriendActivity {
 export const useFriendsFeed = () => {
   const { habboAccount } = useUnifiedAuth();
   
+  const hotelDomain = useMemo(() => {
+    const h = (habboAccount as any)?.hotel as string | undefined;
+    if (!h) return 'com.br';
+    if (h === 'br') return 'com.br';
+    if (h === 'com' || h.includes('.')) return h;
+    return 'com.br';
+  }, [habboAccount?.hotel]);
+  
   // Fetch friends list
   const { 
     data: friends = [], 
@@ -29,9 +37,9 @@ export const useFriendsFeed = () => {
     data: hotelTicker = [], 
     isLoading: tickerLoading 
   } = useQuery({
-    queryKey: ['hotel-ticker-for-friends'],
-    queryFn: () => habboProxyService.getHotelTicker(),
-    enabled: friends.length > 0,
+    queryKey: ['hotel-ticker-for-friends', hotelDomain],
+    queryFn: () => habboProxyService.getHotelTicker(hotelDomain),
+    enabled: friends.length > 0 && !!hotelDomain,
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
   });
@@ -40,7 +48,7 @@ export const useFriendsFeed = () => {
   const friendsActivities = useMemo(() => {
     if (!friends.length || !hotelTicker.length) return [];
 
-    const friendNames = friends.map(f => f.name);
+    const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
     const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
 
     // Filter ticker activities for friends only
@@ -49,7 +57,7 @@ export const useFriendsFeed = () => {
         new Date(activity.timestamp).getTime() : 
         new Date(activity.time).getTime();
       
-      return friendNames.includes(activity.username) && 
+      return friendNameSet.has(activity.username.toLowerCase()) && 
              activityTime >= thirtyMinutesAgo;
     });
 
@@ -64,7 +72,7 @@ export const useFriendsFeed = () => {
 
     // Convert to FriendActivity format
     const result: FriendActivity[] = Object.entries(friendGroups).map(([friendName, activities]) => {
-      const friend = friends.find(f => f.name === friendName);
+      const friend = friends.find(f => f.name.toLowerCase() === friendName.toLowerCase());
       if (!friend) return null;
 
       const sortedActivities = activities.sort((a, b) => {
