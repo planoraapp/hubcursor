@@ -1,310 +1,247 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEnhancedHabboHome } from '@/hooks/useEnhancedHabboHome';
-import { UserCard } from '@/components/homes/UserCard';
-import { GuestbookWidget } from '@/components/homes/GuestbookWidget';
-import { RatingWidget } from '@/components/homes/RatingWidget';
-import { EditModeToggle } from '@/components/homes/EditModeToggle';
-import { InteractiveStickerSystem } from '@/components/homes/InteractiveStickerSystem';
-import { BackgroundCustomizer } from '@/components/homes/BackgroundCustomizer';
-import { PageHeader } from '@/components/PageHeader';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, Home } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
+import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileLayout from '@/layouts/MobileLayout';
+import { 
+  User, 
+  Calendar, 
+  Trophy, 
+  Users, 
+  MapPin, 
+  Clock,
+  ExternalLink,
+  Star,
+  Heart
+} from 'lucide-react';
 
-interface PlacedSticker {
-  id: string;
-  stickerId: string;
-  x: number;
-  y: number;
-  zIndex: number;
-  createdAt: string;
-}
-
-const EnhancedHabboHome: React.FC = () => {
-  const { username } = useParams<{ username: string }>();
+const EnhancedHabboHome = () => {
+  const { username, hotel } = useParams<{ username: string; hotel: string }>();
   const navigate = useNavigate();
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 900, height: 600 });
-  const { toast } = useToast();
+  const [activeSection, setActiveSection] = useState('homes');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isMobile = useIsMobile();
 
-  const {
-    widgets,
-    stickers,
-    background,
-    guestbook,
-    habboData,
-    loading,
-    isEditMode,
-    isOwner,
-    setIsEditMode,
-    updateWidgetPosition,
-    updateWidgetSize,
-    addGuestbookEntry,
-    getWidgetSizeRestrictions,
-    handleStickerDrop,
-    handleStickerPositionChange,
-    handleBackgroundChange
-  } = useEnhancedHabboHome(username || '');
+  const { data: habboUser, isLoading } = useQuery({
+    queryKey: ['habbo-user', username, hotel],
+    queryFn: async () => {
+      if (!username) return null;
+      
+      try {
+        console.log(`🔍 [EnhancedHabboHome] Fetching data for ${username} at hotel ${hotel}`);
+        
+        const { data, error } = await supabase
+          .rpc('get_habbo_account_public_by_name', { 
+            habbo_name_param: username.trim().toLowerCase() 
+          });
 
-  // Convert stickers to the expected format for InteractiveStickerSystem
-  const placedStickers: PlacedSticker[] = stickers.map(sticker => ({
-    id: sticker.id,
-    stickerId: sticker.sticker_id,
-    x: sticker.x,
-    y: sticker.y,
-    zIndex: sticker.z_index || 1,
-    createdAt: new Date().toISOString() // Use current date as fallback since created_at doesn't exist
-  }));
+        if (error) {
+          console.error('❌ [EnhancedHabboHome] Error fetching user:', error);
+          throw error;
+        }
 
-  // Canonical redirect based on hotel detection
-  useEffect(() => {
-    if (habboData && !window.location.pathname.includes(`/${habboData.hotel}/`)) {
-      const canonicalPath = `/enhanced-home/${habboData.hotel}/${habboData.habbo_name}`;
-      console.log('🔄 Redirecting to canonical URL:', canonicalPath);
-      navigate(canonicalPath, { replace: true });
-    }
-  }, [habboData, navigate]);
-
-  // Canvas resize observer
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        setCanvasSize({ 
-          width: Math.max(800, Math.min(1200, width)), 
-          height: Math.max(500, Math.min(800, height))
-        });
+        const userData = Array.isArray(data) ? data[0] : data;
+        console.log('✅ [EnhancedHabboHome] User data loaded:', userData?.habbo_name);
+        
+        return userData;
+      } catch (error) {
+        console.error('❌ [EnhancedHabboHome] Failed to fetch user data:', error);
+        throw error;
       }
-    });
+    },
+    enabled: !!username,
+    retry: 2,
+    staleTime: 5 * 60 * 1000,
+  });
 
-    resizeObserver.observe(canvas);
-    return () => resizeObserver.disconnect();
+  useEffect(() => {
+    const handleSidebarStateChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+    };
   }, []);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-repeat"
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
-          <p className="text-white text-lg volter-font"
-             style={{
-               textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black'
-             }}>
-            Carregando Habbo Home Enhanced...
-          </p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="text-lg volter-font text-white" style={{
+            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+          }}>
+            Carregando perfil do {username}...
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!habboData) {
+  if (!habboUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-repeat"
            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="text-center bg-white/90 backdrop-blur-sm rounded-lg p-8 shadow-lg max-w-md">
-          <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
-            Habbo Home não encontrada
-          </h1>
-          <p className="text-gray-600 mb-4">
-            O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
-          </p>
-          <button 
-            onClick={() => navigate('/')}
-            className="bg-blue-600 text-white px-6 py-2 rounded volter-font hover:bg-blue-700 transition-colors"
-          >
-            Voltar ao Início
-          </button>
-        </div>
+        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
+          <CardContent className="p-6 text-center">
+            <User className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-xl font-bold mb-2">Usuário não encontrado</h2>
+            <p className="text-gray-600 mb-4">
+              O usuário "{username}" não foi encontrado em nosso banco de dados.
+            </p>
+            <Button onClick={() => navigate('/')} className="w-full">
+              Voltar ao Início
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  const getBackgroundStyle = () => {
-    const baseStyle = {
-      minHeight: '100vh',
-      backgroundImage: 'url(/assets/bghabbohub.png)',
-      backgroundRepeat: 'repeat'
-    };
+  const avatarUrl = habboUser?.figure_string 
+    ? `https://www.habbo.${habboUser.hotel}/habbo-imaging/avatarimage?figure=${habboUser.figure_string}&size=l&direction=2&head_direction=3&action=std`
+    : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=3&action=std`;
 
-    if (background.background_type === 'color') {
-      return {
-        ...baseStyle,
-        background: `linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), ${background.background_value}`
-      };
-    } else if (background.background_type === 'repeat') {
-      return {
-        ...baseStyle,
-        background: `url(${background.background_value})`,
-        backgroundRepeat: 'repeat'
-      };
-    } else if (background.background_type === 'cover') {
-      return {
-        ...baseStyle,
-        background: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${background.background_value})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      };
-    }
-
-    return baseStyle;
-  };
-
-  const renderWidget = (widget: any) => {
-    const restrictions = getWidgetSizeRestrictions(widget.widget_id);
-    
-    const commonProps = {
-      style: {
-        position: 'absolute' as const,
-        left: widget.x,
-        top: widget.y,
-        width: widget.width,
-        height: widget.height,
-        zIndex: widget.z_index,
-        cursor: isEditMode ? 'move' : 'default'
-      },
-      className: `${isEditMode ? 'border-2 border-dashed border-blue-400 bg-white/5' : ''} transition-all duration-200`
-    };
-
-    switch (widget.widget_id) {
-      case 'usercard':
-      case 'avatar':
-        return (
-          <div key={widget.id} {...commonProps}>
-            <UserCard 
-              habboData={habboData}
-              isEditMode={isEditMode}
-            />
-          </div>
-        );
-
-      case 'guestbook':
-        return (
-          <div key={widget.id} {...commonProps}>
-            <GuestbookWidget
-              entries={guestbook}
-              onAddEntry={addGuestbookEntry}
-              isOwner={isOwner}
-              homeOwnerName={habboData.habbo_name}
-            />
-          </div>
-        );
-
-      case 'rating':
-        return (
-          <div key={widget.id} {...commonProps}>
-            <RatingWidget
-              homeOwnerUserId={habboData.id}
-              homeOwnerName={habboData.habbo_name}
-            />
-          </div>
-        );
-
-      default:
-        return (
-          <div key={widget.id} {...commonProps}>
-            <div className="w-full h-full bg-white/90 border border-gray-300 rounded-lg p-4 flex items-center justify-center shadow-sm">
-              <span className="text-gray-500 text-sm volter-font">
-                Widget: {widget.widget_id}
-              </span>
-            </div>
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div style={getBackgroundStyle()}>
-      {/* Header */}
-      <div className="p-6">
-        <PageHeader 
-          title={`🏠 ${habboData.habbo_name}'s Enhanced Home`}
-          subtitle={isOwner ? 'Sua Habbo Home pessoal' : `Visitando a home de ${habboData.habbo_name}`}
-          icon="/assets/casahabbo.png"
-        >
-          <div className="flex items-center gap-3">
-            <Badge className="bg-blue-500 text-white volter-font">
-              Hotel {habboData.hotel.toUpperCase()}
-            </Badge>
-            {isOwner && (
-              <>
-                <BackgroundCustomizer onBackgroundChange={handleBackgroundChange} />
-                <EditModeToggle 
-                  isEditMode={isEditMode}
-                  onToggle={setIsEditMode}
-                />
-              </>
-            )}
-          </div>
-        </PageHeader>
-      </div>
-
-      {/* Main canvas area */}
-      <div className="px-6 pb-6">
-        <div 
-          ref={canvasRef}
-          className="relative mx-auto bg-white/10 backdrop-blur-sm rounded-xl border-2 border-white/20 overflow-hidden shadow-2xl"
-          style={{ 
-            width: '95%', 
-            maxWidth: '1200px', 
-            minHeight: '600px',
-            height: 'auto'
-          }}
-        >
-          {/* Widgets */}
-          {widgets.map(renderWidget)}
-
-          {/* Interactive Sticker System */}
-          <InteractiveStickerSystem 
-            stickers={placedStickers}
-            isEditMode={isEditMode}
-            isOwner={isOwner}
-            canvasSize={canvasSize}
-            onStickerAdd={handleStickerDrop}
-            onStickerMove={handleStickerPositionChange}
-            onStickerRemove={(stickerId) => {
-              // Implementation for removing stickers
-              console.log('Remove sticker:', stickerId);
-            }}
-          />
-
-          {/* Edit mode overlay */}
-          {isEditMode && (
-            <div className="absolute top-4 left-4 bg-blue-600/90 text-white px-4 py-2 rounded-lg text-sm font-medium volter-font backdrop-blur-sm">
-              🎨 Modo de Edição Ativo
-            </div>
-          )}
-
-          {/* Empty state */}
-          {widgets.length === 0 && !isEditMode && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center bg-white/90 backdrop-blur-sm rounded-lg p-8 shadow-lg">
-                <Home className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl volter-font mb-2 text-gray-700">Home Vazia</h3>
-                <p className="text-gray-600">Esta home ainda não foi personalizada.</p>
+  const renderMainContent = () => {
+    return (
+      <div className="space-y-6">
+        {/* User Profile Header */}
+        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+              <div className="flex-shrink-0">
+                <div className="relative">
+                  <img
+                    src={avatarUrl}
+                    alt={habboUser.habbo_name}
+                    className="h-32 w-auto object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=3&action=std`;
+                    }}
+                  />
+                  <Badge 
+                    className={`absolute -bottom-2 -right-2 ${habboUser.is_online ? 'bg-green-500' : 'bg-red-500'} text-white`}
+                  >
+                    {habboUser.is_online ? 'Online' : 'Offline'}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-3xl font-bold volter-font mb-2">{habboUser.habbo_name}</h1>
+                
+                {habboUser.motto && (
+                  <p className="text-lg text-gray-600 italic mb-4">"{habboUser.motto}"</p>
+                )}
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-500" />
+                    <span>Hotel: {habboUser.hotel?.toUpperCase()}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-green-500" />
+                    <span>Desde: {new Date(habboUser.created_at).getFullYear()}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-purple-500" />
+                    <span>Atualizado: {new Date(habboUser.last_updated).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 text-yellow-500" />
+                    <span>ID: {habboUser.habbo_id}</span>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          </CardContent>
+        </Card>
+
+        {/* Hotel Feed Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CompactHotelFeed />
+          
+          {/* User Stats/Info Card */}
+          <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5" />
+                Informações do Usuário
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Nome Habbo:</span>
+                  <span className="text-sm">{habboUser.habbo_name}</span>
+                </div>
+                
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Hotel:</span>
+                  <Badge variant="outline">{habboUser.hotel?.toUpperCase()}</Badge>
+                </div>
+                
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Status:</span>
+                  <Badge className={habboUser.is_online ? 'bg-green-500' : 'bg-red-500'}>
+                    {habboUser.is_online ? 'Online' : 'Offline'}
+                  </Badge>
+                </div>
+                
+                <Separator />
+                
+                <div className="text-center pt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => window.open(`https://www.habbo.${habboUser.hotel}/profile/${habboUser.habbo_name}`, '_blank')}
+                  >
+                    Ver Perfil Oficial
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
+    );
+  };
 
-      {/* Footer info */}
-      <div className="text-center py-6">
-        <p className="text-white/80 text-sm volter-font"
-           style={{
-             textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-           }}>
-          {isOwner 
-            ? 'Arraste widgets e stickers no modo de edição para personalizar sua home!'
-            : `Gostou desta home? Deixe um comentário no guestbook!`
-          }
-        </p>
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        <div className="p-4">
+          {renderMainContent()}
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="flex min-h-screen">
+        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+          {renderMainContent()}
+        </main>
       </div>
     </div>
   );

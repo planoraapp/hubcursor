@@ -1,28 +1,49 @@
 
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { habboProxyService } from '@/services/habboProxyService';
+import { useMemo } from 'react';
 
 export const useUserFigures = (usernames: string[]) => {
-  const queries = useQueries({
-    queries: usernames.map(username => ({
-      queryKey: ['user-figure', username],
-      queryFn: () => habboProxyService.getUserProfile(username),
-      staleTime: 10 * 60 * 1000, // 10 minutes
-      retry: 1,
-      enabled: !!username,
-    }))
+  const { data: figureMap = {}, isLoading } = useQuery({
+    queryKey: ['user-figures', usernames.join(',')],
+    queryFn: async () => {
+      if (usernames.length === 0) return {};
+      
+      console.log(`🎭 [useUserFigures] Fetching figures for ${usernames.length} users`);
+      
+      const figureMap: Record<string, string> = {};
+      
+      // Fetch figures in batches to avoid overwhelming the API
+      const batchSize = 5;
+      for (let i = 0; i < usernames.length; i += batchSize) {
+        const batch = usernames.slice(i, i + batchSize);
+        
+        await Promise.allSettled(
+          batch.map(async (username) => {
+            try {
+              const user = await habboProxyService.getUserByName(username);
+              if (user?.figureString) {
+                figureMap[username] = user.figureString;
+              }
+            } catch (error) {
+              console.warn(`⚠️ [useUserFigures] Failed to fetch figure for ${username}:`, error);
+            }
+          })
+        );
+        
+        // Small delay between batches
+        if (i + batchSize < usernames.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      console.log(`✅ [useUserFigures] Fetched ${Object.keys(figureMap).length}/${usernames.length} user figures`);
+      return figureMap;
+    },
+    enabled: usernames.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 15 * 60 * 1000, // 15 minutes
   });
-
-  // Create a map of username -> figureString
-  const figureMap = usernames.reduce((acc, username, index) => {
-    const query = queries[index];
-    if (query.data?.figureString) {
-      acc[username] = query.data.figureString;
-    }
-    return acc;
-  }, {} as Record<string, string>);
-
-  const isLoading = queries.some(query => query.isLoading);
 
   return {
     figureMap,

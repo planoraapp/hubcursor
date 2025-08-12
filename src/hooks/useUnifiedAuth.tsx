@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client'; // Padronizado para usar apenas este cliente
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
 
 interface HabboAccount {
@@ -18,46 +18,9 @@ export const useUnifiedAuth = () => {
   const [habboAccount, setHabboAccount] = useState<HabboAccount | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await loadHabboAccount(session.user.id);
-        }
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await loadHabboAccount(session.user.id);
-      } else {
-        setHabboAccount(null);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadHabboAccount = async (userId: string) => {
+  const loadHabboAccount = useCallback(async (userId: string) => {
     try {
+      console.log('🔍 [useUnifiedAuth] Loading Habbo account for user:', userId);
       const { data, error } = await supabase
         .from('habbo_accounts')
         .select('*')
@@ -65,26 +28,87 @@ export const useUnifiedAuth = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error loading Habbo account:', error);
+        console.error('❌ [useUnifiedAuth] Error loading Habbo account:', error);
         return;
       }
 
+      console.log('✅ [useUnifiedAuth] Habbo account loaded:', data?.habbo_name || 'none');
       setHabboAccount(data || null);
     } catch (error) {
-      console.error('Error in loadHabboAccount:', error);
+      console.error('❌ [useUnifiedAuth] Error in loadHabboAccount:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const getInitialSession = async () => {
+      try {
+        console.log('🚀 [useUnifiedAuth] Getting initial session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (!mounted) return;
+        
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Defer habbo account loading to next tick to avoid state update conflicts
+          setTimeout(() => {
+            if (mounted) {
+              loadHabboAccount(session.user.id);
+            }
+          }, 0);
+        }
+      } catch (error) {
+        console.error('❌ [useUnifiedAuth] Error getting initial session:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      
+      console.log('🔄 [useUnifiedAuth] Auth state changed:', event, session?.user?.id);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Defer habbo account loading to next tick
+        setTimeout(() => {
+          if (mounted) {
+            loadHabboAccount(session.user.id);
+          }
+        }, 0);
+      } else {
+        setHabboAccount(null);
+      }
+      
+      setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [loadHabboAccount]);
 
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
       setLoading(true);
+      console.log('🔐 [useUnifiedAuth] Attempting login for:', habboName);
       
       // Get auth email for this Habbo account
       const { data: emailResult, error: emailError } = await supabase.rpc(
         'get_auth_email_for_habbo_with_hotel', 
         { 
           habbo_name_param: habboName,
-          hotel_param: 'br' // Default to .br, fallback logic is in the function
+          hotel_param: 'br'
         }
       );
 
@@ -93,7 +117,7 @@ export const useUnifiedAuth = () => {
       }
 
       const authEmail = emailResult;
-      console.log('🔐 Attempting login with email:', authEmail);
+      console.log('🔐 [useUnifiedAuth] Attempting login with email:', authEmail);
 
       // Sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -109,14 +133,13 @@ export const useUnifiedAuth = () => {
       }
 
       if (data.user) {
-        await loadHabboAccount(data.user.id);
-        console.log('✅ Login successful for:', habboName);
+        console.log('✅ [useUnifiedAuth] Login successful for:', habboName);
         return data;
       }
 
       throw new Error('Erro no login');
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ [useUnifiedAuth] Login error:', error);
       throw error;
     } finally {
       setLoading(false);
@@ -137,7 +160,7 @@ export const useUnifiedAuth = () => {
         description: "Você foi desconectado com sucesso."
       });
     } catch (error: any) {
-      console.error('Logout error:', error);
+      console.error('❌ [useUnifiedAuth] Logout error:', error);
       toast({
         title: "Erro no logout",
         description: error.message,

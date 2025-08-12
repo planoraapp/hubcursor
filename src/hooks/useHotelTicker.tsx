@@ -31,7 +31,7 @@ export const useHotelTicker = () => {
   } = useQuery({
     queryKey: ['hotel-ticker', hotel],
     queryFn: () => {
-      console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (detected from user: ${habboAccount?.habbo_name})`);
+      console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (user: ${habboAccount?.habbo_name || 'guest'})`);
       return habboProxyService.getHotelTicker(hotel);
     },
     refetchInterval: 30 * 1000, // 30 seconds
@@ -43,7 +43,7 @@ export const useHotelTicker = () => {
   // Extract activities and metadata
   const rawActivities = tickerResponse?.activities || [];
   const metadata = tickerResponse?.meta || {
-    source: 'unknown' as const,
+    source: 'mock' as const,
     timestamp: new Date().toISOString(),
     hotel: hotel,
     count: 0
@@ -52,6 +52,11 @@ export const useHotelTicker = () => {
   // Aggregate activities by user with improved time window
   const aggregatedActivities: AggregatedActivity[] = React.useMemo(() => {
     console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation (hotel: ${hotel}, source: ${metadata.source})`);
+    
+    if (rawActivities.length === 0) {
+      console.log(`⚠️ [useHotelTicker] No activities to process`);
+      return [];
+    }
     
     const groupByUser = (items: TickerActivity[]) => {
       const userGroups: { [username: string]: TickerActivity[] } = {};
@@ -89,6 +94,8 @@ export const useHotelTicker = () => {
     }
 
     console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel}, source: ${metadata.source})`);
+    console.log(`📊 [useHotelTicker] Total activities: ${result.reduce((sum, group) => sum + group.activityCount, 0)}`);
+    
     return result;
   }, [rawActivities, hotel, metadata.source]);
 

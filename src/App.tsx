@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -11,6 +10,7 @@ import { MarketplaceProvider } from './contexts/MarketplaceContext';
 import Index from './pages/Index';
 import Login from './pages/Login';
 import EnhancedHabboHome from './pages/EnhancedHabboHome';
+import HabboHomeRedirect from './pages/HabboHomeRedirect';
 import HomesHub from './pages/HomesHub';
 import Mercado from './pages/Mercado';
 import Emblemas from './pages/Emblemas';
@@ -37,7 +37,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/home/:username" element={<EnhancedHabboHome />} />
+                <Route path="/home/:username" element={<HabboHomeRedirect />} />
+                <Route path="/home/:hotel/:username" element={<EnhancedHabboHome />} />
                 <Route path="/homes" element={<HomesHub />} />
                 <Route path="/mercado" element={<Mercado />} />
                 <Route path="/emblemas" element={<Emblemas />} />
