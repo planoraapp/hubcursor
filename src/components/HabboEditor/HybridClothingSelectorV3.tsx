@@ -8,10 +8,10 @@ import { Shirt, Palette, Zap, Database, Sparkles } from 'lucide-react';
 import { OptimizedClothingGrid } from '../OptimizedClothingGrid';
 import { HybridClothingItemV2 } from '@/hooks/useHybridClothingDataV2';
 import HabboEmotionClothingGrid from '../PuhekuplaEditor/HabboEmotionClothingGrid';
-import { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
+import { UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
 
 interface HybridClothingSelectorV3Props {
-  onItemSelect: (item: HybridClothingItemV2 | HabboEmotionClothingItem) => void;
+  onItemSelect: (item: HybridClothingItemV2 | UnifiedClothingItem) => void;
 }
 
 const CATEGORIES = [
@@ -35,12 +35,12 @@ export const HybridClothingSelectorV3 = ({ onItemSelect }: HybridClothingSelecto
   const [selectedItem, setSelectedItem] = useState<string>();
   const [selectedColor, setSelectedColor] = useState<string>('1');
 
-  const handleHabboEmotionItemSelect = (item: HabboEmotionClothingItem) => {
+  const handleHabboEmotionItemSelect = (item: UnifiedClothingItem) => {
     setSelectedItem(item.code);
-    onItemSelect(item as any); // Type assertion para compatibilidade
+    onItemSelect(item);
   };
 
-  const handleColorSelect = (colorId: string, item: HabboEmotionClothingItem) => {
+  const handleColorSelect = (colorId: string, item: UnifiedClothingItem) => {
     setSelectedColor(colorId);
     onItemSelect({ ...item, selectedColor: colorId } as any);
   };

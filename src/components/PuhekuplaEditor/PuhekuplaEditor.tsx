@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import HabboEmotionClothingGrid from './HabboEmotionClothingGrid';
 import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
 import { useToast } from '@/hooks/use-toast';
 import { useOfficialHabboFigureData } from '@/hooks/useOfficialHabboFigureData';
-import type { HabboEmotionClothingItem } from '@/hooks/useHabboEmotionClothing';
+import type { UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
 
 // Configuração das categorias corrigida para HabboEmotion
 const categoryGroups = [
@@ -98,35 +97,53 @@ const PuhekuplaEditor = () => {
     }
   }, []);
 
-  const handleItemSelect = (item: HabboEmotionClothingItem) => {
-    console.log('🎯 [PuhekuplaEditor] Item HabboEmotion selecionado:', item);
+  const handleItemSelect = (item: UnifiedClothingItem) => {
+    console.log('🎯 [PuhekuplaEditor] Item UnifiedClothing selecionado:', item);
     
     setSelectedItem(item.code);
+    
+    // Convert UnifiedClothingItem to compatible format
+    const compatibleItem = {
+      ...item,
+      name: item.name,
+      code: item.code,
+      category: item.category,
+      part: item.part
+    };
     
     // Aplicar item usando o FigureManager
     const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
       currentFigure, 
-      item, 
+      compatibleItem, 
       selectedColor
     );
     
     setCurrentFigure(updatedFigure);
     
     toast({
-      title: "👕 Roupa HabboEmotion aplicada!",
+      title: "👕 Roupa aplicada!",
       description: `${item.name} foi aplicado ao seu avatar.`,
     });
   };
 
-  const handleColorSelect = (colorId: string, item: HabboEmotionClothingItem) => {
+  const handleColorSelect = (colorId: string, item: UnifiedClothingItem) => {
     console.log('🎨 [PuhekuplaEditor] Cor selecionada:', { colorId, item: item.name });
     
     setSelectedColor(colorId);
     
+    // Convert UnifiedClothingItem to compatible format
+    const compatibleItem = {
+      ...item,
+      name: item.name,
+      code: item.code,
+      category: item.category,
+      part: item.part
+    };
+    
     // Aplicar nova cor
     const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
       currentFigure, 
-      item, 
+      compatibleItem, 
       colorId
     );
     
@@ -211,7 +228,7 @@ const PuhekuplaEditor = () => {
                 <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
                   <div className="mb-3">
                     <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
-                    <p className="text-sm text-gray-600">Roupas da HabboEmotion API - Gênero: {selectedGender}</p>
+                    <p className="text-sm text-gray-600">Roupas da API Unificada - Gênero: {selectedGender}</p>
                   </div>
                   
                   {/* Sub-categorias */}
@@ -239,7 +256,7 @@ const PuhekuplaEditor = () => {
                       <TabsContent key={category.id} value={category.id}>
                         <HabboEmotionClothingGrid 
                           selectedCategory={category.id}
-                          selectedGender={selectedGender}
+                          selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
                           onItemSelect={handleItemSelect}
                           onColorSelect={handleColorSelect}
                           selectedItem={selectedItem}

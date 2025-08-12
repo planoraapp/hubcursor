@@ -11,14 +11,18 @@ interface ClothingGridProps {
   selectedCategory: string;
   selectedGender: 'M' | 'F';
   onItemSelect: (item: UnifiedClothingItem) => void;
+  onColorSelect: (colorId: string, item: UnifiedClothingItem) => void;
   selectedItem?: string;
+  selectedColor?: string;
 }
 
 const HabboEmotionClothingGrid: React.FC<ClothingGridProps> = ({
   selectedCategory,
   selectedGender,
   onItemSelect,
-  selectedItem
+  onColorSelect,
+  selectedItem,
+  selectedColor
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showHCOnly, setShowHCOnly] = useState(false);
