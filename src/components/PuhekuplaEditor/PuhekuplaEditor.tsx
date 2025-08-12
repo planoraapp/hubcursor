@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ export const PuhekuplaEditor: React.FC<PuhekuplaEditorProps> = () => {
   const [avatarName, setAvatarName] = useState<string>('HabboHub');
   const [bubbleText, setBubbleText] = useState<string>('Olá, mundo!');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const handleClothingSelect = (item: UnifiedClothingItem) => {
     setSelectedClothing(item);
@@ -128,6 +130,7 @@ export const PuhekuplaEditor: React.FC<PuhekuplaEditorProps> = () => {
 
           <TabsContent value="roupas">
             <HabboEmotionClothingGrid
+              selectedCategory={selectedCategory}
               selectedGender={selectedGender}
               onItemSelect={handleClothingSelect}
               onColorSelect={() => {}}

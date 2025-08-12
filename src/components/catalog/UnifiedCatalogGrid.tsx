@@ -1,10 +1,11 @@
+
 import { useState, useMemo } from 'react';
 import { Search, Filter, Shirt } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUnifiedClothingAPI, UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
+import { useUnifiedClothingAPI as useUnifiedClothing, UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
 import IntelligentClothingThumbnail from '../HabboEditor/IntelligentClothingThumbnail';
 
 interface UnifiedCatalogGridProps {
@@ -14,9 +15,9 @@ interface UnifiedCatalogGridProps {
 export const UnifiedCatalogGrid = ({ onItemSelect }: UnifiedCatalogGridProps) => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [genderFilter, setGenderFilter] = useState('U');
+  const [genderFilter, setGenderFilter] = useState<'M' | 'F' | 'U'>('U');
 
-  const { data: clothing, isLoading, error } = useUnifiedClothingAPI({
+  const { data: clothing, isLoading, error } = useUnifiedClothing({
     limit: 500,
     category: categoryFilter === 'all' ? '' : categoryFilter,
     gender: genderFilter,
@@ -77,7 +78,7 @@ export const UnifiedCatalogGrid = ({ onItemSelect }: UnifiedCatalogGridProps) =>
             </SelectContent>
           </Select>
           
-          <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <Select value={genderFilter} onValueChange={(value: 'M' | 'F' | 'U') => setGenderFilter(value)}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
