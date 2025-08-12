@@ -1,14 +1,13 @@
 
 import React from 'react';
-import { MainLayout } from '@/components/layout/MainLayout';
-import { OnlineCountDisplay } from '@/components/console/OnlineCountDisplay';
-import { CompactHotelFeed } from '@/components/console/CompactHotelFeed';
+import { MobileLayout } from '@/components/layout/MobileLayout';
+import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
 import { EnhancedFriendsFeedColumn } from '@/components/console/EnhancedFriendsFeedColumn';
 import { RealHotelFeedColumn } from '@/components/console/RealHotelFeedColumn';
 
 export const Console: React.FC = () => {
   return (
-    <MainLayout>
+    <MobileLayout>
       <div className="min-h-screen bg-gradient-to-br from-[#2C3E50] via-[#34495E] to-[#5A6573] text-white">
         <div className="container mx-auto px-4 py-6">
           <div className="mb-6">
@@ -17,9 +16,8 @@ export const Console: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
-            {/* Left Column - Online Count + Compact Feed */}
+            {/* Left Column - Compact Feed */}
             <div className="space-y-6">
-              <OnlineCountDisplay />
               <CompactHotelFeed />
             </div>
 
@@ -35,6 +33,6 @@ export const Console: React.FC = () => {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </MobileLayout>
   );
 };

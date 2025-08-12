@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -18,7 +19,7 @@ import Editor from './pages/Editor';
 import Catalogo from './pages/Catalogo';
 import Eventos from './pages/Eventos';
 import Ferramentas from './pages/Ferramentas';
-import Console from './pages/Console';
+import { Console } from './pages/Console';
 import Noticias from './pages/Noticias';
 import Forum from './pages/Forum';
 import NotFound from './pages/NotFound';
