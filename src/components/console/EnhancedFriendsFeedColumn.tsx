@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -42,7 +41,12 @@ const UserSearch: React.FC<UserSearchProps> = ({ onUserFound, suggestions }) => 
     try {
       const user = await habboProxyService.getUserProfile(nameToSearch);
       if (user) {
-        onUserFound(user);
+        // Ensure uniqueId is present for type compatibility
+        const userWithUniqueId = {
+          ...user,
+          uniqueId: user.uniqueId || user.id || ''
+        };
+        onUserFound(userWithUniqueId);
         toast.success(`Usuário ${user.name} encontrado!`);
         setSearchQuery('');
         setShowSuggestions(false);
