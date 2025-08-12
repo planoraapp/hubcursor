@@ -155,7 +155,7 @@ const ExpandedUserCard: React.FC<ExpandedUserCardProps> = ({ user, hotel }) => {
             alt={user.name}
           />
           <AvatarFallback className="bg-white/20 text-white">
-            {user.name.substring(0, 2).toUpperCase()}
+            {(user.name || '?').substring(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1">
@@ -327,7 +327,7 @@ export const EnhancedFriendsFeedColumn: React.FC = () => {
                             alt={activity.friend.name}
                           />
                           <AvatarFallback className="bg-white/20 text-white">
-                            {activity.friend.name.substring(0, 2).toUpperCase()}
+                            {(activity.friend.name || '?').substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">

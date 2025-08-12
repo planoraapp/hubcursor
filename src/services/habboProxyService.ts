@@ -83,25 +83,43 @@ class HabboProxyService {
 
       console.log(`[HabboProxyService] Raw profile response for ${username}:`, data);
 
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        console.warn(`No data returned for ${username}`);
+      // Normalize candidate from proxy
+      let user: any = Array.isArray(data) ? data[0] : data;
+
+      // If proxy returned an unexpected shape (e.g., ticker), try official API fallback
+      if (!user || typeof user?.name !== 'string' || !(user?.uniqueId || user?.id)) {
+        try {
+          const resp = await fetch(`https://www.habbo.${domain}/api/public/users?name=${encodeURIComponent(username)}`, {
+            headers: { 'Accept': 'application/json' },
+          });
+          if (resp.ok) {
+            const ud = await resp.json();
+            if (ud && typeof ud.name === 'string') {
+              user = ud;
+            }
+          }
+        } catch (fallbackErr) {
+          console.warn('[HabboProxyService] Official users fallback failed:', fallbackErr);
+        }
+      }
+
+      if (!user || typeof user?.name !== 'string') {
+        console.warn(`[HabboProxyService] Unexpected profile shape for ${username}:`, data);
         return null;
       }
 
-      const user = Array.isArray(data) ? data[0] : data;
-
       return {
-        id: user.uniqueId || user.id,
-        name: user.name,
-        motto: user.motto,
-        online: user.online,
-        memberSince: user.memberSince,
+        id: user.uniqueId || user.id || '',
+        name: user.name || username,
+        motto: user.motto || '',
+        online: !!user.online,
+        memberSince: user.memberSince || '',
         selectedBadges: user.selectedBadges || [],
         badges: user.badges || [],
-        figureString: user.figureString,
-        profileVisible: user.profileVisible,
+        figureString: user.figureString || '',
+        profileVisible: user.profileVisible ?? true,
         lastWebVisit: user.lastWebVisit,
-        uniqueId: user.uniqueId || user.id,
+        uniqueId: user.uniqueId || user.id || '',
       };
     } catch (error) {
       console.error(`Error fetching profile for ${username}:`, error);
