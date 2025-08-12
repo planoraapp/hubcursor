@@ -4,7 +4,10 @@ import { habboFeedService, FeedActivity, FeedResponse } from '@/services/habboFe
 import { useUnifiedAuth } from './useUnifiedAuth';
 import { useMemo, useCallback } from 'react';
 
-export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => {
+export const useRealHotelFeed = (options?: { 
+  onlineWithinSeconds?: number;
+  mode?: 'official' | 'database' | 'hybrid';
+}) => {
   const { habboAccount } = useUnifiedAuth();
   
   const hotel = useMemo(() => {
@@ -15,15 +18,12 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     return 'com.br';
   }, [habboAccount?.hotel]);
 
-  // Calculate dynamic limit based on time window to get more data for longer periods
-  const dynamicLimit = useMemo(() => {
-    const baseLimit = 100; // Increased base limit
-    const timeWindowMinutes = (options?.onlineWithinSeconds || 1800) / 60;
-    // Increase limit for longer time windows (more users might be included)
-    return Math.min(500, Math.max(baseLimit, Math.floor(timeWindowMinutes / 30) * 50)); // Increased max limit
-  }, [options?.onlineWithinSeconds]);
+  // Use official mode by default for live ticker behavior
+  const mode = options?.mode || 'official';
+  const baseLimit = 50; // Increased base limit for ticker
+  const onlineWithinSeconds = options?.onlineWithinSeconds || 1800; // 30 minutes default
 
-  // Function to discover and sync online users
+  // Function to discover and sync online users (background operation)
   const discoverOnlineUsers = useCallback(async () => {
     try {
       console.log(`🔍 [useRealHotelFeed] Discovering online users for ${hotel}`);
@@ -34,30 +34,52 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     }
   }, [hotel]);
 
-  // Fetch real feed data from our Edge Function
+  // Fetch real feed data with official ticker integration
   const { 
     data: feedResponse, 
     isLoading, 
     error,
     refetch
   } = useQuery({
-    queryKey: ['real-hotel-feed', hotel, options?.onlineWithinSeconds ?? null, dynamicLimit],
+    queryKey: ['real-hotel-feed', hotel, mode, onlineWithinSeconds],
     queryFn: async () => {
-      // First, try to discover new online users (background operation)
-      discoverOnlineUsers();
+      console.log(`📡 [useRealHotelFeed] Fetching ${mode} feed for ${hotel}`);
       
-      // Then fetch the feed
+      // Background discovery for database warming (but don't wait for it)
+      if (mode === 'hybrid' || mode === 'database') {
+        discoverOnlineUsers().catch(() => {}); // Silent fail
+      }
+      
       return habboFeedService.getHotelFeed(
         hotel,
-        dynamicLimit,
-        { onlineWithinSeconds: options?.onlineWithinSeconds }
+        baseLimit,
+        { 
+          onlineWithinSeconds,
+          mode,
+          offsetHours: 0 // Start with most recent
+        }
       );
     },
-    refetchInterval: 60 * 1000, // Increased to 60 seconds
-    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: mode === 'official' ? 30 * 1000 : 60 * 1000, // More frequent for official
+    staleTime: 15 * 1000, // 15 seconds
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
+
+  // Function to load older data (for infinite scroll)
+  const loadMoreData = useCallback(async (offsetHours: number) => {
+    console.log(`📈 [useRealHotelFeed] Loading more data with ${offsetHours}h offset`);
+    
+    return habboFeedService.getHotelFeed(
+      hotel,
+      baseLimit,
+      { 
+        onlineWithinSeconds: onlineWithinSeconds + (offsetHours * 3600),
+        mode,
+        offsetHours
+      }
+    );
+  }, [hotel, baseLimit, onlineWithinSeconds, mode]);
 
   // Transform activities for compatibility with existing interfaces
   const aggregatedActivities = useMemo(() => {
@@ -90,7 +112,7 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
   }, [feedResponse?.activities, hotel]);
 
   const metadata = feedResponse?.meta || {
-    source: 'cached' as const,
+    source: 'official' as const,
     timestamp: new Date().toISOString(),
     count: 0,
     onlineCount: 0
@@ -101,12 +123,16 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     return feedResponse?.activities || [];
   }, [feedResponse?.activities]);
 
-  // Enhanced refetch that also triggers discovery
+  // Enhanced refetch that also triggers discovery for hybrid/database modes
   const enhancedRefetch = useCallback(async () => {
-    console.log(`🔄 [useRealHotelFeed] Enhanced refetch triggered for ${hotel}`);
-    await discoverOnlineUsers();
+    console.log(`🔄 [useRealHotelFeed] Enhanced refetch triggered for ${hotel} (${mode} mode)`);
+    
+    if (mode === 'hybrid' || mode === 'database') {
+      await discoverOnlineUsers();
+    }
+    
     return refetch();
-  }, [discoverOnlineUsers, refetch, hotel]);
+  }, [discoverOnlineUsers, refetch, hotel, mode]);
 
   return {
     activities: activitiesSorted,
@@ -115,8 +141,10 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     error,
     hotel,
     metadata,
+    mode,
     refetch: enhancedRefetch,
-    discoverOnlineUsers
+    discoverOnlineUsers,
+    loadMoreData
   };
 };
 

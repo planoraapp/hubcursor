@@ -1,4 +1,3 @@
-
 interface FeedActivity {
   username: string;
   lastUpdate: string;
@@ -32,10 +31,15 @@ interface FeedResponse {
   hotel: string;
   activities: FeedActivity[];
   meta: {
-    source: 'live' | 'cached';
+    source: 'official' | 'database' | 'live' | 'cached';
     timestamp: string;
     count: number;
     onlineCount: number;
+    filter?: {
+      mode?: string;
+      onlineWithinSeconds?: number;
+      offsetHours?: number;
+    };
   };
 }
 
@@ -50,12 +54,31 @@ interface DiscoverResponse {
 class HabboFeedService {
   private baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1';
 
-  async getHotelFeed(hotel: string = 'com.br', limit: number = 20, options?: { onlineWithinSeconds?: number }): Promise<FeedResponse> {
-    console.log(`🎯 [HabboFeedService] Fetching feed for hotel: ${hotel}`);
-    const params = new URLSearchParams({ hotel: hotel, limit: String(limit) });
+  async getHotelFeed(
+    hotel: string = 'com.br', 
+    limit: number = 50, 
+    options?: { 
+      onlineWithinSeconds?: number;
+      mode?: 'official' | 'database' | 'hybrid';
+      offsetHours?: number;
+    }
+  ): Promise<FeedResponse> {
+    console.log(`🎯 [HabboFeedService] Fetching ${options?.mode || 'hybrid'} feed for hotel: ${hotel}`);
+    
+    const params = new URLSearchParams({ 
+      hotel: hotel, 
+      limit: String(limit),
+      mode: options?.mode || 'hybrid'
+    });
+    
     if (options?.onlineWithinSeconds) {
       params.set('onlineWithinSeconds', String(options.onlineWithinSeconds));
     }
+    
+    if (options?.offsetHours) {
+      params.set('offsetHours', String(options.offsetHours));
+    }
+    
     const response = await fetch(`${this.baseUrl}/habbo-feed?${params.toString()}`, {
       method: 'GET',
     });
@@ -65,7 +88,7 @@ class HabboFeedService {
     }
 
     const data = await response.json();
-    console.log(`✅ [HabboFeedService] Received ${data.activities?.length || 0} activities for ${hotel}`);
+    console.log(`✅ [HabboFeedService] Received ${data.activities?.length || 0} activities (${data.meta?.source}) for ${hotel}`);
     return data;
   }
 

@@ -35,6 +35,149 @@ interface FeedActivity {
   };
 }
 
+interface TickerEntry {
+  habboName: string;
+  figureString: string;
+  motto: string;
+  buildersClubMember: boolean;
+  habboClubMember: boolean;
+  lastWebAccess: string;
+  habbosMissionChanged: boolean;
+  newFriends: Array<{
+    habboName: string;
+    figureString: string;
+  }>;
+  totalFriends: number;
+  newGroups: Array<{
+    groupName: string;
+    badgeCode: string;
+  }>;
+  totalGroups: number;
+  newBadges: Array<{
+    badgeCode: string;
+    badgeName: string;
+  }>;
+  totalBadges: number;
+  newRooms: Array<{
+    roomName: string;
+    roomId: string;
+  }>;
+  totalRooms: number;
+  profileVisible: boolean;
+}
+
+// Helper function to fetch from Habbo API with retry logic
+async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'HabboHub/1.0',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+      
+      if (response.status === 404 || response.status === 403) {
+        return null;
+      }
+      
+      throw new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      if (i === retries) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+    }
+  }
+}
+
+// Function to get official ticker data
+async function getOfficialTicker(hotel: string, limit: number): Promise<TickerEntry[]> {
+  console.log(`🎯 [habbo-feed] Fetching official ticker for ${hotel}, limit: ${limit}`);
+  
+  const baseUrl = hotel === 'com.br' ? 'https://www.habbo.com.br' : `https://www.habbo.${hotel}`;
+  const tickerUrl = `${baseUrl}/api/public/users/habbo/ticker?limit=${limit}`;
+  
+  try {
+    const tickerData = await fetchHabboAPI(tickerUrl);
+    console.log(`✅ [habbo-feed] Retrieved ${tickerData?.length || 0} ticker entries`);
+    return tickerData || [];
+  } catch (error) {
+    console.error(`❌ [habbo-feed] Failed to fetch ticker:`, error);
+    return [];
+  }
+}
+
+// Function to enrich ticker data with additional profile info
+async function enrichTickerEntry(entry: TickerEntry, hotel: string): Promise<FeedActivity> {
+  const baseUrl = hotel === 'com.br' ? 'https://www.habbo.com.br' : `https://www.habbo.${hotel}`;
+  
+  // Count actual changes
+  const counts = {
+    groups: entry.newGroups?.length || 0,
+    friends: entry.newFriends?.length || 0,
+    badges: entry.newBadges?.length || 0,
+    avatarChanged: false, // Ticker doesn't provide this directly
+    mottoChanged: entry.habbosMissionChanged || false
+  };
+  
+  // Get additional profile data if needed
+  let profileData = null;
+  try {
+    if (entry.profileVisible) {
+      profileData = await fetchHabboAPI(`${baseUrl}/api/public/users?name=${encodeURIComponent(entry.habboName)}`);
+    }
+  } catch (error) {
+    console.warn(`⚠️ [habbo-feed] Failed to fetch profile for ${entry.habboName}:`, error);
+  }
+  
+  // Build description based on activities
+  const activityParts = [];
+  if (counts.groups > 0) activityParts.push(`${counts.groups} novo(s) grupo(s)`);
+  if (counts.friends > 0) activityParts.push(`${counts.friends} novo(s) amigo(s)`);
+  if (counts.badges > 0) activityParts.push(`${counts.badges} novo(s) emblema(s)`);
+  if (counts.mottoChanged) activityParts.push('mudou sua missão');
+  if (entry.newRooms?.length > 0) activityParts.push(`${entry.newRooms.length} novo(s) quarto(s)`);
+  
+  let description = 'atividade recente';
+  if (activityParts.length > 0) {
+    description = `adicionou ${activityParts.join(', ')}.`;
+  }
+  
+  return {
+    username: entry.habboName,
+    lastUpdate: entry.lastWebAccess,
+    counts,
+    groups: (entry.newGroups || []).map(g => ({
+      name: g.groupName,
+      badgeCode: g.badgeCode
+    })),
+    friends: (entry.newFriends || []).map(f => ({
+      name: f.habboName,
+      figureString: f.figureString
+    })),
+    badges: (entry.newBadges || []).map(b => ({
+      code: b.badgeCode,
+      name: b.badgeName
+    })),
+    photos: [], // Ticker doesn't provide photos directly
+    description,
+    profile: {
+      figureString: entry.figureString,
+      motto: entry.motto || '',
+      isOnline: profileData?.online || false,
+      memberSince: profileData?.memberSince || null,
+      lastWebVisit: entry.lastWebAccess,
+      groupsCount: entry.totalGroups || 0,
+      friendsCount: entry.totalFriends || 0,
+      badgesCount: entry.totalBadges || 0,
+      photosCount: 0
+    }
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -49,14 +192,103 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const hotel = url.searchParams.get('hotel') || 'com.br';
     const username = url.searchParams.get('username');
-    const limit = parseInt(url.searchParams.get('limit') || '100'); // Increased default limit
+    const limit = parseInt(url.searchParams.get('limit') || '50');
     const onlineWithinSecondsParam = url.searchParams.get('onlineWithinSeconds');
-    const onlineWithinSeconds = onlineWithinSecondsParam ? parseInt(onlineWithinSecondsParam) : 1800; // Default 30 minutes
+    const onlineWithinSeconds = onlineWithinSecondsParam ? parseInt(onlineWithinSecondsParam) : 1800;
+    const mode = url.searchParams.get('mode') || 'hybrid'; // 'official', 'database', or 'hybrid'
+    const offsetHours = parseInt(url.searchParams.get('offsetHours') || '0');
 
-    console.log(`🎯 [habbo-feed] Fetching feed for hotel: ${hotel}${username ? `, user: ${username}` : ''}, window: ${Math.floor(onlineWithinSeconds / 60)}min, limit: ${limit}`);
+    console.log(`🎯 [habbo-feed] Mode: ${mode}, Hotel: ${hotel}${username ? `, user: ${username}` : ''}, limit: ${limit}`);
 
-    // Get snapshots from the last window (default 30 minutes, expandable)
-    const cutoffTime = new Date(Date.now() - onlineWithinSeconds * 1000).toISOString();
+    // If mode is 'official' or 'hybrid', try to get live ticker data
+    if ((mode === 'official' || mode === 'hybrid') && !username) {
+      try {
+        console.log(`📡 [habbo-feed] Fetching official ticker data...`);
+        const tickerEntries = await getOfficialTicker(hotel, limit);
+        
+        if (tickerEntries.length > 0) {
+          // Apply time filtering if offsetHours is specified
+          let filteredEntries = tickerEntries;
+          if (offsetHours > 0) {
+            const cutoffTime = new Date(Date.now() - offsetHours * 60 * 60 * 1000);
+            filteredEntries = tickerEntries.filter(entry => {
+              const entryTime = new Date(entry.lastWebAccess);
+              return entryTime >= cutoffTime;
+            });
+            console.log(`⏰ [habbo-feed] Filtered to ${filteredEntries.length} entries within ${offsetHours}h`);
+          }
+          
+          // Enrich ticker data with additional details
+          const enrichedActivities: FeedActivity[] = [];
+          const batchSize = 5; // Process in batches to avoid overwhelming the API
+          
+          for (let i = 0; i < Math.min(filteredEntries.length, limit); i += batchSize) {
+            const batch = filteredEntries.slice(i, i + batchSize);
+            const batchPromises = batch.map(entry => enrichTickerEntry(entry, hotel));
+            
+            try {
+              const batchResults = await Promise.allSettled(batchPromises);
+              batchResults.forEach((result, idx) => {
+                if (result.status === 'fulfilled') {
+                  enrichedActivities.push(result.value);
+                } else {
+                  console.warn(`⚠️ [habbo-feed] Failed to enrich ${batch[idx].habboName}:`, result.reason);
+                }
+              });
+            } catch (error) {
+              console.warn(`⚠️ [habbo-feed] Batch processing error:`, error);
+            }
+            
+            // Small delay between batches
+            if (i + batchSize < Math.min(filteredEntries.length, limit)) {
+              await new Promise(resolve => setTimeout(resolve, 200));
+            }
+          }
+          
+          console.log(`✅ [habbo-feed] Returning ${enrichedActivities.length} official activities`);
+          
+          return new Response(
+            JSON.stringify({
+              success: true,
+              hotel,
+              activities: enrichedActivities,
+              meta: {
+                source: 'official',
+                timestamp: new Date().toISOString(),
+                count: enrichedActivities.length,
+                onlineCount: enrichedActivities.filter(a => a.profile.isOnline).length,
+                filter: { mode, offsetHours }
+              }
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          );
+        }
+      } catch (error) {
+        console.error(`❌ [habbo-feed] Official ticker failed:`, error);
+        if (mode === 'official') {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Failed to fetch official ticker: ${error.message}`
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500,
+            }
+          );
+        }
+        // Fall back to database mode if hybrid
+      }
+    }
+
+    // Fallback to database mode (existing logic)
+    console.log(`📊 [habbo-feed] Using database mode as fallback/primary`);
+    
+    // Get snapshots from the database
+    const cutoffTime = new Date(Date.now() - (onlineWithinSeconds + offsetHours * 3600) * 1000).toISOString();
     
     let snapshotsQuery = supabase
       .from('habbo_user_snapshots')
@@ -69,22 +301,22 @@ Deno.serve(async (req) => {
       snapshotsQuery = snapshotsQuery.ilike('habbo_name', username);
     }
 
-    const { data: snapshots, error: snapshotsError } = await snapshotsQuery.limit(limit * 5); // Increased snapshot limit
+    const { data: snapshots, error: snapshotsError } = await snapshotsQuery.limit(limit * 5);
 
     if (snapshotsError) {
       throw new Error(`Failed to fetch snapshots: ${snapshotsError.message}`);
     }
 
-    console.log(`📊 [habbo-feed] Found ${snapshots?.length || 0} snapshots in ${Math.floor(onlineWithinSeconds / 60)}min window`);
+    console.log(`📊 [habbo-feed] Found ${snapshots?.length || 0} snapshots in database`);
 
-    // Get recent activities for context (increased limit)
+    // Get recent activities for context
     const { data: activities } = await supabase
       .from('habbo_activities')
       .select('*')
       .eq('hotel', hotel)
       .gte('created_at', cutoffTime)
       .order('created_at', { ascending: false })
-      .limit(500); // Increased activity limit
+      .limit(500);
 
     // Create user snapshots map with latest data per user
     const userSnapshotMap: { [username: string]: any } = {};
@@ -104,7 +336,7 @@ Deno.serve(async (req) => {
       userActivitiesMap[activity.habbo_name].push(activity);
     });
 
-    // Format for display - show all users with any data, not just online ones
+    // Format for display - show all users with any data
     const feedActivities: FeedActivity[] = Object.entries(userSnapshotMap)
       .map(([username, latestSnapshot]) => {
         const userActivities = userActivitiesMap[username] || [];
@@ -250,22 +482,20 @@ Deno.serve(async (req) => {
           }
         };
       })
-      // More relaxed filtering - show users with recent snapshots or activities
       .filter(activity => {
-        const hasRecentSnapshot = new Date(activity.lastUpdate) > new Date(Date.now() - onlineWithinSeconds * 1000);
+        const hasRecentSnapshot = new Date(activity.lastUpdate) > new Date(Date.now() - (onlineWithinSeconds + offsetHours * 3600) * 1000);
         const hasProfileData = activity.profile.figureString || activity.counts.groups > 0 || activity.counts.friends > 0 || activity.counts.badges > 0;
         
         return hasRecentSnapshot || hasProfileData;
       })
       .sort((a, b) => {
-        // Sort by online status first, then by last update
         if (a.profile.isOnline && !b.profile.isOnline) return -1;
         if (!a.profile.isOnline && b.profile.isOnline) return 1;
         return new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime();
       })
       .slice(0, limit);
 
-    console.log(`✅ [habbo-feed] Returning ${feedActivities.length} activities (${feedActivities.filter(a => a.profile.isOnline).length} online users)`);
+    console.log(`✅ [habbo-feed] Returning ${feedActivities.length} database activities`);
 
     return new Response(
       JSON.stringify({
@@ -273,11 +503,11 @@ Deno.serve(async (req) => {
         hotel,
         activities: feedActivities,
         meta: {
-          source: 'live',
+          source: 'database',
           timestamp: new Date().toISOString(),
           count: feedActivities.length,
           onlineCount: feedActivities.filter(a => a.profile.isOnline).length,
-          filter: { onlineWithinSeconds }
+          filter: { mode, onlineWithinSeconds, offsetHours }
         }
       }),
       {
