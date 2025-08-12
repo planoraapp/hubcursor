@@ -34,7 +34,7 @@ export const useHotelActivities = () => {
     return 'com.br';
   }, [habboAccount?.hotel]);
 
-  // Fetch recent activities from our database
+  // Fetch recent activities from our database using raw query to avoid type issues
   const { 
     data: rawActivities = [], 
     isLoading, 
@@ -45,20 +45,33 @@ export const useHotelActivities = () => {
     queryFn: async (): Promise<HabboActivity[]> => {
       console.log(`🎯 [useHotelActivities] Fetching activities for hotel: ${hotel}`);
       
-      const { data, error } = await supabase
-        .from('habbo_activities')
-        .select('*')
-        .eq('hotel', hotel)
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // Use rpc or direct SQL query to avoid type system issues
+      const { data, error } = await supabase.rpc('get_hotel_activities', {
+        hotel_param: hotel,
+        limit_param: 100
+      });
 
       if (error) {
         console.error('❌ [useHotelActivities] Error fetching activities:', error);
-        throw error;
+        // Fallback to direct query if RPC doesn't exist yet
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('habbo_activities' as any)
+          .select('*')
+          .eq('hotel', hotel)
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (fallbackError) {
+          console.error('❌ [useHotelActivities] Fallback query also failed:', fallbackError);
+          throw fallbackError;
+        }
+
+        console.log(`✅ [useHotelActivities] Fallback: Fetched ${fallbackData?.length || 0} activities for ${hotel}`);
+        return (fallbackData || []) as HabboActivity[];
       }
 
-      console.log(`✅ [useHotelActivities] Fetched ${data.length} activities for ${hotel}`);
-      return data as HabboActivity[];
+      console.log(`✅ [useHotelActivities] Fetched ${data?.length || 0} activities for ${hotel}`);
+      return (data || []) as HabboActivity[];
     },
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
