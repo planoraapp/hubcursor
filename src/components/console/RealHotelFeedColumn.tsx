@@ -1,16 +1,17 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, Database, Clock, Quote } from 'lucide-react';
+import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, Database, Clock, Quote, Search } from 'lucide-react';
 import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { habboFeedService } from '@/services/habboFeedService';
 import { useUserFigures } from '@/hooks/useUserFigures';
 
 export const RealHotelFeedColumn: React.FC = () => {
   const [timeWindowSec, setTimeWindowSec] = useState<number>(1800); // Start with 30 minutes
-  const { activities, isLoading, error, hotel, metadata, refetch } = useRealHotelFeed(
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const { activities, isLoading, error, hotel, metadata, refetch, discoverOnlineUsers } = useRealHotelFeed(
     { onlineWithinSeconds: timeWindowSec }
   );
   
@@ -38,16 +39,51 @@ export const RealHotelFeedColumn: React.FC = () => {
     };
   }, [refetch]);
 
+  // Auto-discover users on component mount
+  useEffect(() => {
+    const autoDiscover = async () => {
+      if (activities.length < 10) { // Only if we have few users
+        console.log('🔍 [RealHotelFeedColumn] Auto-discovering users due to low count');
+        setIsDiscovering(true);
+        try {
+          await discoverOnlineUsers();
+          // Refetch after discovery
+          setTimeout(() => refetch(), 3000);
+        } catch (error) {
+          console.warn('⚠️ [RealHotelFeedColumn] Auto-discovery failed:', error);
+        } finally {
+          setIsDiscovering(false);
+        }
+      }
+    };
+
+    autoDiscover();
+  }, [hotel]); // Only run when hotel changes
+
   // Handle infinite scroll to expand time window in 30min steps
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
     const target = e.currentTarget;
     const threshold = 120; // px from bottom
-    if (target.scrollHeight - target.scrollTop - target.clientHeight < threshold && !isLoading) {
+    if (target.scrollHeight - target.scrollTop - target.clientHeight < threshold && !isLoading && !isDiscovering) {
       setTimeWindowSec((prev) => prev + 1800); // Add 30 more minutes
       console.log(`📈 [RealHotelFeedColumn] Expanding time window to ${Math.floor((timeWindowSec + 1800) / 60)} minutes`);
     }
   };
+
+  const handleDiscoverUsers = useCallback(async () => {
+    setIsDiscovering(true);
+    try {
+      console.log('🔍 [RealHotelFeedColumn] Manual user discovery triggered');
+      await discoverOnlineUsers();
+      // Refetch after discovery
+      setTimeout(() => refetch(), 2000);
+    } catch (error) {
+      console.error('❌ [RealHotelFeedColumn] Discovery failed:', error);
+    } finally {
+      setIsDiscovering(false);
+    }
+  }, [discoverOnlineUsers, refetch]);
 
   const getSourceIcon = () => {
     switch (metadata.source) {
@@ -97,7 +133,7 @@ export const RealHotelFeedColumn: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <Hotel className="w-5 h-5" />
             Feed Oficial ({hotel})
-            {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
+            {(isLoading || isDiscovering) && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
             
             <div className="ml-auto flex items-center gap-2">
               <Badge className={`text-xs ${getSourceColor()} border-0`}>
@@ -120,8 +156,19 @@ export const RealHotelFeedColumn: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={handleDiscoverUsers}
+                disabled={isLoading || isDiscovering}
+                className="text-white hover:bg-white/10 p-1 h-auto mr-1"
+                title="Descobrir usuários online"
+              >
+                <Search className={`w-4 h-4 ${isDiscovering ? 'animate-spin' : ''}`} />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleBatchSync}
-                disabled={isLoading}
+                disabled={isLoading || isDiscovering}
                 className="text-white hover:bg-white/10 p-1 h-auto mr-1"
                 title="Sincronizar dados"
               >
@@ -132,7 +179,7 @@ export const RealHotelFeedColumn: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => refetch()}
-                disabled={isLoading}
+                disabled={isLoading || isDiscovering}
                 className="text-white hover:bg-white/10 p-1 h-auto"
                 title="Atualizar feed"
               >
@@ -147,6 +194,9 @@ export const RealHotelFeedColumn: React.FC = () => {
               <span>• {metadata.count} atividades</span>
             )}
             <span>• janela: {Math.floor(timeWindowSec / 60)}min</span>
+            {isDiscovering && (
+              <span className="text-yellow-300">• descobrindo usuários...</span>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -357,7 +407,24 @@ export const RealHotelFeedColumn: React.FC = () => {
               <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Nenhuma atividade recente</p>
-                <p className="text-xs mt-1">Aguardando sincronização automática</p>
+                <p className="text-xs mt-1">Descobrindo usuários online...</p>
+                <Button 
+                  onClick={handleDiscoverUsers}
+                  disabled={isDiscovering}
+                  className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  {isDiscovering ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Descobrindo...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      Descobrir Usuários
+                    </>
+                  )}
+                </Button>
                 <p className="text-xs mt-2 text-blue-300">ℹ️ Sistema coletando dados da API oficial do Habbo</p>
               </div>
             )}

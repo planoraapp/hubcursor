@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { habboFeedService, FeedActivity, FeedResponse } from '@/services/habboFeedService';
 import { useUnifiedAuth } from './useUnifiedAuth';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 
 export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => {
   const { habboAccount } = useUnifiedAuth();
@@ -17,11 +17,22 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
 
   // Calculate dynamic limit based on time window to get more data for longer periods
   const dynamicLimit = useMemo(() => {
-    const baseLimit = 50;
+    const baseLimit = 100; // Increased base limit
     const timeWindowMinutes = (options?.onlineWithinSeconds || 1800) / 60;
     // Increase limit for longer time windows (more users might be included)
-    return Math.min(200, Math.max(baseLimit, Math.floor(timeWindowMinutes / 30) * 25));
+    return Math.min(500, Math.max(baseLimit, Math.floor(timeWindowMinutes / 30) * 50)); // Increased max limit
   }, [options?.onlineWithinSeconds]);
+
+  // Function to discover and sync online users
+  const discoverOnlineUsers = useCallback(async () => {
+    try {
+      console.log(`🔍 [useRealHotelFeed] Discovering online users for ${hotel}`);
+      await habboFeedService.discoverAndSyncOnlineUsers(hotel, 50);
+      console.log(`✅ [useRealHotelFeed] Discovery completed for ${hotel}`);
+    } catch (error) {
+      console.warn(`⚠️ [useRealHotelFeed] Discovery failed for ${hotel}:`, error);
+    }
+  }, [hotel]);
 
   // Fetch real feed data from our Edge Function
   const { 
@@ -31,13 +42,19 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     refetch
   } = useQuery({
     queryKey: ['real-hotel-feed', hotel, options?.onlineWithinSeconds ?? null, dynamicLimit],
-    queryFn: () => habboFeedService.getHotelFeed(
-      hotel,
-      dynamicLimit,
-      { onlineWithinSeconds: options?.onlineWithinSeconds }
-    ),
-    refetchInterval: 30 * 1000, // 30 seconds
-    staleTime: 15 * 1000, // 15 seconds
+    queryFn: async () => {
+      // First, try to discover new online users (background operation)
+      discoverOnlineUsers();
+      
+      // Then fetch the feed
+      return habboFeedService.getHotelFeed(
+        hotel,
+        dynamicLimit,
+        { onlineWithinSeconds: options?.onlineWithinSeconds }
+      );
+    },
+    refetchInterval: 60 * 1000, // Increased to 60 seconds
+    staleTime: 30 * 1000, // 30 seconds
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
@@ -84,6 +101,13 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     return feedResponse?.activities || [];
   }, [feedResponse?.activities]);
 
+  // Enhanced refetch that also triggers discovery
+  const enhancedRefetch = useCallback(async () => {
+    console.log(`🔄 [useRealHotelFeed] Enhanced refetch triggered for ${hotel}`);
+    await discoverOnlineUsers();
+    return refetch();
+  }, [discoverOnlineUsers, refetch, hotel]);
+
   return {
     activities: activitiesSorted,
     aggregatedActivities,
@@ -91,7 +115,8 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     error,
     hotel,
     metadata,
-    refetch
+    refetch: enhancedRefetch,
+    discoverOnlineUsers
   };
 };
 

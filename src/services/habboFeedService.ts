@@ -39,6 +39,14 @@ interface FeedResponse {
   };
 }
 
+interface DiscoverResponse {
+  success: boolean;
+  hotel: string;
+  discovered: number;
+  users: string[];
+  message: string;
+}
+
 class HabboFeedService {
   private baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1';
 
@@ -58,6 +66,23 @@ class HabboFeedService {
 
     const data = await response.json();
     console.log(`✅ [HabboFeedService] Received ${data.activities?.length || 0} activities for ${hotel}`);
+    return data;
+  }
+
+  async discoverAndSyncOnlineUsers(hotel: string = 'com.br', limit: number = 50): Promise<DiscoverResponse> {
+    console.log(`🔍 [HabboFeedService] Discovering online users for hotel: ${hotel}`);
+    
+    const params = new URLSearchParams({ hotel: hotel, limit: String(limit) });
+    const response = await fetch(`${this.baseUrl}/habbo-discover-online?${params.toString()}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    console.log(`✅ [HabboFeedService] Discovered ${data.discovered || 0} users for ${hotel}`);
     return data;
   }
 
@@ -172,4 +197,4 @@ class HabboFeedService {
 }
 
 export const habboFeedService = new HabboFeedService();
-export type { FeedActivity, FeedResponse };
+export type { FeedActivity, FeedResponse, DiscoverResponse };

@@ -49,11 +49,11 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const hotel = url.searchParams.get('hotel') || 'com.br';
     const username = url.searchParams.get('username');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const limit = parseInt(url.searchParams.get('limit') || '100'); // Increased default limit
     const onlineWithinSecondsParam = url.searchParams.get('onlineWithinSeconds');
     const onlineWithinSeconds = onlineWithinSecondsParam ? parseInt(onlineWithinSecondsParam) : 1800; // Default 30 minutes
 
-    console.log(`🎯 [habbo-feed] Fetching feed for hotel: ${hotel}${username ? `, user: ${username}` : ''}, window: ${Math.floor(onlineWithinSeconds / 60)}min`);
+    console.log(`🎯 [habbo-feed] Fetching feed for hotel: ${hotel}${username ? `, user: ${username}` : ''}, window: ${Math.floor(onlineWithinSeconds / 60)}min, limit: ${limit}`);
 
     // Get snapshots from the last window (default 30 minutes, expandable)
     const cutoffTime = new Date(Date.now() - onlineWithinSeconds * 1000).toISOString();
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       snapshotsQuery = snapshotsQuery.ilike('habbo_name', username);
     }
 
-    const { data: snapshots, error: snapshotsError } = await snapshotsQuery.limit(limit * 3);
+    const { data: snapshots, error: snapshotsError } = await snapshotsQuery.limit(limit * 5); // Increased snapshot limit
 
     if (snapshotsError) {
       throw new Error(`Failed to fetch snapshots: ${snapshotsError.message}`);
@@ -77,14 +77,14 @@ Deno.serve(async (req) => {
 
     console.log(`📊 [habbo-feed] Found ${snapshots?.length || 0} snapshots in ${Math.floor(onlineWithinSeconds / 60)}min window`);
 
-    // Get recent activities for context
+    // Get recent activities for context (increased limit)
     const { data: activities } = await supabase
       .from('habbo_activities')
       .select('*')
       .eq('hotel', hotel)
       .gte('created_at', cutoffTime)
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(500); // Increased activity limit
 
     // Create user snapshots map with latest data per user
     const userSnapshotMap: { [username: string]: any } = {};
@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       userActivitiesMap[activity.habbo_name].push(activity);
     });
 
-    // Format for display - prioritize users who are online or have recent activity
+    // Format for display - show all users with any data, not just online ones
     const feedActivities: FeedActivity[] = Object.entries(userSnapshotMap)
       .map(([username, latestSnapshot]) => {
         const userActivities = userActivitiesMap[username] || [];
@@ -250,16 +250,19 @@ Deno.serve(async (req) => {
           }
         };
       })
+      // More relaxed filtering - show users with recent snapshots or activities
       .filter(activity => {
-        // Filter to show online users or those with very recent activity
-        const isOnline = activity.profile.isOnline;
-        const hasRecentWebVisit = activity.profile.lastWebVisit && 
-          new Date(activity.profile.lastWebVisit) > new Date(Date.now() - onlineWithinSeconds * 1000);
-        const hasRecentActivity = new Date(activity.lastUpdate) > new Date(Date.now() - onlineWithinSeconds * 1000);
+        const hasRecentSnapshot = new Date(activity.lastUpdate) > new Date(Date.now() - onlineWithinSeconds * 1000);
+        const hasProfileData = activity.profile.figureString || activity.counts.groups > 0 || activity.counts.friends > 0 || activity.counts.badges > 0;
         
-        return isOnline || hasRecentWebVisit || hasRecentActivity;
+        return hasRecentSnapshot || hasProfileData;
       })
-      .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
+      .sort((a, b) => {
+        // Sort by online status first, then by last update
+        if (a.profile.isOnline && !b.profile.isOnline) return -1;
+        if (!a.profile.isOnline && b.profile.isOnline) return 1;
+        return new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime();
+      })
       .slice(0, limit);
 
     console.log(`✅ [habbo-feed] Returning ${feedActivities.length} activities (${feedActivities.filter(a => a.profile.isOnline).length} online users)`);
