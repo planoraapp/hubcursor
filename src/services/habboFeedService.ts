@@ -34,9 +34,6 @@ class HabboFeedService {
     
     const response = await fetch(`${this.baseUrl}/habbo-feed?hotel=${encodeURIComponent(hotel)}&limit=${limit}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {
@@ -54,9 +51,6 @@ class HabboFeedService {
     
     const response = await fetch(`${this.baseUrl}/habbo-feed?hotel=${encodeURIComponent(hotel)}&username=${encodeURIComponent(username)}&limit=10`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {

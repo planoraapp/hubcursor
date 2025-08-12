@@ -1,7 +1,7 @@
 
 import React from 'react';
 import MobileLayout from '../layouts/MobileLayout';
-import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
+import { MyAccountColumn } from '@/components/console/MyAccountColumn';
 import { EnhancedFriendsFeedColumn } from '@/components/console/EnhancedFriendsFeedColumn';
 import { RealHotelFeedColumn } from '@/components/console/RealHotelFeedColumn';
 
@@ -18,7 +18,7 @@ export const Console: React.FC = () => {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
             {/* Left Column - Compact Feed */}
             <div className="space-y-6">
-              <CompactHotelFeed />
+              <MyAccountColumn />
             </div>
 
             {/* Center Column - Real Hotel Feed */}
