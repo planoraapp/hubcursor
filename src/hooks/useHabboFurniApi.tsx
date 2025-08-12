@@ -23,81 +23,93 @@ interface UseHabboFurniApiProps {
 export const useHabboFurniApi = ({ 
   searchTerm, 
   className, 
-  limit = 200, 
+  limit = 500, // Aumentado de 200 para 500
   autoFetch = true 
 }: UseHabboFurniApiProps = {}) => {
   const [furniData, setFurniData] = useState<HabboFurniItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchFurniData = useCallback(async (params?: { searchTerm?: string; className?: string }) => {
+  const fetchFurniData = useCallback(async (params?: { searchTerm?: string; className?: string; loadAll?: boolean }) => {
     try {
       setLoading(true);
       setError(null);
 
+      const effectiveLimit = params?.loadAll ? 2000 : limit;
       const searchParams = {
         searchTerm: params?.searchTerm || searchTerm || '',
         className: params?.className || className || '',
-        limit,
+        limit: effectiveLimit,
         category: 'all'
       };
 
       console.log('🔍 [useHabboFurniApi] Fetching with params:', searchParams);
 
       const startTime = Date.now();
-      const { data, error: functionError } = await supabase.functions.invoke('habbo-furni-api', {
-        body: searchParams
-      });
+      
+      // Prioridade: habbo-emotion-furnis (aggregator)
+      let data, error: any;
+      try {
+        console.log('🌐 [useHabboFurniApi] Trying habbo-emotion-furnis (primary source)');
+        ({ data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
+          body: searchParams
+        }));
+      } catch (primaryError) {
+        console.warn('⚠️ [useHabboFurniApi] Primary source failed, falling back to habbo-furni-api');
+        ({ data, error } = await supabase.functions.invoke('habbo-furni-api', {
+          body: searchParams
+        }));
+      }
 
       const duration = Date.now() - startTime;
       console.log(`⏱️ [useHabboFurniApi] Request took ${duration}ms`);
 
-      if (functionError) {
-        console.error('❌ [useHabboFurniApi] Function error:', functionError);
-        throw new Error(functionError.message);
+      if (error) {
+        console.error('❌ [useHabboFurniApi] Function error:', error);
+        throw new Error(error.message);
       }
 
-      console.log('📊 [useHabboFurniApi] Full response:', data);
-      console.log('📊 [useHabboFurniApi] Response structure:', {
+      console.log('📊 [useHabboFurniApi] Response:', {
         hasFurnis: !!data?.furnis,
         furniCount: data?.furnis?.length || 0,
         metadata: data?.metadata,
-        apiStatus: data?.metadata?.apiStatus,
-        firstFurni: data?.furnis?.[0]
+        source: data?.source
       });
 
       if (data?.furnis && Array.isArray(data.furnis)) {
         const validatedFurnis = data.furnis.map((furni: any) => ({
-          id: furni.id || 'unknown',
-          name: furni.name || 'Unknown Item',
-          className: furni.className || furni.class_name || 'unknown_class',
+          id: furni.id || furni.item_id || 'unknown',
+          name: furni.name || furni.publicName || 'Unknown Item',
+          className: furni.className || furni.class_name || furni.classname || 'unknown_class',
           category: furni.category || 'furniture',
-          imageUrl: furni.imageUrl || '/assets/gcreate_icon_credit.png',
+          imageUrl: furni.imageUrl || furni.icon_url || generateFallbackImageUrl(furni),
           description: furni.description || 'Habbo furniture item',
           rarity: furni.rarity || 'common',
           type: furni.type || 'roomitem'
         }));
 
         setFurniData(validatedFurnis);
-        console.log(`✅ [useHabboFurniApi] Loaded ${validatedFurnis.length} furniture items successfully`);
+        setHasMore(validatedFurnis.length >= effectiveLimit);
+        console.log(`✅ [useHabboFurniApi] Loaded ${validatedFurnis.length} furniture items from ${data?.source || 'unknown'}`);
         
-        // Cache apenas resultados bem-sucedidos da API real
-        if (validatedFurnis.length > 0 && data.metadata?.apiStatus === 'success') {
+        // Cache resultados bem-sucedidos
+        if (validatedFurnis.length > 0) {
           const cacheKey = `habbo-furni-cache-${JSON.stringify(searchParams)}`;
           try {
             localStorage.setItem(cacheKey, JSON.stringify({
               data: validatedFurnis,
               timestamp: Date.now(),
-              ttl: 10 * 60 * 1000 // 10 minutos
+              ttl: 10 * 60 * 1000
             }));
-            console.log('💾 [useHabboFurniApi] Results cached successfully');
           } catch (cacheError) {
             console.warn('⚠️ [useHabboFurniApi] Cache write failed:', cacheError);
           }
         }
       } else {
-        console.warn('⚠️ [useHabboFurniApi] No furnis array in response or invalid data');
+        console.warn('⚠️ [useHabboFurniApi] No furnis array in response');
         setFurniData([]);
+        setHasMore(false);
         setError('Nenhum móvel retornado pela API');
       }
     } catch (err) {
@@ -105,7 +117,7 @@ export const useHabboFurniApi = ({
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch furniture data';
       setError(`Erro ao buscar móveis: ${errorMessage}`);
       
-      // Tentar cache como fallback apenas em caso de erro
+      // Fallback para cache
       const cacheKey = `habbo-furni-cache-${JSON.stringify({
         searchTerm: searchTerm || '',
         className: className || '',
@@ -116,15 +128,10 @@ export const useHabboFurniApi = ({
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
           const cachedData = JSON.parse(cached);
-          
-          // Verificar se o cache não expirou (TTL de 10 minutos)
           if (cachedData.timestamp && Date.now() - cachedData.timestamp < cachedData.ttl) {
             setFurniData(cachedData.data);
-            setError('Usando dados salvos (sem conexão com HabboFurni)');
-            console.log('📦 [useHabboFurniApi] Using valid cached data as fallback');
-          } else {
-            console.log('⏰ [useHabboFurniApi] Cache expired, removing');
-            localStorage.removeItem(cacheKey);
+            setError('Usando dados salvos (sem conexão)');
+            console.log('📦 [useHabboFurniApi] Using cached data as fallback');
           }
         }
       } catch (cacheError) {
@@ -135,12 +142,15 @@ export const useHabboFurniApi = ({
     }
   }, [searchTerm, className, limit]);
 
+  const loadAll = useCallback(() => {
+    fetchFurniData({ loadAll: true });
+  }, [fetchFurniData]);
+
   const findItemByClassName = useCallback(async (targetClassName: string): Promise<HabboFurniItem | null> => {
     try {
       console.log(`🔍 [useHabboFurniApi] Finding item by className: ${targetClassName}`);
       
-      const startTime = Date.now();
-      const { data, error: functionError } = await supabase.functions.invoke('habbo-furni-api', {
+      const { data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
         body: {
           className: targetClassName,
           limit: 1,
@@ -149,46 +159,31 @@ export const useHabboFurniApi = ({
         }
       });
 
-      const duration = Date.now() - startTime;
-      console.log(`⏱️ [useHabboFurniApi] findItemByClassName took ${duration}ms`);
-
-      if (functionError) {
-        console.error('❌ [useHabboFurniApi] Function error in findItemByClassName:', functionError);
+      if (error || !data?.furnis?.[0]) {
+        console.log(`❌ [useHabboFurniApi] No item found for className: ${targetClassName}`);
         return null;
       }
 
-      if (data?.furnis && data.furnis.length > 0) {
-        const item = data.furnis[0];
-        console.log(`✅ [useHabboFurniApi] Found item:`, {
-          name: item.name,
-          className: item.className,
-          imageUrl: item.imageUrl,
-          source: item.source
-        });
-        return {
-          id: item.id,
-          name: item.name,
-          className: item.className,
-          category: item.category,
-          imageUrl: item.imageUrl,
-          description: item.description,
-          rarity: item.rarity,
-          type: item.type
-        };
-      }
-
-      console.log(`❌ [useHabboFurniApi] No item found for className: ${targetClassName}`);
-      return null;
+      const item = data.furnis[0];
+      return {
+        id: item.id,
+        name: item.name,
+        className: item.className,
+        category: item.category,
+        imageUrl: item.imageUrl,
+        description: item.description,
+        rarity: item.rarity,
+        type: item.type
+      };
     } catch (error) {
       console.error(`❌ [useHabboFurniApi] Error finding ${targetClassName}:`, error);
       return null;
     }
   }, []);
 
-  // Auto-fetch na inicialização se habilitado
+  // Auto-fetch na inicialização
   useEffect(() => {
     if (autoFetch) {
-      console.log('🚀 [useHabboFurniApi] Auto-fetch triggered');
       fetchFurniData();
     }
   }, [autoFetch, fetchFurniData]);
@@ -197,7 +192,28 @@ export const useHabboFurniApi = ({
     furniData,
     loading,
     error,
+    hasMore,
     refetch: fetchFurniData,
+    loadAll,
     findItemByClassName
   };
+};
+
+// Helper para gerar URLs de fallback
+const generateFallbackImageUrl = (furni: any): string => {
+  const className = furni.className || furni.class_name || furni.classname;
+  const id = furni.id || furni.item_id;
+  
+  // Prioridade 1: HabboAssets.com
+  if (className) {
+    return `https://www.habboassets.com/furniture/${className}_icon.png`;
+  }
+  
+  // Prioridade 2: Habbo oficial
+  if (id) {
+    return `https://images.habbo.com/dcr/hof_furni/${id}/${id}_icon.png`;
+  }
+  
+  // Fallback final
+  return '/assets/gcreate_icon_credit.png';
 };

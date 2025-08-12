@@ -1,20 +1,19 @@
 
 import { useQuery } from '@tanstack/react-query';
+import { useFlashAssetsClothing } from './useFlashAssetsClothing';
+import { useHabboEmotionClothing } from './useHabboEmotionClothing';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface UnifiedClothingItem {
+interface UnifiedClothingItem {
   id: string;
   name: string;
-  part: string;
-  item_id: number;
-  code: string;
-  gender: 'M' | 'F' | 'U';
-  club: 'HC' | 'FREE';
-  colors: string[];
-  image_url?: string;
-  source: string;
-  figureId: string;
   category: string;
+  gender: 'M' | 'F' | 'U';
+  figureId: string;
+  colors: string[];
+  imageUrl: string;
+  club: 'HC' | 'FREE';
+  source: 'flash-assets' | 'habbo-emotion' | 'unified-api' | 'cache';
 }
 
 interface UseUnifiedClothingOptions {
@@ -24,107 +23,128 @@ interface UseUnifiedClothingOptions {
   gender?: 'M' | 'F' | 'U';
 }
 
-export const useUnifiedClothing = (options: UseUnifiedClothingOptions = {}) => {
-  const { limit = 100, category = 'all', search = '', gender = 'U' } = options;
+export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) => {
+  const { limit = 500, category = 'all', search = '', gender = 'U' } = options;
 
-  return useQuery<UnifiedClothingItem[], Error>({
-    queryKey: ['unified-clothing', { limit, category, search, gender }],
-    queryFn: async (): Promise<UnifiedClothingItem[]> => {
-      console.log('🔄 [useUnifiedClothing] Fetching clothing data...');
-      
-      try {
-        // Try flash-assets function first
-        const { data: flashData, error: flashError } = await supabase.functions.invoke('flash-assets-clothing', {
-          body: { limit, category, search, gender }
-        });
+  // Primeira prioridade: Flash Assets via Supabase
+  const { 
+    data: flashAssets = [], 
+    isLoading: flashLoading,
+    error: flashError 
+  } = useFlashAssetsClothing({ limit, category, search, gender });
 
-        if (!flashError && flashData?.assets?.length > 0) {
-          console.log(`✅ [useUnifiedClothing] Got ${flashData.assets.length} items from flash-assets`);
-          return flashData.assets.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            part: item.category,
-            item_id: parseInt(item.figureId),
-            code: item.swfName || item.name,
-            gender: item.gender,
-            club: item.club,
-            colors: Array.isArray(item.colors) ? item.colors.map(String) : ['1'],
-            image_url: item.imageUrl,
-            source: 'flash-assets',
-            figureId: item.figureId,
-            category: item.category
-          }));
-        }
+  // Segunda prioridade: HabboEmotion
+  const { 
+    data: habboEmotionItems = [], 
+    isLoading: emotionLoading,
+    error: emotionError 
+  } = useHabboEmotionClothing(limit, category, gender);
 
-        // Fallback to direct database query
-        console.log('⚙️ [useUnifiedClothing] Fallback to database query...');
-        
-        let query = supabase
-          .from('habbo_clothing_cache')
-          .select('*')
-          .limit(limit);
+  // Terceira prioridade: Edge Function unificado
+  const { 
+    data: unifiedItems = [], 
+    isLoading: unifiedLoading,
+    error: unifiedError 
+  } = useQuery({
+    queryKey: ['unified-clothing', { limit, category, gender, search }],
+    queryFn: async () => {
+      console.log('🌐 [UnifiedClothing] Calling unified-clothing-api edge function');
+      const { data, error } = await supabase.functions.invoke('unified-clothing-api', {
+        body: { limit, category, gender, search }
+      });
 
-        if (category !== 'all') {
-          query = query.eq('part', category);
-        }
-
-        if (gender !== 'U') {
-          query = query.or(`gender.eq.${gender},gender.eq.U`);
-        }
-
-        if (search) {
-          query = query.or(`code.ilike.%${search}%,item_id.eq.${parseInt(search) || 0}`);
-        }
-
-        const { data: dbData, error: dbError } = await query;
-
-        if (dbError) {
-          throw dbError;
-        }
-
-        const unifiedItems: UnifiedClothingItem[] = (dbData || []).map(item => ({
-          id: `db_${item.part}_${item.item_id}`,
-          name: `${getCategoryName(item.part)} ${item.code || item.item_id}`,
-          part: item.part,
-          item_id: item.item_id,
-          code: item.code,
-          gender: item.gender as 'M' | 'F' | 'U',
-          club: item.club === 'HC' ? 'HC' : 'FREE',
-          colors: Array.isArray(item.colors) ? item.colors.map(String) : ['1'],
-          image_url: item.image_url,
-          source: 'database',
-          figureId: item.item_id.toString(),
-          category: item.part
-        }));
-
-        console.log(`✅ [useUnifiedClothing] Got ${unifiedItems.length} items from database`);
-        return unifiedItems;
-
-      } catch (error) {
-        console.error('❌ [useUnifiedClothing] Error:', error);
-        return [];
+      if (error) {
+        console.error('❌ [UnifiedClothing] Edge function error:', error);
+        throw error;
       }
+
+      console.log(`✅ [UnifiedClothing] Edge function returned ${data?.data?.length || 0} items`);
+      return data?.data || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
+    enabled: flashAssets.length === 0 && habboEmotionItems.length === 0,
+    staleTime: 10 * 60 * 1000,
   });
+
+  // Processar e unificar os dados
+  const unifiedData = React.useMemo(() => {
+    console.log('🔄 [UnifiedClothing] Processing unified data:');
+    console.log(`- Flash Assets: ${flashAssets.length} items`);
+    console.log(`- HabboEmotion: ${habboEmotionItems.length} items`);
+    console.log(`- Unified API: ${unifiedItems.length} items`);
+
+    let result: UnifiedClothingItem[] = [];
+
+    // Prioridade 1: Flash Assets
+    if (flashAssets.length > 0) {
+      result = flashAssets.map(item => ({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        gender: item.gender,
+        figureId: item.figureId,
+        colors: item.colors,
+        imageUrl: item.imageUrl,
+        club: item.club === 'HC' ? 'HC' : 'FREE',
+        source: 'flash-assets' as const
+      }));
+      console.log(`✅ [UnifiedClothing] Using Flash Assets: ${result.length} items`);
+      return result;
+    }
+
+    // Prioridade 2: HabboEmotion
+    if (habboEmotionItems.length > 0) {
+      result = habboEmotionItems.map(item => ({
+        id: item.id.toString(),
+        name: item.name,
+        category: item.category,
+        gender: item.gender,
+        figureId: item.figureId || item.code,
+        colors: item.colors,
+        imageUrl: item.imageUrl,
+        club: item.club === 'HC' ? 'HC' : 'FREE',
+        source: 'habbo-emotion' as const
+      }));
+      console.log(`✅ [UnifiedClothing] Using HabboEmotion: ${result.length} items`);
+      return result;
+    }
+
+    // Prioridade 3: Edge Function
+    if (unifiedItems.length > 0) {
+      result = unifiedItems.map((item: any) => ({
+        id: item.item_id?.toString() || item.id,
+        name: item.code || item.name || 'Item',
+        category: item.part || item.category || 'ch',
+        gender: (item.gender || 'U') as 'M' | 'F' | 'U',
+        figureId: item.item_id?.toString() || item.id,
+        colors: item.colors || ['1', '2', '3'],
+        imageUrl: item.image_url || '',
+        club: item.club === 'HC' ? 'HC' : 'FREE',
+        source: 'unified-api' as const
+      }));
+      console.log(`✅ [UnifiedClothing] Using Unified API: ${result.length} items`);
+      return result;
+    }
+
+    console.log('⚠️ [UnifiedClothing] No data from any source');
+    return [];
+  }, [flashAssets, habboEmotionItems, unifiedItems]);
+
+  const isLoading = flashLoading || emotionLoading || unifiedLoading;
+  const error = flashError || emotionError || unifiedError;
+
+  return {
+    data: unifiedData,
+    isLoading,
+    error,
+    source: unifiedData.length > 0 ? unifiedData[0].source : null,
+    stats: {
+      flashAssets: flashAssets.length,
+      habboEmotion: habboEmotionItems.length,
+      unifiedApi: unifiedItems.length,
+      total: unifiedData.length
+    }
+  };
 };
 
-function getCategoryName(category: string): string {
-  const categoryNames: Record<string, string> = {
-    'hd': 'Rosto',
-    'hr': 'Cabelo',
-    'ch': 'Camiseta',
-    'lg': 'Calça',
-    'sh': 'Sapato',
-    'ha': 'Chapéu',
-    'ea': 'Óculos',
-    'cc': 'Casaco',
-    'ca': 'Acessório',
-    'cp': 'Estampa',
-    'wa': 'Cintura',
-    'fa': 'Rosto Acessório'
-  };
-  
-  return categoryNames[category] || 'Item';
-}
+// Hook para usar em React
+export const React = { useMemo: React.useMemo };

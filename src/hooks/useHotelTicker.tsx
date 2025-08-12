@@ -18,14 +18,16 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
   } = useQuery({
     queryKey: ['hotel-ticker', hotel],
     queryFn: () => {
-      console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel}`);
+      console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (works without login)`);
       return habboProxyService.getHotelTicker(hotel);
     },
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  // Aggregate activities by user within a recent time window
+  // Aggregate activities by user with improved time window
   const aggregatedActivities: AggregatedActivity[] = React.useMemo(() => {
     console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation`);
     
@@ -51,28 +53,30 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
       });
     };
 
-    // Primary: keep last 60 minutes
-    const sixtyMinutesAgo = Date.now() - 60 * 60 * 1000;
+    // Janela principal: últimas 2 horas (mais tempo que antes)
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
     const recent = rawActivities.filter(a => {
       const t = a.timestamp ? new Date(a.timestamp).getTime() : new Date(a.time).getTime();
-      return t >= sixtyMinutesAgo;
+      return t >= twoHoursAgo;
     });
 
     let result = groupByUser(recent);
-    // Fallback: if nothing recent, show latest snapshot (no time filter)
-    if (result.length === 0 && rawActivities.length > 0) {
-      console.warn('⚠️ [useHotelTicker] No recent activities found, falling back to latest snapshot');
-      result = groupByUser(rawActivities);
+    
+    // Fallback: se muito poucas atividades recentes, usar snapshot completo
+    if (result.length < 5 && rawActivities.length > 0) {
+      console.warn('⚠️ [useHotelTicker] Few recent activities, using complete snapshot');
+      result = groupByUser(rawActivities).slice(0, 20); // Limitar a 20 para performance
     }
 
-    console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups`);
+    console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel})`);
     return result;
-  }, [rawActivities]);
+  }, [rawActivities, hotel]);
 
   return {
     activities: rawActivities,
     aggregatedActivities,
     isLoading,
     error,
+    hotel
   };
 };

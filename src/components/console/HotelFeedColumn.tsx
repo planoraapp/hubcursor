@@ -8,7 +8,7 @@ import { useUserFigures } from '@/hooks/useUserFigures';
 import { habboProxyService } from '@/services/habboProxyService';
 
 export const HotelFeedColumn: React.FC = () => {
-  const { aggregatedActivities, isLoading, error } = useHotelTicker();
+  const { aggregatedActivities, isLoading, error } = useHotelTicker('com.br');
   
   // Get unique usernames for figure fetching
   const usernames = aggregatedActivities.map(group => group.username);
@@ -51,7 +51,7 @@ export const HotelFeedColumn: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hotel className="w-5 h-5" />
-            Feed do Hotel
+            Feed do Hotel (.com.br)
             {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
             {aggregatedActivities.length > 0 && (
               <Badge variant="secondary" className="ml-auto bg-white/20 text-white">
@@ -61,15 +61,21 @@ export const HotelFeedColumn: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+          <div className="space-y-4 max-h-[600px] overflow-y-auto scrollbar-stealth">
             {isLoading && aggregatedActivities.length === 0 ? (
               <div className="text-center text-white/70 py-8">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                 <p>Carregando atividades do hotel...</p>
               </div>
+            ) : error ? (
+              <div className="text-center text-white/70 py-8">
+                <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Erro ao carregar feed</p>
+                <p className="text-xs mt-1">Tentando reconectar...</p>
+              </div>
             ) : aggregatedActivities.length > 0 ? (
               aggregatedActivities.map((userGroup, index) => (
-                <div key={`${userGroup.username}-${index}`} className="p-4 mb-3 bg-transparent">
+                <div key={`${userGroup.username}-${index}`} className="p-4 mb-3 bg-transparent hover:bg-white/5 rounded-lg transition-colors">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="flex-shrink-0">
                       {figureMap[userGroup.username] ? (
@@ -79,7 +85,7 @@ export const HotelFeedColumn: React.FC = () => {
                           className="h-[130px] w-auto object-contain bg-transparent"
                         />
                       ) : (
-                        <div className="h-[130px] w-16 bg-white/10 flex items-center justify-center">
+                        <div className="h-[130px] w-16 bg-white/10 flex items-center justify-center rounded">
                           <span className="text-2xl font-bold">
                             {userGroup.username[0]?.toUpperCase()}
                           </span>
@@ -92,13 +98,16 @@ export const HotelFeedColumn: React.FC = () => {
                         <Badge variant="secondary" className="text-xs bg-white/20 text-white">
                           {userGroup.activityCount} atividade{userGroup.activityCount !== 1 ? 's' : ''}
                         </Badge>
+                        <span className="text-xs text-white/60">
+                          há {Math.floor((Date.now() - new Date(userGroup.lastActivityTime).getTime()) / 60000)} min
+                        </span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="space-y-2 ml-[4.5rem]">
                     {userGroup.activities.slice(0, 3).map((activity, actIndex) => (
-                      <div key={actIndex} className="flex items-start gap-2 text-sm">
+                      <div key={actIndex} className="flex items-start gap-2 text-sm p-2 bg-white/5 rounded">
                         {getActivityIcon(activity.description)}
                         <span className="text-white/90 flex-1">
                           {activity.description}
@@ -109,7 +118,7 @@ export const HotelFeedColumn: React.FC = () => {
                       </div>
                     ))}
                     {userGroup.activities.length > 3 && (
-                      <p className="text-xs text-white/60 ml-6">
+                      <p className="text-xs text-white/60 ml-6 italic">
                         +{userGroup.activities.length - 3} outras atividades
                       </p>
                     )}

@@ -48,18 +48,30 @@ export const useFriendsFeed = () => {
   const friendsActivities = useMemo(() => {
     if (!friends.length || !hotelTicker.length) return [];
 
+    console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends against ${hotelTicker.length} ticker activities`);
+    
     const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
-    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000; // 6 horas em vez de 30 minutos
 
     // Filter ticker activities for friends only
-    const friendsTickerActivities = hotelTicker.filter(activity => {
+    let friendsTickerActivities = hotelTicker.filter(activity => {
       const activityTime = activity.timestamp ? 
         new Date(activity.timestamp).getTime() : 
         new Date(activity.time).getTime();
       
       return friendNameSet.has(activity.username.toLowerCase()) && 
-             activityTime >= thirtyMinutesAgo;
+             activityTime >= sixHoursAgo;
     });
+
+    console.log(`📊 [useFriendsFeed] Found ${friendsTickerActivities.length} friend activities in last 6 hours`);
+
+    // Fallback: se não houver atividades nas últimas 6 horas, pegar qualquer atividade de amigos
+    if (friendsTickerActivities.length === 0) {
+      friendsTickerActivities = hotelTicker.filter(activity => 
+        friendNameSet.has(activity.username.toLowerCase())
+      );
+      console.log(`🔄 [useFriendsFeed] Fallback: Using ${friendsTickerActivities.length} activities from any time`);
+    }
 
     // Group activities by friend
     const friendGroups: { [friendName: string]: TickerActivity[] } = {};
@@ -89,11 +101,14 @@ export const useFriendsFeed = () => {
     }).filter(Boolean) as FriendActivity[];
 
     // Sort by most recent activity
-    return result.sort((a, b) => {
+    const sortedResult = result.sort((a, b) => {
       const timeA = new Date(a.lastActivityTime).getTime();
       const timeB = new Date(b.lastActivityTime).getTime();
       return timeB - timeA;
     });
+
+    console.log(`✅ [useFriendsFeed] Processed ${sortedResult.length} friends with activities`);
+    return sortedResult;
   }, [friends, hotelTicker]);
 
   return {
