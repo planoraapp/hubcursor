@@ -1,3 +1,4 @@
+import { supabase } from '@/integrations/supabase/client';
 
 export interface FeedActivity {
   username: string;
@@ -69,14 +70,6 @@ class HabboFeedService {
   }
 
   async getHotelFeed(
-    hotel: string, 
-    limit: number = 50, 
-    options?: {
-      onlineWithinSeconds?: number;
-      mode?: 'official' | 'database' | 'hybrid';
-      offsetHours?: number;
-    }
-  async getHotelFeed(
     hotel: string,
     limit: number = 50,
     options?: {
@@ -96,6 +89,38 @@ class HabboFeedService {
 
       if (error || !data) {
         console.warn(`Failed to fetch hotel feed for ${hotel}:`, error?.message || 'no data');
+
+        // Fallback: try official widgets proxy to avoid empty feed
+        try {
+          const { data: tickerData, error: tickerError } = await supabase.functions.invoke('habbo-widgets-proxy', {
+            body: { hotel },
+          });
+
+          if (!tickerError && tickerData?.activities?.length) {
+            const mapped = {
+              activities: (tickerData.activities as any[]).slice(0, limit).map((activity: any) => ({
+                username: activity.username || activity.habboName || 'Unknown',
+                description: activity.activity || activity.description || 'fez uma atividade',
+                lastUpdate: activity.timestamp || activity.time || new Date().toISOString(),
+                counts: {},
+                friends: [],
+                badges: [],
+                photos: [],
+                groups: [],
+              })),
+              meta: {
+                source: 'official',
+                timestamp: new Date().toISOString(),
+                count: tickerData.activities.length,
+                onlineCount: 0,
+              },
+            } as FeedResponse;
+            return mapped;
+          }
+        } catch (fallbackErr) {
+          console.warn('Fallback to widgets proxy failed:', fallbackErr);
+        }
+
         return {
           activities: [],
           meta: {
