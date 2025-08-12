@@ -150,32 +150,48 @@ class HabboProxyService {
 
   async getHotelTicker(hotel: string = 'com.br'): Promise<TickerActivity[]> {
     try {
-      console.log(`[HabboProxyService] Fetching real hotel ticker from widgets proxy`);
+      console.log(`🎯 [HabboProxyService] Fetching hotel ticker for ${hotel} from widgets proxy`);
       
       const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
-        body: {
-          username: 'hotel-ticker'
-        },
+        body: { hotel },
         method: 'POST',
       });
 
-      // The updated widgets proxy now returns 200 with empty activities on error
-      if (!error && data && data.activities && data.activities.length > 0) {
-        console.log(`[HabboProxyService] Successfully got ${data.activities.length} real ticker activities`);
+      if (!error && data) {
+        let activities: TickerActivity[] = [];
         
+        // Handle both response formats: { activities: [...] } or directly [...]
+        if (data.activities && Array.isArray(data.activities)) {
+          // Standard format from proxy
+          activities = data.activities;
+          console.log(`✅ [HabboProxyService] Got ${activities.length} activities from widgets proxy (standard format)`);
+        } else if (Array.isArray(data)) {
+          // Direct array format (legacy)
+          activities = data.map((activity: any) => ({
+            username: activity.username || 'Unknown',
+            description: activity.activity || activity.description || 'fez uma atividade',
+            time: activity.time || new Date().toISOString(),
+            timestamp: activity.timestamp || activity.time || new Date().toISOString()
+          }));
+          console.log(`✅ [HabboProxyService] Got ${activities.length} activities from widgets proxy (array format)`);
+        }
+
         // Normalize the data structure
-        const activities: TickerActivity[] = data.activities.map((activity: any) => ({
+        const normalizedActivities: TickerActivity[] = activities.map((activity: any) => ({
           username: activity.username || 'Unknown',
           description: activity.activity || activity.description || 'fez uma atividade',
           time: activity.time || new Date().toISOString(),
-          timestamp: activity.timestamp || new Date().toISOString()
+          timestamp: activity.timestamp || activity.time || new Date().toISOString()
         }));
 
-        return activities;
+        if (normalizedActivities.length > 0) {
+          console.log(`🎯 [HabboProxyService] Successfully processed ${normalizedActivities.length} real ticker activities`);
+          return normalizedActivities;
+        }
       }
 
-      // Fallback to mock data from habbo-api-proxy
-      console.log(`[HabboProxyService] Widgets proxy returned empty/error, falling back to mock data`);
+      // Fallback to mock data from habbo-api-proxy only if widgets proxy is empty
+      console.log(`⚠️ [HabboProxyService] Widgets proxy returned empty/error, falling back to mock data`);
       const fallbackData = await this.callProxy('getHotelTicker');
       
       if (fallbackData && fallbackData.activities) {
@@ -186,14 +202,14 @@ class HabboProxyService {
           timestamp: activity.time || new Date().toISOString()
         }));
         
-        console.log(`[HabboProxyService] Using ${activities.length} fallback ticker activities`);
+        console.log(`🎯 [HabboProxyService] Using ${activities.length} fallback ticker activities`);
         return activities;
       }
 
-      console.warn(`[HabboProxyService] Both ticker sources failed, returning empty array`);
+      console.warn(`⚠️ [HabboProxyService] Both ticker sources failed, returning empty array`);
       return [];
     } catch (error) {
-      console.error(`[HabboProxyService] Error fetching hotel ticker:`, error);
+      console.error(`❌ [HabboProxyService] Error fetching hotel ticker:`, error);
       return [];
     }
   }

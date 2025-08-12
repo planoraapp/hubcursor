@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Trophy, Users, Loader2, Hotel } from 'lucide-react';
@@ -13,6 +13,16 @@ export const HotelFeedColumn: React.FC = () => {
   // Get unique usernames for figure fetching
   const usernames = aggregatedActivities.map(group => group.username);
   const { figureMap } = useUserFigures(usernames);
+
+  // Add telemetry logging
+  useEffect(() => {
+    if (aggregatedActivities.length > 0) {
+      console.log(`📊 [HotelFeedColumn] Displaying ${aggregatedActivities.length} user groups with activities`);
+      console.log(`👥 [HotelFeedColumn] Total unique users: ${usernames.length}`);
+      const totalActivities = aggregatedActivities.reduce((sum, group) => sum + group.activityCount, 0);
+      console.log(`⚡ [HotelFeedColumn] Total activities: ${totalActivities}`);
+    }
+  }, [aggregatedActivities, usernames.length]);
 
   const getActivityIcon = (description: string) => {
     const desc = description.toLowerCase();
@@ -43,6 +53,11 @@ export const HotelFeedColumn: React.FC = () => {
             <Hotel className="w-5 h-5" />
             Feed do Hotel
             {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
+            {aggregatedActivities.length > 0 && (
+              <Badge variant="secondary" className="ml-auto bg-white/20 text-white">
+                {aggregatedActivities.length} usuários ativos
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>

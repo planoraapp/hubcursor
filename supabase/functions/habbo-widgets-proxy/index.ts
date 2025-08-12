@@ -16,6 +16,12 @@ interface TickerActivity {
   hotel: string;
 }
 
+const USER_AGENTS = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -24,8 +30,18 @@ serve(async (req) => {
   try {
     console.log('🔄 [HabboWidgetsProxy] Starting ticker data fetch...');
     
+    // Get hotel from both URL params and POST body
     const url = new URL(req.url);
-    const hotel = url.searchParams.get('hotel') || 'com.br';
+    let hotel = url.searchParams.get('hotel') || 'com.br';
+    
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        hotel = body.hotel || hotel;
+      } catch (e) {
+        console.log('⚠️ [HabboWidgetsProxy] Could not parse POST body, using URL params');
+      }
+    }
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -44,81 +60,95 @@ serve(async (req) => {
     if (cachedData?.response_data) {
       console.log(`✅ [HabboWidgetsProxy] Returning cached data for ${hotel}`);
       return new Response(
-        JSON.stringify(cachedData.response_data),
+        JSON.stringify({ activities: cachedData.response_data }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch fresh data from habbowidgets.com
-    console.log(`🌐 [HabboWidgetsProxy] Fetching fresh ticker data for hotel: ${hotel}`);
-    
-    const tickerUrl = `https://habbowidgets.com/habbo/ticker?hotel=${hotel}`;
-    const response = await fetch(tickerUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
+    // Try multiple endpoints with different configurations
+    const endpoints = [
+      `https://habbowidgets.com/habbo/ticker?hotel=${hotel}`,
+      `https://www.habbowidgets.com/habbo/ticker?hotel=${hotel}`,
+      `https://habbowidgets.com/habbo/ticker?hotel=${hotel}&_t=${Date.now()}`
+    ];
+
+    let activities: TickerActivity[] = [];
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`🌐 [HabboWidgetsProxy] Trying endpoint: ${endpoint}`);
+        
+        const userAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'User-Agent': userAgent,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Referer': 'https://habbowidgets.com/',
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        if (response.ok) {
+          const html = await response.text();
+          console.log(`📄 [HabboWidgetsProxy] Success with ${endpoint}, HTML length: ${html.length}`);
+          
+          activities = parseTickerHTML(html, hotel);
+          if (activities.length > 0) {
+            console.log(`✅ [HabboWidgetsProxy] Parsed ${activities.length} activities from ${endpoint}`);
+            break;
+          }
+        } else {
+          console.log(`❌ [HabboWidgetsProxy] HTTP ${response.status} from ${endpoint}`);
+          lastError = `HTTP ${response.status}: ${response.statusText}`;
+        }
+      } catch (error) {
+        console.log(`❌ [HabboWidgetsProxy] Error with ${endpoint}:`, error);
+        lastError = error;
       }
-    });
-
-    if (!response.ok) {
-      console.error(`❌ [HabboWidgetsProxy] HTTP ${response.status}: ${response.statusText}`);
-      
-      // Return mock data as fallback
-      const mockActivities = generateMockActivities(hotel);
-      return new Response(
-        JSON.stringify(mockActivities),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
-    const html = await response.text();
-    console.log(`📄 [HabboWidgetsProxy] HTML length: ${html.length} characters`);
-    
-    // Parse HTML to extract ticker activities
-    const activities = parseTickerHTML(html, hotel);
-    
-    if (activities.length === 0) {
-      console.warn('⚠️ [HabboWidgetsProxy] No activities parsed, using mock data');
-      const mockActivities = generateMockActivities(hotel);
-      
-      // Cache mock data for 5 minutes
+    // If we got real data, cache it and return
+    if (activities.length > 0) {
       await supabase
         .from('habbo_emotion_api_cache')
         .upsert({
           endpoint: cacheKey,
-          response_data: mockActivities,
-          status: 'mock_fallback',
-          item_count: mockActivities.length,
-          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+          response_data: activities,
+          status: 'success',
+          item_count: activities.length,
+          expires_at: new Date(Date.now() + 2 * 60 * 1000).toISOString()
         });
-      
+
       return new Response(
-        JSON.stringify(mockActivities),
+        JSON.stringify({ activities }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`✅ [HabboWidgetsProxy] Parsed ${activities.length} activities`);
-
-    // Cache successful results for 2 minutes
+    // All endpoints failed, return mock data
+    console.warn(`⚠️ [HabboWidgetsProxy] All endpoints failed, using mock data. Last error:`, lastError);
+    const mockActivities = generateMockActivities(hotel);
+    
+    // Cache mock data for 5 minutes
     await supabase
       .from('habbo_emotion_api_cache')
       .upsert({
         endpoint: cacheKey,
-        response_data: activities,
-        status: 'success',
-        item_count: activities.length,
-        expires_at: new Date(Date.now() + 2 * 60 * 1000).toISOString()
+        response_data: mockActivities,
+        status: 'mock_fallback',
+        item_count: mockActivities.length,
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
       });
-
+    
     return new Response(
-      JSON.stringify(activities),
+      JSON.stringify({ activities: mockActivities }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -130,10 +160,10 @@ serve(async (req) => {
     const mockActivities = generateMockActivities(hotel);
     
     return new Response(
-      JSON.stringify(mockActivities),
+      JSON.stringify({ activities: mockActivities }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 // Return 200 with mock data instead of 500
+        status: 200
       }
     );
   }
@@ -157,7 +187,6 @@ function parseTickerHTML(html: string, hotel: string): TickerActivity[] {
       for (const match of matches) {
         const content = match[1];
         if (content && content.includes('@')) {
-          // Try to extract username and activity
           const activityMatch = content.match(/(\w+)\s+(.*)/);
           if (activityMatch) {
             activities.push({
@@ -195,16 +224,16 @@ function parseTickerHTML(html: string, hotel: string): TickerActivity[] {
     console.error('❌ [HabboWidgetsProxy] Error parsing HTML:', error);
   }
 
-  return activities.slice(0, 20); // Limit to 20 activities
+  return activities.slice(0, 20);
 }
 
 function cleanHTML(text: string): string {
   return text
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-    .replace(/&amp;/g, '&')  // Replace &amp; with &
-    .replace(/&lt;/g, '<')   // Replace &lt; with <
-    .replace(/&gt;/g, '>')   // Replace &gt; with >
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
     .trim();
 }
 
