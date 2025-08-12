@@ -55,7 +55,7 @@ class HabboProxyService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
   }
 
   private getHotelDomain(hotel: string): string {
