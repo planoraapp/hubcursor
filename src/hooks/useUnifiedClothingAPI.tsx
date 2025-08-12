@@ -1,166 +1,131 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface UnifiedClothingItem {
+  id: string;
+  name: string;
+  part: string;
   item_id: number;
   code: string;
-  part: string;
   gender: 'M' | 'F' | 'U';
-  colors: string[];
-  image_url: string;
   club: 'HC' | 'FREE';
+  colors: string[];
+  image_url?: string;
   source: string;
-  is_active: boolean;
-  name?: string;
-  category?: string;
+  figureId: string;
+  category: string;
 }
 
-interface UseUnifiedClothingAPIProps {
+interface UseUnifiedClothingOptions {
   limit?: number;
   category?: string;
+  search?: string;
   gender?: 'M' | 'F' | 'U';
-  enabled?: boolean;
-  forceRefresh?: boolean;
 }
 
-const fetchUnifiedClothing = async ({
-  limit = 1000,
-  category,
-  gender,
-  forceRefresh = false
-}: UseUnifiedClothingAPIProps): Promise<UnifiedClothingItem[]> => {
-  console.log(`🎯 [UnifiedClothingAPI] Fetching with params:`, { limit, category, gender, forceRefresh });
+export const useUnifiedClothing = (options: UseUnifiedClothingOptions = {}) => {
+  const { limit = 100, category = 'all', search = '', gender = 'U' } = options;
 
-  try {
-    const { data, error } = await supabase.functions.invoke('unified-clothing-api', {
-      body: {
-        limit,
-        category,
-        gender,
-        forceRefresh
+  return useQuery<UnifiedClothingItem[], Error>({
+    queryKey: ['unified-clothing', { limit, category, search, gender }],
+    queryFn: async (): Promise<UnifiedClothingItem[]> => {
+      console.log('🔄 [useUnifiedClothing] Fetching clothing data...');
+      
+      try {
+        // Try flash-assets function first
+        const { data: flashData, error: flashError } = await supabase.functions.invoke('flash-assets-clothing', {
+          body: { limit, category, search, gender }
+        });
+
+        if (!flashError && flashData?.assets?.length > 0) {
+          console.log(`✅ [useUnifiedClothing] Got ${flashData.assets.length} items from flash-assets`);
+          return flashData.assets.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            part: item.category,
+            item_id: parseInt(item.figureId),
+            code: item.swfName || item.name,
+            gender: item.gender,
+            club: item.club,
+            colors: item.colors,
+            image_url: item.imageUrl,
+            source: 'flash-assets',
+            figureId: item.figureId,
+            category: item.category
+          }));
+        }
+
+        // Fallback to direct database query
+        console.log('⚙️ [useUnifiedClothing] Fallback to database query...');
+        
+        let query = supabase
+          .from('habbo_clothing_cache')
+          .select('*')
+          .eq('is_active', true)
+          .limit(limit);
+
+        if (category !== 'all') {
+          query = query.eq('part', category);
+        }
+
+        if (gender !== 'U') {
+          query = query.or(`gender.eq.${gender},gender.eq.U`);
+        }
+
+        if (search) {
+          query = query.or(`code.ilike.%${search}%,item_id.eq.${parseInt(search) || 0}`);
+        }
+
+        const { data: dbData, error: dbError } = await query;
+
+        if (dbError) {
+          throw dbError;
+        }
+
+        const unifiedItems: UnifiedClothingItem[] = (dbData || []).map(item => ({
+          id: `db_${item.part}_${item.item_id}`,
+          name: `${getCategoryName(item.part)} ${item.code || item.item_id}`,
+          part: item.part,
+          item_id: item.item_id,
+          code: item.code,
+          gender: item.gender as 'M' | 'F' | 'U',
+          club: item.club === 'HC' ? 'HC' : 'FREE',
+          colors: Array.isArray(item.colors) ? item.colors : ['1'],
+          image_url: item.image_url,
+          source: 'database',
+          figureId: item.item_id.toString(),
+          category: item.part
+        }));
+
+        console.log(`✅ [useUnifiedClothing] Got ${unifiedItems.length} items from database`);
+        return unifiedItems;
+
+      } catch (error) {
+        console.error('❌ [useUnifiedClothing] Error:', error);
+        return [];
       }
-    });
-
-    if (error) {
-      console.error('❌ [UnifiedClothingAPI] Supabase function error:', error);
-      throw error;
-    }
-
-    if (!data?.success) {
-      console.error('❌ [UnifiedClothingAPI] API returned failure:', data);
-      throw new Error(data?.error || 'API request failed');
-    }
-
-    const items = data.data || [];
-    console.log(`✅ [UnifiedClothingAPI] Retrieved ${items.length} items from ${data.source}`);
-
-    // Enrich items with display names and categories
-    const enrichedItems: UnifiedClothingItem[] = items.map((item: any) => ({
-      ...item,
-      name: generateDisplayName(item.code, item.part),
-      category: getCategoryName(item.part),
-      image_url: item.image_url || generateFallbackImageUrl(item.code, item.part, item.item_id)
-    }));
-
-    // Apply client-side filtering if needed
-    let filteredItems = enrichedItems;
-    
-    if (category) {
-      filteredItems = filteredItems.filter(item => item.part === category);
-    }
-    
-    if (gender && gender !== 'U') {
-      filteredItems = filteredItems.filter(item => item.gender === gender || item.gender === 'U');
-    }
-
-    console.log(`🎨 [UnifiedClothingAPI] Final filtered items: ${filteredItems.length}`);
-    return filteredItems;
-
-  } catch (error) {
-    console.error('💥 [UnifiedClothingAPI] Critical error:', error);
-    throw error;
-  }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+  });
 };
 
-const generateDisplayName = (code: string, part: string): string => {
-  if (!code) return `${getCategoryName(part)} Item`;
-  
-  // Remove common prefixes/suffixes for cleaner names
-  let cleanCode = code.replace(/^(hair|shirt|pants|shoes|hat|acc)_?/i, '');
-  cleanCode = cleanCode.replace(/_?(m|f|u)$/i, '');
-  
-  // Capitalize and format
-  const formatted = cleanCode.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1) || `${getCategoryName(part)} Item`;
-};
-
-const getCategoryName = (part: string): string => {
-  const categoryMap: Record<string, string> = {
+function getCategoryName(category: string): string {
+  const categoryNames: Record<string, string> = {
     'hd': 'Rosto',
     'hr': 'Cabelo',
     'ch': 'Camiseta',
     'lg': 'Calça',
-    'sh': 'Sapatos',
+    'sh': 'Sapato',
     'ha': 'Chapéu',
     'ea': 'Óculos',
-    'fa': 'Acessório Facial',
     'cc': 'Casaco',
-    'ca': 'Acessório Peito',
+    'ca': 'Acessório',
+    'cp': 'Estampa',
     'wa': 'Cintura',
-    'cp': 'Estampa'
+    'fa': 'Rosto Acessório'
   };
-  return categoryMap[part] || 'Item';
-};
-
-const generateFallbackImageUrl = (code: string, part: string, itemId: number): string => {
-  // Multiple fallback strategies
-  const fallbacks = [
-    `https://www.habbo.com/habbo-imaging/avatarimage?figure=${part}-${itemId}-1&direction=2&head_direction=2&size=s`,
-    `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-185-1.${part}-${itemId}-1&direction=2&size=s`,
-    `https://files.habboemotion.com/habbo-assets/sprites/clothing/${code}/h_std_${part}_${itemId}_2_0.png`
-  ];
   
-  return fallbacks[0]; // Use first fallback by default
-};
-
-export const useUnifiedClothingAPI = ({
-  limit = 1000,
-  category,
-  gender,
-  enabled = true,
-  forceRefresh = false
-}: UseUnifiedClothingAPIProps = {}) => {
-  console.log(`🔧 [UnifiedClothingAPI] Hook initialized with:`, { limit, category, gender, enabled, forceRefresh });
-
-  return useQuery({
-    queryKey: ['unified-clothing-api', limit, category, gender, forceRefresh],
-    queryFn: () => fetchUnifiedClothing({ limit, category, gender, forceRefresh }),
-    enabled,
-    staleTime: forceRefresh ? 0 : 1000 * 60 * 30, // 30 minutes
-    gcTime: 1000 * 60 * 60, // 1 hour
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-  });
-};
-
-// Helper hook for category-specific data
-export const useUnifiedClothingByCategory = (
-  category: string,
-  gender?: 'M' | 'F' | 'U',
-  limit?: number
-) => {
-  return useUnifiedClothingAPI({
-    category,
-    gender,
-    limit,
-    enabled: !!category
-  });
-};
-
-// Helper hook to force refresh
-export const useRefreshUnifiedClothing = () => {
-  return useUnifiedClothingAPI({
-    forceRefresh: true,
-    limit: 1000
-  });
-};
+  return categoryNames[category] || 'Item';
+}
