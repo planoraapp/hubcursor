@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -13,6 +12,7 @@ import { habboFeedService } from '@/services/habboFeedService';
 import { HabboUser } from '@/types/habbo';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
+import { useUserFigures } from '@/hooks/useUserFigures';
 
 interface UserSearchProps {
   onUserFound: (user: HabboUser) => void;
@@ -237,6 +237,7 @@ export const EnhancedFriendsFeedColumn: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const { friendsActivities, isLoading } = useFriendsFeed();
   const [foundUsers, setFoundUsers] = useState<HabboUser[]>([]);
+  const { figureMap } = useUserFigures(friendsActivities.map(fa => fa.friend.name));
 
   // Extract usernames for suggestions
   const usernameSuggestions = useMemo(() => {
@@ -319,11 +320,8 @@ export const EnhancedFriendsFeedColumn: React.FC = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium truncate text-white">{activity.friend.name}</p>
-                          <p className="text-xs text-white/70 truncate">
-                            {activity.activities && activity.activities.length > 0 
-                              ? (activity.activities[0].description || 'Atividade recente')
-                              : 'Atividade recente'
-                            }
+                          <p className="text-xs text-white/60 mb-1">
+                            {activity.activity || activity.description || 'fez uma atividade'}
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             <Clock className="w-3 h-3 text-white/50" />

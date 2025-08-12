@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { useUnifiedAuth } from './useUnifiedAuth';
 import { habboProxyService, HabboFriend, TickerActivity } from '@/services/habboProxyService';
@@ -77,7 +76,7 @@ export const useFriendsFeed = () => {
       const isRecent = activityTime >= sixHoursAgo;
       
       if (isFriend) {
-        console.log(`[useFriendsFeed] Found friend activity: ${activity.username} - ${activity.activity || activity.description}`);
+        console.log(`[useFriendsFeed] Found friend activity: ${activity.username} - ${activity.activity || activity.description || 'fez uma atividade'}`);
       }
       
       return isFriend && isRecent;

@@ -11,6 +11,7 @@ export interface HabboUser {
   figureString: string;
   profileVisible?: boolean;
   lastWebVisit?: string;
+  uniqueId?: string;
 }
 
 export interface HabboBadge {
@@ -37,9 +38,10 @@ export interface TickerActivity {
   activity: string;
   timestamp: string;
   time: string;
+  description?: string;
 }
 
-interface TickerResponse {
+export interface TickerResponse {
   activities: TickerActivity[];
   meta: {
     source: string;
@@ -103,11 +105,16 @@ class HabboProxyService {
         figureString: user.figureString,
         profileVisible: user.profileVisible,
         lastWebVisit: user.lastWebVisit,
+        uniqueId: user.uniqueId || user.id,
       };
     } catch (error) {
       console.error(`Error fetching profile for ${username}:`, error);
       return null;
     }
+  }
+
+  async getUserByName(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
+    return this.getUserProfile(username, hotel);
   }
 
   async getUserBadges(username: string, hotel: string = 'com.br'): Promise<HabboBadge[]> {
@@ -165,18 +172,35 @@ class HabboProxyService {
       const data = await response.json();
       console.log(`[HabboProxyService] Raw photos response for ${username}:`, data);
 
-      // Handle different response formats
+      // Handle different response formats including photos array
       let photosArray = [];
       if (Array.isArray(data)) {
         photosArray = data;
-      } else if (data.data && Array.isArray(data.data)) {
-        photosArray = data.data;
-      } else if (data.photos && Array.isArray(data.photos)) {
-        photosArray = data.photos;
-      } else if (data.results && Array.isArray(data.results)) {
-        photosArray = data.results;
-      } else {
-        console.warn(`[HabboProxyService] Unexpected photos response format:`, data);
+      } else if (data && typeof data === 'object') {
+        if (data.data && Array.isArray(data.data)) {
+          photosArray = data.data;
+        } else if (data.photos && Array.isArray(data.photos)) {
+          photosArray = data.photos;
+        } else if (data.results && Array.isArray(data.results)) {
+          photosArray = data.results;
+        } else {
+          // Check if data itself has photo properties
+          const keys = Object.keys(data);
+          for (const key of keys) {
+            if (Array.isArray(data[key]) && data[key].length > 0) {
+              // Check if the array contains photo-like objects
+              const firstItem = data[key][0];
+              if (firstItem && (firstItem.url || firstItem.photoUrl || firstItem.src || firstItem.id)) {
+                photosArray = data[key];
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (photosArray.length === 0) {
+        console.warn(`[HabboProxyService] No photos found in response:`, data);
         return [];
       }
 
@@ -184,7 +208,7 @@ class HabboProxyService {
         id: photo.id || photo.photoId || String(Math.random()),
         url: photo.url || photo.photoUrl || photo.src || '',
         takenOn: photo.takenOn || photo.createdAt || photo.timestamp || new Date().toISOString(),
-      })).filter(photo => photo.url); // Filter out photos without URLs
+      })).filter(photo => photo.url);
 
     } catch (error) {
       console.error(`Error fetching photos for ${username}:`, error);
@@ -214,18 +238,35 @@ class HabboProxyService {
       const data = await response.json();
       console.log(`[HabboProxyService] Raw friends response for ${username}:`, data);
 
-      // Handle different response formats
+      // Handle different response formats including friends array
       let friendsArray = [];
       if (Array.isArray(data)) {
         friendsArray = data;
-      } else if (data.data && Array.isArray(data.data)) {
-        friendsArray = data.data;
-      } else if (data.friends && Array.isArray(data.friends)) {
-        friendsArray = data.friends;
-      } else if (data.results && Array.isArray(data.results)) {
-        friendsArray = data.results;
-      } else {
-        console.warn(`[HabboProxyService] Unexpected friends response format:`, data);
+      } else if (data && typeof data === 'object') {
+        if (data.data && Array.isArray(data.data)) {
+          friendsArray = data.data;
+        } else if (data.friends && Array.isArray(data.friends)) {
+          friendsArray = data.friends;
+        } else if (data.results && Array.isArray(data.results)) {
+          friendsArray = data.results;
+        } else {
+          // Check if data itself has friend properties
+          const keys = Object.keys(data);
+          for (const key of keys) {
+            if (Array.isArray(data[key]) && data[key].length > 0) {
+              // Check if the array contains friend-like objects
+              const firstItem = data[key][0];
+              if (firstItem && (firstItem.name || firstItem.habboName || firstItem.username)) {
+                friendsArray = data[key];
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      if (friendsArray.length === 0) {
+        console.warn(`[HabboProxyService] No friends found in response:`, data);
         return [];
       }
 
@@ -234,12 +275,17 @@ class HabboProxyService {
         figureString: friend.figureString || friend.figure || '',
         online: friend.online || false,
         uniqueId: friend.uniqueId || friend.id || friend.habboId || '',
-      })).filter(friend => friend.name); // Filter out friends without names
+      })).filter(friend => friend.name);
 
     } catch (error) {
       console.error(`Error fetching friends for ${username}:`, error);
       return [];
     }
+  }
+
+  async getTicker(hotel: string = 'com.br'): Promise<TickerActivity[]> {
+    const response = await this.getHotelTicker(hotel);
+    return response.activities;
   }
 
   async getHotelTicker(hotel: string = 'com.br'): Promise<TickerResponse> {
@@ -280,6 +326,7 @@ class HabboProxyService {
         activity: item.activity || item.description || 'fez uma atividade',
         timestamp: item.timestamp || new Date().toISOString(),
         time: item.time || new Date().toISOString(),
+        description: item.description || item.activity || 'fez uma atividade',
       }));
 
       return {

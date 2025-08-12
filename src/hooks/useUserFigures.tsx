@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { habboProxyService } from '@/services/habboProxyService';
 import { useMemo } from 'react';
@@ -21,7 +20,7 @@ export const useUserFigures = (usernames: string[]) => {
         await Promise.allSettled(
           batch.map(async (username) => {
             try {
-              const user = await habboProxyService.getUserByName(username);
+              const user = await habboProxyService.getUserProfile(username);
               if (user?.figureString) {
                 figureMap[username] = user.figureString;
               }

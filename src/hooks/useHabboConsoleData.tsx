@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { habboProxyService, HabboUser } from '@/services/habboProxyService';
@@ -52,7 +51,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     isLoading: tickerLoading 
   } = useQuery({
     queryKey: ['habbo-ticker'],
-    queryFn: () => habboProxyService.getTicker(),
+    queryFn: () => habboProxyService.getHotelTicker(),
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
   });
@@ -118,7 +117,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     try {
       const success = hasLiked 
         ? await consoleInteractionsService.removeLike(searchUsername)
-        : await consoleInteractionsService.addLike(searchUsername, userProfile?.uniqueId);
+        : await consoleInteractionsService.addLike(searchUsername, userProfile?.id);
       
       if (success) {
         await refetchLikes();
@@ -140,7 +139,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
         searchUsername,
         commentText.trim(),
         habboAccount.habbo_name,
-        userProfile?.uniqueId
+        userProfile?.id
       );
       
       if (success) {
@@ -178,7 +177,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
         : await consoleInteractionsService.followUser(
             searchUsername,
             habboAccount.habbo_name,
-            userProfile?.uniqueId
+            userProfile?.id
           );
       
       if (success) {
