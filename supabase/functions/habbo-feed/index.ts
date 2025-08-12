@@ -23,42 +23,69 @@ Deno.serve(async (req) => {
     const hotelFilter = hotel === 'com.br' ? 'br' : hotel
     const cutoffTime = new Date(Date.now() - (onlineWithinSeconds * 1000)).toISOString()
 
-    console.log(`📊 [feed] Getting database feed for ${hotel}, online within ${onlineWithinSeconds}s`)
+    console.log(`📊 [feed] Getting activities from database for ${hotel}`)
 
-    // Get activities from database
+    // Get activities from database - remove the problematic join
     const { data: activities, error } = await supabase
       .from('habbo_activities')
-      .select(`
-        *,
-        habbo_tracked_users!inner(*)
-      `)
+      .select('*')
       .eq('hotel', hotelFilter)
       .gte('created_at', cutoffTime)
       .order('created_at', { ascending: false })
       .limit(limit)
 
     if (error) {
+      console.error(`❌ [feed] Database error: ${error.message}`)
       throw error
     }
 
     console.log(`📊 [feed] Found ${activities?.length || 0} activities in database`)
 
+    // Get user profiles separately for enrichment
+    const uniqueUserIds = [...new Set(activities?.map(a => a.habbo_id) || [])]
+    let userProfiles = new Map()
+
+    if (uniqueUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('habbo_user_snapshots')
+        .select('*')
+        .in('habbo_id', uniqueUserIds)
+        .eq('hotel', hotelFilter)
+        .order('created_at', { ascending: false })
+
+      if (profiles) {
+        profiles.forEach(profile => {
+          if (!userProfiles.has(profile.habbo_id)) {
+            userProfiles.set(profile.habbo_id, profile)
+          }
+        })
+      }
+    }
+
+    // Get online count from snapshots
+    const { count: onlineCount } = await supabase
+      .from('habbo_user_snapshots')
+      .select('*', { count: 'exact', head: true })
+      .eq('hotel', hotelFilter)
+      .eq('is_online', true)
+      .gte('created_at', cutoffTime)
+
     if (!activities || activities.length === 0) {
       console.log(`⚠️ [feed] No activities found in database for ${hotel}`)
       
       if (mode === 'hybrid' || mode === 'database') {
-        console.log(`📊 [feed] Database has only 0 activities, trying official ticker`)
-        console.log(`🎯 [feed] Trying official ticker for ${hotel}`)
+        console.log(`📊 [feed] Trying fallback to widgets proxy`)
         
         // Try to get from official ticker as fallback
-        const tickerResponse = await supabase.functions.invoke('habbo-widgets-proxy', {
+        const { data: tickerResponse, error: tickerError } = await supabase.functions.invoke('habbo-widgets-proxy', {
           body: { hotel }
         })
 
-        if (tickerResponse.data?.activities?.length > 0) {
+        if (!tickerError && tickerResponse?.activities?.length > 0) {
+          console.log(`✅ [feed] Using ${tickerResponse.activities.length} activities from ticker fallback`)
           return new Response(
             JSON.stringify({
-              activities: tickerResponse.data.activities.slice(0, limit).map((activity: any) => ({
+              activities: tickerResponse.activities.slice(0, limit).map((activity: any) => ({
                 username: activity.username || 'Unknown',
                 description: activity.activity || activity.description || 'fez uma atividade',
                 lastUpdate: activity.timestamp || activity.time || new Date().toISOString(),
@@ -71,8 +98,8 @@ Deno.serve(async (req) => {
               meta: {
                 source: 'official-fallback',
                 timestamp: new Date().toISOString(),
-                count: tickerResponse.data.activities.length,
-                onlineCount: 0
+                count: tickerResponse.activities.length,
+                onlineCount: onlineCount || 0
               }
             }),
             { 
@@ -83,7 +110,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      console.log(`✅ [feed] Returning 0 activities (database), 0 online`)
+      console.log(`✅ [feed] Returning 0 activities (database), ${onlineCount || 0} online`)
       return new Response(
         JSON.stringify({
           activities: [],
@@ -91,7 +118,7 @@ Deno.serve(async (req) => {
             source: 'database',
             timestamp: new Date().toISOString(),
             count: 0,
-            onlineCount: 0
+            onlineCount: onlineCount || 0
           }
         }),
         { 
@@ -101,14 +128,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Get online count
-    const { count: onlineCount } = await supabase
-      .from('habbo_tracked_users')
-      .select('*', { count: 'exact', head: true })
-      .eq('hotel', hotelFilter)
-      .eq('is_online', true)
-      .gte('last_seen_at', cutoffTime)
-
     // Aggregate activities by user
     const userActivities = new Map()
 
@@ -116,6 +135,7 @@ Deno.serve(async (req) => {
       const username = activity.habbo_name
       
       if (!userActivities.has(username)) {
+        const userProfile = userProfiles.get(activity.habbo_id)
         userActivities.set(username, {
           username,
           description: '',
@@ -127,7 +147,7 @@ Deno.serve(async (req) => {
             avatarChanged: 0,
             mottoChanged: 0
           },
-          profile: activity.habbo_tracked_users?.raw_data || null,
+          profile: userProfile?.raw_data || null,
           friends: [],
           badges: [],
           photos: [],

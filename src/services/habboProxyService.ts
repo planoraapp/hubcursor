@@ -1,309 +1,345 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { getAvatarUrl, getBadgeUrl, getUserByName } from '@/lib/habboApi';
 
 export interface HabboUser {
-  uniqueId: string;
+  id: string;
   name: string;
-  figureString: string;
   motto: string;
   online: boolean;
-  lastAccessTime: string;
   memberSince: string;
-  profileVisible: boolean;
-  selectedBadges: Array<{
-    code: string;
-    name: string;
-    description: string;
-  }>;
+  selectedBadges: HabboBadge[];
+  badges: HabboBadge[];
+  figureString: string;
+  profileVisible?: boolean;
+  lastWebVisit?: string;
 }
 
-export interface HabboPhoto {
-  id: string;
-  url: string;
-  takenOn: string;
-}
-
-export interface TickerActivity {
-  username: string;
+export interface HabboBadge {
+  code: string;
+  name: string;
   description: string;
-  action: string;
-  time: string;
-  timestamp: string;
-}
-
-export interface TickerResponse {
-  activities: TickerActivity[];
-  meta: {
-    source: 'live' | 'cache' | 'mock';
-    timestamp: string;
-    hotel: string;
-    count: number;
-  };
 }
 
 export interface HabboFriend {
   name: string;
   figureString: string;
-  motto: string;
   online: boolean;
-  lastAccessTime: string;
+  uniqueId: string;
+}
+
+export interface HabboPhoto {
+  id: string;
+  url: string;
+  takenOn?: string;
+}
+
+export interface TickerActivity {
+  username: string;
+  activity: string;
+  timestamp: string;
+  time: string;
+}
+
+interface TickerResponse {
+  activities: TickerActivity[];
+  meta: {
+    source: string;
+    timestamp: string;
+    count: number;
+    onlineCount: number;
+  };
 }
 
 class HabboProxyService {
-  private static CACHE_KEY_PREFIX = 'habbo_ticker_cache_';
-  private static CACHE_EXPIRY_MINUTES = 3;
+  private baseUrl: string;
 
-  private async callProxy(action: string, params: Record<string, string> = {}) {
-    try {
-      const { data, error } = await supabase.functions.invoke('habbo-api-proxy', {
-        body: {
-          action,
-          ...params
-        },
-        method: 'POST',
-      });
+  constructor() {
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  }
 
-      if (error) {
-        console.error(`[HabboProxyService] Error calling ${action}:`, error);
-        throw new Error(`Failed to fetch ${action}: ${error.message}`);
-      }
-
-      return data;
-    } catch (error) {
-      console.error(`[HabboProxyService] Network error for ${action}:`, error);
-      throw error;
+  private getHotelDomain(hotel: string): string {
+    if (hotel === 'com.br' || hotel === 'br') {
+      return 'com.br';
     }
-  }
-
-  private getCacheKey(hotel: string): string {
-    return `${HabboProxyService.CACHE_KEY_PREFIX}${hotel}`;
-  }
-
-  private saveCacheData(hotel: string, response: TickerResponse): void {
-    try {
-      const cacheData = {
-        ...response,
-        cachedAt: Date.now()
-      };
-      localStorage.setItem(this.getCacheKey(hotel), JSON.stringify(cacheData));
-      console.log(`💾 [HabboProxyService] Cached ${response.activities.length} activities for hotel ${hotel} (source: ${response.meta.source})`);
-    } catch (error) {
-      console.warn('Failed to save cache:', error);
-    }
-  }
-
-  private getCacheData(hotel: string): TickerResponse | null {
-    try {
-      const cached = localStorage.getItem(this.getCacheKey(hotel));
-      if (!cached) return null;
-
-      const cacheData = JSON.parse(cached);
-      const age = Date.now() - (cacheData.cachedAt || 0);
-      const maxAge = HabboProxyService.CACHE_EXPIRY_MINUTES * 60 * 1000;
-
-      if (age > maxAge) {
-        localStorage.removeItem(this.getCacheKey(hotel));
-        console.log(`🗑️ [HabboProxyService] Expired client cache for hotel ${hotel}`);
-        return null;
-      }
-
-      console.log(`📋 [HabboProxyService] Using client cached data for hotel ${hotel} (${Math.round(age/1000)}s old, source: ${cacheData.meta?.source || 'unknown'})`);
-      return cacheData;
-    } catch (error) {
-      console.warn('Failed to read cache:', error);
-      return null;
-    }
-  }
-
-  async getUserByName(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
-    return this.getUserProfile(username, hotel);
+    return hotel;
   }
 
   async getUserProfile(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
     try {
-      console.log(`[HabboProxyService] Fetching profile for: ${username} on ${hotel}`);
-      
-      const data = await this.callProxy('getUserProfile', { username, hotel });
-      
-      if (!data || data.error) {
-        console.warn(`[HabboProxyService] User not found: ${username}`);
+      const domain = this.getHotelDomain(hotel);
+      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: `users?name=${encodeURIComponent(username)}`,
+          hotel: domain
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch profile for ${username}:`, response.status);
         return null;
       }
 
-      const userData = Array.isArray(data) ? data[0] : data;
+      const data = await response.json();
+      console.log(`[HabboProxyService] Raw profile response for ${username}:`, data);
 
-      if (!userData || !userData.name) {
-        console.warn(`[HabboProxyService] Invalid user data for: ${username}`);
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        console.warn(`No data returned for ${username}`);
         return null;
       }
+
+      const user = Array.isArray(data) ? data[0] : data;
 
       return {
-        uniqueId: userData.uniqueId || `fallback-${username}`,
-        name: userData.name,
-        figureString: userData.figureString || '',
-        motto: userData.motto || 'Bem-vindo ao Habbo!',
-        online: userData.online || false,
-        lastAccessTime: userData.lastAccessTime || new Date().toISOString(),
-        memberSince: userData.memberSince || '2024',
-        profileVisible: userData.profileVisible !== false,
-        selectedBadges: userData.selectedBadges || []
+        id: user.uniqueId || user.id,
+        name: user.name,
+        motto: user.motto,
+        online: user.online,
+        memberSince: user.memberSince,
+        selectedBadges: user.selectedBadges || [],
+        badges: user.badges || [],
+        figureString: user.figureString,
+        profileVisible: user.profileVisible,
+        lastWebVisit: user.lastWebVisit,
       };
     } catch (error) {
-      console.error(`[HabboProxyService] Error fetching user profile:`, error);
-      throw error;
+      console.error(`Error fetching profile for ${username}:`, error);
+      return null;
     }
   }
 
-  async getUserBadges(username: string, hotel: string = 'com.br'): Promise<Array<{ code: string; name: string; description: string; }>> {
+  async getUserBadges(username: string, hotel: string = 'com.br'): Promise<HabboBadge[]> {
     try {
-      const data = await this.callProxy('getUserBadges', { username, hotel });
-      return data?.selectedBadges || [];
+      const domain = this.getHotelDomain(hotel);
+      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: `users/${encodeURIComponent(username)}/badges`,
+          hotel: domain
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch badges for ${username}:`, response.status);
+        return [];
+      }
+
+      const data = await response.json();
+      console.log(`[HabboProxyService] Raw badges response for ${username}:`, data);
+
+      return (data as any[]).map(badge => ({
+        code: badge.code,
+        name: badge.name,
+        description: badge.description,
+      }));
     } catch (error) {
-      console.error(`[HabboProxyService] Error fetching badges:`, error);
+      console.error(`Error fetching badges for ${username}:`, error);
       return [];
     }
   }
 
   async getUserPhotos(username: string, hotel: string = 'com.br'): Promise<HabboPhoto[]> {
     try {
-      const data = await this.callProxy('getUserPhotos', { username, hotel });
-      
-      if (!data || !Array.isArray(data)) {
+      const domain = this.getHotelDomain(hotel);
+      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: `users/${encodeURIComponent(username)}/photos`,
+          hotel: domain
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch photos for ${username}:`, response.status);
         return [];
       }
 
-      return data.map((photo: any) => ({
-        id: photo.id || photo.photoId || Math.random().toString(),
-        url: photo.url || photo.photoUrl || '',
-        takenOn: photo.takenOn || photo.createdAt || new Date().toISOString()
-      }));
+      const data = await response.json();
+      console.log(`[HabboProxyService] Raw photos response for ${username}:`, data);
+
+      // Handle different response formats
+      let photosArray = [];
+      if (Array.isArray(data)) {
+        photosArray = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        photosArray = data.data;
+      } else if (data.photos && Array.isArray(data.photos)) {
+        photosArray = data.photos;
+      } else if (data.results && Array.isArray(data.results)) {
+        photosArray = data.results;
+      } else {
+        console.warn(`[HabboProxyService] Unexpected photos response format:`, data);
+        return [];
+      }
+
+      return photosArray.map((photo: any) => ({
+        id: photo.id || photo.photoId || String(Math.random()),
+        url: photo.url || photo.photoUrl || photo.src || '',
+        takenOn: photo.takenOn || photo.createdAt || photo.timestamp || new Date().toISOString(),
+      })).filter(photo => photo.url); // Filter out photos without URLs
+
     } catch (error) {
-      console.error(`[HabboProxyService] Error fetching photos:`, error);
+      console.error(`Error fetching photos for ${username}:`, error);
       return [];
     }
   }
 
   async getUserFriends(username: string, hotel: string = 'com.br'): Promise<HabboFriend[]> {
     try {
-      console.log(`[HabboProxyService] Fetching friends for: ${username} on ${hotel}`);
-      const data = await this.callProxy('getUserFriends', { username, hotel });
-      
-      if (!data || !Array.isArray(data)) {
+      const domain = this.getHotelDomain(hotel);
+      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: `users/${encodeURIComponent(username)}/friends`,
+          hotel: domain
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to fetch friends for ${username}:`, response.status);
         return [];
       }
 
-      return data.map((friend: any) => ({
-        name: friend.name || friend.username || '',
-        figureString: friend.figureString || '',
-        motto: friend.motto || '',
+      const data = await response.json();
+      console.log(`[HabboProxyService] Raw friends response for ${username}:`, data);
+
+      // Handle different response formats
+      let friendsArray = [];
+      if (Array.isArray(data)) {
+        friendsArray = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        friendsArray = data.data;
+      } else if (data.friends && Array.isArray(data.friends)) {
+        friendsArray = data.friends;
+      } else if (data.results && Array.isArray(data.results)) {
+        friendsArray = data.results;
+      } else {
+        console.warn(`[HabboProxyService] Unexpected friends response format:`, data);
+        return [];
+      }
+
+      return friendsArray.map((friend: any) => ({
+        name: friend.name || friend.habboName || friend.username || '',
+        figureString: friend.figureString || friend.figure || '',
         online: friend.online || false,
-        lastAccessTime: friend.lastAccessTime || new Date().toISOString()
-      }));
+        uniqueId: friend.uniqueId || friend.id || friend.habboId || '',
+      })).filter(friend => friend.name); // Filter out friends without names
+
     } catch (error) {
-      console.error(`[HabboProxyService] Error fetching friends:`, error);
+      console.error(`Error fetching friends for ${username}:`, error);
       return [];
     }
   }
 
   async getHotelTicker(hotel: string = 'com.br'): Promise<TickerResponse> {
     try {
-      console.log(`🎯 [HabboProxyService] Fetching hotel ticker for ${hotel}`);
-      
-      // Check client cache first
-      const cachedResponse = this.getCacheData(hotel);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      
-      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
-        body: { hotel },
+      const domain = this.getHotelDomain(hotel);
+      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          endpoint: `community/ticker`,
+          hotel: domain
+        }),
       });
 
-      if (!error && data) {
-        let response: TickerResponse;
-        
-        if (data.activities && data.meta) {
-          // New format with metadata
-          response = {
-            activities: data.activities.map((activity: any) => ({
-              username: activity.username || 'Unknown',
-              description: activity.activity || activity.description || 'fez uma atividade',
-              action: activity.action || activity.type || 'activity',
-              time: activity.time || activity.timestamp || new Date().toISOString(),
-              timestamp: activity.timestamp || activity.time || new Date().toISOString()
-            })),
-            meta: {
-              source: data.meta.source || 'mock',
-              timestamp: data.meta.timestamp || new Date().toISOString(),
-              hotel: data.meta.hotel || hotel,
-              count: data.meta.count || data.activities.length
-            }
-          };
-        } else if (Array.isArray(data)) {
-          // Legacy format - convert to new format
-          response = {
-            activities: data.map((activity: any) => ({
-              username: activity.username || 'Unknown',
-              description: activity.activity || activity.description || 'fez uma atividade',
-              action: activity.action || activity.type || 'activity',
-              time: activity.time || new Date().toISOString(),
-              timestamp: activity.timestamp || activity.time || new Date().toISOString()
-            })),
-            meta: {
-              source: 'mock' as const,
-              timestamp: new Date().toISOString(),
-              hotel: hotel,
-              count: data.length
-            }
-          };
-        } else {
-          throw new Error('Invalid response format');
-        }
-
-        console.log(`✅ [HabboProxyService] Got ${response.activities.length} activities (source: ${response.meta.source}) for hotel ${hotel}`);
-        
-        // Cache the response
-        this.saveCacheData(hotel, response);
-        return response;
+      if (!response.ok) {
+        console.warn(`Failed to fetch hotel ticker for ${hotel}:`, response.status);
+        return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
       }
 
-      throw new Error('No data from widgets proxy');
-    } catch (error) {
-      console.error(`❌ [HabboProxyService] Error fetching hotel ticker:`, error);
-      
-      // Try client cache on error
-      const cachedResponse = this.getCacheData(hotel);
-      if (cachedResponse) {
-        console.log(`📋 [HabboProxyService] Using client cached data after error for ${hotel}`);
-        return cachedResponse;
+      const data = await response.json();
+      console.log(`[HabboProxyService] Raw ticker response for ${hotel}:`, data);
+
+      // Normalize activities array
+      let activities: any[] = [];
+      if (Array.isArray(data)) {
+          activities = data;
+      } else if (data && Array.isArray(data.activities)) {
+          activities = data.activities;
+      } else {
+          console.warn(`[HabboProxyService] Unexpected ticker response format:`, data);
+          return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
       }
-      
-      // Final fallback - return empty response with mock metadata
+
+      const tickerActivities = activities.map(item => ({
+        username: item.habboName || 'Unknown',
+        activity: item.activity || item.description || 'fez uma atividade',
+        timestamp: item.timestamp || new Date().toISOString(),
+        time: item.time || new Date().toISOString(),
+      }));
+
       return {
-        activities: [],
+        activities: tickerActivities,
         meta: {
-          source: 'mock',
+          source: 'proxy',
           timestamp: new Date().toISOString(),
-          hotel: hotel,
-          count: 0
+          count: tickerActivities.length,
+          onlineCount: 0,
         }
       };
+    } catch (error) {
+      console.error(`Error fetching hotel ticker for ${hotel}:`, error);
+      return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
     }
   }
 
-  async getTicker(): Promise<TickerResponse> {
-    return this.getHotelTicker();
-  }
+  getAvatarUrl(figureString: string, size: 'xs' | 's' | 'm' | 'l' = 'm', headOnly: boolean = false): string {
+    const baseUrl = 'https://www.habbo.com.br/habbo-imaging/avatarimage';
+    const params = new URLSearchParams({
+      figure: figureString,
+      size: size,
+      direction: '2',
+      head_direction: '3',
+      gesture: 'sml',
+    });
 
-  getAvatarUrl(figureString: string, size: 'xs' | 's' | 'm' | 'l' = 'm'): string {
-    if (!figureString) return '/assets/default-avatar.png';
-    
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${figureString}&direction=2&head_direction=3&gesture=sml&size=${size}&action=std`;
+    if (headOnly) {
+      params.append('headonly', '1');
+    }
+
+    return `${baseUrl}?${params.toString()}`;
   }
 
   getBadgeUrl(badgeCode: string): string {
     return `https://images.habbo.com/c_images/album1584/${badgeCode}.gif`;
+  }
+
+  async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/habbo-ensure-tracked`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      console.log(`[HabboProxyService] Ensure tracked response for ${payload.habbo_name}:`, data);
+      return data;
+    } catch (error) {
+      console.error(`Error ensuring tracking for ${payload.habbo_name}:`, error);
+      return null;
+    }
   }
 }
 

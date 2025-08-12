@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const { habbo_name, hotel } = await req.json()
     console.log(`🔄 [habbo-sync-user] Syncing user: ${habbo_name} (${hotel})`)
 
-    // Use the correct domain format - com.br becomes www.habbo.com.br
+    // Use the correct domain format
     const domain = hotel === 'br' ? 'www.habbo.com.br' : `www.habbo.${hotel}`
     const apiUrl = `https://${domain}/api/public/users?name=${encodeURIComponent(habbo_name)}`
     
@@ -43,20 +43,22 @@ Deno.serve(async (req) => {
       throw new Error(`User not found: ${habbo_name}`)
     }
 
-    // Get existing user data to detect changes
-    const { data: existingUser } = await supabase
-      .from('habbo_tracked_users')
+    // Get existing user data from snapshots to detect changes
+    const { data: existingSnapshot } = await supabase
+      .from('habbo_user_snapshots')
       .select('*')
       .eq('habbo_name', habbo_name)
       .eq('hotel', hotel)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single()
 
     // Calculate what's new/changed
     const details: any = {}
     let hasChanges = false
 
-    if (existingUser?.raw_data) {
-      const oldData = existingUser.raw_data
+    if (existingSnapshot?.raw_data) {
+      const oldData = existingSnapshot.raw_data
       
       // Detect new friends
       const oldFriends = oldData.friends || []
@@ -95,35 +97,36 @@ Deno.serve(async (req) => {
         details.new_motto = userData.motto
         hasChanges = true
       }
-
-      // TODO: Detect new photos (requires additional API call)
-      // For now, we'll handle photos separately in the habbo-feed function
     } else {
       // First time tracking this user
       hasChanges = true
       details.first_time_tracking = true
     }
 
-    // Update or insert user data
-    const { error: upsertError } = await supabase
-      .from('habbo_tracked_users')
-      .upsert({
+    // Create new snapshot
+    const { error: snapshotError } = await supabase
+      .from('habbo_user_snapshots')
+      .insert({
         habbo_name,
         habbo_id: userData.uniqueId,
         hotel,
-        last_seen_at: new Date().toISOString(),
+        figure_string: userData.figureString,
+        motto: userData.motto,
         is_online: userData.online || false,
-        raw_data: userData,
-        last_synced_at: new Date().toISOString()
-      }, {
-        onConflict: 'habbo_name,hotel'
+        member_since: userData.memberSince ? new Date(userData.memberSince).toISOString() : null,
+        last_web_visit: userData.lastWebVisit ? new Date(userData.lastWebVisit).toISOString() : null,
+        friends_count: userData.friends?.length || 0,
+        badges_count: userData.selectedBadges?.length || 0,
+        photos_count: 0, // Will be updated by photo sync
+        groups_count: userData.groups?.length || 0,
+        raw_data: userData
       })
 
-    if (upsertError) {
-      throw upsertError
+    if (snapshotError) {
+      console.warn(`⚠️ [habbo-sync-user] Failed to create snapshot: ${snapshotError.message}`)
     }
 
-    // Create activity record if there are changes
+    // Create activity record if there are meaningful changes
     if (hasChanges && !details.first_time_tracking) {
       const { error: activityError } = await supabase
         .from('habbo_activities')
@@ -134,7 +137,6 @@ Deno.serve(async (req) => {
           activity_type: 'profile_update',
           description: generateActivityDescription(details),
           details,
-          snapshot_id: `sync-${Date.now()}`,
           created_at: new Date().toISOString()
         })
 

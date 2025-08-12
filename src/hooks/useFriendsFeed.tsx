@@ -27,7 +27,14 @@ export const useFriendsFeed = () => {
     isLoading: friendsLoading 
   } = useQuery({
     queryKey: ['habbo-friends', habboAccount?.habbo_name],
-    queryFn: () => habboProxyService.getUserFriends(habboAccount!.habbo_name, hotelDomain),
+    queryFn: async () => {
+      if (!habboAccount?.habbo_name) return [];
+      
+      console.log(`[useFriendsFeed] Fetching friends for ${habboAccount.habbo_name}`);
+      const friendsData = await habboProxyService.getUserFriends(habboAccount.habbo_name, hotelDomain);
+      console.log(`[useFriendsFeed] Retrieved ${friendsData.length} friends:`, friendsData);
+      return friendsData;
+    },
     enabled: !!habboAccount?.habbo_name,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -48,12 +55,17 @@ export const useFriendsFeed = () => {
 
   // Process friends activities from hotel ticker
   const friendsActivities = useMemo(() => {
-    if (!friends.length || !hotelTicker.length) return [];
+    if (!friends.length || !hotelTicker.length) {
+      console.log(`[useFriendsFeed] No processing: friends=${friends.length}, ticker=${hotelTicker.length}`);
+      return [];
+    }
 
     console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends against ${hotelTicker.length} ticker activities (source: ${tickerResponse?.meta.source || 'unknown'})`);
     
     const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
-    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000; // 6 horas em vez de 30 minutos
+    console.log(`[useFriendsFeed] Friend names:`, Array.from(friendNameSet));
+    
+    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000; // 6 horas
 
     // Filter ticker activities for friends only
     let friendsTickerActivities = hotelTicker.filter(activity => {
@@ -61,8 +73,14 @@ export const useFriendsFeed = () => {
         new Date(activity.timestamp).getTime() : 
         new Date(activity.time).getTime();
       
-      return friendNameSet.has(activity.username.toLowerCase()) && 
-             activityTime >= sixHoursAgo;
+      const isFriend = friendNameSet.has(activity.username.toLowerCase());
+      const isRecent = activityTime >= sixHoursAgo;
+      
+      if (isFriend) {
+        console.log(`[useFriendsFeed] Found friend activity: ${activity.username} - ${activity.activity || activity.description}`);
+      }
+      
+      return isFriend && isRecent;
     });
 
     console.log(`📊 [useFriendsFeed] Found ${friendsTickerActivities.length} friend activities in last 6 hours`);

@@ -20,6 +20,8 @@ export const MyAccountColumn: React.FC = () => {
     isLoading 
   } = useMyConsoleProfile();
 
+  console.log('[MyAccountColumn] Photos data:', photos);
+
   if (!isLoggedIn || !habboAccount) {
     return (
       <div className="space-y-4">
@@ -139,20 +141,27 @@ export const MyAccountColumn: React.FC = () => {
             </div>
 
             {/* Photos Section - Instagram Style Grid */}
-            {photos.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Camera className="w-4 h-4 text-white/80" />
-                  <h4 className="text-sm font-medium text-white/80">
-                    Minhas Fotos ({photos.length})
-                  </h4>
-                </div>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Camera className="w-4 h-4 text-white/80" />
+                <h4 className="text-sm font-medium text-white/80">
+                  Minhas Fotos ({photos?.length || 0})
+                </h4>
+              </div>
+              
+              {photos && photos.length > 0 ? (
                 <InstagramPhotoGrid 
                   photos={photos} 
                   habboName={habboAccount.habbo_name}
                 />
-              </div>
-            )}
+              ) : (
+                <div className="text-center text-white/60 py-4">
+                  <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma foto encontrada</p>
+                  <p className="text-xs mt-1">Vá para o Habbo e tire algumas fotos!</p>
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
