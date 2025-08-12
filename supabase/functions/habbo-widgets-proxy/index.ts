@@ -1,6 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,7 +36,7 @@ const REALISTIC_USER_AGENTS = [
 
 const ACCEPT_LANGUAGES = ['pt-BR,pt;q=0.9,en;q=0.8', 'en-US,en;q=0.9', 'pt-PT,pt;q=0.9,en;q=0.8'];
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -58,9 +57,47 @@ serve(async (req) => {
     }
     
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      'https://wueccgeizznjmjgmuscy.supabase.co',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // Check if we have recent activities in our database first
+    const { data: dbActivities, error: dbError } = await supabase
+      .from('habbo_activities')
+      .select(`
+        *,
+        habbo_user_snapshots!inner(*)
+      `)
+      .eq('hotel', hotel)
+      .order('created_at', { ascending: false })
+      .limit(15);
+
+    if (!dbError && dbActivities && dbActivities.length > 0) {
+      console.log(`📊 [HabboWidgetsProxy] Found ${dbActivities.length} activities in database for ${hotel}`);
+      
+      const tickerActivities: TickerActivity[] = dbActivities.map(activity => ({
+        username: activity.habbo_name,
+        activity: activity.description,
+        description: activity.description,
+        action: activity.activity_type,
+        time: activity.created_at,
+        timestamp: activity.created_at,
+        hotel: activity.hotel
+      }));
+
+      return new Response(
+        JSON.stringify({
+          activities: tickerActivities,
+          meta: {
+            source: 'cache',
+            timestamp: new Date().toISOString(),
+            hotel: hotel,
+            count: tickerActivities.length
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Try to fetch from server cache first (2 minutes for live data)
     const cacheKey = `ticker_${hotel}`;

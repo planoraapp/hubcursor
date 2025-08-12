@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.habbo-sync-batch]
 verify_jwt = false
+
+[functions.habbo-feed]
+verify_jwt = false
+
+[functions.habbo-widgets-proxy]
+verify_jwt = false

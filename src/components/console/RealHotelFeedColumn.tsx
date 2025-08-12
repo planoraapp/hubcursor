@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, MessageSquare } from 'lucide-react';
+import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, MessageSquare, Database } from 'lucide-react';
 import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { habboFeedService } from '@/services/habboFeedService';
 import { useUserFigures } from '@/hooks/useUserFigures';
@@ -52,6 +52,16 @@ export const RealHotelFeedColumn: React.FC = () => {
     return habboFeedService.formatTimeAgo(metadata.timestamp);
   };
 
+  const handleBatchSync = async () => {
+    try {
+      await habboFeedService.triggerBatchSync(hotel);
+      // Refetch after sync
+      setTimeout(() => refetch(), 2000);
+    } catch (error) {
+      console.error('Failed to trigger batch sync:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card className="bg-[#5A6573] text-white border-0 shadow-none">
@@ -76,9 +86,21 @@ export const RealHotelFeedColumn: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={handleBatchSync}
+                disabled={isLoading}
+                className="text-white hover:bg-white/10 p-1 h-auto mr-1"
+                title="Sincronizar dados"
+              >
+                <Database className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => refetch()}
                 disabled={isLoading}
                 className="text-white hover:bg-white/10 p-1 h-auto"
+                title="Atualizar feed"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>

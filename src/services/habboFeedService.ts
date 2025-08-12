@@ -96,7 +96,27 @@ class HabboFeedService {
   getAvatarUrl(figureString: string, size: string = 'b', headOnly: boolean = true): string {
     const sizeParam = size;
     const headOnlyParam = headOnly ? '&headonly=1' : '';
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?hb=img&user=${figureString}&size=${sizeParam}${headOnlyParam}`;
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?hb=img&figure=${figureString}&size=${sizeParam}${headOnlyParam}`;
+  }
+
+  async triggerBatchSync(hotel: string = 'com.br'): Promise<void> {
+    console.log(`🔄 [HabboFeedService] Triggering batch sync for ${hotel}`);
+    
+    const response = await fetch(`${this.baseUrl}/habbo-sync-batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        hotel: hotel
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to sync batch: ${response.status}`);
+    }
+
+    console.log(`✅ [HabboFeedService] Batch sync triggered for ${hotel}`);
   }
 
   formatTimeAgo(timestamp: string): string {
