@@ -95,7 +95,7 @@ const UserCard: React.FC<UserCardProps> = ({ user }) => {
 
 export const FriendsFeedColumn: React.FC = () => {
   const { isLoggedIn } = useAuth();
-  const { friendsActivity, isLoading, error } = useFriendsFeed();
+  const { friendsActivities, isLoading } = useFriendsFeed();
   const [foundUser, setFoundUser] = useState<HabboUser | null>(null);
 
   const handleUserFound = (user: HabboUser) => {
@@ -145,23 +145,17 @@ export const FriendsFeedColumn: React.FC = () => {
                   </div>
                 ))}
               </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 text-red-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-red-600 mb-2">Erro ao carregar</h3>
-                <p className="text-red-500 text-sm">Não foi possível carregar a atividade dos amigos</p>
-              </div>
             ) : (
               <div className="scrollbar-stealth overflow-y-auto h-full">
                 <h4 className="text-sm font-semibold mb-3 text-blue-700">Atividade dos Amigos:</h4>
-                {friendsActivity.length === 0 ? (
+                {friendsActivities.length === 0 ? (
                   <div className="text-center py-8">
                     <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-500 text-sm">Nenhuma atividade recente</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {friendsActivity.map((activity, index) => (
+                    {friendsActivities.map((activity, index) => (
                       <div key={index} className="flex items-center gap-3 p-2 bg-white rounded border border-gray-100">
                         <Avatar className="w-8 h-8">
                           <AvatarImage 
