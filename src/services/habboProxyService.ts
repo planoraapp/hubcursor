@@ -234,7 +234,7 @@ class HabboProxyService {
               timestamp: activity.timestamp || activity.time || new Date().toISOString()
             })),
             meta: {
-              source: data.meta.source || 'unknown',
+              source: data.meta.source || 'mock',
               timestamp: data.meta.timestamp || new Date().toISOString(),
               hotel: data.meta.hotel || hotel,
               count: data.meta.count || data.activities.length
@@ -251,7 +251,7 @@ class HabboProxyService {
               timestamp: activity.timestamp || activity.time || new Date().toISOString()
             })),
             meta: {
-              source: 'unknown' as const,
+              source: 'mock' as const,
               timestamp: new Date().toISOString(),
               hotel: hotel,
               count: data.length
