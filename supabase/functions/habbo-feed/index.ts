@@ -63,10 +63,10 @@ Deno.serve(async (req) => {
 
     console.log(`📊 [habbo-feed] Found ${activities?.length || 0} raw activities`);
 
-    // Aggregate activities by user (last 2 hours)
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    // Aggregate activities by user (last 24 hours)
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const recentActivities = activities?.filter(activity => 
-      new Date(activity.created_at) >= twoHoursAgo
+      new Date(activity.created_at) >= twentyFourHoursAgo
     ) || [];
 
     const userGroups: { [username: string]: any[] } = {};
