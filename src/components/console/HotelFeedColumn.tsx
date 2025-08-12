@@ -8,21 +8,19 @@ import { useUserFigures } from '@/hooks/useUserFigures';
 import { habboProxyService } from '@/services/habboProxyService';
 
 export const HotelFeedColumn: React.FC = () => {
-  const { aggregatedActivities, isLoading, error } = useHotelTicker('com.br');
+  const { aggregatedActivities, isLoading, error, hotel } = useHotelTicker();
   
-  // Get unique usernames for figure fetching
   const usernames = aggregatedActivities.map(group => group.username);
   const { figureMap } = useUserFigures(usernames);
 
-  // Add telemetry logging
   useEffect(() => {
     if (aggregatedActivities.length > 0) {
-      console.log(`📊 [HotelFeedColumn] Displaying ${aggregatedActivities.length} user groups with activities`);
+      console.log(`📊 [HotelFeedColumn] Displaying ${aggregatedActivities.length} user groups for hotel ${hotel}`);
       console.log(`👥 [HotelFeedColumn] Total unique users: ${usernames.length}`);
       const totalActivities = aggregatedActivities.reduce((sum, group) => sum + group.activityCount, 0);
       console.log(`⚡ [HotelFeedColumn] Total activities: ${totalActivities}`);
     }
-  }, [aggregatedActivities, usernames.length]);
+  }, [aggregatedActivities, usernames.length, hotel]);
 
   const getActivityIcon = (description: string) => {
     const desc = description.toLowerCase();
@@ -51,7 +49,7 @@ export const HotelFeedColumn: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hotel className="w-5 h-5" />
-            Feed do Hotel (.com.br)
+            Feed do Hotel ({hotel})
             {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
             {aggregatedActivities.length > 0 && (
               <Badge variant="secondary" className="ml-auto bg-white/20 text-white">
@@ -71,7 +69,7 @@ export const HotelFeedColumn: React.FC = () => {
               <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Erro ao carregar feed</p>
-                <p className="text-xs mt-1">Tentando reconectar...</p>
+                <p className="text-xs mt-1">Usando dados em cache...</p>
               </div>
             ) : aggregatedActivities.length > 0 ? (
               aggregatedActivities.map((userGroup, index) => (

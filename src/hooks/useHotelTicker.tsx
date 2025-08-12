@@ -2,6 +2,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { habboProxyService, TickerActivity } from '@/services/habboProxyService';
+import { useUnifiedAuth } from './useUnifiedAuth';
 
 interface AggregatedActivity {
   username: string;
@@ -10,7 +11,18 @@ interface AggregatedActivity {
   activityCount: number;
 }
 
-export const useHotelTicker = (hotel: string = 'com.br') => {
+export const useHotelTicker = () => {
+  const { habboAccount } = useUnifiedAuth();
+  
+  // Detectar hotel do usuário autenticado
+  const hotel = React.useMemo(() => {
+    const userHotel = (habboAccount as any)?.hotel as string | undefined;
+    if (!userHotel) return 'com.br';
+    if (userHotel === 'br') return 'com.br';
+    if (userHotel === 'com' || userHotel.includes('.')) return userHotel;
+    return 'com.br';
+  }, [habboAccount?.hotel]);
+
   const { 
     data: rawActivities = [], 
     isLoading, 
@@ -18,7 +30,7 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
   } = useQuery({
     queryKey: ['hotel-ticker', hotel],
     queryFn: () => {
-      console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (works without login)`);
+      console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (detected from user: ${habboAccount?.habbo_name})`);
       return habboProxyService.getHotelTicker(hotel);
     },
     refetchInterval: 30 * 1000, // 30 seconds
@@ -29,7 +41,7 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
 
   // Aggregate activities by user with improved time window
   const aggregatedActivities: AggregatedActivity[] = React.useMemo(() => {
-    console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation`);
+    console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation (hotel: ${hotel})`);
     
     const groupByUser = (items: TickerActivity[]) => {
       const userGroups: { [username: string]: TickerActivity[] } = {};
@@ -53,7 +65,6 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
       });
     };
 
-    // Janela principal: últimas 2 horas (mais tempo que antes)
     const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
     const recent = rawActivities.filter(a => {
       const t = a.timestamp ? new Date(a.timestamp).getTime() : new Date(a.time).getTime();
@@ -62,10 +73,9 @@ export const useHotelTicker = (hotel: string = 'com.br') => {
 
     let result = groupByUser(recent);
     
-    // Fallback: se muito poucas atividades recentes, usar snapshot completo
     if (result.length < 5 && rawActivities.length > 0) {
       console.warn('⚠️ [useHotelTicker] Few recent activities, using complete snapshot');
-      result = groupByUser(rawActivities).slice(0, 20); // Limitar a 20 para performance
+      result = groupByUser(rawActivities).slice(0, 20);
     }
 
     console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel})`);
