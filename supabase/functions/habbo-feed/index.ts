@@ -4,257 +4,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-}
-
-interface FeedActivity {
-  username: string;
-  lastUpdate: string;
-  counts: {
-    groups: number;
-    friends: number;
-    badges: number;
-    avatarChanged: boolean;
-    mottoChanged: boolean;
-  };
-  groups: Array<{ name: string; badgeCode: string }>;
-  friends: Array<{ name: string; figureString?: string }>;
-  badges: Array<{ code: string; name?: string }>;
-  photos: Array<{ url: string; caption?: string; id?: string }>;
-  description: string;
-  profile: {
-    figureString: string;
-    motto: string;
-    isOnline: boolean;
-    memberSince?: string;
-    lastWebVisit: string;
-    groupsCount: number;
-    friendsCount: number;
-    badgesCount: number;
-    photosCount: number;
-    uniqueId?: string;
-  };
-}
-
-async function getDatabaseFeed(
-  supabase: any,
-  hotel: string,
-  limit: number,
-  onlineWithinSeconds: number
-): Promise<FeedActivity[]> {
-  console.log(`📊 [feed] Getting database feed for ${hotel}, online within ${onlineWithinSeconds}s`);
-  
-  // Get recent activities from the database
-  const cutoffTime = new Date(Date.now() - (onlineWithinSeconds * 1000)).toISOString();
-  
-  const { data: activities, error } = await supabase
-    .from('habbo_activities')
-    .select(`
-      *,
-      habbo_user_snapshots!inner(*)
-    `)
-    .eq('hotel', hotel === 'com.br' ? 'br' : hotel)
-    .gte('created_at', cutoffTime)
-    .order('created_at', { ascending: false })
-    .limit(limit * 2); // Get more to filter duplicates
-
-  if (error) {
-    console.error('❌ [feed] Database query error:', error);
-    return [];
-  }
-
-  if (!activities || activities.length === 0) {
-    console.log(`⚠️ [feed] No activities found in database for ${hotel}`);
-    return [];
-  }
-
-  console.log(`📊 [feed] Found ${activities.length} activities in database`);
-
-  // Group activities by user and aggregate
-  const userActivities = new Map<string, any>();
-
-  for (const activity of activities) {
-    const snapshot = activity.habbo_user_snapshots;
-    const username = activity.habbo_name;
-    
-    if (!userActivities.has(username)) {
-      userActivities.set(username, {
-        username,
-        lastUpdate: activity.created_at,
-        activities: [],
-        latestSnapshot: snapshot,
-        totalCounts: {
-          friends: 0,
-          badges: 0,
-          photos: 0,
-          avatarChanged: false,
-          mottoChanged: false
-        },
-        newItems: {
-          friends: [],
-          badges: [],
-          photos: []
-        }
-      });
-    }
-
-    const userActivity = userActivities.get(username);
-    userActivity.activities.push(activity);
-
-    // Update latest snapshot if this activity is more recent
-    if (new Date(activity.created_at) > new Date(userActivity.lastUpdate)) {
-      userActivity.lastUpdate = activity.created_at;
-      userActivity.latestSnapshot = snapshot;
-    }
-
-    // Aggregate activity counts and new items
-    const details = activity.details || {};
-    
-    switch (activity.activity_type) {
-      case 'new_friend':
-        userActivity.totalCounts.friends += details.new_friends?.length || 0;
-        userActivity.newItems.friends.push(...(details.new_friends || []));
-        break;
-      case 'new_badge':
-        userActivity.totalCounts.badges += details.new_badges?.length || 0;
-        userActivity.newItems.badges.push(...(details.new_badges || []));
-        break;
-      case 'new_photo':
-        userActivity.totalCounts.photos += details.new_photos?.length || 0;
-        userActivity.newItems.photos.push(...(details.new_photos || []));
-        break;
-      case 'avatar_update':
-        userActivity.totalCounts.avatarChanged = true;
-        break;
-      case 'motto_change':
-        userActivity.totalCounts.mottoChanged = true;
-        break;
-      case 'user_tracked':
-        // For initial tracking, show some existing data
-        if (details.initial_friends) {
-          userActivity.newItems.friends.push(...details.initial_friends);
-          userActivity.totalCounts.friends = details.initial_friends.length;
-        }
-        if (details.initial_badges) {
-          userActivity.newItems.badges.push(...details.initial_badges);
-          userActivity.totalCounts.badges = details.initial_badges.length;
-        }
-        if (details.initial_photos) {
-          userActivity.newItems.photos.push(...details.initial_photos);
-          userActivity.totalCounts.photos = details.initial_photos.length;
-        }
-        break;
-    }
-  }
-
-  // Convert to feed format
-  const feedActivities: FeedActivity[] = [];
-  
-  for (const [username, userActivity] of userActivities.entries()) {
-    const snapshot = userActivity.latestSnapshot;
-    const rawData = snapshot.raw_data || {};
-    
-    // Build description based on what changed
-    let description = 'atividade recente';
-    const activityParts = [];
-    
-    if (userActivity.totalCounts.friends > 0) {
-      activityParts.push(`${userActivity.totalCounts.friends} novo${userActivity.totalCounts.friends > 1 ? 's' : ''} amigo${userActivity.totalCounts.friends > 1 ? 's' : ''}`);
-    }
-    if (userActivity.totalCounts.badges > 0) {
-      activityParts.push(`${userActivity.totalCounts.badges} novo${userActivity.totalCounts.badges > 1 ? 's' : ''} emblema${userActivity.totalCounts.badges > 1 ? 's' : ''}`);
-    }
-    if (userActivity.totalCounts.photos > 0) {
-      activityParts.push(`${userActivity.totalCounts.photos} nova${userActivity.totalCounts.photos > 1 ? 's' : ''} foto${userActivity.totalCounts.photos > 1 ? 's' : ''}`);
-    }
-    if (userActivity.totalCounts.avatarChanged) {
-      activityParts.push('mudou o visual');
-    }
-    if (userActivity.totalCounts.mottoChanged) {
-      activityParts.push('mudou o lema');
-    }
-    
-    if (activityParts.length > 0) {
-      description = `adicionou ${activityParts.join(', ')}.`;
-    }
-
-    // Process friends data
-    const friendsData = userActivity.newItems.friends.slice(0, 5).map((friend: any) => ({
-      name: friend.name,
-      figureString: friend.figureString
-    }));
-
-    // Process badges data
-    const badgesData = userActivity.newItems.badges.slice(0, 8).map((badge: any) => ({
-      code: badge.name || badge.badgeIndex || badge.code,
-      name: badge.description || badge.name
-    }));
-
-    // Process photos data with proper URLs
-    const photosData = userActivity.newItems.photos.slice(0, 6).map((photo: any) => ({
-      url: photo.url || `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/photo/${photo.id}.png`,
-      caption: photo.caption || '',
-      id: photo.id
-    }));
-
-    feedActivities.push({
-      username,
-      lastUpdate: userActivity.lastUpdate,
-      counts: {
-        groups: 0,
-        friends: userActivity.totalCounts.friends,
-        badges: userActivity.totalCounts.badges,
-        avatarChanged: userActivity.totalCounts.avatarChanged,
-        mottoChanged: userActivity.totalCounts.mottoChanged
-      },
-      groups: [],
-      friends: friendsData,
-      badges: badgesData,
-      photos: photosData,
-      description,
-      profile: {
-        figureString: snapshot.figure_string || '',
-        motto: snapshot.motto || '',
-        isOnline: snapshot.is_online || false,
-        memberSince: snapshot.member_since,
-        lastWebVisit: snapshot.last_web_visit || userActivity.lastUpdate,
-        groupsCount: 0,
-        friendsCount: snapshot.friends_count || 0,
-        badgesCount: snapshot.badges_count || 0,
-        photosCount: snapshot.photos_count || 0,
-        uniqueId: snapshot.habbo_id
-      }
-    });
-  }
-
-  // Sort by most recent activity
-  feedActivities.sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
-  
-  return feedActivities.slice(0, limit);
-}
-
-async function getOfficialTicker(hotel: string, limit: number): Promise<FeedActivity[]> {
-  console.log(`🎯 [feed] Trying official ticker for ${hotel}`);
-  
-  try {
-    const response = await fetch(`https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-official-ticker?hotel=${hotel}&limit=${limit}`, {
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-      }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success && data.activities && data.activities.length > 0) {
-        console.log(`✅ [feed] Official ticker returned ${data.activities.length} activities`);
-        return data.activities;
-      }
-    }
-  } catch (error) {
-    console.warn(`⚠️ [feed] Official ticker failed:`, error);
-  }
-  
-  return [];
 }
 
 Deno.serve(async (req) => {
@@ -264,97 +13,221 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(
-      'https://wueccgeizznjmjgmuscy.supabase.co',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    const url = new URL(req.url);
-    const hotel = url.searchParams.get('hotel') || 'com.br';
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const mode = url.searchParams.get('mode') || 'hybrid';
-    const onlineWithinSeconds = parseInt(url.searchParams.get('onlineWithinSeconds') || '3600');
-    const offsetHours = parseInt(url.searchParams.get('offsetHours') || '0');
+    const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid' } = await req.json()
+    console.log(`🎯 [feed] Feed request: ${mode} mode for ${hotel}, limit ${limit}, online within ${onlineWithinSeconds}s`)
 
-    console.log(`🎯 [feed] Feed request: ${mode} mode for ${hotel}, limit ${limit}, online within ${onlineWithinSeconds}s`);
+    const hotelFilter = hotel === 'com.br' ? 'br' : hotel
+    const cutoffTime = new Date(Date.now() - (onlineWithinSeconds * 1000)).toISOString()
 
-    let activities: FeedActivity[] = [];
-    let source = 'database';
+    console.log(`📊 [feed] Getting database feed for ${hotel}, online within ${onlineWithinSeconds}s`)
 
-    if (mode === 'official') {
-      // Try official ticker first
-      activities = await getOfficialTicker(hotel, limit);
-      source = 'official';
+    // Get activities from database
+    const { data: activities, error } = await supabase
+      .from('habbo_activities')
+      .select(`
+        *,
+        habbo_tracked_users!inner(*)
+      `)
+      .eq('hotel', hotelFilter)
+      .gte('created_at', cutoffTime)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) {
+      throw error
+    }
+
+    console.log(`📊 [feed] Found ${activities?.length || 0} activities in database`)
+
+    if (!activities || activities.length === 0) {
+      console.log(`⚠️ [feed] No activities found in database for ${hotel}`)
       
-      // Fallback to database if official fails
-      if (activities.length === 0) {
-        console.log(`⚠️ [feed] Official ticker empty, falling back to database`);
-        activities = await getDatabaseFeed(supabase, hotel, limit, onlineWithinSeconds);
-        source = 'database';
+      if (mode === 'hybrid' || mode === 'database') {
+        console.log(`📊 [feed] Database has only 0 activities, trying official ticker`)
+        console.log(`🎯 [feed] Trying official ticker for ${hotel}`)
+        
+        // Try to get from official ticker as fallback
+        const tickerResponse = await supabase.functions.invoke('habbo-widgets-proxy', {
+          body: { hotel }
+        })
+
+        if (tickerResponse.data?.activities?.length > 0) {
+          return new Response(
+            JSON.stringify({
+              activities: tickerResponse.data.activities.slice(0, limit).map((activity: any) => ({
+                username: activity.username || 'Unknown',
+                description: activity.activity || activity.description || 'fez uma atividade',
+                lastUpdate: activity.timestamp || activity.time || new Date().toISOString(),
+                counts: {},
+                profile: null,
+                friends: [],
+                badges: [],
+                photos: []
+              })),
+              meta: {
+                source: 'official-fallback',
+                timestamp: new Date().toISOString(),
+                count: tickerResponse.data.activities.length,
+                onlineCount: 0
+              }
+            }),
+            { 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200 
+            }
+          )
+        }
       }
-    } else if (mode === 'database') {
-      activities = await getDatabaseFeed(supabase, hotel, limit, onlineWithinSeconds);
-      source = 'database';
-    } else {
-      // Hybrid mode: prefer database, fallback to official
-      activities = await getDatabaseFeed(supabase, hotel, limit, onlineWithinSeconds);
-      source = 'database';
+
+      console.log(`✅ [feed] Returning 0 activities (database), 0 online`)
+      return new Response(
+        JSON.stringify({
+          activities: [],
+          meta: {
+            source: 'database',
+            timestamp: new Date().toISOString(),
+            count: 0,
+            onlineCount: 0
+          }
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
+    }
+
+    // Get online count
+    const { count: onlineCount } = await supabase
+      .from('habbo_tracked_users')
+      .select('*', { count: 'exact', head: true })
+      .eq('hotel', hotelFilter)
+      .eq('is_online', true)
+      .gte('last_seen_at', cutoffTime)
+
+    // Aggregate activities by user
+    const userActivities = new Map()
+
+    for (const activity of activities) {
+      const username = activity.habbo_name
       
-      if (activities.length < 5) {
-        console.log(`📊 [feed] Database has only ${activities.length} activities, trying official ticker`);
-        const officialActivities = await getOfficialTicker(hotel, limit);
-        if (officialActivities.length > 0) {
-          activities = [...activities, ...officialActivities].slice(0, limit);
-          source = 'hybrid';
+      if (!userActivities.has(username)) {
+        userActivities.set(username, {
+          username,
+          description: '',
+          lastUpdate: activity.created_at,
+          counts: {
+            friendsAdded: 0,
+            badgesEarned: 0,
+            photosPosted: 0,
+            avatarChanged: 0,
+            mottoChanged: 0
+          },
+          profile: activity.habbo_tracked_users?.raw_data || null,
+          friends: [],
+          badges: [],
+          photos: [],
+          activities: []
+        })
+      }
+
+      const userActivity = userActivities.get(username)
+      userActivity.activities.push(activity)
+      
+      // Update lastUpdate to the most recent
+      if (activity.created_at > userActivity.lastUpdate) {
+        userActivity.lastUpdate = activity.created_at
+      }
+
+      // Process activity details
+      if (activity.details) {
+        if (activity.details.new_friends?.length > 0) {
+          userActivity.counts.friendsAdded += activity.details.new_friends.length
+          userActivity.friends.push(...activity.details.new_friends)
+        }
+        
+        if (activity.details.new_badges?.length > 0) {
+          userActivity.counts.badgesEarned += activity.details.new_badges.length
+          userActivity.badges.push(...activity.details.new_badges)
+        }
+        
+        if (activity.details.new_photos?.length > 0) {
+          userActivity.counts.photosPosted += activity.details.new_photos.length
+          userActivity.photos.push(...activity.details.new_photos)
+        }
+        
+        if (activity.details.avatar_changed) {
+          userActivity.counts.avatarChanged += 1
+        }
+        
+        if (activity.details.motto_changed) {
+          userActivity.counts.mottoChanged += 1
         }
       }
     }
 
-    const onlineCount = activities.filter(a => a.profile?.isOnline).length;
+    // Convert to array and generate descriptions
+    const aggregatedActivities = Array.from(userActivities.values()).map(user => {
+      const actions = []
+      
+      if (user.counts.friendsAdded > 0) {
+        actions.push(`adicionou ${user.counts.friendsAdded} novo(s) amigo(s)`)
+      }
+      
+      if (user.counts.badgesEarned > 0) {
+        actions.push(`conquistou ${user.counts.badgesEarned} novo(s) emblema(s)`)
+      }
+      
+      if (user.counts.photosPosted > 0) {
+        actions.push(`postou ${user.counts.photosPosted} nova(s) foto(s)`)
+      }
+      
+      if (user.counts.avatarChanged > 0) {
+        actions.push('mudou o visual')
+      }
+      
+      if (user.counts.mottoChanged > 0) {
+        actions.push('atualizou a missão')
+      }
+      
+      user.description = actions.length > 0 ? actions.join(', ') : 'esteve ativo no hotel'
+      
+      return user
+    })
 
-    console.log(`✅ [feed] Returning ${activities.length} activities (${source}), ${onlineCount} online`);
+    // Sort by last update
+    aggregatedActivities.sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
+
+    console.log(`✅ [feed] Returning ${aggregatedActivities.length} activities (database), ${onlineCount || 0} online`)
 
     return new Response(
       JSON.stringify({
-        success: true,
-        hotel,
-        activities,
+        activities: aggregatedActivities,
         meta: {
-          source,
+          source: 'database',
           timestamp: new Date().toISOString(),
-          count: activities.length,
-          onlineCount,
-          filter: {
-            mode,
-            onlineWithinSeconds,
-            offsetHours
-          }
+          count: aggregatedActivities.length,
+          onlineCount: onlineCount || 0
         }
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 200 
       }
-    );
+    )
 
   } catch (error) {
-    console.error('❌ [feed] Error:', error);
+    console.error(`❌ [feed] Error: ${error.message}`)
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-        hotel: new URL(req.url).searchParams.get('hotel') || 'com.br',
-        activities: [],
-        meta: {
-          source: 'error',
-          timestamp: new Date().toISOString(),
-          count: 0,
-          onlineCount: 0
-        }
-      }),
-      {
+      JSON.stringify({ error: error.message }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500 
       }
-    );
+    )
   }
-});
+})

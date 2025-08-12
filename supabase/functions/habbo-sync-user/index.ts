@@ -6,36 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface HabboUser {
-  uniqueId: string;
-  name: string;
-  figureString: string;
-  motto: string;
-  memberSince: string;
-  lastWebOnline?: string;
-  online?: boolean;
-}
-
-interface HabboBadge {
-  name: string;
-  description: string;
-  badgeIndex: number;
-}
-
-interface HabboPhoto {
-  id: string;
-  caption: string;
-  timestamp: string;
-  url?: string;
-}
-
-interface HabboFriend {
-  name: string;
-  figureString: string;
-  motto: string;
-  online: boolean;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -43,296 +13,180 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(
-      'https://wueccgeizznjmjgmuscy.supabase.co',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    const { habbo_name, hotel = 'com.br' } = await req.json();
+    const { habbo_name, hotel } = await req.json()
+    console.log(`🔄 [habbo-sync-user] Syncing user: ${habbo_name} (${hotel})`)
 
-    if (!habbo_name) {
-      throw new Error('habbo_name is required');
-    }
-
-    console.log(`🔄 [habbo-sync-user] Syncing user: ${habbo_name} (${hotel})`);
-
-    // Fetch user data from official Habbo API
-    const baseUrl = hotel === 'com.br' ? 'https://www.habbo.com.br' : `https://www.habbo.${hotel}`;
+    // Use the correct domain format - com.br becomes www.habbo.com.br
+    const domain = hotel === 'br' ? 'www.habbo.com.br' : `www.habbo.${hotel}`
+    const apiUrl = `https://${domain}/api/public/users?name=${encodeURIComponent(habbo_name)}`
     
-    // Get user profile
-    const profileResponse = await fetch(`${baseUrl}/api/public/users?name=${encodeURIComponent(habbo_name)}`);
-    if (!profileResponse.ok) {
-      throw new Error(`Failed to fetch user profile: ${profileResponse.status}`);
+    console.log(`🌐 [habbo-sync-user] Fetching from: ${apiUrl}`)
+
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'HabboHub/1.0'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
+
+    const userData = await response.json()
     
-    const userData: HabboUser = await profileResponse.json();
-    console.log(`✅ [habbo-sync-user] User profile fetched for ${userData.name}`);
-
-    // Get user badges
-    let badges: HabboBadge[] = [];
-    let selectedBadges: HabboBadge[] = [];
-    try {
-      const badgesResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/badges`);
-      if (badgesResponse.ok) {
-        badges = await badgesResponse.json();
-        
-        // Get profile to see selected badges
-        const profileDetailResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/profile`);
-        if (profileDetailResponse.ok) {
-          const profileDetail = await profileDetailResponse.json();
-          selectedBadges = profileDetail.selectedBadges || [];
-        }
-      }
-    } catch (error) {
-      console.warn(`⚠️ [habbo-sync-user] Failed to fetch badges for ${habbo_name}:`, error);
+    if (!userData || !userData.uniqueId) {
+      throw new Error(`User not found: ${habbo_name}`)
     }
 
-    // Get user photos
-    let photos: HabboPhoto[] = [];
-    try {
-      const photosResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/photos`);
-      if (photosResponse.ok) {
-        const photosData = await photosResponse.json();
-        photos = photosData.map((photo: any) => ({
-          id: photo.id,
-          caption: photo.caption || '',
-          timestamp: photo.timestamp || new Date().toISOString(),
-          url: photo.url || `https://www.habbo.${hotel}/habbo-imaging/photo/${photo.id}.png`
-        }));
-      }
-    } catch (error) {
-      console.warn(`⚠️ [habbo-sync-user] Failed to fetch photos for ${habbo_name}:`, error);
-    }
-
-    // Get user friends
-    let friends: HabboFriend[] = [];
-    try {
-      const friendsResponse = await fetch(`${baseUrl}/api/public/users/${userData.uniqueId}/friends`);
-      if (friendsResponse.ok) {
-        friends = await friendsResponse.json();
-      }
-    } catch (error) {
-      console.warn(`⚠️ [habbo-sync-user] Failed to fetch friends for ${habbo_name}:`, error);
-    }
-
-    // Get previous snapshot for comparison
-    const { data: previousSnapshot } = await supabase
-      .from('habbo_user_snapshots')
+    // Get existing user data to detect changes
+    const { data: existingUser } = await supabase
+      .from('habbo_tracked_users')
       .select('*')
-      .eq('habbo_name', userData.name)
+      .eq('habbo_name', habbo_name)
       .eq('hotel', hotel)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .single()
 
-    // Create new snapshot
-    const newSnapshot = {
-      habbo_name: userData.name,
-      habbo_id: userData.uniqueId,
-      hotel,
-      motto: userData.motto,
-      figure_string: userData.figureString,
-      is_online: userData.online || false,
-      last_web_visit: userData.lastWebOnline ? new Date(userData.lastWebOnline).toISOString() : null,
-      member_since: new Date(userData.memberSince).toISOString(),
-      badges_count: badges.length,
-      photos_count: photos.length,
-      friends_count: friends.length,
-      raw_data: {
-        user: userData,
-        badges,
-        selectedBadges,
-        photos,
-        friends
+    // Calculate what's new/changed
+    const details: any = {}
+    let hasChanges = false
+
+    if (existingUser?.raw_data) {
+      const oldData = existingUser.raw_data
+      
+      // Detect new friends
+      const oldFriends = oldData.friends || []
+      const newFriends = userData.friends || []
+      const addedFriends = newFriends.filter((friend: any) => 
+        !oldFriends.some((old: any) => old.uniqueId === friend.uniqueId)
+      )
+      if (addedFriends.length > 0) {
+        details.new_friends = addedFriends
+        hasChanges = true
       }
-    };
 
-    const { data: insertedSnapshot, error: snapshotError } = await supabase
-      .from('habbo_user_snapshots')
-      .insert(newSnapshot)
-      .select()
-      .single();
+      // Detect new badges
+      const oldBadges = oldData.selectedBadges || []
+      const newBadges = userData.selectedBadges || []
+      const addedBadges = newBadges.filter((badge: any) => 
+        !oldBadges.some((old: any) => old.code === badge.code)
+      )
+      if (addedBadges.length > 0) {
+        details.new_badges = addedBadges
+        hasChanges = true
+      }
 
-    if (snapshotError) {
-      throw new Error(`Failed to insert snapshot: ${snapshotError.message}`);
+      // Detect avatar change
+      if (oldData.figureString !== userData.figureString) {
+        details.avatar_changed = true
+        details.old_figure = oldData.figureString
+        details.new_figure = userData.figureString
+        hasChanges = true
+      }
+
+      // Detect motto change
+      if (oldData.motto !== userData.motto) {
+        details.motto_changed = true
+        details.old_motto = oldData.motto
+        details.new_motto = userData.motto
+        hasChanges = true
+      }
+
+      // TODO: Detect new photos (requires additional API call)
+      // For now, we'll handle photos separately in the habbo-feed function
+    } else {
+      // First time tracking this user
+      hasChanges = true
+      details.first_time_tracking = true
     }
 
-    console.log(`📸 [habbo-sync-user] Snapshot created for ${userData.name}`);
-
-    // Detect changes and create activities
-    const activities = [];
-
-    if (previousSnapshot) {
-      const prevRawData = previousSnapshot.raw_data || {};
-      const prevFriends = prevRawData.friends || [];
-      const prevBadges = prevRawData.badges || [];
-      const prevPhotos = prevRawData.photos || [];
-
-      // Check for motto change
-      if (previousSnapshot.motto !== userData.motto) {
-        activities.push({
-          habbo_name: userData.name,
-          habbo_id: userData.uniqueId,
-          hotel,
-          activity_type: 'motto_change',
-          description: `${userData.name} mudou o lema para "${userData.motto}"`,
-          details: {
-            old_motto: previousSnapshot.motto,
-            new_motto: userData.motto
-          },
-          snapshot_id: insertedSnapshot.id
-        });
-      }
-
-      // Check for avatar update
-      if (previousSnapshot.figure_string !== userData.figureString) {
-        activities.push({
-          habbo_name: userData.name,
-          habbo_id: userData.uniqueId,
-          hotel,
-          activity_type: 'avatar_update',
-          description: `${userData.name} atualizou o visual do avatar`,
-          details: {
-            old_figure: previousSnapshot.figure_string,
-            new_figure: userData.figureString
-          },
-          snapshot_id: insertedSnapshot.id
-        });
-      }
-
-      // Check for new badges (compare by badge name)
-      const prevBadgeNames = new Set(prevBadges.map((b: any) => b.name));
-      const newBadges = badges.filter(badge => !prevBadgeNames.has(badge.name));
-      
-      if (newBadges.length > 0) {
-        activities.push({
-          habbo_name: userData.name,
-          habbo_id: userData.uniqueId,
-          hotel,
-          activity_type: 'new_badge',
-          description: `${userData.name} conquistou ${newBadges.length} novo${newBadges.length > 1 ? 's' : ''} emblema${newBadges.length > 1 ? 's' : ''}`,
-          details: {
-            new_badges: newBadges,
-            badges_count: badges.length,
-            previous_badges_count: prevBadges.length
-          },
-          snapshot_id: insertedSnapshot.id
-        });
-      }
-
-      // Check for new photos (compare by ID)
-      const prevPhotoIds = new Set(prevPhotos.map((p: any) => p.id));
-      const newPhotos = photos.filter(photo => !prevPhotoIds.has(photo.id));
-      
-      if (newPhotos.length > 0) {
-        activities.push({
-          habbo_name: userData.name,
-          habbo_id: userData.uniqueId,
-          hotel,
-          activity_type: 'new_photo',
-          description: `${userData.name} postou ${newPhotos.length} nova${newPhotos.length > 1 ? 's' : ''} foto${newPhotos.length > 1 ? 's' : ''}`,
-          details: {
-            new_photos: newPhotos,
-            photos_count: photos.length,
-            previous_photos_count: prevPhotos.length
-          },
-          snapshot_id: insertedSnapshot.id
-        });
-      }
-
-      // Check for new friends (compare by name)
-      const prevFriendNames = new Set(prevFriends.map((f: any) => f.name));
-      const newFriends = friends.filter(friend => !prevFriendNames.has(friend.name));
-      
-      if (newFriends.length > 0) {
-        activities.push({
-          habbo_name: userData.name,
-          habbo_id: userData.uniqueId,
-          hotel,
-          activity_type: 'new_friend',
-          description: `${userData.name} fez ${newFriends.length} novo${newFriends.length > 1 ? 's' : ''} amigo${newFriends.length > 1 ? 's' : ''}`,
-          details: {
-            new_friends: newFriends,
-            friends_count: friends.length,
-            previous_friends_count: prevFriends.length
-          },
-          snapshot_id: insertedSnapshot.id
-        });
-      }
-
-      // Check for online status change
-      if (previousSnapshot.is_online !== userData.online) {
-        activities.push({
-          habbo_name: userData.name,
-          habbo_id: userData.uniqueId,
-          hotel,
-          activity_type: 'status_change',
-          description: `${userData.name} ${userData.online ? 'entrou online' : 'saiu offline'}`,
-          details: {
-            is_online: userData.online,
-            previous_status: previousSnapshot.is_online
-          },
-          snapshot_id: insertedSnapshot.id
-        });
-      }
-    } else {
-      // First snapshot, create initial activity
-      activities.push({
-        habbo_name: userData.name,
+    // Update or insert user data
+    const { error: upsertError } = await supabase
+      .from('habbo_tracked_users')
+      .upsert({
+        habbo_name,
         habbo_id: userData.uniqueId,
         hotel,
-        activity_type: 'user_tracked',
-        description: `${userData.name} agora está sendo monitorado no feed`,
-        details: {
-          badges_count: badges.length,
-          photos_count: photos.length,
-          friends_count: friends.length,
-          initial_friends: friends.slice(0, 5),
-          initial_badges: selectedBadges || badges.slice(0, 8),
-          initial_photos: photos.slice(0, 6)
-        },
-        snapshot_id: insertedSnapshot.id
-      });
+        last_seen_at: new Date().toISOString(),
+        is_online: userData.online || false,
+        raw_data: userData,
+        last_synced_at: new Date().toISOString()
+      }, {
+        onConflict: 'habbo_name,hotel'
+      })
+
+    if (upsertError) {
+      throw upsertError
     }
 
-    // Insert activities if any
-    if (activities.length > 0) {
-      const { error: activitiesError } = await supabase
+    // Create activity record if there are changes
+    if (hasChanges && !details.first_time_tracking) {
+      const { error: activityError } = await supabase
         .from('habbo_activities')
-        .insert(activities);
+        .insert({
+          habbo_name,
+          habbo_id: userData.uniqueId,
+          hotel,
+          activity_type: 'profile_update',
+          description: generateActivityDescription(details),
+          details,
+          snapshot_id: `sync-${Date.now()}`,
+          created_at: new Date().toISOString()
+        })
 
-      if (activitiesError) {
-        console.error(`❌ [habbo-sync-user] Failed to insert activities:`, activitiesError);
-      } else {
-        console.log(`🎯 [habbo-sync-user] Created ${activities.length} activities for ${userData.name}`);
+      if (activityError) {
+        console.warn(`⚠️ [habbo-sync-user] Failed to create activity: ${activityError.message}`)
       }
     }
+
+    console.log(`✅ [habbo-sync-user] Successfully synced ${habbo_name} (changes: ${hasChanges})`)
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        user: userData.name,
-        hotel,
-        snapshot_id: insertedSnapshot.id,
-        activities_created: activities.length,
-        changes_detected: activities.map(a => a.activity_type)
+      JSON.stringify({ 
+        success: true, 
+        hasChanges,
+        details: hasChanges ? details : undefined
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 200 
       }
-    );
+    )
 
   } catch (error) {
-    console.error('❌ [habbo-sync-user] Error:', error);
+    console.error(`❌ [habbo-sync-user] Error: ${error.message}`)
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
-      }),
-      {
+      JSON.stringify({ error: error.message }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 500 
       }
-    );
+    )
   }
-});
+})
+
+function generateActivityDescription(details: any): string {
+  const actions = []
+  
+  if (details.new_friends?.length > 0) {
+    actions.push(`adicionou ${details.new_friends.length} novo(s) amigo(s)`)
+  }
+  
+  if (details.new_badges?.length > 0) {
+    actions.push(`conquistou ${details.new_badges.length} novo(s) emblema(s)`)
+  }
+  
+  if (details.avatar_changed) {
+    actions.push('mudou o visual')
+  }
+  
+  if (details.motto_changed) {
+    actions.push('atualizou a missão')
+  }
+  
+  return actions.length > 0 ? actions.join(', ') : 'atualizou o perfil'
+}

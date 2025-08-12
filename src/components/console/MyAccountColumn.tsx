@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { habboProxyService } from '@/services/habboProxyService';
+import { InstagramPhotoGrid } from './InstagramPhotoGrid';
 
 export const MyAccountColumn: React.FC = () => {
   const { 
@@ -138,7 +138,7 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Photos Section */}
+            {/* Photos Section - Instagram Style Grid */}
             {photos.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -147,26 +147,10 @@ export const MyAccountColumn: React.FC = () => {
                     Minhas Fotos ({photos.length})
                   </h4>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {photos.slice(0, 6).map((photo, index) => (
-                    <div key={photo.id || index} className="aspect-square relative">
-                      <img
-                        src={photo.url}
-                        alt={`Foto ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors" />
-                    </div>
-                  ))}
-                </div>
-                {photos.length > 6 && (
-                  <p className="text-xs text-white/60 mt-2 text-center">
-                    +{photos.length - 6} fotos
-                  </p>
-                )}
+                <InstagramPhotoGrid 
+                  photos={photos} 
+                  habboName={habboAccount.habbo_name}
+                />
               </div>
             )}
           </div>
