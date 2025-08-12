@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useUnifiedAuth } from '../hooks/useUnifiedAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { UserProfilePopover } from '../components/UserProfilePopover';
 import { HabboMobileDock, DockItem } from '../components/ui/habbo-mobile-dock';
@@ -10,10 +9,15 @@ import { getUserByName } from '../services/habboApi';
 
 const MobileLayout = ({ children }: { children: React.ReactNode }) => {
   const [habboData, setHabboData] = useState<any>(null);
-  const { isLoggedIn, habboAccount, isAdmin } = useAuth();
+  const { isLoggedIn, habboAccount } = useUnifiedAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if user is admin
+  const isAdmin = () => {
+    return habboAccount?.is_admin === true;
+  };
 
   // Fetch current Habbo data when logged in
   useEffect(() => {
