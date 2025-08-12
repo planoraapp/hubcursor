@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { habboFeedService, FeedActivity, FeedResponse } from '@/services/habboFeedService';
 import { useUnifiedAuth } from './useUnifiedAuth';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 
 export const useRealHotelFeed = (options?: { 
   onlineWithinSeconds?: number;
@@ -38,6 +38,7 @@ export const useRealHotelFeed = (options?: {
   const { 
     data: feedResponse, 
     isLoading, 
+    isFetching,
     error,
     refetch
   } = useQuery({
@@ -65,6 +66,45 @@ export const useRealHotelFeed = (options?: {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
+
+  // Incremental, flicker-free merge of activities
+  const [mergedActivities, setMergedActivities] = useState<Array<FeedActivity & { key: string; isNew?: boolean }>>([]);
+  const keysRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const incoming = feedResponse?.activities || [];
+
+    // Initial load
+    if (mergedActivities.length === 0) {
+      const initial = incoming.map((it) => {
+        const key = `${it.username}-${it.lastUpdate}`;
+        keysRef.current.add(key);
+        return { ...it, key, isNew: false } as FeedActivity & { key: string; isNew?: boolean };
+      });
+      setMergedActivities(initial);
+      return;
+    }
+
+    // Subsequent updates: prepend only new items and mark asNew
+    const newItems: Array<FeedActivity & { key: string; isNew?: boolean }> = [];
+    for (const it of incoming) {
+      const key = `${it.username}-${it.lastUpdate}`;
+      if (!keysRef.current.has(key)) {
+        keysRef.current.add(key);
+        newItems.push({ ...it, key, isNew: true });
+      } else {
+        // Optional: update existing item if description changed
+      }
+    }
+
+    if (newItems.length > 0) {
+      setMergedActivities((prev) => {
+        const clearedPrev = prev.map((p) => ({ ...p, isNew: false }));
+        const updated = [...newItems, ...clearedPrev];
+        return updated.slice(0, 200);
+      });
+    }
+  }, [feedResponse?.activities]);
 
   // Function to load older data with improved pagination strategy
   const loadMoreData = useCallback(async (page: number) => {
@@ -136,10 +176,7 @@ export const useRealHotelFeed = (options?: {
     onlineCount: 0
   };
 
-  // Activities are already sorted by lastUpdate in descending order from the Edge Function
-  const activitiesSorted = useMemo(() => {
-    return feedResponse?.activities || [];
-  }, [feedResponse?.activities]);
+  // activities are sorted from the edge function already; we maintain order via mergedActivities
 
   // Enhanced refetch that also triggers discovery for hybrid/database modes
   const enhancedRefetch = useCallback(async () => {
@@ -153,9 +190,10 @@ export const useRealHotelFeed = (options?: {
   }, [discoverOnlineUsers, refetch, hotel, mode]);
 
   return {
-    activities: activitiesSorted,
+    activities: mergedActivities,
     aggregatedActivities,
     isLoading,
+    isFetching,
     error,
     hotel,
     metadata,

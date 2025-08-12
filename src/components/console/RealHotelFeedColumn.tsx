@@ -7,7 +7,7 @@ import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { toast } from 'sonner';
 
 export const RealHotelFeedColumn: React.FC = () => {
-  const { activities, isLoading, error, hotel, metadata, mode, refetch, loadMoreData } = useRealHotelFeed({
+  const { activities, isLoading, isFetching, error, hotel, metadata, mode, refetch, loadMoreData } = useRealHotelFeed({
     onlineWithinSeconds: 1800,
     mode: 'official' // Use 'official' instead of 'live'
   });
@@ -114,17 +114,31 @@ export const RealHotelFeedColumn: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {activities.map((activity, index) => (
-                  <div key={index} className="flex items-center gap-3 p-2 bg-white/10 rounded border border-white/20">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate text-white">{activity.username}</p>
-                      <p className="text-xs text-white/60 mb-1">{activity.description}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="text-xs text-white/60">{activity.lastUpdate}</span>
+                {isFetching && (
+                  <div className="sticky top-0 z-10 -mt-2 mb-1 flex items-center gap-2 text-xs text-white/70 bg-white/10 px-2 py-1 rounded">
+                    <span className="w-2 h-2 rounded-full bg-green-400 pulse" />
+                    Atualizando...
+                  </div>
+                )}
+                {activities.map((activity, index) => {
+                  const a: any = activity as any;
+                  const isNew = !!a.isNew;
+                  const itemKey = (a.key as string) || `${a.username}-${a.lastUpdate}-${index}`;
+                  return (
+                    <div
+                      key={itemKey}
+                      className={`flex items-center gap-3 p-2 bg-white/10 rounded border border-white/20 transition-all ${isNew ? 'animate-enter' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate text-white">{a.username}</p>
+                        <p className="text-xs text-white/60 mb-1">{a.description}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-xs text-white/60">{a.lastUpdate}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

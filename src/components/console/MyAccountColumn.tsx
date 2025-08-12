@@ -52,7 +52,7 @@ export const MyAccountColumn: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <Card className="bg-[#5A6573] text:white border-0 shadow-none">
+      <Card className="bg-[#5A6573] text-white border-0 shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
@@ -72,7 +72,7 @@ export const MyAccountColumn: React.FC = () => {
                     className="h-[130px] w-auto object-contain bg-transparent"
                   />
                 ) : (
-                  <div className="h-[130px] w-16 bg:white/10 flex items-center justify-center">
+                  <div className="h-[130px] w-16 bg-white/10 flex items-center justify-center">
                     <span className="text-2xl font-bold">
                       {habboAccount.habbo_name[0]?.toUpperCase()}
                     </span>
