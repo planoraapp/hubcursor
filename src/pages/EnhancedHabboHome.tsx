@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -21,6 +22,18 @@ import {
   Star,
   Heart
 } from 'lucide-react';
+
+interface HabboUserData {
+  supabase_user_id: string;
+  habbo_name: string;
+  habbo_id: string;
+  hotel: string;
+  figure_string?: string;
+  motto?: string;
+  is_online?: boolean;
+  created_at?: string;
+  last_updated?: string;
+}
 
 const EnhancedHabboHome = () => {
   const { username, hotel } = useParams<{ username: string; hotel: string }>();
@@ -50,7 +63,7 @@ const EnhancedHabboHome = () => {
         const userData = Array.isArray(data) ? data[0] : data;
         console.log('✅ [EnhancedHabboHome] User data loaded:', userData?.habbo_name);
         
-        return userData;
+        return userData as HabboUserData;
       } catch (error) {
         console.error('❌ [EnhancedHabboHome] Failed to fetch user data:', error);
         throw error;
@@ -152,12 +165,12 @@ const EnhancedHabboHome = () => {
                   
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-green-500" />
-                    <span>Desde: {new Date(habboUser.created_at).getFullYear()}</span>
+                    <span>Desde: {habboUser.created_at ? new Date(habboUser.created_at).getFullYear() : 'N/A'}</span>
                   </div>
                   
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-purple-500" />
-                    <span>Atualizado: {new Date(habboUser.last_updated).toLocaleDateString('pt-BR')}</span>
+                    <span>Atualizado: {habboUser.last_updated ? new Date(habboUser.last_updated).toLocaleDateString('pt-BR') : 'N/A'}</span>
                   </div>
                   
                   <div className="flex items-center gap-2">
