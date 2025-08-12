@@ -13,6 +13,17 @@ interface FeedActivity {
   friends: Array<{ name: string; figureString?: string }>;
   badges: Array<{ code: string; name?: string }>;
   description: string;
+  profile?: {
+    figureString?: string;
+    motto?: string;
+    isOnline?: boolean;
+    memberSince?: string;
+    lastWebVisit?: string;
+    groupsCount?: number;
+    friendsCount?: number;
+    badgesCount?: number;
+    photosCount?: number;
+  };
 }
 
 interface FeedResponse {

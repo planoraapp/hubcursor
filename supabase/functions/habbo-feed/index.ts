@@ -21,6 +21,17 @@ interface FeedActivity {
   friends: Array<{ name: string; figureString?: string }>;
   badges: Array<{ code: string; name?: string }>;
   description: string;
+  profile: {
+    figureString?: string;
+    motto?: string;
+    isOnline?: boolean;
+    memberSince?: string;
+    lastWebVisit?: string;
+    groupsCount?: number;
+    friendsCount?: number;
+    badgesCount?: number;
+    photosCount?: number;
+  };
 }
 
 Deno.serve(async (req) => {
@@ -63,6 +74,21 @@ Deno.serve(async (req) => {
 
     console.log(`📊 [habbo-feed] Found ${activities?.length || 0} raw activities`);
 
+    // Get latest snapshots for all tracked users for richer data
+    const { data: latestSnapshots } = await supabase
+      .from('habbo_user_snapshots')
+      .select('*')
+      .eq('hotel', hotel)
+      .order('created_at', { ascending: false });
+
+    // Create user snapshots map
+    const userSnapshotMap: { [username: string]: any } = {};
+    latestSnapshots?.forEach(snapshot => {
+      if (!userSnapshotMap[snapshot.habbo_name]) {
+        userSnapshotMap[snapshot.habbo_name] = snapshot;
+      }
+    });
+
     // Aggregate activities by user (last 24 hours)
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const recentActivities = activities?.filter(activity => 
@@ -77,6 +103,13 @@ Deno.serve(async (req) => {
       userGroups[activity.habbo_name].push(activity);
     });
 
+    // Include users from snapshots even if they don't have recent activities
+    Object.keys(userSnapshotMap).forEach(username => {
+      if (!userGroups[username]) {
+        userGroups[username] = [];
+      }
+    });
+
     // Format for HabboWidgets-style display
     const feedActivities: FeedActivity[] = Object.entries(userGroups)
       .map(([username, userActivities]) => {
@@ -84,7 +117,7 @@ Deno.serve(async (req) => {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         
-        const latestSnapshot = sortedActivities[0]?.habbo_user_snapshots;
+        const latestSnapshot = sortedActivities[0]?.habbo_user_snapshots || userSnapshotMap[username];
         const counts = {
           groups: 0,
           friends: 0,
@@ -96,6 +129,40 @@ Deno.serve(async (req) => {
         const groups: Array<{ name: string; badgeCode: string }> = [];
         const friends: Array<{ name: string; figureString?: string }> = [];
         const badges: Array<{ code: string; name?: string }> = [];
+
+        // Extract data from latest snapshot's raw_data if available
+        const rawData = latestSnapshot?.raw_data;
+        if (rawData) {
+          // Extract groups from raw data
+          if (rawData.groups && Array.isArray(rawData.groups)) {
+            const snapshotGroups = rawData.groups.slice(0, 3).map((group: any) => ({
+              name: group.name || 'Grupo',
+              badgeCode: group.badgeCode || 'GRP001'
+            }));
+            groups.push(...snapshotGroups);
+            counts.groups = rawData.groups.length;
+          }
+
+          // Extract friends from raw data
+          if (rawData.friends && Array.isArray(rawData.friends)) {
+            const snapshotFriends = rawData.friends.slice(0, 5).map((friend: any) => ({
+              name: friend.name || friend.habboName || 'Amigo',
+              figureString: friend.figureString
+            }));
+            friends.push(...snapshotFriends);
+            counts.friends = rawData.friends.length;
+          }
+
+          // Extract badges from raw data
+          if (rawData.selectedBadges && Array.isArray(rawData.selectedBadges)) {
+            const snapshotBadges = rawData.selectedBadges.slice(0, 5).map((badge: any) => ({
+              code: badge.code || badge.badgeCode || 'BAD001',
+              name: badge.name || badge.description || badge.code
+            }));
+            badges.push(...snapshotBadges);
+            counts.badges = rawData.selectedBadges.length;
+          }
+        }
 
         // Process activities to build counts and details
         sortedActivities.forEach(activity => {
@@ -127,37 +194,73 @@ Deno.serve(async (req) => {
           }
         });
 
-        // Build HabboWidgets-style description
-        const parts = [];
-        if (counts.groups > 0) {
-          parts.push(`${counts.groups} novo(s) grupo(s)`);
-        }
-        if (counts.friends > 0) {
-          parts.push(`${counts.friends} novo(s) amigo(s)`);
-        }
-        if (counts.badges > 0) {
-          const badgeText = counts.badges > 5 ? 'mais de 5 novo(s) emblema(s)' : `${counts.badges} novo(s) emblema(s)`;
-          parts.push(badgeText);
-        }
-        if (counts.avatarChanged) {
-          parts.push('mudou seu visual');
-        }
-        if (counts.mottoChanged) {
-          parts.push('mudou o lema');
+        // Build HabboWidgets-style description based on available data
+        const activityParts = [];
+        const hasRecentActivity = sortedActivities.length > 0;
+        
+        if (hasRecentActivity) {
+          if (counts.groups > 0) {
+            activityParts.push(`${counts.groups} novo(s) grupo(s)`);
+          }
+          if (counts.friends > 0) {
+            activityParts.push(`${counts.friends} novo(s) amigo(s)`);
+          }
+          if (counts.badges > 0) {
+            const badgeText = counts.badges > 5 ? 'mais de 5 novo(s) emblema(s)' : `${counts.badges} novo(s) emblema(s)`;
+            activityParts.push(badgeText);
+          }
+          if (counts.avatarChanged) {
+            activityParts.push('mudou seu visual');
+          }
+          if (counts.mottoChanged) {
+            activityParts.push('mudou o lema');
+          }
         }
 
-        const description = parts.length > 0 
-          ? `adicionou ${parts.join(', ')}.`
-          : 'atividade recente';
+        let description = 'atividade recente';
+        if (activityParts.length > 0) {
+          description = `adicionou ${activityParts.join(', ')}.`;
+        } else if (latestSnapshot) {
+          // Create description from profile data
+          const profileParts = [];
+          if (latestSnapshot.groups_count > 0) {
+            profileParts.push(`${latestSnapshot.groups_count} grupos`);
+          }
+          if (latestSnapshot.friends_count > 0) {
+            profileParts.push(`${latestSnapshot.friends_count} amigos`);
+          }
+          if (latestSnapshot.badges_count > 0) {
+            profileParts.push(`${latestSnapshot.badges_count} emblemas`);
+          }
+          
+          if (profileParts.length > 0) {
+            description = `possui ${profileParts.join(', ')}.`;
+          }
+          
+          if (latestSnapshot.is_online) {
+            description = `está online! ${description}`;
+          }
+        }
 
         return {
           username,
-          lastUpdate: sortedActivities[0]?.created_at || new Date().toISOString(),
+          lastUpdate: sortedActivities[0]?.created_at || latestSnapshot?.created_at || new Date().toISOString(),
           counts,
           groups: groups.slice(0, 3),
           friends: friends.slice(0, 5),
           badges: badges.slice(0, 5),
-          description
+          description,
+          profile: {
+            figureString: latestSnapshot?.figure_string,
+            motto: latestSnapshot?.motto,
+            isOnline: latestSnapshot?.is_online || false,
+            memberSince: latestSnapshot?.member_since,
+            lastWebVisit: latestSnapshot?.last_web_visit,
+            groupsCount: latestSnapshot?.groups_count || groups.length,
+            friendsCount: latestSnapshot?.friends_count || friends.length,
+            badgesCount: latestSnapshot?.badges_count || badges.length,
+            photosCount: latestSnapshot?.photos_count || 0
+          }
         };
       })
       .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())

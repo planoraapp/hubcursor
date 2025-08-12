@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, MessageSquare, Database } from 'lucide-react';
+import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, MessageSquare, Database, Clock, Star, Quote } from 'lucide-react';
 import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { habboFeedService } from '@/services/habboFeedService';
 import { useUserFigures } from '@/hooks/useUserFigures';
@@ -131,10 +131,13 @@ export const RealHotelFeedColumn: React.FC = () => {
               activities.map((activity, index) => (
                 <div key={`${activity.username}-${index}`} className="p-4 mb-3 bg-transparent hover:bg-white/5 rounded-lg transition-colors">
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="flex-shrink-0">
-                      {figureMap[activity.username] ? (
+                    <div className="flex-shrink-0 relative">
+                      {(activity.profile?.figureString || figureMap[activity.username]) ? (
                         <img 
-                          src={habboFeedService.getAvatarUrl(figureMap[activity.username], 'l', false)} 
+                          src={habboFeedService.getAvatarUrl(
+                            activity.profile?.figureString || figureMap[activity.username], 
+                            'l', false
+                          )} 
                           alt={activity.username}
                           className="h-[130px] w-auto object-contain bg-transparent"
                         />
@@ -145,14 +148,71 @@ export const RealHotelFeedColumn: React.FC = () => {
                           </span>
                         </div>
                       )}
+                      
+                      {/* Online status indicator */}
+                      {activity.profile?.isOnline && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        </div>
+                      )}
                     </div>
+                    
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-blue-200 mb-1">{activity.username}</h4>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold text-blue-200">{activity.username}</h4>
+                        {activity.profile?.isOnline && (
+                          <Badge className="bg-green-500/20 text-green-300 text-xs border-green-500/30">
+                            Online
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {activity.profile?.motto && (
+                        <div className="flex items-center gap-1 mb-2">
+                          <Quote className="w-3 h-3 text-white/50" />
+                          <p className="text-white/70 text-xs italic">"{activity.profile.motto}"</p>
+                        </div>
+                      )}
+                      
                       <p className="text-white/90 text-sm mb-2">{activity.description}</p>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-white/60">
-                          Última atualização {habboFeedService.formatTimeAgo(activity.lastUpdate)}
-                        </span>
+                      
+                      {/* Profile stats */}
+                      <div className="flex items-center gap-4 mb-2 text-xs text-white/60">
+                        {activity.profile?.groupsCount !== undefined && activity.profile.groupsCount > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{activity.profile.groupsCount} grupos</span>
+                          </div>
+                        )}
+                        {activity.profile?.friendsCount !== undefined && activity.profile.friendsCount > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            <span>{activity.profile.friendsCount} amigos</span>
+                          </div>
+                        )}
+                        {activity.profile?.badgesCount !== undefined && activity.profile.badgesCount > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Trophy className="w-3 h-3" />
+                            <span>{activity.profile.badgesCount} emblemas</span>
+                          </div>
+                        )}
+                        {activity.profile?.photosCount !== undefined && activity.profile.photosCount > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Camera className="w-3 h-3" />
+                            <span>{activity.profile.photosCount} fotos</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-xs text-white/50">
+                        <Clock className="w-3 h-3" />
+                        <span>Última atualização {habboFeedService.formatTimeAgo(activity.lastUpdate)}</span>
+                        {activity.profile?.memberSince && (
+                          <>
+                            <span>•</span>
+                            <span>Membro desde {new Date(activity.profile.memberSince).getFullYear()}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -161,7 +221,10 @@ export const RealHotelFeedColumn: React.FC = () => {
                   <div className="space-y-3 ml-[4.5rem]">
                     {activity.groups.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-white mb-2">Grupos</h3>
+                        <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          Grupos Recentes
+                        </h3>
                         <div className="space-y-2">
                           {activity.groups.slice(0, 3).map((group, idx) => (
                             <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-white/5 rounded">
@@ -182,7 +245,10 @@ export const RealHotelFeedColumn: React.FC = () => {
 
                     {activity.friends.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-white mb-2">Amigos</h3>
+                        <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
+                          <Heart className="w-4 h-4" />
+                          Amigos Recentes
+                        </h3>
                         <div className="space-y-2">
                           {activity.friends.slice(0, 5).map((friend, idx) => (
                             <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-white/5 rounded">
@@ -204,10 +270,13 @@ export const RealHotelFeedColumn: React.FC = () => {
 
                     {activity.badges.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-semibold text-white mb-2">Emblemas</h3>
-                        <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
+                          <Trophy className="w-4 h-4" />
+                          Emblemas Selecionados
+                        </h3>
+                        <div className="grid grid-cols-5 gap-2">
                           {activity.badges.slice(0, 5).map((badge, idx) => (
-                            <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-white/5 rounded">
+                            <div key={idx} className="flex flex-col items-center gap-1 p-2 bg-white/5 rounded text-center">
                               <img 
                                 src={habboFeedService.getBadgeUrl(badge.code)} 
                                 alt={badge.code}
@@ -216,7 +285,9 @@ export const RealHotelFeedColumn: React.FC = () => {
                                   e.currentTarget.style.display = 'none';
                                 }}
                               />
-                              <span className="text-white/90">{badge.code}</span>
+                              <span className="text-white/70 text-xs truncate w-full" title={badge.name || badge.code}>
+                                {badge.code}
+                              </span>
                             </div>
                           ))}
                         </div>
