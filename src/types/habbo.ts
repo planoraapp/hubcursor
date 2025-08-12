@@ -5,7 +5,7 @@ export interface HabboUser {
   figureString: string;
   motto: string;
   online: boolean;
-  profileVisible: boolean;
+  profileVisible?: boolean;
   memberSince?: string;
   lastAccessTime?: string;
   selectedBadges?: any[];

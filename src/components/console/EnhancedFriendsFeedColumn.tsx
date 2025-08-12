@@ -41,12 +41,19 @@ const UserSearch: React.FC<UserSearchProps> = ({ onUserFound, suggestions }) => 
     try {
       const user = await habboProxyService.getUserProfile(nameToSearch);
       if (user) {
-        // Ensure uniqueId is present for type compatibility
-        const userWithUniqueId = {
-          ...user,
-          uniqueId: user.uniqueId || user.id || ''
+        // Ensure all required properties are present for type compatibility
+        const userWithRequiredProps: HabboUser = {
+          uniqueId: user.uniqueId || user.id || '',
+          name: user.name,
+          figureString: user.figureString,
+          motto: user.motto || '',
+          online: user.online || false,
+          profileVisible: user.profileVisible ?? true,
+          memberSince: user.memberSince,
+          lastAccessTime: user.lastWebVisit,
+          selectedBadges: user.selectedBadges || []
         };
-        onUserFound(userWithUniqueId);
+        onUserFound(userWithRequiredProps);
         toast.success(`Usuário ${user.name} encontrado!`);
         setSearchQuery('');
         setShowSuggestions(false);
