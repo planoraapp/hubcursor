@@ -15,6 +15,14 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     return 'com.br';
   }, [habboAccount?.hotel]);
 
+  // Calculate dynamic limit based on time window to get more data for longer periods
+  const dynamicLimit = useMemo(() => {
+    const baseLimit = 50;
+    const timeWindowMinutes = (options?.onlineWithinSeconds || 1800) / 60;
+    // Increase limit for longer time windows (more users might be included)
+    return Math.min(200, Math.max(baseLimit, Math.floor(timeWindowMinutes / 30) * 25));
+  }, [options?.onlineWithinSeconds]);
+
   // Fetch real feed data from our Edge Function
   const { 
     data: feedResponse, 
@@ -22,10 +30,10 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
     error,
     refetch
   } = useQuery({
-    queryKey: ['real-hotel-feed', hotel, options?.onlineWithinSeconds ?? null],
+    queryKey: ['real-hotel-feed', hotel, options?.onlineWithinSeconds ?? null, dynamicLimit],
     queryFn: () => habboFeedService.getHotelFeed(
       hotel,
-      Math.min(200, 50 * Math.ceil(((options?.onlineWithinSeconds || 1800) / 1800))),
+      dynamicLimit,
       { onlineWithinSeconds: options?.onlineWithinSeconds }
     ),
     refetchInterval: 30 * 1000, // 30 seconds
@@ -52,7 +60,8 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
             counts: activity.counts,
             groups: activity.groups,
             friends: activity.friends,
-            badges: activity.badges
+            badges: activity.badges,
+            photos: activity.photos
           },
           snapshot_id: '',
           created_at: activity.lastUpdate
@@ -66,12 +75,13 @@ export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => 
   const metadata = feedResponse?.meta || {
     source: 'cached' as const,
     timestamp: new Date().toISOString(),
-    count: 0
+    count: 0,
+    onlineCount: 0
   };
 
+  // Activities are already sorted by lastUpdate in descending order from the Edge Function
   const activitiesSorted = useMemo(() => {
-    const list = feedResponse?.activities || [];
-    return [...list].sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
+    return feedResponse?.activities || [];
   }, [feedResponse?.activities]);
 
   return {

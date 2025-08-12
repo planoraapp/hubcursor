@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useUnifiedAuth } from '../hooks/useUnifiedAuth';
 
 export type HotelCode = 'br' | 'com' | 'es' | 'fr' | 'de' | 'it' | 'nl' | 'fi' | 'tr';
 
@@ -17,7 +17,7 @@ const HotelContext = createContext<HotelContextType | undefined>(undefined);
 export const availableHotels: HotelCode[] = ['br', 'com', 'es', 'fr', 'de', 'it', 'nl', 'fi', 'tr'];
 
 export const HotelProvider = ({ children }: { children: ReactNode }) => {
-  const { habboAccount } = useAuth();
+  const { habboAccount } = useUnifiedAuth();
   const [currentHotel, setCurrentHotel] = useState<HotelCode>('br');
   
   const userHotel = habboAccount?.hotel as HotelCode || null;

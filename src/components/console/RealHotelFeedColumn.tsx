@@ -3,15 +3,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, MessageSquare, Database, Clock, Star, Quote } from 'lucide-react';
+import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, Archive, Heart, Camera, UserPlus, Database, Clock, Quote } from 'lucide-react';
 import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { habboFeedService } from '@/services/habboFeedService';
 import { useUserFigures } from '@/hooks/useUserFigures';
 
 export const RealHotelFeedColumn: React.FC = () => {
-  const [onlineWindowSec, setOnlineWindowSec] = useState<number | null>(1800);
-  const { activities, aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useRealHotelFeed(
-    onlineWindowSec ? { onlineWithinSeconds: onlineWindowSec } : undefined
+  const [timeWindowSec, setTimeWindowSec] = useState<number>(1800); // Start with 30 minutes
+  const { activities, isLoading, error, hotel, metadata, refetch } = useRealHotelFeed(
+    { onlineWithinSeconds: timeWindowSec }
   );
   
   const usernames = activities.map(activity => activity.username);
@@ -20,11 +20,11 @@ export const RealHotelFeedColumn: React.FC = () => {
   useEffect(() => {
     if (activities.length > 0) {
       console.log(`📊 [RealHotelFeedColumn] Displaying ${activities.length} feed activities for hotel ${hotel}`);
-      console.log(`👥 [RealHotelFeedColumn] Total unique users: ${usernames.length} (source: ${metadata.source})`);
+      console.log(`👥 [RealHotelFeedColumn] Online users: ${metadata.onlineCount || 0} (source: ${metadata.source})`);
     }
-  }, [activities, usernames.length, hotel, metadata.source]);
+  }, [activities, hotel, metadata]);
 
-  // Refresh feed when a global event is dispatched (e.g., after login)
+  // Refresh feed when a global event is dispatched
   useEffect(() => {
     const handler = () => {
       console.log('🔄 [RealHotelFeedColumn] feed:refresh received -> refetch');
@@ -44,9 +44,8 @@ export const RealHotelFeedColumn: React.FC = () => {
     const target = e.currentTarget;
     const threshold = 120; // px from bottom
     if (target.scrollHeight - target.scrollTop - target.clientHeight < threshold && !isLoading) {
-      setOnlineWindowSec((prev) => (prev ? prev + 1800 : 1800));
-      // slight delay to allow refetch
-      setTimeout(() => refetch(), 50);
+      setTimeWindowSec((prev) => prev + 1800); // Add 30 more minutes
+      console.log(`📈 [RealHotelFeedColumn] Expanding time window to ${Math.floor((timeWindowSec + 1800) / 60)} minutes`);
     }
   };
 
@@ -106,12 +105,17 @@ export const RealHotelFeedColumn: React.FC = () => {
                 <span className="ml-1">{getSourceLabel()}</span>
               </Badge>
               
+              {metadata.onlineCount !== undefined && (
+                <Badge variant="secondary" className="bg-green-500/20 text-green-200">
+                  {metadata.onlineCount} online
+                </Badge>
+              )}
+              
               {activities.length > 0 && (
                 <Badge variant="secondary" className="bg-white/20 text-white">
                   {activities.length} usuários
                 </Badge>
               )}
-              
               
               <Button
                 variant="ghost"
@@ -142,9 +146,7 @@ export const RealHotelFeedColumn: React.FC = () => {
             {metadata.count > 0 && (
               <span>• {metadata.count} atividades</span>
             )}
-            {onlineWindowSec && (
-              <span>• janela: {Math.floor((onlineWindowSec || 0) / 60)}min</span>
-            )}
+            <span>• janela: {Math.floor(timeWindowSec / 60)}min</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -250,9 +252,9 @@ export const RealHotelFeedColumn: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* HabboWidgets-style sections */}
+                  {/* Content sections */}
                   <div className="space-y-3 ml-[4.5rem]">
-                    {activity.groups.length > 0 && (
+                    {activity.groups && activity.groups.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
                           <Users className="w-4 h-4" />
@@ -276,7 +278,7 @@ export const RealHotelFeedColumn: React.FC = () => {
                       </div>
                     )}
 
-                    {activity.friends.length > 0 && (
+                    {activity.friends && activity.friends.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
                           <Heart className="w-4 h-4" />
@@ -301,7 +303,7 @@ export const RealHotelFeedColumn: React.FC = () => {
                       </div>
                     )}
 
-                    {activity.badges.length > 0 && (
+                    {activity.badges && activity.badges.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
                           <Trophy className="w-4 h-4" />
@@ -327,19 +329,19 @@ export const RealHotelFeedColumn: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Fotos recentes */}
-                    {Array.isArray((activity as any).photos) && (activity as any).photos.length > 0 && (
+                    {/* Photos section */}
+                    {activity.photos && activity.photos.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-white mb-2 flex items-center gap-1">
                           <Camera className="w-4 h-4" />
-                          Fotos recentes
+                          Fotos Recentes
                         </h3>
                         <div className="grid grid-cols-3 gap-2">
-                          {(activity as any).photos.slice(0, 6).map((photo: any, idx: number) => (
+                          {activity.photos.slice(0, 6).map((photo, idx) => (
                             <img
                               key={idx}
                               src={photo.url}
-                              alt={photo.caption || `${activity.username} photo ${idx+1}`}
+                              alt={photo.caption || `${activity.username} foto ${idx+1}`}
                               className="w-full h-24 object-cover rounded bg-white/5"
                               loading="lazy"
                               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}

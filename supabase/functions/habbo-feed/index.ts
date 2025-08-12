@@ -20,6 +20,7 @@ interface FeedActivity {
   groups: Array<{ name: string; badgeCode: string }>;
   friends: Array<{ name: string; figureString?: string }>;
   badges: Array<{ code: string; name?: string }>;
+  photos: Array<{ url: string; caption?: string; id?: string }>;
   description: string;
   profile: {
     figureString?: string;
@@ -48,86 +49,65 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const hotel = url.searchParams.get('hotel') || 'com.br';
     const username = url.searchParams.get('username');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const limit = parseInt(url.searchParams.get('limit') || '50');
     const onlineWithinSecondsParam = url.searchParams.get('onlineWithinSeconds');
-    const onlineWithinSeconds = onlineWithinSecondsParam ? parseInt(onlineWithinSecondsParam) : undefined;
+    const onlineWithinSeconds = onlineWithinSecondsParam ? parseInt(onlineWithinSecondsParam) : 1800; // Default 30 minutes
 
-    console.log(`🎯 [habbo-feed] Fetching feed for hotel: ${hotel}${username ? `, user: ${username}` : ''}`);
+    console.log(`🎯 [habbo-feed] Fetching feed for hotel: ${hotel}${username ? `, user: ${username}` : ''}, window: ${Math.floor(onlineWithinSeconds / 60)}min`);
 
-    // Build query
-    let query = supabase
-      .from('habbo_activities')
-      .select(`
-        *,
-        habbo_user_snapshots!inner(*)
-      `)
-      .eq('hotel', hotel)
-      .order('created_at', { ascending: false });
-
-    if (username) {
-      query = query.ilike('habbo_name', username);
-    }
-
-    const { data: activities, error } = await query.limit(limit * 3); // Get more to aggregate properly
-
-    if (error) {
-      throw new Error(`Failed to fetch activities: ${error.message}`);
-    }
-
-    console.log(`📊 [habbo-feed] Found ${activities?.length || 0} raw activities`);
-
-    // Get latest snapshots for all tracked users for richer data
-    const cutoffIso = onlineWithinSeconds ? new Date(Date.now() - onlineWithinSeconds * 1000).toISOString() : undefined;
+    // Get snapshots from the last window (default 30 minutes, expandable)
+    const cutoffTime = new Date(Date.now() - onlineWithinSeconds * 1000).toISOString();
+    
     let snapshotsQuery = supabase
       .from('habbo_user_snapshots')
       .select('*')
       .eq('hotel', hotel)
+      .gte('created_at', cutoffTime)
       .order('created_at', { ascending: false });
-    if (cutoffIso) {
-      snapshotsQuery = snapshotsQuery.gte('created_at', cutoffIso);
-    }
-    const { data: latestSnapshots } = await snapshotsQuery;
 
-    // Create user snapshots map
+    if (username) {
+      snapshotsQuery = snapshotsQuery.ilike('habbo_name', username);
+    }
+
+    const { data: snapshots, error: snapshotsError } = await snapshotsQuery.limit(limit * 3);
+
+    if (snapshotsError) {
+      throw new Error(`Failed to fetch snapshots: ${snapshotsError.message}`);
+    }
+
+    console.log(`📊 [habbo-feed] Found ${snapshots?.length || 0} snapshots in ${Math.floor(onlineWithinSeconds / 60)}min window`);
+
+    // Get recent activities for context
+    const { data: activities } = await supabase
+      .from('habbo_activities')
+      .select('*')
+      .eq('hotel', hotel)
+      .gte('created_at', cutoffTime)
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    // Create user snapshots map with latest data per user
     const userSnapshotMap: { [username: string]: any } = {};
-    const cutoffDate = cutoffIso ? new Date(cutoffIso) : undefined;
-    latestSnapshots?.forEach(snapshot => {
-      // When filtering for onlineWithinSeconds, only include users definitely online or with recent web visit
-      const passesOnlineFilter = !cutoffDate || (snapshot.is_online === true || (snapshot.last_web_visit && new Date(snapshot.last_web_visit) >= cutoffDate));
-      if (passesOnlineFilter && !userSnapshotMap[snapshot.habbo_name]) {
+    snapshots?.forEach(snapshot => {
+      if (!userSnapshotMap[snapshot.habbo_name] || 
+          new Date(snapshot.created_at) > new Date(userSnapshotMap[snapshot.habbo_name].created_at)) {
         userSnapshotMap[snapshot.habbo_name] = snapshot;
       }
     });
 
-    // Aggregate activities by user (last 24 hours)
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentActivities = activities?.filter(activity => 
-      new Date(activity.created_at) >= twentyFourHoursAgo
-    ) || [];
-
-    const userGroups: { [username: string]: any[] } = {};
-    recentActivities.forEach(activity => {
-      if (!userGroups[activity.habbo_name]) {
-        userGroups[activity.habbo_name] = [];
+    // Group activities by user
+    const userActivitiesMap: { [username: string]: any[] } = {};
+    activities?.forEach(activity => {
+      if (!userActivitiesMap[activity.habbo_name]) {
+        userActivitiesMap[activity.habbo_name] = [];
       }
-      userGroups[activity.habbo_name].push(activity);
+      userActivitiesMap[activity.habbo_name].push(activity);
     });
 
-    // Include users from snapshots even if they don't have recent activities
-    Object.keys(userSnapshotMap).forEach(username => {
-      if (!userGroups[username]) {
-        userGroups[username] = [];
-      }
-    });
-
-    // Format for HabboWidgets-style display
-    const feedActivities: FeedActivity[] = Object.entries(userGroups)
-      .map(([username, userActivities]) => {
-        const sortedActivities = userActivities.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        
-        const latestSnapshot = sortedActivities[0]?.habbo_user_snapshots || userSnapshotMap[username];
+    // Format for display - prioritize users who are online or have recent activity
+    const feedActivities: FeedActivity[] = Object.entries(userSnapshotMap)
+      .map(([username, latestSnapshot]) => {
+        const userActivities = userActivitiesMap[username] || [];
         const counts = {
           groups: 0,
           friends: 0,
@@ -139,11 +119,12 @@ Deno.serve(async (req) => {
         const groups: Array<{ name: string; badgeCode: string }> = [];
         const friends: Array<{ name: string; figureString?: string }> = [];
         const badges: Array<{ code: string; name?: string }> = [];
+        const photos: Array<{ url: string; caption?: string; id?: string }> = [];
 
-        // Extract data from latest snapshot's raw_data if available
+        // Extract data from latest snapshot's raw_data
         const rawData = latestSnapshot?.raw_data;
         if (rawData) {
-          // Extract groups from raw data
+          // Extract groups
           if (rawData.groups && Array.isArray(rawData.groups)) {
             const snapshotGroups = rawData.groups.slice(0, 3).map((group: any) => ({
               name: group.name || 'Grupo',
@@ -153,7 +134,7 @@ Deno.serve(async (req) => {
             counts.groups = rawData.groups.length;
           }
 
-          // Extract friends from raw data
+          // Extract friends
           if (rawData.friends && Array.isArray(rawData.friends)) {
             const snapshotFriends = rawData.friends.slice(0, 5).map((friend: any) => ({
               name: friend.name || friend.habboName || 'Amigo',
@@ -163,7 +144,7 @@ Deno.serve(async (req) => {
             counts.friends = rawData.friends.length;
           }
 
-          // Extract badges from raw data
+          // Extract badges
           if (rawData.selectedBadges && Array.isArray(rawData.selectedBadges)) {
             const snapshotBadges = rawData.selectedBadges.slice(0, 5).map((badge: any) => ({
               code: badge.code || badge.badgeCode || 'BAD001',
@@ -172,15 +153,25 @@ Deno.serve(async (req) => {
             badges.push(...snapshotBadges);
             counts.badges = rawData.selectedBadges.length;
           }
+
+          // Extract photos
+          if (rawData.photos && Array.isArray(rawData.photos)) {
+            const snapshotPhotos = rawData.photos.slice(0, 6).map((photo: any) => ({
+              url: photo.url || `https://www.habbo.com.br/habbo-imaging/badge/${photo.id}.gif`,
+              caption: photo.caption || '',
+              id: photo.id
+            }));
+            photos.push(...snapshotPhotos);
+          }
         }
 
-        // Process activities to build counts and details
-        sortedActivities.forEach(activity => {
+        // Process recent activities for additional counts
+        userActivities.forEach(activity => {
           switch (activity.activity_type) {
             case 'new_group':
               counts.groups += activity.details?.groups_added || 1;
               if (activity.details?.new_groups) {
-                groups.push(...activity.details.new_groups.slice(0, 5));
+                groups.push(...activity.details.new_groups.slice(0, 3));
               }
               break;
             case 'new_friend':
@@ -204,44 +195,29 @@ Deno.serve(async (req) => {
           }
         });
 
-        // Build HabboWidgets-style description based on available data
+        // Build description
         const activityParts = [];
-        const hasRecentActivity = sortedActivities.length > 0;
+        const hasRecentActivity = userActivities.length > 0;
         
         if (hasRecentActivity) {
-          if (counts.groups > 0) {
-            activityParts.push(`${counts.groups} novo(s) grupo(s)`);
-          }
-          if (counts.friends > 0) {
-            activityParts.push(`${counts.friends} novo(s) amigo(s)`);
-          }
+          if (counts.groups > 0) activityParts.push(`${counts.groups} novo(s) grupo(s)`);
+          if (counts.friends > 0) activityParts.push(`${counts.friends} novo(s) amigo(s)`);
           if (counts.badges > 0) {
             const badgeText = counts.badges > 5 ? 'mais de 5 novo(s) emblema(s)' : `${counts.badges} novo(s) emblema(s)`;
             activityParts.push(badgeText);
           }
-          if (counts.avatarChanged) {
-            activityParts.push('mudou seu visual');
-          }
-          if (counts.mottoChanged) {
-            activityParts.push('mudou o lema');
-          }
+          if (counts.avatarChanged) activityParts.push('mudou seu visual');
+          if (counts.mottoChanged) activityParts.push('mudou o lema');
         }
 
         let description = 'atividade recente';
         if (activityParts.length > 0) {
           description = `adicionou ${activityParts.join(', ')}.`;
         } else if (latestSnapshot) {
-          // Create description from profile data
           const profileParts = [];
-          if (latestSnapshot.groups_count > 0) {
-            profileParts.push(`${latestSnapshot.groups_count} grupos`);
-          }
-          if (latestSnapshot.friends_count > 0) {
-            profileParts.push(`${latestSnapshot.friends_count} amigos`);
-          }
-          if (latestSnapshot.badges_count > 0) {
-            profileParts.push(`${latestSnapshot.badges_count} emblemas`);
-          }
+          if (latestSnapshot.groups_count > 0) profileParts.push(`${latestSnapshot.groups_count} grupos`);
+          if (latestSnapshot.friends_count > 0) profileParts.push(`${latestSnapshot.friends_count} amigos`);
+          if (latestSnapshot.badges_count > 0) profileParts.push(`${latestSnapshot.badges_count} emblemas`);
           
           if (profileParts.length > 0) {
             description = `possui ${profileParts.join(', ')}.`;
@@ -254,11 +230,12 @@ Deno.serve(async (req) => {
 
         return {
           username,
-          lastUpdate: sortedActivities[0]?.created_at || latestSnapshot?.created_at || new Date().toISOString(),
+          lastUpdate: userActivities[0]?.created_at || latestSnapshot?.created_at || new Date().toISOString(),
           counts,
           groups: groups.slice(0, 3),
           friends: friends.slice(0, 5),
           badges: badges.slice(0, 5),
+          photos: photos.slice(0, 6),
           description,
           profile: {
             figureString: latestSnapshot?.figure_string,
@@ -269,14 +246,23 @@ Deno.serve(async (req) => {
             groupsCount: latestSnapshot?.groups_count || groups.length,
             friendsCount: latestSnapshot?.friends_count || friends.length,
             badgesCount: latestSnapshot?.badges_count || badges.length,
-            photosCount: latestSnapshot?.photos_count || 0
+            photosCount: latestSnapshot?.photos_count || photos.length
           }
         };
+      })
+      .filter(activity => {
+        // Filter to show online users or those with very recent activity
+        const isOnline = activity.profile.isOnline;
+        const hasRecentWebVisit = activity.profile.lastWebVisit && 
+          new Date(activity.profile.lastWebVisit) > new Date(Date.now() - onlineWithinSeconds * 1000);
+        const hasRecentActivity = new Date(activity.lastUpdate) > new Date(Date.now() - onlineWithinSeconds * 1000);
+        
+        return isOnline || hasRecentWebVisit || hasRecentActivity;
       })
       .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
       .slice(0, limit);
 
-    console.log(`✅ [habbo-feed] Returning ${feedActivities.length} aggregated activities`);
+    console.log(`✅ [habbo-feed] Returning ${feedActivities.length} activities (${feedActivities.filter(a => a.profile.isOnline).length} online users)`);
 
     return new Response(
       JSON.stringify({
@@ -287,7 +273,8 @@ Deno.serve(async (req) => {
           source: 'live',
           timestamp: new Date().toISOString(),
           count: feedActivities.length,
-          filter: onlineWithinSeconds ? { onlineWithinSeconds } : undefined
+          onlineCount: feedActivities.filter(a => a.profile.isOnline).length,
+          filter: { onlineWithinSeconds }
         }
       }),
       {
