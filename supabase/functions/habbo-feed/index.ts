@@ -49,6 +49,8 @@ Deno.serve(async (req) => {
     const hotel = url.searchParams.get('hotel') || 'com.br';
     const username = url.searchParams.get('username');
     const limit = parseInt(url.searchParams.get('limit') || '20');
+    const onlineWithinSecondsParam = url.searchParams.get('onlineWithinSeconds');
+    const onlineWithinSeconds = onlineWithinSecondsParam ? parseInt(onlineWithinSecondsParam) : undefined;
 
     console.log(`🎯 [habbo-feed] Fetching feed for hotel: ${hotel}${username ? `, user: ${username}` : ''}`);
 
@@ -75,16 +77,24 @@ Deno.serve(async (req) => {
     console.log(`📊 [habbo-feed] Found ${activities?.length || 0} raw activities`);
 
     // Get latest snapshots for all tracked users for richer data
-    const { data: latestSnapshots } = await supabase
+    const cutoffIso = onlineWithinSeconds ? new Date(Date.now() - onlineWithinSeconds * 1000).toISOString() : undefined;
+    let snapshotsQuery = supabase
       .from('habbo_user_snapshots')
       .select('*')
       .eq('hotel', hotel)
       .order('created_at', { ascending: false });
+    if (cutoffIso) {
+      snapshotsQuery = snapshotsQuery.gte('created_at', cutoffIso);
+    }
+    const { data: latestSnapshots } = await snapshotsQuery;
 
     // Create user snapshots map
     const userSnapshotMap: { [username: string]: any } = {};
+    const cutoffDate = cutoffIso ? new Date(cutoffIso) : undefined;
     latestSnapshots?.forEach(snapshot => {
-      if (!userSnapshotMap[snapshot.habbo_name]) {
+      // When filtering for onlineWithinSeconds, only include users definitely online or with recent web visit
+      const passesOnlineFilter = !cutoffDate || (snapshot.is_online === true || (snapshot.last_web_visit && new Date(snapshot.last_web_visit) >= cutoffDate));
+      if (passesOnlineFilter && !userSnapshotMap[snapshot.habbo_name]) {
         userSnapshotMap[snapshot.habbo_name] = snapshot;
       }
     });
@@ -276,7 +286,8 @@ Deno.serve(async (req) => {
         meta: {
           source: 'live',
           timestamp: new Date().toISOString(),
-          count: feedActivities.length
+          count: feedActivities.length,
+          filter: onlineWithinSeconds ? { onlineWithinSeconds } : undefined
         }
       }),
       {

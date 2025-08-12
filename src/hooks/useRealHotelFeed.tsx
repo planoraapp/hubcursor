@@ -4,7 +4,7 @@ import { habboFeedService, FeedActivity, FeedResponse } from '@/services/habboFe
 import { useUnifiedAuth } from './useUnifiedAuth';
 import { useMemo } from 'react';
 
-export const useRealHotelFeed = () => {
+export const useRealHotelFeed = (options?: { onlineWithinSeconds?: number }) => {
   const { habboAccount } = useUnifiedAuth();
   
   const hotel = useMemo(() => {
@@ -22,8 +22,8 @@ export const useRealHotelFeed = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['real-hotel-feed', hotel],
-    queryFn: () => habboFeedService.getHotelFeed(hotel, 20),
+    queryKey: ['real-hotel-feed', hotel, options?.onlineWithinSeconds ?? null],
+    queryFn: () => habboFeedService.getHotelFeed(hotel, 20, { onlineWithinSeconds: options?.onlineWithinSeconds }),
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
     retry: 3,

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,10 @@ import { habboFeedService } from '@/services/habboFeedService';
 import { useUserFigures } from '@/hooks/useUserFigures';
 
 export const RealHotelFeedColumn: React.FC = () => {
-  const { activities, aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useRealHotelFeed();
+  const [onlineWindowSec, setOnlineWindowSec] = useState<number | null>(3600);
+  const { activities, aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useRealHotelFeed(
+    onlineWindowSec ? { onlineWithinSeconds: onlineWindowSec } : undefined
+  );
   
   const usernames = activities.map(activity => activity.username);
   const { figureMap } = useUserFigures(usernames);
@@ -20,6 +23,20 @@ export const RealHotelFeedColumn: React.FC = () => {
       console.log(`👥 [RealHotelFeedColumn] Total unique users: ${usernames.length} (source: ${metadata.source})`);
     }
   }, [activities, usernames.length, hotel, metadata.source]);
+
+  // Refresh feed when a global event is dispatched (e.g., after login)
+  useEffect(() => {
+    const handler = () => {
+      console.log('🔄 [RealHotelFeedColumn] feed:refresh received -> refetch');
+      refetch();
+    };
+    // @ts-ignore - Custom event type
+    window.addEventListener('feed:refresh', handler);
+    return () => {
+      // @ts-ignore - Custom event type
+      window.removeEventListener('feed:refresh', handler);
+    };
+  }, [refetch]);
 
   const getSourceIcon = () => {
     switch (metadata.source) {
@@ -83,6 +100,27 @@ export const RealHotelFeedColumn: React.FC = () => {
                 </Badge>
               )}
               
+              <div className="flex items-center rounded bg-white/10 overflow-hidden">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`text-white px-2 ${onlineWindowSec === null ? 'bg-white/20' : 'hover:bg-white/20'}`}
+                  onClick={() => setOnlineWindowSec(null)}
+                  title="Mostrar todos"
+                >
+                  Todos
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`text-white px-2 ${onlineWindowSec === 3600 ? 'bg-white/20' : 'hover:bg-white/20'}`}
+                  onClick={() => setOnlineWindowSec(3600)}
+                  title="Mostrar online na última hora"
+                >
+                  Online (1h)
+                </Button>
+              </div>
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -111,6 +149,9 @@ export const RealHotelFeedColumn: React.FC = () => {
             <span>Última atualização: {getLastUpdateText()}</span>
             {metadata.count > 0 && (
               <span>• {metadata.count} atividades</span>
+            )}
+            {onlineWindowSec && (
+              <span>• filtro: online em {Math.floor((onlineWindowSec || 0) / 60)}min</span>
             )}
           </div>
         </CardHeader>

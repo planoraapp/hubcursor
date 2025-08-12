@@ -40,10 +40,13 @@ interface FeedResponse {
 class HabboFeedService {
   private baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/functions/v1';
 
-  async getHotelFeed(hotel: string = 'com.br', limit: number = 20): Promise<FeedResponse> {
+  async getHotelFeed(hotel: string = 'com.br', limit: number = 20, options?: { onlineWithinSeconds?: number }): Promise<FeedResponse> {
     console.log(`🎯 [HabboFeedService] Fetching feed for hotel: ${hotel}`);
-    
-    const response = await fetch(`${this.baseUrl}/habbo-feed?hotel=${encodeURIComponent(hotel)}&limit=${limit}`, {
+    const params = new URLSearchParams({ hotel: hotel, limit: String(limit) });
+    if (options?.onlineWithinSeconds) {
+      params.set('onlineWithinSeconds', String(options.onlineWithinSeconds));
+    }
+    const response = await fetch(`${this.baseUrl}/habbo-feed?${params.toString()}`, {
       method: 'GET',
     });
 
@@ -53,7 +56,6 @@ class HabboFeedService {
 
     const data = await response.json();
     console.log(`✅ [HabboFeedService] Received ${data.activities?.length || 0} activities for ${hotel}`);
-    
     return data;
   }
 
@@ -93,6 +95,19 @@ class HabboFeedService {
     }
 
     console.log(`✅ [HabboFeedService] Sync triggered for ${habboName}`);
+  }
+
+  async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<void> {
+    console.log(`🧭 [HabboFeedService] Ensure tracked + sync for ${payload.habbo_name} (${payload.hotel})`);
+    const response = await fetch(`${this.baseUrl}/habbo-ensure-tracked`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to ensure tracked: ${response.status}`);
+    }
+    console.log('✅ [HabboFeedService] ensureTracked succeeded');
   }
 
   // Helper functions for HabboWidgets-style formatting

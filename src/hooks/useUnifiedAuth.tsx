@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { habboFeedService } from '@/services/habboFeedService';
 import { useToast } from './use-toast';
 
 interface HabboAccount {
@@ -174,6 +175,26 @@ export const useUnifiedAuth = () => {
   const isAdmin = () => {
     return habboAccount?.is_admin === true;
   };
+
+  // Ensure tracked + sync when we have a habboAccount, then refresh feed
+  useEffect(() => {
+    (async () => {
+      try {
+        if (user && habboAccount?.habbo_id && habboAccount?.hotel && habboAccount?.habbo_name) {
+          console.log('🧭 [useUnifiedAuth] Ensuring tracked and syncing user...');
+          await habboFeedService.ensureTrackedAndSynced({
+            habbo_name: habboAccount.habbo_name,
+            habbo_id: habboAccount.habbo_id,
+            hotel: habboAccount.hotel,
+          });
+          // Notify feed to refresh
+          window.dispatchEvent(new CustomEvent('feed:refresh'));
+        }
+      } catch (e) {
+        console.error('❌ [useUnifiedAuth] ensureTracked failed:', e);
+      }
+    })();
+  }, [user?.id, habboAccount?.habbo_id, habboAccount?.hotel]);
 
   return {
     user,

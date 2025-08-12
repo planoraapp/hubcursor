@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.habbo-widgets-proxy]
 verify_jwt = false
+
+[functions.habbo-ensure-tracked]
+verify_jwt = false
