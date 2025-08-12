@@ -1,4 +1,5 @@
 import { getAvatarUrl, getBadgeUrl, getUserByName } from '@/lib/habboApi';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface HabboUser {
   id: string;
@@ -55,7 +56,7 @@ class HabboProxyService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    this.baseUrl = '';
   }
 
   private getHotelDomain(hotel: string): string {
@@ -68,23 +69,18 @@ class HabboProxyService {
   async getUserProfile(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
     try {
       const domain = this.getHotelDomain(hotel);
-      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
+        body: {
           endpoint: `users?name=${encodeURIComponent(username)}`,
-          hotel: domain
-        }),
+          hotel: domain,
+        },
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch profile for ${username}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch profile for ${username}:`, error?.message || 'no data');
         return null;
       }
 
-      const data = await response.json();
       console.log(`[HabboProxyService] Raw profile response for ${username}:`, data);
 
       if (!data || (Array.isArray(data) && data.length === 0)) {
@@ -120,24 +116,19 @@ class HabboProxyService {
   async getUserBadges(username: string, hotel: string = 'com.br'): Promise<HabboBadge[]> {
     try {
       const domain = this.getHotelDomain(hotel);
-      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
+        body: {
           endpoint: `users/${encodeURIComponent(username)}/badges`,
-          hotel: domain
-        }),
+          hotel: domain,
+        },
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch badges for ${username}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch badges for ${username}:`, error?.message || 'no data');
         return [];
       }
-
-      const data = await response.json();
       console.log(`[HabboProxyService] Raw badges response for ${username}:`, data);
+
 
       return (data as any[]).map(badge => ({
         code: badge.code,
@@ -153,24 +144,19 @@ class HabboProxyService {
   async getUserPhotos(username: string, hotel: string = 'com.br'): Promise<HabboPhoto[]> {
     try {
       const domain = this.getHotelDomain(hotel);
-      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
+        body: {
           endpoint: `users/${encodeURIComponent(username)}/photos`,
-          hotel: domain
-        }),
+          hotel: domain,
+        },
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch photos for ${username}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch photos for ${username}:`, error?.message || 'no data');
         return [];
       }
-
-      const data = await response.json();
       console.log(`[HabboProxyService] Raw photos response for ${username}:`, data);
+
 
       // Handle different response formats including photos array
       let photosArray = [];
@@ -219,24 +205,20 @@ class HabboProxyService {
   async getUserFriends(username: string, hotel: string = 'com.br'): Promise<HabboFriend[]> {
     try {
       const domain = this.getHotelDomain(hotel);
-      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
+        body: {
           endpoint: `users/${encodeURIComponent(username)}/friends`,
-          hotel: domain
-        }),
+          hotel: domain,
+        },
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch friends for ${username}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch friends for ${username}:`, error?.message || 'no data');
         return [];
       }
 
-      const data = await response.json();
       console.log(`[HabboProxyService] Raw friends response for ${username}:`, data);
+
 
       // Handle different response formats including friends array
       let friendsArray = [];
@@ -291,24 +273,20 @@ class HabboProxyService {
   async getHotelTicker(hotel: string = 'com.br'): Promise<TickerResponse> {
     try {
       const domain = this.getHotelDomain(hotel);
-      const response = await fetch(`${this.baseUrl}/proxy/habbo-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
+        body: {
           endpoint: `community/ticker`,
-          hotel: domain
-        }),
+          hotel: domain,
+        },
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch hotel ticker for ${hotel}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch hotel ticker for ${hotel}:`, error?.message || 'no data');
         return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
       }
 
-      const data = await response.json();
       console.log(`[HabboProxyService] Raw ticker response for ${hotel}:`, data);
+
 
       // Normalize activities array
       let activities: any[] = [];
@@ -367,20 +345,15 @@ class HabboProxyService {
 
   async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/habbo-ensure-tracked`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+      const { data, error } = await supabase.functions.invoke('habbo-ensure-tracked', {
+        body: payload,
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, response.status);
+      if (error) {
+        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, error.message);
         return null;
       }
 
-      const data = await response.json();
       console.log(`[HabboProxyService] Ensure tracked response for ${payload.habbo_name}:`, data);
       return data;
     } catch (error) {

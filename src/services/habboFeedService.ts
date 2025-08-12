@@ -49,28 +49,18 @@ class HabboFeedService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    this.baseUrl = '';
   }
 
   async getUserFeed(hotel: string, username: string) {
     try {
-      const response = await fetch(`${this.baseUrl}/api/habbo-feed`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hotel,
-          username
-        }),
+      const { data, error } = await supabase.functions.invoke('habbo-feed', {
+        body: { hotel, username },
       });
-
-      if (!response.ok) {
-        console.warn(`Failed to fetch user feed for ${username}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch user feed for ${username}:`, error?.message || 'no data');
         return null;
       }
-
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error(`Error fetching user feed for ${username}:`, error);
@@ -86,35 +76,37 @@ class HabboFeedService {
       mode?: 'official' | 'database' | 'hybrid';
       offsetHours?: number;
     }
+  async getHotelFeed(
+    hotel: string,
+    limit: number = 50,
+    options?: {
+      onlineWithinSeconds?: number;
+      mode?: 'official' | 'database' | 'hybrid';
+      offsetHours?: number;
+    }
   ): Promise<FeedResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/habbo-feed`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habbo-feed', {
+        body: {
           hotel,
           limit,
-          ...options
-        }),
+          ...options,
+        },
       });
 
-      if (!response.ok) {
-        console.warn(`Failed to fetch hotel feed for ${hotel}:`, response.status);
+      if (error || !data) {
+        console.warn(`Failed to fetch hotel feed for ${hotel}:`, error?.message || 'no data');
         return {
           activities: [],
           meta: {
             source: 'database',
             timestamp: new Date().toISOString(),
             count: 0,
-            onlineCount: 0
-          }
+            onlineCount: 0,
+          },
         };
       }
-
-      const data = await response.json();
-      return data;
+      return data as FeedResponse;
     } catch (error) {
       console.error(`Error fetching hotel feed for ${hotel}:`, error);
       return {
@@ -123,31 +115,21 @@ class HabboFeedService {
           source: 'database',
           timestamp: new Date().toISOString(),
           count: 0,
-          onlineCount: 0
-        }
+          onlineCount: 0,
+        },
       };
     }
   }
 
   async triggerUserSync(username: string, hotel: string) {
     try {
-      const response = await fetch(`${this.baseUrl}/api/habbo-sync-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          habbo_name: username,
-          hotel
-        }),
+      const { data, error } = await supabase.functions.invoke('habbo-sync-user', {
+        body: { habbo_name: username, hotel },
       });
-
-      if (!response.ok) {
-        console.warn(`Failed to trigger sync for ${username}:`, response.status);
+      if (error) {
+        console.warn(`Failed to trigger sync for ${username}:`, error.message);
         return null;
       }
-
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error(`Error triggering sync for ${username}:`, error);
@@ -157,20 +139,13 @@ class HabboFeedService {
 
   async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/habbo-ensure-tracked`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+      const { data, error } = await supabase.functions.invoke('habbo-ensure-tracked', {
+        body: payload,
       });
-
-      if (!response.ok) {
-        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, response.status);
+      if (error) {
+        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, error.message);
         return null;
       }
-
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error(`Error ensuring tracking for ${payload.habbo_name}:`, error);
@@ -180,23 +155,13 @@ class HabboFeedService {
 
   async discoverAndSyncOnlineUsers(hotel: string, limit: number = 50): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/discover-online-users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hotel,
-          limit
-        }),
+      const { data, error } = await supabase.functions.invoke('habbo-discover-online', {
+        body: { hotel, limit },
       });
-
-      if (!response.ok) {
-        console.warn(`Failed to discover online users for ${hotel}:`, response.status);
+      if (error) {
+        console.warn(`Failed to discover online users for ${hotel}:`, error.message);
         return null;
       }
-
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error(`Error discovering online users for ${hotel}:`, error);
@@ -206,22 +171,13 @@ class HabboFeedService {
 
   async triggerBatchSync(hotel: string): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/batch-sync`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hotel
-        }),
+      const { data, error } = await supabase.functions.invoke('habbo-sync-batch', {
+        body: { hotel },
       });
-
-      if (!response.ok) {
-        console.warn(`Failed to trigger batch sync for ${hotel}:`, response.status);
+      if (error) {
+        console.warn(`Failed to trigger batch sync for ${hotel}:`, error.message);
         return null;
       }
-
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error(`Error triggering batch sync for ${hotel}:`, error);
