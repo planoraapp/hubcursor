@@ -10,6 +10,7 @@ export interface HabboFriend {
 
 export interface TickerActivity {
   username: string;
+  description: string;
   action: string;
   timestamp: string;
   time: string;
