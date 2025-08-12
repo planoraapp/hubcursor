@@ -3,7 +3,7 @@ import React from 'react';
 import MobileLayout from '../layouts/MobileLayout';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
 import { EnhancedFriendsFeedColumn } from '@/components/console/EnhancedFriendsFeedColumn';
-import { RealHotelFeedColumn } from '@/components/console/RealHotelFeedColumn';
+import { OfficialHotelTickerColumn } from '@/components/console/OfficialHotelTickerColumn';
 
 export const Console: React.FC = () => {
   return (
@@ -16,14 +16,14 @@ export const Console: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
-            {/* Left Column - Compact Feed */}
+            {/* Left Column - My Account */}
             <div className="space-y-6">
               <MyAccountColumn />
             </div>
 
-            {/* Center Column - Real Hotel Feed */}
+            {/* Center Column - Official Hotel Ticker */}
             <div className="xl:col-span-1">
-              <RealHotelFeedColumn />
+              <OfficialHotelTickerColumn />
             </div>
 
             {/* Right Column - Enhanced Friends Feed */}
