@@ -6,11 +6,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUnifiedClothingAPI as useUnifiedClothing, UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
-import IntelligentClothingThumbnail from '../HabboEditor/IntelligentClothingThumbnail';
 
 interface UnifiedCatalogGridProps {
   onItemSelect: (item: UnifiedClothingItem) => void;
 }
+
+// Simple clothing thumbnail component for catalog
+const ClothingThumbnail = ({ item }: { item: UnifiedClothingItem }) => {
+  return (
+    <div className="aspect-square bg-gray-100 rounded border flex items-center justify-center">
+      <img
+        src={item.imageUrl}
+        alt={item.name}
+        className="w-full h-full object-contain"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.figureId}&size=m&direction=2&head_direction=2`;
+        }}
+      />
+    </div>
+  );
+};
 
 export const UnifiedCatalogGrid = ({ onItemSelect }: UnifiedCatalogGridProps) => {
   const [search, setSearch] = useState('');
@@ -105,11 +121,7 @@ export const UnifiedCatalogGrid = ({ onItemSelect }: UnifiedCatalogGridProps) =>
               className="aspect-square p-0.5 rounded hover:bg-gray-50"
               title={item.name}
             >
-              <IntelligentClothingThumbnail 
-                item={item} 
-                size="m" 
-                className="w-full h-full"
-              />
+              <ClothingThumbnail item={item} />
             </button>
           ))
         ) : (

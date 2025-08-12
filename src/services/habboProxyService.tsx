@@ -102,7 +102,18 @@ export const habboProxyService: HabboProxyService = {
       }
 
       const tickerData = await response.json();
-      return tickerData || [];
+      
+      // Ensure each ticker item has the required properties
+      const processedTicker = (tickerData || []).map((item: any) => ({
+        username: item.username || item.user || 'Unknown',
+        description: item.description || item.message || 'Activity',
+        action: item.action || item.type || 'action',
+        timestamp: item.timestamp || new Date().toISOString(),
+        time: item.time || new Date().toLocaleTimeString(),
+        figureString: item.figureString || ''
+      }));
+      
+      return processedTicker;
       
     } catch (error) {
       console.error(`❌ [HabboProxy] Error fetching ticker for ${hotel}:`, error);
