@@ -87,41 +87,11 @@ class HabboFeedService {
         },
       });
 
+      let baseResponse: FeedResponse = data as FeedResponse;
+
       if (error || !data) {
         console.warn(`Failed to fetch hotel feed for ${hotel}:`, error?.message || 'no data');
-
-        // Fallback: try official widgets proxy to avoid empty feed
-        try {
-          const { data: tickerData, error: tickerError } = await supabase.functions.invoke('habbo-widgets-proxy', {
-            body: { hotel },
-          });
-
-          if (!tickerError && tickerData?.activities?.length) {
-            const mapped = {
-              activities: (tickerData.activities as any[]).slice(0, limit).map((activity: any) => ({
-                username: activity.username || activity.habboName || 'Unknown',
-                description: activity.activity || activity.description || 'fez uma atividade',
-                lastUpdate: activity.timestamp || activity.time || new Date().toISOString(),
-                counts: {},
-                friends: [],
-                badges: [],
-                photos: [],
-                groups: [],
-              })),
-              meta: {
-                source: 'official',
-                timestamp: new Date().toISOString(),
-                count: tickerData.activities.length,
-                onlineCount: 0,
-              },
-            } as FeedResponse;
-            return mapped;
-          }
-        } catch (fallbackErr) {
-          console.warn('Fallback to widgets proxy failed:', fallbackErr);
-        }
-
-        return {
+        baseResponse = {
           activities: [],
           meta: {
             source: 'database',
@@ -131,7 +101,51 @@ class HabboFeedService {
           },
         };
       }
-      return data as FeedResponse;
+
+      // If the database feed is sparse, enrich with official ticker items
+      if (!baseResponse.activities || baseResponse.activities.length < Math.min(20, limit)) {
+        try {
+          const ticker = await (await import('./habboProxyService')).habboProxyService.getHotelTicker(hotel);
+          if (ticker.activities?.length) {
+            const mappedTicker: FeedActivity[] = ticker.activities.slice(0, limit).map((t) => ({
+              username: t.username,
+              description: t.description || t.activity,
+              lastUpdate: t.timestamp,
+              counts: { friends: 0, badges: 0, photos: 0 },
+              friends: [],
+              badges: [],
+              photos: [],
+              groups: [],
+            }));
+
+            // Merge by username+lastUpdate (avoid duplicates)
+            const key = (a: FeedActivity) => `${a.username}-${a.lastUpdate}`;
+            const existingMap = new Map((baseResponse.activities || []).map((a) => [key(a), a]));
+            for (const item of mappedTicker) {
+              if (!existingMap.has(key(item))) {
+                existingMap.set(key(item), item);
+              }
+            }
+            const merged = Array.from(existingMap.values())
+              .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
+              .slice(0, limit);
+
+            return {
+              activities: merged,
+              meta: {
+                source: 'hybrid',
+                timestamp: new Date().toISOString(),
+                count: merged.length,
+                onlineCount: baseResponse?.meta?.onlineCount || 0,
+              },
+            };
+          }
+        } catch (enrichErr) {
+          console.warn('Failed to enrich with official ticker:', enrichErr);
+        }
+      }
+
+      return (baseResponse || { activities: [], meta: { source: 'database', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } });
     } catch (error) {
       console.error(`Error fetching hotel feed for ${hotel}:`, error);
       return {

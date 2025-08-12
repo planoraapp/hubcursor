@@ -196,37 +196,36 @@ const ExpandedUserCard: React.FC<ExpandedUserCardProps> = ({ user, hotel }) => {
               <p className="text-xs text-white/60">Carregando atividades...</p>
             </div>
           ) : userFeed?.activities && userFeed.activities.length > 0 ? (
-            <div className="space-y-2">
-              <h5 className="text-xs font-semibold text-green-300">Atividades Recentes:</h5>
-              {userFeed.activities.slice(0, 1).map((activity, index) => (
-                <div key={index} className="text-xs text-white/80 bg-white/5 p-2 rounded">
-                  <p>{activity.description}</p>
-                  <p className="text-white/60 mt-1">
-                    {habboFeedService.formatTimeAgo(activity.lastUpdate)}
-                  </p>
-                  
-                  {/* Show some details */}
-                  {Array.isArray(activity.groups) && activity.groups.length > 0 && (
-                    <div className="mt-2">
-                      <span className="text-yellow-300">Grupos: </span>
-                      {(activity.groups || []).slice(0, 2).map(g => g.name).join(', ')}
-                    </div>
-                  )}
-                  {Array.isArray(activity.friends) && activity.friends.length > 0 && (
-                    <div className="mt-1">
-                      <span className="text-green-300">Amigos: </span>
-                      {(activity.friends || []).slice(0, 3).map(f => f.name).join(', ')}
-                    </div>
-                  )}
-                  {Array.isArray(activity.badges) && activity.badges.length > 0 && (
-                    <div className="mt-1">
-                      <span className="text-purple-300">Emblemas: </span>
-                      {(activity.badges || []).slice(0, 2).map(b => b.code).join(', ')}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+              <div className="space-y-2">
+                <h5 className="text-xs font-semibold text-green-300">Atividades Recentes:</h5>
+                {(userFeed.activities || []).slice(0, 5).map((activity, index) => (
+                  <div key={index} className="text-xs text-white/80 bg-white/5 p-2 rounded">
+                    <p>{activity.description}</p>
+                    <p className="text-white/60 mt-1">
+                      {habboFeedService.formatTimeAgo(activity.lastUpdate)}
+                    </p>
+                    {/* Show some details */}
+                    {Array.isArray(activity.groups) && activity.groups.length > 0 && (
+                      <div className="mt-2">
+                        <span className="text-yellow-300">Grupos: </span>
+                        {(activity.groups || []).slice(0, 2).map(g => g.name).join(', ')}
+                      </div>
+                    )}
+                    {Array.isArray(activity.friends) && activity.friends.length > 0 && (
+                      <div className="mt-1">
+                        <span className="text-green-300">Amigos: </span>
+                        {(activity.friends || []).slice(0, 3).map(f => f.name).join(', ')}
+                      </div>
+                    )}
+                    {Array.isArray(activity.badges) && activity.badges.length > 0 && (
+                      <div className="mt-1">
+                        <span className="text-purple-300">Emblemas: </span>
+                        {(activity.badges || []).slice(0, 2).map(b => b.code).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
           ) : (
             <div className="text-center py-4">
               <p className="text-xs text-white/60 mb-2">Nenhuma atividade encontrada</p>

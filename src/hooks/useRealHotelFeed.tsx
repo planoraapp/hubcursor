@@ -19,7 +19,7 @@ export const useRealHotelFeed = (options?: {
   }, [habboAccount?.hotel]);
 
   // Use official mode by default for live ticker behavior
-  const mode = options?.mode || 'official';
+  const mode = options?.mode || 'hybrid';
   const baseLimit = 50; // Base limit for initial load
   const onlineWithinSeconds = options?.onlineWithinSeconds || 1800; // 30 minutes default
 
@@ -60,7 +60,7 @@ export const useRealHotelFeed = (options?: {
         }
       );
     },
-    refetchInterval: mode === 'official' ? 30 * 1000 : 60 * 1000, // More frequent for official
+    refetchInterval: mode === 'hybrid' ? 5 * 1000 : mode === 'official' ? 10 * 1000 : 60 * 1000, // 5s for hybrid
     staleTime: 15 * 1000, // 15 seconds
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
