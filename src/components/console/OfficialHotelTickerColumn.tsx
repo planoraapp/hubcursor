@@ -1,60 +1,75 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Radio, Heart, Camera, UserPlus, Clock, Quote } from 'lucide-react';
-import { useOfficialHotelTicker } from '@/hooks/useOfficialHotelTicker';
+import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Heart, Camera, UserPlus, Clock, Quote } from 'lucide-react';
+import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { habboFeedService } from '@/services/habboFeedService';
 
 export const OfficialHotelTickerColumn: React.FC = () => {
-  const { activities, isLoading, error, hotel, metadata, refetch, success } = useOfficialHotelTicker();
+  const { 
+    activities, 
+    isLoading, 
+    error, 
+    hotel, 
+    metadata, 
+    refetch, 
+    discoverOnlineUsers 
+  } = useRealHotelFeed({ 
+    mode: 'hybrid',
+    onlineWithinSeconds: 7200 // 2 horas para captar mais atividades
+  });
 
-  useEffect(() => {
-    if (activities.length > 0) {
-      console.log(`📊 [OfficialTicker] Displaying ${activities.length} official ticker activities for hotel ${hotel}`);
-      console.log(`👥 [OfficialTicker] Online users: ${metadata.onlineCount || 0}`);
-    }
-  }, [activities, hotel, metadata]);
+  const syncIntervalRef = useRef<NodeJS.Timeout>();
+  const hasInitialized = useRef(false);
 
-  // Refresh ticker when a global event is dispatched
+  // Inicializar descoberta de usuários e configurar sync periódico
   useEffect(() => {
-    const handler = () => {
-      console.log('🔄 [OfficialTicker] feed:refresh received -> refetch ticker');
-      refetch();
+    const initializeFeed = async () => {
+      if (hasInitialized.current) return;
+      hasInitialized.current = true;
+
+      console.log('🎯 [Feed Hotel] Inicializando descoberta de usuários...');
+      
+      // Descobrir usuários online para popular o feed
+      try {
+        await discoverOnlineUsers();
+        console.log('✅ [Feed Hotel] Descoberta inicial concluída');
+      } catch (error) {
+        console.warn('⚠️ [Feed Hotel] Erro na descoberta inicial:', error);
+      }
+
+      // Configurar sync periódico a cada 4 minutos
+      syncIntervalRef.current = setInterval(async () => {
+        try {
+          console.log('🔄 [Feed Hotel] Executando sync batch periódico...');
+          await habboFeedService.triggerBatchSync(hotel);
+          // Refetch após o batch sync
+          setTimeout(() => refetch(), 2000);
+        } catch (error) {
+          console.warn('⚠️ [Feed Hotel] Erro no sync batch:', error);
+        }
+      }, 4 * 60 * 1000); // 4 minutos
     };
-    // @ts-ignore - Custom event type
-    window.addEventListener('feed:refresh', handler);
+
+    initializeFeed();
+
     return () => {
-      // @ts-ignore - Custom event type
-      window.removeEventListener('feed:refresh', handler);
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
     };
-  }, [refetch]);
+  }, [hotel, discoverOnlineUsers, refetch]);
 
-  const getSourceIcon = () => {
-    switch (metadata.source) {
-      case 'official':
-        return <Radio className="w-4 h-4 text-green-500" />;
-      default:
-        return <Activity className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getSourceColor = () => {
-    switch (metadata.source) {
-      case 'official':
-        return 'bg-green-500/20 text-green-200';
-      default:
-        return 'bg-gray-500/20 text-gray-200';
-    }
-  };
-
-  const getSourceLabel = () => {
-    switch (metadata.source) {
-      case 'official':
-        return 'Ticker Oficial';
-      default:
-        return 'API Oficial';
+  const handleForceUpdate = async () => {
+    console.log('🔄 [Feed Hotel] Forçando atualização completa...');
+    try {
+      await discoverOnlineUsers();
+      await habboFeedService.triggerBatchSync(hotel);
+      setTimeout(() => refetch(), 2000);
+    } catch (error) {
+      console.error('❌ [Feed Hotel] Erro na atualização forçada:', error);
     }
   };
 
@@ -68,16 +83,16 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hotel className="w-5 h-5" />
-            Ticker Oficial ({hotel})
+            Feed do Hotel ({hotel})
             {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
             
             <div className="ml-auto flex items-center gap-2">
-              <Badge className={`text-xs ${getSourceColor()} border-0`}>
-                {getSourceIcon()}
-                <span className="ml-1">{getSourceLabel()}</span>
+              <Badge className="text-xs bg-blue-500/20 text-blue-200 border-0">
+                <Activity className="w-4 h-4" />
+                <span className="ml-1">Feed Unificado</span>
               </Badge>
               
-              {metadata.onlineCount !== undefined && (
+              {metadata.onlineCount !== undefined && metadata.onlineCount > 0 && (
                 <Badge variant="secondary" className="bg-green-500/20 text-green-200">
                   {metadata.onlineCount} online
                 </Badge>
@@ -92,10 +107,10 @@ export const OfficialHotelTickerColumn: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => refetch()}
+                onClick={handleForceUpdate}
                 disabled={isLoading}
                 className="text-white hover:bg-white/10 p-1 h-auto"
-                title="Atualizar ticker"
+                title="Forçar atualização"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
@@ -107,12 +122,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
             {metadata.count > 0 && (
               <span>• {metadata.count} atividades</span>
             )}
-            {metadata.totalAvailable && metadata.totalAvailable > metadata.count && (
-              <span>• {metadata.totalAvailable} total disponível</span>
-            )}
-            {metadata.message && (
-              <span className="text-yellow-300">• {metadata.message}</span>
-            )}
+            <span>• Fonte: {metadata.source === 'database' ? 'Base de Dados' : 'API Oficial'}</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -120,16 +130,16 @@ export const OfficialHotelTickerColumn: React.FC = () => {
             {isLoading && activities.length === 0 ? (
               <div className="text-center text-white/70 py-8">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                <p>Carregando ticker oficial...</p>
-                <p className="text-xs mt-1">Conectando com API oficial do Habbo...</p>
+                <p>Carregando feed do hotel...</p>
+                <p className="text-xs mt-1">Coletando dados dos usuários...</p>
               </div>
             ) : error ? (
               <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Erro ao carregar ticker oficial</p>
+                <p>Erro ao carregar feed</p>
                 <p className="text-xs mt-1 text-red-300">{error.message}</p>
                 <Button 
-                  onClick={() => refetch()}
+                  onClick={handleForceUpdate}
                   disabled={isLoading}
                   className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
                 >
@@ -174,8 +184,8 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                               Online
                             </Badge>
                           )}
-                          <Badge className="bg-blue-500/20 text-blue-300 text-xs border-blue-500/30">
-                            Oficial
+                          <Badge className="bg-purple-500/20 text-purple-300 text-xs border-purple-500/30">
+                            {metadata.source === 'database' ? 'BD' : 'Oficial'}
                           </Badge>
                         </div>
                         
@@ -218,7 +228,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                         
                         <div className="flex items-center gap-2 text-xs text-white/50">
                           <Clock className="w-3 h-3" />
-                          <span>Última atividade {habboFeedService.formatTimeAgo(activity.lastUpdate)}</span>
+                          <span>Atividade {habboFeedService.formatTimeAgo(activity.lastUpdate)}</span>
                           {activity.profile?.memberSince && (
                             <>
                               <span>•</span>
@@ -336,22 +346,16 @@ export const OfficialHotelTickerColumn: React.FC = () => {
             ) : (
               <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma atividade disponível no ticker oficial</p>
-                <p className="text-xs mt-1">
-                  {success 
-                    ? "O ticker oficial não retornou dados para este hotel no momento."
-                    : "Tentando conectar com o ticker oficial do Habbo..."
-                  }
-                </p>
+                <p>Nenhuma atividade encontrada</p>
+                <p className="text-xs mt-1">Aguarde alguns minutos para que os dados sejam coletados...</p>
                 <Button 
-                  onClick={() => refetch()}
+                  onClick={handleForceUpdate}
                   disabled={isLoading}
                   className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                  Tentar Novamente
+                  Iniciar Coleta
                 </Button>
-                <p className="text-xs mt-2 text-blue-300">ℹ️ Sistema conectado diretamente com a API oficial do Habbo</p>
               </div>
             )}
           </div>
