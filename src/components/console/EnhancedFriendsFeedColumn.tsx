@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -39,7 +40,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onUserFound, suggestions }) => 
     
     setIsSearching(true);
     try {
-      const user = await habboProxyService.getUserByName(nameToSearch);
+      const user = await habboProxyService.getUserProfile(nameToSearch);
       if (user) {
         onUserFound(user);
         toast.success(`Usuário ${user.name} encontrado!`);
@@ -321,7 +322,10 @@ export const EnhancedFriendsFeedColumn: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium truncate text-white">{activity.friend.name}</p>
                           <p className="text-xs text-white/60 mb-1">
-                            {activity.activity || activity.description || 'fez uma atividade'}
+                            {activity.activities.length > 0 
+                              ? activity.activities[0].activity || activity.activities[0].description || 'fez uma atividade'
+                              : 'fez uma atividade'
+                            }
                           </p>
                           <div className="flex items-center gap-1 mt-1">
                             <Clock className="w-3 h-3 text-white/50" />
