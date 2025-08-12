@@ -276,6 +276,50 @@ export type Database = {
         }
         Relationships: []
       }
+      habbo_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string
+          details: Json | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          snapshot_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description: string
+          details?: Json | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id?: string
+          snapshot_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string
+          details?: Json | null
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          snapshot_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habbo_activities_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "habbo_user_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habbo_badges: {
         Row: {
           badge_code: string
@@ -522,6 +566,60 @@ export type Database = {
         }
         Relationships: []
       }
+      habbo_user_snapshots: {
+        Row: {
+          badges_count: number | null
+          created_at: string
+          figure_string: string | null
+          friends_count: number | null
+          groups_count: number | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          is_online: boolean | null
+          last_web_visit: string | null
+          member_since: string | null
+          motto: string | null
+          photos_count: number | null
+          raw_data: Json | null
+        }
+        Insert: {
+          badges_count?: number | null
+          created_at?: string
+          figure_string?: string | null
+          friends_count?: number | null
+          groups_count?: number | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id?: string
+          is_online?: boolean | null
+          last_web_visit?: string | null
+          member_since?: string | null
+          motto?: string | null
+          photos_count?: number | null
+          raw_data?: Json | null
+        }
+        Update: {
+          badges_count?: number | null
+          created_at?: string
+          figure_string?: string | null
+          friends_count?: number | null
+          groups_count?: number | null
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          is_online?: boolean | null
+          last_web_visit?: string | null
+          member_since?: string | null
+          motto?: string | null
+          photos_count?: number | null
+          raw_data?: Json | null
+        }
+        Relationships: []
+      }
       home_assets: {
         Row: {
           bucket_name: string
@@ -603,6 +701,36 @@ export type Database = {
           id?: string
           photo_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tracked_habbo_users: {
+        Row: {
+          created_at: string
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          habbo_id: string
+          habbo_name: string
+          hotel?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
