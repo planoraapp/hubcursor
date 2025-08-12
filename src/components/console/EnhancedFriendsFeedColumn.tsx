@@ -206,22 +206,22 @@ const ExpandedUserCard: React.FC<ExpandedUserCardProps> = ({ user, hotel }) => {
                   </p>
                   
                   {/* Show some details */}
-                  {activity.groups.length > 0 && (
+                  {Array.isArray(activity.groups) && activity.groups.length > 0 && (
                     <div className="mt-2">
                       <span className="text-yellow-300">Grupos: </span>
-                      {activity.groups.slice(0, 2).map(g => g.name).join(', ')}
+                      {(activity.groups || []).slice(0, 2).map(g => g.name).join(', ')}
                     </div>
                   )}
-                  {activity.friends.length > 0 && (
+                  {Array.isArray(activity.friends) && activity.friends.length > 0 && (
                     <div className="mt-1">
                       <span className="text-green-300">Amigos: </span>
-                      {activity.friends.slice(0, 3).map(f => f.name).join(', ')}
+                      {(activity.friends || []).slice(0, 3).map(f => f.name).join(', ')}
                     </div>
                   )}
-                  {activity.badges.length > 0 && (
+                  {Array.isArray(activity.badges) && activity.badges.length > 0 && (
                     <div className="mt-1">
                       <span className="text-purple-300">Emblemas: </span>
-                      {activity.badges.slice(0, 2).map(b => b.code).join(', ')}
+                      {(activity.badges || []).slice(0, 2).map(b => b.code).join(', ')}
                     </div>
                   )}
                 </div>
