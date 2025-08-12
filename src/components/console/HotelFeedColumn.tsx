@@ -3,13 +3,13 @@ import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, WifiOff, Archive } from 'lucide-react';
-import { useHotelTicker } from '@/hooks/useHotelTicker';
+import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, WifiOff, Archive, Heart, Camera, UserPlus, MessageSquare } from 'lucide-react';
+import { useHotelActivities } from '@/hooks/useHotelActivities';
 import { useUserFigures } from '@/hooks/useUserFigures';
 import { habboProxyService } from '@/services/habboProxyService';
 
 export const HotelFeedColumn: React.FC = () => {
-  const { aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useHotelTicker();
+  const { aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useHotelActivities();
   
   const usernames = aggregatedActivities.map(group => group.username);
   const { figureMap } = useUserFigures(usernames);
@@ -23,18 +23,25 @@ export const HotelFeedColumn: React.FC = () => {
     }
   }, [aggregatedActivities, usernames.length, hotel, metadata.source]);
 
-  const getActivityIcon = (description: string) => {
-    const desc = description.toLowerCase();
-    if (desc.includes('amigo') || desc.includes('friend')) {
-      return <Users className="w-4 h-4 text-blue-500" />;
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'motto_change':
+        return <MessageSquare className="w-4 h-4 text-blue-500" />;
+      case 'avatar_update':
+        return <Users className="w-4 h-4 text-purple-500" />;
+      case 'new_badge':
+        return <Trophy className="w-4 h-4 text-yellow-500" />;
+      case 'new_photo':
+        return <Camera className="w-4 h-4 text-pink-500" />;
+      case 'new_friend':
+        return <UserPlus className="w-4 h-4 text-green-500" />;
+      case 'status_change':
+        return <Activity className="w-4 h-4 text-orange-500" />;
+      case 'user_tracked':
+        return <Heart className="w-4 h-4 text-red-500" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-500" />;
     }
-    if (desc.includes('emblema') || desc.includes('badge') || desc.includes('achievement')) {
-      return <Trophy className="w-4 h-4 text-yellow-500" />;
-    }
-    if (desc.includes('grupo') || desc.includes('quarto') || desc.includes('group') || desc.includes('room')) {
-      return <Hotel className="w-4 h-4 text-purple-500" />;
-    }
-    return <Activity className="w-4 h-4 text-green-500" />;
   };
 
   const formatTime = (timeString: string) => {
@@ -48,10 +55,8 @@ export const HotelFeedColumn: React.FC = () => {
     switch (metadata.source) {
       case 'live':
         return <Wifi className="w-4 h-4 text-green-500" />;
-      case 'cache':
-        return <Archive className="w-4 h-4 text-yellow-500" />;
-      case 'mock':
-        return <WifiOff className="w-4 h-4 text-red-500" />;
+      case 'empty':
+        return <Archive className="w-4 h-4 text-gray-500" />;
       default:
         return <Activity className="w-4 h-4 text-gray-500" />;
     }
@@ -61,10 +66,8 @@ export const HotelFeedColumn: React.FC = () => {
     switch (metadata.source) {
       case 'live':
         return 'bg-green-500/20 text-green-200';
-      case 'cache':
-        return 'bg-yellow-500/20 text-yellow-200';
-      case 'mock':
-        return 'bg-red-500/20 text-red-200';
+      case 'empty':
+        return 'bg-gray-500/20 text-gray-200';
       default:
         return 'bg-gray-500/20 text-gray-200';
     }
@@ -73,11 +76,9 @@ export const HotelFeedColumn: React.FC = () => {
   const getSourceLabel = () => {
     switch (metadata.source) {
       case 'live':
-        return 'Ao Vivo';
-      case 'cache':
-        return 'Cache';
-      case 'mock':
-        return 'Simulado';
+        return 'Dados Reais';
+      case 'empty':
+        return 'Aguardando Dados';
       default:
         return 'Desconhecido';
     }
@@ -146,7 +147,7 @@ export const HotelFeedColumn: React.FC = () => {
               <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Erro ao carregar feed</p>
-                <p className="text-xs mt-1">Usando dados em cache...</p>
+                <p className="text-xs mt-1">Tentando novamente...</p>
               </div>
             ) : aggregatedActivities.length > 0 ? (
               aggregatedActivities.map((userGroup, index) => (
@@ -183,12 +184,12 @@ export const HotelFeedColumn: React.FC = () => {
                   <div className="space-y-2 ml-[4.5rem]">
                     {userGroup.activities.slice(0, 3).map((activity, actIndex) => (
                       <div key={actIndex} className="flex items-start gap-2 text-sm p-2 bg-white/5 rounded">
-                        {getActivityIcon(activity.description)}
+                        {getActivityIcon(activity.activity_type)}
                         <span className="text-white/90 flex-1">
                           {activity.description}
                         </span>
                         <span className="text-xs text-white/60 ml-2">
-                          {formatTime(activity.time)}
+                          {formatTime(activity.created_at)}
                         </span>
                       </div>
                     ))}
@@ -204,9 +205,9 @@ export const HotelFeedColumn: React.FC = () => {
               <div className="text-center text-white/70 py-8">
                 <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Nenhuma atividade recente</p>
-                <p className="text-xs mt-1">As atividades do hotel aparecerão aqui</p>
-                {metadata.source === 'mock' && (
-                  <p className="text-xs mt-2 text-red-300">⚠️ Dados simulados - serviço indisponível</p>
+                <p className="text-xs mt-1">Os usuários monitorados aparecerão aqui em breve</p>
+                {metadata.source === 'empty' && (
+                  <p className="text-xs mt-2 text-blue-300">ℹ️ Sistema coletando dados da API oficial do Habbo</p>
                 )}
               </div>
             )}

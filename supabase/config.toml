@@ -20,3 +20,9 @@ email_double_confirm_changes = true
 
 [functions.habbo-api-proxy]
 verify_jwt = false
+
+[functions.habbo-sync-user]
+verify_jwt = false
+
+[functions.habbo-sync-batch]
+verify_jwt = false

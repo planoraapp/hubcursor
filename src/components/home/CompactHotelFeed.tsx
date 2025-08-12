@@ -3,14 +3,14 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, Hotel, RefreshCw, Wifi, WifiOff, Archive, ExternalLink } from 'lucide-react';
-import { useHotelTicker } from '@/hooks/useHotelTicker';
+import { Activity, Hotel, RefreshCw, Wifi, Archive, ExternalLink, Trophy, Camera, UserPlus, MessageSquare, Heart } from 'lucide-react';
+import { useHotelActivities } from '@/hooks/useHotelActivities';
 import { useUserFigures } from '@/hooks/useUserFigures';
 import { habboProxyService } from '@/services/habboProxyService';
 import { Link } from 'react-router-dom';
 
 export const CompactHotelFeed: React.FC = () => {
-  const { aggregatedActivities, isLoading, hotel, metadata, refetch } = useHotelTicker();
+  const { aggregatedActivities, isLoading, hotel, metadata, refetch } = useHotelActivities();
   
   const usernames = aggregatedActivities.slice(0, 6).map(group => group.username);
   const { figureMap } = useUserFigures(usernames);
@@ -19,10 +19,8 @@ export const CompactHotelFeed: React.FC = () => {
     switch (metadata.source) {
       case 'live':
         return <Wifi className="w-3 h-3 text-green-500" />;
-      case 'cache':
-        return <Archive className="w-3 h-3 text-yellow-500" />;
-      case 'mock':
-        return <WifiOff className="w-3 h-3 text-red-500" />;
+      case 'empty':
+        return <Archive className="w-3 h-3 text-gray-500" />;
       default:
         return <Activity className="w-3 h-3 text-gray-500" />;
     }
@@ -32,10 +30,8 @@ export const CompactHotelFeed: React.FC = () => {
     switch (metadata.source) {
       case 'live':
         return 'bg-green-500/20 text-green-700';
-      case 'cache':
-        return 'bg-yellow-500/20 text-yellow-700';
-      case 'mock':
-        return 'bg-red-500/20 text-red-700';
+      case 'empty':
+        return 'bg-gray-500/20 text-gray-700';
       default:
         return 'bg-gray-500/20 text-gray-700';
     }
@@ -44,13 +40,32 @@ export const CompactHotelFeed: React.FC = () => {
   const getSourceLabel = () => {
     switch (metadata.source) {
       case 'live':
-        return 'Ao Vivo';
-      case 'cache':
-        return 'Cache';
-      case 'mock':
-        return 'Simulado';
+        return 'Dados Reais';
+      case 'empty':
+        return 'Coletando';
       default:
         return 'Desconhecido';
+    }
+  };
+
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'motto_change':
+        return <MessageSquare className="w-3 h-3 text-blue-500" />;
+      case 'avatar_update':
+        return <Activity className="w-3 h-3 text-purple-500" />;
+      case 'new_badge':
+        return <Trophy className="w-3 h-3 text-yellow-500" />;
+      case 'new_photo':
+        return <Camera className="w-3 h-3 text-pink-500" />;
+      case 'new_friend':
+        return <UserPlus className="w-3 h-3 text-green-500" />;
+      case 'status_change':
+        return <Activity className="w-3 h-3 text-orange-500" />;
+      case 'user_tracked':
+        return <Heart className="w-3 h-3 text-red-500" />;
+      default:
+        return <Activity className="w-3 h-3 text-gray-500" />;
     }
   };
 
@@ -120,9 +135,12 @@ export const CompactHotelFeed: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-blue-600 text-sm mb-1">{userGroup.username}</h4>
-                    <p className="text-xs text-gray-600 truncate mb-1">
-                      {userGroup.activities[0]?.description || 'Atividade recente'}
-                    </p>
+                    <div className="flex items-center gap-1 mb-1">
+                      {userGroup.activities[0] && getActivityIcon(userGroup.activities[0].activity_type)}
+                      <p className="text-xs text-gray-600 truncate">
+                        {userGroup.activities[0]?.description || 'Atividade recente'}
+                      </p>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
                         {userGroup.activityCount} atividade{userGroup.activityCount !== 1 ? 's' : ''}
@@ -149,7 +167,7 @@ export const CompactHotelFeed: React.FC = () => {
               <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Nenhuma atividade recente</p>
               <p className="text-xs mt-1 text-gray-500">
-                {metadata.source === 'mock' && '⚠️ Dados simulados - serviço indisponível'}
+                {metadata.source === 'empty' && 'ℹ️ Sistema coletando dados da API oficial do Habbo'}
               </p>
             </div>
           )}
