@@ -66,35 +66,33 @@ export const useRealHotelFeed = (options?: {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  // Function to load older data (for infinite scroll) - uses increased limit instead of offsetHours for official mode
+  // Function to load older data with improved pagination strategy
   const loadMoreData = useCallback(async (page: number) => {
     console.log(`📈 [useRealHotelFeed] Loading more data for page ${page}`);
     
-    if (mode === 'official') {
-      // For official mode, increase the limit to get more items from the community ticker
-      const newLimit = baseLimit * (page + 1); // page 0: 50, page 1: 100, page 2: 150, etc.
-      console.log(`📈 [useRealHotelFeed] Official mode: requesting ${newLimit} items total`);
-      
+    if (page === 0) {
+      // Page 0 is always live ticker for official mode
+      console.log(`📈 [useRealHotelFeed] Page 0: using live ticker (${mode} mode)`);
       return habboFeedService.getHotelFeed(
         hotel,
-        newLimit,
+        baseLimit,
         { 
           onlineWithinSeconds,
           mode,
-          offsetHours: 0 // Keep at 0 for official mode
+          offsetHours: 0
         }
       );
     } else {
-      // For database/hybrid mode, use offsetHours as before
-      const offsetHours = page * 2; // 0h, 2h, 4h, etc.
-      console.log(`📈 [useRealHotelFeed] Database mode: using ${offsetHours}h offset`);
+      // For page 1 and beyond, switch to hybrid mode for historical data
+      console.log(`📈 [useRealHotelFeed] Page ${page}: switching to hybrid mode for historical data`);
+      const offsetHours = page * 2; // 2h, 4h, 6h, etc.
       
       return habboFeedService.getHotelFeed(
         hotel,
         baseLimit,
         { 
           onlineWithinSeconds: onlineWithinSeconds + (offsetHours * 3600),
-          mode,
+          mode: 'hybrid', // Force hybrid for historical data
           offsetHours
         }
       );

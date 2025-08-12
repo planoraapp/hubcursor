@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,13 +25,14 @@ export const RealHotelFeedColumn: React.FC = () => {
   // Update allActivities when activities change
   useEffect(() => {
     if (activities.length > 0 && currentPage === 0) {
+      console.log(`📊 [RealHotelFeedColumn] Received ${activities.length} activities for page 0`);
       setAllActivities(activities);
     }
   }, [activities, currentPage]);
 
   useEffect(() => {
     if (activities.length > 0) {
-      console.log(`📊 [RealHotelFeedColumn] Displaying ${activities.length} official feed activities for hotel ${hotel}`);
+      console.log(`📊 [RealHotelFeedColumn] Displaying ${activities.length} ${metadata.source} feed activities for hotel ${hotel}`);
       console.log(`👥 [RealHotelFeedColumn] Source: ${metadata.source}, Online users: ${metadata.onlineCount || 0}`);
     }
   }, [activities, hotel, metadata]);
@@ -51,7 +53,7 @@ export const RealHotelFeedColumn: React.FC = () => {
     };
   }, [refetch]);
 
-  // Handle infinite scroll to load older data
+  // Handle infinite scroll to load older data with improved merging logic
   const scrollRef = useRef<HTMLDivElement>(null);
   const handleScroll: React.UIEventHandler<HTMLDivElement> = useCallback(async (e) => {
     const target = e.currentTarget;
@@ -68,27 +70,29 @@ export const RealHotelFeedColumn: React.FC = () => {
         const olderData = await loadMoreData(nextPage);
         
         if (olderData.activities.length > 0) {
-          if (metadata.source === 'official') {
-            // For official mode, we get a larger set including previous items
-            // Extract only the new items (those not already in allActivities)
-            const existingUsernames = new Set(allActivities.map(a => a.username));
-            const newActivities = olderData.activities.filter(a => !existingUsernames.has(a.username));
-            
-            if (newActivities.length > 0) {
-              setAllActivities(prev => [...prev, ...newActivities]);
-              setCurrentPage(nextPage);
-              console.log(`✅ [RealHotelFeedColumn] Added ${newActivities.length} more activities (official mode)`);
-            } else {
-              console.log(`📄 [RealHotelFeedColumn] No new activities found on page ${nextPage}`);
-            }
-          } else {
-            // For database mode, append all new activities
-            setAllActivities(prev => [...prev, ...olderData.activities]);
+          // Merge without duplicates (by username + lastUpdate combination)
+          const existingKeys = new Set(allActivities.map(a => `${a.username}-${a.lastUpdate}`));
+          const newActivities = olderData.activities.filter(a => 
+            !existingKeys.has(`${a.username}-${a.lastUpdate}`)
+          );
+          
+          if (newActivities.length > 0) {
+            setAllActivities(prev => {
+              const merged = [...prev, ...newActivities];
+              // Re-sort to maintain proper order
+              return merged.sort((a, b) => {
+                if (a.profile?.isOnline && !b.profile?.isOnline) return -1;
+                if (!a.profile?.isOnline && b.profile?.isOnline) return 1;
+                return new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime();
+              });
+            });
             setCurrentPage(nextPage);
-            console.log(`✅ [RealHotelFeedColumn] Added ${olderData.activities.length} more activities (database mode)`);
+            console.log(`✅ [RealHotelFeedColumn] Added ${newActivities.length} new activities (page ${nextPage})`);
+          } else {
+            console.log(`📄 [RealHotelFeedColumn] No new unique activities found on page ${nextPage}`);
           }
         } else {
-          console.log(`📄 [RealHotelFeedColumn] No more activities available`);
+          console.log(`📄 [RealHotelFeedColumn] No more activities available for page ${nextPage}`);
         }
       } catch (error) {
         console.error('❌ [RealHotelFeedColumn] Failed to load more data:', error);
@@ -96,7 +100,7 @@ export const RealHotelFeedColumn: React.FC = () => {
         setIsLoadingMore(false);
       }
     }
-  }, [currentPage, allActivities, isLoading, isLoadingMore, isDiscovering, loadMoreData, metadata.source]);
+  }, [currentPage, allActivities, isLoading, isLoadingMore, isDiscovering, loadMoreData]);
 
   const handleDiscoverUsers = useCallback(async () => {
     setIsDiscovering(true);
@@ -146,16 +150,6 @@ export const RealHotelFeedColumn: React.FC = () => {
 
   const getLastUpdateText = () => {
     return habboFeedService.formatTimeAgo(metadata.timestamp);
-  };
-
-  const handleBatchSync = async () => {
-    try {
-      await habboFeedService.triggerBatchSync(hotel);
-      // Refetch after sync
-      setTimeout(() => refetch(), 2000);
-    } catch (error) {
-      console.error('Failed to trigger batch sync:', error);
-    }
   };
 
   const displayActivities = allActivities.length > 0 ? allActivities : activities;
@@ -247,7 +241,7 @@ export const RealHotelFeedColumn: React.FC = () => {
             ) : displayActivities.length > 0 ? (
               <>
                 {displayActivities.map((activity, index) => (
-                  <div key={`${activity.username}-${index}`} className="p-4 mb-3 bg-transparent hover:bg-white/5 rounded-lg transition-colors">
+                  <div key={`${activity.username}-${activity.lastUpdate}-${index}`} className="p-4 mb-3 bg-transparent hover:bg-white/5 rounded-lg transition-colors">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="flex-shrink-0 relative">
                         {(activity.profile?.figureString || figureMap[activity.username]) ? (

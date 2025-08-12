@@ -110,18 +110,26 @@ async function fetchHabboAPI(url: string, retries = 3): Promise<any> {
   }
 }
 
-// Function to get community ticker data (the correct endpoint)
+// Function to get community ticker data - using the correct endpoint
 async function getCommunityTicker(hotel: string, limit: number): Promise<CommunityTickerEntry[]> {
-  console.log(`🎯 [habbo-feed] Fetching community ticker for ${hotel}, limit: ${limit}`);
+  console.log(`🎯 [habbo-feed] Fetching community ticker for ${hotel}`);
   
   const baseUrl = hotel === 'com.br' ? 'https://www.habbo.com.br' : `https://www.habbo.${hotel}`;
-  const tickerUrl = `${baseUrl}/api/public/community/ticker?limit=${limit}`;
+  const tickerUrl = `${baseUrl}/api/public/community/ticker`;
   
   try {
+    console.log(`📡 [habbo-feed] Fetching community ticker from ${tickerUrl}`);
     const tickerData = await fetchHabboAPI(tickerUrl);
-    const entries = tickerData || [];
-    console.log(`✅ [habbo-feed] Retrieved ${entries.length} community ticker entries`);
-    return entries;
+    
+    if (!tickerData || !Array.isArray(tickerData)) {
+      console.log(`⚠️ [habbo-feed] Invalid ticker data received`);
+      return [];
+    }
+    
+    // Apply limit after receiving the data
+    const limitedEntries = tickerData.slice(0, limit);
+    console.log(`✅ [habbo-feed] Retrieved ${tickerData.length} total entries, using ${limitedEntries.length} (limit: ${limit})`);
+    return limitedEntries;
   } catch (error) {
     console.error(`❌ [habbo-feed] Failed to fetch community ticker:`, error);
     return [];
@@ -227,7 +235,7 @@ Deno.serve(async (req) => {
     const mode = url.searchParams.get('mode') || 'hybrid'; // 'official', 'database', or 'hybrid'
     const offsetHours = parseInt(url.searchParams.get('offsetHours') || '0');
 
-    console.log(`🎯 [habbo-feed] Mode: ${mode}, Hotel: ${hotel}${username ? `, user: ${username}` : ''}, limit: ${limit}`);
+    console.log(`🎯 [habbo-feed] Mode: ${mode}, Hotel: ${hotel}${username ? `, user: ${username}` : ''}, limit: ${limit}, offsetHours: ${offsetHours}`);
 
     // If mode is 'official' or 'hybrid', try to get live community ticker data
     if ((mode === 'official' || mode === 'hybrid') && !username) {
