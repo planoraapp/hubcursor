@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MobileLayout } from '@/components/layout/MobileLayout';
+import MobileLayout from '../layouts/MobileLayout';
 import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
 import { EnhancedFriendsFeedColumn } from '@/components/console/EnhancedFriendsFeedColumn';
 import { RealHotelFeedColumn } from '@/components/console/RealHotelFeedColumn';
