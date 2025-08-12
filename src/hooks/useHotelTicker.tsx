@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { habboProxyService, TickerActivity } from '@/services/habboProxyService';
+import { habboProxyService, TickerActivity, TickerResponse } from '@/services/habboProxyService';
 import { useUnifiedAuth } from './useUnifiedAuth';
 
 interface AggregatedActivity {
@@ -24,9 +24,10 @@ export const useHotelTicker = () => {
   }, [habboAccount?.hotel]);
 
   const { 
-    data: rawActivities = [], 
+    data: tickerResponse, 
     isLoading, 
-    error 
+    error,
+    refetch
   } = useQuery({
     queryKey: ['hotel-ticker', hotel],
     queryFn: () => {
@@ -39,9 +40,18 @@ export const useHotelTicker = () => {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
+  // Extract activities and metadata
+  const rawActivities = tickerResponse?.activities || [];
+  const metadata = tickerResponse?.meta || {
+    source: 'unknown' as const,
+    timestamp: new Date().toISOString(),
+    hotel: hotel,
+    count: 0
+  };
+
   // Aggregate activities by user with improved time window
   const aggregatedActivities: AggregatedActivity[] = React.useMemo(() => {
-    console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation (hotel: ${hotel})`);
+    console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation (hotel: ${hotel}, source: ${metadata.source})`);
     
     const groupByUser = (items: TickerActivity[]) => {
       const userGroups: { [username: string]: TickerActivity[] } = {};
@@ -78,15 +88,17 @@ export const useHotelTicker = () => {
       result = groupByUser(rawActivities).slice(0, 20);
     }
 
-    console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel})`);
+    console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel}, source: ${metadata.source})`);
     return result;
-  }, [rawActivities, hotel]);
+  }, [rawActivities, hotel, metadata.source]);
 
   return {
     activities: rawActivities,
     aggregatedActivities,
     isLoading,
     error,
-    hotel
+    hotel,
+    metadata,
+    refetch
   };
 };

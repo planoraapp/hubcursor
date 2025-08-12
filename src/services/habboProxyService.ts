@@ -28,7 +28,17 @@ export interface TickerActivity {
   description: string;
   action: string;
   time: string;
-  timestamp?: string;
+  timestamp: string;
+}
+
+export interface TickerResponse {
+  activities: TickerActivity[];
+  meta: {
+    source: 'live' | 'cache' | 'mock';
+    timestamp: string;
+    hotel: string;
+    count: number;
+  };
 }
 
 export interface HabboFriend {
@@ -41,7 +51,7 @@ export interface HabboFriend {
 
 class HabboProxyService {
   private static CACHE_KEY_PREFIX = 'habbo_ticker_cache_';
-  private static CACHE_EXPIRY_MINUTES = 5;
+  private static CACHE_EXPIRY_MINUTES = 3;
 
   private async callProxy(action: string, params: Record<string, string> = {}) {
     try {
@@ -69,37 +79,36 @@ class HabboProxyService {
     return `${HabboProxyService.CACHE_KEY_PREFIX}${hotel}`;
   }
 
-  private saveCacheData(hotel: string, activities: TickerActivity[]): void {
+  private saveCacheData(hotel: string, response: TickerResponse): void {
     try {
       const cacheData = {
-        activities,
-        timestamp: Date.now(),
-        hotel
+        ...response,
+        cachedAt: Date.now()
       };
       localStorage.setItem(this.getCacheKey(hotel), JSON.stringify(cacheData));
-      console.log(`💾 [HabboProxyService] Cached ${activities.length} activities for hotel ${hotel}`);
+      console.log(`💾 [HabboProxyService] Cached ${response.activities.length} activities for hotel ${hotel} (source: ${response.meta.source})`);
     } catch (error) {
       console.warn('Failed to save cache:', error);
     }
   }
 
-  private getCacheData(hotel: string): TickerActivity[] | null {
+  private getCacheData(hotel: string): TickerResponse | null {
     try {
       const cached = localStorage.getItem(this.getCacheKey(hotel));
       if (!cached) return null;
 
       const cacheData = JSON.parse(cached);
-      const age = Date.now() - cacheData.timestamp;
+      const age = Date.now() - (cacheData.cachedAt || 0);
       const maxAge = HabboProxyService.CACHE_EXPIRY_MINUTES * 60 * 1000;
 
       if (age > maxAge) {
         localStorage.removeItem(this.getCacheKey(hotel));
-        console.log(`🗑️ [HabboProxyService] Expired cache for hotel ${hotel}`);
+        console.log(`🗑️ [HabboProxyService] Expired client cache for hotel ${hotel}`);
         return null;
       }
 
-      console.log(`📋 [HabboProxyService] Using cached data for hotel ${hotel} (${Math.round(age/1000)}s old)`);
-      return cacheData.activities;
+      console.log(`📋 [HabboProxyService] Using client cached data for hotel ${hotel} (${Math.round(age/1000)}s old, source: ${cacheData.meta?.source || 'unknown'})`);
+      return cacheData;
     } catch (error) {
       console.warn('Failed to read cache:', error);
       return null;
@@ -196,9 +205,15 @@ class HabboProxyService {
     }
   }
 
-  async getHotelTicker(hotel: string = 'com.br'): Promise<TickerActivity[]> {
+  async getHotelTicker(hotel: string = 'com.br'): Promise<TickerResponse> {
     try {
       console.log(`🎯 [HabboProxyService] Fetching hotel ticker for ${hotel}`);
+      
+      // Check client cache first
+      const cachedResponse = this.getCacheData(hotel);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
       
       const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
         body: { hotel },
@@ -206,79 +221,78 @@ class HabboProxyService {
       });
 
       if (!error && data) {
-        let activities: TickerActivity[] = [];
+        let response: TickerResponse;
         
-        if (data.activities && Array.isArray(data.activities)) {
-          activities = data.activities;
-          console.log(`✅ [HabboProxyService] Got ${activities.length} real activities from widgets proxy`);
+        if (data.activities && data.meta) {
+          // New format with metadata
+          response = {
+            activities: data.activities.map((activity: any) => ({
+              username: activity.username || 'Unknown',
+              description: activity.activity || activity.description || 'fez uma atividade',
+              action: activity.action || activity.type || 'activity',
+              time: activity.time || activity.timestamp || new Date().toISOString(),
+              timestamp: activity.timestamp || activity.time || new Date().toISOString()
+            })),
+            meta: {
+              source: data.meta.source || 'unknown',
+              timestamp: data.meta.timestamp || new Date().toISOString(),
+              hotel: data.meta.hotel || hotel,
+              count: data.meta.count || data.activities.length
+            }
+          };
         } else if (Array.isArray(data)) {
-          activities = data.map((activity: any) => ({
-            username: activity.username || 'Unknown',
-            description: activity.activity || activity.description || 'fez uma atividade',
-            action: activity.action || activity.type || 'action',
-            time: activity.time || new Date().toISOString(),
-            timestamp: activity.timestamp || activity.time || new Date().toISOString()
-          }));
-          console.log(`✅ [HabboProxyService] Got ${activities.length} activities (array format)`);
+          // Legacy format - convert to new format
+          response = {
+            activities: data.map((activity: any) => ({
+              username: activity.username || 'Unknown',
+              description: activity.activity || activity.description || 'fez uma atividade',
+              action: activity.action || activity.type || 'activity',
+              time: activity.time || new Date().toISOString(),
+              timestamp: activity.timestamp || activity.time || new Date().toISOString()
+            })),
+            meta: {
+              source: 'unknown' as const,
+              timestamp: new Date().toISOString(),
+              hotel: hotel,
+              count: data.length
+            }
+          };
+        } else {
+          throw new Error('Invalid response format');
         }
 
-        const normalizedActivities: TickerActivity[] = activities.map((activity: any) => ({
-          username: activity.username || 'Unknown',
-          description: activity.activity || activity.description || 'fez uma atividade',
-          action: activity.action || activity.type || 'action',
-          time: activity.time || new Date().toISOString(),
-          timestamp: activity.timestamp || activity.time || new Date().toISOString()
-        }));
-
-        if (normalizedActivities.length > 0) {
-          this.saveCacheData(hotel, normalizedActivities);
-          return normalizedActivities;
-        }
-      }
-
-      console.log(`⚠️ [HabboProxyService] Widgets proxy empty/error, trying fallback...`);
-      
-      // Try fallback from habbo-api-proxy
-      const fallbackData = await this.callProxy('getHotelTicker');
-      
-      if (fallbackData && fallbackData.activities) {
-        const activities: TickerActivity[] = fallbackData.activities.map((activity: any) => ({
-          username: activity.username || 'Unknown',
-          description: activity.description || 'fez uma atividade',
-          action: activity.action || activity.type || 'action',
-          time: activity.time || new Date().toISOString(),
-          timestamp: activity.time || new Date().toISOString()
-        }));
+        console.log(`✅ [HabboProxyService] Got ${response.activities.length} activities (source: ${response.meta.source}) for hotel ${hotel}`);
         
-        console.log(`🎯 [HabboProxyService] Using ${activities.length} fallback activities`);
-        this.saveCacheData(hotel, activities);
-        return activities;
+        // Cache the response
+        this.saveCacheData(hotel, response);
+        return response;
       }
 
-      // Final fallback to cache
-      const cachedData = this.getCacheData(hotel);
-      if (cachedData) {
-        console.log(`📋 [HabboProxyService] Using cached data as final fallback for ${hotel}`);
-        return cachedData;
-      }
-
-      console.warn(`⚠️ [HabboProxyService] All ticker sources failed for ${hotel}, returning empty array`);
-      return [];
+      throw new Error('No data from widgets proxy');
     } catch (error) {
       console.error(`❌ [HabboProxyService] Error fetching hotel ticker:`, error);
       
-      // Try cache on error
-      const cachedData = this.getCacheData(hotel);
-      if (cachedData) {
-        console.log(`📋 [HabboProxyService] Using cached data after error for ${hotel}`);
-        return cachedData;
+      // Try client cache on error
+      const cachedResponse = this.getCacheData(hotel);
+      if (cachedResponse) {
+        console.log(`📋 [HabboProxyService] Using client cached data after error for ${hotel}`);
+        return cachedResponse;
       }
       
-      return [];
+      // Final fallback - return empty response with mock metadata
+      return {
+        activities: [],
+        meta: {
+          source: 'mock',
+          timestamp: new Date().toISOString(),
+          hotel: hotel,
+          count: 0
+        }
+      };
     }
   }
 
-  async getTicker(): Promise<TickerActivity[]> {
+  async getTicker(): Promise<TickerResponse> {
     return this.getHotelTicker();
   }
 

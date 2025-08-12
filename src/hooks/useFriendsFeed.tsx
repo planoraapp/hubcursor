@@ -27,14 +27,14 @@ export const useFriendsFeed = () => {
     isLoading: friendsLoading 
   } = useQuery({
     queryKey: ['habbo-friends', habboAccount?.habbo_name],
-    queryFn: () => habboProxyService.getUserFriends(habboAccount!.habbo_name),
+    queryFn: () => habboProxyService.getUserFriends(habboAccount!.habbo_name, hotelDomain),
     enabled: !!habboAccount?.habbo_name,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Fetch hotel ticker
   const { 
-    data: hotelTicker = [], 
+    data: tickerResponse, 
     isLoading: tickerLoading 
   } = useQuery({
     queryKey: ['hotel-ticker-for-friends', hotelDomain],
@@ -44,11 +44,13 @@ export const useFriendsFeed = () => {
     staleTime: 15 * 1000, // 15 seconds
   });
 
+  const hotelTicker = tickerResponse?.activities || [];
+
   // Process friends activities from hotel ticker
   const friendsActivities = useMemo(() => {
     if (!friends.length || !hotelTicker.length) return [];
 
-    console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends against ${hotelTicker.length} ticker activities`);
+    console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends against ${hotelTicker.length} ticker activities (source: ${tickerResponse?.meta.source || 'unknown'})`);
     
     const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
     const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000; // 6 horas em vez de 30 minutos
@@ -109,12 +111,13 @@ export const useFriendsFeed = () => {
 
     console.log(`✅ [useFriendsFeed] Processed ${sortedResult.length} friends with activities`);
     return sortedResult;
-  }, [friends, hotelTicker]);
+  }, [friends, hotelTicker, tickerResponse?.meta.source]);
 
   return {
     friends,
     friendsActivities,
     isLoading: friendsLoading || tickerLoading,
     hasFriends: friends.length > 0,
+    tickerMetadata: tickerResponse?.meta
   };
 };
