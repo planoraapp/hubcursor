@@ -26,6 +26,7 @@ export interface HabboPhoto {
 export interface TickerActivity {
   username: string;
   description: string;
+  action: string;
   time: string;
   timestamp?: string;
 }
@@ -59,6 +60,10 @@ class HabboProxyService {
       console.error(`[HabboProxyService] Network error for ${action}:`, error);
       throw error;
     }
+  }
+
+  async getUserByName(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
+    return this.getUserProfile(username, hotel);
   }
 
   async getUserProfile(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
@@ -170,6 +175,7 @@ class HabboProxyService {
           activities = data.map((activity: any) => ({
             username: activity.username || 'Unknown',
             description: activity.activity || activity.description || 'fez uma atividade',
+            action: activity.action || activity.type || 'action',
             time: activity.time || new Date().toISOString(),
             timestamp: activity.timestamp || activity.time || new Date().toISOString()
           }));
@@ -180,6 +186,7 @@ class HabboProxyService {
         const normalizedActivities: TickerActivity[] = activities.map((activity: any) => ({
           username: activity.username || 'Unknown',
           description: activity.activity || activity.description || 'fez uma atividade',
+          action: activity.action || activity.type || 'action',
           time: activity.time || new Date().toISOString(),
           timestamp: activity.timestamp || activity.time || new Date().toISOString()
         }));
@@ -198,6 +205,7 @@ class HabboProxyService {
         const activities: TickerActivity[] = fallbackData.activities.map((activity: any) => ({
           username: activity.username || 'Unknown',
           description: activity.description || 'fez uma atividade',
+          action: activity.action || activity.type || 'action',
           time: activity.time || new Date().toISOString(),
           timestamp: activity.time || new Date().toISOString()
         }));
