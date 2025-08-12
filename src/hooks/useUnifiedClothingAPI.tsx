@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { useFlashAssetsClothing } from './useFlashAssetsClothing';
 import { useHabboEmotionClothing } from './useHabboEmotionClothing';
 import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 
-interface UnifiedClothingItem {
+export interface UnifiedClothingItem {
   id: string;
   name: string;
   category: string;
@@ -66,7 +67,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
   });
 
   // Processar e unificar os dados
-  const unifiedData = React.useMemo(() => {
+  const unifiedData = useMemo(() => {
     console.log('🔄 [UnifiedClothing] Processing unified data:');
     console.log(`- Flash Assets: ${flashAssets.length} items`);
     console.log(`- HabboEmotion: ${habboEmotionItems.length} items`);
@@ -98,7 +99,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
         name: item.name,
         category: item.category,
         gender: item.gender,
-        figureId: item.figureId || item.code,
+        figureId: item.code || item.id.toString(),
         colors: item.colors,
         imageUrl: item.imageUrl,
         club: item.club === 'HC' ? 'HC' : 'FREE',
@@ -146,5 +147,5 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
   };
 };
 
-// Hook para usar em React
-export const React = { useMemo: React.useMemo };
+// Export alias for backward compatibility
+export const useUnifiedClothing = useUnifiedClothingAPI;

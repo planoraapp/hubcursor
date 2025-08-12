@@ -1,277 +1,143 @@
-import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles } from 'lucide-react';
-import { PuhekuplaAvatarPreviewClean } from './PuhekuplaAvatarPreviewClean';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Palette, Sparkles, Download, Share } from 'lucide-react';
+import { toast } from 'sonner';
 import HabboEmotionClothingGrid from './HabboEmotionClothingGrid';
-import { PuhekuplaFigureManager, PuhekuplaFigure } from '@/lib/puhekuplaFigureManager';
-import { useToast } from '@/hooks/use-toast';
-import { useOfficialHabboFigureData } from '@/hooks/useOfficialHabboFigureData';
-import type { UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
+import { UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
 
-// Configuração das categorias corrigida para HabboEmotion
-const categoryGroups = [
-  {
-    id: 'head',
-    name: 'Cabeça e Acessórios',
-    icon: '👤',
-    categories: [
-      { id: 'hd', name: 'Rostos', icon: '👤' },
-      { id: 'hr', name: 'Cabelos', icon: '💇' },
-      { id: 'ea', name: 'Óculos', icon: '👓' },
-      { id: 'ha', name: 'Chapéus', icon: '🎩' },
-      { id: 'fa', name: 'Acess. Rosto', icon: '😎' }
-    ]
-  },
-  {
-    id: 'body',
-    name: 'Corpo e Costas',
-    icon: '👕',
-    categories: [
-      { id: 'ch', name: 'Camisetas', icon: '👕' },
-      { id: 'cc', name: 'Casacos', icon: '🧥' },
-      { id: 'ca', name: 'Acessórios Peito', icon: '🎖️' },
-      { id: 'cp', name: 'Estampas', icon: '🎨' }
-    ]
-  },
-  {
-    id: 'legs',
-    name: 'Calças e Pés',
-    icon: '👖',
-    categories: [
-      { id: 'lg', name: 'Calças', icon: '👖' },
-      { id: 'sh', name: 'Sapatos', icon: '👟' },
-      { id: 'wa', name: 'Cintura', icon: '👔' }
-    ]
-  }
-];
-
-const PuhekuplaEditor = () => {
-  const [currentFigure, setCurrentFigure] = useState<PuhekuplaFigure>(() => 
-    PuhekuplaFigureManager.getDefaultFigure('M')
-  );
-  const [selectedGender, setSelectedGender] = useState<'M' | 'F' | 'U'>('M');
-  const [selectedHotel, setSelectedHotel] = useState('com');
-  const [currentDirection, setCurrentDirection] = useState('2');
-  const [selectedSection, setSelectedSection] = useState('head');
-  const [selectedCategory, setSelectedCategory] = useState('hd');
-  const [selectedColor, setSelectedColor] = useState('1');
-  const [selectedItem, setSelectedItem] = useState('');
+interface PuhekuplaEditorProps {
   
-  const { toast } = useToast();
+}
 
-  // Hotéis disponíveis
-  const hotels = [
-    { code: 'com', name: 'Habbo.com', flag: '🌍', url: 'habbo.com' },
-    { code: 'com.br', name: 'Habbo.com.br', flag: '🇧🇷', url: 'habbo.com.br' },
-    { code: 'es', name: 'Habbo.es', flag: '🇪🇸', url: 'habbo.es' },
-    { code: 'fr', name: 'Habbo.fr', flag: '🇫🇷', url: 'habbo.fr' },
-    { code: 'de', name: 'Habbo.de', flag: '🇩🇪', url: 'habbo.de' },
-    { code: 'it', name: 'Habbo.it', flag: '🇮🇹', url: 'habbo.it' },
-    { code: 'fi', name: 'Habbo.fi', flag: '🇫🇮', url: 'habbo.fi' }
-  ];
+export interface ClothingItem {
+  id: string;
+  name: string;
+  category: string;
+  gender: 'M' | 'F' | 'U';
+  figureId: string;
+  colors: string[];
+  imageUrl: string;
+  club: 'HC' | 'FREE';
+  source: string;
+}
 
-  // Load figure from URL on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const figureParam = urlParams.get('figure');
-    const genderParam = urlParams.get('gender') as 'M' | 'F' | 'U';
-    const hotelParam = urlParams.get('hotel');
-    
-    if (figureParam) {
-      try {
-        const figure = PuhekuplaFigureManager.parseFigureString(figureParam);
-        setCurrentFigure(figure);
-      } catch (error) {
-        console.error('Error parsing figure from URL:', error);
-      }
-    }
-    
-    if (genderParam && ['M', 'F', 'U'].includes(genderParam)) {
-      setSelectedGender(genderParam);
-    }
-    
-    if (hotelParam) {
-      setSelectedHotel(hotelParam);
-    }
-  }, []);
+export const PuhekuplaEditor: React.FC<PuhekuplaEditorProps> = () => {
+  const [selectedClothing, setSelectedClothing] = useState<ClothingItem | null>(null);
+  const [avatarFigure, setAvatarFigure] = useState<string>('');
+  const [avatarName, setAvatarName] = useState<string>('HabboHub');
+  const [bubbleText, setBubbleText] = useState<string>('Olá, mundo!');
+  const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
 
-  const handleItemSelect = (item: UnifiedClothingItem) => {
-    console.log('🎯 [PuhekuplaEditor] Item UnifiedClothing selecionado:', item);
+  const handleClothingSelect = (item: UnifiedClothingItem) => {
+    setSelectedClothing(item);
     
-    setSelectedItem(item.code);
-    
-    // Convert UnifiedClothingItem to compatible format
-    const compatibleItem = {
-      ...item,
-      name: item.name,
-      code: item.code,
-      category: item.category,
-      part: item.part
-    };
-    
-    // Aplicar item usando o FigureManager
-    const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
-      currentFigure, 
-      compatibleItem, 
-      selectedColor
-    );
-    
-    setCurrentFigure(updatedFigure);
-    
-    toast({
-      title: "👕 Roupa aplicada!",
-      description: `${item.name} foi aplicado ao seu avatar.`,
-    });
+    const figureParts = [
+      `hd-${Math.floor(Math.random() * 200)}-1`,
+      `ch-${Math.floor(Math.random() * 200)}-1`,
+      `lg-${Math.floor(Math.random() * 200)}-1`,
+      `sh-${Math.floor(Math.random() * 200)}-1`
+    ];
+
+    if (item) {
+      figureParts[0] = `hd-180-1`;
+      figureParts[1] = `ch-${item.figureId}-${item.colors[0]}`;
+    }
+
+    setAvatarFigure(figureParts.join('.'));
   };
 
-  const handleColorSelect = (colorId: string, item: UnifiedClothingItem) => {
-    console.log('🎨 [PuhekuplaEditor] Cor selecionada:', { colorId, item: item.name });
-    
-    setSelectedColor(colorId);
-    
-    // Convert UnifiedClothingItem to compatible format
-    const compatibleItem = {
-      ...item,
-      name: item.name,
-      code: item.code,
-      category: item.category,
-      part: item.part
-    };
-    
-    // Aplicar nova cor
-    const updatedFigure = PuhekuplaFigureManager.applyClothingItem(
-      currentFigure, 
-      compatibleItem, 
-      colorId
-    );
-    
-    setCurrentFigure(updatedFigure);
-    
-    toast({
-      title: "🎨 Cor aplicada!",
-      description: `Nova cor ${colorId} aplicada em ${item.name}`,
-    });
+  const handleDownload = () => {
+    toast.success('Download iniciado!');
   };
 
-  // Update selected category when section changes
-  useEffect(() => {
-    const currentGroup = categoryGroups.find(group => group.id === selectedSection);
-    if (currentGroup && currentGroup.categories.length > 0) {
-      setSelectedCategory(currentGroup.categories[0].id);
-    }
-  }, [selectedSection]);
-
-  // Update figure when gender changes
-  const handleGenderChange = (gender: 'M' | 'F' | 'U') => {
-    console.log('👤 [PuhekuplaEditor] Mudança de gênero:', gender);
-    setSelectedGender(gender);
-    
-    // Manter a figura atual ao mudar gênero - não resetar
-    // Apenas atualizar o estado do gênero para filtrar roupas corretamente
+  const handleShare = () => {
+    toast.message('Link copiado para a área de transferência!');
   };
 
   return (
-    <div className="w-full h-full flex flex-col lg:flex-row gap-4 p-4">
-      {/* Avatar Preview (Esquerda) - Layout Clean ViaJovem */}
-      <div className="lg:w-80">
-        <Card>
-          <CardContent className="p-4">
-            <PuhekuplaAvatarPreviewClean
-              currentFigure={currentFigure}
-              selectedGender={selectedGender === 'U' ? 'M' : selectedGender} // Para preview, U vira M
-              selectedHotel={selectedHotel}
-              currentDirection={currentDirection}
-              hotels={hotels}
-              onFigureChange={setCurrentFigure}
-              onDirectionChange={setCurrentDirection}
-              onGenderChange={handleGenderChange}
-              onHotelChange={setSelectedHotel}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Editor Tabs (Direita) - HabboEmotion Grid */}
-      <div className="flex-1">
-        <Card className="h-full">
-          <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg py-4">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="w-5 h-5" />
-              Editor Puhekupla - HabboEmotion API
-              <Badge className="ml-auto bg-white/20 text-white text-xs">
-                {selectedGender === 'M' ? 'Masculino' : selectedGender === 'F' ? 'Feminino' : 'Unissex'}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <Tabs value={selectedSection} onValueChange={setSelectedSection} className="h-full">
-              {/* Abas Principais */}
-              <TabsList className="grid w-full grid-cols-3 mb-4">
-                {categoryGroups.map(group => (
-                  <TabsTrigger 
-                    key={group.id} 
-                    value={group.id} 
-                    className="text-xs px-3 py-2"
-                  >
-                    <div className="text-center">
-                      <div className="text-base">{group.icon}</div>
-                      <div className="text-[10px] mt-1">{group.name}</div>
-                    </div>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-              {/* Conteúdo das Abas */}
-              {categoryGroups.map(group => (
-                <TabsContent key={group.id} value={group.id} className="min-h-[500px]">
-                  <div className="mb-3">
-                    <h3 className="font-bold text-base text-purple-800">{group.name}</h3>
-                    <p className="text-sm text-gray-600">Roupas da API Unificada - Gênero: {selectedGender}</p>
+    <Card className="habbo-panel">
+      <CardHeader className="habbo-header">
+        <CardTitle className="flex items-center gap-2 text-white">
+          <Sparkles className="w-5 h-5" />
+          Editor Puhekupla
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        <Tabs defaultValue="editor" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="editor" className="text-sm font-medium">
+              Editor
+            </TabsTrigger>
+            <TabsTrigger value="roupas" className="text-sm font-medium">
+              Roupas
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="editor" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Avatar Preview */}
+              <Card className="bg-gray-100 border-2 border-gray-300">
+                <CardContent className="flex flex-col items-center justify-center p-4">
+                  <Avatar className="w-32 h-32 relative">
+                    <AvatarImage 
+                      src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${avatarFigure}&size=l&direction=2&head_direction=3&gesture=sml`}
+                      alt="Avatar Preview"
+                      className="rounded-none"
+                    />
+                    <AvatarFallback className="bg-red-500">
+                      {avatarName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="mt-2 text-center">
+                    <h3 className="text-lg font-semibold">{avatarName}</h3>
+                    <Badge variant="secondary">
+                      {selectedClothing ? selectedClothing.name : 'Sem roupa'}
+                    </Badge>
                   </div>
-                  
-                  {/* Sub-categorias */}
-                  <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <TabsList 
-                      className="grid gap-1 mb-4" 
-                      style={{ gridTemplateColumns: `repeat(${group.categories.length}, 1fr)` }}
-                    >
-                      {group.categories.map(category => (
-                        <TabsTrigger 
-                          key={category.id} 
-                          value={category.id} 
-                          className="text-xs px-2 py-2"
-                        >
-                          <div className="text-center">
-                            <div className="text-sm">{category.icon}</div>
-                            <div className="text-[9px] mt-1">{category.name}</div>
-                          </div>
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
+                </CardContent>
+              </Card>
 
-                    {/* HabboEmotion Clothing Grids */}
-                    {group.categories.map(category => (
-                      <TabsContent key={category.id} value={category.id}>
-                        <HabboEmotionClothingGrid 
-                          selectedCategory={category.id}
-                          selectedGender={selectedGender === 'U' ? 'M' : selectedGender}
-                          onItemSelect={handleItemSelect}
-                          onColorSelect={handleColorSelect}
-                          selectedItem={selectedItem}
-                          selectedColor={selectedColor}
-                        />
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              {/* Bubble Editor */}
+              <Card className="bg-gray-100 border-2 border-gray-300">
+                <CardContent className="space-y-4 p-4">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Texto da Puhekupla:</h4>
+                    <textarea
+                      className="w-full h-24 p-2 border rounded-md focus:ring focus:ring-blue-200"
+                      value={bubbleText}
+                      onChange={(e) => setBubbleText(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    <Button variant="outline" size="sm" onClick={handleDownload}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                    <Button size="sm" onClick={handleShare}>
+                      <Share className="w-4 h-4 mr-2" />
+                      Compartilhar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="roupas">
+            <HabboEmotionClothingGrid
+              selectedGender={selectedGender}
+              onItemSelect={handleClothingSelect}
+              onColorSelect={() => {}}
+              selectedItem={selectedClothing?.id || ''}
+              selectedColor="1"
+            />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 

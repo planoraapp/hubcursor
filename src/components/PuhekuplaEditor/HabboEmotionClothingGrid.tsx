@@ -1,13 +1,15 @@
-
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Search, Filter, Loader2 } from 'lucide-react';
-import { useUnifiedClothing, UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
+import { Loader2, Search, Palette } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useHabboEmotionClothing } from '@/hooks/useHabboEmotionClothing';
+import { useUnifiedClothingAPI, UnifiedClothingItem } from '@/hooks/useUnifiedClothingAPI';
+import { getColorById } from '@/data/habboColors';
 
-interface ClothingGridProps {
+interface HabboEmotionClothingGridProps {
   selectedCategory: string;
   selectedGender: 'M' | 'F';
   onItemSelect: (item: UnifiedClothingItem) => void;
@@ -16,7 +18,7 @@ interface ClothingGridProps {
   selectedColor?: string;
 }
 
-const HabboEmotionClothingGrid: React.FC<ClothingGridProps> = ({
+const HabboEmotionClothingGrid: React.FC<HabboEmotionClothingGridProps> = ({
   selectedCategory,
   selectedGender,
   onItemSelect,
@@ -24,146 +26,111 @@ const HabboEmotionClothingGrid: React.FC<ClothingGridProps> = ({
   selectedItem,
   selectedColor
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showHCOnly, setShowHCOnly] = useState(false);
-  
-  const {
-    data: clothingItems = [],
-    isLoading,
-    error
-  } = useUnifiedClothing({
-    category: selectedCategory === 'all' ? undefined : selectedCategory,
-    gender: selectedGender,
-    search: searchTerm || undefined,
-    limit: 100
-  });
+  const [search, setSearch] = useState('');
+  const { data: clothing, isLoading, error } = useHabboEmotionClothing(
+    2000,
+    selectedCategory === 'all' ? undefined : selectedCategory,
+    selectedGender
+  );
 
-  const filteredItems = clothingItems.filter(item => {
-    const matchesSearch = !searchTerm || 
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesHC = !showHCOnly || item.club === 'HC';
-    
-    return matchesSearch && matchesHC;
-  });
+  const filteredClothing = React.useMemo(() => {
+    if (!clothing) return [];
+    return clothing.filter(item =>
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.code.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [clothing, search]);
 
-  const getClothingThumbnail = (item: UnifiedClothingItem) => {
-    if (item.image_url) {
-      return item.image_url;
-    }
-    
-    // Fallback to habbo-imaging
-    const baseAvatar = 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92';
-    const fullFigure = `${baseAvatar}.${item.part}-${item.item_id}-1`;
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${selectedGender}&direction=2&size=s`;
+  const handleItemSelect = (item: any) => {
+    onItemSelect({
+      id: item.id.toString(),
+      name: item.name,
+      category: item.category,
+      gender: item.gender,
+      figureId: item.code || item.id.toString(),
+      colors: item.colors,
+      imageUrl: item.imageUrl,
+      club: item.club === 'HC' ? 'HC' : 'FREE',
+      source: 'habbo-emotion' as const
+    });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-gray-600">Carregando roupas...</span>
-      </div>
-    );
-  }
+  const handleColorSelect = (colorId: string, item: any) => {
+    onColorSelect(colorId, {
+      id: item.id.toString(),
+      name: item.name,
+      category: item.category,
+      gender: item.gender,
+      figureId: item.code || item.id.toString(),
+      colors: item.colors,
+      imageUrl: item.imageUrl,
+      club: item.club === 'HC' ? 'HC' : 'FREE',
+      source: 'habbo-emotion' as const
+    });
+  };
 
   if (error) {
     return (
-      <div className="text-center p-8">
-        <div className="text-red-500 text-lg mb-4">❌ Erro ao carregar roupas</div>
-        <p className="text-gray-600">{error.message}</p>
+      <div className="text-center py-12">
+        <h3 className="text-xl font-bold text-red-600 mb-2">Erro ao Carregar Roupas</h3>
+        <p className="text-gray-600 mb-4">Não foi possível carregar as roupas do HabboEmotion.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {/* Search and Filters */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder={`Buscar ${selectedCategory.toUpperCase()}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Input
+          placeholder="Buscar roupas..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-5 gap-2">
+          {Array.from({ length: 20 }, (_, i) => (
+            <Skeleton key={i} className="aspect-square rounded" />
+          ))}
         </div>
-        
-        <Button
-          variant={showHCOnly ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setShowHCOnly(!showHCOnly)}
-        >
-          <Filter className="w-3 h-3 mr-1" />
-          HC Only
-        </Button>
-      </div>
-
-      {/* Results info */}
-      <div className="text-sm text-gray-600">
-        {filteredItems.length} itens encontrados
-      </div>
-
-      {/* Items Grid */}
-      <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-96 overflow-y-auto">
-        {filteredItems.map((item) => (
-          <Card
-            key={`${item.source}-${item.part}-${item.item_id}`}
-            className={`cursor-pointer transition-all duration-200 hover:scale-105 ${
-              selectedItem === item.figureId 
-                ? 'ring-2 ring-blue-500 shadow-lg' 
-                : 'hover:shadow-md'
-            }`}
-            onClick={() => onItemSelect(item)}
-          >
-            <CardContent className="p-2">
-              <div className="aspect-square relative">
+      ) : filteredClothing.length === 0 ? (
+        <div className="text-center py-12">
+          <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhuma roupa encontrada</h3>
+          <p className="text-gray-500">Tente ajustar os termos de busca</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-5 gap-2">
+          {filteredClothing.map((item) => (
+            <div key={item.id} className="relative">
+              <button
+                onClick={() => handleItemSelect(item)}
+                className={`aspect-square w-full rounded overflow-hidden relative ${selectedItem === item.code ? 'ring-2 ring-purple-500' : 'hover:opacity-80'}`}
+              >
                 <img
-                  src={getClothingThumbnail(item)}
+                  src={item.imageUrl}
                   alt={item.name}
-                  className="w-full h-full object-contain rounded"
-                  loading="lazy"
-                  style={{ imageRendering: 'pixelated' }}
+                  className="w-full h-full object-cover"
                 />
-                
-                {/* HC Badge */}
-                {item.club === 'HC' && (
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute top-0 right-0 text-xs bg-yellow-500 text-black px-1 py-0"
-                  >
-                    HC
-                  </Badge>
-                )}
-                
-                {/* Source Badge */}
-                <Badge 
-                  variant="outline" 
-                  className="absolute bottom-0 left-0 text-xs px-1 py-0"
-                >
-                  {item.source === 'database' ? 'DB' : item.source.substring(0, 2).toUpperCase()}
+              </button>
+              {selectedItem === item.code && (
+                <Badge className="absolute top-1 right-1 bg-purple-600 text-white text-xs">
+                  Selecionado
                 </Badge>
+              )}
+              <div className="absolute bottom-0 left-0 w-full bg-black/50 text-white text-xs p-1 flex items-center justify-between">
+                <span>{item.name}</span>
+                <Palette className="w-4 h-4 cursor-pointer" onClick={(e) => {
+                  e.stopPropagation();
+                  handleColorSelect(item.colors[0], item);
+                }} />
               </div>
-              
-              <div className="mt-1 text-center">
-                <p className="text-xs font-medium text-gray-700 truncate">
-                  {item.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {item.item_id}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredItems.length === 0 && (
-        <div className="text-center p-8">
-          <div className="text-4xl mb-4">🔍</div>
-          <p className="text-gray-500">Nenhum item encontrado</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
