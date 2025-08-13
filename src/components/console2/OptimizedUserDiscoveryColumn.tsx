@@ -180,8 +180,8 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                 >
                   <div className="relative">
                     <img
-                      src={getAvatarUrl(user.figureString)}
-                      alt={user.username}
+                      src={getAvatarUrl(user.figure_string || '')}
+                      alt={user.habbo_name}
                       className="w-8 h-8 rounded-full bg-muted"
                       onError={(e) => {
                         e.currentTarget.src = 'https://www.habbo.com.br/habbo-imaging/avatarimage?figure=lg-3023-1335.sh-300-64.hd-180-1.hr-831-49.ch-255-66.ca-1813-62&size=s&direction=2&head_direction=3&action=std';
@@ -194,10 +194,10 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm truncate">
-                        {user.username}
+                        {user.habbo_name}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {formatTimeAgo(user.lastSeen)}
+                        {formatTimeAgo(user.last_seen)}
                       </span>
                     </div>
                     {user.motto && (

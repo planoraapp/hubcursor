@@ -76,7 +76,7 @@ class LocalCache {
   }
 
   size(): number {
-    return this.cache.size();
+    return this.cache.size;
   }
 }
 
@@ -147,7 +147,7 @@ export class OptimizedFeedService {
     }
   }
 
-  // Online Users with optimized queries - using existing discovered_users table
+  // Online Users - simplified approach using existing habbo_accounts table
   async getOnlineUsers(hotel: string = 'br', limit: number = 20): Promise<{
     users: OnlineUser[];
     meta: FeedMeta;
@@ -163,15 +163,15 @@ export class OptimizedFeedService {
     try {
       console.log(`🚀 [OptimizedFeedService] Fetching online users for ${hotel}...`);
       
-      // Query discovered_users table for recent users
+      // Query habbo_accounts table for recent users
       const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
       
       const { data, error } = await supabase
-        .from('discovered_users')
+        .from('habbo_accounts')
         .select('*')
         .eq('hotel', hotel)
-        .gte('last_seen_at', thirtyMinutesAgo)
-        .order('last_seen_at', { ascending: false })
+        .gte('updated_at', thirtyMinutesAgo)
+        .order('updated_at', { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -187,8 +187,8 @@ export class OptimizedFeedService {
         hotel: user.hotel,
         figure_string: user.figure_string,
         motto: user.motto,
-        online: user.is_online, 
-        last_seen: user.last_seen_at || user.updated_at
+        online: true, // Assume users from recent queries are online
+        last_seen: user.updated_at
       }));
 
       const result = {
