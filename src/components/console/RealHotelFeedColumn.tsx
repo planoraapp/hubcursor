@@ -7,9 +7,11 @@ import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
 import { toast } from 'sonner';
 
 export const RealHotelFeedColumn: React.FC = () => {
+  const [onlyOnline, setOnlyOnline] = useState(true);
   const { activities, isLoading, isFetching, error, hotel, metadata, mode, refetch, loadMoreData } = useRealHotelFeed({
     onlineWithinSeconds: 21600, // 6 horas
-    mode: 'hybrid'
+    mode: 'hybrid',
+    onlyOnline,
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -62,19 +64,29 @@ export const RealHotelFeedColumn: React.FC = () => {
           <span>
             Feed do Hotel <Badge className="ml-2">{hotel}</Badge>
           </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            className="h-8 w-8 p-1 rounded-full hover:bg-white/10"
-          >
-            {isRefreshing || isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOnlyOnline((v) => !v)}
+              className={`h-8 px-2 rounded hover:bg-white/10 ${onlyOnline ? 'bg-white/10' : ''}`}
+            >
+              {onlyOnline ? 'Apenas online' : 'Todos'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className="h-8 w-8 p-1 rounded-full hover:bg-white/10"
+            >
+              {isRefreshing || isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-4 overflow-hidden">

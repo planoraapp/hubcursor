@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         
         // Try to get from official ticker as fallback
         const { data: tickerResponse, error: tickerError } = await supabase.functions.invoke('habbo-widgets-proxy', {
-          body: { hotel }
+          body: { endpoint: 'community/ticker', hotel }
         })
 
         if (!tickerError && tickerResponse?.activities?.length > 0) {

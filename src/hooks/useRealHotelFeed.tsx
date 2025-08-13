@@ -46,7 +46,7 @@ export const useRealHotelFeed = (options?: {
     error,
     refetch
   } = useQuery({
-    queryKey: ['real-hotel-feed', hotel, mode, onlineWithinSeconds],
+    queryKey: ['real-hotel-feed', hotel, mode, onlineWithinSeconds, onlyOnline],
     queryFn: async () => {
       console.log(`📡 [useRealHotelFeed] Fetching ${mode} feed for ${hotel}`);
       
@@ -61,7 +61,8 @@ export const useRealHotelFeed = (options?: {
         { 
           onlineWithinSeconds,
           mode,
-          offsetHours: 0 // Start with most recent
+          offsetHours: 0, // Start with most recent
+          onlyOnline,
         }
       );
     },
@@ -123,7 +124,8 @@ export const useRealHotelFeed = (options?: {
         { 
           onlineWithinSeconds,
           mode,
-          offsetHours: 0
+          offsetHours: 0,
+          onlyOnline,
         }
       );
     } else {
@@ -137,7 +139,8 @@ export const useRealHotelFeed = (options?: {
         { 
           onlineWithinSeconds: onlineWithinSeconds + (offsetHours * 3600),
           mode: 'hybrid', // Force hybrid for historical data
-          offsetHours
+          offsetHours,
+          onlyOnline,
         }
       );
     }

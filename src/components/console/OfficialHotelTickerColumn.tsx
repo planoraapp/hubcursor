@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Camera, UserPlus, Trophy, Palette } from 'lucide-react';
@@ -9,6 +9,7 @@ import { habboFeedService } from '@/services/habboFeedService';
 
 export const OfficialHotelTickerColumn: React.FC = () => {
   const { habboAccount } = useUnifiedAuth();
+  const [onlyOnline, setOnlyOnline] = useState(true);
   
   const { 
     activities, 
@@ -27,7 +28,8 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         target.setDate(target.getDate() - 1); // if before 20:00, use yesterday 20:00
       }
       return Math.floor((now.getTime() - target.getTime()) / 1000);
-    })()
+    })(),
+    onlyOnline,
   });
 
   const syncIntervalRef = useRef<NodeJS.Timeout>();
@@ -152,6 +154,15 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Feed do Hotel
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOnlyOnline((v) => !v)}
+              className={`px-2 py-1 h-auto ${onlyOnline ? 'bg-white/10' : ''}`}
+              title="Alternar: apenas online"
+            >
+              {onlyOnline ? 'Apenas online' : 'Todos'}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -314,7 +325,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                                   alt={photo.caption || `Foto ${idx+1}`}
                                   className="w-full h-20 object-cover rounded bg-white/5 cursor-pointer hover:opacity-80 transition-opacity"
                                   loading="lazy"
-                                  onClick={() => window.open(`https://www.habbo.com.br/profile/${activity.username}`, '_blank')}
+                                  onClick={() => window.open(`https://www.habbo.${hotel}/profile/${activity.username}`, '_blank')}
                                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                                 />
                               ))}
