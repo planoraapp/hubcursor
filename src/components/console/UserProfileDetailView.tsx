@@ -15,7 +15,7 @@ interface UserProfileDetailViewProps {
 
 export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ user, onBack }) => {
   // Fetch user activities
-  const { data: userActivities = [], isLoading: activitiesLoading } = useQuery({
+  const { data: userActivities = null, isLoading: activitiesLoading } = useQuery({
     queryKey: ['user-activities', user.name],
     queryFn: () => habboFeedService.getUserFeed('com.br', user.name),
     staleTime: 60 * 1000,
@@ -139,7 +139,7 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div>
                 <p className="text-white/60 text-sm mt-2">Carregando atividades...</p>
               </div>
-            ) : userActivities.activities && userActivities.activities.length > 0 ? (
+            ) : userActivities && userActivities.activities && userActivities.activities.length > 0 ? (
               <div className="space-y-3">
                 {userActivities.activities.slice(0, 5).map((activity: any, index: number) => (
                   <div key={index} className="flex items-start gap-3 p-2 bg-white/5 rounded">
