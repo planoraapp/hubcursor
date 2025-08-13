@@ -1,307 +1,158 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useEffect, useMemo } from 'react';
+import { useParams, Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
-import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
-import { UserActivityTimeline } from '@/components/home/UserActivityTimeline';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileLayout from '@/layouts/MobileLayout';
-import { 
-  User, 
-  Calendar, 
-  Trophy, 
-  Users, 
-  MapPin, 
-  Clock,
-  ExternalLink,
-  Star,
-  Heart
-} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { habboFeedService } from '@/services/habboFeedService';
+import { usePublicHabboProfile } from '@/hooks/usePublicHabboProfile';
+import UserActivityTimeline from '@/components/home/UserActivityTimeline';
+import { Users, Home } from 'lucide-react';
 
-interface HabboUserData {
-  supabase_user_id: string;
-  habbo_name: string;
-  habbo_id: string;
-  hotel: string;
-  figure_string?: string;
-  motto?: string;
-  is_online?: boolean;
-  created_at?: string;
-  last_updated?: string;
-}
+const normalizeHotel = (hotel: string) => (hotel === 'com.br' ? 'com.br' : hotel);
 
-const EnhancedHabboHome = () => {
-  const { username, hotel } = useParams<{ username: string; hotel: string }>();
-  const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('homes');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const isMobile = useIsMobile();
+const avatarFromFigure = (figure?: string | null) => {
+  if (!figure) return '';
+  const params = new URLSearchParams({
+    figure,
+    direction: '2',
+    head_direction: '2',
+    gesture: 'sml',
+    size: 'l',
+  });
+  return `https://www.habbo.com/habbo-imaging/avatarimage?${params.toString()}`;
+};
 
-  const { data: habboUser, isLoading } = useQuery({
-    queryKey: ['habbo-user', username, hotel],
-    queryFn: async () => {
-      if (!username) return null;
-      
-      try {
-        console.log(`🔍 [EnhancedHabboHome] Fetching data for ${username} at hotel ${hotel}`);
-        
-        const { data, error } = await supabase
-          .rpc('get_habbo_account_public_by_name', { 
-            habbo_name_param: username.trim().toLowerCase() 
-          });
+const EnhancedHabboHome: React.FC = () => {
+  const params = useParams();
+  const queryClient = useQueryClient();
 
-        if (error) {
-          console.error('❌ [EnhancedHabboHome] Error fetching user:', error);
-          throw error;
-        }
+  const hotelParam = params.hotel || '';
+  const usernameParam = params.username || '';
 
-        const userData = Array.isArray(data) ? data[0] : data;
-        console.log('✅ [EnhancedHabboHome] User data loaded:', userData?.habbo_name);
-        
-        return userData as HabboUserData;
-      } catch (error) {
-        console.error('❌ [EnhancedHabboHome] Failed to fetch user data:', error);
-        throw error;
+  // Basic validation – redirect if malformed
+  if (!hotelParam || !usernameParam) {
+    return <Navigate to="/" replace />;
+  }
+
+  const hotel = useMemo(() => normalizeHotel(hotelParam), [hotelParam]);
+  const username = useMemo(() => usernameParam, [usernameParam]);
+
+  // Load minimal public profile via RPC
+  const { data: profile, isLoading: loadingProfile } = usePublicHabboProfile(username, hotel);
+
+  // Trigger on-demand sync for this user to populate fresh activities
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      console.log('🧭 [EnhancedHabboHome] Triggering user sync for', { username, hotel });
+      const resp = await habboFeedService.triggerUserSync(username, hotel);
+      console.log('🔄 [EnhancedHabboHome] Sync result:', resp);
+      if (!cancelled) {
+        // After sync, refresh feed shortly after
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['user-feed', hotel, username] });
+          queryClient.invalidateQueries({ queryKey: ['public-habbo-profile', username.toLowerCase(), hotel] });
+        }, 400);
       }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hotel, username, queryClient]);
+
+  // Load user feed filtered by username
+  const { data: feed, isLoading: loadingFeed } = useQuery({
+    queryKey: ['user-feed', hotel, username],
+    queryFn: async () => {
+      console.log('📰 [EnhancedHabboHome] Fetching user feed for', { hotel, username });
+      const data = await habboFeedService.getUserFeed(hotel, username);
+      return data;
     },
-    enabled: !!username,
-    retry: 2,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 30,
   });
 
-  // Garante rastreamento/sincronização e SEO por usuário
-  useEffect(() => {
-    if (habboUser?.habbo_id && habboUser?.habbo_name && habboUser?.hotel) {
-      habboFeedService.ensureTrackedAndSynced({
-        habbo_name: habboUser.habbo_name,
-        habbo_id: habboUser.habbo_id,
-        hotel: habboUser.hotel,
-      }).catch(() => {});
-    }
-  }, [habboUser?.habbo_id, habboUser?.habbo_name, habboUser?.hotel]);
-
-  useEffect(() => {
-    if (!habboUser) return;
-    const title = `${habboUser.habbo_name} • Habbo Home (${habboUser.hotel?.toUpperCase()}) | HabboHub`;
-    document.title = title;
-
-    // Meta description
-    const descText = `Veja o perfil Habbo de ${habboUser.habbo_name} (${habboUser.hotel}). Emblemas, amigos, quartos e atividades recentes.`;
-    let desc = document.querySelector('meta[name="description"]');
-    if (!desc) {
-      desc = document.createElement('meta');
-      desc.setAttribute('name', 'description');
-      document.head.appendChild(desc);
-    }
-    desc.setAttribute('content', descText);
-
-    // Canonical
-    const canonicalHref = `${window.location.origin}/home/${habboUser.hotel}/${habboUser.habbo_name}`;
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', canonicalHref);
-
-    // JSON-LD Person
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.text = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Person',
-      name: habboUser.habbo_name,
-      url: canonicalHref,
-      description: descText,
-    });
-    document.head.appendChild(script);
-    return () => {
-      if (script && script.parentNode) script.parentNode.removeChild(script);
-    };
-  }, [habboUser]);
-
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg volter-font text-white" style={{
-            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-          }}>
-            Carregando perfil do {username}...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!habboUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
-          <CardContent className="p-6 text-center">
-            <User className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-xl font-bold mb-2">Usuário não encontrado</h2>
-            <p className="text-gray-600 mb-4">
-              O usuário "{username}" não foi encontrado em nosso banco de dados.
-            </p>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Voltar ao Início
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const avatarUrl = habboUser?.figure_string 
-    ? `https://www.habbo.${habboUser.hotel}/habbo-imaging/avatarimage?figure=${habboUser.figure_string}&size=l&direction=2&head_direction=3&action=std`
-    : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=3&action=std`;
-
-  const renderMainContent = () => {
-    return (
-      <div className="space-y-6">
-        {/* User Profile Header */}
-        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              <div className="flex-shrink-0">
-                <div className="relative">
-                  <img
-                    src={avatarUrl}
-                    alt={habboUser.habbo_name}
-                    className="h-32 w-auto object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=3&action=std`;
-                    }}
-                  />
-                  <Badge 
-                    className={`absolute -bottom-2 -right-2 ${habboUser.is_online ? 'bg-green-500' : 'bg-red-500'} text-white`}
-                  >
-                    {habboUser.is_online ? 'Online' : 'Offline'}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-3xl font-bold volter-font mb-2">{habboUser.habbo_name}</h1>
-                
-                {habboUser.motto && (
-                  <p className="text-lg text-gray-600 italic mb-4">"{habboUser.motto}"</p>
-                )}
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-blue-500" />
-                    <span>Hotel: {habboUser.hotel?.toUpperCase()}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-green-500" />
-                    <span>Desde: {habboUser.created_at ? new Date(habboUser.created_at).getFullYear() : 'N/A'}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-purple-500" />
-                    <span>Atualizado: {habboUser.last_updated ? new Date(habboUser.last_updated).toLocaleDateString('pt-BR') : 'N/A'}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-500" />
-                    <span>ID: {habboUser.habbo_id}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Hotel Feed Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CompactHotelFeed />
-
-          <UserActivityTimeline hotel={habboUser.hotel} username={habboUser.habbo_name} />
-          
-          {/* User Stats/Info Card */}
-          <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="w-5 h-5" />
-                Informações do Usuário
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Nome Habbo:</span>
-                  <span className="text-sm">{habboUser.habbo_name}</span>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Hotel:</span>
-                  <Badge variant="outline">{habboUser.hotel?.toUpperCase()}</Badge>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Status:</span>
-                  <Badge className={habboUser.is_online ? 'bg-green-500' : 'bg-red-500'}>
-                    {habboUser.is_online ? 'Online' : 'Offline'}
-                  </Badge>
-                </div>
-                
-                <Separator />
-                
-                <div className="text-center pt-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => window.open(`https://www.habbo.${habboUser.hotel}/profile/${habboUser.habbo_name}`, '_blank')}
-                  >
-                    Ver Perfil Oficial
-                    <ExternalLink className="w-3 h-3 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  };
-
-  if (isMobile) {
-    return (
-      <MobileLayout>
-        <div className="p-4">
-          {renderMainContent()}
-        </div>
-      </MobileLayout>
-    );
-  }
+  const figureUrl = profile?.figure_string ? avatarFromFigure(profile.figure_string) : '';
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          {renderMainContent()}
-        </main>
-      </div>
+    <div className="container mx-auto max-w-5xl px-4 py-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-start gap-4">
+            <Avatar className="w-20 h-20 border">
+              {figureUrl ? (
+                <AvatarImage src={figureUrl} alt={profile?.habbo_name || username} />
+              ) : null}
+              <AvatarFallback className="text-lg font-bold">
+                {(profile?.habbo_name || username)[0]?.toUpperCase() || 'H'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <CardTitle className="flex items-center gap-2">
+                {profile?.habbo_name || username}
+                {profile?.is_online ? (
+                  <span className="inline-flex items-center h-2.5 w-2.5 rounded-full bg-green-500" />
+                ) : (
+                  <span className="inline-flex items-center h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
+                )}
+              </CardTitle>
+              <p className="text-muted-foreground italic mt-1">
+                {loadingProfile ? 'Carregando missão...' : profile?.motto || 'Sem missão definida'}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline">{hotel}</Badge>
+                {profile?.last_updated ? (
+                  <span className="text-xs text-muted-foreground">
+                    Atualizado: {new Date(profile.last_updated).toLocaleString()}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="overview">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+              <TabsTrigger value="activities">Atividades</TabsTrigger>
+              <TabsTrigger value="more">Mais</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="mt-4">
+              <div className="text-muted-foreground text-sm">
+                {profile
+                  ? 'Página pública do Habbo com dados básicos e atividades recentes.'
+                  : 'Ainda não temos dados deste usuário — sincronizando...'}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="activities" className="mt-4">
+              <UserActivityTimeline activities={feed?.activities || []} isLoading={loadingFeed} />
+            </TabsContent>
+
+            <TabsContent value="more" className="mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    <Users className="w-8 h-8 mx-auto mb-2" />
+                    Amigos e grupos em breve
+                  </CardContent>
+                </Card>
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    <Home className="w-8 h-8 mx-auto mb-2" />
+                    Quartos e fotos em breve
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };
