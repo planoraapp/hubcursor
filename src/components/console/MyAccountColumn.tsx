@@ -1,11 +1,14 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
+import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { habboProxyService } from '@/services/habboProxyService';
 import { InstagramPhotoGrid } from './InstagramPhotoGrid';
 import { useHabboPhotos } from '@/hooks/useHabboPhotos';
+import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
 
 export const MyAccountColumn: React.FC = () => {
   const { 
@@ -20,10 +23,17 @@ export const MyAccountColumn: React.FC = () => {
     isLoading 
   } = useMyConsoleProfile();
 
-  // Always call hooks in the same order (avoid conditional hooks)
+  // Get complete profile data for stats grid
   const hotel = (habboAccount as any)?.hotel === 'br' ? 'com.br' : ((habboAccount as any)?.hotel || 'com.br');
+  const { 
+    data: completeProfile, 
+    isLoading: isLoadingComplete 
+  } = useCompleteProfile(habboAccount?.habbo_name || '', hotel as string);
+
+  // Always call hooks in the same order (avoid conditional hooks)
   const { habboPhotos, isLoading: isLoadingHabboPhotos } = useHabboPhotos(habboAccount?.habbo_name, hotel as string);
 
+  console.log('[MyAccountColumn] Complete Profile data:', completeProfile);
   console.log('[MyAccountColumn] Photos data:', photos);
 
   if (!isLoggedIn || !habboAccount) {
@@ -57,7 +67,7 @@ export const MyAccountColumn: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
             Minha Conta
-            {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
+            {(isLoading || isLoadingComplete) && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -65,9 +75,9 @@ export const MyAccountColumn: React.FC = () => {
             {/* Profile Section */}
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                {myProfile?.figureString ? (
+                {myProfile?.figureString || completeProfile?.figureString ? (
                   <img 
-                    src={habboProxyService.getAvatarUrl(myProfile.figureString, 'l')} 
+                    src={habboProxyService.getAvatarUrl(myProfile?.figureString || completeProfile?.figureString || '', 'l')} 
                     alt={habboAccount.habbo_name}
                     className="h-[130px] w-auto object-contain bg-transparent"
                   />
@@ -83,22 +93,23 @@ export const MyAccountColumn: React.FC = () => {
                 <h3 className="font-semibold text-blue-200 text-lg mb-1">
                   {habboAccount.habbo_name}
                 </h3>
-                {myProfile?.motto && (
+                {(myProfile?.motto || completeProfile?.motto) && (
                   <p className="text-white/80 text-sm italic mb-2">
-                    "{myProfile.motto}"
+                    "{myProfile?.motto || completeProfile?.motto}"
                   </p>
                 )}
                 <div className="flex items-center gap-2 mb-2">
                   <div className={`w-2 h-2 rounded-full ${
-                    myProfile?.online ? 'bg-green-500' : 'bg-red-500'
+                    (myProfile?.online || completeProfile?.online) ? 'bg-green-500' : 'bg-red-500'
                   }`}></div>
                   <span className="text-xs text-white/60">
-                    {myProfile?.online ? 'Online' : 'Offline'}
+                    {(myProfile?.online || completeProfile?.online) ? 'Online' : 'Offline'}
                   </span>
                 </div>
-                {myProfile?.selectedBadges && myProfile.selectedBadges.length > 0 && (
+                {((myProfile?.selectedBadges && myProfile.selectedBadges.length > 0) || 
+                  (completeProfile?.data?.selectedBadges && completeProfile.data.selectedBadges.length > 0)) && (
                   <div className="flex flex-wrap gap-1">
-                    {myProfile.selectedBadges.slice(0, 3).map((badge, index) => (
+                    {(myProfile?.selectedBadges || completeProfile?.data?.selectedBadges || []).slice(0, 3).map((badge, index) => (
                       <img
                         key={index}
                         src={habboProxyService.getBadgeUrl(badge.code)}
@@ -112,35 +123,52 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Stats Section */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Heart className="w-4 h-4 text-red-400" />
-                  <span className="text-lg font-semibold">{myLikes.length}</span>
-                </div>
-                <p className="text-xs text-white/60">Curtidas</p>
+            {/* Habbo Stats Section - Using ProfileStatsGrid */}
+            {completeProfile && (
+              <div>
+                <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Estatísticas do Habbo
+                </h4>
+                <ProfileStatsGrid profile={completeProfile} className="scale-90 origin-top-left" />
               </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <MessageCircle className="w-4 h-4 text-blue-400" />
-                  <span className="text-lg font-semibold">{myComments.length}</span>
+            )}
+
+            {/* Social Stats Section - Internal System Data */}
+            <div>
+              <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                Estatísticas Sociais
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Heart className="w-4 h-4 text-red-400" />
+                    <span className="text-lg font-semibold">{myLikes.length}</span>
+                  </div>
+                  <p className="text-xs text-white/60">Curtidas</p>
                 </div>
-                <p className="text-xs text-white/60">Comentários</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users className="w-4 h-4 text-green-400" />
-                  <span className="text-lg font-semibold">{followers.length}</span>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <MessageCircle className="w-4 h-4 text-blue-400" />
+                    <span className="text-lg font-semibold">{myComments.length}</span>
+                  </div>
+                  <p className="text-xs text-white/60">Comentários</p>
                 </div>
-                <p className="text-xs text-white/60">Seguidores</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users className="w-4 h-4 text-purple-400" />
-                  <span className="text-lg font-semibold">{following.length}</span>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Users className="w-4 h-4 text-green-400" />
+                    <span className="text-lg font-semibold">{followers.length}</span>
+                  </div>
+                  <p className="text-xs text-white/60">Seguidores</p>
                 </div>
-                <p className="text-xs text-white/60">Seguindo</p>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Users className="w-4 h-4 text-purple-400" />
+                    <span className="text-lg font-semibold">{following.length}</span>
+                  </div>
+                  <p className="text-xs text-white/60">Seguindo</p>
+                </div>
               </div>
             </div>
 
