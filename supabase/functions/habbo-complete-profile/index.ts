@@ -8,6 +8,7 @@ const corsHeaders = {
 
 // Cache para armazenar IDs internos descobertos
 const internalIdCache = new Map<string, string>();
+const internalUserIdCache = new Map<string, string>();
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -282,44 +283,53 @@ async function getPhotosFromHabboAPI(uniqueId: string, hotel: string, username: 
   return [];
 }
 
-// Enhanced function to discover photos using multiple strategies
+// Enhanced photo discovery function with profile scraping priority
 async function discoverPhotosEnhanced(uniqueId: string, hotel: string, username: string): Promise<any[]> {
-  let allPhotos: any[] = [];
+  console.log(`[Photo Discovery] Starting enhanced discovery for ${username} on ${hotel}`);
   
-  // Strategy 1: Try official Habbo API first
-  console.log(`[Photo Discovery] Strategy 1: Official Habbo API`);
+  const allPhotos: any[] = [];
+  
+  // Strategy 1: Profile page scraping (primary method)
+  console.log('[Photo Discovery] Strategy 1: Profile Page Scraping');
+  const scrapedPhotos = await scrapeProfilePhotos(username, hotel);
+  allPhotos.push(...scrapedPhotos);
+  
+  // Strategy 2: Official Habbo API (backup)
+  console.log('[Photo Discovery] Strategy 2: Official Habbo API');
   const apiPhotos = await getPhotosFromHabboAPI(uniqueId, hotel, username);
-  allPhotos = [...allPhotos, ...apiPhotos];
+  allPhotos.push(...apiPhotos);
   
-  // Strategy 2: Extract internal ID and use S3 discovery
-  console.log(`[Photo Discovery] Strategy 2: S3 Discovery`);
-  let internalUserId = internalIdCache.get(uniqueId);
-  
-  if (!internalUserId) {
-    console.log(`[Photo Discovery] Extracting internal user ID for ${username}`);
-    internalUserId = await extractInternalUserId(username, hotel);
-    if (internalUserId) {
-      internalIdCache.set(uniqueId, internalUserId);
-      console.log(`[Photo Discovery] Found internal user ID: ${internalUserId}`);
+  // Strategy 3: S3 Discovery (if other methods fail)
+  if (allPhotos.length === 0) {
+    console.log('[Photo Discovery] Strategy 3: S3 Discovery (fallback)');
+    console.log('[Photo Discovery] Extracting internal user ID for', username);
+    
+    let cachedInternalId = internalUserIdCache.get(`${username}-${hotel}`);
+    if (!cachedInternalId) {
+      cachedInternalId = await extractInternalUserId(username, hotel);
+      if (cachedInternalId) {
+        internalUserIdCache.set(`${username}-${hotel}`, cachedInternalId);
+      }
+    }
+    
+    if (cachedInternalId) {
+      const s3Photos = await discoverS3Photos(cachedInternalId, hotel, username);
+      allPhotos.push(...s3Photos);
     }
   }
   
-  if (internalUserId) {
-    const s3Photos = await discoverS3Photos(internalUserId, hotel, username);
-    allPhotos = [...allPhotos, ...s3Photos];
-  }
+  // Strategy 4: Test known examples (always add as backup)
+  console.log('[Photo Discovery] Strategy 4: Testing known examples');
+  const testPhotos = await testKnownExamples(hotel, username);
+  allPhotos.push(...testPhotos);
   
-  // Strategy 3: Try known working examples for testing
-  console.log(`[Photo Discovery] Strategy 3: Testing known examples`);
-  const knownTestPhotos = await testKnownExamples(hotel, username);
-  allPhotos = [...allPhotos, ...knownTestPhotos];
-  
-  // Remove duplicates and return
-  const uniquePhotos = allPhotos.filter((photo, index, self) => 
-    index === self.findIndex((p) => p.url === photo.url)
+  // Deduplicate photos by URL
+  const uniquePhotos = Array.from(
+    new Map(allPhotos.map(photo => [photo.url, photo])).values()
   );
   
-  console.log(`[Photo Discovery] Total photos found: ${uniquePhotos.length} (${apiPhotos.length} API + ${allPhotos.length - apiPhotos.length - knownTestPhotos.length} S3 + ${knownTestPhotos.length} test)`);
+  console.log(`[Photo Discovery] Total photos found: ${uniquePhotos.length} (${scrapedPhotos.length} scraped + ${apiPhotos.length} API + ${allPhotos.filter(p => p.source === 's3_discovery').length} S3 + ${testPhotos.length} test)`);
+  
   return uniquePhotos;
 }
 
@@ -377,6 +387,85 @@ async function testKnownExamples(hotel: string, username: string): Promise<any[]
   return photos;
 }
 
+// Function to scrape photos from official Habbo profile page
+async function scrapeProfilePhotos(username: string, hotel: string): Promise<any[]> {
+  const photos: any[] = [];
+  const profileUrl = `https://www.habbo.${hotel}/profile/${username}`;
+  
+  console.log(`[Profile Scraping] Fetching photos from: ${profileUrl}`);
+  
+  try {
+    const response = await fetch(profileUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+      }
+    });
+
+    if (!response.ok) {
+      console.log(`[Profile Scraping] Failed to fetch profile page: ${response.status}`);
+      return photos;
+    }
+
+    const html = await response.text();
+    console.log(`[Profile Scraping] Profile page HTML length: ${html.length} characters`);
+
+    // Enhanced regex patterns to find photo URLs in the HTML
+    const photoUrlPatterns = [
+      /habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/[^\/]+\/p-(\d+)-(\d+)\.png/gi,
+      /\/\/habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/[^\/]+\/p-(\d+)-(\d+)\.png/gi,
+      /https?:\/\/habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/[^\/]+\/p-(\d+)-(\d+)\.png/gi
+    ];
+
+    let foundUrls = new Set<string>();
+
+    for (const pattern of photoUrlPatterns) {
+      let match;
+      while ((match = pattern.exec(html)) !== null) {
+        const fullUrl = match[0].startsWith('//') ? `https:${match[0]}` : 
+                       match[0].startsWith('http') ? match[0] : 
+                       `https://${match[0]}`;
+        
+        foundUrls.add(fullUrl);
+        console.log(`[Profile Scraping] Found photo URL: ${fullUrl}`);
+      }
+    }
+
+    // Convert found URLs to photo objects
+    Array.from(foundUrls).forEach((photoUrl, index) => {
+      const urlMatch = photoUrl.match(/p-(\d+)-(\d+)\.png/);
+      if (urlMatch) {
+        const internalId = urlMatch[1];
+        const timestamp = parseInt(urlMatch[2]);
+        
+        photos.push({
+          id: `scraped-${internalId}-${timestamp}`,
+          url: photoUrl,
+          previewUrl: photoUrl,
+          caption: `Foto de ${username}`,
+          timestamp: new Date(timestamp).toISOString(),
+          roomName: 'Quarto do jogo',
+          likesCount: 0,
+          type: 'PHOTO',
+          source: 'profile_scraping'
+        });
+      }
+    });
+
+    console.log(`[Profile Scraping] Found ${photos.length} photos from profile page`);
+
+  } catch (error) {
+    console.error(`[Profile Scraping] Error scraping profile page:`, error);
+  }
+
+  return photos;
+}
+
 // Function to discover photos from S3 bucket with enhanced strategy
 async function discoverS3Photos(internalUserId: string, hotel: string, username: string): Promise<any[]> {
   const photos: any[] = [];
@@ -384,24 +473,29 @@ async function discoverS3Photos(internalUserId: string, hotel: string, username:
   
   console.log(`[S3 Discovery] Starting photo discovery for user ${internalUserId} on hotel ${hotelCode}`);
   
-  // Generate smarter timestamp sampling
+  // Generate smarter timestamp sampling based on known working examples
   const now = Date.now();
   const timestamps = [];
   
-  // Recent photos - higher probability (daily for last 2 weeks)
-  for (let days = 0; days < 14; days++) {
-    timestamps.push(now - (days * 24 * 60 * 60 * 1000));
+  // Add known working timestamps as reference points
+  const knownTimestamps = [1753569292755, 1755042756833];
+  
+  // Recent photos - higher probability (every 6 hours for last week)
+  for (let hours = 0; hours < 168; hours += 6) {
+    timestamps.push(now - (hours * 60 * 60 * 1000));
   }
   
-  // Older photos - weekly sampling for last 6 months
-  for (let weeks = 2; weeks < 26; weeks++) {
-    timestamps.push(now - (weeks * 7 * 24 * 60 * 60 * 1000));
-  }
+  // Add variations around known working timestamps
+  knownTimestamps.forEach(knownTs => {
+    for (let offset = -86400000; offset <= 86400000; offset += 3600000) { // ±24h in 1h steps
+      timestamps.push(knownTs + offset);
+    }
+  });
 
   console.log(`[S3 Discovery] Testing ${timestamps.length} timestamps for user ${internalUserId}`);
 
-  // Test each timestamp with rate limiting
-  for (let i = 0; i < timestamps.length && photos.length < 20; i++) {
+  // Test each timestamp with optimized rate limiting
+  for (let i = 0; i < Math.min(timestamps.length, 50) && photos.length < 10; i++) {
     const timestamp = timestamps[i];
     const photoUrl = `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/${hotelCode}/p-${internalUserId}-${timestamp}.png`;
     
@@ -429,11 +523,11 @@ async function discoverS3Photos(internalUserId: string, hotel: string, username:
         });
       }
 
-      // Rate limiting
-      if (i % 10 === 0 && i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 150));
+      // Optimized rate limiting
+      if (i % 5 === 0 && i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       } else {
-        await new Promise(resolve => setTimeout(resolve, 75));
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
     } catch (error) {

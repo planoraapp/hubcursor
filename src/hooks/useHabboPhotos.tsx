@@ -12,7 +12,7 @@ export interface EnhancedHabboPhoto {
   roomName?: string;
   likesCount?: number;
   type?: string;
-  source?: 's3_discovery' | 'api' | 'fallback';
+  source?: 'profile_scraping' | 's3_discovery' | 'known_working_example' | 'test_example' | 'api' | 'fallback';
 }
 
 export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
@@ -41,7 +41,7 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
       const photos = data?.data?.photos || [];
       console.log('[useHabboPhotos] Raw photos data from enhanced discovery:', photos);
 
-      // Map and enhance photos, prioritizing S3 discovered photos
+      // Map and enhance photos, prioritizing scraped photos, then S3 discovered photos
       const enhancedPhotos: EnhancedHabboPhoto[] = photos
         .filter((photo: any) => photo && (photo.url || photo.imageUrl))
         .map((photo: any, index: number) => ({
@@ -57,9 +57,18 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
           source: photo.source || 'api'
         }))
         .sort((a, b) => {
-          // Sort by source priority (s3_discovery first), then by timestamp
-          if (a.source === 's3_discovery' && b.source !== 's3_discovery') return -1;
-          if (b.source === 's3_discovery' && a.source !== 's3_discovery') return 1;
+          // Sort by source priority: profile_scraping > s3_discovery > known_working_example > api
+          const sourcePriority = {
+            'profile_scraping': 0,
+            's3_discovery': 1,
+            'known_working_example': 2,
+            'api': 3
+          };
+          
+          const priorityA = sourcePriority[a.source as keyof typeof sourcePriority] ?? 99;
+          const priorityB = sourcePriority[b.source as keyof typeof sourcePriority] ?? 99;
+          
+          if (priorityA !== priorityB) return priorityA - priorityB;
           
           // Then sort by timestamp, newest first
           const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
@@ -68,9 +77,10 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
         });
 
       console.log(`[useHabboPhotos] Enhanced photos (${enhancedPhotos.length} total):`, {
+        scraped_photos: enhancedPhotos.filter(p => p.source === 'profile_scraping').length,
         s3_photos: enhancedPhotos.filter(p => p.source === 's3_discovery').length,
-        api_photos: enhancedPhotos.filter(p => p.source === 'api').length,
-        other_photos: enhancedPhotos.filter(p => p.source !== 's3_discovery' && p.source !== 'api').length
+        known_photos: enhancedPhotos.filter(p => p.source === 'known_working_example').length,
+        api_photos: enhancedPhotos.filter(p => p.source === 'api').length
       });
       
       return enhancedPhotos;
