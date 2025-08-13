@@ -8,6 +8,7 @@ import { usePhotosScraped } from '@/hooks/usePhotosScraped';
 import { useFollowSystem } from '@/hooks/useFollowSystem';
 import { habboProxyService } from '@/services/habboProxyService';
 import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
+import { PhotosSection } from './PhotosSection';
 
 export const MyAccountColumn: React.FC = () => {
   const { 
@@ -156,59 +157,21 @@ export const MyAccountColumn: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Enhanced Photos Section with Scraping */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Camera className="w-4 h-4 text-white/80" />
-                <h4 className="text-sm font-medium text-white/80">
-                  Minhas Fotos ({scrapedPhotos?.length || 0})
-                </h4>
-                {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
-              </div>
-              
-              {isLoadingPhotos ? (
-                <div className="text-center py-6 bg-white/5 rounded-lg">
-                  <p className="text-white/60 text-sm">Carregando fotos...</p>
-                </div>
-              ) : scrapedPhotos && scrapedPhotos.length > 0 ? (
-                <div className="bg-white/10 p-3 rounded-lg">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {scrapedPhotos.map((photo) => (
-                      <div key={photo.id} className="relative overflow-hidden rounded-lg group aspect-square">
-                        <img
-                          src={photo.imageUrl}
-                          alt="Foto Habbo"
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://placehold.co/150x150/4B5563/FFFFFF?text=Foto+Não+Disponível`;
-                          }}
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                          <span className="text-xs text-white/80">{photo.date}</span>
-                          <div className="flex items-center gap-1 text-white/80 text-xs">
-                            <Heart className="w-3 h-3 text-red-400" />
-                            <span>{photo.likes}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 bg-white/5 rounded-lg">
-                  <Camera className="w-8 h-8 mx-auto mb-2 opacity-50 text-white/50" />
-                  <p className="text-white/60 text-sm">Nenhuma foto encontrada</p>
-                  <p className="text-white/40 text-xs mt-1">
-                    As fotos são obtidas diretamente do seu perfil público do Habbo
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Enhanced Photos Section */}
+      <PhotosSection 
+        photos={scrapedPhotos?.map(photo => ({
+          id: photo.id,
+          imageUrl: photo.imageUrl,
+          date: photo.date,
+          likes: photo.likes
+        })) || []}
+        userName="Minhas Fotos"
+        isLoading={isLoadingPhotos}
+      />
     </div>
   );
 };

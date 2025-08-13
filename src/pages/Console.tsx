@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
 import { UserDiscoveryColumn } from '@/components/console/UserDiscoveryColumn';
 import { PlaceholderColumn } from '@/components/console/PlaceholderColumn';
 import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
-import { Radio, Activity, Users } from 'lucide-react';
+import { Radio, Activity, Users, Menu } from 'lucide-react';
 
 export const Console: React.FC = () => {
   const { isInitializing } = useInitializeUserFeed();
@@ -17,8 +17,13 @@ export const Console: React.FC = () => {
         <AppSidebar />
         <SidebarInset>
           <div className="min-h-screen bg-gradient-to-br from-[#2C3E50] via-[#34495E] to-[#5A6573] text-white">
-            <div className="container mx-auto px-4 py-6">
-              <div className="mb-6">
+            {/* Header with Sidebar Toggle */}
+            <div className="flex items-center gap-4 p-4 border-b border-white/10">
+              <SidebarTrigger className="text-white hover:bg-white/10 p-2 rounded-lg">
+                <Menu className="w-5 h-5" />
+              </SidebarTrigger>
+              
+              <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-3xl font-bold text-white">Console do Hotel</h1>
                   <div className="flex items-center gap-2">
@@ -38,7 +43,10 @@ export const Console: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
 
+            {/* Main Content */}
+            <div className="container mx-auto px-4 py-6">
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
                 {/* Left Column - My Account */}
                 <div className="space-y-6">

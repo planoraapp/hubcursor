@@ -20,6 +20,28 @@ export const usePhotosScraped = (username?: string) => {
       
       console.log('[usePhotosScraped] Fetching scraped photos for:', username);
       
+      // First try to get from database
+      const { data: dbPhotos, error: dbError } = await supabase
+        .from('habbo_photos')
+        .select('*')
+        .eq('habbo_name', username.trim())
+        .order('taken_date', { ascending: false });
+
+      if (!dbError && dbPhotos && dbPhotos.length > 0) {
+        console.log('[usePhotosScraped] Found photos in database:', dbPhotos.length);
+        return dbPhotos.map(photo => ({
+          id: photo.id,
+          photo_id: photo.photo_id,
+          imageUrl: photo.s3_url,
+          date: new Date(photo.taken_date || photo.created_at).toLocaleDateString('pt-BR'),
+          likes: photo.likes_count || 0,
+          timestamp: photo.timestamp_taken,
+          roomName: photo.room_name
+        }));
+      }
+
+      // Fallback to edge function if no photos in database
+      console.log('[usePhotosScraped] No photos in database, trying edge function...');
       const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
         body: { username: username.trim() }
       });
@@ -29,7 +51,7 @@ export const usePhotosScraped = (username?: string) => {
         throw new Error(error.message || 'Failed to fetch photos');
       }
 
-      console.log('[usePhotosScraped] Retrieved photos:', data);
+      console.log('[usePhotosScraped] Retrieved photos from edge function:', data);
       return data || [];
     },
     enabled: !!username,
