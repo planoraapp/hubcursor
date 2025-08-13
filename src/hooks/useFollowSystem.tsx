@@ -1,84 +1,110 @@
 
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { followService, type FollowData } from '@/services/followService';
+import { followService } from '@/services/followService';
+import { useAuth } from './useAuth';
 
-export const useFollowSystem = (userId?: string) => {
+interface UseFollowSystemProps {
+  targetHabboId?: string;
+  targetHabboName?: string;
+}
+
+export const useFollowSystem = ({ targetHabboId, targetHabboName }: UseFollowSystemProps = {}) => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Check if current user is following target user
+  const { data: isFollowing, isLoading: isCheckingFollow } = useQuery({
+    queryKey: ['isFollowing', user?.id, targetHabboId],
+    queryFn: () => {
+      if (!user?.id || !targetHabboId) return false;
+      return followService.isFollowing(user.id, targetHabboId);
+    },
+    enabled: !!(user?.id && targetHabboId)
+  });
 
   // Get followers count
   const { data: followersCount = 0 } = useQuery({
-    queryKey: ['followers-count', userId],
-    queryFn: () => followService.getFollowersCount(userId!),
-    enabled: !!userId,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    queryKey: ['followersCount', targetHabboId],
+    queryFn: () => {
+      if (!targetHabboId) return 0;
+      return followService.getFollowersCount(targetHabboId);
+    },
+    enabled: !!targetHabboId
   });
 
   // Get following count
   const { data: followingCount = 0 } = useQuery({
-    queryKey: ['following-count', userId],
-    queryFn: () => followService.getFollowingCount(userId!),
-    enabled: !!userId,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-
-  // Get followers list
-  const { data: followers = [] } = useQuery({
-    queryKey: ['followers', userId],
-    queryFn: () => followService.getFollowers(userId!),
-    enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-
-  // Get following list
-  const { data: following = [] } = useQuery({
-    queryKey: ['following', userId],
-    queryFn: () => followService.getFollowing(userId!),
-    enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    queryKey: ['followingCount', user?.id],
+    queryFn: () => {
+      if (!user?.id) return 0;
+      return followService.getFollowingCount(user.id);
+    },
+    enabled: !!user?.id
   });
 
   // Follow mutation
   const followMutation = useMutation({
-    mutationFn: ({ 
-      followerUserId, 
-      followedUserId, 
-      followerHabboName, 
-      followedHabboName 
-    }: {
-      followerUserId: string;
-      followedUserId: string;
+    mutationFn: async ({ habboId, habboName, followerHabboName }: { 
+      habboId: string; 
+      habboName: string; 
       followerHabboName: string;
-      followedHabboName: string;
-    }) => 
-      followService.followUser(followerUserId, followedUserId, followerHabboName, followedHabboName),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['followers-count'] });
-      queryClient.invalidateQueries({ queryKey: ['following-count'] });
-      queryClient.invalidateQueries({ queryKey: ['followers'] });
-      queryClient.invalidateQueries({ queryKey: ['following'] });
+    }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      return followService.followUser(user.id, habboId, followerHabboName, habboName);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['isFollowing'] });
+      queryClient.invalidateQueries({ queryKey: ['followersCount'] });
+      queryClient.invalidateQueries({ queryKey: ['followingCount'] });
+    }
   });
 
   // Unfollow mutation
   const unfollowMutation = useMutation({
-    mutationFn: ({ followerUserId, followedUserId }: { followerUserId: string; followedUserId: string }) =>
-      followService.unfollowUser(followerUserId, followedUserId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['followers-count'] });
-      queryClient.invalidateQueries({ queryKey: ['following-count'] });
-      queryClient.invalidateQueries({ queryKey: ['followers'] });
-      queryClient.invalidateQueries({ queryKey: ['following'] });
+    mutationFn: async (habboId: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      return followService.unfollowUser(user.id, habboId);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['isFollowing'] });
+      queryClient.invalidateQueries({ queryKey: ['followersCount'] });
+      queryClient.invalidateQueries({ queryKey: ['followingCount'] });
+    }
   });
 
+  const handleFollow = async (followerHabboName: string) => {
+    if (!targetHabboId || !targetHabboName) return;
+    
+    try {
+      await followMutation.mutateAsync({
+        habboId: targetHabboId,
+        habboName: targetHabboName,
+        followerHabboName
+      });
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    if (!targetHabboId) return;
+    
+    try {
+      await unfollowMutation.mutateAsync(targetHabboId);
+    } catch (error) {
+      console.error('Error unfollowing user:', error);
+    }
+  };
+
   return {
+    isFollowing: isFollowing ?? false,
+    isCheckingFollow,
     followersCount,
     followingCount,
-    followers,
-    following,
-    followUser: followMutation.mutate,
-    unfollowUser: unfollowMutation.mutate,
-    isFollowing: followMutation.isPending,
-    isUnfollowing: unfollowMutation.isPending,
+    handleFollow,
+    handleUnfollow,
+    isFollowLoading: followMutation.isPending,
+    isUnfollowLoading: unfollowMutation.isPending
   };
 };

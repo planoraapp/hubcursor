@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface FollowData {
   id: string;
   follower_user_id: string;
-  followed_user_id: string;
+  followed_habbo_id: string;
   follower_habbo_name: string;
   followed_habbo_name: string;
   created_at: string;
@@ -12,13 +12,13 @@ export interface FollowData {
 
 export const followService = {
   // Follow a user
-  async followUser(followerUserId: string, followedUserId: string, followerHabboName: string, followedHabboName: string): Promise<boolean> {
+  async followUser(followerUserId: string, followedHabboId: string, followerHabboName: string, followedHabboName: string): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .insert({
           follower_user_id: followerUserId,
-          followed_user_id: followedUserId,
+          followed_habbo_id: followedHabboId,
           follower_habbo_name: followerHabboName,
           followed_habbo_name: followedHabboName
         });
@@ -35,13 +35,13 @@ export const followService = {
   },
 
   // Unfollow a user
-  async unfollowUser(followerUserId: string, followedUserId: string): Promise<boolean> {
+  async unfollowUser(followerUserId: string, followedHabboId: string): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .delete()
         .eq('follower_user_id', followerUserId)
-        .eq('followed_user_id', followedUserId);
+        .eq('followed_habbo_id', followedHabboId);
 
       if (error) {
         console.error('Error unfollowing user:', error);
@@ -55,13 +55,13 @@ export const followService = {
   },
 
   // Check if user is following another user
-  async isFollowing(followerUserId: string, followedUserId: string): Promise<boolean> {
+  async isFollowing(followerUserId: string, followedHabboId: string): Promise<boolean> {
     try {
       const { data, error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .select('id')
         .eq('follower_user_id', followerUserId)
-        .eq('followed_user_id', followedUserId)
+        .eq('followed_habbo_id', followedHabboId)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -76,13 +76,13 @@ export const followService = {
     }
   },
 
-  // Get followers count for a user
-  async getFollowersCount(userId: string): Promise<number> {
+  // Get followers count for a user (by their habbo_id)
+  async getFollowersCount(habboId: string): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .select('*', { count: 'exact' })
-        .eq('followed_user_id', userId);
+        .eq('followed_habbo_id', habboId);
 
       if (error) {
         console.error('Error getting followers count:', error);
@@ -96,11 +96,11 @@ export const followService = {
     }
   },
 
-  // Get following count for a user
+  // Get following count for a user (by their user_id)
   async getFollowingCount(userId: string): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .select('*', { count: 'exact' })
         .eq('follower_user_id', userId);
 
@@ -117,12 +117,12 @@ export const followService = {
   },
 
   // Get followers list
-  async getFollowers(userId: string): Promise<FollowData[]> {
+  async getFollowers(habboId: string): Promise<FollowData[]> {
     try {
       const { data, error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .select('*')
-        .eq('followed_user_id', userId)
+        .eq('followed_habbo_id', habboId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -141,7 +141,7 @@ export const followService = {
   async getFollowing(userId: string): Promise<FollowData[]> {
     try {
       const { data, error } = await supabase
-        .from('user_follows')
+        .from('user_followers')
         .select('*')
         .eq('follower_user_id', userId)
         .order('created_at', { ascending: false });
