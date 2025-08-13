@@ -3,6 +3,7 @@ import React from 'react';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
+import { UserDiscoveryColumn } from '@/components/console/UserDiscoveryColumn';
 import { PlaceholderColumn } from '@/components/console/PlaceholderColumn';
 import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
 import { Radio, Activity, Users } from 'lucide-react';
@@ -53,13 +54,9 @@ export const Console: React.FC = () => {
                   />
                 </div>
 
-                {/* Right Column - Friends Feed Placeholder */}
+                {/* Right Column - User Discovery */}
                 <div className="xl:col-span-1">
-                  <PlaceholderColumn 
-                    title="Feed dos Amigos"
-                    description="O sistema de descoberta e acompanhamento de usuários está sendo modernizado com melhor performance."
-                    icon={Users}
-                  />
+                  <UserDiscoveryColumn />
                 </div>
               </div>
             </div>

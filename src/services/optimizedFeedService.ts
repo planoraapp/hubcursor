@@ -274,6 +274,65 @@ export class OptimizedFeedService {
     }
   }
 
+  // User Search with enhanced filtering
+  async searchUsers(query: string, hotel: string = 'br', limit: number = 20): Promise<{
+    users: HabboUser[];
+    meta: FeedMeta;
+  }> {
+    const cacheKey = `search-users-${query}-${hotel}-${limit}`;
+    const cached = cache.get<{ users: HabboUser[]; meta: FeedMeta }>(cacheKey);
+    
+    if (cached) {
+      console.log('🎯 [OptimizedFeedService] User search cache hit');
+      return cached;
+    }
+
+    try {
+      console.log(`🔍 [OptimizedFeedService] Searching users: "${query}" in ${hotel}...`);
+      
+      const { data, error } = await supabase.functions.invoke('habbo-discover-users', {
+        body: { 
+          hotel, 
+          limit, 
+          method: 'search',
+          query: query.trim()
+        }
+      });
+
+      if (error) {
+        console.error('❌ [OptimizedFeedService] User search error:', error);
+        throw error;
+      }
+
+      const result = {
+        users: data?.users || [],
+        meta: {
+          timestamp: new Date().toISOString(),
+          count: data?.users?.length || 0,
+          source: 'search-query'
+        }
+      };
+
+      // Cache for 2 minutes (searches change frequently)
+      cache.set(cacheKey, result, 2);
+      
+      console.log(`✅ [OptimizedFeedService] Users found: ${result.users.length} users`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ [OptimizedFeedService] User search error:', error);
+      
+      return {
+        users: [],
+        meta: {
+          timestamp: new Date().toISOString(),
+          count: 0,
+          source: 'error-fallback'
+        }
+      };
+    }
+  }
+
   // Cache management
   clearCache(): void {
     cache.clear();

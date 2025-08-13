@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { hotel = 'br', method = 'random', limit = 20 } = await req.json();
+    const { hotel = 'br', method = 'random', limit = 20, query } = await req.json();
     const cacheKey = `${hotel}:${method}:${limit}`;
     
     // Verificar cache
@@ -40,6 +40,9 @@ Deno.serve(async (req) => {
     const hotelFilter = hotel === 'com.br' ? 'br' : hotel;
     
     switch (method) {
+      case 'search':
+        users = await searchUsers(supabase, hotelFilter, query, limit);
+        break;
       case 'random':
         users = await discoverRandomUsers(supabase, hotelFilter, limit);
         break;
@@ -158,6 +161,42 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
     id: user.habbo_id,
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
+    motto: user.motto,
+    figure_string: user.figure_string,
+    online: true,
+    last_seen: user.updated_at
+  }));
+}
+
+async function searchUsers(supabase: any, hotel: string, query: string, limit: number) {
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
+
+  const searchTerm = query.trim().toLowerCase();
+  console.log(`🔍 [searchUsers] Searching for "${searchTerm}" in hotel ${hotel}`);
+
+  // Busca por nome usando ILIKE para correspondência parcial
+  const { data, error } = await supabase
+    .from('habbo_accounts')
+    .select('*')
+    .eq('hotel', hotel)
+    .ilike('habbo_name', `%${searchTerm}%`)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('❌ [searchUsers] Database error:', error);
+    throw error;
+  }
+
+  console.log(`✅ [searchUsers] Found ${data?.length || 0} users for "${searchTerm}"`);
+
+  return (data || []).map(user => ({
+    id: user.habbo_id,
+    habbo_name: user.habbo_name,
+    habbo_id: user.habbo_id,
+    hotel: user.hotel,
     motto: user.motto,
     figure_string: user.figure_string,
     online: true,
