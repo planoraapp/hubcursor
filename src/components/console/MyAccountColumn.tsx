@@ -1,23 +1,19 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react';
+import { User, Heart, Users, Camera, Loader2 } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
-import { useHabboPhotosEnhanced } from '@/hooks/useHabboPhotosEnhanced';
+import { usePhotosScraped } from '@/hooks/usePhotosScraped';
+import { useFollowSystem } from '@/hooks/useFollowSystem';
 import { habboProxyService } from '@/services/habboProxyService';
 import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
-import { PhotoFeed } from '@/components/profile/PhotoFeed';
 
 export const MyAccountColumn: React.FC = () => {
   const { 
     isLoggedIn, 
     habboAccount, 
     myProfile, 
-    myLikes, 
-    myComments, 
-    followers, 
-    following, 
     isLoading 
   } = useMyConsoleProfile();
 
@@ -28,13 +24,13 @@ export const MyAccountColumn: React.FC = () => {
     isLoading: isLoadingComplete 
   } = useCompleteProfile(habboAccount?.habbo_name || '', hotel as string);
 
-  // Get photos using the new enhanced system
-  const { habboPhotos, isLoading: isLoadingPhotos } = useHabboPhotosEnhanced(
-    habboAccount?.habbo_name, 
-    (habboAccount as any)?.hotel || 'br'
-  );
+  // Get photos using the new scraping system
+  const { scrapedPhotos, isLoading: isLoadingPhotos } = usePhotosScraped(habboAccount?.habbo_name);
 
-  console.log('[MyAccountColumn] Enhanced Photos data:', habboPhotos);
+  // Get follow system data
+  const { followersCount, followingCount } = useFollowSystem((habboAccount as any)?.supabase_user_id);
+
+  console.log('[MyAccountColumn] Scraped Photos data:', scrapedPhotos);
 
   if (!isLoggedIn || !habboAccount) {
     return (
@@ -134,73 +130,79 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             )}
 
-            {/* Social Stats Section - Internal System Data */}
+            {/* Simplified Social Stats Section */}
             <div>
-              <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
-                <Heart className="w-4 h-4" />
-                Estatísticas Sociais
-              </h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <Heart className="w-4 h-4 text-red-400" />
-                    <span className="text-lg font-semibold">{myLikes.length}</span>
+                    <Camera className="w-4 h-4 text-white/60" />
+                    <span className="text-lg font-semibold">{scrapedPhotos?.length || 0}</span>
                   </div>
-                  <p className="text-xs text-white/60">Curtidas</p>
+                  <p className="text-xs text-white/60">Fotos</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <MessageCircle className="w-4 h-4 text-blue-400" />
-                    <span className="text-lg font-semibold">{myComments.length}</span>
-                  </div>
-                  <p className="text-xs text-white/60">Comentários</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-1">
-                    <Users className="w-4 h-4 text-green-400" />
-                    <span className="text-lg font-semibold">{followers.length}</span>
+                    <Users className="w-4 h-4 text-white/60" />
+                    <span className="text-lg font-semibold">{followersCount}</span>
                   </div>
                   <p className="text-xs text-white/60">Seguidores</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <Users className="w-4 h-4 text-purple-400" />
-                    <span className="text-lg font-semibold">{following.length}</span>
+                    <Users className="w-4 h-4 text-white/60" />
+                    <span className="text-lg font-semibold">{followingCount}</span>
                   </div>
                   <p className="text-xs text-white/60">Seguindo</p>
                 </div>
               </div>
             </div>
 
-            {/* Enhanced Photos Section */}
+            {/* Enhanced Photos Section with Scraping */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Camera className="w-4 h-4 text-white/80" />
                 <h4 className="text-sm font-medium text-white/80">
-                  Minhas Fotos ({habboPhotos?.length || 0})
+                  Minhas Fotos ({scrapedPhotos?.length || 0})
                 </h4>
                 {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
               </div>
               
-              {habboPhotos && habboPhotos.length > 0 ? (
+              {isLoadingPhotos ? (
+                <div className="text-center py-6 bg-white/5 rounded-lg">
+                  <p className="text-white/60 text-sm">Carregando fotos...</p>
+                </div>
+              ) : scrapedPhotos && scrapedPhotos.length > 0 ? (
                 <div className="bg-white/10 p-3 rounded-lg">
-                  <PhotoFeed 
-                    photos={habboPhotos}
-                    userName={habboAccount.habbo_name}
-                    hotel={(habboAccount as any)?.hotel || 'br'}
-                  />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {scrapedPhotos.map((photo) => (
+                      <div key={photo.id} className="relative overflow-hidden rounded-lg group aspect-square">
+                        <img
+                          src={photo.imageUrl}
+                          alt="Foto Habbo"
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://placehold.co/150x150/4B5563/FFFFFF?text=Foto+Não+Disponível`;
+                          }}
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                          <span className="text-xs text-white/80">{photo.date}</span>
+                          <div className="flex items-center gap-1 text-white/80 text-xs">
+                            <Heart className="w-3 h-3 text-red-400" />
+                            <span>{photo.likes}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-6 bg-white/5 rounded-lg">
                   <Camera className="w-8 h-8 mx-auto mb-2 opacity-50 text-white/50" />
-                  <p className="text-white/60 text-sm">
-                    {isLoadingPhotos ? 'Carregando suas fotos...' : 'Nenhuma foto encontrada'}
+                  <p className="text-white/60 text-sm">Nenhuma foto encontrada</p>
+                  <p className="text-white/40 text-xs mt-1">
+                    As fotos são obtidas diretamente do seu perfil público do Habbo
                   </p>
-                  {!isLoadingPhotos && (
-                    <p className="text-white/40 text-xs mt-1">
-                      As fotos são obtidas diretamente do seu perfil público do Habbo
-                    </p>
-                  )}
                 </div>
               )}
             </div>
