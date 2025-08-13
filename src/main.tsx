@@ -11,7 +11,7 @@ import { MarketplaceProvider } from './contexts/MarketplaceContext';
 // Pages
 import Login from './pages/Login';
 import Profile from './pages/Profile';
-import { Console } from './pages/Console';
+import Console from './pages/Console';
 import { Console2 } from './pages/Console2';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';

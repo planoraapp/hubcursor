@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './hooks/useAuth';
 import { HotelProvider } from './contexts/HotelContext';
-import { MarketplaceProvider } from './contexts/MarketplaceContext';
+import { MarketplaceProvider } from './contexts/MarketplaceProvider';
 
 // Pages
 import Index from './pages/Index';
@@ -19,7 +19,7 @@ import Editor from './pages/Editor';
 import Catalogo from './pages/Catalogo';
 import Eventos from './pages/Eventos';
 import Ferramentas from './pages/Ferramentas';
-import { Console } from './pages/Console';
+import Console from './pages/Console';
 import Noticias from './pages/Noticias';
 import Forum from './pages/Forum';
 import NotFound from './pages/NotFound';
