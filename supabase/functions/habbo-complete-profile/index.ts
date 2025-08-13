@@ -62,9 +62,12 @@ serve(async (req) => {
 
     const profileData = await profileResponse.json();
 
-    // Get photos separately as they're not in the profile endpoint
+    // Get photos with enhanced error handling and logging
     const photosUrl = `https://www.habbo.${hotel}/api/public/users/${uniqueId}/photos`;
     let photos = [];
+    
+    console.log(`[Complete Profile] Fetching photos from: ${photosUrl}`);
+    
     try {
       const photosResponse = await fetch(photosUrl, {
         headers: {
@@ -72,11 +75,41 @@ serve(async (req) => {
           'Accept': 'application/json',
         },
       });
+      
+      console.log(`[Complete Profile] Photos response status: ${photosResponse.status}`);
+      
       if (photosResponse.ok) {
-        photos = await photosResponse.json();
+        const rawPhotos = await photosResponse.json();
+        console.log(`[Complete Profile] Raw photos data:`, JSON.stringify(rawPhotos, null, 2));
+        
+        // Handle both array and object responses
+        if (Array.isArray(rawPhotos)) {
+          photos = rawPhotos;
+        } else if (rawPhotos && rawPhotos.photos) {
+          photos = rawPhotos.photos;
+        } else if (rawPhotos) {
+          photos = [rawPhotos];
+        }
+        
+        // Enhanced photo mapping with more fields
+        photos = photos.map((photo, index) => ({
+          id: photo.id || photo.photoId || `photo-${uniqueId}-${index}`,
+          url: photo.url || photo.imageUrl || photo.src,
+          previewUrl: photo.previewUrl || photo.thumbnailUrl || photo.url || photo.imageUrl,
+          caption: photo.caption || photo.description || '',
+          timestamp: photo.timestamp || photo.takenOn || photo.createdAt || new Date().toISOString(),
+          roomId: photo.roomId || null,
+          roomName: photo.roomName || 'Quarto desconhecido',
+          likesCount: photo.likesCount || photo.likes || 0,
+          type: photo.type || 'PHOTO'
+        }));
+        
+        console.log(`[Complete Profile] Processed ${photos.length} photos for ${username}`);
+      } else {
+        console.log(`[Complete Profile] Photos API returned ${photosResponse.status}, continuing without photos`);
       }
     } catch (error) {
-      console.log('[Complete Profile] Photos fetch failed, continuing without photos');
+      console.log(`[Complete Profile] Photos fetch failed: ${error.message}, continuing without photos`);
     }
 
     // Calculate Habbo Ticker activities (mock for now, could be enhanced with real activity data)
@@ -120,7 +153,7 @@ serve(async (req) => {
     };
 
     console.log(`[Complete Profile] Successfully fetched profile for ${username}`);
-    console.log(`[Complete Profile] Stats: Level ${completeProfile.stats.level}, ${completeProfile.stats.badgesCount} badges, ${completeProfile.stats.friendsCount} friends`);
+    console.log(`[Complete Profile] Stats: Level ${completeProfile.stats.level}, ${completeProfile.stats.badgesCount} badges, ${completeProfile.stats.friendsCount} friends, ${completeProfile.stats.photosCount} photos`);
 
     return new Response(JSON.stringify(completeProfile), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

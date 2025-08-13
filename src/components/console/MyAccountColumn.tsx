@@ -123,7 +123,7 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Habbo Stats Section - Using ProfileStatsGrid (sem level, star gems e fotos) */}
+            {/* Habbo Stats Section - Using ProfileStatsGrid */}
             {completeProfile && (
               <div>
                 <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
@@ -172,7 +172,7 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Enhanced Photos Section */}
+            {/* Enhanced Photos Section with 3-column grid */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Camera className="w-4 h-4 text-white/80" />

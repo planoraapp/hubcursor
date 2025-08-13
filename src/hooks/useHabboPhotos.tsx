@@ -5,12 +5,13 @@ import { supabase } from '@/integrations/supabase/client';
 export interface EnhancedHabboPhoto {
   id: string;
   url: string;
+  previewUrl?: string;
   caption?: string;
   timestamp?: string;
   roomId?: string;
   roomName?: string;
-  takenOn?: string;
   likesCount?: number;
+  type?: string;
 }
 
 export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
@@ -40,16 +41,19 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
       console.log('[useHabboPhotos] Raw photos data:', photos);
 
       // Mapear e enriquecer as fotos
-      const enhancedPhotos: EnhancedHabboPhoto[] = photos.map((photo: any) => ({
-        id: photo.id || String(Math.random()),
-        url: photo.url || photo.previewUrl || '',
-        caption: photo.caption || photo.description,
-        timestamp: photo.timestamp || photo.takenOn,
-        roomId: photo.roomId,
-        roomName: photo.roomName,
-        takenOn: photo.takenOn || photo.timestamp,
-        likesCount: photo.likesCount || 0
-      })).filter((photo: EnhancedHabboPhoto) => photo.url);
+      const enhancedPhotos: EnhancedHabboPhoto[] = photos
+        .filter((photo: any) => photo && (photo.url || photo.imageUrl))
+        .map((photo: any, index: number) => ({
+          id: photo.id || photo.photoId || `photo-${username}-${index}`,
+          url: photo.url || photo.imageUrl || '',
+          previewUrl: photo.previewUrl || photo.thumbnailUrl || photo.url || photo.imageUrl,
+          caption: photo.caption || photo.description || '',
+          timestamp: photo.timestamp || photo.takenOn || photo.createdAt,
+          roomId: photo.roomId,
+          roomName: photo.roomName || 'Quarto desconhecido',
+          likesCount: photo.likesCount || photo.likes || 0,
+          type: photo.type || 'PHOTO'
+        }));
 
       console.log('[useHabboPhotos] Enhanced photos:', enhancedPhotos);
       return enhancedPhotos;
