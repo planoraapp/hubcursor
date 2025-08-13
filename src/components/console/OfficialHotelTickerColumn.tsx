@@ -254,7 +254,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                             >
                               {activity.username}
                             </h4>
-                            {activity.profile?.isOnline && (
+                            {activity.profile?.online && (
                               <Badge variant="default" className="bg-green-500/20 text-green-200 border-0 text-xs">
                                 Online
                               </Badge>
