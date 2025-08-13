@@ -3,13 +3,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-interface EnsureTrackedPayload {
+interface EnsureTrackedRequest {
   habbo_name: string;
   habbo_id: string;
-  hotel: string; // e.g., 'com.br'
+  hotel: string;
 }
 
 Deno.serve(async (req) => {
@@ -20,87 +20,115 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       'https://wueccgeizznjmjgmuscy.supabase.co',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      {
+        db: { schema: 'public' }
+      }
     );
 
-    if (req.method !== 'POST') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 405,
-      });
-    }
-
-    const body: EnsureTrackedPayload = await req.json();
-    const { habbo_name, habbo_id, hotel } = body || {} as any;
+    const { habbo_name, habbo_id, hotel }: EnsureTrackedRequest = await req.json();
 
     if (!habbo_name || !habbo_id || !hotel) {
-      return new Response(JSON.stringify({ error: 'Missing habbo_name, habbo_id or hotel' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing required fields: habbo_name, habbo_id, hotel'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
 
-    console.log(`🧭 [habbo-ensure-tracked] Ensuring tracking for ${habbo_name} (${hotel})`);
+    console.log(`🔄 [ensure-tracked] Ensuring ${habbo_name} (${habbo_id}) is tracked for hotel ${hotel}`);
 
-    // Check if already tracked
-    const { data: existing, error: selError } = await supabase
+    // First check if user is already tracked
+    const { data: existingUser, error: checkError } = await supabase
       .from('tracked_habbo_users')
-      .select('*')
-      .eq('hotel', hotel)
+      .select('id, is_active')
       .eq('habbo_id', habbo_id)
-      .limit(1);
+      .eq('hotel', hotel)
+      .maybeSingle();
 
-    if (selError) {
-      throw new Error(`Select error: ${selError.message}`);
+    if (checkError) {
+      console.error('❌ [ensure-tracked] Error checking existing user:', checkError);
+      throw new Error(`Database check failed: ${checkError.message}`);
     }
 
-    let action: 'insert' | 'update' = 'insert';
+    let result;
 
-    if (!existing || existing.length === 0) {
-      const { error: insError } = await supabase.from('tracked_habbo_users').insert({
-        habbo_name,
-        habbo_id,
-        hotel,
-        is_active: true,
-      });
-      if (insError) throw new Error(`Insert error: ${insError.message}`);
-      console.log('✅ [habbo-ensure-tracked] Inserted into tracked_habbo_users');
-      action = 'insert';
+    if (existingUser) {
+      // Update existing user if inactive
+      if (!existingUser.is_active) {
+        const { data: updateData, error: updateError } = await supabase
+          .from('tracked_habbo_users')
+          .update({
+            habbo_name,
+            is_active: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingUser.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('❌ [ensure-tracked] Error updating user:', updateError);
+          throw new Error(`Update failed: ${updateError.message}`);
+        }
+
+        result = { action: 'reactivated', user: updateData };
+        console.log(`✅ [ensure-tracked] Reactivated user ${habbo_name}`);
+      } else {
+        result = { action: 'already_tracked', user: existingUser };
+        console.log(`ℹ️ [ensure-tracked] User ${habbo_name} already tracked and active`);
+      }
     } else {
-      const { error: updError } = await supabase
+      // Insert new user
+      const { data: insertData, error: insertError } = await supabase
         .from('tracked_habbo_users')
-        .update({ habbo_name, is_active: true, updated_at: new Date().toISOString() })
-        .eq('id', existing[0].id);
-      if (updError) throw new Error(`Update error: ${updError.message}`);
-      console.log('✅ [habbo-ensure-tracked] Updated tracked_habbo_users');
-      action = 'update';
-    }
+        .insert({
+          habbo_name,
+          habbo_id,
+          hotel,
+          is_active: true
+        })
+        .select()
+        .single();
 
-    // Trigger a user sync immediately
-    console.log('🔄 [habbo-ensure-tracked] Invoking habbo-sync-user...');
-    const { data: invokeData, error: invokeError } = await supabase.functions.invoke('habbo-sync-user', {
-      body: { habbo_name, hotel },
-    });
+      if (insertError) {
+        console.error('❌ [ensure-tracked] Error inserting user:', insertError);
+        throw new Error(`Insert failed: ${insertError.message}`);
+      }
 
-    if (invokeError) {
-      console.error('❌ [habbo-ensure-tracked] Sync invoke error:', invokeError);
-    } else {
-      console.log('✅ [habbo-ensure-tracked] Sync invoked successfully');
+      result = { action: 'added', user: insertData };
+      console.log(`✅ [ensure-tracked] Added new tracked user ${habbo_name}`);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        action,
-        sync: invokeError ? 'failed' : 'ok',
+        ...result,
+        timestamp: new Date().toISOString()
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
     );
-  } catch (err: any) {
-    console.error('❌ [habbo-ensure-tracked] Error:', err);
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+
+  } catch (error) {
+    console.error('❌ [ensure-tracked] Error:', error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    );
   }
 });

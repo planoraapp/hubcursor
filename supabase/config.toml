@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.habbo-discover-online]
 verify_jwt = false
+
+[functions.habbo-activity-detector]
+verify_jwt = false

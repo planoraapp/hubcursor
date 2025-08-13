@@ -14,8 +14,13 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      'https://wueccgeizznjmjgmuscy.supabase.co',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      {
+        db: { 
+          schema: 'public'
+        }
+      }
     )
 
     const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid', onlyOnline = false, username } = await req.json()
@@ -27,14 +32,14 @@ Deno.serve(async (req) => {
 
     console.log(`📊 [feed] Getting activities from database for ${hotel}`)
 
-    // Get activities from database - remove the problematic join
+    // Get activities from database with optimized query
     const { data: activities, error } = await supabase
       .from('habbo_activities')
-      .select('*')
+      .select('id, habbo_name, habbo_id, hotel, activity_type, description, details, created_at')
       .eq('hotel', hotelFilter)
       .gte('created_at', cutoffTime)
       .order('created_at', { ascending: false })
-      .limit(limit)
+      .limit(Math.min(limit, 100))
 
     if (error) {
       console.error(`❌ [feed] Database error: ${error.message}`)

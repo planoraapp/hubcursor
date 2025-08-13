@@ -24,7 +24,12 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(
       'https://wueccgeizznjmjgmuscy.supabase.co',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      {
+        db: { 
+          schema: 'public'
+        }
+      }
     );
 
     const url = new URL(req.url);
