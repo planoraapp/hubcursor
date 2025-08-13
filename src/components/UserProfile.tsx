@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useAuth } from '../hooks/useAuth';
-import { getUserByName, getAvatarUrl } from '../services/habboApi';
+import { getUserByName, getAvatarUrl, HabboUser } from '../services/habboApi';
 
 export const UserProfile = ({ habboName }: { habboName: string }) => {
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<HabboUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

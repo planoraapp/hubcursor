@@ -17,16 +17,15 @@ export const UserLoginModal = () => {
   const [habboName, setHabboName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithPassword } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      await loginWithPassword(habboName, password);
+      // Placeholder for login functionality
       toast({
-        title: "Sucesso",
-        description: `Bem-vindo de volta, ${habboName}!`
+        title: "Info",
+        description: "Login functionality will be implemented later"
       });
     } catch (error: any) {
       toast({

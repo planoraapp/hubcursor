@@ -22,6 +22,15 @@ export interface HabboBadge {
   description?: string;
 }
 
+export interface HabboRoom {
+  id: number;
+  name: string;
+  description: string;
+  ownerName: string;
+  rating: number;
+  thumbnailUrl?: string;
+}
+
 const HABBO_API_BASE = 'https://www.habbo.com.br/api/public';
 
 export const getUserByName = async (username: string): Promise<HabboUser | null> => {
@@ -62,4 +71,30 @@ export const getAvatarUrl = (figureString: string, size: 's' | 'm' | 'l' = 'm'):
 
 export const getBadgeUrl = (badgeCode: string): string => {
   return `https://images.habbo.com/c_images/album1584/${badgeCode}.png`;
+};
+
+// Mock implementations for missing functions to prevent errors
+export const getAchievements = async (): Promise<any[]> => {
+  console.warn('getAchievements is not yet implemented');
+  return [];
+};
+
+export const discoverRooms = async (): Promise<HabboRoom[]> => {
+  console.warn('discoverRooms is not yet implemented');
+  return [];
+};
+
+export const getTopBadgeCollectors = async (): Promise<any[]> => {
+  console.warn('getTopBadgeCollectors is not yet implemented');
+  return [];
+};
+
+export const getTopRooms = async (): Promise<any[]> => {
+  console.warn('getTopRooms is not yet implemented');
+  return [];
+};
+
+export const getRealtimeStats = async (): Promise<any> => {
+  console.warn('getRealtimeStats is not yet implemented');
+  return { online: 0, rooms: 0 };
 };
