@@ -63,8 +63,10 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
   } = useQuery({
     queryKey: ['official-hotel-ticker', hotel, limit],
     queryFn: async (): Promise<OfficialTickerResponse> => {
-      console.log(`📡 [useOfficialHotelTicker] Fetching official ticker for ${hotel}`);
+      console.log(`📡 [useOfficialHotelTicker] DESABILITADO: Edge function obsoleta`);
       
+      // COMENTADO: Edge function habbo-official-ticker não existe mais
+      /*
       const { data, error } = await supabase.functions.invoke('habbo-official-ticker', {
         body: { hotel, limit }
       });
@@ -80,25 +82,41 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
 
       console.log(`✅ [useOfficialHotelTicker] Retrieved ${data.activities?.length || 0} activities`);
       return data;
+      */
+      
+      // Retorna dados vazios para manter compatibilidade
+      return {
+        success: true,
+        hotel,
+        activities: [],
+        meta: {
+          source: 'database' as const,
+          timestamp: new Date().toISOString(),
+          count: 0,
+          onlineCount: 0,
+          message: 'Sistema em manutenção'
+        }
+      };
     },
-    refetchInterval: 60 * 1000, // 1 minuto
-    staleTime: 30 * 1000, // 30 segundos
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    enabled: false, // DESABILITADO: Edge function não existe
+    refetchInterval: false, // Remove polling
+    staleTime: Infinity,
+    retry: 0,
+    retryDelay: () => 0,
   });
 
   return {
-    activities: response?.activities || [],
-    isLoading,
-    error,
+    activities: [],
+    isLoading: false,
+    error: null,
     hotel,
-    metadata: response?.meta || {
-      source: 'official' as const,
+    metadata: {
+      source: 'database' as const,
       timestamp: new Date().toISOString(),
       count: 0,
       onlineCount: 0
     },
-    success: response?.success || false,
-    refetch
+    success: true,
+    refetch: () => Promise.resolve()
   };
 };

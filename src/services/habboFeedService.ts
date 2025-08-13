@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface FeedActivity {
@@ -55,6 +56,10 @@ class HabboFeedService {
 
   async getUserFeed(hotel: string, username: string) {
     try {
+      console.log(`🚫 [habboFeedService] DESABILITADO: getUserFeed para ${username}`);
+      
+      // COMENTADO: Edge function habbo-feed não existe mais
+      /*
       const { data, error } = await supabase.functions.invoke('habbo-feed', {
         body: { hotel, username },
       });
@@ -63,6 +68,9 @@ class HabboFeedService {
         return null;
       }
       return data;
+      */
+      
+      return null;
     } catch (error) {
       console.error(`Error fetching user feed for ${username}:`, error);
       return null;
@@ -80,6 +88,10 @@ class HabboFeedService {
     }
   ): Promise<FeedResponse> {
     try {
+      console.log(`🚫 [habboFeedService] DESABILITADO: getHotelFeed para ${hotel}`);
+      
+      // COMENTADO: Edge function habbo-feed não existe mais
+      /*
       const { data, error } = await supabase.functions.invoke('habbo-feed', {
         body: {
           hotel,
@@ -103,50 +115,18 @@ class HabboFeedService {
         };
       }
 
-      // If the database feed is sparse, enrich with official ticker items
-      if (!baseResponse.activities || baseResponse.activities.length < Math.min(20, limit)) {
-        try {
-          const ticker = await (await import('./habboProxyService')).habboProxyService.getHotelTicker(hotel);
-          if (ticker.activities?.length) {
-            const mappedTicker: FeedActivity[] = ticker.activities.slice(0, limit).map((t) => ({
-              username: t.username,
-              description: t.description || t.activity,
-              lastUpdate: t.timestamp,
-              counts: { friends: 0, badges: 0, photos: 0 },
-              friends: [],
-              badges: [],
-              photos: [],
-              groups: [],
-            }));
+      // Fallback logic comentado também pois depende de habboProxyService
+      */
 
-            // Merge by username+lastUpdate (avoid duplicates)
-            const key = (a: FeedActivity) => `${a.username}-${a.lastUpdate}`;
-            const existingMap = new Map((baseResponse.activities || []).map((a) => [key(a), a]));
-            for (const item of mappedTicker) {
-              if (!existingMap.has(key(item))) {
-                existingMap.set(key(item), item);
-              }
-            }
-            const merged = Array.from(existingMap.values())
-              .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
-              .slice(0, limit);
-
-            return {
-              activities: merged,
-              meta: {
-                source: 'hybrid',
-                timestamp: new Date().toISOString(),
-                count: merged.length,
-                onlineCount: baseResponse?.meta?.onlineCount || 0,
-              },
-            };
-          }
-        } catch (enrichErr) {
-          console.warn('Failed to enrich with official ticker:', enrichErr);
-        }
-      }
-
-      return (baseResponse || { activities: [], meta: { source: 'database', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } });
+      return {
+        activities: [],
+        meta: {
+          source: 'database',
+          timestamp: new Date().toISOString(),
+          count: 0,
+          onlineCount: 0,
+        },
+      };
     } catch (error) {
       console.error(`Error fetching hotel feed for ${hotel}:`, error);
       return {
@@ -162,6 +142,10 @@ class HabboFeedService {
   }
 
   async triggerUserSync(username: string, hotel: string) {
+    console.log(`🚫 [habboFeedService] DESABILITADO: triggerUserSync para ${username}`);
+    
+    // COMENTADO: Edge function habbo-sync-user não existe mais
+    /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-sync-user', {
         body: { habbo_name: username, hotel },
@@ -175,9 +159,16 @@ class HabboFeedService {
       console.error(`Error triggering sync for ${username}:`, error);
       return null;
     }
+    */
+    
+    return null;
   }
 
   async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<any> {
+    console.log(`🚫 [habboFeedService] DESABILITADO: ensureTrackedAndSynced para ${payload.habbo_name}`);
+    
+    // COMENTADO: Edge function habbo-ensure-tracked não existe mais
+    /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-ensure-tracked', {
         body: payload,
@@ -191,9 +182,16 @@ class HabboFeedService {
       console.error(`Error ensuring tracking for ${payload.habbo_name}:`, error);
       return null;
     }
+    */
+    
+    return null;
   }
 
   async discoverAndSyncOnlineUsers(hotel: string, limit: number = 50): Promise<any> {
+    console.log(`🚫 [habboFeedService] DESABILITADO: discoverAndSyncOnlineUsers para ${hotel}`);
+    
+    // COMENTADO: Edge function habbo-discover-online não existe mais
+    /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-discover-online', {
         body: { hotel, limit },
@@ -207,9 +205,16 @@ class HabboFeedService {
       console.error(`Error discovering online users for ${hotel}:`, error);
       return null;
     }
+    */
+    
+    return null;
   }
 
   async triggerBatchSync(hotel: string): Promise<any> {
+    console.log(`🚫 [habboFeedService] DESABILITADO: triggerBatchSync para ${hotel}`);
+    
+    // COMENTADO: Edge function habbo-sync-batch não existe mais
+    /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-sync-batch', {
         body: { hotel },
@@ -223,8 +228,12 @@ class HabboFeedService {
       console.error(`Error triggering batch sync for ${hotel}:`, error);
       return null;
     }
+    */
+    
+    return null;
   }
 
+  // Métodos utilitários mantidos funcionando (não dependem de edge functions)
   getAvatarUrl(figureString: string, size: 'xs' | 's' | 'm' | 'l' | 'b' = 'm', headOnly: boolean = false): string {
     const baseUrl = 'https://www.habbo.com.br/habbo-imaging/avatarimage';
     const params = new URLSearchParams({
