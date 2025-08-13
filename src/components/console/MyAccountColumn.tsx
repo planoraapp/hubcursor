@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
-import { useHabboPhotos } from '@/hooks/useHabboPhotos';
+import { useHabboPhotosEnhanced } from '@/hooks/useHabboPhotosEnhanced';
 import { habboProxyService } from '@/services/habboProxyService';
 import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
-import { EnhancedPhotosGrid } from '@/components/profile/EnhancedPhotosGrid';
+import { PhotoFeed } from '@/components/profile/PhotoFeed';
+
 export const MyAccountColumn: React.FC = () => {
   const { 
     isLoggedIn, 
@@ -28,11 +28,13 @@ export const MyAccountColumn: React.FC = () => {
     isLoading: isLoadingComplete 
   } = useCompleteProfile(habboAccount?.habbo_name || '', hotel as string);
 
-  // Get photos using the updated S3 discovery system
-  const { habboPhotos, isLoading: isLoadingPhotos } = useHabboPhotos(habboAccount?.habbo_name, hotel as string);
+  // Get photos using the new enhanced system
+  const { habboPhotos, isLoading: isLoadingPhotos } = useHabboPhotosEnhanced(
+    habboAccount?.habbo_name, 
+    (habboAccount as any)?.hotel || 'br'
+  );
 
-  console.log('[MyAccountColumn] Complete Profile data:', completeProfile);
-  console.log('[MyAccountColumn] S3 Photos data:', habboPhotos);
+  console.log('[MyAccountColumn] Enhanced Photos data:', habboPhotos);
 
   if (!isLoggedIn || !habboAccount) {
     return (
@@ -170,7 +172,7 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Enhanced Photos Section with S3 Discovery */}
+            {/* Enhanced Photos Section */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Camera className="w-4 h-4 text-white/80" />
@@ -181,20 +183,22 @@ export const MyAccountColumn: React.FC = () => {
               </div>
               
               {habboPhotos && habboPhotos.length > 0 ? (
-                <EnhancedPhotosGrid 
-                  photos={habboPhotos}
-                  userName={habboAccount.habbo_name}
-                  hotel={hotel as string}
-                />
+                <div className="bg-white/10 p-3 rounded-lg">
+                  <PhotoFeed 
+                    photos={habboPhotos}
+                    userName={habboAccount.habbo_name}
+                    hotel={(habboAccount as any)?.hotel || 'br'}
+                  />
+                </div>
               ) : (
-                <div className="text-center py-6">
+                <div className="text-center py-6 bg-white/5 rounded-lg">
                   <Camera className="w-8 h-8 mx-auto mb-2 opacity-50 text-white/50" />
                   <p className="text-white/60 text-sm">
-                    {isLoadingPhotos ? 'Descobrindo suas fotos...' : 'Nenhuma foto encontrada'}
+                    {isLoadingPhotos ? 'Carregando suas fotos...' : 'Nenhuma foto encontrada'}
                   </p>
                   {!isLoadingPhotos && (
                     <p className="text-white/40 text-xs mt-1">
-                      As fotos são descobertas automaticamente do sistema do Habbo
+                      As fotos são obtidas diretamente do seu perfil público do Habbo
                     </p>
                   )}
                 </div>

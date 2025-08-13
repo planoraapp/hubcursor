@@ -95,6 +95,48 @@ export type Database = {
         }
         Relationships: []
       }
+      discovered_users: {
+        Row: {
+          created_at: string | null
+          discovery_source: string | null
+          figure_string: string | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          is_online: boolean | null
+          last_seen_at: string | null
+          motto: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          discovery_source?: string | null
+          figure_string?: string | null
+          habbo_id: string
+          habbo_name: string
+          hotel?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen_at?: string | null
+          motto?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          discovery_source?: string | null
+          figure_string?: string | null
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen_at?: string | null
+          motto?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       forum_categories: {
         Row: {
           bg_color: string
@@ -286,6 +328,8 @@ export type Database = {
           habbo_name: string
           hotel: string
           id: string
+          photo_id: string | null
+          photo_url: string | null
           snapshot_id: string | null
         }
         Insert: {
@@ -297,6 +341,8 @@ export type Database = {
           habbo_name: string
           hotel: string
           id?: string
+          photo_id?: string | null
+          photo_url?: string | null
           snapshot_id?: string | null
         }
         Update: {
@@ -308,17 +354,11 @@ export type Database = {
           habbo_name?: string
           hotel?: string
           id?: string
+          photo_id?: string | null
+          photo_url?: string | null
           snapshot_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "habbo_activities_snapshot_id_fkey"
-            columns: ["snapshot_id"]
-            isOneToOne: false
-            referencedRelation: "habbo_user_snapshots"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       habbo_badges: {
         Row: {
@@ -566,57 +606,63 @@ export type Database = {
         }
         Relationships: []
       }
-      habbo_user_snapshots: {
+      habbo_photos: {
         Row: {
-          badges_count: number | null
+          caption: string | null
           created_at: string
-          figure_string: string | null
-          friends_count: number | null
-          groups_count: number | null
           habbo_id: string
           habbo_name: string
           hotel: string
           id: string
-          is_online: boolean | null
-          last_web_visit: string | null
-          member_since: string | null
-          motto: string | null
-          photos_count: number | null
-          raw_data: Json | null
+          internal_user_id: string | null
+          likes_count: number | null
+          photo_id: string
+          photo_type: string | null
+          preview_url: string | null
+          room_name: string | null
+          s3_url: string
+          source: string | null
+          taken_date: string | null
+          timestamp_taken: number | null
+          updated_at: string
         }
         Insert: {
-          badges_count?: number | null
+          caption?: string | null
           created_at?: string
-          figure_string?: string | null
-          friends_count?: number | null
-          groups_count?: number | null
           habbo_id: string
           habbo_name: string
-          hotel: string
+          hotel?: string
           id?: string
-          is_online?: boolean | null
-          last_web_visit?: string | null
-          member_since?: string | null
-          motto?: string | null
-          photos_count?: number | null
-          raw_data?: Json | null
+          internal_user_id?: string | null
+          likes_count?: number | null
+          photo_id: string
+          photo_type?: string | null
+          preview_url?: string | null
+          room_name?: string | null
+          s3_url: string
+          source?: string | null
+          taken_date?: string | null
+          timestamp_taken?: number | null
+          updated_at?: string
         }
         Update: {
-          badges_count?: number | null
+          caption?: string | null
           created_at?: string
-          figure_string?: string | null
-          friends_count?: number | null
-          groups_count?: number | null
           habbo_id?: string
           habbo_name?: string
           hotel?: string
           id?: string
-          is_online?: boolean | null
-          last_web_visit?: string | null
-          member_since?: string | null
-          motto?: string | null
-          photos_count?: number | null
-          raw_data?: Json | null
+          internal_user_id?: string | null
+          likes_count?: number | null
+          photo_id?: string
+          photo_type?: string | null
+          preview_url?: string | null
+          room_name?: string | null
+          s3_url?: string
+          source?: string | null
+          taken_date?: string | null
+          timestamp_taken?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -701,6 +747,54 @@ export type Database = {
           id?: string
           photo_id?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      profile_snapshots: {
+        Row: {
+          badges: Json | null
+          created_at: string | null
+          figure_string: string | null
+          friends_count: number | null
+          groups_count: number | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          motto: string | null
+          photos: Json | null
+          raw_profile_data: Json | null
+          snapshot_date: string | null
+        }
+        Insert: {
+          badges?: Json | null
+          created_at?: string | null
+          figure_string?: string | null
+          friends_count?: number | null
+          groups_count?: number | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id?: string
+          motto?: string | null
+          photos?: Json | null
+          raw_profile_data?: Json | null
+          snapshot_date?: string | null
+        }
+        Update: {
+          badges?: Json | null
+          created_at?: string | null
+          figure_string?: string | null
+          friends_count?: number | null
+          groups_count?: number | null
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          motto?: string | null
+          photos?: Json | null
+          raw_profile_data?: Json | null
+          snapshot_date?: string | null
         }
         Relationships: []
       }
@@ -854,6 +948,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profile_changes: {
+        Row: {
+          change_description: string | null
+          change_type: string
+          created_at: string | null
+          detected_at: string | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+        }
+        Insert: {
+          change_description?: string | null
+          change_type: string
+          created_at?: string | null
+          detected_at?: string | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Update: {
+          change_description?: string | null
+          change_type?: string
+          created_at?: string | null
+          detected_at?: string | null
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+        }
+        Relationships: []
+      }
       user_stickers: {
         Row: {
           category: string | null
@@ -904,6 +1037,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       ensure_user_home_exists: {
         Args: { user_uuid: string }
         Returns: undefined
