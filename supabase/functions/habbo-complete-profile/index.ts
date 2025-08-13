@@ -167,35 +167,63 @@ async function extractInternalUserId(username: string, hotel: string): Promise<s
     }
 
     const html = await response.text();
+    console.log(`[Internal ID] HTML page length: ${html.length} characters`);
     
-    // Try multiple patterns to extract internal user ID
+    // Enhanced patterns to extract internal user ID with more logging
     const patterns = [
-      /userId['":\s]*(\d+)/i,
-      /user_id['":\s]*(\d+)/i,
-      /"id"[:\s]*(\d+)/i,
-      /data-user-id[='"]*(\d+)/i,
-      /servercamera\/purchased\/\w+\/p-(\d+)-/i,
+      // Specific patterns for Habbo profile pages
+      /user['":\s]*['":]?(\d+)/gi,
+      /userId['":\s]*['":]?(\d+)/gi,
+      /user_id['":\s]*['":]?(\d+)/gi,
+      /id['":\s]*['":]?(\d+)/gi,
+      /data-user-id[='"]*(\d+)/gi,
+      // S3 URL patterns we know work
+      /servercamera\/purchased\/\w+\/p-(\d+)-/gi,
+      // JavaScript variable patterns
+      /var\s+user\s*=\s*['"]*(\d+)/gi,
+      /window\.user\s*=\s*['"]*(\d+)/gi,
+      // JSON data patterns
+      /"user"\s*:\s*['"]*(\d+)/gi,
+      /"userId"\s*:\s*['"]*(\d+)/gi,
     ];
 
     for (const pattern of patterns) {
-      const match = html.match(pattern);
-      if (match && match[1]) {
-        const id = match[1];
-        console.log(`[Internal ID] Found internal user ID: ${id} using pattern: ${pattern}`);
-        return id;
+      console.log(`[Internal ID] Testing pattern: ${pattern}`);
+      const matches = Array.from(html.matchAll(pattern));
+      
+      if (matches && matches.length > 0) {
+        for (const match of matches) {
+          if (match && match[1]) {
+            const id = match[1];
+            // Filter out common false positives
+            if (id.length >= 5 && id.length <= 10 && parseInt(id) > 10000) {
+              console.log(`[Internal ID] Found potential internal user ID: ${id} using pattern: ${pattern}`);
+              return id;
+            }
+          }
+        }
       }
     }
 
-    // Also try to find it in any script tags or JSON data
-    const scriptMatches = html.match(/<script[^>]*>(.*?)<\/script>/gis);
+    // Also search in script tags specifically
+    const scriptRegex = /<script[^>]*>(.*?)<\/script>/gis;
+    const scriptMatches = html.match(scriptRegex);
     if (scriptMatches) {
-      for (const script of scriptMatches) {
+      console.log(`[Internal ID] Found ${scriptMatches.length} script tags to analyze`);
+      for (let i = 0; i < scriptMatches.length; i++) {
+        const script = scriptMatches[i];
         for (const pattern of patterns) {
-          const match = script.match(pattern);
-          if (match && match[1]) {
-            const id = match[1];
-            console.log(`[Internal ID] Found internal user ID in script: ${id}`);
-            return id;
+          const matches = Array.from(script.matchAll(pattern));
+          if (matches && matches.length > 0) {
+            for (const match of matches) {
+              if (match && match[1]) {
+                const id = match[1];
+                if (id.length >= 5 && id.length <= 10 && parseInt(id) > 10000) {
+                  console.log(`[Internal ID] Found internal user ID in script ${i}: ${id}`);
+                  return id;
+                }
+              }
+            }
           }
         }
       }
@@ -210,24 +238,33 @@ async function extractInternalUserId(username: string, hotel: string): Promise<s
   }
 }
 
-// Function to discover photos from S3 bucket
+// Function to discover photos from S3 bucket with enhanced strategy
 async function discoverS3Photos(internalUserId: string, hotel: string, username: string): Promise<any[]> {
   const photos: any[] = [];
   const hotelCode = hotel === 'com.br' ? 'hhbr' : 'hhus'; // Adjust for different hotels
   
-  // Generate timestamps for the last 6 months (sample strategy)
-  const now = Date.now();
-  const sixMonthsAgo = now - (6 * 30 * 24 * 60 * 60 * 1000);
+  console.log(`[S3 Discovery] Starting photo discovery for user ${internalUserId} on hotel ${hotelCode}`);
   
-  // Create a sampling of potential timestamps (weekly intervals)
+  // Generate timestamps for the last 12 months with more frequent sampling
+  const now = Date.now();
+  const twelveMonthsAgo = now - (12 * 30 * 24 * 60 * 60 * 1000);
+  
+  // Create a more comprehensive sampling of potential timestamps
   const timestamps = [];
-  for (let time = now; time >= sixMonthsAgo; time -= (7 * 24 * 60 * 60 * 1000)) {
+  
+  // Daily intervals for the last month
+  for (let time = now; time >= now - (30 * 24 * 60 * 60 * 1000) && timestamps.length < 30; time -= (24 * 60 * 60 * 1000)) {
+    timestamps.push(time);
+  }
+  
+  // Weekly intervals for the last 12 months
+  for (let time = now - (30 * 24 * 60 * 60 * 1000); time >= twelveMonthsAgo && timestamps.length < 80; time -= (7 * 24 * 60 * 60 * 1000)) {
     timestamps.push(time);
   }
 
   console.log(`[S3 Discovery] Testing ${timestamps.length} potential photo timestamps for user ${internalUserId}`);
 
-  // Test each timestamp (with rate limiting)
+  // Test each timestamp with improved rate limiting and error handling
   for (let i = 0; i < timestamps.length && photos.length < 50; i++) {
     const timestamp = timestamps[i];
     const photoUrl = `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/${hotelCode}/p-${internalUserId}-${timestamp}.png`;
@@ -242,7 +279,7 @@ async function discoverS3Photos(internalUserId: string, hotel: string, username:
       });
 
       if (headResponse.ok) {
-        console.log(`[S3 Discovery] Found photo: ${photoUrl}`);
+        console.log(`[S3 Discovery] ✅ Found photo: ${photoUrl}`);
         
         photos.push({
           id: `s3-${internalUserId}-${timestamp}`,
@@ -255,12 +292,17 @@ async function discoverS3Photos(internalUserId: string, hotel: string, username:
           type: 'PHOTO',
           source: 's3_discovery'
         });
+      } else {
+        console.log(`[S3 Discovery] ❌ Photo not found (${headResponse.status}): ${photoUrl}`);
       }
 
-      // Rate limiting - small delay between requests
-      if (i % 10 === 0 && i > 0) {
-        console.log(`[S3 Discovery] Processed ${i + 1}/${timestamps.length} timestamps, found ${photos.length} photos so far`);
-        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay every 10 requests
+      // Enhanced rate limiting - smaller delay between requests but pause every 15
+      if (i % 15 === 0 && i > 0) {
+        console.log(`[S3 Discovery] Processed ${i + 1}/${timestamps.length} timestamps, found ${photos.length} photos so far - pausing briefly...`);
+        await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay every 15 requests
+      } else {
+        // Small delay between each request to be respectful
+        await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay between requests
       }
 
     } catch (error) {

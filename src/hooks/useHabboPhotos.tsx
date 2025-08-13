@@ -17,11 +17,11 @@ export interface EnhancedHabboPhoto {
 
 export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
   const { data: habboPhotos = [], isLoading, error } = useQuery({
-    queryKey: ['habbo-photos-s3', username, hotel],
+    queryKey: ['habbo-photos-enhanced-s3', username, hotel],
     queryFn: async (): Promise<EnhancedHabboPhoto[]> => {
       if (!username) return [];
       
-      console.log('[useHabboPhotos] Fetching photos with S3 discovery for:', username, hotel);
+      console.log('[useHabboPhotos] Fetching photos with enhanced S3 discovery for:', username, hotel);
       
       const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
         body: { username: username.trim(), hotel }
@@ -39,9 +39,9 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
 
       // Extract photos from complete profile response
       const photos = data?.data?.photos || [];
-      console.log('[useHabboPhotos] Raw photos data:', photos);
+      console.log('[useHabboPhotos] Raw photos data from enhanced discovery:', photos);
 
-      // Map and enhance photos
+      // Map and enhance photos, prioritizing S3 discovered photos
       const enhancedPhotos: EnhancedHabboPhoto[] = photos
         .filter((photo: any) => photo && (photo.url || photo.imageUrl))
         .map((photo: any, index: number) => ({
@@ -51,19 +51,28 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
           caption: photo.caption || photo.description || `Foto de ${username}`,
           timestamp: photo.timestamp || photo.takenOn || photo.createdAt,
           roomId: photo.roomId,
-          roomName: photo.roomName || 'Quarto desconhecido',
+          roomName: photo.roomName || 'Quarto do jogo',
           likesCount: photo.likesCount || photo.likes || 0,
           type: photo.type || 'PHOTO',
           source: photo.source || 'api'
         }))
         .sort((a, b) => {
-          // Sort by timestamp, newest first
+          // Sort by source priority (s3_discovery first), then by timestamp
+          if (a.source === 's3_discovery' && b.source !== 's3_discovery') return -1;
+          if (b.source === 's3_discovery' && a.source !== 's3_discovery') return 1;
+          
+          // Then sort by timestamp, newest first
           const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
           const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
           return timeB - timeA;
         });
 
-      console.log('[useHabboPhotos] Enhanced photos:', enhancedPhotos.length);
+      console.log(`[useHabboPhotos] Enhanced photos (${enhancedPhotos.length} total):`, {
+        s3_photos: enhancedPhotos.filter(p => p.source === 's3_discovery').length,
+        api_photos: enhancedPhotos.filter(p => p.source === 'api').length,
+        other_photos: enhancedPhotos.filter(p => p.source !== 's3_discovery' && p.source !== 'api').length
+      });
+      
       return enhancedPhotos;
     },
     enabled: !!username,
