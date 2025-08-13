@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '../hooks/useAuth';
 
 export const DebugAuthInfo = () => {
-  const { user, userProfile, loading, isLoggedIn, isAdmin } = useAuth();
+  const { user, habboAccount, loading, isLoggedIn, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -41,27 +41,27 @@ export const DebugAuthInfo = () => {
           </div>
         </div>
 
-        {userProfile && (
+        {habboAccount && (
           <div className="space-y-2 border-t pt-3">
             <p className="text-xs font-medium text-gray-700">Conta Habbo Vinculada:</p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
-                <span className="font-medium">Nome:</span> {userProfile.habbo_name}
+                <span className="font-medium">Nome:</span> {habboAccount.habbo_name}
               </div>
               <div>
-                <span className="font-medium">ID:</span> {userProfile.habbo_id}
+                <span className="font-medium">ID:</span> {habboAccount.habbo_id}
               </div>
               <div>
                 <span className="font-medium">Admin:</span> 
-                <Badge className={isAdmin() ? 'bg-yellow-500 ml-1' : 'bg-gray-500 ml-1'}>
-                  {isAdmin() ? 'Sim' : 'Não'}
+                <Badge className={habboAccount.is_admin ? 'bg-yellow-500 ml-1' : 'bg-gray-500 ml-1'}>
+                  {habboAccount.is_admin ? 'Sim' : 'Não'}
                 </Badge>
               </div>
             </div>
           </div>
         )}
 
-        {!userProfile && user && (
+        {!habboAccount && user && (
           <div className="border-t pt-3">
             <p className="text-xs text-orange-600">
               ⚠️ Usuário autenticado mas sem conta Habbo vinculada
@@ -70,7 +70,7 @@ export const DebugAuthInfo = () => {
         )}
 
         <div className="text-xs text-gray-500 border-t pt-2">
-          Sistema: Auth System | Timestamp: {new Date().toLocaleString('pt-BR')}
+          Sistema: Unified Auth | Timestamp: {new Date().toLocaleString('pt-BR')}
         </div>
       </CardContent>
     </Card>
