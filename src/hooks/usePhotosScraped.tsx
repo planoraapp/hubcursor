@@ -25,7 +25,7 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
         .from('habbo_photos')
         .select('*')
         .eq('habbo_name', username.trim())
-        .eq('hotel', hotel)
+        .eq('hotel', hotel === 'com.br' ? 'br' : hotel) // Database uses 'br' format
         .order('taken_date', { ascending: false });
 
       if (!dbError && dbPhotos && dbPhotos.length > 0) {
@@ -43,22 +43,34 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
 
       // Fallback to edge function if no photos in database
       console.log('[usePhotosScraped] No photos in database, trying edge function...');
-      const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
-        body: { username: username.trim(), hotel }
-      });
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
+          body: { 
+            username: username.trim(), 
+            hotel: hotel // Send as-is, edge function will handle conversion
+          }
+        });
 
-      if (error) {
-        console.error('[usePhotosScraped] Error fetching photos:', error);
-        throw new Error(error.message || 'Failed to fetch photos');
+        if (error) {
+          console.error('[usePhotosScraped] Edge function error:', error);
+          throw new Error(error.message || 'Failed to fetch photos from edge function');
+        }
+
+        console.log('[usePhotosScraped] Retrieved photos from edge function:', data?.length || 0);
+        return data || [];
+      } catch (edgeError) {
+        console.error('[usePhotosScraped] Edge function failed:', edgeError);
+        
+        // Return empty array instead of throwing to prevent UI breaks
+        return [];
       }
-
-      console.log('[usePhotosScraped] Retrieved photos from edge function:', data);
-      return data || [];
     },
     enabled: !!username,
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   return { scrapedPhotos, isLoading, error };

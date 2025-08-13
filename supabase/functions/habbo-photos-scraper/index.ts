@@ -23,10 +23,29 @@ serve(async (req) => {
   }
 
   try {
+    let username: string | null = null;
+    let hotel: string = 'br';
+
+    // Try to get parameters from query string first
     const url = new URL(req.url)
-    const username = url.searchParams.get('username')
-    
+    username = url.searchParams.get('username')
+    const queryHotel = url.searchParams.get('hotel')
+
+    // If not in query string, try to get from body
     if (!username) {
+      try {
+        const body = await req.json()
+        username = body.username
+        hotel = body.hotel || 'br'
+      } catch (error) {
+        console.log('[habbo-photos-scraper] No JSON body found, continuing with query params')
+      }
+    } else {
+      hotel = queryHotel || 'br'
+    }
+
+    if (!username) {
+      console.error('[habbo-photos-scraper] No username provided in query or body')
       return new Response(
         JSON.stringify({ error: 'Username parameter is required' }), 
         { 
@@ -36,7 +55,11 @@ serve(async (req) => {
       )
     }
 
-    console.log(`[habbo-photos-scraper] Fetching photos for: ${username}`)
+    // Normalize hotel format - convert 'br' to 'com.br' for profile URL
+    const profileHotel = hotel === 'br' ? 'com.br' : hotel
+    const dbHotel = hotel === 'com.br' ? 'br' : hotel // Database uses 'br' format
+
+    console.log(`[habbo-photos-scraper] Fetching photos for: ${username} (hotel: ${hotel}, profile: ${profileHotel}, db: ${dbHotel})`)
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -48,7 +71,7 @@ serve(async (req) => {
       .from('habbo_photos')
       .select('*')
       .eq('habbo_name', username)
-      .eq('hotel', 'br')
+      .eq('hotel', dbHotel)
       .gte('updated_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
       .order('taken_date', { ascending: false })
 
@@ -77,7 +100,7 @@ serve(async (req) => {
     // If no cache, try to scrape from Habbo profile
     console.log(`[habbo-photos-scraper] No cache found, attempting to scrape profile for ${username}`)
     
-    const profileUrl = `https://www.habbo.com.br/profile/${username}`
+    const profileUrl = `https://www.habbo.${profileHotel}/profile/${username}`
     
     const response = await fetch(profileUrl, {
       headers: {
@@ -107,17 +130,28 @@ serve(async (req) => {
     // Extract photos using regex patterns for S3 URLs
     const photos: Photo[] = []
     
-    // Pattern for S3 URLs in Habbo photos
+    // Pattern for S3 URLs in Habbo photos - more flexible pattern
     const s3UrlPattern = /https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/hhbr\/p-(\d+)-(\d+)\.png/g
     const matches = [...html.matchAll(s3UrlPattern)]
     
     console.log(`[habbo-photos-scraper] Found ${matches.length} S3 URLs in HTML`)
 
-    for (const match of matches) {
-      const fullUrl = match[0]
-      const userId = match[1]
-      const timestamp = parseInt(match[2])
+    // Also try to find any other photo patterns
+    const alternativePattern = /ng-src="(https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/[^"]+)"/g
+    const altMatches = [...html.matchAll(alternativePattern)]
+    console.log(`[habbo-photos-scraper] Found ${altMatches.length} alternative photo URLs`)
+
+    // Combine both patterns
+    const allMatches = [...matches, ...altMatches.map(match => [match[1], match[1].match(/p-(\d+)-(\d+)\.png/)?.[1] || '000000', match[1].match(/p-(\d+)-(\d+)\.png/)?.[2] || Date.now().toString()])]
+
+    for (const match of allMatches) {
+      const fullUrl = typeof match === 'string' ? match : match[0]
+      const userId = typeof match === 'string' ? '000000' : match[1]
+      const timestamp = typeof match === 'string' ? Date.now() : parseInt(match[2])
       
+      // Skip duplicates
+      if (photos.some(p => p.imageUrl === fullUrl)) continue
+
       const photo: Photo = {
         id: `${username}-${timestamp}`,
         photo_id: `${username}-${timestamp}`,
@@ -127,7 +161,7 @@ serve(async (req) => {
           month: '2-digit',
           year: '2-digit'
         }),
-        likes: Math.floor(Math.random() * 10), // Random likes since we can't scrape exact counts
+        likes: Math.floor(Math.random() * 10), // Random likes since we can't scrape exact counts reliably
         timestamp: timestamp,
         roomName: 'Quarto do jogo'
       }
@@ -146,7 +180,7 @@ serve(async (req) => {
             photo_id: photo.photo_id,
             habbo_name: username,
             habbo_id: `hhbr-${userId || '000000'}`,
-            hotel: 'br',
+            hotel: dbHotel,
             s3_url: photo.imageUrl,
             preview_url: photo.imageUrl,
             timestamp_taken: photo.timestamp,
@@ -160,6 +194,8 @@ serve(async (req) => {
             onConflict: 'photo_id,habbo_name,hotel'
           })
       }
+    } else {
+      console.log(`[habbo-photos-scraper] No photos found for ${username}, returning empty array`)
     }
 
     console.log(`[habbo-photos-scraper] Returning ${photos.length} photos for ${username}`)
