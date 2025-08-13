@@ -96,8 +96,8 @@ async function discoverRandomUsers(supabase: any, hotel: string, limit: number) 
     .from('habbo_accounts')
     .select('*')
     .eq('hotel', hotel)
-    .gte('updated_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString())
-    .order('updated_at', { ascending: false })
+    .gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString())
+    .order('created_at', { ascending: false })
     .limit(limit * 3);
 
   if (error) throw error;
@@ -112,10 +112,10 @@ async function discoverRandomUsers(supabase: any, hotel: string, limit: number) 
         id: user.habbo_id,
         habbo_name: user.habbo_name,
         habbo_id: user.habbo_id,
-        motto: user.motto,
-        figure_string: user.figure_string,
+        motto: user.motto || '',
+        figure_string: user.figure_string || '',
         online: true,
-        last_seen: user.updated_at
+        last_seen: user.created_at
       });
       
       if (uniqueUsers.size >= limit) break;
@@ -130,7 +130,7 @@ async function discoverRecentUsers(supabase: any, hotel: string, limit: number) 
     .from('habbo_accounts')
     .select('*')
     .eq('hotel', hotel)
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -139,10 +139,10 @@ async function discoverRecentUsers(supabase: any, hotel: string, limit: number) 
     id: user.habbo_id,
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
-    motto: user.motto,
-    figure_string: user.figure_string,
+    motto: user.motto || '',
+    figure_string: user.figure_string || '',
     online: true,
-    last_seen: user.updated_at
+    last_seen: user.created_at
   }));
 }
 
@@ -151,8 +151,8 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
     .from('habbo_accounts')
     .select('*')
     .eq('hotel', hotel)
-    .gte('updated_at', new Date(Date.now() - (60 * 60 * 1000)).toISOString()) // Last hour
-    .order('updated_at', { ascending: false })
+    .gte('created_at', new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString()) // Last 24 hours
+    .order('created_at', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -161,10 +161,10 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
     id: user.habbo_id,
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
-    motto: user.motto,
-    figure_string: user.figure_string,
+    motto: user.motto || '',
+    figure_string: user.figure_string || '',
     online: true,
-    last_seen: user.updated_at
+    last_seen: user.created_at
   }));
 }
 
@@ -182,7 +182,7 @@ async function searchUsers(supabase: any, hotel: string, query: string, limit: n
     .select('*')
     .eq('hotel', hotel)
     .ilike('habbo_name', `%${searchTerm}%`)
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(limit);
 
   if (error) {
@@ -197,9 +197,9 @@ async function searchUsers(supabase: any, hotel: string, query: string, limit: n
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
     hotel: user.hotel,
-    motto: user.motto,
-    figure_string: user.figure_string,
+    motto: user.motto || '',
+    figure_string: user.figure_string || '',
     online: true,
-    last_seen: user.updated_at
+    last_seen: user.created_at
   }));
 }

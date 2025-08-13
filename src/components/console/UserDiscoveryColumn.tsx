@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Loader2 } from 'lucide-react';
+import { Users, Loader2, AlertCircle } from 'lucide-react';
 import { UserSearchInput } from './UserSearchInput';
 import { UserCard } from './UserCard';
 import { UserProfileDetailView } from './UserProfileDetailView';
@@ -14,6 +15,7 @@ export const UserDiscoveryColumn: React.FC = () => {
   const { 
     searchResults, 
     isSearching, 
+    error: searchError,
     searchUser 
   } = useUserSearch();
   
@@ -70,6 +72,13 @@ export const UserDiscoveryColumn: React.FC = () => {
           placeholder="Buscar usuários por nome..."
         />
 
+        {searchError && (
+          <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-400/30 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <span className="text-sm text-red-200">{searchError}</span>
+          </div>
+        )}
+
         {searchQuery.trim() && (
           <div className="text-sm text-white/60">
             {isSearching ? (
@@ -96,7 +105,9 @@ export const UserDiscoveryColumn: React.FC = () => {
                 {isLoading ? (
                   'Descobrindo usuários...'
                 ) : searchQuery.trim() ? (
-                  'Nenhum usuário encontrado'
+                  searchQuery.trim().length < 2 ? 
+                    'Digite pelo menos 2 caracteres para buscar' : 
+                    'Nenhum usuário encontrado'
                 ) : (
                   'Nenhum usuário disponível'
                 )}

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { optimizedFeedService } from '@/services/optimizedFeedService';
 
@@ -9,6 +10,14 @@ export const useUserSearch = () => {
   const searchUser = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
+      setError(null);
+      return;
+    }
+
+    // Só busca se tiver pelo menos 2 caracteres
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      setError(null);
       return;
     }
 
@@ -19,12 +28,17 @@ export const useUserSearch = () => {
       console.log(`🔍 [useUserSearch] Searching for: "${query}"`);
       
       const results = await optimizedFeedService.searchUsers(query);
-      setSearchResults(results.users || []);
       
-      console.log(`✅ [useUserSearch] Found ${results.users?.length || 0} users`);
+      if (results && results.users) {
+        setSearchResults(results.users);
+        console.log(`✅ [useUserSearch] Found ${results.users.length} users`);
+      } else {
+        setSearchResults([]);
+        console.log(`⚠️ [useUserSearch] No results returned for "${query}"`);
+      }
     } catch (err) {
       console.error('❌ [useUserSearch] Search error:', err);
-      setError('Erro na busca de usuários');
+      setError('Erro na busca. Tente novamente em alguns segundos.');
       setSearchResults([]);
     } finally {
       setIsSearching(false);

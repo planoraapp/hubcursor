@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
@@ -15,11 +16,11 @@ export const UserSearchInput: React.FC<UserSearchInputProps> = ({
 }) => {
   const [searchInput, setSearchInput] = useState('');
 
-  // Debounce da busca
+  // Debounce da busca - aumentado para 500ms
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       onSearch(searchInput);
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [searchInput, onSearch]);
