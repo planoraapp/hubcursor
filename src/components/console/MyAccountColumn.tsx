@@ -6,9 +6,9 @@ import { User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { habboProxyService } from '@/services/habboProxyService';
-import { InstagramPhotoGrid } from './InstagramPhotoGrid';
-import { useHabboPhotos } from '@/hooks/useHabboPhotos';
 import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
+import { EnhancedPhotosGrid } from '@/components/profile/EnhancedPhotosGrid';
+import { useHabboPhotos } from '@/hooks/useHabboPhotos';
 
 export const MyAccountColumn: React.FC = () => {
   const { 
@@ -30,11 +30,11 @@ export const MyAccountColumn: React.FC = () => {
     isLoading: isLoadingComplete 
   } = useCompleteProfile(habboAccount?.habbo_name || '', hotel as string);
 
-  // Always call hooks in the same order (avoid conditional hooks)
+  // Get enhanced photos from API
   const { habboPhotos, isLoading: isLoadingHabboPhotos } = useHabboPhotos(habboAccount?.habbo_name, hotel as string);
 
   console.log('[MyAccountColumn] Complete Profile data:', completeProfile);
-  console.log('[MyAccountColumn] Photos data:', photos);
+  console.log('[MyAccountColumn] Enhanced Photos data:', habboPhotos);
 
   if (!isLoggedIn || !habboAccount) {
     return (
@@ -123,14 +123,14 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Habbo Stats Section - Using ProfileStatsGrid */}
+            {/* Habbo Stats Section - Using ProfileStatsGrid (sem level, star gems e fotos) */}
             {completeProfile && (
               <div>
                 <h4 className="text-sm font-medium text-white/80 mb-3 flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Estatísticas do Habbo
                 </h4>
-                <ProfileStatsGrid profile={completeProfile} className="scale-90 origin-top-left" />
+                <ProfileStatsGrid profile={completeProfile} />
               </div>
             )}
 
@@ -172,57 +172,21 @@ export const MyAccountColumn: React.FC = () => {
               </div>
             </div>
 
-            {/* Photos Section - Instagram Style Grid */}
+            {/* Enhanced Photos Section */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Camera className="w-4 h-4 text-white/80" />
                 <h4 className="text-sm font-medium text-white/80">
-                  Minhas Fotos ({(photos?.length || 0) > 0 ? photos.length : (habboPhotos?.length || 0)})
-                </h4>
-              </div>
-              {(photos && photos.length > 0) || (habboPhotos && habboPhotos.length > 0) ? (
-                <InstagramPhotoGrid 
-                  photos={(photos && photos.length > 0) ? photos : (habboPhotos || [])}
-                  habboName={habboAccount.habbo_name}
-                  hotel={hotel as string}
-                />
-              ) : (
-                <div className="text-center text-white/60 py-4">
-                  <Camera className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Nenhuma foto encontrada</p>
-                  <p className="text-xs mt-1">Vá para o Habbo e tire algumas fotos!</p>
-                </div>
-              )}
-            </div>
-
-            {/* Photos pulled from official Habbo profile */}
-            <div>
-              <div className="flex items-center gap-2 mb-3 mt-6">
-                <Camera className="w-4 h-4 text-white/80" />
-                <h4 className="text-sm font-medium text-white/80">
-                  Fotos do meu perfil Habbo ({habboPhotos?.length || 0})
+                  Minhas Fotos ({habboPhotos?.length || 0})
                 </h4>
                 {isLoadingHabboPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
               </div>
-
-              {habboPhotos && habboPhotos.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1">
-                  {habboPhotos.slice(0, 16).map((photo) => (
-                    <a key={photo.id} href={photo.url} target="_blank" rel="noopener noreferrer" className="block group">
-                      <img
-                        src={photo.url}
-                        alt={`Foto Habbo de ${habboAccount.habbo_name}`}
-                        loading="lazy"
-                        className="aspect-square object-cover w-full h-full bg-white/10 group-hover:opacity-90 transition-opacity"
-                      />
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-white/60 py-4">
-                  <p className="text-sm">Não foi possível carregar fotos do seu perfil Habbo agora.</p>
-                </div>
-              )}
+              
+              <EnhancedPhotosGrid 
+                photos={habboPhotos || []}
+                userName={habboAccount.habbo_name}
+                hotel={hotel as string}
+              />
             </div>
           </div>
         </CardContent>
