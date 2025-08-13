@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.habbo-discover-users]
 verify_jwt = false
+
+[functions.habbo-complete-profile]
+verify_jwt = false
+
+[functions.test-habbo-photos]
+verify_jwt = false

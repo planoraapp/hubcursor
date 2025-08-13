@@ -9,6 +9,7 @@ import { useHabboPhotos } from '@/hooks/useHabboPhotos';
 import { habboProxyService } from '@/services/habboProxyService';
 import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
 import { EnhancedPhotosGrid } from '@/components/profile/EnhancedPhotosGrid';
+import { PhotoTestPanel } from './PhotoTestPanel';
 
 export const MyAccountColumn: React.FC = () => {
   const { 
@@ -204,6 +205,9 @@ export const MyAccountColumn: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+        {/* Photo Test Panel for debugging */}
+        <PhotoTestPanel />
+        
+        </div>
   );
 };
