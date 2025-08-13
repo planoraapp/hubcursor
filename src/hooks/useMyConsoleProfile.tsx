@@ -13,8 +13,11 @@ export const useMyConsoleProfile = () => {
     isLoading: profileLoading, 
     error: profileError 
   } = useQuery({
-    queryKey: ['my-console-profile', habboAccount?.habbo_name],
-    queryFn: () => habboProxyService.getUserProfile(habboAccount!.habbo_name),
+    queryKey: ['my-console-profile', habboAccount?.habbo_name, (habboAccount as any)?.hotel],
+    queryFn: () => {
+      const hotel = (habboAccount as any)?.hotel === 'br' ? 'com.br' : ((habboAccount as any)?.hotel || 'com.br');
+      return habboProxyService.getUserProfile(habboAccount!.habbo_name, hotel);
+    },
     enabled: !!habboAccount?.habbo_name,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -24,8 +27,11 @@ export const useMyConsoleProfile = () => {
     data: photos = [], 
     isLoading: photosLoading 
   } = useQuery({
-    queryKey: ['my-console-photos', habboAccount?.habbo_name],
-    queryFn: () => habboProxyService.getUserPhotos(habboAccount!.habbo_name),
+    queryKey: ['my-console-photos', habboAccount?.habbo_name, (habboAccount as any)?.hotel],
+    queryFn: () => {
+      const hotel = (habboAccount as any)?.hotel === 'br' ? 'com.br' : ((habboAccount as any)?.hotel || 'com.br');
+      return habboProxyService.getUserPhotos(habboAccount!.habbo_name, hotel);
+    },
     enabled: !!habboAccount?.habbo_name,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

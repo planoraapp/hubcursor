@@ -208,11 +208,11 @@ class HabboProxyService {
         return [];
       }
 
-      return photosArray.map((photo: any) => ({
-        id: photo.id || photo.photoId || String(Math.random()),
-        url: photo.url || photo.photoUrl || photo.src || '',
-        takenOn: photo.takenOn || photo.createdAt || photo.timestamp || new Date().toISOString(),
-      })).filter(photo => photo.url);
+        return photosArray.map((photo: any) => ({
+          id: photo.id || photo.photoId || String(Math.random()),
+          url: photo.url || photo.photoUrl || photo.previewUrl || photo.thumbnailUrl || photo.imageUrl || photo.src || '',
+          takenOn: photo.takenOn || photo.createdAt || photo.timestamp || new Date().toISOString(),
+        })).filter(photo => photo.url);
 
     } catch (error) {
       console.error(`Error fetching photos for ${username}:`, error);

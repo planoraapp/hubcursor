@@ -19,7 +19,15 @@ export const OfficialHotelTickerColumn: React.FC = () => {
     discoverOnlineUsers 
   } = useRealHotelFeed({ 
     mode: 'hybrid',
-    onlineWithinSeconds: Math.floor((Date.now() - new Date().setHours(0, 0, 0, 0)) / 1000) // From start of day
+    onlineWithinSeconds: (() => {
+      const now = new Date();
+      const target = new Date();
+      target.setHours(20, 0, 0, 0); // 20:00 today
+      if (now.getTime() < target.getTime()) {
+        target.setDate(target.getDate() - 1); // if before 20:00, use yesterday 20:00
+      }
+      return Math.floor((now.getTime() - target.getTime()) / 1000);
+    })()
   });
 
   const syncIntervalRef = useRef<NodeJS.Timeout>();
@@ -91,9 +99,9 @@ export const OfficialHotelTickerColumn: React.FC = () => {
   };
 
   const getActivityItems = (activity: any) => {
-    const items = [];
+    const items: Array<{ type: string; icon: any; text: string; data?: any }> = [];
     
-    // Added friends
+    // Added friends (detailed list)
     if (activity.friends && activity.friends.length > 0) {
       items.push({
         type: 'friends',
@@ -101,6 +109,9 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         text: `${activity.friends.length} novo(s) amigo(s)`,
         data: activity.friends
       });
+    } else if (activity.counts?.friends > 0) {
+      // Fallback to counts
+      items.push({ type: 'friends', icon: UserPlus, text: `${activity.counts.friends} novo(s) amigo(s)` });
     }
     
     // Earned badges
@@ -111,6 +122,8 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         text: `${activity.badges.length} novo(s) emblema(s)`,
         data: activity.badges
       });
+    } else if (activity.counts?.badges > 0) {
+      items.push({ type: 'badges', icon: Trophy, text: `${activity.counts.badges} novo(s) emblema(s)` });
     }
     
     // Posted photos
@@ -121,16 +134,13 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         text: `${activity.photos.length} nova(s) foto(s)`,
         data: activity.photos
       });
+    } else if (activity.counts?.photos > 0) {
+      items.push({ type: 'photos', icon: Camera, text: `${activity.counts.photos} nova(s) foto(s)` });
     }
     
     // Changed look (avatar)
     if (activity.counts?.avatarChanged) {
-      items.push({
-        type: 'avatar',
-        icon: Palette,
-        text: 'mudou o visual',
-        data: null
-      });
+      items.push({ type: 'avatar', icon: Palette, text: 'mudou o visual' });
     }
     
     return items;
@@ -190,17 +200,17 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                               alt={activity.username}
                               className="h-[100px] w-auto object-contain bg-transparent cursor-pointer"
                               loading="lazy"
-                              onClick={() => window.open(`https://www.habbo.com.br/profile/${activity.username}`, '_blank')}
+                              onClick={() => window.open(`https://www.habbo.${hotel}/profile/${activity.username}`, '_blank')}
                               title={`Ver perfil de ${activity.username}`}
                             />
-                          ) : (
-                            <div className="h-[100px] w-16 bg-white/10 flex items-center justify-center rounded cursor-pointer"
-                                 onClick={() => window.open(`https://www.habbo.com.br/profile/${activity.username}`, '_blank')}>
-                              <span className="text-xl font-bold">
-                                {activity.username[0]?.toUpperCase()}
-                              </span>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="h-[100px] w-16 bg-white/10 flex items-center justify-center rounded cursor-pointer"
+                                   onClick={() => window.open(`https://www.habbo.${hotel}/profile/${activity.username}`, '_blank')}>
+                                <span className="text-xl font-bold">
+                                  {activity.username[0]?.toUpperCase()}
+                                </span>
+                              </div>
+                            )}
                         </div>
                         
                         {/* Content */}
@@ -208,7 +218,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                           <div className="flex items-center gap-2 mb-2">
                             <h4 
                               className="font-semibold text-blue-200 cursor-pointer hover:text-blue-100"
-                              onClick={() => window.open(`https://www.habbo.com.br/profile/${activity.username}`, '_blank')}
+                              onClick={() => window.open(`https://www.habbo.${hotel}/profile/${activity.username}`, '_blank')}
                             >
                               {activity.username}
                             </h4>
@@ -250,14 +260,14 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                                       alt={friend.name}
                                       className="w-6 h-6 cursor-pointer"
                                       loading="lazy"
-                                      onClick={() => window.open(`https://www.habbo.com.br/profile/${friend.name}`, '_blank')}
+                                      onClick={() => window.open(`https://www.habbo.${hotel}/profile/${friend.name}`, '_blank')}
                                     />
                                   ) : (
                                     <UserPlus className="w-4 h-4 text-green-500" />
                                   )}
                                   <span 
                                     className="text-white/90 cursor-pointer hover:text-white"
-                                    onClick={() => window.open(`https://www.habbo.com.br/profile/${friend.name}`, '_blank')}
+                                    onClick={() => window.open(`https://www.habbo.${hotel}/profile/${friend.name}`, '_blank`)}
                                   >
                                     {friend.name}
                                   </span>
