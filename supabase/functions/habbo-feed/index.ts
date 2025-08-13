@@ -19,28 +19,22 @@ Deno.serve(async (req) => {
     )
 
     const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid', onlyOnline = false, username } = await req.json()
-    console.log(`🎯 [feed] Feed request: ${mode} mode for ${hotel}, limit ${limit}, online within ${onlineWithinSeconds}s${username ? `, username=${username}` : ''}`)
+    console.log(`🎯 [feed] Feed request: ${mode} mode for ${hotel}, limit ${limit}, online within ${onlineWithinSeconds}s`)
+
 
     const hotelFilter = hotel === 'com.br' ? 'br' : hotel
     const cutoffTime = new Date(Date.now() - (onlineWithinSeconds * 1000)).toISOString()
 
-    console.log(`📊 [feed] Getting activities from database for ${hotel}${username ? ` (user ${username})` : ''}`)
+    console.log(`📊 [feed] Getting activities from database for ${hotel}`)
 
-    // Build base query with filters
-    let activitiesQuery = supabase
+    // Get activities from database - remove the problematic join
+    const { data: activities, error } = await supabase
       .from('habbo_activities')
       .select('*')
       .eq('hotel', hotelFilter)
       .gte('created_at', cutoffTime)
       .order('created_at', { ascending: false })
       .limit(limit)
-
-    // If username provided, filter at DB level
-    if (username) {
-      activitiesQuery = activitiesQuery.eq('habbo_name', username)
-    }
-
-    const { data: activities, error } = await activitiesQuery
 
     if (error) {
       console.error(`❌ [feed] Database error: ${error.message}`)
@@ -79,7 +73,7 @@ Deno.serve(async (req) => {
       .gte('created_at', cutoffTime)
 
     if (!activities || activities.length === 0) {
-      console.log(`⚠️ [feed] No activities found in database for ${hotel}${username ? ` (user ${username})` : ''}`)
+      console.log(`⚠️ [feed] No activities found in database for ${hotel}`)
       
       if (mode === 'hybrid' || mode === 'database') {
         console.log(`📊 [feed] Trying fallback to widgets proxy`)
@@ -91,14 +85,9 @@ Deno.serve(async (req) => {
 
         if (!tickerError && tickerResponse?.activities?.length > 0) {
           console.log(`✅ [feed] Using ${tickerResponse.activities.length} activities from ticker fallback`)
-          // If username is provided, filter ticker by username
-          const tickerActivities = username
-            ? tickerResponse.activities.filter((a: any) => a?.username?.toLowerCase() === String(username).toLowerCase())
-            : tickerResponse.activities
-
           return new Response(
             JSON.stringify({
-              activities: tickerActivities.slice(0, limit).map((activity: any) => ({
+              activities: tickerResponse.activities.slice(0, limit).map((activity: any) => ({
                 username: activity.username || 'Unknown',
                 description: activity.activity || activity.description || 'fez uma atividade',
                 lastUpdate: activity.timestamp || activity.time || new Date().toISOString(),
@@ -111,9 +100,8 @@ Deno.serve(async (req) => {
               meta: {
                 source: 'official-fallback',
                 timestamp: new Date().toISOString(),
-                count: tickerActivities.length,
-                onlineCount: onlineCount || 0,
-                filters: { hotel: hotelFilter, onlyOnline, username: username || null }
+                count: tickerResponse.activities.length,
+                onlineCount: onlineCount || 0
               }
             }),
             { 
@@ -132,8 +120,7 @@ Deno.serve(async (req) => {
             source: 'database',
             timestamp: new Date().toISOString(),
             count: 0,
-            onlineCount: onlineCount || 0,
-            filters: { hotel: hotelFilter, onlyOnline, username: username || null }
+            onlineCount: onlineCount || 0
           }
         }),
         { 
@@ -147,12 +134,12 @@ Deno.serve(async (req) => {
     const userActivities = new Map()
 
     for (const activity of activities) {
-      const usernameKey = activity.habbo_name
+      const username = activity.habbo_name
       
-      if (!userActivities.has(usernameKey)) {
+      if (!userActivities.has(username)) {
         const userProfile = userProfiles.get(activity.habbo_id)
-        userActivities.set(usernameKey, {
-          username: usernameKey,
+        userActivities.set(username, {
+          username,
           description: '',
           lastUpdate: activity.created_at,
           counts: {
@@ -170,7 +157,7 @@ Deno.serve(async (req) => {
         })
       }
 
-      const userActivity = userActivities.get(usernameKey)
+      const userActivity = userActivities.get(username)
       userActivity.activities.push(activity)
       
       // Update lastUpdate to the most recent
@@ -257,12 +244,6 @@ Deno.serve(async (req) => {
       aggregatedActivities = aggregatedActivities.filter((u: any) => u?.profile?.online)
     }
 
-    // If username provided, filter the aggregated list as a safeguard
-    if (username) {
-      const uname = String(username).toLowerCase()
-      aggregatedActivities = aggregatedActivities.filter((u: any) => String(u.username).toLowerCase() === uname)
-    }
-
     // Sort by last update
     aggregatedActivities.sort((a: any, b: any) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
 
@@ -275,8 +256,7 @@ Deno.serve(async (req) => {
           source: 'database',
           timestamp: new Date().toISOString(),
           count: aggregatedActivities.length,
-          onlineCount: onlineCount || 0,
-          filters: { hotel: hotelFilter, onlyOnline, username: username || null }
+          onlineCount: onlineCount || 0
         }
       }),
       { 
@@ -285,7 +265,7 @@ Deno.serve(async (req) => {
       }
     )
 
-  } catch (error: any) {
+  } catch (error) {
     console.error(`❌ [feed] Error: ${error.message}`)
     return new Response(
       JSON.stringify({ error: error.message }),
