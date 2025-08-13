@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.test-habbo-photos]
 verify_jwt = false
+
+[functions.habbo-photo-discovery]
+verify_jwt = false
