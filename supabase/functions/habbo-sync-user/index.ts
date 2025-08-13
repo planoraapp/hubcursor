@@ -44,6 +44,35 @@ Deno.serve(async (req) => {
       throw new Error(`User not found: ${habbo_name}`)
     }
 
+    // Fetch additional data (friends, badges, profile)
+    const userId = userData.uniqueId;
+    let friendsData: any[] = [];
+    let badgesData: any[] = [];
+    let profileData: any = null;
+
+    try {
+      const [friendsRes, badgesRes, profileRes] = await Promise.all([
+        fetch(`https://${domain}/api/public/users/${userId}/friends?limit=100`, { headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' } }),
+        fetch(`https://${domain}/api/public/users/${userId}/badges`, { headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' } }),
+        fetch(`https://${domain}/api/public/users/${userId}/profile`, { headers: { 'Accept': 'application/json', 'User-Agent': 'HabboHub/1.0' } }),
+      ]);
+
+      if (friendsRes.ok) friendsData = await friendsRes.json();
+      if (badgesRes.ok) badgesData = await badgesRes.json();
+      if (profileRes.ok) profileData = await profileRes.json();
+    } catch (e) {
+      console.warn(`⚠️ [habbo-sync-user] Failed to fetch friends/badges/profile for ${habbo_name}: ${e}`);
+    }
+
+    // Merge data for snapshot and diffing
+    const combinedData: any = {
+      ...userData,
+      friends: Array.isArray(friendsData) ? friendsData : [],
+      badges: Array.isArray(badgesData) ? badgesData : [],
+      selectedBadges: profileData?.selectedBadges || userData.selectedBadges || [],
+      groups: profileData?.groups || userData.groups || [],
+    };
+
     // Get existing user data from snapshots to detect changes
     const { data: existingSnapshot } = await supabase
       .from('habbo_user_snapshots')
@@ -63,7 +92,7 @@ Deno.serve(async (req) => {
       
       // Detect new friends
       const oldFriends = oldData.friends || []
-      const newFriends = userData.friends || []
+      const newFriends = combinedData.friends || []
       const addedFriends = newFriends.filter((friend: any) => 
         !oldFriends.some((old: any) => old.uniqueId === friend.uniqueId)
       )
@@ -74,7 +103,7 @@ Deno.serve(async (req) => {
 
       // Detect new badges
       const oldBadges = oldData.selectedBadges || []
-      const newBadges = userData.selectedBadges || []
+      const newBadges = combinedData.selectedBadges || []
       const addedBadges = newBadges.filter((badge: any) => 
         !oldBadges.some((old: any) => old.code === badge.code)
       )
@@ -116,11 +145,11 @@ Deno.serve(async (req) => {
         is_online: userData.online || false,
         member_since: userData.memberSince ? new Date(userData.memberSince).toISOString() : null,
         last_web_visit: userData.lastWebVisit ? new Date(userData.lastWebVisit).toISOString() : null,
-        friends_count: userData.friends?.length || 0,
-        badges_count: userData.selectedBadges?.length || 0,
+        friends_count: combinedData.friends?.length || 0,
+        badges_count: combinedData.selectedBadges?.length || 0,
         photos_count: 0, // Will be updated by photo sync
-        groups_count: userData.groups?.length || 0,
-        raw_data: userData
+        groups_count: combinedData.groups?.length || 0,
+        raw_data: combinedData
       })
 
     if (snapshotError) {

@@ -7,6 +7,7 @@ import { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 export const useRealHotelFeed = (options?: { 
   onlineWithinSeconds?: number;
   mode?: 'official' | 'database' | 'hybrid';
+  onlyOnline?: boolean;
 }) => {
   const { habboAccount } = useUnifiedAuth();
   
@@ -17,6 +18,9 @@ export const useRealHotelFeed = (options?: {
     if (userHotel === 'com' || userHotel.includes('.')) return userHotel;
     return 'com.br';
   }, [habboAccount?.hotel]);
+  
+  // Online-only filter
+  const onlyOnline = options?.onlyOnline ?? false;
 
   // Use official mode by default for live ticker behavior
   const mode = options?.mode || 'hybrid';

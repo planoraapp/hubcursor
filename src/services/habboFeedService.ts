@@ -76,6 +76,7 @@ class HabboFeedService {
       onlineWithinSeconds?: number;
       mode?: 'official' | 'database' | 'hybrid';
       offsetHours?: number;
+      onlyOnline?: boolean;
     }
   ): Promise<FeedResponse> {
     try {

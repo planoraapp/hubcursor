@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid' } = await req.json()
+    const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid', onlyOnline = false } = await req.json()
     console.log(`🎯 [feed] Feed request: ${mode} mode for ${hotel}, limit ${limit}, online within ${onlineWithinSeconds}s`)
 
     const hotelFilter = hotel === 'com.br' ? 'br' : hotel
@@ -191,39 +191,62 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Convert to array and generate descriptions
-    const aggregatedActivities = Array.from(userActivities.values()).map(user => {
-      const actions = []
-      
+    // Convert to array, generate descriptions and normalize counts
+    let aggregatedActivities = Array.from(userActivities.values()).map((user: any) => {
+      const actions: string[] = []
+
       if (user.counts.friendsAdded > 0) {
         actions.push(`adicionou ${user.counts.friendsAdded} novo(s) amigo(s)`)
       }
-      
       if (user.counts.badgesEarned > 0) {
         actions.push(`conquistou ${user.counts.badgesEarned} novo(s) emblema(s)`)
       }
-      
       if (user.counts.photosPosted > 0) {
         actions.push(`postou ${user.counts.photosPosted} nova(s) foto(s)`)
       }
-      
       if (user.counts.avatarChanged > 0) {
         actions.push('mudou o visual')
       }
-      
       if (user.counts.mottoChanged > 0) {
         actions.push('atualizou a missão')
       }
-      
-      user.description = actions.length > 0 ? actions.join(', ') : 'esteve ativo no hotel'
-      
-      return user
+
+      const description = actions.length > 0 ? actions.join(', ') : 'esteve ativo no hotel'
+
+      const profileRaw = user.profile || null
+      const profile = profileRaw ? {
+        figureString: profileRaw.figureString,
+        motto: profileRaw.motto,
+        online: !!profileRaw.online
+      } : null
+
+      return {
+        username: user.username,
+        description,
+        lastUpdate: user.lastUpdate,
+        counts: {
+          friends: user.counts.friendsAdded || 0,
+          badges: user.counts.badgesEarned || 0,
+          photos: user.counts.photosPosted || 0,
+          avatarChanged: (user.counts.avatarChanged || 0) > 0,
+        },
+        profile,
+        friends: user.friends || [],
+        badges: user.badges || [],
+        photos: user.photos || [],
+        activities: user.activities || [],
+      }
     })
 
-    // Sort by last update
-    aggregatedActivities.sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
+    // Optional: filter to only online users
+    if (onlyOnline) {
+      aggregatedActivities = aggregatedActivities.filter((u: any) => u?.profile?.online)
+    }
 
-    console.log(`✅ [feed] Returning ${aggregatedActivities.length} activities (database), ${onlineCount || 0} online`)
+    // Sort by last update
+    aggregatedActivities.sort((a: any, b: any) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
+
+    console.log(`✅ [feed] Returning ${aggregatedActivities.length} activities (database), ${onlineCount || 0} online (onlyOnline=${onlyOnline})`)
 
     return new Response(
       JSON.stringify({

@@ -28,8 +28,19 @@ Deno.serve(async (req) => {
     );
 
     const url = new URL(req.url);
-    const hotel = url.searchParams.get('hotel') || 'com.br';
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    let hotel = url.searchParams.get('hotel') || 'com.br';
+    let limit = parseInt(url.searchParams.get('limit') || '50');
+
+    // Support POST body parameters as well
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        if (body?.hotel) hotel = body.hotel;
+        if (body?.limit) limit = parseInt(String(body.limit));
+      } catch (_e) {
+        // ignore body parse errors and keep query/defaults
+      }
+    }
 
     console.log(`🔍 [habbo-discover-online] Discovering online users for hotel: ${hotel}`);
 
