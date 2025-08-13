@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid', onlyOnline = false } = await req.json()
+    const { hotel, limit = 50, onlineWithinSeconds = 3600, mode = 'hybrid', onlyOnline = false, username } = await req.json()
     console.log(`🎯 [feed] Feed request: ${mode} mode for ${hotel}, limit ${limit}, online within ${onlineWithinSeconds}s`)
+
 
     const hotelFilter = hotel === 'com.br' ? 'br' : hotel
     const cutoffTime = new Date(Date.now() - (onlineWithinSeconds * 1000)).toISOString()

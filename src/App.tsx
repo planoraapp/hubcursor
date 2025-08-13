@@ -40,6 +40,9 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/home/:username" element={<HabboHomeRedirect />} />
                 <Route path="/home/:hotel/:username" element={<EnhancedHabboHome />} />
+                {/* Aliases para rotas canônicas por hotel/usuário */}
+                <Route path="/habbo/:hotel/:username" element={<EnhancedHabboHome />} />
+                <Route path="/habinfo/:hotel/:username" element={<EnhancedHabboHome />} />
                 <Route path="/homes" element={<HomesHub />} />
                 <Route path="/mercado" element={<Mercado />} />
                 <Route path="/emblemas" element={<Emblemas />} />

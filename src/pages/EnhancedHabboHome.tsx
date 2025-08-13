@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
+import { UserActivityTimeline } from '@/components/home/UserActivityTimeline';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileLayout from '@/layouts/MobileLayout';
 import { 
@@ -22,6 +23,7 @@ import {
   Star,
   Heart
 } from 'lucide-react';
+import { habboFeedService } from '@/services/habboFeedService';
 
 interface HabboUserData {
   supabase_user_id: string;
@@ -74,16 +76,58 @@ const EnhancedHabboHome = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Garante rastreamento/sincronização e SEO por usuário
   useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
-    };
+    if (habboUser?.habbo_id && habboUser?.habbo_name && habboUser?.hotel) {
+      habboFeedService.ensureTrackedAndSynced({
+        habbo_name: habboUser.habbo_name,
+        habbo_id: habboUser.habbo_id,
+        hotel: habboUser.hotel,
+      }).catch(() => {});
+    }
+  }, [habboUser?.habbo_id, habboUser?.habbo_name, habboUser?.hotel]);
 
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+  useEffect(() => {
+    if (!habboUser) return;
+    const title = `${habboUser.habbo_name} • Habbo Home (${habboUser.hotel?.toUpperCase()}) | HabboHub`;
+    document.title = title;
+
+    // Meta description
+    const descText = `Veja o perfil Habbo de ${habboUser.habbo_name} (${habboUser.hotel}). Emblemas, amigos, quartos e atividades recentes.`;
+    let desc = document.querySelector('meta[name="description"]');
+    if (!desc) {
+      desc = document.createElement('meta');
+      desc.setAttribute('name', 'description');
+      document.head.appendChild(desc);
+    }
+    desc.setAttribute('content', descText);
+
+    // Canonical
+    const canonicalHref = `${window.location.origin}/home/${habboUser.hotel}/${habboUser.habbo_name}`;
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', canonicalHref);
+
+    // JSON-LD Person
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: habboUser.habbo_name,
+      url: canonicalHref,
+      description: descText,
+    });
+    document.head.appendChild(script);
     return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
+      if (script && script.parentNode) script.parentNode.removeChild(script);
     };
-  }, []);
+  }, [habboUser]);
+
 
   if (isLoading) {
     return (
@@ -186,6 +230,8 @@ const EnhancedHabboHome = () => {
         {/* Hotel Feed Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <CompactHotelFeed />
+
+          <UserActivityTimeline hotel={habboUser.hotel} username={habboUser.habbo_name} />
           
           {/* User Stats/Info Card */}
           <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
