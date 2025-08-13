@@ -1,0 +1,139 @@
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { username, hotel = 'com.br' } = await req.json();
+    
+    if (!username) {
+      throw new Error('Username is required');
+    }
+
+    console.log(`[Complete Profile] Fetching complete profile for ${username} on ${hotel}`);
+
+    // First get user basic info to get uniqueId
+    const userUrl = `https://www.habbo.${hotel}/api/public/users?name=${encodeURIComponent(username)}`;
+    const userResponse = await fetch(userUrl, {
+      headers: {
+        'User-Agent': 'HabboHub/1.0 (Mozilla/5.0 compatible)',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!userResponse.ok) {
+      if (userResponse.status === 404) {
+        return new Response(JSON.stringify({ error: 'User not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw new Error(`HTTP error! status: ${userResponse.status}`);
+    }
+
+    const userData = await userResponse.json();
+    const uniqueId = userData.uniqueId;
+
+    if (!uniqueId) {
+      throw new Error('User uniqueId not found');
+    }
+
+    // Get complete profile with all data in one call
+    const profileUrl = `https://www.habbo.${hotel}/api/public/users/${uniqueId}/profile`;
+    const profileResponse = await fetch(profileUrl, {
+      headers: {
+        'User-Agent': 'HabboHub/1.0 (Mozilla/5.0 compatible)',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!profileResponse.ok) {
+      throw new Error(`Profile API error! status: ${profileResponse.status}`);
+    }
+
+    const profileData = await profileResponse.json();
+
+    // Get photos separately as they're not in the profile endpoint
+    const photosUrl = `https://www.habbo.${hotel}/api/public/users/${uniqueId}/photos`;
+    let photos = [];
+    try {
+      const photosResponse = await fetch(photosUrl, {
+        headers: {
+          'User-Agent': 'HabboHub/1.0 (Mozilla/5.0 compatible)',
+          'Accept': 'application/json',
+        },
+      });
+      if (photosResponse.ok) {
+        photos = await photosResponse.json();
+      }
+    } catch (error) {
+      console.log('[Complete Profile] Photos fetch failed, continuing without photos');
+    }
+
+    // Calculate Habbo Ticker activities (mock for now, could be enhanced with real activity data)
+    const habboTickerCount = Math.floor(Math.random() * 20) + 10; // Mock data
+
+    // Structure the complete profile data
+    const completeProfile = {
+      // Basic user info
+      uniqueId: profileData.uniqueId,
+      name: profileData.name,
+      figureString: profileData.figureString,
+      motto: profileData.motto,
+      online: profileData.online,
+      lastAccessTime: profileData.lastAccessTime,
+      memberSince: profileData.memberSince,
+      profileVisible: profileData.profileVisible,
+      
+      // Stats for the buttons
+      stats: {
+        level: profileData.currentLevel || 0,
+        levelPercent: profileData.currentLevelCompletePercent || 0,
+        experience: profileData.totalExperience || 0,
+        starGems: profileData.starGemCount || 0,
+        badgesCount: profileData.badges ? profileData.badges.length : 0,
+        friendsCount: profileData.friends ? profileData.friends.length : 0,
+        groupsCount: profileData.groups ? profileData.groups.length : 0,
+        roomsCount: profileData.rooms ? profileData.rooms.length : 0,
+        photosCount: photos.length,
+        habboTickerCount: habboTickerCount
+      },
+
+      // Complete data for modals
+      data: {
+        badges: profileData.badges || [],
+        friends: profileData.friends || [],
+        groups: profileData.groups || [],
+        rooms: profileData.rooms || [],
+        photos: photos,
+        selectedBadges: profileData.selectedBadges || []
+      }
+    };
+
+    console.log(`[Complete Profile] Successfully fetched profile for ${username}`);
+    console.log(`[Complete Profile] Stats: Level ${completeProfile.stats.level}, ${completeProfile.stats.badgesCount} badges, ${completeProfile.stats.friendsCount} friends`);
+
+    return new Response(JSON.stringify(completeProfile), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error(`[Complete Profile] Error:`, error);
+    
+    return new Response(JSON.stringify({ 
+      error: error.message || 'Internal server error' 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
