@@ -318,7 +318,7 @@ class HabboProxyService {
       }
 
       const tickerActivities = activities.map(item => ({
-        username: item.habboName || 'Unknown',
+        username: item.habboName || item.username || 'Unknown',
         activity: item.activity || item.description || 'fez uma atividade',
         timestamp: item.timestamp || new Date().toISOString(),
         time: item.time || new Date().toISOString(),

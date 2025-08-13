@@ -20,14 +20,14 @@ export const useRealHotelFeed = (options?: {
 
   // Use official mode by default for live ticker behavior
   const mode = options?.mode || 'hybrid';
-  const baseLimit = 50; // Base limit for initial load
+  const baseLimit = 100; // Base limit for initial load
   const onlineWithinSeconds = options?.onlineWithinSeconds || 1800; // 30 minutes default
 
   // Function to discover and sync online users (background operation)
   const discoverOnlineUsers = useCallback(async () => {
     try {
       console.log(`🔍 [useRealHotelFeed] Discovering online users for ${hotel}`);
-      await habboFeedService.discoverAndSyncOnlineUsers(hotel, 50);
+      await habboFeedService.discoverAndSyncOnlineUsers(hotel, 100);
       console.log(`✅ [useRealHotelFeed] Discovery completed for ${hotel}`);
     } catch (error) {
       console.warn(`⚠️ [useRealHotelFeed] Discovery failed for ${hotel}:`, error);

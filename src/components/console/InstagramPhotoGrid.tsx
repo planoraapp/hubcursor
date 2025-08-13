@@ -13,9 +13,10 @@ interface Photo {
 interface InstagramPhotoGridProps {
   photos: Photo[];
   habboName: string;
+  hotel?: string;
 }
 
-export const InstagramPhotoGrid: React.FC<InstagramPhotoGridProps> = ({ photos, habboName }) => {
+export const InstagramPhotoGrid: React.FC<InstagramPhotoGridProps> = ({ photos, habboName, hotel = 'com.br' }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   const openModal = (index: number) => {
@@ -40,10 +41,9 @@ export const InstagramPhotoGrid: React.FC<InstagramPhotoGridProps> = ({ photos, 
 
   const openHabboProfile = () => {
     if (selectedPhoto) {
-      window.open(`https://www.habbo.com.br/profile/${habboName}/photo/${selectedPhoto.id}`, '_blank');
+      window.open(`https://www.habbo.${hotel}/profile/${habboName}/photo/${selectedPhoto.id}`, '_blank');
     }
   };
-
   if (photos.length === 0) {
     return (
       <div className="text-center text-white/60 py-4">

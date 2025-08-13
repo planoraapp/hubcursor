@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 
 export const RealHotelFeedColumn: React.FC = () => {
   const { activities, isLoading, isFetching, error, hotel, metadata, mode, refetch, loadMoreData } = useRealHotelFeed({
-    onlineWithinSeconds: 1800,
-    mode: 'official' // Use 'official' instead of 'live'
+    onlineWithinSeconds: 21600, // 6 horas
+    mode: 'hybrid'
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -132,8 +132,20 @@ export const RealHotelFeedColumn: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate text-white">{a.username}</p>
                         <p className="text-xs text-white/60 mb-1">{a.description}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs text-white/60">{a.lastUpdate}</span>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="text-[10px] text-white/60 mr-2">{a.lastUpdate}</span>
+                          {a.counts?.friends > 0 && (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 border border-white/20">+{a.counts.friends} amigos</span>
+                          )}
+                          {a.counts?.badges > 0 && (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 border border-white/20">+{a.counts.badges} emblemas</span>
+                          )}
+                          {a.counts?.photos > 0 && (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 border border-white/20">+{a.counts.photos} fotos</span>
+                          )}
+                          {a.counts?.avatarChanged && (
+                            <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 border border-white/20">Mudou o visual</span>
+                          )}
                         </div>
                       </div>
                     </div>

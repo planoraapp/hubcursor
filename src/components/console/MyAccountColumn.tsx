@@ -149,13 +149,14 @@ export const MyAccountColumn: React.FC = () => {
               <div className="flex items-center gap-2 mb-3">
                 <Camera className="w-4 h-4 text-white/80" />
                 <h4 className="text-sm font-medium text-white/80">
-                  Minhas Fotos ({photos?.length || 0})
+                  Minhas Fotos ({(photos?.length || 0) > 0 ? photos.length : (habboPhotos?.length || 0)})
                 </h4>
               </div>
-              {photos && photos.length > 0 ? (
+              {(photos && photos.length > 0) || (habboPhotos && habboPhotos.length > 0) ? (
                 <InstagramPhotoGrid 
-                  photos={photos} 
+                  photos={(photos && photos.length > 0) ? photos : (habboPhotos || [])}
                   habboName={habboAccount.habbo_name}
+                  hotel={hotel as string}
                 />
               ) : (
                 <div className="text-center text-white/60 py-4">
