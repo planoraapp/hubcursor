@@ -115,18 +115,19 @@ serve(async (req) => {
         }
       }
 
-      // Strategy 2: Test known S3 patterns with current timestamps
-      console.log(`[Test Photos] Strategy 2: Testing S3 patterns`);
+      // Strategy 2: Aggressive S3 discovery with known working patterns
+      console.log(`[Test Photos] Strategy 2: Aggressive S3 Discovery`);
       
       const hotelCode = hotel === 'com.br' ? 'hhbr' : 'hhus';
-      const knownIds = ['464837', '91557551']; // Known working IDs from your examples
-      const now = Date.now();
       
-      // Test recent timestamps (last 7 days)
-      for (let days = 0; days < 7; days++) {
-        const timestamp = now - (days * 24 * 60 * 60 * 1000);
-        
-        for (const testId of knownIds) {
+      // Test with known working IDs from your examples
+      const knownWorkingIds = ['464837', '91557551'];
+      const knownWorkingTimestamps = [1753569292755, 1755042756833];
+      
+      // First test: Verify the known working examples still work
+      console.log(`[Test Photos] Testing known working examples...`);
+      for (const testId of knownWorkingIds) {
+        for (const timestamp of knownWorkingTimestamps) {
           const s3Url = `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/${hotelCode}/p-${testId}-${timestamp}.png`;
           
           try {
@@ -138,22 +139,99 @@ serve(async (req) => {
             });
 
             if (headResponse.ok) {
-              console.log(`[Test Photos] ✅ Found S3 photo: ${s3Url}`);
+              console.log(`[Test Photos] ✅ Known working example confirmed: ${s3Url}`);
               results.photos.push({
-                id: `s3-${testId}-${timestamp}`,
+                id: `known-${testId}-${timestamp}`,
                 url: s3Url,
                 previewUrl: s3Url,
                 timestamp: new Date(timestamp).toISOString(),
-                source: 's3_test',
-                testId: testId
+                source: 'known_working_example',
+                testId: testId,
+                originalTimestamp: timestamp
               });
+            } else {
+              console.log(`[Test Photos] ❌ Known example failed (${headResponse.status}): ${s3Url}`);
             }
           } catch (error) {
-            console.log(`[Test Photos] S3 test error: ${error.message}`);
+            console.log(`[Test Photos] Error testing known example: ${error.message}`);
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Generate timestamps based on the pattern from your examples
+      const now = Date.now();
+      const timestampPatterns = [];
+      
+      // Recent timestamps (last 30 days, daily)
+      for (let days = 0; days < 30; days++) {
+        timestampPatterns.push(now - (days * 24 * 60 * 60 * 1000));
+      }
+      
+      // Use the exact timestamp patterns from your examples as reference
+      const baseTimestamp1 = 1753569292755; // From your first example
+      const baseTimestamp2 = 1755042756833; // From your second example
+      
+      // Generate variations around these known timestamps
+      for (let i = -48; i <= 48; i++) { // ±48 hours around known working timestamps
+        timestampPatterns.push(baseTimestamp1 + (i * 60 * 60 * 1000)); // hourly variations
+        timestampPatterns.push(baseTimestamp2 + (i * 60 * 60 * 1000));
+      }
+      
+      console.log(`[Test Photos] Generated ${timestampPatterns.length} timestamp patterns to test`);
+      
+      // Test with multiple potential internal IDs
+      const potentialInternalIds = [
+        ...knownWorkingIds, // Known working IDs
+        // Try some common ID patterns for testing
+        '100000', '200000', '300000', '400000', '500000',
+        '1000000', '2000000', '3000000', '4000000', '5000000',
+      ];
+      
+      let foundPhotos = 0;
+      const maxPhotosToFind = 10;
+      
+      for (const internalId of potentialInternalIds) {
+        if (foundPhotos >= maxPhotosToFind) break;
+        
+        console.log(`[Test Photos] Testing internal ID: ${internalId}`);
+        
+        // Test a subset of timestamps for each ID
+        const timestampsToTest = timestampPatterns.slice(0, 20);
+        
+        for (const timestamp of timestampsToTest) {
+          if (foundPhotos >= maxPhotosToFind) break;
+          
+          const s3Url = `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/${hotelCode}/p-${internalId}-${timestamp}.png`;
+          
+          try {
+            const headResponse = await fetch(s3Url, { 
+              method: 'HEAD',
+              headers: {
+                'User-Agent': 'HabboHub/1.0 (Mozilla/5.0 compatible)',
+              },
+            });
+
+            if (headResponse.ok) {
+              console.log(`[Test Photos] ✅ Found photo with ID ${internalId}: ${s3Url}`);
+              results.photos.push({
+                id: `discovered-${internalId}-${timestamp}`,
+                url: s3Url,
+                previewUrl: s3Url,
+                timestamp: new Date(timestamp).toISOString(),
+                source: 's3_pattern_discovery',
+                internalId: internalId,
+                testTimestamp: timestamp
+              });
+              foundPhotos++;
+            }
+          } catch (error) {
+            console.log(`[Test Photos] Error testing ID ${internalId}: ${error.message}`);
           }
           
           // Rate limiting
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
       }
       
@@ -172,47 +250,81 @@ serve(async (req) => {
         if (profileResponse.ok) {
           const html = await profileResponse.text();
           
-          // Enhanced patterns to find internal ID
-          const patterns = [
-            /user['":\s]*['":]?(\d+)/gi,
-            /userId['":\s]*['":]?(\d+)/gi,
-            /user_id['":\s]*['":]?(\d+)/gi,
-            /id['":\s]*['":]?(\d+)/gi,
-            /"user"\s*:\s*['"]*(\d+)/gi,
+          // Enhanced patterns focused on finding internal user IDs
+          const enhancedPatterns = [
+            // Direct ID patterns
+            /['":](\d{6,8})['":\s,]/gi,                    // 6-8 digit IDs
+            /user[_-]?id['":\s]*['":]?(\d+)/gi,           // user_id, userId patterns
+            /internal[_-]?id['":\s]*['":]?(\d+)/gi,       // internal_id patterns
+            /habbo[_-]?id['":\s]*['":]?(\d+)/gi,          // habbo_id patterns
+            
+            // S3 URL patterns (most reliable)
+            /servercamera\/purchased\/\w+\/p-(\d+)-/gi,   // From S3 URLs
+            /habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/\w+\/p-(\d+)-/gi,
+            
+            // JavaScript variable patterns
+            /var\s+userId\s*=\s*['"]*(\d+)/gi,
+            /var\s+internalId\s*=\s*['"]*(\d+)/gi,
+            /window\.userId\s*=\s*['"]*(\d+)/gi,
+            /window\.internalId\s*=\s*['"]*(\d+)/gi,
+            
+            // JSON data patterns
             /"userId"\s*:\s*['"]*(\d+)/gi,
-            /data-user-id[='"]*(\d+)/gi,
-            /var\s+user\s*=\s*['"]*(\d+)/gi,
-            /window\.user\s*=\s*['"]*(\d+)/gi,
+            /"internalId"\s*:\s*['"]*(\d+)/gi,
+            /"id"\s*:\s*['"]*(\d+)/gi,
+            
+            // Data attribute patterns
+            /data-user-id\s*=\s*['"]*(\d+)/gi,
+            /data-internal-id\s*=\s*['"]*(\d+)/gi,
+            
+            // Configuration object patterns
+            /config\s*:\s*{[^}]*user[_-]?id['":\s]*['":]?(\d+)/gi,
+            /settings\s*:\s*{[^}]*user[_-]?id['":\s]*['":]?(\d+)/gi,
+            
+            // Angular/React state patterns
+            /state\s*:\s*{[^}]*user[_-]?id['":\s]*['":]?(\d+)/gi,
+            /props\s*:\s*{[^}]*user[_-]?id['":\s]*['":]?(\d+)/gi,
           ];
 
           const foundIds = new Set();
           
-          for (const pattern of patterns) {
+          for (const pattern of enhancedPatterns) {
             const matches = Array.from(html.matchAll(pattern));
+            console.log(`[Test Photos] Pattern ${pattern} found ${matches.length} matches`);
+            
             for (const match of matches) {
               if (match[1] && match[1].length >= 5 && match[1].length <= 10) {
                 const id = match[1];
-                if (parseInt(id) > 10000) {
+                const numericId = parseInt(id);
+                
+                // More restrictive filtering for realistic internal IDs
+                if (numericId >= 100000 && numericId <= 99999999) {
                   foundIds.add(id);
+                  console.log(`[Test Photos] Found candidate internal ID: ${id} (pattern: ${pattern.toString().slice(0, 50)})`);
                 }
               }
             }
           }
 
           results.strategies.push({
-            name: 'Internal ID Extraction',
+            name: 'Enhanced Internal ID Extraction',
             success: true,
             data: {
               foundIds: Array.from(foundIds),
-              htmlLength: html.length
+              htmlLength: html.length,
+              patternsUsed: enhancedPatterns.length
             }
           });
 
-          // Test found IDs with known working timestamps
-          const knownTimestamps = [1753569292755, 1755042756833]; // From your examples
+          // Test found IDs with broader timestamp range
+          const timestampsToTest = [
+            ...knownWorkingTimestamps, // Your known working timestamps
+            now, now - (24 * 60 * 60 * 1000), now - (48 * 60 * 60 * 1000), // Recent
+            now - (7 * 24 * 60 * 60 * 1000), now - (30 * 24 * 60 * 60 * 1000), // Older
+          ];
           
           for (const internalId of foundIds) {
-            for (const timestamp of knownTimestamps) {
+            for (const timestamp of timestampsToTest) {
               const s3Url = `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/${hotelCode}/p-${internalId}-${timestamp}.png`;
               
               try {
@@ -224,21 +336,22 @@ serve(async (req) => {
                 });
 
                 if (headResponse.ok) {
-                  console.log(`[Test Photos] ✅ Found photo with extracted ID: ${s3Url}`);
+                  console.log(`[Test Photos] ✅ Found photo with extracted ID ${internalId}: ${s3Url}`);
                   results.photos.push({
                     id: `extracted-${internalId}-${timestamp}`,
                     url: s3Url,
                     previewUrl: s3Url,
                     timestamp: new Date(timestamp).toISOString(),
-                    source: 'extracted_id',
-                    internalId: internalId
+                    source: 'extracted_internal_id',
+                    internalId: internalId,
+                    extractedTimestamp: timestamp
                   });
                 }
               } catch (error) {
-                console.log(`[Test Photos] Error testing extracted ID: ${error.message}`);
+                console.log(`[Test Photos] Error testing extracted ID ${internalId}: ${error.message}`);
               }
               
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 75));
             }
           }
         }
