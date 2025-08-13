@@ -12,19 +12,20 @@ interface ScrapedPhoto {
   roomName?: string;
 }
 
-export const usePhotosScraped = (username?: string) => {
+export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
   const { data: scrapedPhotos = [], isLoading, error } = useQuery({
-    queryKey: ['photos-scraped', username],
+    queryKey: ['photos-scraped', username, hotel],
     queryFn: async (): Promise<ScrapedPhoto[]> => {
       if (!username) return [];
       
-      console.log('[usePhotosScraped] Fetching scraped photos for:', username);
+      console.log('[usePhotosScraped] Fetching photos for:', username, hotel);
       
       // First try to get from database
       const { data: dbPhotos, error: dbError } = await supabase
         .from('habbo_photos')
         .select('*')
         .eq('habbo_name', username.trim())
+        .eq('hotel', hotel)
         .order('taken_date', { ascending: false });
 
       if (!dbError && dbPhotos && dbPhotos.length > 0) {
@@ -43,7 +44,7 @@ export const usePhotosScraped = (username?: string) => {
       // Fallback to edge function if no photos in database
       console.log('[usePhotosScraped] No photos in database, trying edge function...');
       const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
-        body: { username: username.trim() }
+        body: { username: username.trim(), hotel }
       });
 
       if (error) {

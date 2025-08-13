@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, Eye, Camera, Users, Heart, UserPlus, UserCheck } from 'lucide-react';
 import { habboProxyService } from '@/services/habboProxyService';
-import { useHabboPhotos } from '@/hooks/useHabboPhotos';
+import { usePhotosScraped } from '@/hooks/usePhotosScraped';
 import { useFollowSystem } from '@/hooks/useFollowSystem';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
@@ -17,8 +17,8 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
   const { habboAccount } = useUnifiedAuth();
   
   // Get photos count for this user
-  const hotel = user.hotel === 'br' ? 'com.br' : (user.hotel || 'com.br');
-  const { habboPhotos = [] } = useHabboPhotos(user.habbo_name, hotel);
+  const hotel = user.hotel === 'br' ? 'br' : (user.hotel || 'br');
+  const { scrapedPhotos = [] } = usePhotosScraped(user.habbo_name, hotel);
 
   // Get follow system data
   const { 
@@ -35,7 +35,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
 
   const avatarUrl = user.figure_string 
     ? habboProxyService.getAvatarUrl(user.figure_string, 'm')
-    : `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${user.habbo_name}&size=m&direction=2&head_direction=3&action=std`;
+    : `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/avatarimage?user=${user.habbo_name}&size=m&direction=2&head_direction=3&action=std`;
 
   const handleFollowClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -61,7 +61,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
                   alt={user.habbo_name}
                   className="w-full h-full object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${user.habbo_name}&size=m`;
+                    (e.target as HTMLImageElement).src = `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/avatarimage?user=${user.habbo_name}&size=m`;
                   }}
                 />
               ) : (
@@ -91,7 +91,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
             <div className="flex items-center gap-3 text-xs text-white/50 mb-1">
               <div className="flex items-center gap-1">
                 <Camera className="w-3 h-3" />
-                <span>{habboPhotos.length}</span>
+                <span>{scrapedPhotos.length}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
@@ -146,13 +146,13 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
         </div>
 
         {/* Photos Preview */}
-        {habboPhotos.length > 0 && (
+        {scrapedPhotos.length > 0 && (
           <div className="mt-3 pt-2 border-t border-white/10">
             <div className="flex gap-1 overflow-hidden">
-              {habboPhotos.slice(0, 3).map((photo, index) => (
+              {scrapedPhotos.slice(0, 3).map((photo, index) => (
                 <div key={index} className="w-8 h-8 bg-white/5 rounded flex-shrink-0 overflow-hidden">
                   <img
-                    src={photo.url}
+                    src={photo.imageUrl}
                     alt={`Foto ${index + 1}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -161,9 +161,9 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
                   />
                 </div>
               ))}
-              {habboPhotos.length > 3 && (
+              {scrapedPhotos.length > 3 && (
                 <div className="w-8 h-8 bg-white/5 rounded flex-shrink-0 flex items-center justify-center">
-                  <span className="text-xs text-white/60">+{habboPhotos.length - 3}</span>
+                  <span className="text-xs text-white/60">+{scrapedPhotos.length - 3}</span>
                 </div>
               )}
             </div>

@@ -19,14 +19,14 @@ export const MyAccountColumn: React.FC = () => {
   } = useMyConsoleProfile();
 
   // Get complete profile data for stats grid
-  const hotel = (habboAccount as any)?.hotel === 'br' ? 'com.br' : ((habboAccount as any)?.hotel || 'com.br');
+  const hotel = (habboAccount as any)?.hotel === 'br' ? 'br' : ((habboAccount as any)?.hotel || 'br');
   const { 
     data: completeProfile, 
     isLoading: isLoadingComplete 
   } = useCompleteProfile(habboAccount?.habbo_name || '', hotel as string);
 
-  // Get photos using the new scraping system
-  const { scrapedPhotos, isLoading: isLoadingPhotos } = usePhotosScraped(habboAccount?.habbo_name);
+  // Get photos using the corrected scraping system
+  const { scrapedPhotos, isLoading: isLoadingPhotos } = usePhotosScraped(habboAccount?.habbo_name, hotel);
 
   // Get follow system data
   const { followersCount, followingCount } = useFollowSystem((habboAccount as any)?.supabase_user_id);
