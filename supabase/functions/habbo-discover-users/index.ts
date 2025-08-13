@@ -88,13 +88,13 @@ Deno.serve(async (req) => {
 });
 
 async function discoverRandomUsers(supabase: any, hotel: string, limit: number) {
-  // Buscar usuários aleatórios dos snapshots recentes
+  // Buscar usuários aleatórios da tabela habbo_users
   const { data, error } = await supabase
-    .from('habbo_user_snapshots')
+    .from('habbo_users')
     .select('*')
     .eq('hotel', hotel)
-    .gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString())
-    .order('created_at', { ascending: false })
+    .gte('updated_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString())
+    .order('updated_at', { ascending: false })
     .limit(limit * 3);
 
   if (error) throw error;
@@ -108,10 +108,11 @@ async function discoverRandomUsers(supabase: any, hotel: string, limit: number) 
       uniqueUsers.set(user.habbo_id, {
         id: user.habbo_id,
         username: user.habbo_name,
+        habbo_id: user.habbo_id,
         motto: user.motto,
         figureString: user.figure_string,
-        online: user.is_online,
-        lastSeen: user.created_at
+        online: true,
+        lastSeen: user.updated_at
       });
       
       if (uniqueUsers.size >= limit) break;
@@ -123,10 +124,10 @@ async function discoverRandomUsers(supabase: any, hotel: string, limit: number) 
 
 async function discoverRecentUsers(supabase: any, hotel: string, limit: number) {
   const { data, error } = await supabase
-    .from('habbo_user_snapshots')
+    .from('habbo_users')
     .select('*')
     .eq('hotel', hotel)
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -134,20 +135,21 @@ async function discoverRecentUsers(supabase: any, hotel: string, limit: number) 
   return (data || []).map(user => ({
     id: user.habbo_id,
     username: user.habbo_name,
+    habbo_id: user.habbo_id,
     motto: user.motto,
     figureString: user.figure_string,
-    online: user.is_online,
-    lastSeen: user.created_at
+    online: true,
+    lastSeen: user.updated_at
   }));
 }
 
 async function discoverActiveUsers(supabase: any, hotel: string, limit: number) {
   const { data, error } = await supabase
-    .from('habbo_user_snapshots')
+    .from('habbo_users')
     .select('*')
     .eq('hotel', hotel)
-    .eq('is_online', true)
-    .order('created_at', { ascending: false })
+    .gte('updated_at', new Date(Date.now() - (60 * 60 * 1000)).toISOString()) // Last hour
+    .order('updated_at', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -155,9 +157,10 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
   return (data || []).map(user => ({
     id: user.habbo_id,
     username: user.habbo_name,
+    habbo_id: user.habbo_id,
     motto: user.motto,
     figureString: user.figure_string,
     online: true,
-    lastSeen: user.created_at
+    lastSeen: user.updated_at
   }));
 }

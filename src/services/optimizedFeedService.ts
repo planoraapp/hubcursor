@@ -4,12 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 // Types
 interface HabboUser {
   id: string;
-  habbo_name: string;
+  username: string;
   habbo_id: string;
   hotel: string;
-  avatar_url?: string;
-  last_seen?: string;
-  online_status?: boolean;
+  figureString?: string;
+  motto?: string;
+  online?: boolean;
+  lastSeen: string;
 }
 
 interface HotelActivity {
@@ -22,15 +23,18 @@ interface HotelActivity {
 }
 
 interface OnlineUser {
-  habbo_name: string;
+  id: string;
+  username: string;
   habbo_id: string;
   hotel: string;
-  avatar_url?: string;
-  last_seen: string;
+  figureString?: string;
+  motto?: string;
+  online?: boolean;
+  lastSeen: string;
 }
 
 interface FeedMeta {
-  timestamp: number;
+  timestamp: string;
   count: number;
   source: string;
 }
@@ -72,7 +76,7 @@ class LocalCache {
   }
 
   size(): number {
-    return this.cache.size;
+    return this.cache.size();
   }
 }
 
@@ -116,7 +120,7 @@ export class OptimizedFeedService {
       const result = {
         activities: data?.activities || [],
         meta: {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           count: data?.activities?.length || 0,
           source: 'edge-function'
         }
@@ -135,7 +139,7 @@ export class OptimizedFeedService {
       return {
         activities: [],
         meta: {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           count: 0,
           source: 'error-fallback'
         }
@@ -143,7 +147,7 @@ export class OptimizedFeedService {
     }
   }
 
-  // Online Users with optimized queries
+  // Online Users with optimized queries - using existing habbo_users table
   async getOnlineUsers(hotel: string = 'br', limit: number = 20): Promise<{
     users: OnlineUser[];
     meta: FeedMeta;
@@ -159,19 +163,13 @@ export class OptimizedFeedService {
     try {
       console.log(`🚀 [OptimizedFeedService] Fetching online users for ${hotel}...`);
       
-      // Query recent activities to find online users
+      // Query habbo_users table for recent users
       const { data, error } = await supabase
-        .from('habbo_user_activities')
-        .select(`
-          user_name,
-          habbo_id,
-          hotel,
-          created_at,
-          habbo_users!inner(*)
-        `)
+        .from('habbo_users')
+        .select('*')
         .eq('hotel', hotel)
-        .gte('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()) // Last 30 minutes
-        .order('created_at', { ascending: false })
+        .gte('updated_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()) // Last 30 minutes
+        .order('updated_at', { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -179,27 +177,22 @@ export class OptimizedFeedService {
         throw error;
       }
 
-      // Process and deduplicate users
-      const usersMap = new Map<string, OnlineUser>();
-      data?.forEach((activity: any) => {
-        const userId = `${activity.habbo_id}-${activity.hotel}`;
-        if (!usersMap.has(userId)) {
-          usersMap.set(userId, {
-            habbo_name: activity.user_name,
-            habbo_id: activity.habbo_id,
-            hotel: activity.hotel,
-            last_seen: activity.created_at,
-            avatar_url: activity.habbo_users?.avatar_url
-          });
-        }
-      });
+      // Process users
+      const users: OnlineUser[] = (data || []).map((user: any) => ({
+        id: user.habbo_id,
+        username: user.habbo_name,
+        habbo_id: user.habbo_id,
+        hotel: user.hotel,
+        figureString: user.figure_string,
+        motto: user.motto,
+        online: true, // Assume users from recent queries are online
+        lastSeen: user.updated_at
+      }));
 
-      const users = Array.from(usersMap.values()).slice(0, limit);
-      
       const result = {
         users,
         meta: {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           count: users.length,
           source: 'database-query'
         }
@@ -217,7 +210,7 @@ export class OptimizedFeedService {
       return {
         users: [],
         meta: {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           count: 0,
           source: 'error-fallback'
         }
@@ -253,7 +246,7 @@ export class OptimizedFeedService {
       const result = {
         users: data?.users || [],
         meta: {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           count: data?.users?.length || 0,
           source: 'edge-function'
         }
@@ -271,7 +264,7 @@ export class OptimizedFeedService {
       return {
         users: [],
         meta: {
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           count: 0,
           source: 'error-fallback'
         }

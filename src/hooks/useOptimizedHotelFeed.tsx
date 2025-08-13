@@ -28,7 +28,7 @@ export const useOptimizedHotelFeed = (options?: {
     refetch 
   } = useQuery({
     queryKey: ['optimized-hotel-feed', hotel, limit],
-    queryFn: () => optimizedFeedService.getHotelActivities(hotel, limit),
+    queryFn: () => optimizedFeedService.getHotelFeed(hotel, limit),
     refetchInterval: refreshInterval,
     staleTime: 1 * 60 * 1000, // Considera stale após 1 minuto
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes

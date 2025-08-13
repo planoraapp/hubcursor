@@ -32,7 +32,7 @@ export const useOptimizedUserDiscovery = (options?: {
     refetch 
   } = useQuery({
     queryKey: ['optimized-user-discovery', hotel, method, limit],
-    queryFn: () => optimizedFeedService.discoverUsers(hotel, method, limit),
+    queryFn: () => optimizedFeedService.discoverUsers(hotel, limit),
     enabled,
     refetchInterval: refreshInterval,
     staleTime: 2 * 60 * 1000, // Considera stale após 2 minutos
