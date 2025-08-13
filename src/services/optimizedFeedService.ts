@@ -4,13 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 // Types
 interface HabboUser {
   id: string;
-  username: string;
+  habbo_name: string;
   habbo_id: string;
   hotel: string;
-  figureString?: string;
+  figure_string?: string;
   motto?: string;
   online?: boolean;
-  lastSeen: string;
+  last_seen: string;
 }
 
 interface HotelActivity {
@@ -24,13 +24,13 @@ interface HotelActivity {
 
 interface OnlineUser {
   id: string;
-  username: string;
+  habbo_name: string;
   habbo_id: string;
   hotel: string;
-  figureString?: string;
+  figure_string?: string;
   motto?: string;
   online?: boolean;
-  lastSeen: string;
+  last_seen: string;
 }
 
 interface FeedMeta {
@@ -147,7 +147,7 @@ export class OptimizedFeedService {
     }
   }
 
-  // Online Users with optimized queries - using existing habbo_users table
+  // Online Users with optimized queries - using existing discovered_users table
   async getOnlineUsers(hotel: string = 'br', limit: number = 20): Promise<{
     users: OnlineUser[];
     meta: FeedMeta;
@@ -163,13 +163,15 @@ export class OptimizedFeedService {
     try {
       console.log(`🚀 [OptimizedFeedService] Fetching online users for ${hotel}...`);
       
-      // Query habbo_users table for recent users
+      // Query discovered_users table for recent users
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+      
       const { data, error } = await supabase
-        .from('habbo_users')
+        .from('discovered_users')
         .select('*')
         .eq('hotel', hotel)
-        .gte('updated_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()) // Last 30 minutes
-        .order('updated_at', { ascending: false })
+        .gte('last_seen_at', thirtyMinutesAgo)
+        .order('last_seen_at', { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -180,13 +182,13 @@ export class OptimizedFeedService {
       // Process users
       const users: OnlineUser[] = (data || []).map((user: any) => ({
         id: user.habbo_id,
-        username: user.habbo_name,
+        habbo_name: user.habbo_name,
         habbo_id: user.habbo_id,
         hotel: user.hotel,
-        figureString: user.figure_string,
+        figure_string: user.figure_string,
         motto: user.motto,
-        online: true, // Assume users from recent queries are online
-        lastSeen: user.updated_at
+        online: user.is_online, 
+        last_seen: user.last_seen_at || user.updated_at
       }));
 
       const result = {
