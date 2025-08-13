@@ -1,244 +1,296 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export interface FeedActivity {
+// Types
+interface HabboUser {
   id: string;
-  username: string;
-  description: string;
-  timestamp: string;
-  profile: {
-    figureString: string;
-    motto: string;
-    online: boolean;
-  };
-  changes?: Record<string, any>;
-}
-
-export interface OnlineUser {
-  id: string;
-  username: string;
-  motto: string;
-  figureString: string;
-  online: boolean;
-  lastSeen: string;
-}
-
-export interface ProfileChange {
-  id: string;
-  username: string;
-  changeType: string;
-  description: string;
-  timestamp: string;
-  oldValue: any;
-  newValue: any;
-}
-
-export interface FeedMeta {
-  source: string;
-  type: string;
-  timestamp: string;
-  count: number;
+  habbo_name: string;
+  habbo_id: string;
   hotel: string;
+  avatar_url?: string;
+  last_seen?: string;
+  online_status?: boolean;
 }
 
-class OptimizedFeedService {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
-  private readonly DEFAULT_TTL = 2 * 60 * 1000; // 2 minutos
+interface HotelActivity {
+  id: string;
+  user_name: string;
+  activity_type: string;
+  description: string;
+  timestamp: string;
+  avatar_url?: string;
+}
 
-  private getCacheKey(hotel: string, type: string, params?: any): string {
-    return `${hotel}:${type}:${JSON.stringify(params || {})}`;
-  }
+interface OnlineUser {
+  habbo_name: string;
+  habbo_id: string;
+  hotel: string;
+  avatar_url?: string;
+  last_seen: string;
+}
 
-  private getFromCache<T>(key: string): T | null {
-    const entry = this.cache.get(key);
-    if (!entry || Date.now() > entry.timestamp + entry.ttl) {
-      this.cache.delete(key);
-      return null;
-    }
-    return entry.data as T;
-  }
+interface FeedMeta {
+  timestamp: number;
+  count: number;
+  source: string;
+}
 
-  private setCache(key: string, data: any, ttl = this.DEFAULT_TTL): void {
+// Cache interface
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+// Local cache with TTL
+class LocalCache {
+  private cache = new Map<string, CacheEntry<any>>();
+
+  set<T>(key: string, data: T, ttlMinutes: number = 5): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl: ttlMinutes * 60 * 1000
     });
   }
 
-  async getHotelActivities(hotel: string = 'br', limit: number = 50): Promise<{
-    activities: FeedActivity[];
-    meta: FeedMeta;
-  }> {
-    const cacheKey = this.getCacheKey(hotel, 'activities', { limit });
-    const cached = this.getFromCache<{ activities: FeedActivity[]; meta: FeedMeta }>(cacheKey);
-    
-    if (cached) {
-      console.log(`📦 [OptimizedFeedService] Cache hit for activities:${hotel}`);
-      return cached;
+  get<T>(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+
+    const isExpired = Date.now() - entry.timestamp > entry.ttl;
+    if (isExpired) {
+      this.cache.delete(key);
+      return null;
     }
 
-    try {
-      console.log(`🔄 [OptimizedFeedService] Fetching activities for hotel:${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-feed-optimized', {
-        body: { hotel, type: 'activities', limit }
-      });
-
-      if (error) throw error;
-
-      this.setCache(cacheKey, data);
-      return data;
-    } catch (error) {
-      console.error(`❌ [OptimizedFeedService] Error fetching activities:`, error);
-      return {
-        activities: [],
-        meta: {
-          source: 'error',
-          type: 'activities',
-          timestamp: new Date().toISOString(),
-          count: 0,
-          hotel
-        }
-      };
-    }
+    return entry.data;
   }
 
-  async getOnlineUsers(hotel: string = 'br', limit: number = 30): Promise<{
-    users: OnlineUser[];
-    meta: FeedMeta;
-  }> {
-    const cacheKey = this.getCacheKey(hotel, 'online-users', { limit });
-    const cached = this.getFromCache<{ users: OnlineUser[]; meta: FeedMeta }>(cacheKey);
-    
-    if (cached) {
-      console.log(`📦 [OptimizedFeedService] Cache hit for online-users:${hotel}`);
-      return cached;
-    }
-
-    try {
-      console.log(`🔄 [OptimizedFeedService] Fetching online users for hotel:${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-feed-optimized', {
-        body: { hotel, type: 'online-users', limit }
-      });
-
-      if (error) throw error;
-
-      this.setCache(cacheKey, data, 1 * 60 * 1000); // Cache por 1 minuto
-      return data;
-    } catch (error) {
-      console.error(`❌ [OptimizedFeedService] Error fetching online users:`, error);
-      return {
-        users: [],
-        meta: {
-          source: 'error',
-          type: 'online-users',
-          timestamp: new Date().toISOString(),
-          count: 0,
-          hotel
-        }
-      };
-    }
-  }
-
-  async getRecentChanges(hotel: string = 'br', limit: number = 20): Promise<{
-    changes: ProfileChange[];
-    meta: FeedMeta;
-  }> {
-    const cacheKey = this.getCacheKey(hotel, 'recent-changes', { limit });
-    const cached = this.getFromCache<{ changes: ProfileChange[]; meta: FeedMeta }>(cacheKey);
-    
-    if (cached) {
-      console.log(`📦 [OptimizedFeedService] Cache hit for recent-changes:${hotel}`);
-      return cached;
-    }
-
-    try {
-      console.log(`🔄 [OptimizedFeedService] Fetching recent changes for hotel:${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-feed-optimized', {
-        body: { hotel, type: 'recent-changes', limit }
-      });
-
-      if (error) throw error;
-
-      this.setCache(cacheKey, data, 3 * 60 * 1000); // Cache por 3 minutos
-      return data;
-    } catch (error) {
-      console.error(`❌ [OptimizedFeedService] Error fetching recent changes:`, error);
-      return {
-        changes: [],
-        meta: {
-          source: 'error',
-          type: 'recent-changes',
-          timestamp: new Date().toISOString(),
-          count: 0,
-          hotel
-        }
-      };
-    }
-  }
-
-  async discoverUsers(hotel: string = 'br', method: 'random' | 'recent' | 'active' = 'random', limit: number = 20): Promise<{
-    users: OnlineUser[];
-    meta: FeedMeta;
-  }> {
-    const cacheKey = this.getCacheKey(hotel, 'discover', { method, limit });
-    const cached = this.getFromCache<{ users: OnlineUser[]; meta: FeedMeta }>(cacheKey);
-    
-    if (cached) {
-      console.log(`📦 [OptimizedFeedService] Cache hit for discover:${hotel}:${method}`);
-      return cached;
-    }
-
-    try {
-      console.log(`🔄 [OptimizedFeedService] Discovering users via ${method} for hotel:${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-discover-users', {
-        body: { hotel, method, limit }
-      });
-
-      if (error) throw error;
-
-      this.setCache(cacheKey, data, 5 * 60 * 1000); // Cache por 5 minutos
-      return data;
-    } catch (error) {
-      console.error(`❌ [OptimizedFeedService] Error discovering users:`, error);
-      return {
-        users: [],
-        meta: {
-          source: 'error',
-          method,
-          timestamp: new Date().toISOString(),
-          count: 0,
-          hotel
-        }
-      };
-    }
-  }
-
-  // Método para limpar cache
-  clearCache(): void {
+  clear(): void {
     this.cache.clear();
-    console.log(`🧹 [OptimizedFeedService] Cache cleared`);
   }
 
-  // Método para invalidar cache específico
-  invalidateCache(hotel: string, type?: string): void {
-    const keysToDelete = [];
-    
-    for (const [key] of this.cache) {
-      if (key.startsWith(`${hotel}:`)) {
-        if (!type || key.includes(`:${type}:`)) {
-          keysToDelete.push(key);
-        }
-      }
-    }
-    
-    keysToDelete.forEach(key => this.cache.delete(key));
-    console.log(`🗑️ [OptimizedFeedService] Invalidated ${keysToDelete.length} cache entries for ${hotel}${type ? `:${type}` : ''}`);
+  size(): number {
+    return this.cache.size;
   }
 }
 
-export const optimizedFeedService = new OptimizedFeedService();
+const cache = new LocalCache();
+
+export class OptimizedFeedService {
+  private static instance: OptimizedFeedService;
+
+  static getInstance(): OptimizedFeedService {
+    if (!OptimizedFeedService.instance) {
+      OptimizedFeedService.instance = new OptimizedFeedService();
+    }
+    return OptimizedFeedService.instance;
+  }
+
+  // Hotel Feed with optimized edge function
+  async getHotelFeed(hotel: string = 'br', limit: number = 50): Promise<{
+    activities: HotelActivity[];
+    meta: FeedMeta;
+  }> {
+    const cacheKey = `hotel-feed-${hotel}-${limit}`;
+    const cached = cache.get<{ activities: HotelActivity[]; meta: FeedMeta }>(cacheKey);
+    
+    if (cached) {
+      console.log('🎯 [OptimizedFeedService] Hotel feed cache hit');
+      return cached;
+    }
+
+    try {
+      console.log(`🚀 [OptimizedFeedService] Fetching hotel feed for ${hotel}...`);
+      
+      const { data, error } = await supabase.functions.invoke('habbo-feed-optimized', {
+        body: { hotel, limit }
+      });
+
+      if (error) {
+        console.error('❌ [OptimizedFeedService] Edge function error:', error);
+        throw error;
+      }
+
+      const result = {
+        activities: data?.activities || [],
+        meta: {
+          timestamp: Date.now(),
+          count: data?.activities?.length || 0,
+          source: 'edge-function'
+        }
+      };
+
+      // Cache for 2 minutes
+      cache.set(cacheKey, result, 2);
+      
+      console.log(`✅ [OptimizedFeedService] Hotel feed loaded: ${result.activities.length} activities`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ [OptimizedFeedService] Hotel feed error:', error);
+      
+      // Return empty state on error
+      return {
+        activities: [],
+        meta: {
+          timestamp: Date.now(),
+          count: 0,
+          source: 'error-fallback'
+        }
+      };
+    }
+  }
+
+  // Online Users with optimized queries
+  async getOnlineUsers(hotel: string = 'br', limit: number = 20): Promise<{
+    users: OnlineUser[];
+    meta: FeedMeta;
+  }> {
+    const cacheKey = `online-users-${hotel}-${limit}`;
+    const cached = cache.get<{ users: OnlineUser[]; meta: FeedMeta }>(cacheKey);
+    
+    if (cached) {
+      console.log('🎯 [OptimizedFeedService] Online users cache hit');
+      return cached;
+    }
+
+    try {
+      console.log(`🚀 [OptimizedFeedService] Fetching online users for ${hotel}...`);
+      
+      // Query recent activities to find online users
+      const { data, error } = await supabase
+        .from('habbo_user_activities')
+        .select(`
+          user_name,
+          habbo_id,
+          hotel,
+          created_at,
+          habbo_users!inner(*)
+        `)
+        .eq('hotel', hotel)
+        .gte('created_at', new Date(Date.now() - 30 * 60 * 1000).toISOString()) // Last 30 minutes
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('❌ [OptimizedFeedService] Online users query error:', error);
+        throw error;
+      }
+
+      // Process and deduplicate users
+      const usersMap = new Map<string, OnlineUser>();
+      data?.forEach((activity: any) => {
+        const userId = `${activity.habbo_id}-${activity.hotel}`;
+        if (!usersMap.has(userId)) {
+          usersMap.set(userId, {
+            habbo_name: activity.user_name,
+            habbo_id: activity.habbo_id,
+            hotel: activity.hotel,
+            last_seen: activity.created_at,
+            avatar_url: activity.habbo_users?.avatar_url
+          });
+        }
+      });
+
+      const users = Array.from(usersMap.values()).slice(0, limit);
+      
+      const result = {
+        users,
+        meta: {
+          timestamp: Date.now(),
+          count: users.length,
+          source: 'database-query'
+        }
+      };
+
+      // Cache for 3 minutes
+      cache.set(cacheKey, result, 3);
+      
+      console.log(`✅ [OptimizedFeedService] Online users loaded: ${users.length} users`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ [OptimizedFeedService] Online users error:', error);
+      
+      return {
+        users: [],
+        meta: {
+          timestamp: Date.now(),
+          count: 0,
+          source: 'error-fallback'
+        }
+      };
+    }
+  }
+
+  // User Discovery with edge function
+  async discoverUsers(hotel: string = 'br', limit: number = 15): Promise<{
+    users: HabboUser[];
+    meta: FeedMeta;
+  }> {
+    const cacheKey = `discover-users-${hotel}-${limit}`;
+    const cached = cache.get<{ users: HabboUser[]; meta: FeedMeta }>(cacheKey);
+    
+    if (cached) {
+      console.log('🎯 [OptimizedFeedService] User discovery cache hit');
+      return cached;
+    }
+
+    try {
+      console.log(`🚀 [OptimizedFeedService] Discovering users for ${hotel}...`);
+      
+      const { data, error } = await supabase.functions.invoke('habbo-discover-users', {
+        body: { hotel, limit }
+      });
+
+      if (error) {
+        console.error('❌ [OptimizedFeedService] User discovery error:', error);
+        throw error;
+      }
+
+      const result = {
+        users: data?.users || [],
+        meta: {
+          timestamp: Date.now(),
+          count: data?.users?.length || 0,
+          source: 'edge-function'
+        }
+      };
+
+      // Cache for 5 minutes
+      cache.set(cacheKey, result, 5);
+      
+      console.log(`✅ [OptimizedFeedService] Users discovered: ${result.users.length} users`);
+      return result;
+
+    } catch (error) {
+      console.error('❌ [OptimizedFeedService] User discovery error:', error);
+      
+      return {
+        users: [],
+        meta: {
+          timestamp: Date.now(),
+          count: 0,
+          source: 'error-fallback'
+        }
+      };
+    }
+  }
+
+  // Cache management
+  clearCache(): void {
+    cache.clear();
+    console.log('🧹 [OptimizedFeedService] Cache cleared');
+  }
+
+  getCacheStats(): { size: number; entries: string[] } {
+    return {
+      size: cache.size(),
+      entries: Array.from(cache['cache'].keys())
+    };
+  }
+}
+
+export const optimizedFeedService = OptimizedFeedService.getInstance();
