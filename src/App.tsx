@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import EnhancedHabboHome from '@/pages/EnhancedHabboHome';
@@ -20,14 +21,14 @@ function App() {
         enableSystem
         disableTransitionOnChange
       >
-        <SiteHeader />
         <Router>
+          <SiteHeader />
           <Routes>
             <Route path="/habbo/:hotel/:username" element={<EnhancedHabboHome />} />
             <Route path="/habinfo/:hotel/:username" element={<EnhancedHabboHome />} />
           </Routes>
+          <SiteFooter />
         </Router>
-        <SiteFooter />
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
