@@ -267,7 +267,7 @@ export const OfficialHotelTickerColumn: React.FC = () => {
                                   )}
                                   <span 
                                     className="text-white/90 cursor-pointer hover:text-white"
-                                    onClick={() => window.open(`https://www.habbo.${hotel}/profile/${friend.name}`, '_blank`)}
+                                    onClick={() => window.open(`https://www.habbo.${hotel}/profile/${friend.name}`, '_blank')}
                                   >
                                     {friend.name}
                                   </span>
