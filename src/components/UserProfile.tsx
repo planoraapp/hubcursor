@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '../hooks/useAuth';
-import { getUserByName } from '../services/habboApi';
+import { getUserByName, getAvatarUrl } from '../services/habboApi';
 
 export const UserProfile = ({ habboName }: { habboName: string }) => {
   const [userData, setUserData] = useState<any>(null);
@@ -73,13 +74,16 @@ export const UserProfile = ({ habboName }: { habboName: string }) => {
       <CardHeader>
         <CardTitle>Perfil de {userData.name}</CardTitle>
         <div className="text-sm text-muted-foreground">
-          Última atualização: {new Date(userData.lastOnline).toLocaleDateString()}
+          Última atualização: {userData.lastAccessTime ? new Date(userData.lastAccessTime).toLocaleDateString() : 'N/A'}
         </div>
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="flex items-center space-x-4">
-          <Avatar>
-            <AvatarImage src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${userData.figureString}&size=l&direction=2&head_direction=2&gesture=sml`} alt={userData.name} />
+          <Avatar className="h-16 w-16">
+            <AvatarImage 
+              src={getAvatarUrl(userData.figureString)} 
+              alt={userData.name} 
+            />
             <AvatarFallback>{userData.name.substring(0, 2)}</AvatarFallback>
           </Avatar>
           <div>
@@ -101,7 +105,7 @@ export const UserProfile = ({ habboName }: { habboName: string }) => {
             </div>
             <div>
               <span className="text-xs font-medium text-gray-700">Conta criada:</span>
-              <span className="text-xs ml-1">{new Date(userData.memberSince).toLocaleDateString()}</span>
+              <span className="text-xs ml-1">{userData.memberSince ? new Date(userData.memberSince).toLocaleDateString() : 'N/A'}</span>
             </div>
           </div>
         </div>
@@ -109,4 +113,3 @@ export const UserProfile = ({ habboName }: { habboName: string }) => {
     </Card>
   );
 };
-
