@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +33,10 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
     setSelectedUser(username);
   };
 
+  const handleRefresh = () => {
+    refetch();
+  };
+
   const getAvatarUrl = (figureString: string) => {
     return `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${figureString}&size=s&direction=2&head_direction=3&action=std`;
   };
@@ -58,7 +63,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
           <Users className="w-4 h-4 text-blue-400" />
           Descobrir Usuários
         </CardTitle>
-        <Button variant="ghost" size="sm" onClick={refetch} disabled={isLoading}>
+        <Button variant="ghost" size="sm" onClick={handleRefresh} disabled={isLoading}>
           <RefreshCw className="h-4 w-4 mr-2" />
           {isLoading ? 'Carregando...' : 'Atualizar'}
         </Button>
