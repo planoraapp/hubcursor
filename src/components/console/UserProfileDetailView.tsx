@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Heart, MessageCircle, Users, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Camera, Loader2 } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
-import { useHabboPhotos } from '@/hooks/useHabboPhotos';
+import { usePhotosScraped } from '@/hooks/usePhotosScraped';
 import { habboProxyService } from '@/services/habboProxyService';
 import { ProfileStatsGrid } from '@/components/profile/ProfileStatsGrid';
 import { EnhancedPhotosGrid } from '@/components/profile/EnhancedPhotosGrid';
@@ -28,9 +29,9 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
   } = useCompleteProfile(user.habbo_name, hotel);
 
   const { 
-    habboPhotos, 
+    scrapedPhotos, 
     isLoading: isLoadingPhotos 
-  } = useHabboPhotos(user.habbo_name, hotel);
+  } = usePhotosScraped(user.habbo_name, hotel);
 
   const isLoading = isLoadingUser || isLoadingComplete || isLoadingPhotos;
   const profile = habboUser || completeProfile;
@@ -126,17 +127,29 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
           <div className="flex items-center gap-2 mb-3">
             <Camera className="w-4 h-4 text-white/80" />
             <h4 className="text-sm font-medium text-white/80">
-              Fotos ({habboPhotos?.length || 0})
+              Fotos ({scrapedPhotos?.length || 0})
             </h4>
             {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
           </div>
           
-          {habboPhotos && habboPhotos.length > 0 ? (
-            <EnhancedPhotosGrid 
-              photos={habboPhotos}
-              userName={user.habbo_name}
-              hotel={hotel}
-            />
+          {scrapedPhotos && scrapedPhotos.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2">
+              {scrapedPhotos.map((photo, index) => (
+                <div key={photo.id || index} className="relative group">
+                  <img
+                    src={photo.imageUrl}
+                    alt={`Foto de ${user.habbo_name}`}
+                    className="w-full h-20 object-cover rounded border border-white/20 group-hover:border-white/40 transition-colors"
+                    loading="lazy"
+                  />
+                  {photo.likes > 0 && (
+                    <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1 rounded">
+                      ♥ {photo.likes}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-6">
               <Camera className="w-8 h-8 mx-auto mb-2 opacity-50 text-white/50" />

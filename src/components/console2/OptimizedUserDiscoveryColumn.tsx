@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, RefreshCw, AlertCircle, ExternalLink, User } from 'lucide-react';
 import { useOptimizedUserDiscovery } from '@/hooks/useOptimizedUserDiscovery';
+import { UserProfileDetailView } from '@/components/console/UserProfileDetailView';
 import { UserProfileModal } from '@/components/UserProfileModal';
-import { CompleteProfileModal } from '@/components/profile/CompleteProfileModal';
 
 interface HabboUser {
   id: string;
@@ -22,15 +22,19 @@ interface HabboUser {
 }
 
 export const OptimizedUserDiscoveryColumn: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<HabboUser | null>(null);
   const [profileModalUser, setProfileModalUser] = useState<string | null>(null);
   const { users, isLoading, error, refetch, method, hotel } = useOptimizedUserDiscovery({
     refreshInterval: 2 * 60 * 1000, // 2 minutes
     limit: 25
   });
 
-  const handleUserClick = (username: string) => {
-    setSelectedUser(username);
+  const handleUserClick = (user: HabboUser) => {
+    setSelectedUser(user);
+  };
+
+  const handleBackClick = () => {
+    setSelectedUser(null);
   };
 
   const handleRefresh = () => {
@@ -56,6 +60,17 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
     }
   };
 
+  // Se um usuário está selecionado, mostrar o perfil detalhado
+  if (selectedUser) {
+    return (
+      <UserProfileDetailView
+        user={selectedUser}
+        onBack={handleBackClick}
+      />
+    );
+  }
+
+  // Caso contrário, mostrar a lista de usuários
   return (
     <Card className="h-full bg-gradient-to-br from-slate-900/90 to-slate-800/90 border-slate-700/50">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -108,7 +123,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <button
-                      onClick={() => handleUserClick(user.habbo_name)}
+                      onClick={() => handleUserClick(user)}
                       className="font-medium text-white group-hover:text-blue-300 transition-colors truncate text-left"
                     >
                       {user.habbo_name}
@@ -135,7 +150,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setProfileModalUser(user.habbo_name);
+                      handleUserClick(user);
                     }}
                     className="text-slate-400 hover:text-white hover:bg-white/10 p-1 h-8 w-8"
                   >
@@ -166,21 +181,12 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
         </ScrollArea>
       </CardContent>
 
-      {/* Modals */}
-      {selectedUser && (
-        <UserProfileModal
-          open={!!selectedUser}
-          setOpen={() => setSelectedUser(null)}
-          habboName={selectedUser}
-        />
-      )}
-
+      {/* Modal de perfil para casos específicos */}
       {profileModalUser && (
-        <CompleteProfileModal
-          isOpen={!!profileModalUser}
-          onClose={() => setProfileModalUser(null)}
+        <UserProfileModal
+          open={!!profileModalUser}
+          setOpen={() => setProfileModalUser(null)}
           habboName={profileModalUser}
-          hotel="com.br"
         />
       )}
     </Card>
