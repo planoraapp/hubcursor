@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Camera, Loader2, Calendar, MapPin, Heart } from 'lucide-react';
+import { ArrowLeft, User, Camera, Loader2, Calendar, MapPin, Heart, RefreshCw } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { usePhotosScraped } from '@/hooks/usePhotosScraped';
@@ -18,6 +18,7 @@ interface UserProfileDetailViewProps {
 
 export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ user, onBack }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [forceRefresh, setForceRefresh] = useState(false);
 
   const { 
     habboUser,
@@ -33,8 +34,11 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
 
   const { 
     scrapedPhotos, 
-    isLoading: isLoadingPhotos 
-  } = usePhotosScraped(user.habbo_name, hotel);
+    isLoading: isLoadingPhotos,
+    refreshPhotos,
+    photoCount,
+    error: photosError
+  } = usePhotosScraped(user.habbo_name, hotel, forceRefresh);
 
   const isLoading = isLoadingUser || isLoadingComplete || isLoadingPhotos;
   const profile = habboUser || completeProfile;
@@ -65,6 +69,16 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
   const handleNext = () => {
     if (selectedPhotoIndex !== null && selectedPhotoIndex < modalPhotos.length - 1) {
       setSelectedPhotoIndex(selectedPhotoIndex + 1);
+    }
+  };
+
+  const handleRefreshPhotos = async () => {
+    console.log('[UserProfileDetailView] Refreshing photos for:', user.habbo_name);
+    setForceRefresh(true);
+    try {
+      await refreshPhotos();
+    } finally {
+      setForceRefresh(false);
     }
   };
 
@@ -151,13 +165,32 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
 
           {/* Enhanced Photos Section */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Camera className="w-4 h-4 text-white/80" />
-              <h4 className="text-sm font-medium text-white/80">
-                Fotos ({scrapedPhotos?.length || 0})
-              </h4>
-              {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-white/80" />
+                <h4 className="text-sm font-medium text-white/80">
+                  Fotos ({photoCount})
+                </h4>
+                {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshPhotos}
+                disabled={isLoadingPhotos || forceRefresh}
+                className="text-white/60 hover:text-white hover:bg-white/10 p-1 h-auto"
+                title="Atualizar fotos"
+              >
+                <RefreshCw className={`w-3 h-3 ${(isLoadingPhotos || forceRefresh) ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
+
+            {/* Debug info */}
+            {photosError && (
+              <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded text-xs text-red-200">
+                Erro ao carregar fotos: {photosError.message}
+              </div>
+            )}
             
             {scrapedPhotos && scrapedPhotos.length > 0 ? (
               <div className="grid grid-cols-3 gap-3">
@@ -174,6 +207,10 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
                         alt={`Foto de ${user.habbo_name}`}
                         className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
                         loading="lazy"
+                        onError={(e) => {
+                          console.log('[UserProfileDetailView] Image failed to load:', photo.imageUrl);
+                          (e.target as HTMLImageElement).src = 'https://placehold.co/150x150/4B5563/FFFFFF?text=Erro';
+                        }}
                       />
                     </div>
 
@@ -228,9 +265,20 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({ us
                   {isLoadingPhotos ? 'Descobrindo fotos...' : 'Nenhuma foto encontrada'}
                 </p>
                 {!isLoadingPhotos && (
-                  <p className="text-white/40 text-xs mt-1">
-                    As fotos são descobertas automaticamente do sistema do Habbo
-                  </p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-white/40 text-xs">
+                      As fotos são descobertas automaticamente do sistema do Habbo
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRefreshPhotos}
+                      className="text-white/60 hover:text-white text-xs"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Tentar novamente
+                    </Button>
+                  </div>
                 )}
               </div>
             )}

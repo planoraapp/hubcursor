@@ -12,15 +12,18 @@ interface ScrapedPhoto {
   roomName?: string;
 }
 
-export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
-  const { data: scrapedPhotos = [], isLoading, error } = useQuery({
-    queryKey: ['photos-scraped', username, hotel],
+export const usePhotosScraped = (username?: string, hotel: string = 'br', forceRefresh: boolean = false) => {
+  const { data: scrapedPhotos = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['photos-scraped', username, hotel, forceRefresh],
     queryFn: async (): Promise<ScrapedPhoto[]> => {
       if (!username) return [];
       
-      console.log('[usePhotosScraped] Fetching photos for:', username, hotel);
+      console.log('[usePhotosScraped] ====== FETCHING PHOTOS ======');
+      console.log('[usePhotosScraped] Username:', username);
+      console.log('[usePhotosScraped] Hotel:', hotel);
+      console.log('[usePhotosScraped] Force refresh:', forceRefresh);
       
-      // First try to get from database
+      // First try to get from database (unless force refresh)
       const { data: dbPhotos, error: dbError } = await supabase
         .from('habbo_photos')
         .select('*')
@@ -28,9 +31,17 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
         .eq('hotel', hotel === 'com.br' ? 'br' : hotel) // Database uses 'br' format
         .order('taken_date', { ascending: false });
 
-      if (!dbError && dbPhotos && dbPhotos.length > 0) {
+      console.log('[usePhotosScraped] Database query result:', {
+        photosFound: dbPhotos?.length || 0,
+        error: dbError,
+        forceRefresh
+      });
+
+      if (!dbError && dbPhotos && dbPhotos.length > 0 && !forceRefresh) {
         console.log('[usePhotosScraped] Found photos in database:', dbPhotos.length);
-        return dbPhotos.map(photo => ({
+        console.log('[usePhotosScraped] Sample photo URLs:', dbPhotos.slice(0, 3).map(p => p.s3_url));
+        
+        const mappedPhotos = dbPhotos.map(photo => ({
           id: photo.id,
           photo_id: photo.photo_id,
           imageUrl: photo.s3_url,
@@ -39,17 +50,34 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
           timestamp: photo.timestamp_taken,
           roomName: photo.room_name
         }));
+        
+        console.log('[usePhotosScraped] Returning mapped photos:', mappedPhotos.length);
+        return mappedPhotos;
       }
 
-      // Fallback to edge function if no photos in database
-      console.log('[usePhotosScraped] No photos in database, trying edge function...');
+      // Fallback to edge function if no photos in database or force refresh
+      console.log('[usePhotosScraped] Calling edge function...');
+      console.log('[usePhotosScraped] Edge function params:', {
+        username: username.trim(),
+        hotel: hotel,
+        forceRefresh
+      });
       
       try {
         const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
           body: { 
             username: username.trim(), 
-            hotel: hotel // Send as-is, edge function will handle conversion
+            hotel: hotel,
+            forceRefresh: forceRefresh
           }
+        });
+
+        console.log('[usePhotosScraped] Edge function response:', {
+          success: !error,
+          error: error,
+          photoCount: data?.length || 0,
+          dataType: typeof data,
+          isArray: Array.isArray(data)
         });
 
         if (error) {
@@ -57,21 +85,43 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br') => {
           throw new Error(error.message || 'Failed to fetch photos from edge function');
         }
 
-        console.log('[usePhotosScraped] Retrieved photos from edge function:', data?.length || 0);
-        return data || [];
+        if (data && Array.isArray(data)) {
+          console.log('[usePhotosScraped] Sample scraped URLs:', data.slice(0, 3).map(p => p.imageUrl));
+          console.log('[usePhotosScraped] Retrieved photos from edge function:', data.length);
+          return data;
+        } else {
+          console.warn('[usePhotosScraped] Edge function returned unexpected data format:', data);
+          return [];
+        }
       } catch (edgeError) {
         console.error('[usePhotosScraped] Edge function failed:', edgeError);
+        console.error('[usePhotosScraped] Error details:', {
+          message: edgeError.message,
+          name: edgeError.name,
+          stack: edgeError.stack?.split('\n').slice(0, 3)
+        });
         
         // Return empty array instead of throwing to prevent UI breaks
         return [];
       }
     },
     enabled: !!username,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: forceRefresh ? 0 : 5 * 60 * 1000, // 5 minutes instead of 10
+    gcTime: 15 * 60 * 1000, // Keep in memory for 15 minutes
+    retry: 1, // Reduce retries to see errors faster
+    retryDelay: 2000,
   });
 
-  return { scrapedPhotos, isLoading, error };
+  const refreshPhotos = () => {
+    console.log('[usePhotosScraped] Manual refresh triggered for:', username);
+    return refetch();
+  };
+
+  return { 
+    scrapedPhotos, 
+    isLoading, 
+    error,
+    refreshPhotos,
+    photoCount: scrapedPhotos.length 
+  };
 };

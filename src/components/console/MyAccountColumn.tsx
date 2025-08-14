@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Heart, Users, Camera, Loader2, Calendar, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { User, Heart, Users, Camera, Loader2, Calendar, MapPin, RefreshCw } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { usePhotosScraped } from '@/hooks/usePhotosScraped';
@@ -12,6 +14,7 @@ import { convertScrapedPhotosToModalFormat } from '@/utils/photoHelpers';
 
 export const MyAccountColumn: React.FC = () => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [forceRefresh, setForceRefresh] = useState(false);
 
   const { 
     isLoggedIn, 
@@ -28,7 +31,13 @@ export const MyAccountColumn: React.FC = () => {
   } = useCompleteProfile(habboAccount?.habbo_name || '', hotel as string);
 
   // Get photos using the scraping system
-  const { scrapedPhotos, isLoading: isLoadingPhotos } = usePhotosScraped(habboAccount?.habbo_name, hotel);
+  const { 
+    scrapedPhotos, 
+    isLoading: isLoadingPhotos, 
+    refreshPhotos,
+    photoCount,
+    error: photosError 
+  } = usePhotosScraped(habboAccount?.habbo_name, hotel, forceRefresh);
 
   // Get follow system data
   const { followersCount, followingCount } = useFollowSystem((habboAccount as any)?.supabase_user_id);
@@ -53,6 +62,16 @@ export const MyAccountColumn: React.FC = () => {
   const handleNext = () => {
     if (selectedPhotoIndex !== null && selectedPhotoIndex < modalPhotos.length - 1) {
       setSelectedPhotoIndex(selectedPhotoIndex + 1);
+    }
+  };
+
+  const handleRefreshPhotos = async () => {
+    console.log('[MyAccountColumn] Refreshing photos for:', habboAccount?.habbo_name);
+    setForceRefresh(true);
+    try {
+      await refreshPhotos();
+    } finally {
+      setForceRefresh(false);
     }
   };
 
@@ -159,13 +178,32 @@ export const MyAccountColumn: React.FC = () => {
 
             {/* Enhanced Photos Section */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Camera className="w-4 h-4 text-white/80" />
-                <h4 className="text-sm font-medium text-white/80">
-                  Minhas Fotos ({scrapedPhotos?.length || 0})
-                </h4>
-                {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-white/80" />
+                  <h4 className="text-sm font-medium text-white/80">
+                    Minhas Fotos ({photoCount})
+                  </h4>
+                  {isLoadingPhotos && <Loader2 className="w-3 h-3 ml-2 animate-spin" />}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRefreshPhotos}
+                  disabled={isLoadingPhotos || forceRefresh}
+                  className="text-white/60 hover:text-white hover:bg-white/10 p-1 h-auto"
+                  title="Atualizar fotos"
+                >
+                  <RefreshCw className={`w-3 h-3 ${(isLoadingPhotos || forceRefresh) ? 'animate-spin' : ''}`} />
+                </Button>
               </div>
+
+              {/* Debug info */}
+              {photosError && (
+                <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded text-xs text-red-200">
+                  Erro ao carregar fotos: {photosError.message}
+                </div>
+              )}
               
               {scrapedPhotos && scrapedPhotos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-3">
@@ -182,6 +220,10 @@ export const MyAccountColumn: React.FC = () => {
                           alt={`Minha foto`}
                           className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
                           loading="lazy"
+                          onError={(e) => {
+                            console.log('[MyAccountColumn] Image failed to load:', photo.imageUrl);
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/150x150/4B5563/FFFFFF?text=Erro';
+                          }}
                         />
                       </div>
 
@@ -236,9 +278,20 @@ export const MyAccountColumn: React.FC = () => {
                     {isLoadingPhotos ? 'Descobrindo minhas fotos...' : 'Nenhuma foto encontrada'}
                   </p>
                   {!isLoadingPhotos && (
-                    <p className="text-white/40 text-xs mt-1">
-                      As fotos são descobertas automaticamente do sistema do Habbo
-                    </p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-white/40 text-xs">
+                        As fotos são descobertas automaticamente do sistema do Habbo
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRefreshPhotos}
+                        className="text-white/60 hover:text-white text-xs"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Tentar novamente
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}
@@ -250,7 +303,7 @@ export const MyAccountColumn: React.FC = () => {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Camera className="w-4 h-4 text-white/60" />
-                    <span className="text-lg font-semibold">{scrapedPhotos?.length || 0}</span>
+                    <span className="text-lg font-semibold">{photoCount}</span>
                   </div>
                   <p className="text-xs text-white/60">Fotos</p>
                 </div>

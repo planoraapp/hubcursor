@@ -25,11 +25,13 @@ serve(async (req) => {
   try {
     let username: string | null = null;
     let hotel: string = 'br';
+    let forceRefresh: boolean = false;
 
     // Try to get parameters from query string first
     const url = new URL(req.url)
     username = url.searchParams.get('username')
     const queryHotel = url.searchParams.get('hotel')
+    forceRefresh = url.searchParams.get('forceRefresh') === 'true'
 
     // If not in query string, try to get from body
     if (!username) {
@@ -37,6 +39,7 @@ serve(async (req) => {
         const body = await req.json()
         username = body.username
         hotel = body.hotel || 'br'
+        forceRefresh = body.forceRefresh || false
       } catch (error) {
         console.log('[habbo-photos-scraper] No JSON body found, continuing with query params')
       }
@@ -59,23 +62,31 @@ serve(async (req) => {
     const profileHotel = hotel === 'br' ? 'com.br' : hotel
     const dbHotel = hotel === 'com.br' ? 'br' : hotel // Database uses 'br' format
 
-    console.log(`[habbo-photos-scraper] Fetching photos for: ${username} (hotel: ${hotel}, profile: ${profileHotel}, db: ${dbHotel})`)
+    console.log(`[habbo-photos-scraper] ====== STARTING SCRAPE ======`)
+    console.log(`[habbo-photos-scraper] Username: ${username}`)
+    console.log(`[habbo-photos-scraper] Hotel: ${hotel} (profile: ${profileHotel}, db: ${dbHotel})`)
+    console.log(`[habbo-photos-scraper] Force refresh: ${forceRefresh}`)
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // First check if we have cached photos in database (less than 1 hour old)
+    // Check cached photos (5 minutes cache instead of 1 hour, unless force refresh)
+    const cacheMinutes = forceRefresh ? 0 : 5;
+    const cacheTime = new Date(Date.now() - cacheMinutes * 60 * 1000).toISOString();
+    
     const { data: cachedPhotos } = await supabase
       .from('habbo_photos')
       .select('*')
       .eq('habbo_name', username)
       .eq('hotel', dbHotel)
-      .gte('updated_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+      .gte('updated_at', cacheTime)
       .order('taken_date', { ascending: false })
 
-    if (cachedPhotos && cachedPhotos.length > 0) {
+    console.log(`[habbo-photos-scraper] Cache check: found ${cachedPhotos?.length || 0} cached photos (cache since: ${cacheTime})`)
+
+    if (cachedPhotos && cachedPhotos.length > 0 && !forceRefresh) {
       console.log(`[habbo-photos-scraper] Returning ${cachedPhotos.length} cached photos`)
       const formattedPhotos = cachedPhotos.map(photo => ({
         id: photo.photo_id,
@@ -97,26 +108,34 @@ serve(async (req) => {
       )
     }
 
-    // If no cache, try to scrape from Habbo profile
-    console.log(`[habbo-photos-scraper] No cache found, attempting to scrape profile for ${username}`)
+    // If no cache or force refresh, scrape from Habbo profile
+    console.log(`[habbo-photos-scraper] No valid cache found, attempting to scrape profile`)
     
     const profileUrl = `https://www.habbo.${profileHotel}/profile/${username}`
+    console.log(`[habbo-photos-scraper] Profile URL: ${profileUrl}`)
     
     const response = await fetch(profileUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8,es;q=0.7',
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'no-cache'
       }
     })
 
     if (!response.ok) {
-      console.error(`[habbo-photos-scraper] HTTP error: ${response.status}`)
+      console.error(`[habbo-photos-scraper] HTTP error: ${response.status} - ${response.statusText}`)
       return new Response(
-        JSON.stringify({ error: `Failed to fetch profile: ${response.statusText}` }),
+        JSON.stringify({ 
+          error: `Failed to fetch profile: ${response.statusText}`,
+          debug: { status: response.status, url: profileUrl }
+        }),
         { 
           status: response.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -126,31 +145,76 @@ serve(async (req) => {
 
     const html = await response.text()
     console.log(`[habbo-photos-scraper] Retrieved HTML, length: ${html.length}`)
+    console.log(`[habbo-photos-scraper] HTML preview (first 500 chars): ${html.substring(0, 500)}`)
 
-    // Extract photos using regex patterns for S3 URLs
+    // Extract photos using multiple patterns
     const photos: Photo[] = []
+    const uniqueUrls = new Set<string>()
     
-    // Pattern for S3 URLs in Habbo photos - more flexible pattern
-    const s3UrlPattern = /https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/hhbr\/p-(\d+)-(\d+)\.png/g
-    const matches = [...html.matchAll(s3UrlPattern)]
-    
-    console.log(`[habbo-photos-scraper] Found ${matches.length} S3 URLs in HTML`)
+    // Pattern 1: Main S3 URLs
+    const s3UrlPattern = /https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/servercamera\/purchased\/[^\/]+\/p-(\d+)-(\d+)\.png/g
+    const s3Matches = [...html.matchAll(s3UrlPattern)]
+    console.log(`[habbo-photos-scraper] Pattern 1 (S3 URLs): Found ${s3Matches.length} matches`)
 
-    // Also try to find any other photo patterns
-    const alternativePattern = /ng-src="(https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/[^"]+)"/g
-    const altMatches = [...html.matchAll(alternativePattern)]
-    console.log(`[habbo-photos-scraper] Found ${altMatches.length} alternative photo URLs`)
+    // Pattern 2: Any S3 content URLs
+    const generalS3Pattern = /https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/[^"'\s]+\.png/g
+    const generalMatches = [...html.matchAll(generalS3Pattern)]
+    console.log(`[habbo-photos-scraper] Pattern 2 (General S3): Found ${generalMatches.length} matches`)
 
-    // Combine both patterns
-    const allMatches = [...matches, ...altMatches.map(match => [match[1], match[1].match(/p-(\d+)-(\d+)\.png/)?.[1] || '000000', match[1].match(/p-(\d+)-(\d+)\.png/)?.[2] || Date.now().toString()])]
+    // Pattern 3: ng-src attributes
+    const ngSrcPattern = /ng-src="(https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/[^"]+)"/g
+    const ngSrcMatches = [...html.matchAll(ngSrcPattern)]
+    console.log(`[habbo-photos-scraper] Pattern 3 (ng-src): Found ${ngSrcMatches.length} matches`)
 
+    // Pattern 4: src attributes
+    const srcPattern = /src="(https:\/\/habbo-stories-content\.s3\.amazonaws\.com\/[^"]+)"/g
+    const srcMatches = [...html.matchAll(srcPattern)]
+    console.log(`[habbo-photos-scraper] Pattern 4 (src): Found ${srcMatches.length} matches`)
+
+    // Combine all patterns
+    const allMatches = [
+      ...s3Matches.map(match => ({ url: match[0], userId: match[1], timestamp: parseInt(match[2]) })),
+      ...generalMatches.map(match => ({ url: match[0], userId: 'unknown', timestamp: Date.now() })),
+      ...ngSrcMatches.map(match => ({ url: match[1], userId: 'unknown', timestamp: Date.now() })),
+      ...srcMatches.map(match => ({ url: match[1], userId: 'unknown', timestamp: Date.now() }))
+    ]
+
+    console.log(`[habbo-photos-scraper] Total URL matches found: ${allMatches.length}`)
+
+    // Process matches
     for (const match of allMatches) {
-      const fullUrl = typeof match === 'string' ? match : match[0]
-      const userId = typeof match === 'string' ? '000000' : match[1]
-      const timestamp = typeof match === 'string' ? Date.now() : parseInt(match[2])
+      const fullUrl = match.url
       
       // Skip duplicates
-      if (photos.some(p => p.imageUrl === fullUrl)) continue
+      if (uniqueUrls.has(fullUrl)) {
+        console.log(`[habbo-photos-scraper] Skipping duplicate: ${fullUrl}`)
+        continue
+      }
+      uniqueUrls.add(fullUrl)
+
+      // Extract timestamp from URL if possible
+      const timestampMatch = fullUrl.match(/p-\d+-(\d+)\.png/)
+      const timestamp = timestampMatch ? parseInt(timestampMatch[1]) : match.timestamp
+
+      // Try to extract more metadata from surrounding HTML
+      const urlIndex = html.indexOf(fullUrl)
+      let likes = 0
+      let roomName = 'Quarto do jogo'
+      
+      if (urlIndex > -1) {
+        // Look for likes in surrounding context (500 chars before and after)
+        const context = html.substring(Math.max(0, urlIndex - 500), urlIndex + 500)
+        const likesMatch = context.match(/(\d+)\s*like[s]?/i) || context.match(/curtida[s]?\s*(\d+)/i)
+        if (likesMatch) {
+          likes = parseInt(likesMatch[1]) || 0
+        }
+
+        // Look for room name
+        const roomMatch = context.match(/room[:\s]+([^<"']+)/i) || context.match(/quarto[:\s]+([^<"']+)/i)
+        if (roomMatch) {
+          roomName = roomMatch[1].trim()
+        }
+      }
 
       const photo: Photo = {
         id: `${username}-${timestamp}`,
@@ -161,25 +225,35 @@ serve(async (req) => {
           month: '2-digit',
           year: '2-digit'
         }),
-        likes: Math.floor(Math.random() * 10), // Random likes since we can't scrape exact counts reliably
+        likes: likes,
         timestamp: timestamp,
-        roomName: 'Quarto do jogo'
+        roomName: roomName
       }
       
       photos.push(photo)
+      console.log(`[habbo-photos-scraper] Added photo: ${fullUrl} (likes: ${likes}, room: ${roomName})`)
     }
+
+    console.log(`[habbo-photos-scraper] Final photo count: ${photos.length} unique photos`)
 
     // Store in database for caching
     if (photos.length > 0) {
       console.log(`[habbo-photos-scraper] Storing ${photos.length} photos in database`)
       
+      // Clear existing photos for this user to avoid duplicates
+      await supabase
+        .from('habbo_photos')
+        .delete()
+        .eq('habbo_name', username)
+        .eq('hotel', dbHotel)
+      
       for (const photo of photos) {
-        await supabase
+        const { error: insertError } = await supabase
           .from('habbo_photos')
-          .upsert({
+          .insert({
             photo_id: photo.photo_id,
             habbo_name: username,
-            habbo_id: `hhbr-${userId || '000000'}`,
+            habbo_id: `${dbHotel}-${match.userId || '000000'}`,
             hotel: dbHotel,
             s3_url: photo.imageUrl,
             preview_url: photo.imageUrl,
@@ -190,14 +264,31 @@ serve(async (req) => {
             source: 'profile_scraping',
             caption: `Foto de ${username}`,
             room_name: photo.roomName
-          }, {
-            onConflict: 'photo_id,habbo_name,hotel'
           })
+        
+        if (insertError) {
+          console.error(`[habbo-photos-scraper] Error inserting photo ${photo.photo_id}:`, insertError)
+        }
       }
+      
+      console.log(`[habbo-photos-scraper] Successfully stored ${photos.length} photos`)
     } else {
-      console.log(`[habbo-photos-scraper] No photos found for ${username}, returning empty array`)
+      console.log(`[habbo-photos-scraper] No photos found for ${username}`)
+      console.log(`[habbo-photos-scraper] HTML sample for debugging:`)
+      
+      // Log specific sections of HTML that might contain photos
+      const photoSections = [
+        html.match(/<div[^>]*photo[^>]*>.*?<\/div>/gi),
+        html.match(/<img[^>]*habbo-stories[^>]*>/gi),
+        html.match(/habbo-stories-content\.s3\.amazonaws\.com[^"'\s]*/gi)
+      ].filter(Boolean)
+      
+      photoSections.forEach((section, index) => {
+        console.log(`[habbo-photos-scraper] Photo section ${index + 1}:`, section)
+      })
     }
 
+    console.log(`[habbo-photos-scraper] ====== SCRAPE COMPLETE ======`)
     console.log(`[habbo-photos-scraper] Returning ${photos.length} photos for ${username}`)
     
     return new Response(
@@ -207,8 +298,15 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[habbo-photos-scraper] Error:', error)
+    console.error('[habbo-photos-scraper] Error stack:', error.stack)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        debug: {
+          name: error.name,
+          stack: error.stack?.split('\n').slice(0, 5)
+        }
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
