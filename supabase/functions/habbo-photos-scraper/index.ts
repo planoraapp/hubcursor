@@ -248,12 +248,19 @@ serve(async (req) => {
         .eq('hotel', dbHotel)
       
       for (const photo of photos) {
+        // Fixed bug: get userId from URL extraction or use fallback
+        let userId = 'unknown'
+        const userIdMatch = photo.imageUrl.match(/p-(\d+)-\d+\.png/)
+        if (userIdMatch) {
+          userId = userIdMatch[1]
+        }
+
         const { error: insertError } = await supabase
           .from('habbo_photos')
           .insert({
             photo_id: photo.photo_id,
             habbo_name: username,
-            habbo_id: `${dbHotel}-${match.userId || '000000'}`,
+            habbo_id: `${dbHotel}-${userId}`,
             hotel: dbHotel,
             s3_url: photo.imageUrl,
             preview_url: photo.imageUrl,

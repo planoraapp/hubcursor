@@ -1,6 +1,5 @@
 
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useUnifiedPhotoSystem } from './useUnifiedPhotoSystem';
 
 export interface HabboPhotoEnhanced {
   id: string;
@@ -23,34 +22,34 @@ export interface HabboPhotoEnhanced {
 }
 
 export const useHabboPhotosEnhanced = (username?: string, hotel: string = 'br') => {
-  const { data: habboPhotos = [], isLoading, error } = useQuery({
-    queryKey: ['habbo-photos-enhanced', username, hotel],
-    queryFn: async (): Promise<HabboPhotoEnhanced[]> => {
-      if (!username) return [];
-      
-      console.log('[useHabboPhotosEnhanced] Fetching photos from database for:', username, hotel);
-      
-      const { data, error } = await supabase
-        .from('habbo_photos')
-        .select('*')
-        .eq('habbo_name', username.trim())
-        .eq('hotel', hotel)
-        .order('taken_date', { ascending: false });
+  const { photos, isLoading, error } = useUnifiedPhotoSystem(
+    username, 
+    hotel,
+    { cacheTime: 15 }
+  );
 
-      if (error) {
-        console.error('[useHabboPhotosEnhanced] Error fetching photos:', error);
-        throw new Error(error.message || 'Failed to fetch photos');
-      }
+  // Convert to enhanced database format
+  const habboPhotos: HabboPhotoEnhanced[] = photos.map(photo => ({
+    id: photo.id,
+    photo_id: photo.photo_id,
+    habbo_name: username || '',
+    habbo_id: `${hotel}-unknown`,
+    hotel: hotel,
+    s3_url: photo.imageUrl,
+    preview_url: photo.imageUrl,
+    internal_user_id: undefined,
+    timestamp_taken: photo.timestamp,
+    caption: `Foto de ${username}`,
+    room_name: photo.roomName,
+    taken_date: photo.timestamp ? new Date(photo.timestamp).toISOString() : new Date().toISOString(),
+    likes_count: photo.likes,
+    photo_type: 'PHOTO',
+    source: photo.source,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }));
 
-      console.log(`[useHabboPhotosEnhanced] Found ${data?.length || 0} photos for ${username}`);
-      
-      return data || [];
-    },
-    enabled: !!username,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    retry: 2,
-  });
+  console.log(`[🔧 DB ENHANCED PHOTOS] Converted ${photos.length} photos for ${username}`);
 
   return { habboPhotos, isLoading, error };
 };
