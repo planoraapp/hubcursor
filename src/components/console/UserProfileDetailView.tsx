@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, MessageCircle, UserPlus, Camera, RefreshCw, Loader2, Clock } from 'lucide-react';
+import { Heart, MessageCircle, UserPlus, Camera, RefreshCw, Loader2, Clock, ArrowLeft } from 'lucide-react';
 import { HabboUser } from '@/services/habboProxyService';
 import { usePhotosScraped } from '@/hooks/usePhotosScraped';
 import { PhotosDebugPanel } from './PhotosDebugPanel';
@@ -18,6 +18,7 @@ interface UserProfileDetailViewProps {
   hasLiked?: boolean;
   isFollowing?: boolean;
   onClose?: () => void;
+  onBack?: () => void;
 }
 
 export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({
@@ -28,7 +29,8 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({
   onFollow,
   hasLiked = false,
   isFollowing = false,
-  onClose
+  onClose,
+  onBack
 }) => {
   const { scrapedPhotos, isLoading: photosLoading, refreshPhotos, photoCount } = usePhotosScraped(
     user.name,
@@ -53,7 +55,19 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({
       <Card className="bg-gradient-to-br from-blue-600 to-purple-700 text-white border-0">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">Perfil do Usuário</CardTitle>
+            <div className="flex items-center gap-2">
+              {onBack && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              )}
+              <CardTitle className="text-xl">Perfil do Usuário</CardTitle>
+            </div>
             {onClose && (
               <Button
                 variant="ghost"

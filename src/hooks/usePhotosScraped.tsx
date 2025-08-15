@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -165,19 +165,27 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br', forceR
     gcTime: 10 * 60 * 1000, // Keep in memory for 10 minutes
     retry: 1, // Single retry to see errors faster
     retryDelay: 1500,
-    onSuccess: (data) => {
+  });
+
+  // Log success in a useEffect instead
+  React.useEffect(() => {
+    if (!isLoading && !error && scrapedPhotos.length >= 0) {
       console.log('%c[🎉 PHOTOS DEBUG] Query completed successfully', 'background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px;');
       console.log('[📈 PHOTOS DEBUG] Final result summary:', {
-        photosReturned: data.length,
+        photosReturned: scrapedPhotos.length,
         cacheStatus: forceRefresh ? 'bypassed' : 'checked',
         timestamp: new Date().toISOString()
       });
-    },
-    onError: (error) => {
+    }
+  }, [isLoading, error, scrapedPhotos.length, forceRefresh]);
+
+  // Log errors in a useEffect instead
+  React.useEffect(() => {
+    if (error) {
       console.error('%c[💀 PHOTOS DEBUG] Query failed completely', 'background: #F44336; color: white; padding: 4px 8px; border-radius: 4px;');
       console.error('[🔍 PHOTOS DEBUG] Query error:', error);
     }
-  });
+  }, [error]);
 
   const refreshPhotos = () => {
     console.log('%c[🔄 PHOTOS DEBUG] Manual refresh triggered', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;');
