@@ -19,7 +19,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
     const completeUser = {
       name: user.habbo_name || user.name || 'Unknown',
       motto: user.motto || '',
-      online: user.online || user.is_online || false,
+      online: user.online || false,
       figureString: user.figure_string || '',
       memberSince: user.member_since || new Date().toISOString(),
       selectedBadges: user.selected_badges || [],
@@ -105,7 +105,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                   alt={`Avatar de ${user.habbo_name}`}
                   className="w-12 h-12 rounded border border-white/20"
                   onError={(e) => {
-                    const target = e.target as HTMLImageElement;
+                    const target = e.target as HTMLImageImage;
                     target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&action=std`;
                   }}
                 />
@@ -117,9 +117,9 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                     "{user.motto || 'Sem motto'}"
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`w-2 h-2 rounded-full ${(user.online || user.is_online) ? 'bg-green-400' : 'bg-gray-400'}`} />
+                    <span className={`w-2 h-2 rounded-full ${user.online ? 'bg-green-400' : 'bg-gray-400'}`} />
                     <span className="text-xs text-white/50">
-                      {(user.online || user.is_online) ? 'Online' : 'Offline'}
+                      {user.online ? 'Online' : 'Offline'}
                     </span>
                   </div>
                 </div>
