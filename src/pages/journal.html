@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal Hub - Edição Completa</title>
+    <!-- Inclui Tailwind CSS para estilização fácil e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos personalizados para a fonte pixel art */
+        html {
+            scroll-behavior: smooth; /* Habilita a rolagem suave para âncoras */
+        }
+        body {
+            font-family: 'VT323', monospace; /* Uma fonte que lembra pixel art */
+            background-color: #d1d5db; /* Um cinza claro para o fundo */
+            color: #1f2937; /* Cor do texto principal */
+            image-rendering: crisp-edges; /* Tenta renderizar pixels mais nítidos */
+            image-rendering: pixelated; /* Garante que as imagens (se houver) sejam pixeladas */
+        }
+        .pixel-border {
+            border: 2px solid #1f2937; /* Borda pixelada */
+            box-shadow: 2px 2px 0px 0px #1f2937; /* Sombra para dar profundidade pixelada */
+        }
+        .pixel-heading {
+            font-family: 'Press Start 2P', cursive; /* Fonte mais "game" para títulos */
+            text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2); /* Sombra de texto pixelada */
+        }
+        /* Efeito de glitch sutil em hover para botões/links, opcional */
+        .glitch-hover:hover {
+            transform: translate(1px, 1px);
+            box-shadow: -1px -1px 0px 0px #1f2937;
+        }
+
+        /* Estilo para simular o papel de jornal */
+        .newspaper-background {
+            background-color: #f3f4f6; /* Quase branco, como papel */
+            border: 4px solid #1f2937; /* Borda grossa para o "jornal" */
+            box-shadow: 6px 6px 0px 0px #1f2937; /* Sombra maior para o jornal */
+        }
+
+        /* Estilo para as linhas divisórias */
+        .news-divider {
+            border-top: 1px dashed #4b5563; /* Linha tracejada sutil */
+            margin: 0.75rem 0;
+        }
+
+        /* Classes para simular imagens pixel art (placeholders) */
+        .pixel-image-placeholder {
+            background-color: #9ca3af; /* Cor de preenchimento para o placeholder */
+            border: 1px solid #4b5563;
+            display: block;
+        }
+        /* Estilo para o avatar do autor na imagem da notícia (padrão para banners menores) */
+        .creator-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 75px; /* Altura ajustada para exibir cabeça e torso */
+            width: 64px; /* Largura do avatar */
+            overflow: hidden; /* Corta a parte inferior do avatar */
+            pointer-events: none; /* Permite clicar através do overlay na imagem da notícia */
+        }
+        .creator-overlay img {
+            position: absolute; /* Posiciona a imagem dentro do overlay */
+            bottom: -35px; /* Ajusta a posição para descer a imagem e cortar a parte inferior, exibindo cabeça e torso */
+            left: 0;
+            height: 110px; /* Altura total da imagem do avatar */
+            width: 64px; /* Largura total da imagem do avatar */
+            object-fit: none; /* Garante que a imagem não seja escalada e mantenha o tamanho original do pixel */
+            filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.5)); /* Sombra para destacar o avatar */
+        }
+        /* Estilo para o avatar do autor na imagem da notícia (ampliado para banners grandes) */
+        .creator-overlay-large {
+            height: 110px; /* Amplia a altura do overlay */
+            width: 96px; /* Amplia a largura do overlay */
+        }
+        .creator-overlay-large img {
+            height: 165px; /* Altura ampliada da imagem do avatar */
+            width: 96px; /* Largura ampliada da imagem do avatar */
+            bottom: -55px; /* Ajusta a posição para mostrar cabeça e torso na nova escala */
+        }
+        /* Esconder o autor abaixo do texto para os artigos com overlay */
+        .hide-author-below-text {
+            display: none;
+        }
+        /* Classe para ocultar páginas */
+        .hidden {
+            display: none;
+        }
+
+        /* Estilo para o overlay das logos dos fã sites */
+        .fansite-logo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 120px; /* Tamanho padrão do contêiner do overlay */
+            height: 120px; /* Tamanho padrão do contêiner do overlay */
+            display: flex; /* Para centralizar a logo se for menor */
+            align-items: center; /* Centraliza verticalmente */
+            justify-content: center; /* Centraliza horizontalmente */
+            pointer-events: none; /* Permite clicar através do overlay na imagem da notícia */
+        }
+        .fansite-logo-overlay img {
+            max-width: 100%; /* Faz a imagem preencher o contêiner */
+            max-height: 100%; /* Faz a imagem preencher o contêiner */
+            object-fit: contain; /* Garante que a logo se ajuste sem cortar */
+            background-color: transparent; /* Garante que o fundo da imagem seja transparente */
+            filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.3)); /* Sombra sutil para a logo */
+        }
+
+        /* Classe para logos de fã sites maiores (Habblindados e Kihabbo) */
+        .fansite-logo-extra-large {
+            width: 180px; /* Tamanho ampliado do contêiner do overlay */
+            height: 180px; /* Tamanho ampliado do contêiner do overlay */
+        }
+        .fansite-logo-extra-large img {
+            /* Estas propriedades herdam de .fansite-logo-overlay img */
+        }
+
+        /* Estilo para o modal de mensagem */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #f3f4f6;
+            border: 4px solid #1f2937;
+            box-shadow: 6px 6px 0px 0px #1f2937;
+            padding: 2rem;
+            border-radius: 0.25rem;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-content button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #1f2937;
+            color: white;
+            border: 2px solid #1f2937;
+            box-shadow: 2px 2px 0px 0px #1f2937;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-7xl mx-auto newspaper-background rounded-md p-6 sm:p-10 shadow-lg">
+
+        <!-- Cabeçalho do Jornal -->
+        <header class="text-center mb-8 pb-4 border-b-4 border-gray-900 relative">
+            <div class="flex items-center justify-center">
+                <!-- Imagem no canto esquerdo do título -->
+                <img src="https://placehold.co/60x60/808080/FFFFFF?text=Logo" alt="" class="absolute left-0 top-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 object-contain pixelated hidden sm:block">
+
+                <h1 class="pixel-heading text-4xl sm:text-5xl lg:text-6xl text-gray-900 mb-2">
+                    JOURNAL HUB
+                </h1>
+
+                <!-- Imagem no canto direito do título -->
+                <img src="https://placehold.co/60x60/808080/FFFFFF?text=Logo" alt="" class="absolute right-0 top-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 object-contain pixelated hidden sm:block">
+            </div>
+            <p class="text-lg sm:text-xl text-gray-700">As últimas notícias direto do Hotel, pelos próprios Habbos!</p>
+        </header>
+
+        <!-- Navegação de Categorias (simplificada) como barra de texto com hiperlinks -->
+        <nav class="mb-8 flex flex-wrap justify-center gap-6 text-sm sm:text-base border-b-2 border-gray-500 pb-4">
+            <a href="#destaques" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Destaques do Hotel</a>
+            <a href="#eventos" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Eventos</a>
+            <a href="#entrevistas" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Entrevistas</a>
+            <a href="#opiniao" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Opinião</a>
+            <a href="#fansites" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Fã Sites</a>
+            <a href="#jogos-esportes" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Jogos & Esportes do Hotel</a>
+            <a href="#enviar-coluna" class="text-gray-900 hover:text-blue-700 hover:underline transition-all duration-75">Envie Sua Coluna</a>
+        </nav>
+
+        <main>
+            <!-- Página 1: Destaques do Hotel, Eventos e Anúncios Laterais -->
+            <div id="page-1" class="journal-page grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Coluna Principal (2/3 da largura em telas médias/grandes) -->
+                <div class="md:col-span-2">
+                    <!-- SEÇÃO: DESTAQUES DO HOTEL -->
+                    <section id="destaques" class="p-4 mb-8">
+                        <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                            Notícia em Destaque: 25 Anos de Habbo Hotel: Uma Celebração Épica Cheia de Nostalgia e Novidades!
+                        </h2>
+                        <div class="relative w-full h-48 sm:h-72 bg-gray-300 mb-4 pixel-image-placeholder">
+                            <img src="https://placehold.co/700x300/9ca3af/1f2937?text=Habbo+25+Anos" alt="" class="w-full h-full object-cover pixelated">
+                            <!-- Overlay do criador na imagem -->
+                            <div class="creator-overlay creator-overlay-large">
+                                <img src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png" alt="" class="pixelated" width="64" height="110">
+                            </div>
+                        </div>
+                        <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                            O Habbo Hotel está em festa! Completando 25 anos de existência, o icônico mundo pixelado convida todos os Habbos para uma celebração inesquecível. Prepare-se para uma onda de nostalgia com o retorno de mobis clássicos através do Furni-Matic e Collecti-Matic, além de novas Coroas de Fidelidade para os veteranos que acompanham o Hotel há 15, 20 e até 25 anos! A equipe Staff está organizando festas na Piscina com brindes e uma nova sala pública que promete agitar o Hotel dia e noite. Não perca a chance de compartilhar suas memórias com a hashtag #Habbo25 nas redes sociais e concorrer a prêmios ultra raros. O Diretor de Produto, Muumiopappa, deixou uma carta emocionante para a comunidade. Este aniversário é uma homenagem a todos os Habbos que construíram essa história!
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-sm sm:text-base">Leia o artigo completo...</a>
+                        <p class="text-xs text-gray-500 mt-2 hide-author-below-text">Por: Beebop - 14 de Agosto de 2025</p>
+                    </section>
+
+                    <div class="news-divider mt-8 mb-8"></div> <!-- Divisor de seção -->
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <article class="p-4">
+                            <h3 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                                Lançamento do Habbo Hub: Um Novo Ponto de Encontro para a Comunidade!
+                            </h3>
+                            <div class="relative w-full h-32 bg-gray-300 mb-4 pixel-image-placeholder">
+                                <img src="https://placehold.co/400x150/9ca3af/1f2937?text=Habbo+Hub+Launch" alt="" class="w-full h-full object-cover pixelated">
+                                <!-- Overlay do criador na imagem -->
+                                <div class="creator-overlay">
+                                    <img src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-1.ch-255-84.lg-275-1408.sh-295-64%2Cs-0.g-1.d-2.h-2.a-0%2C3565e22f0ecd66108595e64551d13483.png" alt="" class="pixelated" width="64" height="110">
+                                </div>
+                            </div>
+                            <p class="text-sm leading-snug mb-2">
+                                É com grande entusiasmo que anunciamos o lançamento oficial do Habbo Hub, o seu novo centro de informações e comunidade! Fique por dentro de tudo que acontece no Hotel.
+                            </p>
+                            <a href="#" class="text-blue-700 hover:underline text-xs">Conheça o Habbo Hub</a>
+                            <p class="text-xs text-gray-500 mt-1 hide-author-below-text">Por: HabboHub - 14 de Agosto de 2025</p>
+                        </article>
+
+                        <article class="p-4">
+                            <h3 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                                Recorde de Jogadores Online no Fim de Semana!
+                            </h3>
+                            <div class="relative w-full h-32 bg-gray-300 mb-4 pixel-image-placeholder">
+                                <img src="https://placehold.co/400x150/9ca3af/1f2937?text=Habbos+Conectados" alt="" class="w-full h-full object-cover pixelated">
+                                <div class="creator-overlay">
+                                    <img src="https://www.habbo.com.br/habbo-imaging/avatar/hd-6002.ch-3971-73-73.lg-3407-73-66.sh-300-64%2Cs-0.g-1.d-2.h-2.a-0%2C33af513aeef3cbf0985b18796b5b75f5.png" alt="" class="pixelated" width="64" height="110">
+                                </div>
+                            </div>
+                            <p class="text-sm leading-snug mb-2">
+                                O último fim de semana marcou um novo recorde de Habbos conectados simultaneamente, demonstrando a força e a vitalidade da nossa comunidade. Eventos e promoções especiais contribuíram para a alta adesão. Parabéns, Habbos!
+                            </p>
+                            <a href="#" class="text-blue-700 hover:underline text-xs">Veja os números</a>
+                            <p class="text-xs text-gray-500 mt-1 hide-author-below-text">Por: InfoPixel - 09 de Agosto de 2025</p>
+                        </article>
+                    </div>
+                    <div class="news-divider mt-8 mb-8 border-t-4 border-gray-900"></div> <!-- Divisor principal entre grandes seções -->
+                    <!-- SEÇÃO: EVENTOS -->
+                    <section id="eventos" class="p-4 mb-8">
+                        <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                            Próximos Eventos no Hotel
+                        </h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <article class="p-4">
+                                <h3 class="font-bold text-lg sm:text-xl mb-1">Festa de Aniversário de 25 Anos com Staff!</h3>
+                                <p class="text-sm text-gray-600 mb-2">Data: 13 de Agosto de 2025 | Horário: 11:00 UTC (verifique seu fuso)</p>
+                                <p class="text-base leading-snug mb-3">
+                                    Junte-se à equipe Staff na Sala Pública da Festa na Piscina para uma super comemoração épica. Haverá brindes e muita diversão!
+                                </p>
+                                <a href="#" class="text-blue-700 hover:underline text-xs">Detalhes do evento</a>
+                                <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    Por:
+                                    <a href="https://habbo-hub.com/profile/EventMaster" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                        <img src="https://placehold.co/40x60/d3d3d3/555555?text=EM" alt="" class="w-10 h-16 object-contain pixelated">
+                                        <span>EventMaster</span>
+                                    </a>
+                                    - 11 de Agosto de 2025
+                                </p>
+                            </article>
+
+                            <article class="p-4">
+                                <h3 class="font-bold text-lg sm:text-xl mb-1">Tarefa de Aniversário de 24 horas (15/08)!</h3>
+                                <p class="text-sm text-gray-600 mb-2">Data: 15 de Agosto de 2025 | Duração: 24 horas</p>
+                                <p class="text-base leading-snug mb-3">
+                                    Fique de olho na janela de Tarefas! Uma missão especial de 24 horas será liberada no dia do aniversário do Habbo. Não perca!
+                                </p>
+                                <a href="#" class="text-blue-700 hover:underline text-xs">Prepare-se para a tarefa</a>
+                                <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    Por:
+                                    <a href="https://habbo-hub.com/profile/MelodyMage" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                        <img src="https://placehold.co/40x60/d3d3d3/555555?text=MM" alt="" class="w-10 h-16 object-contain pixelated">
+                                        <span>MelodyMage</span>
+                                    </a>
+                                    - 10 de Agosto de 2025
+                                </p>
+                            </article>
+
+                            <article class="p-4">
+                                <h3 class="font-bold text-lg sm:text-xl mb-1">Nova Sala Pública: Festa na Piscina!</h3>
+                                <p class="text-sm text-gray-600 mb-2">Disponível agora!</p>
+                                <p class="text-base leading-snug mb-3">
+                                    Explore a nova e incrível sala pública "Festa na Piscina", que literalmente alterna entre o dia e a noite. Perfeita para eventos e encontros!
+                                </p>
+                                <a href="#" class="text-blue-700 hover:underline text-xs">Visite a nova sala</a>
+                                <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    Por:
+                                    <a href="https://habbo-hub.com/profile/GameGuru" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                        <img src="https://placehold.co/40x60/d3d3d3/555555?text=GG" alt="" class="w-10 h-16 object-contain pixelated">
+                                        <span>GameGuru</span>
+                                    </a>
+                                    - 09 de Agosto de 2025
+                                </p>
+                            </article>
+                        </div>
+
+                        <div class="news-divider mt-8 mb-8"></div> <!-- Divisor de seção -->
+
+                        <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                            Eventos Anteriores
+                        </h2>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <article class="p-4">
+                                <h3 class="font-bold text-lg sm:text-xl mb-1">Gincana de Construção: "Cidade do Futuro"</h3>
+                                <p class="text-sm text-gray-600 mb-2">Realizado em: 05 de Agosto de 2025</p>
+                                <p class="text-base leading-snug mb-3">
+                                    Conheça os vencedores da gincana de construção que desafiou os Habbos a criarem suas visões de uma cidade futurista. Quartos incríveis e cheios de inovação!
+                                </p>
+                                <a href="#" class="text-blue-700 hover:underline text-xs">Veja os vencedores</a>
+                                <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    Por:
+                                    <a href="https://habbo-hub.com/profile/BuildPro" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                        <img src="https://placehold.co/40x60/d3d3d3/555555?text=BP" alt="" class="w-10 h-16 object-contain pixelated">
+                                        <span>BuildPro</span>
+                                    </a>
+                                    - 05 de Agosto de 2025
+                                </p>
+                            </article>
+
+                            <article class="p-4">
+                                <h3 class="font-bold text-lg sm:text-xl mb-1">Flash Mob no Infobus</h3>
+                                <p class="text-sm text-gray-600 mb-2">Realizado em: 02 de Agosto de 2025</p>
+                                <p class="text-base leading-snug mb-3">
+                                    Centenas de Habbos se juntaram em um flash mob surpresa no Infobus, criando um momento hilário e memorável. O vídeo já está disponível!
+                                </p>
+                                <a href="#" class="text-blue-700 hover:underline text-xs">Assista ao vídeo</a>
+                                <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    Por:
+                                    <a href="https://habbo-hub.com/profile/FlashDancer" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                        <img src="https://placehold.co/40x60/d3d3d3/555555?text=FD" alt="" class="w-10 h-16 object-contain pixelated">
+                                        <span>FlashDancer</span>
+                                    </a>
+                                    - 02 de Agosto de 2025
+                                </p>
+                            </article>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Coluna Lateral de Anúncios (1/3 da largura em telas médias/grandes) -->
+                <aside class="md:col-span-1 p-4">
+                    <h2 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                        Anúncios
+                    </h2>
+                    <article class="mb-6 pixel-border p-3 bg-gray-100 rounded-sm">
+                        <h3 class="font-bold text-base sm:text-lg mb-2">Anúncio: A Loja de Mobis Raros!</h3>
+                        <div class="w-full h-24 bg-gray-300 mb-3 pixel-image-placeholder">
+                            <img src="https://placehold.co/200x80/663399/FFFFFF?text=An%C3%BAncio+1" alt="" class="w-full h-full object-cover pixelated">
+                        </div>
+                        <p class="text-sm leading-snug mb-2">
+                            Não perca as ofertas exclusivas de mobis raros e LTDs! Visite a Loja de Mobis Raros e complete sua coleção.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Confira agora!</a>
+                    </article>
+
+                    <article class="mb-6 pixel-border p-3 bg-gray-100 rounded-sm">
+                        <h3 class="font-bold text-base sm:text-lg mb-2">Anúncio: Evento de RPG da Guilda Sombria!</h3>
+                        <div class="w-full h-24 bg-gray-300 mb-3 pixel-image-placeholder">
+                            <img src="https://placehold.co/200x80/CC0000/FFFFFF?text=An%C3%BAncio+2" alt="" class="w-full h-full object-cover pixelated">
+                        </div>
+                        <p class="text-sm leading-snug mb-2">
+                            Participe da próxima aventura da Guilda Sombria! Novos desafios, mistérios e muita ação esperam por você.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Junte-se à Guilda!</a>
+                    </article>
+                </aside>
+            </div>
+
+            <div class="news-divider mt-8 mb-8 border-t-4 border-gray-900"></div> <!-- Divisor principal entre grandes seções -->
+
+            <!-- Página 2: Entrevistas e Opinião -->
+            <div id="page-2" class="journal-page hidden">
+                <!-- SEÇÃO: ENTREVISTAS -->
+                <section id="entrevistas" class="p-4 mb-8">
+                    <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                        Entrevista Exclusiva: [Nome do Habbo Famoso], O Construtor Mestre!
+                    </h2>
+                    <div class="relative w-full h-48 sm:h-72 bg-gray-300 mb-4 pixel-image-placeholder">
+                        <img src="https://placehold.co/700x300/9ca3af/1f2937?text=Habbo+Famoso" alt="" class="w-full h-full object-cover pixelated">
+                        <!-- Overlay do criador na imagem -->
+                        <div class="creator-overlay creator-overlay-large">
+                            <img src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png" alt="" class="pixelated" width="64" height="110">
+                        </div>
+                    </div>
+                    <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                        Nesta semana, nosso repórter pixelado conversou com [Nome do Habbo Famoso], o aclamado construtor de quartos do Hotel. Ele nos contou sobre suas inspirações, os desafios de criar ambientes inovadores e deu dicas valiosas para quem sonha em ter um quarto de destaque. "A criatividade é o limite", afirmou ele, enquanto mostrava seu mais recente projeto, um labirinto subaquático.
+                    </p>
+                    <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                        Descubra como [Nome do Habbo Famoso] transformou sua paixão em arte e o que ele planeja para o futuro do design no Habbo.
+                    </p>
+                    <a href="#" class="text-blue-700 hover:underline text-sm sm:text-base">Leia a entrevista completa...</a>
+                    <p class="text-xs text-gray-500 mt-2 hide-author-below-text">Por: Repórter Pixelado - 10 de Agosto de 2025</p>
+                </section>
+
+                <div class="news-divider mt-8 mb-8"></div> <!-- Divisor de seção -->
+
+                <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                    Outras Entrevistas
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <article class="p-4">
+                        <h3 class="font-bold text-lg sm:text-xl mb-1">
+                            Conheça o [Nome do Habbo]: O Embaixador da Paz no Hotel
+                        </h3>
+                        <p class="text-sm leading-snug mb-2">
+                            Conversamos com [Nome do Habbo], conhecido por suas iniciativas de mediação e por promover um ambiente amigável no Habbo.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Leia mais</a>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            Por:
+                            <a href="https://habbo-hub.com/profile/PixelTalks" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                <img src="https://placehold.co/40x60/d3d3d3/555555?text=PT" alt="" class="w-10 h-16 object-contain pixelated">
+                                <span>PixelTalks</span>
+                            </a>
+                            - 05 de Agosto de 2025
+                        </p>
+                    </article>
+
+                    <article class="p-4">
+                        <h3 class="font-bold text-lg sm:text-xl mb-1">
+                            A História de [Nome do Habbo]: De Novato a Colecionador Raro
+                        </h3>
+                        <p class="text-sm leading-snug mb-2">
+                            Descubra a jornada de [Nome do Habbo], que começou sem nada e hoje é um dos maiores colecionadores de mobis raros do Hotel.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Leia mais</a>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            Por:
+                            <a href="https://habbo-hub.com/profile/MobiTales" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                <img src="https://placehold.co/40x60/d3d3d3/555555?text=MT" alt="" class="w-10 h-16 object-contain pixelated">
+                                <span>MobiTales</span>
+                            </a>
+                            - 01 de Agosto de 2025
+                        </p>
+                    </article>
+                </div>
+                <div class="news-divider mt-8 mb-8 border-t-4 border-gray-900"></div> <!-- Divisor principal entre grandes seções -->
+                <!-- SEÇÃO: OPINIÃO -->
+                <section id="opiniao" class="p-4 mb-8">
+                    <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                        Opinião em Destaque: O Futuro das Companhias de RPG no Habbo
+                    </h2>
+                    <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                        [Nome do Colunista Habbo] compartilha sua visão sobre o papel das companhias de RPG no Habbo e como elas podem evoluir para atrair novos jogadores e manter a comunidade engajada. "É preciso inovar e criar narrativas que realmente prendam a atenção", defende o autor, propondo novas ideias para eventos e interações dentro do universo RPG do Hotel.
+                    </p>
+                    <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                        O artigo analisa os desafios enfrentados por essas comunidades e sugere caminhos para um futuro mais próspero e cheio de aventuras.
+                    </p>
+                    <a href="#" class="text-blue-700 hover:underline text-sm sm:text-base">Leia o artigo completo...</a>
+                    <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        Por:
+                        <a href="https://habbo-hub.com/profile/RPGMaster" class="flex items-center gap-1 text-blue-700 hover:underline">
+                            <img src="https://placehold.co/40x60/d3d3d3/555555?text=RM" alt="" class="w-10 h-16 object-contain pixelated">
+                            <span>RPGMaster</span>
+                                </a>
+                        - 09 de Agosto de 2025
+                    </p>
+                </section>
+
+                <div class="news-divider mt-8 mb-8"></div> <!-- Divisor de seção -->
+
+                <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                    Últimas Colunas
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <article class="p-4">
+                        <h3 class="font-bold text-lg sm:text-xl mb-1">
+                            A Verdadeira Essência da Amizade Virtual
+                        </h3>
+                        <p class="text-sm leading-snug mb-2">
+                            [Nome do Colunista] reflete sobre os laços de amizade construídos no Habbo e sua importância na vida dos jogadores.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Continue lendo</a>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            Por:
+                            <a href="https://habbo-hub.com/profile/AmigoPixel" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                <img src="https://placehold.co/40x60/d3d3d3/555555?text=AP" alt="" class="w-10 h-16 object-contain pixelated">
+                                <span>AmigoPixel</span>
+                            </a>
+                            - 07 de Agosto de 2025
+                        </p>
+                    </article>
+
+                    <article class="p-4">
+                        <h3 class="font-bold text-lg sm:text-xl mb-1">
+                            O Debate: Moedas vs. Diamantes - Qual o Melhor Investimento?
+                        </h3>
+                        <p class="text-sm leading-snug mb-2">
+                            Um olhar aprofundado sobre a economia do Habbo e onde vale mais a pena investir seus créditos.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Confira a análise</a>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            Por:
+                            <a href="https://habbo-hub.com/profile/HabboEconomista" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                <img src="https://placehold.co/40x60/d3d3d3/555555?text=HE" alt="" class="w-10 h-16 object-contain pixelated">
+                                <span>HabboEconomista</span>
+                            </a>
+                            - 05 de Agosto de 2025
+                        </p>
+                    </article>
+                </div>
+            </div>
+
+            <div class="news-divider mt-8 mb-8 border-t-4 border-gray-900"></div> <!-- Divisor principal entre grandes seções -->
+
+            <!-- Página 3: Fã Sites e Jogos & Esportes do Hotel -->
+            <div id="page-3" class="journal-page hidden">
+                <!-- SEÇÃO: FÃ SITES -->
+                <section id="fansites" class="p-4 mb-8">
+                    <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                        Notícias dos Fã Sites Oficiais
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Notícia HabboNews -->
+                        <article class="p-4">
+                            <h3 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                                HabboNews: Infláveis de 25 Anos Chegando!
+                            </h3>
+                            <div class="relative w-full h-32 bg-gray-300 mb-4 pixel-image-placeholder">
+                                <img src="https://placehold.co/400x150/9ca3af/1f2937?text=Noticia+HabboNews" alt="" class="w-full h-full object-cover pixelated">
+                                <div class="fansite-logo-overlay">
+                                    <img src="https://i.imgur.com/q3sECIR.png" alt="Logo da HabboNews" class="pixelated">
+                                </div>
+                            </div>
+                            <p class="text-sm leading-snug mb-2">
+                                A HabboNews revelou que novos Infláveis de 25 Anos com emblemas exclusivos estão a caminho da loja! Prepare-se para colecionar.
+                            </p>
+                            <a href="#" class="text-blue-700 hover:underline text-xs">Leia mais na HabboNews</a>
+                            <p class="text-xs text-gray-500 mt-1 hide-author-below-text">Fonte: HabboNews - 14 de Agosto de 2025</p>
+                        </article>
+
+                        <!-- Notícia Habblindados -->
+                        <article class="p-4">
+                            <h3 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                                Habblindados: Novo Labirinto "Zona de Sobrevivência"!
+                            </h3>
+                            <div class="relative w-full h-32 bg-gray-300 mb-4 pixel-image-placeholder">
+                                <img src="https://placehold.co/400x150/9ca3af/1f2937?text=Noticia+Habblindados" alt="" class="w-full h-full object-cover pixelated">
+                                <div class="fansite-logo-overlay fansite-logo-extra-large">
+                                    <img src="https://habblindados.com.br/uploads/logotipo-ab8017c844.gif" alt="Logo da Habblindados" class="pixelated">
+                                </div>
+                            </div>
+                            <p class="text-sm leading-snug mb-2">
+                                A Habblindados lançou um novo labirinto desafiador, a "Zona de Sobrevivência", com prêmios e muita aventura. Teste suas habilidades!
+                            </p>
+                            <a href="#" class="text-blue-700 hover:underline text-xs">Participe na Habblindados</a>
+                            <p class="text-xs text-gray-500 mt-1 hide-author-below-text">Fonte: Habblindados - 06 de Agosto de 2025</p>
+                        </article>
+
+                        <!-- Notícia Habbonight -->
+                        <article class="p-4">
+                            <h3 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                                Habbonight: NightCity - Uma Aventura Urbana!
+                            </h3>
+                            <div class="relative w-full h-32 bg-gray-300 mb-4 pixel-image-placeholder">
+                                <img src="https://placehold.co/400x150/9ca3af/1f2937?text=Noticia+Habbonight" alt="" class="w-full h-full object-cover pixelated">
+                                <div class="fansite-logo-overlay">
+                                    <img src="https://habbonight.com.br/media/acervo/2022/03/c595f02930.gif" alt="Logo da Habbonight" class="pixelated">
+                                </div>
+                            </div>
+                            <p class="text-sm leading-snug mb-2">
+                                A Habbonight apresenta sua nova campanha "NightCity", convidando os Habbos a explorarem uma cidade cheia de mistérios e códigos.
+                            </p>
+                            <a href="#" class="text-blue-700 hover:underline text-xs">Descubra NightCity na Habbonight</a>
+                            <p class="text-xs text-gray-500 mt-1 hide-author-below-text">Fonte: Habbonight - 23 de Julho de 2025</p>
+                        </article>
+
+                        <!-- Notícia Kihabbo -->
+                        <article class="p-4">
+                            <h3 class="pixel-heading text-xl sm:text-2xl mb-4 border-b-2 border-gray-500 pb-2">
+                                Kihabbo: Aventura entre Laços - Novo Capítulo!
+                            </h3>
+                            <div class="relative w-full h-32 bg-gray-300 mb-4 pixel-image-placeholder">
+                                <img src="https://placehold.co/400x150/9ca3af/1f2937?text=Noticia+Kihabbo" alt="" class="w-full h-full object-cover pixelated">
+                                <div class="fansite-logo-overlay fansite-logo-extra-large">
+                                    <img src="https://images.habbo.com/c_images/album1584/BRA97.gif" alt="Logo da Kihabbo" class="pixelated">
+                                </div>
+                            </div>
+                            <p class="text-sm leading-snug mb-2">
+                                A Kihabbo lança um novo capítulo de sua saga "Aventura entre Laços", com mais desafios e uma história envolvente para a comunidade.
+                            </p>
+                            <a href="#" class="text-blue-700 hover:underline text-xs">Acompanhe a saga na Kihabbo</a>
+                            <p class="text-xs text-gray-500 mt-1 hide-author-below-text">Fonte: Kihabbo - 02 de Agosto de 2025</p>
+                        </article>
+                    </div>
+                </section>
+
+                <div class="news-divider mt-8 mb-8 border-t-4 border-gray-900"></div> <!-- Divisor principal entre grandes seções -->
+                <!-- SEÇÃO: JOGOS & ESPORTES DO HOTEL -->
+                <section id="jogos-esportes" class="p-4 mb-8">
+                    <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                        Copa Habbo de Futebol de Quartos: Grandes Finais!
+                    </h2>
+                    <div class="relative w-full h-48 sm:h-72 bg-gray-300 mb-4 pixel-image-placeholder">
+                        <img src="https://placehold.co/700x300/9ca3af/1f2937?text=Futebol+Habbo" alt="" class="w-full h-full object-cover pixelated">
+                        <!-- Overlay do criador na imagem -->
+                        <div class="creator-overlay creator-overlay-large">
+                            <img src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png" alt="" class="pixelated" width="64" height="110">
+                        </div>
+                    </div>
+                    <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                        A emoção tomou conta do Hotel com as semifinais e a grande final da Copa Habbo de Futebol de Quartos! Times de todo o mundo se enfrentaram em partidas eletrizantes, demonstrando habilidade e estratégia. A equipe "[Nome do Time Campeão]" sagrou-se campeã em uma disputa acirrada, levantando a Taça Pixelada para a alegria de sua torcida.
+                    </p>
+                    <a href="#" class="text-blue-700 hover:underline text-sm sm:text-base">Veja os melhores momentos...</a>
+                    <p class="text-xs text-gray-500 mt-2 hide-author-below-text">Por: EsportePixel - 10 de Agosto de 2025</p>
+                </section>
+
+                <div class="news-divider mt-8 mb-8"></div> <!-- Divisor de seção -->
+
+                <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                    Ranking da Semana
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <article class="p-4">
+                        <h3 class="font-bold text-lg sm:text-xl mb-1">
+                            Top 3 Jogadores de Labirinto:
+                        </h3>
+                        <ol class="list-decimal list-inside text-base mb-2">
+                            <li>[Nick Habbo 1]</li>
+                            <li>[Nick Habbo 2]</li>
+                            <li>[Nick Habbo 3]</li>
+                        </ol>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Ver Ranking Completo</a>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            Por:
+                            <a href="https://habbo-hub.com/profile/RankMaster" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                <img src="https://placehold.co/40x60/d3d3d3/555555?text=RM" alt="" class="w-10 h-16 object-contain pixelated">
+                                <span>RankMaster</span>
+                            </a>
+                            - 11 de Agosto de 2025
+                        </p>
+                    </article>
+
+                    <article class="p-4">
+                        <h3 class="font-bold text-lg sm:text-xl mb-1">
+                            Dica do GameMaster: Como Vencer no Fall Guys Habbo!
+                        </h3>
+                        <p class="text-sm leading-snug mb-2">
+                            Nosso GameMaster compartilha os segredos e atalhos para você se tornar um campeão no popular jogo de sala.
+                        </p>
+                        <a href="#" class="text-blue-700 hover:underline text-xs">Aprenda as dicas</a>
+                        <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            Por:
+                            <a href="https://habbo-hub.com/profile/GameMaster" class="flex items-center gap-1 text-blue-700 hover:underline">
+                                <img src="https://placehold.co/40x60/d3d3d3/555555?text=GM" alt="" class="w-10 h-16 object-contain pixelated">
+                                <span>GameMaster</span>
+                            </a>
+                            - 08 de Agosto de 2025
+                        </p>
+                    </article>
+                </div>
+            </section>
+            </div>
+        </main>
+
+        <!-- Seção de Envio de Coluna -->
+        <section id="enviar-coluna" class="pixel-border p-6 bg-white rounded-sm mt-10 hidden">
+            <h2 class="pixel-heading text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2">
+                Envie Sua Coluna para a Próxima Edição!
+            </h2>
+            <p class="text-base sm:text-lg mb-4 leading-relaxed">
+                Habbos, este é o seu espaço! Compartilhe suas opiniões, análises ou histórias sobre o Hotel. As melhores colunas serão selecionadas para a próxima edição do Journal Hub!
+            </p>
+
+            <form id="submissionForm" class="space-y-4">
+                <div>
+                    <label for="columnTitle" class="block text-sm font-bold mb-1">Título da Coluna:</label>
+                    <input type="text" id="columnTitle" class="pixel-border w-full p-2 bg-gray-100 text-gray-900" placeholder="Ex: Minha Opinião sobre os Novos Mobis" required>
+                </div>
+
+                <div>
+                    <label for="columnSection" class="block text-sm font-bold mb-1">Seção Desejada:</label>
+                    <select id="columnSection" class="pixel-border w-full p-2 bg-gray-100 text-gray-900" required>
+                        <option value="">Selecione uma seção</option>
+                        <option value="opiniao">Opinião</option>
+                        <option value="destaques">Destaques do Hotel</option>
+                        <option value="eventos">Eventos</option>
+                        <option value="entrevistas">Entrevistas</option>
+                        <option value="fansites">Fã Sites</option>
+                        <option value="jogos-esportes">Jogos & Esportes do Hotel</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="columnContent" class="block text-sm font-bold mb-1">Sua Coluna/Opinião:</label>
+                    <textarea id="columnContent" rows="8" class="pixel-border w-full p-2 bg-gray-100 text-gray-900" placeholder="Escreva sua coluna aqui..." required></textarea>
+                </div>
+
+                <div>
+                    <label for="coverImage" class="block text-sm font-bold mb-1">URL da Imagem de Capa (opcional):</label>
+                    <input type="url" id="coverImage" class="pixel-border w-full p-2 bg-gray-100 text-gray-900" placeholder="Ex: https://seusite.com/imagem-capa.png">
+                </div>
+
+                <button type="submit" class="pixel-border px-6 py-3 bg-blue-700 text-white text-lg rounded-sm hover:bg-blue-800 glitch-hover transition-all duration-75">
+                    Enviar Coluna
+                </button>
+            </form>
+        </section>
+
+        <!-- Botões de Paginação -->
+        <div class="flex justify-between mt-10">
+            <button id="prevPage" class="pixel-border px-4 py-2 bg-gray-700 text-white text-sm sm:text-base rounded-sm cursor-pointer hover:bg-gray-800 transition-all duration-75 glitch-hover">Página Anterior</button>
+            <button id="nextPage" class="pixel-border px-4 py-2 bg-gray-700 text-white text-sm sm:text-base rounded-sm cursor-pointer hover:bg-gray-800 transition-all duration-75 glitch-hover">Próxima Página</button>
+        </div>
+
+        <footer class="text-center mt-10 pt-6 border-t-4 border-gray-900 text-gray-700 text-sm">
+            <p>&copy; 2025 Journal Hub. Todos os direitos reservados. Feito com pixel art.</p>
+            <p class="mt-2">Contato: jornal@habbohub.com | Siga-nos nas redes sociais do Habbo!</p>
+        </footer>
+
+    </div>
+
+    <!-- Modal de Mensagem -->
+    <div id="messageModal" class="modal-overlay hidden">
+        <div class="modal-content pixel-border">
+            <p id="modalMessage" class="text-lg mb-4"></p>
+            <button id="closeModal">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const pagesData = [
+            ['destaques', 'eventos'],
+            ['entrevistas', 'opiniao'],
+            ['fansites', 'jogos-esportes', 'enviar-coluna'] // 'enviar-coluna' adicionado à última página
+        ];
+        let currentPageIndex = 0;
+
+        // Função para exibir a página correta
+        function showPage(index) {
+            // Oculta todas as divs de página
+            document.querySelectorAll('.journal-page').forEach(pageDiv => {
+                pageDiv.classList.add('hidden');
+            });
+
+            // Exibe a div da página atual
+            const currentPageDiv = document.getElementById(`page-${index + 1}`);
+            if (currentPageDiv) {
+                currentPageDiv.classList.remove('hidden');
+                // Rola para o topo da página ao mudar, para simular o "virar"
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // Atualiza o estado dos botões de navegação
+            const prevButton = document.getElementById('prevPage');
+            const nextButton = document.getElementById('nextPage');
+
+            prevButton.disabled = (index === 0);
+            nextButton.disabled = (index === pagesData.length - 1);
+
+            // Adiciona/remove estilos de desabilitado
+            if (prevButton.disabled) {
+                prevButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                prevButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            if (nextButton.disabled) {
+                nextButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                nextButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Atualiza o link de navegação ativo no cabeçalho
+            document.querySelectorAll('nav a').forEach(link => {
+                link.classList.remove('font-bold', 'text-blue-700');
+                link.classList.add('text-gray-900');
+            });
+
+            // Destaca o link da primeira seção da página atual na navegação
+            const currentSectionId = pagesData[index][0];
+            const currentNavLink = document.querySelector(`nav a[href="#${currentSectionId}"]`);
+            if (currentNavLink) {
+                currentNavLink.classList.add('font-bold', 'text-blue-700');
+                currentNavLink.classList.remove('text-gray-900');
+            }
+        }
+
+        // Event Listeners para os botões de paginação
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPageIndex > 0) {
+                currentPageIndex--;
+                showPage(currentPageIndex);
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            if (currentPageIndex < pagesData.length - 1) {
+                currentPageIndex++;
+                showPage(currentPageIndex);
+            }
+        });
+
+        // Exibe a primeira página ao carregar o documento
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage(currentPageIndex);
+        });
+
+        // Lida com os cliques nos links de navegação do cabeçalho
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                let targetPageIndex = -1;
+                // Encontra o índice da página que contém a seção clicada
+                for (let i = 0; i < pagesData.length; i++) {
+                    if (pagesData[i].includes(targetId)) {
+                        targetPageIndex = i;
+                        break;
+                    }
+                }
+                // Se a seção estiver em uma página diferente, muda para essa página
+                if (targetPageIndex !== -1 && targetPageIndex !== currentPageIndex) {
+                    currentPageIndex = targetPageIndex;
+                    showPage(currentPageIndex);
+                    // Garante que a rolagem suave ocorra após a página ser exibida
+                    setTimeout(() => {
+                        document.getElementById(targetId).scrollIntoView({ behavior: 'smooth' });
+                    }, 100); // Pequeno delay para garantir que a página esteja visível
+                } else {
+                    // Se a seção estiver na mesma página, apenas rola suavemente
+                    document.getElementById(targetId).scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Lógica do formulário de submissão
+        const submissionForm = document.getElementById('submissionForm');
+        const messageModal = document.getElementById('messageModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeModalButton = document.getElementById('closeModal');
+
+        submissionForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const title = document.getElementById('columnTitle').value;
+            const section = document.getElementById('columnSection').value;
+            const content = document.getElementById('columnContent').value;
+            const coverImage = document.getElementById('coverImage').value;
+
+            // Simulação de envio
+            const authorName = "Beebop"; // Simula o usuário logado
+            const authorAvatarUrl = "https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png";
+
+            let message = `Sua coluna "${title}" para a seção "${section}" foi enviada com sucesso para análise!\n\n`;
+            message += `Agradecemos sua contribuição, ${authorName}!\n\n`;
+            message += `Em uma aplicação real, esta coluna seria armazenada em um banco de dados (como Firestore) para revisão.`;
+
+            // Exibe o modal de mensagem
+            modalMessage.textContent = message;
+            messageModal.classList.remove('hidden');
+
+            // Limpa o formulário
+            submissionForm.reset();
+        });
+
+        closeModalButton.addEventListener('click', () => {
+            messageModal.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
