@@ -105,7 +105,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                   alt={`Avatar de ${user.habbo_name}`}
                   className="w-12 h-12 rounded border border-white/20"
                   onError={(e) => {
-                    const target = e.target as HTMLImageImage;
+                    const target = e.target as HTMLImageElement;
                     target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&action=std`;
                   }}
                 />
