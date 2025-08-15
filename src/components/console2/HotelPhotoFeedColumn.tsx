@@ -45,11 +45,11 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
   return (
     <>
-      <Card className="h-full flex flex-col">
+      <Card className="h-full flex flex-col bg-[#5A6573] text-white border-0 shadow-none">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Globe className="w-5 h-5 text-green-500" />
+              <Globe className="w-5 h-5 text-green-400" />
               Feed do Hotel
             </CardTitle>
             <Button
@@ -57,6 +57,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
               size="sm"
               onClick={() => refetch()}
               disabled={isLoading}
+              className="text-white/80 hover:text-white hover:bg-white/10"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -70,13 +71,13 @@ export const HotelPhotoFeedColumn: React.FC = () => {
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="animate-pulse space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-muted rounded-full" />
+                      <div className="w-10 h-10 bg-white/10 rounded-full" />
                       <div className="flex-1 space-y-1">
-                        <div className="h-3 bg-muted rounded w-24" />
-                        <div className="h-2 bg-muted rounded w-16" />
+                        <div className="h-3 bg-white/10 rounded w-24" />
+                        <div className="h-2 bg-white/10 rounded w-16" />
                       </div>
                     </div>
-                    <div className="aspect-square bg-muted rounded-lg" />
+                    <div className="aspect-square bg-white/10 rounded-lg" />
                   </div>
                 ))}
               </div>
@@ -84,12 +85,12 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
             {error && (
               <div className="text-center py-8 space-y-3">
-                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div className="text-muted-foreground">
+                <AlertCircle className="w-12 h-12 text-white/40 mx-auto" />
+                <div className="text-white/60">
                   <p className="font-medium">Erro ao carregar feed</p>
                   <p className="text-sm">{error.message}</p>
                 </div>
-                <Button variant="outline" onClick={() => refetch()}>
+                <Button variant="outline" onClick={() => refetch()} className="text-white border-white/20 hover:bg-white/10">
                   Tentar novamente
                 </Button>
               </div>
@@ -97,8 +98,8 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
             {!isLoading && !error && hotelPhotos.length === 0 && (
               <div className="text-center py-8 space-y-3">
-                <Globe className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div className="text-muted-foreground">
+                <Globe className="w-12 h-12 text-white/40 mx-auto" />
+                <div className="text-white/60">
                   <p className="font-medium">Nenhuma foto encontrada</p>
                   <p className="text-sm">Aguarde novos posts dos usuários</p>
                 </div>
@@ -114,14 +115,14 @@ export const HotelPhotoFeedColumn: React.FC = () => {
                       <img
                         src={photo.userAvatar}
                         alt={photo.userName}
-                        className="w-10 h-10 rounded-full border border-border"
+                        className="w-10 h-10 rounded-full border border-white/20"
                         onError={(e) => {
-                          e.currentTarget.src = `https://placehold.co/40x40/4B5563/FFFFFF?text=${photo.userName[0]}`;
+                          e.currentTarget.src = `https://placehold.co/40x40/5A6573/FFFFFF?text=${photo.userName[0]}`;
                         }}
                       />
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{photo.userName}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="font-medium text-sm text-white">{photo.userName}</div>
+                        <div className="text-xs text-white/60">
                           {formatTimeAgo(photo.date)}
                         </div>
                       </div>
@@ -129,7 +130,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
                     {/* Foto - largura total da coluna */}
                     <div 
-                      className="relative w-full bg-muted rounded-lg overflow-hidden cursor-pointer group"
+                      className="relative w-full bg-white/10 rounded-lg overflow-hidden cursor-pointer group"
                       style={{ aspectRatio: '1/1' }}
                       onClick={() => handlePhotoClick(photo)}
                     >
@@ -139,7 +140,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
                         className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                         loading="lazy"
                         onError={(e) => {
-                          e.currentTarget.src = `https://placehold.co/400x400/4B5563/FFFFFF?text=Foto+Não+Disponível`;
+                          e.currentTarget.src = `https://placehold.co/400x400/5A6573/FFFFFF?text=Foto+Não+Disponível`;
                         }}
                       />
                       
@@ -154,8 +155,8 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
                     {/* Footer com likes */}
                     <div className="flex items-center gap-2 text-sm">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Heart className="w-4 h-4 text-red-500" />
+                      <div className="flex items-center gap-1 text-white/60">
+                        <Heart className="w-4 h-4 text-red-400" />
                         <span>{photo.likes} curtidas</span>
                       </div>
                     </div>

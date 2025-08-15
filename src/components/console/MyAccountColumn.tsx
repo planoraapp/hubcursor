@@ -96,50 +96,37 @@ export const MyAccountColumn: React.FC = () => {
 
           {/* Social Stats - Fotos, Seguidores, Seguindo */}
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-lg font-bold text-white">{photoCount}</div>
+            <Button
+              variant="ghost"
+              className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
+            >
+              <div className="text-lg font-bold">{photoCount}</div>
               <div className="text-xs text-white/60">Fotos</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-lg font-bold text-white">0</div>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
+            >
+              <div className="text-lg font-bold">0</div>
               <div className="text-xs text-white/60">Seguidores</div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-2">
-              <div className="text-lg font-bold text-white">0</div>
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
+            >
+              <div className="text-lg font-bold">0</div>
               <div className="text-xs text-white/60">Seguindo</div>
-            </div>
+            </Button>
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-xs"
-              disabled
-            >
-              <Heart className="w-3 h-3 mr-1" />
-              Curtir
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-xs"
-              disabled
-            >
-              <Users className="w-3 h-3 mr-1" />
-              Comentar
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-xs"
-              disabled
-            >
-              <UserPlus className="w-3 h-3 mr-1" />
-              Seguir
-            </Button>
-          </div>
+          {/* Follow Button - Desabilitado para perfil próprio */}
+          <Button
+            disabled
+            className="w-full bg-white/10 hover:bg-white/20 text-white/50 cursor-not-allowed"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Seu perfil
+          </Button>
 
           {/* Complete Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
@@ -208,7 +195,7 @@ export const MyAccountColumn: React.FC = () => {
           {photosLoading && (
             <div className="text-xs text-white/60 flex items-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Carregando fotos via API...
+              Carregando fotos via API oficial...
             </div>
           )}
           

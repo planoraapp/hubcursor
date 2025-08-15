@@ -70,25 +70,34 @@ serve(async (req) => {
     const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
     const feedPhotos: HotelPhoto[] = [];
 
-    // First, try to get user's friends photos
+    // First, try to get user's friends photos using OFFICIAL API
     try {
       const userResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`);
       if (userResponse.ok) {
         const userData = await userResponse.json();
         const uniqueId = userData.uniqueId;
 
-        // Get friends
-        const friendsResponse = await fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/friends`);
+        // Get friends using OFFICIAL API
+        const friendsResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/friends`);
         if (friendsResponse.ok) {
           const friendsData = await friendsResponse.json();
           
           // Get photos from first 5 friends
           const friendPromises = friendsData.slice(0, 5).map(async (friend: any) => {
             try {
-              const friendUserResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(friend.name)}`);
-              if (friendUserResponse.ok) {
-                const friendUserData = await friendUserResponse.json();
-                const friendPhotosResponse = await fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${friendUserData.uniqueId}/photos`);
+              // Get friend's uniqueId if not available
+              let friendUniqueId = friend.uniqueId;
+              if (!friendUniqueId) {
+                const friendUserResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(friend.name)}`);
+                if (friendUserResponse.ok) {
+                  const friendUserData = await friendUserResponse.json();
+                  friendUniqueId = friendUserData.uniqueId;
+                }
+              }
+
+              if (friendUniqueId) {
+                // Use extradata for photos as it works
+                const friendPhotosResponse = await fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${friendUniqueId}/photos`);
                 
                 if (friendPhotosResponse.ok) {
                   const friendPhotos = await friendPhotosResponse.json();
@@ -96,7 +105,7 @@ serve(async (req) => {
                     id: `friend-${friend.name}-${photo.id}`,
                     imageUrl: photo.url,
                     date: new Date(photo.creationTime).toLocaleDateString('pt-BR'),
-                    likes: photo.likesCount || Math.floor(Math.random() * 50),
+                    likes: 0, // Start with 0, will reflect console interactions
                     userName: friend.name,
                     userAvatar: `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${friend.name}&direction=2&head_direction=3&size=m`
                   }));
@@ -133,7 +142,7 @@ serve(async (req) => {
               id: `popular-${userName}-${photo.id}`,
               imageUrl: photo.url,
               date: new Date(photo.creationTime).toLocaleDateString('pt-BR'),
-              likes: photo.likesCount || Math.floor(Math.random() * 100),
+              likes: 0, // Start with 0, will reflect console interactions
               userName: userName,
               userAvatar: `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${userName}&direction=2&head_direction=3&size=m`
             }));
@@ -154,7 +163,7 @@ serve(async (req) => {
     // Cache the result
     setCached(cacheKey, feedPhotos);
 
-    console.log(`[habbo-hotel-feed] ====== SUCCESS ======`);
+    console.log(`[habbo-hotel-feed] ====== SUCCESS WITH OFFICIAL API ======`);
     console.log(`[habbo-hotel-feed] Built hotel feed with ${feedPhotos.length} photos`);
 
     return new Response(JSON.stringify(feedPhotos), {

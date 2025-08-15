@@ -83,10 +83,10 @@ serve(async (req) => {
 
     const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
 
-    // Step 1: Get basic user info
+    // Step 1: Get basic user info using OFFICIAL API
     const userApiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`;
     
-    console.log(`[habbo-complete-profile] Fetching user data...`);
+    console.log(`[habbo-complete-profile] Fetching user data from official API...`);
     
     const userResponse = await fetch(userApiUrl, {
       headers: {
@@ -108,37 +108,37 @@ serve(async (req) => {
 
     console.log(`[habbo-complete-profile] Found uniqueId: ${uniqueId}`);
 
-    // Step 2: Fetch all data in parallel
+    // Step 2: Fetch all data in parallel using OFFICIAL API endpoints
     const promises = [
-      // Photos
+      // Photos - using extradata as it works for photos
       fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/photos`, {
         headers: { 'Accept': 'application/json' }
       }).then(res => res.ok ? res.json() : []).catch(() => []),
       
-      // Badges
-      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/badges`, {
+      // Badges - using OFFICIAL API
+      fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/badges`, {
         headers: { 'Accept': 'application/json' }
       }).then(res => res.ok ? res.json() : []).catch(() => []),
 
-      // Friends
-      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/friends`, {
+      // Friends - using OFFICIAL API
+      fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/friends`, {
         headers: { 'Accept': 'application/json' }
       }).then(res => res.ok ? res.json() : []).catch(() => []),
 
-      // Groups
-      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/groups`, {
+      // Groups - using OFFICIAL API
+      fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/groups`, {
         headers: { 'Accept': 'application/json' }
       }).then(res => res.ok ? res.json() : []).catch(() => []),
 
-      // Rooms
-      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/rooms`, {
+      // Rooms - using OFFICIAL API
+      fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/rooms`, {
         headers: { 'Accept': 'application/json' }
       }).then(res => res.ok ? res.json() : []).catch(() => [])
     ];
 
     const [photosData, badgesData, friendsData, groupsData, roomsData] = await Promise.all(promises);
 
-    console.log(`[habbo-complete-profile] Fetched data: ${photosData.length} photos, ${badgesData.length} badges, ${friendsData.length} friends, ${groupsData.length} groups, ${roomsData.length} rooms`);
+    console.log(`[habbo-complete-profile] Fetched data using OFFICIAL API: ${photosData.length} photos, ${badgesData.length} badges, ${friendsData.length} friends, ${groupsData.length} groups, ${roomsData.length} rooms`);
 
     // Step 3: Build complete profile
     const completeProfile: CompleteProfile = {
@@ -156,7 +156,7 @@ serve(async (req) => {
         previewUrl: photo.url,
         timestamp: photo.creationTime,
         roomName: photo.roomName || 'Quarto do jogo',
-        likesCount: photo.likesCount || 0
+        likesCount: 0 // Start with 0 likes, will reflect console interactions
       })),
       badges: badgesData,
       selectedBadges: userData.selectedBadges || [],
@@ -164,8 +164,8 @@ serve(async (req) => {
       groups: groupsData,
       rooms: roomsData,
       stats: {
-        level: userData.starGems || 0,
-        levelPercent: 0,
+        level: userData.starGemCount || userData.currentLevel || 0,
+        levelPercent: userData.currentLevelCompletePercent || 0,
         photosCount: photosData.length,
         badgesCount: badgesData.length,
         friendsCount: friendsData.length,
@@ -177,7 +177,7 @@ serve(async (req) => {
     // Cache the result
     setCached(cacheKey, completeProfile);
 
-    console.log(`[habbo-complete-profile] ====== SUCCESS ======`);
+    console.log(`[habbo-complete-profile] ====== SUCCESS WITH OFFICIAL API ======`);
     console.log(`[habbo-complete-profile] Complete profile built for ${username}`);
 
     return new Response(JSON.stringify(completeProfile), {

@@ -1,32 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
-import { OptimizedHotelFeedColumn } from '@/components/console2/OptimizedHotelFeedColumn';
-import { OptimizedUserDiscoveryColumn } from '@/components/console2/OptimizedUserDiscoveryColumn';
+import { HotelPhotoFeedColumn } from '@/components/console2/HotelPhotoFeedColumn';
+import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 const Console: React.FC = () => {
   const [activeSection, setActiveSection] = useState('console');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isLoggedIn } = useUnifiedAuth();
 
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1a365d] via-[#2d3748] to-[#1a202c] flex">
-        <CollapsibleSidebar 
-          activeSection={activeSection} 
-          setActiveSection={setActiveSection} 
-        />
-        
-        <div className="flex-1 ml-64 p-6 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h2 className="text-2xl font-bold mb-4">Console do Habbo</h2>
-            <p className="text-white/70">Faça login para acessar o console</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const handleSidebarChange = (event: CustomEvent) => {
+      setSidebarCollapsed(event.detail.isCollapsed);
+    };
+
+    window.addEventListener('sidebarStateChange', handleSidebarChange as EventListener);
+    return () => {
+      window.removeEventListener('sidebarStateChange', handleSidebarChange as EventListener);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a365d] via-[#2d3748] to-[#1a202c] flex">
@@ -35,7 +29,9 @@ const Console: React.FC = () => {
         setActiveSection={setActiveSection} 
       />
       
-      <div className="flex-1 ml-64 p-6">
+      <div className={`flex-1 transition-all duration-300 ${
+        sidebarCollapsed ? 'ml-20' : 'ml-64'
+      } p-6`}>
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">Console do Habbo</h1>
           <p className="text-white/70">Gerencie sua experiência no HabboHub</p>
@@ -49,12 +45,12 @@ const Console: React.FC = () => {
 
           {/* Center Column - Hotel Feed */}
           <div className="xl:col-span-1">
-            <OptimizedHotelFeedColumn />
+            <HotelPhotoFeedColumn />
           </div>
 
           {/* Right Column - User Discovery */}
           <div className="xl:col-span-1">
-            <OptimizedUserDiscoveryColumn />
+            <UserSearchColumn />
           </div>
         </div>
       </div>
