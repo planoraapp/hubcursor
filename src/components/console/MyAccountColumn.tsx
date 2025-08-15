@@ -3,10 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Camera, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
+import { User, Camera, RefreshCw, Loader2, AlertCircle, Trophy, Users, Home, Crown, Star, Activity } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
-import { PhotosDebugPanel } from './PhotosDebugPanel';
+import { useCompleteProfile } from '@/hooks/useCompleteProfile';
+import { PhotoGrid } from './PhotoGrid';
 
 export const MyAccountColumn: React.FC = () => {
   const { isLoggedIn, habboAccount, myProfile, isLoading } = useMyConsoleProfile();
@@ -22,6 +23,11 @@ export const MyAccountColumn: React.FC = () => {
   } = useOptimizedPhotos(
     habboAccount?.habbo_name,
     (habboAccount as any)?.hotel || 'br'
+  );
+
+  const { data: completeProfile } = useCompleteProfile(
+    habboAccount?.habbo_name || '',
+    (habboAccount as any)?.hotel === 'br' ? 'com.br' : (habboAccount as any)?.hotel || 'com.br'
   );
 
   if (!isLoggedIn || !habboAccount) {
@@ -44,6 +50,14 @@ export const MyAccountColumn: React.FC = () => {
       console.error('[❌ MY ACCOUNT] Photo refresh failed:', error);
     }
   };
+
+  // Mapear fotos para o formato do PhotoGrid
+  const photoGridData = photos.map(photo => ({
+    id: photo.id,
+    imageUrl: photo.imageUrl,
+    date: photo.date || new Date().toLocaleDateString('pt-BR'),
+    likes: photo.likes || 0
+  }));
 
   return (
     <div className="space-y-4 h-full overflow-y-auto">
@@ -75,35 +89,59 @@ export const MyAccountColumn: React.FC = () => {
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-white truncate">{habboAccount.habbo_name}</h3>
               <p className="text-white/60 text-sm">
-                {myProfile?.motto || 'Sem motto definido'}
+                {myProfile?.motto || completeProfile?.motto || 'Sem motto definido'}
               </p>
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Stats Grid - 2 colunas */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="text-center">
+            <div className="bg-white/10 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Camera className="w-4 h-4 text-blue-400" />
+                <Trophy className="w-4 h-4 text-yellow-400" />
+              </div>
               <div className="text-lg font-bold text-white">{photoCount}</div>
               <div className="text-xs text-white/60">Fotos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-white">
-                {myProfile?.selectedBadges?.length || 0}
-              </div>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
               <div className="text-xs text-white/60">Emblemas</div>
             </div>
-          </div>
 
-          {/* Photo Actions */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-white/80">Suas Fotos</span>
+            <div className="bg-white/10 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Home className="w-4 h-4 text-green-400" />
+                <Crown className="w-4 h-4 text-purple-400" />
+              </div>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
+              <div className="text-xs text-white/60">Quartos</div>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
+              <div className="text-xs text-white/60">Grupos</div>
+            </div>
+
+            <div className="bg-white/10 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Users className="w-4 h-4 text-pink-400" />
+                <Star className="w-4 h-4 text-orange-400" />
+              </div>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
+              <div className="text-xs text-white/60">Amigos</div>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.level || 0}</div>
+              <div className="text-xs text-white/60">Nível</div>
+            </div>
+
+            <div className="bg-white/10 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Activity className="w-4 h-4 text-red-400" />
+                <RefreshCw className="w-4 h-4 text-cyan-400" />
+              </div>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.habboTickerCount || 0}</div>
+              <div className="text-xs text-white/60">Atividades</div>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={handleRefreshPhotos}
                 disabled={photosLoading}
-                className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10"
+                className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 mt-1"
               >
                 {photosLoading ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -112,79 +150,50 @@ export const MyAccountColumn: React.FC = () => {
                 )}
               </Button>
             </div>
-            
-            {/* Loading State */}
-            {photosLoading && (
-              <div className="text-xs text-white/60 flex items-center gap-2">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Carregando fotos via API...
-              </div>
-            )}
-            
-            {/* Error State */}
-            {photosError && (
-              <div className="space-y-2">
-                <div className="text-xs text-red-300 flex items-center gap-2">
-                  <AlertCircle className="w-3 h-3" />
-                  {errorMessage}
-                </div>
-                {canRetry && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={retryLoadPhotos}
-                    className="h-6 px-2 text-xs text-white/80 hover:text-white hover:bg-white/10"
-                  >
-                    Tentar novamente
-                  </Button>
-                )}
-              </div>
-            )}
-            
-            {/* Empty State */}
-            {!photosLoading && !photosError && photoCount === 0 && (
-              <div className="text-xs text-white/60 flex items-center gap-2">
-                <Camera className="w-3 h-3" />
-                Nenhuma foto encontrada
-              </div>
-            )}
           </div>
 
-          {/* Recent Photos Preview */}
-          {photos.length > 0 && (
+          {/* Loading/Error States */}
+          {photosLoading && (
+            <div className="text-xs text-white/60 flex items-center gap-2">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Carregando fotos via API...
+            </div>
+          )}
+          
+          {photosError && (
             <div className="space-y-2">
-              <span className="text-sm text-white/80">Fotos Recentes (API)</span>
-              <div className="grid grid-cols-3 gap-1">
-                {photos.slice(0, 3).map((photo, index) => (
-                  <div key={photo.id || index} className="aspect-square">
-                    <img
-                      src={photo.imageUrl}
-                      alt={`Foto ${index + 1}`}
-                      className="w-full h-full object-cover rounded border border-white/20"
-                      loading="lazy"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ))}
+              <div className="text-xs text-red-300 flex items-center gap-2">
+                <AlertCircle className="w-3 h-3" />
+                {errorMessage}
               </div>
-              {photos.length > 3 && (
-                <p className="text-xs text-white/60 text-center">
-                  +{photos.length - 3} fotos adicionais
-                </p>
+              {canRetry && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={retryLoadPhotos}
+                  className="h-6 px-2 text-xs text-white/80 hover:text-white hover:bg-white/10"
+                >
+                  Tentar novamente
+                </Button>
               )}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Debug Panel */}
-      <PhotosDebugPanel 
-        username={habboAccount.habbo_name}
-        hotel={(habboAccount as any)?.hotel || 'br'}
-      />
+      {/* Photos Grid */}
+      {photos.length > 0 && (
+        <Card className="bg-[#5A6573] text-white border-0 shadow-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-white/80">
+              Suas Fotos ({photos.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PhotoGrid photos={photoGridData} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
