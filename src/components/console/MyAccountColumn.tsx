@@ -3,14 +3,23 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Camera, RefreshCw, Loader2 } from 'lucide-react';
+import { User, Camera, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
-import { usePhotosScraped } from '@/hooks/usePhotosScraped';
+import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
 import { PhotosDebugPanel } from './PhotosDebugPanel';
 
 export const MyAccountColumn: React.FC = () => {
   const { isLoggedIn, habboAccount, myProfile, isLoading } = useMyConsoleProfile();
-  const { scrapedPhotos, isLoading: photosLoading, refreshPhotos, photoCount } = usePhotosScraped(
+  const { 
+    photos, 
+    photoCount, 
+    isLoading: photosLoading, 
+    hasError: photosError,
+    errorMessage,
+    refreshPhotos,
+    canRetry,
+    retryLoadPhotos
+  } = useOptimizedPhotos(
     habboAccount?.habbo_name,
     (habboAccount as any)?.hotel || 'br'
   );
@@ -104,14 +113,36 @@ export const MyAccountColumn: React.FC = () => {
               </Button>
             </div>
             
+            {/* Loading State */}
             {photosLoading && (
               <div className="text-xs text-white/60 flex items-center gap-2">
                 <Loader2 className="w-3 h-3 animate-spin" />
-                Carregando fotos...
+                Carregando fotos via API...
               </div>
             )}
             
-            {!photosLoading && photoCount === 0 && (
+            {/* Error State */}
+            {photosError && (
+              <div className="space-y-2">
+                <div className="text-xs text-red-300 flex items-center gap-2">
+                  <AlertCircle className="w-3 h-3" />
+                  {errorMessage}
+                </div>
+                {canRetry && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={retryLoadPhotos}
+                    className="h-6 px-2 text-xs text-white/80 hover:text-white hover:bg-white/10"
+                  >
+                    Tentar novamente
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {/* Empty State */}
+            {!photosLoading && !photosError && photoCount === 0 && (
               <div className="text-xs text-white/60 flex items-center gap-2">
                 <Camera className="w-3 h-3" />
                 Nenhuma foto encontrada
@@ -120,16 +151,17 @@ export const MyAccountColumn: React.FC = () => {
           </div>
 
           {/* Recent Photos Preview */}
-          {scrapedPhotos.length > 0 && (
+          {photos.length > 0 && (
             <div className="space-y-2">
-              <span className="text-sm text-white/80">Fotos Recentes</span>
+              <span className="text-sm text-white/80">Fotos Recentes (API)</span>
               <div className="grid grid-cols-3 gap-1">
-                {scrapedPhotos.slice(0, 3).map((photo, index) => (
+                {photos.slice(0, 3).map((photo, index) => (
                   <div key={photo.id || index} className="aspect-square">
                     <img
                       src={photo.imageUrl}
                       alt={`Foto ${index + 1}`}
                       className="w-full h-full object-cover rounded border border-white/20"
+                      loading="lazy"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -138,9 +170,9 @@ export const MyAccountColumn: React.FC = () => {
                   </div>
                 ))}
               </div>
-              {scrapedPhotos.length > 3 && (
+              {photos.length > 3 && (
                 <p className="text-xs text-white/60 text-center">
-                  +{scrapedPhotos.length - 3} fotos adicionais
+                  +{photos.length - 3} fotos adicionais
                 </p>
               )}
             </div>

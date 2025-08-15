@@ -39,11 +39,11 @@ export interface CompleteProfile {
 
 export const useCompleteProfile = (username: string, hotel: string = 'com.br') => {
   return useQuery({
-    queryKey: ['complete-profile', username, hotel],
+    queryKey: ['complete-profile-optimized', username, hotel],
     queryFn: async (): Promise<CompleteProfile> => {
       if (!username) throw new Error('Username is required');
       
-      console.log(`[🚀 COMPLETE PROFILE] Fetching complete profile for ${username} on ${hotel}`);
+      console.log(`[🚀 COMPLETE PROFILE] Fetching optimized profile for ${username} on ${hotel}`);
       
       const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
         body: { username: username.trim(), hotel }
@@ -59,18 +59,46 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         throw new Error(data.error);
       }
 
-      console.log(`[✅ COMPLETE PROFILE] Successfully fetched profile for ${username}`);
+      console.log(`[✅ COMPLETE PROFILE] Successfully fetched optimized profile for ${username}`);
       console.log(`[📊 COMPLETE PROFILE] Profile stats:`, {
-        level: data.stats?.level,
-        badges: data.stats?.badgesCount,
-        friends: data.stats?.friendsCount,
-        photos: data.stats?.photosCount
+        photos: data.stats?.photosCount || 0,
+        badges: data.stats?.badgesCount || 0,
+        online: data.online
       });
 
-      return data;
+      return {
+        uniqueId: data.uniqueId,
+        name: data.name,
+        figureString: data.figureString,
+        motto: data.motto,
+        online: data.online,
+        lastAccessTime: data.lastAccessTime,
+        memberSince: data.memberSince,
+        profileVisible: data.profileVisible,
+        stats: {
+          level: data.stats?.level || 0,
+          levelPercent: data.stats?.levelPercent || 0,
+          experience: 0,
+          starGems: data.stats?.level || 0,
+          badgesCount: data.stats?.badgesCount || 0,
+          friendsCount: 0,
+          groupsCount: 0,
+          roomsCount: 0,
+          photosCount: data.stats?.photosCount || 0,
+          habboTickerCount: 0
+        },
+        data: {
+          badges: data.badges || [],
+          friends: [],
+          groups: [],
+          rooms: [],
+          photos: data.photos || [],
+          selectedBadges: data.selectedBadges || []
+        }
+      };
     },
     enabled: !!username,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - optimized for API calls
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
   });
