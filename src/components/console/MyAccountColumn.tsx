@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Camera, RefreshCw, Loader2, AlertCircle, Trophy, Users, Home, Crown, Star, Activity } from 'lucide-react';
+import { User, Camera, RefreshCw, Loader2, AlertCircle, Trophy, Users, Home, Crown, Star, Activity, Heart, UserPlus } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
@@ -60,18 +60,18 @@ export const MyAccountColumn: React.FC = () => {
   }));
 
   return (
-    <div className="space-y-4 h-full overflow-y-auto">
-      {/* Profile Card */}
-      <Card className="bg-[#5A6573] text-white border-0 shadow-none">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between text-lg">
-            <span>Minha Conta</span>
-            <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
-              Online
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-lg">
+          <span>Minha Conta</span>
+          <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
+            Online
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="flex-1 min-h-0">
+        <div className="h-full overflow-y-auto space-y-4">
           {/* Avatar and Basic Info */}
           <div className="flex items-center gap-3">
             <div className="relative">
@@ -94,15 +94,59 @@ export const MyAccountColumn: React.FC = () => {
             </div>
           </div>
 
-          {/* Stats Grid - 2 colunas */}
+          {/* Social Stats - Fotos, Seguidores, Seguindo */}
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-white/10 rounded-lg p-2">
+              <div className="text-lg font-bold text-white">{photoCount}</div>
+              <div className="text-xs text-white/60">Fotos</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2">
+              <div className="text-lg font-bold text-white">0</div>
+              <div className="text-xs text-white/60">Seguidores</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2">
+              <div className="text-lg font-bold text-white">0</div>
+              <div className="text-xs text-white/60">Seguindo</div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-xs"
+              disabled
+            >
+              <Heart className="w-3 h-3 mr-1" />
+              Curtir
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-xs"
+              disabled
+            >
+              <Users className="w-3 h-3 mr-1" />
+              Comentar
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-white/80 hover:text-white hover:bg-white/10 h-8 text-xs"
+              disabled
+            >
+              <UserPlus className="w-3 h-3 mr-1" />
+              Seguir
+            </Button>
+          </div>
+
+          {/* Complete Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-white/10 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Camera className="w-4 h-4 text-blue-400" />
                 <Trophy className="w-4 h-4 text-yellow-400" />
               </div>
-              <div className="text-lg font-bold text-white">{photoCount}</div>
-              <div className="text-xs text-white/60">Fotos</div>
               <div className="text-lg font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
               <div className="text-xs text-white/60">Emblemas</div>
             </div>
@@ -110,47 +154,55 @@ export const MyAccountColumn: React.FC = () => {
             <div className="bg-white/10 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Home className="w-4 h-4 text-green-400" />
-                <Crown className="w-4 h-4 text-purple-400" />
               </div>
               <div className="text-lg font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
               <div className="text-xs text-white/60">Quartos</div>
-              <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
-              <div className="text-xs text-white/60">Grupos</div>
             </div>
 
             <div className="bg-white/10 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Users className="w-4 h-4 text-pink-400" />
-                <Star className="w-4 h-4 text-orange-400" />
               </div>
               <div className="text-lg font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
               <div className="text-xs text-white/60">Amigos</div>
-              <div className="text-lg font-bold text-white">{completeProfile?.stats.level || 0}</div>
-              <div className="text-xs text-white/60">Nível</div>
             </div>
 
             <div className="bg-white/10 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Activity className="w-4 h-4 text-red-400" />
-                <RefreshCw className="w-4 h-4 text-cyan-400" />
+                <Crown className="w-4 h-4 text-purple-400" />
               </div>
-              <div className="text-lg font-bold text-white">{completeProfile?.stats.habboTickerCount || 0}</div>
-              <div className="text-xs text-white/60">Atividades</div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleRefreshPhotos}
-                disabled={photosLoading}
-                className="h-7 px-2 text-white/80 hover:text-white hover:bg-white/10 mt-1"
-              >
-                {photosLoading ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-3 h-3" />
-                )}
-              </Button>
+              <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
+              <div className="text-xs text-white/60">Grupos</div>
             </div>
           </div>
+
+          {/* Refresh Button */}
+          <div className="flex justify-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleRefreshPhotos}
+              disabled={photosLoading}
+              className="text-white/80 hover:text-white hover:bg-white/10"
+            >
+              {photosLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Atualizar Fotos
+            </Button>
+          </div>
+
+          {/* Photos Grid */}
+          {photos.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-white/80 mb-3">
+                Suas Fotos ({photos.length})
+              </h4>
+              <PhotoGrid photos={photoGridData} />
+            </div>
+          )}
 
           {/* Loading/Error States */}
           {photosLoading && (
@@ -178,22 +230,8 @@ export const MyAccountColumn: React.FC = () => {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Photos Grid */}
-      {photos.length > 0 && (
-        <Card className="bg-[#5A6573] text-white border-0 shadow-none">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-white/80">
-              Suas Fotos ({photos.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <PhotoGrid photos={photoGridData} />
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

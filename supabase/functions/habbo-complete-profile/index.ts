@@ -18,11 +18,17 @@ interface CompleteProfile {
   photos: any[];
   badges: any[];
   selectedBadges: any[];
+  friends: any[];
+  groups: any[];
+  rooms: any[];
   stats: {
     level: number;
     levelPercent: number;
     photosCount: number;
     badgesCount: number;
+    friendsCount: number;
+    groupsCount: number;
+    roomsCount: number;
   };
 }
 
@@ -102,7 +108,7 @@ serve(async (req) => {
 
     console.log(`[habbo-complete-profile] Found uniqueId: ${uniqueId}`);
 
-    // Step 2: Fetch photos, badges, and other data in parallel
+    // Step 2: Fetch all data in parallel
     const promises = [
       // Photos
       fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/photos`, {
@@ -112,12 +118,27 @@ serve(async (req) => {
       // Badges
       fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/badges`, {
         headers: { 'Accept': 'application/json' }
+      }).then(res => res.ok ? res.json() : []).catch(() => []),
+
+      // Friends
+      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/friends`, {
+        headers: { 'Accept': 'application/json' }
+      }).then(res => res.ok ? res.json() : []).catch(() => []),
+
+      // Groups
+      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/groups`, {
+        headers: { 'Accept': 'application/json' }
+      }).then(res => res.ok ? res.json() : []).catch(() => []),
+
+      // Rooms
+      fetch(`https://www.habbo.${hotelDomain}/extradata/public/users/${uniqueId}/rooms`, {
+        headers: { 'Accept': 'application/json' }
       }).then(res => res.ok ? res.json() : []).catch(() => [])
     ];
 
-    const [photosData, badgesData] = await Promise.all(promises);
+    const [photosData, badgesData, friendsData, groupsData, roomsData] = await Promise.all(promises);
 
-    console.log(`[habbo-complete-profile] Fetched ${photosData.length} photos and ${badgesData.length} badges`);
+    console.log(`[habbo-complete-profile] Fetched data: ${photosData.length} photos, ${badgesData.length} badges, ${friendsData.length} friends, ${groupsData.length} groups, ${roomsData.length} rooms`);
 
     // Step 3: Build complete profile
     const completeProfile: CompleteProfile = {
@@ -139,11 +160,17 @@ serve(async (req) => {
       })),
       badges: badgesData,
       selectedBadges: userData.selectedBadges || [],
+      friends: friendsData,
+      groups: groupsData,
+      rooms: roomsData,
       stats: {
         level: userData.starGems || 0,
         levelPercent: 0,
         photosCount: photosData.length,
-        badgesCount: badgesData.length
+        badgesCount: badgesData.length,
+        friendsCount: friendsData.length,
+        groupsCount: groupsData.length,
+        roomsCount: roomsData.length
       }
     };
 
