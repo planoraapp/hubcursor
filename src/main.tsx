@@ -12,7 +12,6 @@ import { MarketplaceProvider } from './contexts/MarketplaceContext';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Console from './pages/Console';
-import { Console2 } from './pages/Console2';
 import NotFound from './pages/NotFound';
 import Index from './pages/Index';
 import Homes from './pages/Homes';
@@ -50,10 +49,6 @@ const router = createBrowserRouter([
   {
     path: "/console",
     element: <Console />,
-  },
-  {
-    path: "/console2", 
-    element: <Console2 />,
   },
   {
     path: "/homes",
