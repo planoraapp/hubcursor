@@ -1,222 +1,182 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Camera, RefreshCw, Loader2, AlertCircle, Trophy, Users, Home, Crown, Star, Activity, Heart, UserPlus } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Trophy, Users, Home, Crown, Camera } from 'lucide-react';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
-import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
-import { useCompleteProfile } from '@/hooks/useCompleteProfile';
-import { PhotoGrid } from './PhotoGrid';
+import { BadgesModal } from './modals/BadgesModal';
+import { FriendsModal } from './modals/FriendsModal';
+import { RoomsModal } from './modals/RoomsModal';
+import { GroupsModal } from './modals/GroupsModal';
 
 export const MyAccountColumn: React.FC = () => {
-  const { isLoggedIn, habboAccount, myProfile, isLoading } = useMyConsoleProfile();
-  const { 
-    photos, 
-    photoCount, 
-    isLoading: photosLoading, 
-    hasError: photosError,
-    errorMessage,
-    refreshPhotos,
-    canRetry,
-    retryLoadPhotos
-  } = useOptimizedPhotos(
-    habboAccount?.habbo_name,
-    (habboAccount as any)?.hotel || 'br'
-  );
+  const { isLoggedIn, habboAccount, myProfile, photos, isLoading } = useMyConsoleProfile();
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
-  const { data: completeProfile } = useCompleteProfile(
-    habboAccount?.habbo_name || '',
-    (habboAccount as any)?.hotel === 'br' ? 'com.br' : (habboAccount as any)?.hotel || 'com.br'
-  );
-
-  if (!isLoggedIn || !habboAccount) {
+  if (isLoading) {
     return (
-      <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full">
-        <CardContent className="p-6 text-center">
-          <User className="w-12 h-12 text-white/50 mx-auto mb-4" />
-          <p className="text-white/80">Faça login para ver seu perfil</p>
+      <Card className="bg-gray-800/50 border-gray-700 h-full">
+        <CardContent className="flex items-center justify-center h-full">
+          <p className="text-gray-400">Carregando...</p>
         </CardContent>
       </Card>
     );
   }
 
-  const handleRefreshPhotos = async () => {
-    console.log('%c[🔄 MY ACCOUNT] Manual photo refresh initiated', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;');
-    try {
-      await refreshPhotos();
-      console.log('[✅ MY ACCOUNT] Photo refresh completed');
-    } catch (error) {
-      console.error('[❌ MY ACCOUNT] Photo refresh failed:', error);
-    }
+  if (!isLoggedIn || !habboAccount) {
+    return (
+      <Card className="bg-gray-800/50 border-gray-700 h-full">
+        <CardContent className="flex items-center justify-center h-full">
+          <p className="text-gray-400">Faça login para ver seu perfil</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const stats = {
+    badgesCount: myProfile?.selectedBadges?.length || 0,
+    photosCount: photos.length,
+    friendsCount: myProfile?.friendsCount || 0,
+    roomsCount: myProfile?.roomsCount || 0,
+    groupsCount: myProfile?.groupsCount || 0,
   };
 
-  // Mapear fotos para o formato do PhotoGrid
-  const photoGridData = photos.map(photo => ({
-    id: photo.id,
-    imageUrl: photo.imageUrl,
-    date: photo.date || new Date().toLocaleDateString('pt-BR'),
-    likes: photo.likes || 0
-  }));
-
   return (
-    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-3 flex-shrink-0">
-        <CardTitle className="flex items-center justify-between text-lg">
-          <span>Minha Conta</span>
-          <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
-            Online
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4">
-        {/* Avatar and Basic Info */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <img
-              src={`https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&direction=2&head_direction=3&size=m&action=std`}
-              alt={`Avatar de ${habboAccount.habbo_name}`}
-              className="w-12 h-12 rounded-full bg-white/10"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&action=std`;
-              }}
-            />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#5A6573] rounded-full"></div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-white truncate">{habboAccount.habbo_name}</h3>
-            <p className="text-white/60 text-sm">
-              {myProfile?.motto || completeProfile?.motto || 'Sem motto definido'}
-            </p>
-          </div>
-        </div>
-
-        {/* Social Stats - Fotos, Seguidores, Seguindo */}
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Button
-            variant="ghost"
-            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
-          >
-            <div className="text-lg font-bold">{photoCount}</div>
-            <div className="text-xs text-white/60">Fotos</div>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
-          >
-            <div className="text-lg font-bold">0</div>
-            <div className="text-xs text-white/60">Seguidores</div>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
-          >
-            <div className="text-lg font-bold">0</div>
-            <div className="text-xs text-white/60">Seguindo</div>
-          </Button>
-        </div>
-
-        {/* Follow Button - Desabilitado para perfil próprio */}
-        <Button
-          disabled
-          className="w-full bg-white/10 hover:bg-white/20 text-white/50 cursor-not-allowed"
-        >
-          <UserPlus className="w-4 h-4 mr-2" />
-          Seu perfil
-        </Button>
-
-        {/* Complete Stats Grid - DADOS CORRETOS */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/10 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Trophy className="w-4 h-4 text-yellow-400" />
-            </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
-            <div className="text-xs text-white/60">Emblemas</div>
-          </div>
-
-          <div className="bg-white/10 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Home className="w-4 h-4 text-green-400" />
-            </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
-            <div className="text-xs text-white/60">Quartos</div>
-          </div>
-
-          <div className="bg-white/10 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Users className="w-4 h-4 text-pink-400" />
-            </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
-            <div className="text-xs text-white/60">Amigos</div>
-          </div>
-
-          <div className="bg-white/10 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Crown className="w-4 h-4 text-purple-400" />
-            </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
-            <div className="text-xs text-white/60">Grupos</div>
-          </div>
-        </div>
-
-        {/* Refresh Button */}
-        <div className="flex justify-center">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleRefreshPhotos}
-            disabled={photosLoading}
-            className="text-white/80 hover:text-white hover:bg-white/10"
-          >
-            {photosLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <RefreshCw className="w-4 h-4 mr-2" />
-            )}
-            Atualizar Fotos
-          </Button>
-        </div>
-
-        {/* Photos Grid */}
-        {photos.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">
-              Suas Fotos ({photos.length})
-            </h4>
-            <PhotoGrid photos={photoGridData} />
-          </div>
-        )}
-
-        {/* Loading/Error States */}
-        {photosLoading && (
-          <div className="text-xs text-white/60 flex items-center gap-2">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Carregando fotos via API oficial...
-          </div>
-        )}
+    <>
+      <Card className="bg-gray-800/50 border-gray-700 h-full">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Users className="w-5 h-5" />
+            Minha Conta
+          </CardTitle>
+        </CardHeader>
         
-        {photosError && (
-          <div className="space-y-2">
-            <div className="text-xs text-red-300 flex items-center gap-2">
-              <AlertCircle className="w-3 h-3" />
-              {errorMessage}
+        <CardContent className="space-y-4">
+          {/* Profile Info */}
+          <div className="flex items-center gap-4">
+            <Avatar className="w-14 h-14 border-2 border-gray-600">
+              <AvatarImage 
+                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${myProfile?.figureString}&size=l&direction=2&head_direction=3&action=std`}
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <AvatarFallback className="bg-gray-600 text-white">
+                {habboAccount.habbo_name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-white truncate">{habboAccount.habbo_name}</h3>
+              <p className="text-xs text-gray-400 truncate italic">
+                "{myProfile?.motto || 'Sem motto'}"
+              </p>
+              <Badge className={myProfile?.online ? 'bg-green-600' : 'bg-red-600'}>
+                {myProfile?.online ? 'Online' : 'Offline'}
+              </Badge>
             </div>
-            {canRetry && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={retryLoadPhotos}
-                className="h-6 px-2 text-xs text-white/80 hover:text-white hover:bg-white/10"
-              >
-                Tentar novamente
-              </Button>
+          </div>
+
+          {/* Stats Grid - Updated with click handlers */}
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center p-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600 text-white h-auto"
+              onClick={() => setActiveModal('badges')}
+            >
+              <Trophy className="w-5 h-5 text-yellow-400 mb-1" />
+              <span className="text-lg font-bold">{stats.badgesCount}</span>
+              <span className="text-xs text-gray-400">Emblemas</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center p-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600 text-white h-auto"
+              onClick={() => setActiveModal('friends')}
+            >
+              <Users className="w-5 h-5 text-blue-400 mb-1" />
+              <span className="text-lg font-bold">{stats.friendsCount}</span>
+              <span className="text-xs text-gray-400">Amigos</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center p-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600 text-white h-auto"
+              onClick={() => setActiveModal('rooms')}
+            >
+              <Home className="w-5 h-5 text-purple-400 mb-1" />
+              <span className="text-lg font-bold">{stats.roomsCount}</span>
+              <span className="text-xs text-gray-400">Quartos</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center p-3 bg-gray-700/50 hover:bg-gray-600/50 border border-gray-600 text-white h-auto"
+              onClick={() => setActiveModal('groups')}
+            >
+              <Crown className="w-5 h-5 text-orange-400 mb-1" />
+              <span className="text-lg font-bold">{stats.groupsCount}</span>
+              <span className="text-xs text-gray-400">Grupos</span>
+            </Button>
+          </div>
+
+          {/* Recent Photos */}
+          <div>
+            <h4 className="mb-2 text-sm font-medium text-white">
+              Fotos Recentes
+            </h4>
+            {photos.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {photos.slice(0, 3).map((photo) => (
+                  <img
+                    key={photo.id}
+                    src={photo.url}
+                    alt="Foto do Habbo"
+                    className="w-full aspect-square object-cover rounded border border-gray-600"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <Camera className="w-6 h-6 mx-auto mb-1 text-gray-500" />
+                <p className="text-xs text-gray-400">Nenhuma foto encontrada</p>
+              </div>
             )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <BadgesModal
+        isOpen={activeModal === 'badges'}
+        onClose={() => setActiveModal(null)}
+        badges={myProfile?.selectedBadges || []}
+        userName={habboAccount?.habbo_name || ''}
+      />
+      
+      <FriendsModal
+        isOpen={activeModal === 'friends'}
+        onClose={() => setActiveModal(null)}
+        friends={[]} // TODO: Add friends data when available
+        userName={habboAccount?.habbo_name || ''}
+      />
+      
+      <RoomsModal
+        isOpen={activeModal === 'rooms'}
+        onClose={() => setActiveModal(null)}
+        rooms={[]} // TODO: Add rooms data when available
+        userName={habboAccount?.habbo_name || ''}
+      />
+      
+      <GroupsModal
+        isOpen={activeModal === 'groups'}
+        onClose={() => setActiveModal(null)}
+        groups={[]} // TODO: Add groups data when available
+        userName={habboAccount?.habbo_name || ''}
+      />
+    </>
   );
 };
