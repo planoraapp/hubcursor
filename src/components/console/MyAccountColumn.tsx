@@ -1,175 +1,222 @@
 
-import React, { useState } from 'react';
-import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Settings, 
-  MapPin, 
-  Calendar, 
-  Star,
-  Trophy,
-  Users,
-  Crown,
-  Home,
-  Activity
-} from 'lucide-react';
-import { ProfileStatsGrid } from '../profile/ProfileStatsGrid';
-import { SocialInteractionButtons } from './SocialInteractionButtons';
+import { Button } from '@/components/ui/button';
+import { User, Camera, RefreshCw, Loader2, AlertCircle, Trophy, Users, Home, Crown, Star, Activity, Heart, UserPlus } from 'lucide-react';
+import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
+import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
+import { useCompleteProfile } from '@/hooks/useCompleteProfile';
+import { PhotoGrid } from './PhotoGrid';
 
-export const MyAccountColumn = () => {
-  const { myProfile, photos, isLoading, habboAccount } = useMyConsoleProfile();
+export const MyAccountColumn: React.FC = () => {
+  const { isLoggedIn, habboAccount, myProfile, isLoading } = useMyConsoleProfile();
+  const { 
+    photos, 
+    photoCount, 
+    isLoading: photosLoading, 
+    hasError: photosError,
+    errorMessage,
+    refreshPhotos,
+    canRetry,
+    retryLoadPhotos
+  } = useOptimizedPhotos(
+    habboAccount?.habbo_name,
+    (habboAccount as any)?.hotel || 'br'
+  );
 
-  if (isLoading) {
+  const { data: completeProfile } = useCompleteProfile(
+    habboAccount?.habbo_name || '',
+    (habboAccount as any)?.hotel === 'br' ? 'com.br' : (habboAccount as any)?.hotel || 'com.br'
+  );
+
+  if (!isLoggedIn || !habboAccount) {
     return (
-      <div className="w-full max-w-sm mx-auto bg-background p-4 space-y-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-muted rounded-lg"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
+      <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full">
+        <CardContent className="p-6 text-center">
+          <User className="w-12 h-12 text-white/50 mx-auto mb-4" />
+          <p className="text-white/80">Faça login para ver seu perfil</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (!myProfile || !habboAccount) {
-    return (
-      <div className="w-full max-w-sm mx-auto bg-background p-4">
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">
-              Faça login para ver seu perfil
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleRefreshPhotos = async () => {
+    console.log('%c[🔄 MY ACCOUNT] Manual photo refresh initiated', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;');
+    try {
+      await refreshPhotos();
+      console.log('[✅ MY ACCOUNT] Photo refresh completed');
+    } catch (error) {
+      console.error('[❌ MY ACCOUNT] Photo refresh failed:', error);
+    }
+  };
 
-  const avatarUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${myProfile.figureString}&size=l&direction=2&head_direction=3&action=std`;
+  // Mapear fotos para o formato do PhotoGrid
+  const photoGridData = photos.map(photo => ({
+    id: photo.id,
+    imageUrl: photo.imageUrl,
+    date: photo.date || new Date().toLocaleDateString('pt-BR'),
+    likes: photo.likes || 0
+  }));
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-background space-y-4 h-screen overflow-y-auto p-4">
-      {/* Profile Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-              <img
-                src={avatarUrl}
-                alt={myProfile.name}
-                className="w-24 h-24 pixelated"
-                style={{ imageRendering: 'pixelated' }}
-              />
-              <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                myProfile.online ? 'bg-green-500' : 'bg-red-500'
-              }`}></div>
-            </div>
-            
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-bold">{myProfile.name}</h2>
-              <p className="text-sm text-muted-foreground italic">
-                "{myProfile.motto || 'Sem motto'}"
-              </p>
-              
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <MapPin className="w-3 h-3" />
-                <span>Habbo Hotel BR</span>
-              </div>
-              
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="w-3 h-3" />
-                <span>Membro desde {new Date(myProfile.memberSince).getFullYear()}</span>
-              </div>
-
-              <Badge variant={myProfile.online ? "default" : "secondary"}>
-                {myProfile.online ? 'Online' : 'Offline'}
-              </Badge>
-            </div>
-
-            <Button className="w-full" size="sm">
-              <Settings className="w-4 h-4 mr-2" />
-              Editar Perfil
-            </Button>
+    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 flex-shrink-0">
+        <CardTitle className="flex items-center justify-between text-lg">
+          <span>Minha Conta</span>
+          <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
+            Online
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4">
+        {/* Avatar and Basic Info */}
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <img
+              src={`https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&direction=2&head_direction=3&size=m&action=std`}
+              alt={`Avatar de ${habboAccount.habbo_name}`}
+              className="w-12 h-12 rounded-full bg-white/10"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&action=std`;
+              }}
+            />
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#5A6573] rounded-full"></div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Grid */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="font-semibold mb-4 text-center">Estatísticas</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="text-center p-3 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-lg">
-              <Trophy className="w-5 h-5 mx-auto mb-1" />
-              <div className="text-xl font-bold">{myProfile.selectedBadges?.length || 0}</div>
-              <div className="text-xs opacity-90">Emblemas</div>
-            </div>
-            <div className="text-center p-3 bg-gradient-to-r from-purple-400 to-purple-600 text-white rounded-lg">
-              <Star className="w-5 h-5 mx-auto mb-1" />
-              <div className="text-xl font-bold">{photos.length}</div>
-              <div className="text-xs opacity-90">Fotos</div>
-            </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-white truncate">{habboAccount.habbo_name}</h3>
+            <p className="text-white/60 text-sm">
+              {myProfile?.motto || completeProfile?.motto || 'Sem motto definido'}
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Social Interactions */}
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="font-semibold mb-4 text-center">Interações</h3>
-          <SocialInteractionButtons 
-            targetHabboName={myProfile.name}
-            className="justify-center"
-          />
-        </CardContent>
-      </Card>
+        {/* Social Stats - Fotos, Seguidores, Seguindo */}
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <Button
+            variant="ghost"
+            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
+          >
+            <div className="text-lg font-bold">{photoCount}</div>
+            <div className="text-xs text-white/60">Fotos</div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
+          >
+            <div className="text-lg font-bold">0</div>
+            <div className="text-xs text-white/60">Seguidores</div>
+          </Button>
+          <Button
+            variant="ghost"
+            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
+          >
+            <div className="text-lg font-bold">0</div>
+            <div className="text-xs text-white/60">Seguindo</div>
+          </Button>
+        </div>
 
-      {/* Recent Photos */}
-      {photos.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-4 text-center">Fotos Recentes</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {photos.slice(0, 4).map((photo) => (
-                <div key={photo.id} className="aspect-square bg-muted rounded-lg overflow-hidden">
-                  <img
-                    src={photo.url}
-                    alt="Foto do Habbo"
-                    className="w-full h-full object-cover pixelated"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </div>
-              ))}
+        {/* Follow Button - Desabilitado para perfil próprio */}
+        <Button
+          disabled
+          className="w-full bg-white/10 hover:bg-white/20 text-white/50 cursor-not-allowed"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          Seu perfil
+        </Button>
+
+        {/* Complete Stats Grid - DADOS CORRETOS */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Trophy className="w-4 h-4 text-yellow-400" />
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="text-lg font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
+            <div className="text-xs text-white/60">Emblemas</div>
+          </div>
 
-      {/* Selected Badges */}
-      {myProfile.selectedBadges && myProfile.selectedBadges.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-4 text-center">Emblemas em Destaque</h3>
-            <div className="grid grid-cols-3 gap-3">
-              {myProfile.selectedBadges.slice(0, 6).map((badge, index) => (
-                <div key={index} className="text-center">
-                  <img
-                    src={`https://images.habbo.com/c_images/album1584/${badge.code}.png`}
-                    alt={badge.name}
-                    className="w-8 h-8 mx-auto pixelated"
-                    style={{ imageRendering: 'pixelated' }}
-                    title={badge.name}
-                  />
-                </div>
-              ))}
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Home className="w-4 h-4 text-green-400" />
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            <div className="text-lg font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
+            <div className="text-xs text-white/60">Quartos</div>
+          </div>
+
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Users className="w-4 h-4 text-pink-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
+            <div className="text-xs text-white/60">Amigos</div>
+          </div>
+
+          <div className="bg-white/10 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Crown className="w-4 h-4 text-purple-400" />
+            </div>
+            <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
+            <div className="text-xs text-white/60">Grupos</div>
+          </div>
+        </div>
+
+        {/* Refresh Button */}
+        <div className="flex justify-center">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleRefreshPhotos}
+            disabled={photosLoading}
+            className="text-white/80 hover:text-white hover:bg-white/10"
+          >
+            {photosLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            Atualizar Fotos
+          </Button>
+        </div>
+
+        {/* Photos Grid */}
+        {photos.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium text-white/80 mb-3">
+              Suas Fotos ({photos.length})
+            </h4>
+            <PhotoGrid photos={photoGridData} />
+          </div>
+        )}
+
+        {/* Loading/Error States */}
+        {photosLoading && (
+          <div className="text-xs text-white/60 flex items-center gap-2">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Carregando fotos via API oficial...
+          </div>
+        )}
+        
+        {photosError && (
+          <div className="space-y-2">
+            <div className="text-xs text-red-300 flex items-center gap-2">
+              <AlertCircle className="w-3 h-3" />
+              {errorMessage}
+            </div>
+            {canRetry && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={retryLoadPhotos}
+                className="h-6 px-2 text-xs text-white/80 hover:text-white hover:bg-white/10"
+              >
+                Tentar novamente
+              </Button>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
