@@ -63,6 +63,9 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
       console.log(`[📊 COMPLETE PROFILE] Profile stats:`, {
         photos: data.stats?.photosCount || 0,
         badges: data.stats?.badgesCount || 0,
+        friends: data.stats?.friendsCount || 0,
+        groups: data.stats?.groupsCount || 0,
+        rooms: data.stats?.roomsCount || 0,
         online: data.online
       });
 
@@ -81,17 +84,17 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
           experience: 0,
           starGems: data.stats?.level || 0,
           badgesCount: data.stats?.badgesCount || 0,
-          friendsCount: 0,
-          groupsCount: 0,
-          roomsCount: 0,
+          friendsCount: data.stats?.friendsCount || 0, // Corrigido para mapear corretamente
+          groupsCount: data.stats?.groupsCount || 0,   // Corrigido para mapear corretamente
+          roomsCount: data.stats?.roomsCount || 0,     // Corrigido para mapear corretamente
           photosCount: data.stats?.photosCount || 0,
           habboTickerCount: 0
         },
         data: {
           badges: data.badges || [],
-          friends: [],
-          groups: [],
-          rooms: [],
+          friends: data.friends || [],     // Agora mapeia os dados reais
+          groups: data.groups || [],       // Agora mapeia os dados reais
+          rooms: data.rooms || [],         // Agora mapeia os dados reais
           photos: data.photos || [],
           selectedBadges: data.selectedBadges || []
         }

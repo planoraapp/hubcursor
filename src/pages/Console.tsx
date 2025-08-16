@@ -31,25 +31,26 @@ const Console: React.FC = () => {
       
       <div className={`flex-1 transition-all duration-300 ${
         sidebarCollapsed ? 'ml-20' : 'ml-64'
-      } p-6`}>
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Console do Habbo</h1>
+      } p-4`}>
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-white mb-2">Console do Habbo</h1>
           <p className="text-white/70">Gerencie sua experiência no HabboHub</p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
-          {/* Left Column - My Account */}
-          <div className="xl:col-span-1">
+        {/* Layout Fixo Mobile-First - 3 colunas com largura fixa */}
+        <div className="flex gap-4 h-[calc(100vh-10rem)] overflow-hidden">
+          {/* Left Column - My Account - Largura fixa mobile */}
+          <div className="w-[360px] flex-shrink-0">
             <MyAccountColumn />
           </div>
 
-          {/* Center Column - Hotel Feed */}
-          <div className="xl:col-span-1">
+          {/* Center Column - Hotel Feed - Largura fixa mobile */}
+          <div className="w-[360px] flex-shrink-0">
             <HotelPhotoFeedColumn />
           </div>
 
-          {/* Right Column - User Discovery */}
-          <div className="xl:col-span-1">
+          {/* Right Column - User Discovery - Largura fixa mobile */}
+          <div className="w-[360px] flex-shrink-0">
             <UserSearchColumn />
           </div>
         </div>
