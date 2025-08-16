@@ -22,7 +22,7 @@ export const Journal = () => {
       fontFamily: "'VT323', monospace",
       imageRendering: 'crisp-edges'
     }}>
-      <style jsx>{`
+      <style>{`
         .pixel-border {
           border: 1px solid #1f2937;
           box-shadow: 1px 1px 0px 0px #1f2937;

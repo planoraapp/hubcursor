@@ -6,10 +6,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Pages
-import { Index } from './pages/Index';
-import { Console } from './pages/Console';
-import { Home } from './pages/Home';
-import { HabboHomePage } from './pages/HabboHomePage';
+import Index from './pages/Index';
+import Console from './pages/Console';
+import Home from './pages/Home';
+import HabboHomePage from './pages/HabboHomePage';
 import { Journal } from './pages/Journal';
 import { AdminHub } from './pages/AdminHub';
 

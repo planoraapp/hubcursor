@@ -137,7 +137,7 @@ export const MyAccountColumn = () => {
               {photos.slice(0, 4).map((photo) => (
                 <div key={photo.id} className="aspect-square bg-muted rounded-lg overflow-hidden">
                   <img
-                    src={photo.imageUrl}
+                    src={photo.url}
                     alt="Foto do Habbo"
                     className="w-full h-full object-cover pixelated"
                     style={{ imageRendering: 'pixelated' }}
