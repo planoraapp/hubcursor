@@ -24,26 +24,27 @@ export interface HabboPhotoEnhanced {
 export const useHabboPhotosEnhanced = (username?: string, hotel: string = 'br') => {
   const { photos, isLoading, error } = useUnifiedPhotoSystem(
     username, 
-    hotel
+    hotel,
+    { cacheTime: 15 }
   );
 
   // Convert to enhanced database format
   const habboPhotos: HabboPhotoEnhanced[] = photos.map(photo => ({
     id: photo.id,
-    photo_id: photo.id,
+    photo_id: photo.photo_id,
     habbo_name: username || '',
     habbo_id: `${hotel}-unknown`,
     hotel: hotel,
-    s3_url: photo.url,
-    preview_url: photo.url,
+    s3_url: photo.imageUrl,
+    preview_url: photo.imageUrl,
     internal_user_id: undefined,
-    timestamp_taken: photo.timestamp ? new Date(photo.timestamp).getTime() : Date.now(),
+    timestamp_taken: photo.timestamp,
     caption: `Foto de ${username}`,
-    room_name: photo.room_name,
+    room_name: photo.roomName,
     taken_date: photo.timestamp ? new Date(photo.timestamp).toISOString() : new Date().toISOString(),
-    likes_count: photo.likes_count || 0,
+    likes_count: photo.likes,
     photo_type: 'PHOTO',
-    source: 'profile_scraping',
+    source: photo.source,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   }));

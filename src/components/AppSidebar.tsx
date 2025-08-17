@@ -24,7 +24,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -63,7 +62,6 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <SidebarTrigger />
           {state !== "collapsed" && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -168,10 +166,7 @@ export function AppSidebar() {
         <div className="mt-auto p-4 border-t">
           <div className="flex items-center gap-3">
             <Avatar className="w-8 h-8">
-              <AvatarImage 
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=s&user=${habboAccount.habbo_name}&action=wav&direction=2&head_direction=2&gesture=sml`} 
-                style={{ imageRendering: 'pixelated' }}
-              />
+              <AvatarImage src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=s&user=${habboAccount.habbo_name}&action=wav&direction=2&head_direction=2&gesture=sml`} />
               <AvatarFallback>{habboAccount.habbo_name[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">

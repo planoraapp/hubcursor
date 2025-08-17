@@ -2,21 +2,18 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-import { useLoginDebug } from '@/hooks/useLoginDebug';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useToast } from '@/hooks/use-toast';
 
-export const LoginBySenha = () => {
+export const LoginBySenha: React.FC = () => {
   const [habboName, setHabboName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [debugMode, setDebugMode] = useState(false);
+  const [loginError, setLoginError] = useState('');
   
   const { loginWithPassword } = useUnifiedAuth();
-  const { debugLogin, debugInfo } = useLoginDebug();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,134 +21,98 @@ export const LoginBySenha = () => {
     
     if (!habboName.trim() || !password.trim()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos.",
+        title: "Erro",
+        description: "Preencha todos os campos",
         variant: "destructive"
       });
       return;
     }
 
     setIsLoading(true);
+    setLoginError('');
     
     try {
-      // Debug mode for troubleshooting
-      if (debugMode) {
-        await debugLogin(habboName.trim());
-        setIsLoading(false);
-        return;
-      }
-
-      await loginWithPassword(habboName.trim(), password);
-      
+      await loginWithPassword(habboName, password);
       toast({
-        title: "Login realizado com sucesso!",
+        title: "Sucesso!",
         description: `Bem-vindo de volta, ${habboName}!`
       });
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Erro no login:', error);
+      const errorMessage = error.message || 'Verifique suas credenciais';
+      setLoginError(errorMessage);
       
-      let errorMessage = 'Erro no login';
-      
-      if (error.message.includes('Conta não encontrada')) {
-        errorMessage = 'Conta não encontrada. Use a aba "Missão" para se cadastrar.';
-      } else if (error.message.includes('Senha incorreta')) {
-        errorMessage = 'Senha incorreta. Verifique suas credenciais.';
-      } else if (error.message.includes('Invalid login credentials')) {
-        errorMessage = 'Credenciais inválidas. Verifique nome de usuário e senha.';
+      if (errorMessage.includes('Conta não encontrada')) {
+        toast({
+          title: "Conta não encontrada",
+          description: "Use a aba 'Missão' para se cadastrar ou redefinir senha.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro no login",
+          description: errorMessage,
+          variant: "destructive"
+        });
       }
-      
-      toast({
-        title: "Erro no login",
-        description: errorMessage,
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center space-y-2">
-        <h3 className="text-lg font-semibold volter-font">Login por Senha</h3>
-        <p className="text-sm text-gray-600">
-          Entre com seu nome Habbo e senha do HabboHub
-        </p>
+    <form onSubmit={handleLogin} className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="login-habbo" className="text-sm font-medium">
+          Nome Habbo
+        </label>
+        <Input
+          id="login-habbo"
+          type="text"
+          placeholder="Digite seu nome Habbo"
+          value={habboName}
+          onChange={(e) => setHabboName(e.target.value)}
+          className="border-2 border-gray-300 focus:border-blue-500"
+        />
       </div>
 
-      {debugInfo && debugMode && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Debug Info:</strong><br/>
-            Contas encontradas: {debugInfo.accountCount}<br/>
-            Tem duplicatas: {debugInfo.hasDuplicates ? 'Sim' : 'Não'}<br/>
-            Email de auth: {debugInfo.authEmail || 'Não encontrado'}
+      <div className="space-y-2">
+        <label htmlFor="login-password" className="text-sm font-medium">
+          Senha
+        </label>
+        <Input
+          id="login-password"
+          type="password"
+          placeholder="Digite sua senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="border-2 border-gray-300 focus:border-blue-500"
+        />
+      </div>
+
+      {loginError && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertDescription className="text-red-700">
+            {loginError}
           </AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="habbo-name">Nome Habbo</Label>
-          <Input
-            id="habbo-name"
-            type="text"
-            placeholder="Digite seu nome Habbo"
-            value={habboName}
-            onChange={(e) => setHabboName(e.target.value)}
-            disabled={isLoading}
-            className="volter-font"
-          />
-        </div>
+      <Button
+        type="submit"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Entrando...' : 'Entrar'}
+      </Button>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Digite sua senha"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            className="volter-font"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="debug-mode"
-            checked={debugMode}
-            onChange={(e) => setDebugMode(e.target.checked)}
-            className="w-4 h-4"
-          />
-          <Label htmlFor="debug-mode" className="text-xs text-gray-500">
-            Modo Debug (para troubleshooting)
-          </Label>
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full volter-font"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {debugMode ? 'Verificando...' : 'Entrando...'}
-            </>
-          ) : (
-            debugMode ? 'Verificar Conta' : 'Entrar'
-          )}
-        </Button>
-      </form>
-
-      <div className="text-center">
-        <p className="text-xs text-gray-500">
-          Não tem conta? Use a aba "Missão" para se cadastrar.
-        </p>
-      </div>
-    </div>
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Primeira vez aqui?</strong> Use a aba "Missão" para se cadastrar.<br/>
+          <strong>Esqueceu a senha?</strong> Use também a aba "Missão" para redefinir.
+        </AlertDescription>
+      </Alert>
+    </form>
   );
 };
