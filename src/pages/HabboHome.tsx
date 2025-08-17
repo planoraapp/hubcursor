@@ -17,6 +17,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '../hooks/use-mobile';
 import MobileLayout from '../layouts/MobileLayout';
 
+// Use the same interface as the hook returns
+interface GuestbookEntry {
+  id: string;
+  author: string;
+  message: string;
+  timestamp: string;
+}
+
 const HabboHome = () => {
   const { username, hotel } = useParams<{ username: string; hotel?: string }>();
   const navigate = useNavigate();
@@ -121,6 +129,14 @@ const HabboHome = () => {
     hotel: habboData.hotel
   };
 
+  // Convert guestbook entries to match the GuestbookWidget expected format
+  const guestbookEntries = guestbook.map(entry => ({
+    id: entry.id,
+    author_habbo_name: entry.author,
+    message: entry.message,
+    created_at: entry.timestamp
+  }));
+
   const renderDesktop = () => (
     <div className="min-h-screen bg-repeat p-4" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       <div className="flex flex-col min-h-full">
@@ -147,10 +163,10 @@ const HabboHome = () => {
           <div className="w-1/4 flex flex-col gap-4">
             <AvatarWidget habboData={enhancedHabboData} />
             <GuestbookWidget 
-              habboData={enhancedHabboData}
-              guestbook={guestbook}
+              entries={guestbookEntries}
               onAddEntry={addGuestbookEntry}
               isOwner={isOwner}
+              homeOwnerName={habboData.name}
             />
           </div>
 
@@ -236,10 +252,10 @@ const HabboHome = () => {
         <div className="flex flex-col gap-4">
           <AvatarWidget habboData={enhancedHabboData} />
           <GuestbookWidget 
-            habboData={enhancedHabboData}
-            guestbook={guestbook}
+            entries={guestbookEntries}
             onAddEntry={addGuestbookEntry}
             isOwner={isOwner}
+            homeOwnerName={habboData.name}
           />
         </div>
 

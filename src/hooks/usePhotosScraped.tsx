@@ -12,12 +12,12 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br', forceR
   // Convert to legacy format for backward compatibility
   const scrapedPhotos = photos.map(photo => ({
     id: photo.id,
-    photo_id: photo.photo_id,
-    imageUrl: photo.imageUrl,
-    date: photo.date,
-    likes: photo.likes,
+    photo_id: photo.id, // Map id to photo_id
+    imageUrl: photo.url, // Map url to imageUrl
+    date: photo.takenOn, // Map takenOn to date
+    likes: photo.likes_count || 0, // Map likes_count to likes
     timestamp: photo.timestamp,
-    roomName: photo.roomName
+    roomName: photo.roomName || photo.room_name
   }));
 
   const refreshPhotos = () => {

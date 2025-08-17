@@ -27,6 +27,7 @@ interface Sticker {
   scale?: number;
 }
 
+// Match the interface expected by GuestbookWidget
 interface GuestbookEntry {
   id: string;
   author: string;
