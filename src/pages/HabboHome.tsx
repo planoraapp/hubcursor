@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
 import { HomeHeader } from '../components/HabboHome/HomeHeader';
 import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
-import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
+import { GuestbookWidget } from '../components/homes/GuestbookWidget'; // Use the correct one
 import { EnhancedHomeToolbar } from '../components/HabboHome/EnhancedHomeToolbar';
 import { DraggableWidget } from '../components/HabboHome/DraggableWidget';
 import { StickerSystem } from '../components/homes/StickerSystem';
