@@ -1,10 +1,6 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from './hooks/useAuth';
-import { HotelProvider } from './contexts/HotelContext';
-import { MarketplaceProvider } from './contexts/MarketplaceContext';
 
 // Pages
 import Index from './pages/Index';
@@ -25,41 +21,29 @@ import NotFound from './pages/NotFound';
 
 import './App.css';
 
-const queryClient = new QueryClient();
-
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <HotelProvider>
-          <MarketplaceProvider>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/home/:username" element={<HabboHomeRedirect />} />
-                <Route path="/home/:hotel/:username" element={<EnhancedHabboHome />} />
-                {/* Aliases para rotas canônicas por hotel/usuário */}
-                <Route path="/habbo/:hotel/:username" element={<EnhancedHabboHome />} />
-                <Route path="/habinfo/:hotel/:username" element={<EnhancedHabboHome />} />
-                <Route path="/homes" element={<HomesHub />} />
-                <Route path="/mercado" element={<Mercado />} />
-                <Route path="/emblemas" element={<Emblemas />} />
-                <Route path="/editor" element={<Editor />} />
-                <Route path="/catalogo" element={<Catalogo />} />
-                <Route path="/eventos" element={<Eventos />} />
-                <Route path="/ferramentas" element={<Ferramentas />} />
-                <Route path="/console" element={<Console />} />
-                <Route path="/noticias" element={<Noticias />} />
-                <Route path="/forum" element={<Forum />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Router>
-          </MarketplaceProvider>
-        </HotelProvider>
-      </AuthProvider>
-      <Toaster />
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/home/:username" element={<HabboHomeRedirect />} />
+        <Route path="/home/:hotel/:username" element={<EnhancedHabboHome />} />
+        <Route path="/habbo/:hotel/:username" element={<EnhancedHabboHome />} />
+        <Route path="/habinfo/:hotel/:username" element={<EnhancedHabboHome />} />
+        <Route path="/homes" element={<HomesHub />} />
+        <Route path="/mercado" element={<Mercado />} />
+        <Route path="/emblemas" element={<Emblemas />} />
+        <Route path="/editor" element={<Editor />} />
+        <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/eventos" element={<Eventos />} />
+        <Route path="/ferramentas" element={<Ferramentas />} />
+        <Route path="/console" element={<Console />} />
+        <Route path="/noticias" element={<Noticias />} />
+        <Route path="/forum" element={<Forum />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
   );
 }
 

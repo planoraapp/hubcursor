@@ -9,6 +9,9 @@ export interface HabboUser {
   memberSince?: string;
   lastAccessTime?: string;
   selectedBadges?: any[];
+  friendsCount?: number;
+  roomsCount?: number;
+  groupsCount?: number;
 }
 
 export interface HabboBadge {
@@ -24,4 +27,11 @@ export interface HabboRoom {
   ownerName: string;
   rating: number;
   thumbnailUrl?: string;
+}
+
+export interface HabboPhoto {
+  id: string;
+  url: string;
+  likes_count?: number;
+  room_name?: string;
 }
