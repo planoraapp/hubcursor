@@ -21,6 +21,7 @@ import Ferramentas from './pages/Ferramentas';
 import Console from './pages/Console';
 import Noticias from './pages/Noticias';
 import Forum from './pages/Forum';
+import { NewAppSidebar } from '@/components/NewAppSidebar';
 import NotFound from './pages/NotFound';
 
 import './App.css';

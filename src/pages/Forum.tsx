@@ -1,324 +1,207 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PageHeader } from '../components/PageHeader';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
-import { useIsMobile } from '../hooks/use-mobile';
-import MobileLayout from '../layouts/MobileLayout';
-import { PostsList } from '../components/forum/PostsList';
-import type { ForumPost } from '../types/forum';
+import { MessageSquare, Clock, User, Pin, Lock, TrendingUp, Plus } from 'lucide-react';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { NewAppSidebar } from '@/components/NewAppSidebar';
 
-interface ForumCategory {
-  id: number;
-  name: string;
-  description: string;
-  icon: string;
-}
-
-const forumCategories: ForumCategory[] = [
-  { id: 1, name: 'Geral', description: 'Discussões gerais sobre o Habbo e a comunidade.', icon: '💬' },
-  { id: 2, name: 'Eventos', description: 'Anúncios e discussões sobre eventos no Habbo Hub.', icon: '🎉' },
-  { id: 3, name: 'Suporte', description: 'Precisa de ajuda? Tire suas dúvidas aqui.', icon: '❓' },
-  { id: 4, name: 'Off-Topic', description: 'Assuntos que não se encaixam nas outras categorias.', icon: '☕' },
-];
-
-const recentTopics = [
-  { title: 'Novo evento de Natal!', author: 'User123', created_at: '2023-11-20T14:30:00' },
-  { title: 'Dúvidas sobre o sistema de trocas', author: 'HabboGamer', created_at: '2023-11-19T18:00:00' },
-  { title: 'Compartilhe suas dicas de construção', author: 'ArquitetoHabbo', created_at: '2023-11-18T21:45:00' },
-];
-
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
-
-const Forum = () => {
-  const isMobile = useIsMobile();
-  const [activeSection, setActiveSection] = useState('forum');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [posts, setPosts] = useState<ForumPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        // Mock data for demonstration - using ForumPost type
-        const mockPosts: ForumPost[] = [
-          { 
-            id: '1', 
-            title: 'Bem-vindos ao novo fórum!', 
-            content: 'Este é o primeiro post do nosso novo fórum da comunidade Habbo Hub. Compartilhe suas ideias e sugestões!', 
-            author_supabase_user_id: 'admin-id',
-            author_habbo_name: 'Admin', 
-            category: 'Geral', 
-            created_at: '2023-11-21T10:00:00', 
-            likes: 15 
-          },
-          { 
-            id: '2', 
-            title: 'Evento: Concurso de дизayna de quartos', 
-            content: 'Participe do nosso concurso de design de quartos com tema natalino e concorra a prêmios incríveis!', 
-            author_supabase_user_id: 'eventos-id',
-            author_habbo_name: 'EventosHabbo', 
-            category: 'Eventos', 
-            created_at: '2023-11-20T16:45:00', 
-            likes: 8 
-          },
-          { 
-            id: '3', 
-            title: 'Dúvidas frequentes sobre o Habbo Hub', 
-            content: 'Confira a lista de dúvidas frequentes e encontre respostas para as suas perguntas sobre o Habbo Hub.', 
-            author_supabase_user_id: 'suporte-id',
-            author_habbo_name: 'SuporteHabbo', 
-            category: 'Suporte', 
-            created_at: '2023-11-19T09:20:00', 
-            likes: 12 
-          },
-        ];
-        setPosts(mockPosts);
-      } catch (err: any) {
-        setError(err.message || 'Erro ao carregar os posts.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
-
-  useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
-    };
-
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat" 
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+// Mock forum data - in a real app this would come from your backend
+const forumCategories = [
+  {
+    id: 1,
+    name: 'Anúncios Oficiais',
+    description: 'Novidades e atualizações do HabboHub',
+    icon: '📢',
+    topics: 5,
+    posts: 23,
+    lastPost: {
+      title: 'Nova atualização do Console',
+      author: 'HabboHub',
+      date: '2025-01-15'
+    }
+  },
+  {
+    id: 2,
+    name: 'Discussão Geral',
+    description: 'Converse sobre qualquer assunto relacionado ao Habbo',
+    icon: '💬',
+    topics: 42,
+    posts: 187,
+    lastPost: {
+      title: 'Melhores eventos de 2025',
+      author: 'Beebop',
+      date: '2025-01-14'
+    }
+  },
+  {
+    id: 3,
+    name: 'Suporte Técnico',
+    description: 'Tire suas dúvidas e reporte problemas',
+    icon: '🔧',
+    topics: 18,
+    posts: 95,
+    lastPost: {
+      title: 'Problema no carregamento de fotos',
+      author: 'Usuario123',
+      date: '2025-01-13'
+    }
   }
+];
 
-  const renderDesktop = () => (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 p-4 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+const Forum: React.FC = () => {
+  const [activeSection, setActiveSection] = useState('forum');
+  const { habboAccount } = useUnifiedAuth();
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen bg-repeat flex" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <NewAppSidebar />
+        
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
-            <PageHeader 
-              title="Fórum da Comunidade"
-              icon="/icons/forum.png"
-            />
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-white mb-4 volter-font" style={{
+                textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+              }}>
+                💬 Fórum da Comunidade
+              </h1>
+              <p className="text-xl text-white mb-4" style={{
+                textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+              }}>
+                Conecte-se, discuta e compartilhe experiências
+              </p>
+            </div>
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-                <p className="text-red-700 volter-font">{error}</p>
-              </div>
-            )}
+            {/* Forum Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                <CardContent className="p-4 text-center">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <div className="text-2xl font-bold text-gray-800">65</div>
+                  <div className="text-sm text-gray-600">Tópicos</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                <CardContent className="p-4 text-center">
+                  <User className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                  <div className="text-2xl font-bold text-gray-800">305</div>
+                  <div className="text-sm text-gray-600">Posts</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                  <div className="text-2xl font-bold text-gray-800">24</div>
+                  <div className="text-sm text-gray-600">Membros Ativos</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                <CardContent className="p-4 text-center">
+                  <Clock className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+                  <div className="text-2xl font-bold text-gray-800">Hoje</div>
+                  <div className="text-sm text-gray-600">Último Post</div>
+                </CardContent>
+              </Card>
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Categories Section */}
-              <div className="lg:col-span-2">
-                <div className="mb-6">
-                  <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-4 rounded-t-lg border-2 border-black border-b-0">
-                    <h2 className="text-xl volter-font text-white habbo-outline-sm font-bold">
-                      📋 Categorias do Fórum
-                    </h2>
-                  </div>
-                  <Card className="rounded-t-none border-2 border-black">
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {forumCategories.map((category) => (
-                          <div
-                            key={category.id}
-                            className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
-                          >
-                            <div className="text-2xl mr-3">{category.icon}</div>
-                            <div>
-                              <h3 className="volter-font font-bold text-blue-700">{category.name}</h3>
-                              <p className="text-sm text-gray-600">{category.description}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <PostsList posts={posts} loading={loading} />
-              </div>
-
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Recent Topics */}
-                <div>
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-lg border-2 border-black border-b-0">
-                    <h3 className="text-lg volter-font text-white habbo-outline-sm font-bold">
-                      🔥 Tópicos Recentes
-                    </h3>
-                  </div>
-                  <Card className="rounded-t-none border-2 border-black">
-                    <CardContent className="p-4">
-                      {recentTopics.length === 0 ? (
-                        <p className="text-gray-500 text-center py-4 volter-font">
-                          Nenhum tópico encontrado
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          {recentTopics.map((topic, index) => (
-                            <div key={index} className="pb-3 border-b border-gray-200 last:border-b-0">
-                              <h4 className="volter-font font-medium text-blue-700 hover:text-blue-900 cursor-pointer text-sm">
-                                {topic.title}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1">
-                                por {topic.author} • {formatDate(topic.created_at)}
-                              </p>
-                            </div>
-                          ))}
+            {/* Categories */}
+            <div className="space-y-4">
+              {forumCategories.map((category) => (
+                <Card key={category.id} className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="text-2xl">{category.icon}</div>
+                        <div>
+                          <CardTitle className="text-lg volter-font">{category.name}</CardTitle>
+                          <p className="text-sm text-gray-600">{category.description}</p>
                         </div>
+                      </div>
+                      {habboAccount && (
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white volter-font">
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo Tópico
+                        </Button>
                       )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Forum Stats */}
-                <Card className="border-2 border-black">
-                  <CardHeader className="bg-gradient-to-r from-green-600 to-green-700 text-white border-b-2 border-black">
-                    <CardTitle className="text-lg volter-font habbo-outline-sm">📊 Estatísticas</CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="volter-font text-gray-600">Total de Posts:</span>
-                        <span className="volter-font font-bold">{posts.length}</span>
+                  
+                  <CardContent className="pt-0">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex gap-6">
+                        <div className="flex items-center gap-1">
+                          <MessageSquare className="w-4 h-4 text-blue-600" />
+                          <span className="font-medium">{category.topics}</span>
+                          <span className="text-gray-500">tópicos</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <User className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{category.posts}</span>
+                          <span className="text-gray-500">posts</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="volter-font text-gray-600">Posts Hoje:</span>
-                        <span className="volter-font font-bold">
-                          {posts.filter(post => 
-                            new Date(post.created_at).toDateString() === new Date().toDateString()
-                          ).length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="volter-font text-gray-600">Membros Ativos:</span>
-                        <span className="volter-font font-bold">127</span>
+                      
+                      <div className="text-right">
+                        <div className="font-medium text-gray-800">{category.lastPost.title}</div>
+                        <div className="text-gray-500">
+                          por <span className="font-medium">{category.lastPost.author}</span>
+                          {' • '}
+                          {new Date(category.lastPost.date).toLocaleDateString('pt-BR')}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+              ))}
             </div>
+
+            {/* Login Message */}
+            {!habboAccount && (
+              <Card className="mt-6 bg-yellow-50 border-2 border-yellow-300">
+                <CardContent className="p-6 text-center">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-4 text-yellow-600" />
+                  <h3 className="text-xl font-bold text-yellow-800 mb-2 volter-font">
+                    Participe da Comunidade!
+                  </h3>
+                  <p className="text-yellow-700 mb-4">
+                    Faça login para criar tópicos, participar de discussões e interagir com outros membros
+                  </p>
+                  <Button className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-bold volter-font">
+                    Conectar Conta Habbo
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Forum Rules */}
+            <Card className="mt-6 bg-blue-50 border-2 border-blue-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-800 volter-font">
+                  <Pin className="w-5 h-5" />
+                  Regras do Fórum
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-blue-700 text-sm">
+                  <p>• Seja respeitoso com todos os membros da comunidade</p>
+                  <p>• Não faça spam ou publique conteúdo irrelevante</p>
+                  <p>• Use categorias apropriadas para seus tópicos</p>
+                  <p>• Não compartilhe informações pessoais ou sensíveis</p>
+                  <p>• Siga as diretrizes gerais do HabboHub</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
-
-  const renderMobile = () => (
-    <MobileLayout>
-      <div className="p-4">
-        <PageHeader 
-          title="Fórum da Comunidade"
-          icon="/icons/forum.png"
-        />
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-            <p className="text-red-700 volter-font">{error}</p>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {/* Categories Section */}
-          <div>
-            <h2 className="text-xl volter-font font-bold mb-3">📋 Categorias do Fórum</h2>
-            <div className="space-y-3">
-              {forumCategories.map((category) => (
-                <div
-                  key={category.id}
-                  className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors"
-                >
-                  <div className="text-2xl mr-3">{category.icon}</div>
-                  <div>
-                    <h3 className="volter-font font-bold text-blue-700">{category.name}</h3>
-                    <p className="text-sm text-gray-600">{category.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Posts Section */}
-          <div>
-            <h2 className="text-xl volter-font font-bold mb-3">📰 Tópicos Recentes</h2>
-            <PostsList posts={posts} loading={loading} />
-          </div>
-
-          {/* Recent Topics */}
-          <div>
-            <h2 className="text-lg volter-font font-bold mb-3">🔥 Tópicos Recentes</h2>
-            {recentTopics.length === 0 ? (
-              <p className="text-gray-500 text-center py-4 volter-font">
-                Nenhum tópico encontrado
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {recentTopics.map((topic, index) => (
-                  <div key={index} className="pb-3 border-b border-gray-200 last:border-b-0">
-                    <h4 className="volter-font font-medium text-blue-700 hover:text-blue-900 cursor-pointer text-sm">
-                      {topic.title}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-1">
-                      por {topic.author} • {formatDate(topic.created_at)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Forum Stats */}
-          <div>
-            <h2 className="text-lg volter-font font-bold mb-3">📊 Estatísticas</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="volter-font text-gray-600">Total de Posts:</span>
-                <span className="volter-font font-bold">{posts.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="volter-font text-gray-600">Posts Hoje:</span>
-                <span className="volter-font font-bold">
-                  {posts.filter(post => 
-                    new Date(post.created_at).toDateString() === new Date().toDateString()
-                  ).length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="volter-font text-gray-600">Membros Ativos:</span>
-                <span className="volter-font font-bold">127</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </MobileLayout>
-  );
-
-  return isMobile ? renderMobile() : renderDesktop();
 };
 
 export default Forum;

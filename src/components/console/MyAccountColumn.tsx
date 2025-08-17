@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,13 @@ import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { PhotoGrid } from './PhotoGrid';
+import { BadgesModal } from '@/components/profile/modals/BadgesModal';
+import { FriendsModal } from '@/components/profile/modals/FriendsModal';
+import { GroupsModal } from '@/components/profile/modals/GroupsModal';
+import { RoomsModal } from '@/components/profile/modals/RoomsModal';
 
 export const MyAccountColumn: React.FC = () => {
+  const [activeModal, setActiveModal] = useState<'badges' | 'friends' | 'groups' | 'rooms' | null>(null);
   const { isLoggedIn, habboAccount, myProfile, isLoading } = useMyConsoleProfile();
   const { 
     photos, 
@@ -129,37 +134,53 @@ export const MyAccountColumn: React.FC = () => {
 
         {/* Complete Stats Grid - DADOS CORRETOS */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white/10 rounded-lg p-3 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveModal('badges')}
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+          >
             <div className="flex items-center justify-center gap-1 mb-1">
               <Trophy className="w-4 h-4 text-yellow-400" />
             </div>
             <div className="text-lg font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
             <div className="text-xs text-white/60">Emblemas</div>
-          </div>
+          </Button>
 
-          <div className="bg-white/10 rounded-lg p-3 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveModal('rooms')}
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+          >
             <div className="flex items-center justify-center gap-1 mb-1">
               <Home className="w-4 h-4 text-green-400" />
             </div>
             <div className="text-lg font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
             <div className="text-xs text-white/60">Quartos</div>
-          </div>
+          </Button>
 
-          <div className="bg-white/10 rounded-lg p-3 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveModal('friends')}
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+          >
             <div className="flex items-center justify-center gap-1 mb-1">
               <Users className="w-4 h-4 text-pink-400" />
             </div>
             <div className="text-lg font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
             <div className="text-xs text-white/60">Amigos</div>
-          </div>
+          </Button>
 
-          <div className="bg-white/10 rounded-lg p-3 text-center">
+          <Button
+            variant="ghost"
+            onClick={() => setActiveModal('groups')}
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+          >
             <div className="flex items-center justify-center gap-1 mb-1">
               <Crown className="w-4 h-4 text-purple-400" />
             </div>
             <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
             <div className="text-xs text-white/60">Grupos</div>
-          </div>
+          </Button>
         </div>
 
         {/* Refresh Button */}
@@ -217,6 +238,35 @@ export const MyAccountColumn: React.FC = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Modals */}
+      <BadgesModal 
+        isOpen={activeModal === 'badges'} 
+        onClose={() => setActiveModal(null)}
+        badges={completeProfile?.data.badges || []}
+        userName={habboAccount?.habbo_name || ''}
+      />
+      
+      <FriendsModal 
+        isOpen={activeModal === 'friends'} 
+        onClose={() => setActiveModal(null)}
+        friends={completeProfile?.data.friends || []}
+        userName={habboAccount?.habbo_name || ''}
+      />
+      
+      <GroupsModal 
+        isOpen={activeModal === 'groups'} 
+        onClose={() => setActiveModal(null)}
+        groups={completeProfile?.data.groups || []}
+        userName={habboAccount?.habbo_name || ''}
+      />
+      
+      <RoomsModal 
+        isOpen={activeModal === 'rooms'} 
+        onClose={() => setActiveModal(null)}
+        rooms={completeProfile?.data.rooms || []}
+        userName={habboAccount?.habbo_name || ''}
+      />
     </Card>
   );
 };

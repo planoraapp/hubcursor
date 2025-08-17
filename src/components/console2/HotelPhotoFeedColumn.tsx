@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera } from 'lucide-react';
 import { useHotelPhotoFeed } from '@/hooks/useHotelPhotoFeed';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-import { UserProfileModal } from '@/components/UserProfileModal';
+import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
 
 export const HotelPhotoFeedColumn: React.FC = () => {
   const { habboAccount } = useUnifiedAuth();
@@ -131,7 +131,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
       </Card>
 
       {/* Modal para exibir perfil do usuário */}
-      <UserProfileModal
+      <ConsoleProfileModal
         open={isModalOpen}
         setOpen={setIsModalOpen}
         habboName={selectedUser}

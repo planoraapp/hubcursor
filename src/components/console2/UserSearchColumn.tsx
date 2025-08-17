@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Users, Loader2, User } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useUserSearch';
-import { UserProfileModal } from '@/components/UserProfileModal';
+import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
 
 export const UserSearchColumn: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -111,7 +111,7 @@ export const UserSearchColumn: React.FC = () => {
       </Card>
 
       {/* Modal para exibir perfil do usuário */}
-      <UserProfileModal
+      <ConsoleProfileModal
         open={isModalOpen}
         setOpen={setIsModalOpen}
         habboName={selectedUser}

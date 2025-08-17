@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Search, User, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { NewAppSidebar } from '@/components/NewAppSidebar';
 import { HotelSelector } from '@/components/HotelSelector';
 import { useHotel } from '@/contexts/HotelContext';
 import { LatestHomesCards } from '@/components/LatestHomesCards';
@@ -193,28 +194,29 @@ const HomesHub: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4 volter-font" style={{
-              textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-            }}>
-              🏠 Habbo Homes
-            </h1>
-            <p className="text-xl text-white mb-4" style={{
-              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-            }}>
-              Explore e personalize casas virtuais nostálgicas
-            </p>
-            
-            <div className="flex justify-center mb-6">
-              <HotelSelector />
+    <SidebarProvider>
+      <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <div className="flex min-h-screen">
+          <NewAppSidebar />
+          <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-white mb-4 volter-font" style={{
+                textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+              }}>
+                🏠 Habbo Homes
+              </h1>
+              <p className="text-xl text-white mb-4" style={{
+                textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+              }}>
+                Explore e personalize casas virtuais nostálgicas
+              </p>
+              
+              <div className="flex justify-center mb-6">
+                <HotelSelector />
+              </div>
             </div>
-          </div>
 
-          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-4xl mx-auto space-y-6">
             {/* Minha Home (apenas para usuários logados) */}
             {isLoggedIn && habboAccount && (
               <Card className="p-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
@@ -332,10 +334,11 @@ const HomesHub: React.FC = () => {
                 <p>• <strong>Multi-Hotel:</strong> Usuários são únicos por hotel - o mesmo nome pode existir em hotéis diferentes</p>
               </div>
             </Card>
-          </div>
-        </main>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
