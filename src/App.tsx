@@ -1,49 +1,55 @@
 
-import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/hooks/useAuth';
+import { AppSidebar } from '@/components/AppSidebar';
+import Index from '@/pages/Index';
+import Console from '@/pages/Console';
+import HabboHome from '@/pages/HabboHome';
+import EnhancedHabboHome from '@/pages/EnhancedHabboHome';
 
-// Pages
-import Index from './pages/Index';
-import Login from './pages/Login';
-import EnhancedHabboHome from './pages/EnhancedHabboHome';
-import HabboHomeRedirect from './pages/HabboHomeRedirect';
-import HomesHub from './pages/HomesHub';
-import Mercado from './pages/Mercado';
-import Emblemas from './pages/Emblemas';
-import Editor from './pages/Editor';
-import Catalogo from './pages/Catalogo';
-import Eventos from './pages/Eventos';
-import Ferramentas from './pages/Ferramentas';
-import Console from './pages/Console';
-import Noticias from './pages/Noticias';
-import Forum from './pages/Forum';
-import NotFound from './pages/NotFound';
-
-import './App.css';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/home/:username" element={<HabboHomeRedirect />} />
-        <Route path="/home/:hotel/:username" element={<EnhancedHabboHome />} />
-        <Route path="/habbo/:hotel/:username" element={<EnhancedHabboHome />} />
-        <Route path="/habinfo/:hotel/:username" element={<EnhancedHabboHome />} />
-        <Route path="/homes" element={<HomesHub />} />
-        <Route path="/mercado" element={<Mercado />} />
-        <Route path="/emblemas" element={<Emblemas />} />
-        <Route path="/editor" element={<Editor />} />
-        <Route path="/catalogo" element={<Catalogo />} />
-        <Route path="/eventos" element={<Eventos />} />
-        <Route path="/ferramentas" element={<Ferramentas />} />
-        <Route path="/console" element={<Console />} />
-        <Route path="/noticias" element={<Noticias />} />
-        <Route path="/forum" element={<Forum />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <SidebarProvider>
+            <div className="min-h-screen flex w-full">
+              <AppSidebar />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/console" element={<Console />} />
+                  <Route path="/home/:hotel/:username" element={<HabboHome />} />
+                  <Route path="/home/:username" element={<HabboHome />} />
+                  <Route path="/profile/:username" element={<EnhancedHabboHome />} />
+                  <Route path="/noticias" element={<div className="p-8"><h1 className="text-2xl font-bold">Notícias</h1><p>Em breve...</p></div>} />
+                  <Route path="/eventos" element={<div className="p-8"><h1 className="text-2xl font-bold">Eventos</h1><p>Em breve...</p></div>} />
+                  <Route path="/marketplace" element={<div className="p-8"><h1 className="text-2xl font-bold">Marketplace</h1><p>Em breve...</p></div>} />
+                  <Route path="/forum" element={<div className="p-8"><h1 className="text-2xl font-bold">Fórum</h1><p>Em breve...</p></div>} />
+                  <Route path="/emblemas" element={<div className="p-8"><h1 className="text-2xl font-bold">Emblemas</h1><p>Em breve...</p></div>} />
+                  <Route path="/ferramentas" element={<div className="p-8"><h1 className="text-2xl font-bold">Ferramentas</h1><p>Em breve...</p></div>} />
+                  <Route path="/catalogo" element={<div className="p-8"><h1 className="text-2xl font-bold">Catálogo</h1><p>Em breve...</p></div>} />
+                  <Route path="/configuracoes" element={<div className="p-8"><h1 className="text-2xl font-bold">Configurações</h1><p>Em breve...</p></div>} />
+                </Routes>
+              </main>
+            </div>
+            <Toaster />
+          </SidebarProvider>
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
