@@ -17,19 +17,18 @@ export interface EnhancedHabboPhoto {
 export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
   const { photos, isLoading, error } = useUnifiedPhotoSystem(
     username, 
-    hotel === 'com.br' ? 'br' : hotel,
-    { cacheTime: 5 }
+    hotel === 'com.br' ? 'br' : hotel
   );
 
   // Convert to enhanced format
   const habboPhotos: EnhancedHabboPhoto[] = photos.map(photo => ({
     id: photo.id,
-    url: photo.imageUrl,
-    previewUrl: photo.imageUrl,
+    url: photo.url,
+    previewUrl: photo.url,
     caption: `Foto de ${username}`,
     timestamp: photo.timestamp ? new Date(photo.timestamp).toISOString() : undefined,
-    roomName: photo.roomName,
-    likesCount: photo.likes,
+    roomName: photo.room_name,
+    likesCount: photo.likes_count,
     type: 'PHOTO',
     source: 'profile_scraping'
   }));

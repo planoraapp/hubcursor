@@ -288,3 +288,6 @@ class HabboProxyService {
 }
 
 export const habboProxyService = new HabboProxyService();
+
+// Export types for other files to use
+export type { HabboUser, HabboBadge, HabboPhoto, HabboFriend, TickerActivity, TickerResponse };

@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { habboProxyService } from '@/services/habboProxyService';
 import { HabboPhoto } from '@/types/habbo';
 
-export const useUnifiedPhotoSystem = (username: string, hotel: string = 'com.br') => {
-  const { data: photos = [], isLoading } = useQuery({
+export const useUnifiedPhotoSystem = (username?: string, hotel: string = 'com.br', options?: { cacheTime?: number }) => {
+  const { data: photos = [], isLoading, error } = useQuery({
     queryKey: ['unified-photos', username, hotel],
-    queryFn: () => habboProxyService.getUserPhotos(username, hotel),
+    queryFn: () => habboProxyService.getUserPhotos(username!, hotel),
     enabled: !!username,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: (options?.cacheTime || 10) * 60 * 1000, // Convert minutes to milliseconds
   });
 
   const likePhoto = async (photoId: string) => {
@@ -24,6 +24,7 @@ export const useUnifiedPhotoSystem = (username: string, hotel: string = 'com.br'
   return {
     photos,
     isLoading,
+    error,
     likePhoto,
     openPhotoModal,
   };

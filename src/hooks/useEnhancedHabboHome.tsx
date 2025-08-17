@@ -54,8 +54,8 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
         });
 
       let userHotel = hotel;
-      if (userData && !hotel) {
-        userHotel = userData.hotel;
+      if (userData && userData.length > 0 && !hotel) {
+        userHotel = userData[0].hotel;
       }
 
       // Get profile from Habbo API
@@ -64,7 +64,7 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
       if (profile) {
         return {
           ...profile,
-          hotel: userHotel || userData?.hotel || 'com.br'
+          hotel: userHotel || (userData && userData.length > 0 ? userData[0].hotel : 'com.br')
         };
       }
 
@@ -74,7 +74,7 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
     retry: 2,
   });
 
-  // Load home data
+  // Load home data - simplified without database tables that don't exist
   useEffect(() => {
     if (habboData && username) {
       loadHomeData();
@@ -83,52 +83,22 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
 
   const loadHomeData = async () => {
     try {
-      // Load widgets
-      const { data: widgetData } = await supabase
-        .from('home_widgets')
-        .select('*')
-        .eq('home_owner', username.toLowerCase())
-        .order('created_at');
+      // For now, just set empty arrays since the database tables don't exist
+      // In a real implementation, these would come from proper database tables
+      setWidgets([
+        {
+          id: 'welcome-widget',
+          title: 'Bem-vindo',
+          content: `Olá, ${username}! Esta é sua Home.`,
+          x: 0,
+          y: 0,
+          width: 2,
+          height: 1,
+        }
+      ]);
 
-      if (widgetData) {
-        setWidgets(widgetData.map((w: any) => ({
-          id: w.id,
-          title: w.title || 'Widget',
-          content: w.content || 'Widget content',
-          x: w.x || 0,
-          y: w.y || 0,
-          width: w.width,
-          height: w.height,
-        })));
-      }
-
-      // Load stickers
-      const { data: stickerData } = await supabase
-        .from('home_stickers')
-        .select('*')
-        .eq('home_owner', username.toLowerCase())
-        .order('z_index');
-
-      if (stickerData) {
-        setStickers(stickerData);
-      }
-
-      // Load guestbook
-      const { data: guestbookData } = await supabase
-        .from('home_guestbook')
-        .select('*')
-        .eq('home_owner', username.toLowerCase())
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (guestbookData) {
-        setGuestbook(guestbookData.map((g: any) => ({
-          id: g.id,
-          author: g.author,
-          message: g.message,
-          timestamp: g.created_at,
-        })));
-      }
+      setStickers([]);
+      setGuestbook([]);
     } catch (error) {
       console.error('Error loading home data:', error);
     }
