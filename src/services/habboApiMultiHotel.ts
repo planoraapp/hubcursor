@@ -101,3 +101,18 @@ export const getUserById = async (userId: string): Promise<HabboUser | null> => 
   console.log(`❌ [HabboAPI] User with ID ${userId} not found on any hotel`);
   return null;
 };
+
+export const getAvatarUrl = (username: string, figureString?: string, hotel: string = 'com.br'): string => {
+  // Normalize hotel domain
+  let domain = hotel;
+  if (hotel === 'br') domain = 'com.br';
+  if (hotel === 'us') domain = 'com';
+  
+  const baseUrl = `https://www.habbo.${domain}`;
+  
+  if (figureString) {
+    return `${baseUrl}/habbo-imaging/avatarimage?figure=${encodeURIComponent(figureString)}&direction=2&head_direction=2&size=l`;
+  }
+  
+  return `${baseUrl}/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&size=l`;
+};
