@@ -10,24 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { OptimizedDraggableWidget } from '@/components/HabboHome/OptimizedDraggableWidget';
 import { OptimizedDroppedSticker } from '@/components/HabboHome/OptimizedDroppedSticker';
 import { EnhancedHomeToolbar } from '@/components/HabboHome/EnhancedHomeToolbar';
-import { getStickerById, type StickerAsset } from '@/data/stickerAssets';
-
-interface PlacedSticker {
-  id: string;
-  stickerId: string;
-  src: string;
-  category: string;
-  x: number;
-  y: number;
-  zIndex: number;
-  scale?: number;
-  rotation?: number;
-}
-
-const BACKGROUND_COLORS = [
-  '#c7d2dc', '#f0f8ff', '#e6f3e6', '#fff0e6', '#ffe6e6',
-  '#e6e6ff', '#f0e6ff', '#ffe6f0', '#f5f5dc', '#e0ffff'
-];
+import { getStickerById } from '@/data/stickerAssets';
 
 const EnhancedHabboHome: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -46,76 +29,65 @@ const EnhancedHabboHome: React.FC = () => {
     setIsEditMode,
     updateWidgetPosition,
     updateWidgetSize,
+    addSticker,
+    updateStickerPosition,
+    removeStickerFromDb,
+    updateBackground,
     addGuestbookEntry,
     getWidgetSizeRestrictions
   } = useHabboHome(username || '');
 
-  const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
-  const [homeBackground, setHomeBackground] = useState({
-    type: 'color' as 'color' | 'image',
-    value: '#c7d2dc'
-  });
-
   // Handle sticker operations
   const handleStickerAdd = useCallback((stickerId: string) => {
     const stickerAsset = getStickerById(stickerId);
-    if (!stickerAsset) return;
+    if (!stickerAsset || !addSticker) return;
 
-    const newSticker: PlacedSticker = {
-      id: `sticker_${Date.now()}`,
-      stickerId,
-      src: stickerAsset.src,
-      category: stickerAsset.category,
-      x: Math.random() * (1200 - stickerAsset.width),
-      y: Math.random() * (800 - stickerAsset.height),
-      zIndex: Date.now(),
-      scale: 1,
-      rotation: 0
-    };
+    const x = Math.random() * (1200 - 100);
+    const y = Math.random() * (800 - 100);
     
-    setPlacedStickers(prev => [...prev, newSticker]);
+    addSticker(stickerId, x, y, stickerAsset.src, stickerAsset.category);
+    
     toast({
       title: "Sticker adicionado!",
       description: "O sticker foi adicionado à sua home."
     });
-  }, [toast]);
+  }, [addSticker, toast]);
 
   const handleStickerPositionChange = useCallback((id: string, x: number, y: number) => {
-    setPlacedStickers(prev => 
-      prev.map(sticker => 
-        sticker.id === id ? { ...sticker, x, y } : sticker
-      )
-    );
-  }, []);
+    if (updateStickerPosition) {
+      updateStickerPosition(id, x, y);
+    }
+  }, [updateStickerPosition]);
 
   const handleStickerZIndexChange = useCallback((id: string, zIndex: number) => {
-    setPlacedStickers(prev => 
-      prev.map(sticker => 
-        sticker.id === id ? { ...sticker, zIndex } : sticker
-      )
-    );
+    // TODO: Implementar Z-index para stickers
+    console.log('Alterando Z-index do sticker:', id, zIndex);
   }, []);
 
   const handleStickerRemove = useCallback((id: string) => {
-    setPlacedStickers(prev => prev.filter(sticker => sticker.id !== id));
-    toast({
-      title: "Sticker removido",
-      description: "O sticker foi removido da sua home."
-    });
-  }, [toast]);
+    if (removeStickerFromDb) {
+      removeStickerFromDb(id);
+      toast({
+        title: "Sticker removido",
+        description: "O sticker foi removido da sua home."
+      });
+    }
+  }, [removeStickerFromDb, toast]);
 
   // Handle background change
   const handleBackgroundChange = useCallback((bg: { type: 'color' | 'image'; value: string }) => {
-    setHomeBackground(bg);
-    toast({
-      title: "Fundo alterado!",
-      description: "O fundo da sua home foi alterado."
-    });
-  }, [toast]);
+    if (updateBackground) {
+      updateBackground(bg.type === 'image' ? 'cover' : 'color', bg.value);
+      toast({
+        title: "Fundo alterado!",
+        description: "O fundo da sua home foi alterado."
+      });
+    }
+  }, [updateBackground, toast]);
 
   // Handle widget addition
   const handleWidgetAdd = useCallback((widgetType: string) => {
-    console.log('Adding widget:', widgetType);
+    console.log('Adicionando widget:', widgetType);
     toast({
       title: "Widget adicionado!",
       description: `O widget ${widgetType} foi adicionado à sua home.`
@@ -124,16 +96,11 @@ const EnhancedHabboHome: React.FC = () => {
 
   // Handle save
   const handleSave = useCallback(() => {
-    console.log('Saving home layout...', {
-      widgets,
-      stickers: placedStickers,
-      background: homeBackground
-    });
     toast({
       title: "Home salva!",
-      description: "Suas alterações foram salvas com sucesso."
+      description: "Suas alterações foram salvas automaticamente."
     });
-  }, [widgets, placedStickers, homeBackground, toast]);
+  }, [toast]);
 
   if (loading) {
     return (
@@ -174,11 +141,11 @@ const EnhancedHabboHome: React.FC = () => {
   }
 
   const backgroundStyle = {
-    backgroundColor: homeBackground.type === 'color' ? homeBackground.value : '#c7d2dc',
-    backgroundImage: homeBackground.type === 'image' ? `url("${homeBackground.value}")` : undefined,
-    backgroundSize: homeBackground.type === 'image' ? 'cover' : undefined,
-    backgroundPosition: homeBackground.type === 'image' ? 'center' : undefined,
-    backgroundRepeat: homeBackground.type === 'image' ? 'no-repeat' : undefined
+    backgroundColor: background.background_type === 'color' ? background.background_value : '#c7d2dc',
+    backgroundImage: background.background_type === 'cover' ? `url("${background.background_value}")` : undefined,
+    backgroundSize: background.background_type === 'cover' ? 'cover' : undefined,
+    backgroundPosition: background.background_type === 'cover' ? 'center' : undefined,
+    backgroundRepeat: background.background_type === 'cover' ? 'no-repeat' : undefined
   };
 
   const renderWidget = (widget: any) => {
@@ -264,6 +231,22 @@ const EnhancedHabboHome: React.FC = () => {
               <div className="text-sm text-gray-600 volter-font">Baseado em 25 avaliações</div>
             </CardContent>
           </Card>
+        ) : widgetType === 'info' ? (
+          <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-3">
+              <CardTitle className="volter-font text-center text-lg habbo-text">
+                ℹ️ Informações
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              <div className="space-y-2 text-sm volter-font">
+                <p><strong>Nome:</strong> {habboData.name}</p>
+                <p><strong>Hotel:</strong> {habboData.hotel?.toUpperCase() || 'BR'}</p>
+                <p><strong>Status:</strong> {habboData.is_online ? '🟢 Online' : '🔴 Offline'}</p>
+                <p><strong>Missão:</strong> {habboData.motto || 'Não definida'}</p>
+              </div>
+            </CardContent>
+          </Card>
         ) : null}
       </OptimizedDraggableWidget>
     );
@@ -327,16 +310,16 @@ const EnhancedHabboHome: React.FC = () => {
             {widgets.map(renderWidget)}
 
             {/* Render Stickers */}
-            {placedStickers.map((sticker) => (
+            {stickers.map((sticker) => (
               <OptimizedDroppedSticker
                 key={sticker.id}
                 id={sticker.id}
-                stickerId={sticker.stickerId}
-                src={sticker.src}
+                stickerId={sticker.sticker_id}
+                src={sticker.sticker_src}
                 category={sticker.category}
                 x={sticker.x}
                 y={sticker.y}
-                zIndex={sticker.zIndex}
+                zIndex={sticker.z_index}
                 scale={sticker.scale}
                 rotation={sticker.rotation}
                 isEditMode={isEditMode}
@@ -347,7 +330,7 @@ const EnhancedHabboHome: React.FC = () => {
             ))}
 
             {/* Empty State */}
-            {widgets.length === 0 && placedStickers.length === 0 && !loading && (
+            {widgets.length === 0 && stickers.length === 0 && !loading && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="bg-white/90 backdrop-blur-sm rounded-lg p-8 text-center border-2 border-black">
                   <h3 className="text-xl text-gray-800 mb-2 volter-font">
@@ -372,6 +355,11 @@ const EnhancedHabboHome: React.FC = () => {
                   💡 Modo de edição ativo - arraste widgets e stickers para reorganizar
                 </p>
               </div>
+            )}
+
+            {/* Canvas Border for Edit Mode */}
+            {isEditMode && (
+              <div className="absolute inset-0 border-4 border-dashed border-blue-400 pointer-events-none rounded-lg" />
             )}
           </div>
         </div>

@@ -21,7 +21,8 @@ interface EnhancedHomeToolbarProps {
 const BACKGROUND_COLORS = [
   '#c7d2dc', '#f0f8ff', '#e6f3e6', '#fff0e6', '#ffe6e6',
   '#e6e6ff', '#f0e6ff', '#ffe6f0', '#f5f5dc', '#e0ffff',
-  '#ffb6c1', '#98fb98', '#87ceeb', '#dda0dd', '#f0e68c'
+  '#ffb6c1', '#98fb98', '#87ceeb', '#dda0dd', '#f0e68c',
+  '#fafad2', '#d3d3d3', '#ffe4b5', '#ffd700', '#ffc0cb'
 ];
 
 const AVAILABLE_WIDGETS = [
@@ -47,7 +48,12 @@ export const EnhancedHomeToolbar = ({
   const [showWidgets, setShowWidgets] = useState(false);
   const [selectedBg, setSelectedBg] = useState('#c7d2dc');
 
-  if (!isOwner) return null;
+  console.log('🛠️ Toolbar renderizada - isOwner:', isOwner, 'isEditMode:', isEditMode);
+
+  if (!isOwner) {
+    console.log('⚠️ Toolbar não será exibida - usuário não é proprietário');
+    return null;
+  }
 
   const handleBackgroundSelect = (type: 'color' | 'image', value: string) => {
     setSelectedBg(value);
@@ -56,11 +62,13 @@ export const EnhancedHomeToolbar = ({
   };
 
   const handleStickerAdd = (stickerId: string) => {
+    console.log('🎯 Adicionando sticker via toolbar:', stickerId);
     onStickerAdd?.(stickerId);
     setShowStickers(false);
   };
 
   const handleWidgetAdd = (widgetType: string) => {
+    console.log('📦 Adicionando widget via toolbar:', widgetType);
     onWidgetAdd?.(widgetType);
     setShowWidgets(false);
   };
@@ -215,6 +223,7 @@ export const EnhancedHomeToolbar = ({
                       src={sticker.src}
                       alt={sticker.name}
                       className="w-full h-full object-contain"
+                      style={{ imageRendering: 'pixelated' }}
                     />
                   </button>
                 ))}
@@ -234,6 +243,7 @@ export const EnhancedHomeToolbar = ({
                       src={sticker.src}
                       alt={sticker.name}
                       className="w-full h-full object-contain"
+                      style={{ imageRendering: 'pixelated' }}
                     />
                   </button>
                 ))}
@@ -253,6 +263,7 @@ export const EnhancedHomeToolbar = ({
                       src={sticker.src}
                       alt={sticker.name}
                       className="w-full h-full object-contain"
+                      style={{ imageRendering: 'pixelated' }}
                     />
                   </button>
                 ))}
@@ -272,6 +283,7 @@ export const EnhancedHomeToolbar = ({
                       src={sticker.src}
                       alt={sticker.name}
                       className="w-full h-full object-contain"
+                      style={{ imageRendering: 'pixelated' }}
                     />
                   </button>
                 ))}
