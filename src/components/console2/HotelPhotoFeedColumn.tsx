@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera } from 'lucide-react';
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
 
 export const HotelPhotoFeedColumn: React.FC = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   
