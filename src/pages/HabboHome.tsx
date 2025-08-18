@@ -1,284 +1,135 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle } from 'lucide-react';
-import { HomeHeader } from '../components/HabboHome/HomeHeader';
-import { AvatarWidget } from '../components/HabboHome/AvatarWidget';
-import { GuestbookWidget } from '../components/HabboHome/GuestbookWidget';
-import { EnhancedHomeToolbar } from '../components/HabboHome/EnhancedHomeToolbar';
-import { DraggableWidget } from '../components/HabboHome/DraggableWidget';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
-import { useEnhancedHabboHome } from '../hooks/useEnhancedHabboHome';
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '../hooks/use-mobile';
-import MobileLayout from '../layouts/MobileLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Home, Users, Calendar } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { habboApiService } from '@/services/habboApiService';
+import { habboProxyService } from '@/services/habboProxyService';
+import { NewAppSidebar } from '@/components/NewAppSidebar';
+
+interface HabboRoom {
+  id: number;
+  name: string;
+  description: string;
+  ownerName: string;
+  userCount: number;
+  maxUsers: number;
+  tags: string[];
+  creationTime: string;
+  habboGroupId?: number;
+}
 
 const HabboHome = () => {
-  const { username, hotel } = useParams<{ username: string; hotel?: string }>();
-  const navigate = useNavigate();
-  const { user, habboAccount, loading } = useAuth();
-  const { toast } = useToast();
-  const isMobile = useIsMobile();
-  const [activeSection, setActiveSection] = useState('homes');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { user } = useAuth();
+  const [rooms, setRooms] = useState<HabboRoom[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Normalizar o username para garantir case insensitive
-  const normalizedUsername = username?.trim() || '';
-
-  const {
-    habboData,
-    widgets,
-    guestbook,
-    loading: isLoading,
-    error,
-    addWidget,
-    removeWidget,
-    updateWidgetPosition,
-    handleSaveLayout,
-    isEditMode,
-    setIsEditMode,
-    isOwner,
-    addGuestbookEntry
-  } = useEnhancedHabboHome(normalizedUsername, hotel);
-
-  // Redirecionar para rota canônica se necessário
-  useEffect(() => {
-    if (habboData && !hotel) {
-      // Se temos dados do usuário mas não especificamos o hotel na URL, redirecionar
-      console.log('🔄 Redirecionando para rota canônica com hotel:', habboData.hotel);
-      navigate(`/home/${habboData.hotel}/${normalizedUsername}`, { replace: true });
+  const searchRooms = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setLoading(true);
+    try {
+      // This would be replaced with actual room search API
+      console.log('Searching for rooms:', searchQuery);
+      // Placeholder for room search results
+      setRooms([]);
+    } catch (error) {
+      console.error('Error searching rooms:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [habboData, hotel, normalizedUsername, navigate]);
-
-  useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
-    };
-
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (error) {
-      console.error('Erro na Habbo Home:', error);
-      toast({
-        title: "Erro",
-        description: error,
-        variant: "destructive"
-      });
-    }
-  }, [error, toast]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg volter-font text-white" style={{
-            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-          }}>
-            Carregando a Habbo Home de {normalizedUsername}...
-          </div>
-          <div className="text-sm text-white/80 mt-2" style={{
-            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-          }}>
-            {hotel ? `Buscando no hotel ${hotel.toUpperCase()}...` : 'Detectando hotel...'}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!habboData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg p-6 text-center max-w-md">
-          <CardContent className="pt-6">
-            <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-xl volter-font mb-2">Habbo Home não encontrada</h2>
-            <p className="text-gray-600 mb-4">
-              O usuário "{normalizedUsername}" não foi encontrado {hotel ? `no hotel ${hotel.toUpperCase()}` : ''} ou não possui uma Habbo Home.
-            </p>
-            <div className="space-y-2">
-              <Button onClick={() => navigate('/')} className="w-full volter-font">
-                Voltar ao Início
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.reload()} 
-                className="w-full volter-font"
-              >
-                Tentar Novamente
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Create the expected format for widgets
-  const enhancedHabboData = {
-    name: habboData.name,
-    figureString: habboData.figureString || '',
-    motto: habboData.motto || '',
-    online: habboData.online || false,
-    memberSince: habboData.memberSince || '',
-    selectedBadges: habboData.selectedBadges || [],
-    hotel: habboData.hotel
   };
 
-  const renderDesktop = () => (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 p-4 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          <div className="flex flex-col min-h-full">
-            <HomeHeader username={habboData.name} />
-
-            <div className="mb-4">
-              {isOwner && (
-                <Badge className="bg-green-500 text-white volter-font">
-                  Sua Home
-                </Badge>
-              )}
-              <Badge className="ml-2 bg-blue-500 text-white volter-font">
-                Hotel {habboData.hotel.toUpperCase()}
-              </Badge>
-            </div>
-
-            <EnhancedHomeToolbar
-              isEditMode={isEditMode}
-              isOwner={isOwner}
-              onEditModeChange={setIsEditMode}
-            />
-
-            <div className="flex flex-1 p-4 gap-4">
-              <div className="w-1/4 flex flex-col gap-4">
-                <AvatarWidget habboData={enhancedHabboData} />
-                <GuestbookWidget 
-                  habboData={enhancedHabboData}
-                  guestbook={guestbook}
-                  onAddEntry={addGuestbookEntry}
-                  isOwner={isOwner}
-                />
-              </div>
-
-              <div className="w-3/4 grid gap-4 grid-cols-3 grid-rows-3">
-                {widgets.map(widget => (
-                  <DraggableWidget
-                    key={widget.id}
-                    id={widget.id}
-                    x={widget.x}
-                    y={widget.y}
-                    isEditMode={isEditMode}
-                    onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
-                  >
-                    <Card className="bg-white/80 backdrop-blur-sm shadow-md h-full">
-                      <CardHeader>
-                        <CardTitle className="volter-font">{widget.title || 'Widget'}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm">{widget.content || 'Widget content'}</p>
-                      </CardContent>
-                    </Card>
-                  </DraggableWidget>
-                ))}
-                
-                {widgets.length === 0 && (
-                  <div className="col-span-3 row-span-3 flex items-center justify-center">
-                    <Card className="bg-white/80 backdrop-blur-sm shadow-md p-8 text-center">
-                      <CardContent>
-                        <div className="w-12 h-12 bg-gray-400 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl">
-                          🏠
-                        </div>
-                        <h3 className="text-lg volter-font mb-2">Home Vazia</h3>
-                        <p className="text-gray-600 mb-4">Esta home ainda não foi personalizada.</p>
-                        {isOwner && (
-                          <Button onClick={() => setIsEditMode(true)} className="volter-font">
-                            Começar a Personalizar
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-              </div>
-            </div>
+  return (
+    <div className="flex h-screen bg-gray-50">
+      <NewAppSidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Habbo Home</h1>
+            <p className="text-gray-600">Explorar quartos e espaços do Habbo</p>
           </div>
-        </main>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="w-5 h-5" />
+                Buscar Quartos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite o nome do quarto..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && searchRooms()}
+                />
+                <Button onClick={searchRooms} disabled={loading}>
+                  {loading ? 'Buscando...' : 'Buscar'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Home className="w-5 h-5" />
+                Quartos Encontrados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {rooms.length === 0 ? (
+                <div className="text-center py-8">
+                  <Home className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-600">Nenhum quarto encontrado</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Use a busca para encontrar quartos
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {rooms.map((room) => (
+                    <div key={room.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-lg">{room.name}</h3>
+                        <Badge variant="outline">
+                          <Users className="w-3 h-3 mr-1" />
+                          {room.userCount}/{room.maxUsers}
+                        </Badge>
+                      </div>
+                      <p className="text-gray-600 mb-2">{room.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span>Por: {room.ownerName}</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(room.creationTime).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {room.tags.length > 0 && (
+                        <div className="flex gap-1 mt-2">
+                          {room.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
-
-  const renderMobile = () => (
-    <MobileLayout>
-      <div className="flex flex-col min-h-screen p-4">
-        <HomeHeader username={habboData.name} />
-        
-        <div className="mb-4">
-          {isOwner && (
-            <Badge className="bg-green-500 text-white volter-font mr-2">
-              Sua Home
-            </Badge>
-          )}
-          <Badge className="bg-blue-500 text-white volter-font">
-            Hotel {habboData.hotel.toUpperCase()}
-          </Badge>
-        </div>
-        
-        <EnhancedHomeToolbar
-          isEditMode={isEditMode}
-          isOwner={isOwner}
-          onEditModeChange={setIsEditMode}
-        />
-
-        <div className="flex flex-col gap-4">
-          <AvatarWidget habboData={enhancedHabboData} />
-          <GuestbookWidget 
-            habboData={enhancedHabboData}
-            guestbook={guestbook}
-            onAddEntry={addGuestbookEntry}
-            isOwner={isOwner}
-          />
-        </div>
-
-        <div className="flex flex-col gap-4 mt-4">
-          {widgets.map(widget => (
-            <Card key={widget.id} className="bg-white/80 backdrop-blur-sm shadow-md">
-              <CardHeader>
-                <CardTitle className="volter-font">{widget.title || 'Widget'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">{widget.content || 'Widget content'}</p>
-              </CardContent>
-            </Card>
-          ))}
-          
-          {widgets.length === 0 && (
-            <Card className="bg-white/80 backdrop-blur-sm shadow-md p-6 text-center">
-              <CardContent>
-                <div className="w-8 h-8 bg-gray-400 rounded mx-auto mb-2 flex items-center justify-center text-lg">
-                  🏠
-                </div>
-                <p className="text-sm text-gray-600">Esta home ainda não foi personalizada.</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </MobileLayout>
-  );
-
-  return isMobile ? renderMobile() : renderDesktop();
 };
 
 export default HabboHome;

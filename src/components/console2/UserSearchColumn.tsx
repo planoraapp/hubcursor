@@ -8,7 +8,7 @@ import { InlineProfileView } from './InlineProfileView';
 
 export const UserSearchColumn: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showProfile, setShowProfile] = useState(false);
   const { searchResults, isSearching, error, searchUser } = useUserSearch();
 
@@ -23,20 +23,20 @@ export const UserSearchColumn: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, searchUser]);
 
-  const handleUserClick = (userName: string) => {
-    setSelectedUser(userName);
+  const handleUserClick = (user: any) => {
+    setSelectedUser(user);
     setShowProfile(true);
   };
 
   const handleBackToSearch = () => {
     setShowProfile(false);
-    setSelectedUser('');
+    setSelectedUser(null);
   };
 
   if (showProfile && selectedUser) {
     return (
       <InlineProfileView
-        habboName={selectedUser}
+        user={selectedUser}
         onBack={handleBackToSearch}
       />
     );
@@ -89,7 +89,7 @@ export const UserSearchColumn: React.FC = () => {
             <div
               key={user.habbo_id || index}
               className="bg-white/10 rounded-lg p-3 hover:bg-white/20 transition-colors cursor-pointer"
-              onClick={() => handleUserClick(user.habbo_name)}
+              onClick={() => handleUserClick(user)}
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 flex-shrink-0">
