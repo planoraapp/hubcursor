@@ -9,9 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface Asset {
   id: string;
   name: string;
-  url?: string;
-  src?: string;
+  url: string;
   category: string;
+  file_path: string;
+  bucket_name: string;
 }
 
 interface AssetSelectorProps {
@@ -47,13 +48,21 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       const { data, error } = await query;
 
       if (!error && data) {
-        const formattedAssets = data.map(asset => ({
-          id: asset.id || asset.name,
-          name: asset.name,
-          url: asset.url,
-          src: asset.url,
-          category: asset.category
-        }));
+        const formattedAssets = data.map(asset => {
+          // Generate the public URL using Supabase storage
+          const { data: urlData } = supabase.storage
+            .from(asset.bucket_name)
+            .getPublicUrl(asset.file_path);
+          
+          return {
+            id: asset.id || asset.name,
+            name: asset.name,
+            url: urlData.publicUrl,
+            category: asset.category,
+            file_path: asset.file_path,
+            bucket_name: asset.bucket_name
+          };
+        });
         setAssets(formattedAssets);
       }
     } catch (error) {
@@ -111,7 +120,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                       }}
                     >
                       <img
-                        src={asset.url || asset.src}
+                        src={asset.url}
                         alt={asset.name}
                         className="w-full h-20 object-cover"
                         style={{ imageRendering: 'pixelated' }}

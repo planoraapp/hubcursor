@@ -8,8 +8,6 @@ import './index.css'
 
 // Import pages
 import Console from './pages/Console'
-import SimpleLogin from './pages/SimpleLogin'
-import SimpleRegister from './pages/SimpleRegister'
 import HabboHomeV2 from './pages/HabboHomeV2'
 
 const queryClient = new QueryClient()
@@ -17,15 +15,7 @@ const queryClient = new QueryClient()
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <SimpleLogin />,
-  },
-  {
-    path: "/login",
-    element: <SimpleLogin />,
-  },
-  {
-    path: "/register", 
-    element: <SimpleRegister />,
+    element: <div>Welcome to HabboHub</div>,
   },
   {
     path: "/console",
