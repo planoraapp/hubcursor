@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useUnifiedAuth } from '../hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,15 +8,13 @@ import { LoginBySenha } from './auth/LoginBySenha';
 import { LoginByMissao } from './auth/LoginByMissao';
 
 export const HabboLoginForm = () => {
-  const { user, loading, isLoggedIn } = useUnifiedAuth();
+  const { user, loading, isLoggedIn } = useAuth();
   const [activeTab, setActiveTab] = useState('senha');
 
-  // Se já estiver logado, redirecionar
   if (isLoggedIn) {
     return <Navigate to="/" replace />;
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-repeat"

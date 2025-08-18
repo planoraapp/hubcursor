@@ -93,6 +93,15 @@ export const LoginByMissao: React.FC = () => {
       return;
     }
 
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -100,7 +109,8 @@ export const LoginByMissao: React.FC = () => {
         body: {
           habboName: habboName.trim(),
           verificationCode: verificationCode.trim(),
-          newPassword: newPassword
+          newPassword: newPassword,
+          hotel: 'br'
         }
       });
 
@@ -125,9 +135,21 @@ export const LoginByMissao: React.FC = () => {
 
     } catch (error: any) {
       console.error('Motto verification error:', error);
+      
+      let errorMessage = error.message || 'Erro na verificação';
+      
+      // Handle specific error cases
+      if (errorMessage.includes('não encontrado')) {
+        errorMessage = 'Usuário não encontrado no Habbo Hotel';
+      } else if (errorMessage.includes('altere sua missão')) {
+        errorMessage = `Altere sua missão no Habbo para incluir: ${verificationCode}`;
+      } else if (errorMessage.includes('código não encontrado')) {
+        errorMessage = `Código ${verificationCode} não encontrado na sua missão. Verifique se você copiou corretamente.`;
+      }
+      
       toast({
         title: "Erro",
-        description: error.message || 'Erro na verificação',
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -173,10 +195,11 @@ export const LoginByMissao: React.FC = () => {
         <Input
           id="missao-password"
           type="password"
-          placeholder="Defina uma nova senha"
+          placeholder="Defina uma nova senha (mín. 6 caracteres)"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           className="border-2 border-gray-300 focus:border-blue-500"
+          minLength={6}
         />
       </div>
 
@@ -216,7 +239,7 @@ export const LoginByMissao: React.FC = () => {
           <AlertDescription className="text-xs">
             1. Gere um código de verificação<br/>
             2. Copie e cole na sua motto do Habbo<br/>
-            3. Defina uma nova senha<br/>
+            3. Defina uma nova senha (mínimo 6 caracteres)<br/>
             4. Clique em "Confirmar" para cadastrar/redefinir senha
           </AlertDescription>
         </Alert>
@@ -225,7 +248,7 @@ export const LoginByMissao: React.FC = () => {
       <Button
         type="submit"
         className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2"
-        disabled={isLoading || !verificationCode || !newPassword || !habboName}
+        disabled={isLoading || !verificationCode || !newPassword || !habboName || newPassword.length < 6}
       >
         {isLoading ? 'Processando...' : 'Confirmar'}
       </Button>

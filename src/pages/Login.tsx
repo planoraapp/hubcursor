@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { HabboLoginForm } from '@/components/HabboLoginForm';
 
 const Login = () => {
-  const { isLoggedIn, loading } = useUnifiedAuth();
+  const { isLoggedIn, loading } = useAuth();
 
   if (loading) {
     return (
@@ -16,7 +16,6 @@ const Login = () => {
     );
   }
 
-  // Se já estiver logado, redirecionar para a página principal
   if (isLoggedIn) {
     return <Navigate to="/" replace />;
   }

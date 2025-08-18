@@ -39,14 +39,14 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { habboName, newPassword, hotel = 'br' } = await req.json();
+    const { habboName, verificationCode, newPassword, hotel = 'br' } = await req.json();
 
-    console.log(`🔍 [RegisterOrReset] Processing request for: ${habboName} on hotel: ${hotel}`);
+    console.log(`🔍 [RegisterOrReset] Processing request for: ${habboName} on hotel: ${hotel} with code: ${verificationCode}`);
 
-    if (!habboName || !newPassword) {
+    if (!habboName || !verificationCode || !newPassword) {
       return new Response(JSON.stringify({
         success: false,
-        error: 'Nome Habbo e nova senha são obrigatórios'
+        error: 'Nome Habbo, código de verificação e nova senha são obrigatórios'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -58,6 +58,17 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         success: false,
         error: 'A senha deve ter pelo menos 6 caracteres'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate verification code format
+    if (!verificationCode.match(/^HUB-[A-Z0-9]{5}$/)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Código de verificação inválido. Use o formato HUB-XXXXX'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -84,25 +95,25 @@ Deno.serve(async (req) => {
     }
 
     const habboData: HabboAPIResponse = await habboResponse.json();
-    console.log(`✅ [RegisterOrReset] Found user: ${habboData.name}`);
+    console.log(`✅ [RegisterOrReset] Found user: ${habboData.name}, motto: "${habboData.motto}"`);
 
-    // Step 2: Check motto for secret code
+    // Step 2: Check motto for verification code
     const motto = habboData.motto || '';
-    const secretCode = 'HabboHub2024';
     
-    if (!motto.includes(secretCode)) {
+    if (!motto.includes(verificationCode)) {
       return new Response(JSON.stringify({
         success: false,
-        error: `Para continuar, altere sua missão no Habbo para incluir: ${secretCode}`,
+        error: `Código ${verificationCode} não encontrado na sua missão. Missão atual: "${motto}". Altere sua missão no Habbo para incluir: ${verificationCode}`,
         requiresMottoChange: true,
-        secretCode
+        currentMotto: motto,
+        expectedCode: verificationCode
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log(`🔑 [RegisterOrReset] Secret code verified in motto`);
+    console.log(`🔑 [RegisterOrReset] Verification code found in motto`);
 
     // Step 3: Extract Habbo ID from figureString or use name-based ID
     const extractHabboId = (figureString: string, name: string, hotel: string): string => {
@@ -189,7 +200,9 @@ Deno.serve(async (req) => {
           supabase_user_id: createData.user.id,
           habbo_name: habboData.name,
           habbo_id: habboId,
-          hotel: hotel
+          hotel: hotel,
+          figure_string: habboData.figureString,
+          motto: habboData.motto
         });
 
       if (accountError) {
@@ -204,6 +217,21 @@ Deno.serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+
+      // Initialize user's home
+      try {
+        const { error: homeError } = await supabase.rpc('ensure_user_home_exists', {
+          user_uuid: createData.user.id
+        });
+
+        if (homeError) {
+          console.error(`❌ [RegisterOrReset] Home initialization error:`, homeError);
+        } else {
+          console.log(`🏠 [RegisterOrReset] User home initialized`);
+        }
+      } catch (homeInitError) {
+        console.error(`❌ [RegisterOrReset] Home initialization error:`, homeInitError);
       }
 
       console.log(`✅ [RegisterOrReset] Habbo account linked successfully`);

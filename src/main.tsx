@@ -1,3 +1,4 @@
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -26,6 +27,7 @@ import Ferramentas from './pages/Ferramentas';
 import EventosPage from './pages/Eventos';
 import EditorPuhekupla from './pages/EditorPuhekupla';
 import Mercado from './pages/Mercado';
+import EnhancedHome from './pages/EnhancedHome';
 
 import './index.css';
 
@@ -55,6 +57,10 @@ const router = createBrowserRouter([
   {
     path: "/home/:username",
     element: <HabboHomeRedirect />,
+  },
+  {
+    path: "/enhanced-home/:username",
+    element: <EnhancedHome />,
   },
   {
     path: "/editor",
