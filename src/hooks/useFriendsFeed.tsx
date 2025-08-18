@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useUnifiedAuth } from './useUnifiedAuth';
+import { useAuth } from './useAuth';
 import { habboProxyService, HabboFriend, TickerActivity } from '@/services/habboProxyService';
 import { useMemo } from 'react';
 
@@ -10,7 +10,7 @@ interface FriendActivity {
 }
 
 export const useFriendsFeed = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotelDomain = useMemo(() => {
     const h = (habboAccount as any)?.hotel as string | undefined;
