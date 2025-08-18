@@ -1,58 +1,51 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { optimizedFeedService } from '@/services/optimizedFeedService';
-import { useUnifiedAuth } from './useUnifiedAuth';
-import { useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useOptimizedUserDiscovery = (options?: {
+interface DiscoveryOptions {
   method?: 'random' | 'recent' | 'active';
-  refreshInterval?: number;
   limit?: number;
   enabled?: boolean;
-}) => {
-  const { habboAccount } = useUnifiedAuth();
-  
-  const hotel = useMemo(() => {
-    const userHotel = (habboAccount as any)?.hotel as string | undefined;
-    if (!userHotel) return 'br';
-    if (userHotel === 'br') return 'br';
-    if (userHotel === 'com.br') return 'br';
-    return 'br'; // Default para BR por enquanto
-  }, [habboAccount?.hotel]);
+}
 
-  const method = options?.method || 'random';
-  const refreshInterval = options?.refreshInterval || 120000; // 2 minutos
-  const limit = options?.limit || 20;
-  const enabled = options?.enabled !== false;
+export const useOptimizedUserDiscovery = (options: DiscoveryOptions = {}) => {
+  const { method = 'random', limit = 20, enabled = true } = options;
 
-  const { 
-    data: discoveryData, 
-    isLoading, 
-    error,
-    refetch 
-  } = useQuery({
-    queryKey: ['optimized-user-discovery', hotel, method, limit],
-    queryFn: () => optimizedFeedService.discoverUsers(hotel, limit),
+  return useQuery({
+    queryKey: ['user-discovery', method, limit],
+    queryFn: async () => {
+      console.log(`🔍 [useOptimizedUserDiscovery] Discovering users via ${method}`);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('habbo-discover-users', {
+          body: { 
+            hotel: 'br', 
+            method, 
+            limit 
+          }
+        });
+
+        if (error) {
+          console.error('❌ [useOptimizedUserDiscovery] Error:', error);
+          throw new Error(error.message || 'Failed to discover users');
+        }
+
+        if (data.error) {
+          console.error('❌ [useOptimizedUserDiscovery] API Error:', data.error);
+          throw new Error(data.error);
+        }
+
+        console.log(`✅ [useOptimizedUserDiscovery] Found ${data.users?.length || 0} users`);
+        
+        return data.users || [];
+      } catch (error: any) {
+        console.error('❌ [useOptimizedUserDiscovery] Fetch failed:', error);
+        throw error;
+      }
+    },
     enabled,
-    refetchInterval: refreshInterval,
-    staleTime: 2 * 60 * 1000, // Considera stale após 2 minutos
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
-
-  const users = discoveryData?.users || [];
-  const meta = discoveryData?.meta;
-
-  return {
-    users,
-    meta,
-    method,
-    hotel,
-    isLoading,
-    error,
-    refetch,
-    isEmpty: !isLoading && users.length === 0,
-    lastUpdate: meta?.timestamp
-  };
 };

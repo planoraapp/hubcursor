@@ -1,103 +1,97 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { habboFeedService } from '@/services/habboFeedService';
+import { User } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
 
 interface HabboAccount {
   id: string;
+  supabase_user_id: string;
   habbo_name: string;
   habbo_id: string;
   hotel: string;
-  supabase_user_id: string;
-  is_admin?: boolean;
+  is_admin: boolean;
+  motto?: string;
+  figure_string?: string;
+  is_online?: boolean;
+  created_at: string;
 }
 
-export const useUnifiedAuth = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+interface UnifiedAuthContextType {
+  user: User | null;
+  habboAccount: HabboAccount | null;
+  isLoggedIn: boolean;
+  loading: boolean;
+  loginWithPassword: (habboName: string, password: string) => Promise<any>;
+  logout: () => Promise<void>;
+  refreshHabboAccount: () => Promise<void>;
+  isAdmin: () => boolean;
+}
+
+const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
+
+export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [habboAccount, setHabboAccount] = useState<HabboAccount | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const loadHabboAccount = useCallback(async (userId: string) => {
+  const isLoggedIn = !!user && !!habboAccount;
+
+  useEffect(() => {
+    console.log('🚀 [useUnifiedAuth] Getting initial session...');
+    
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadHabboAccount(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log(`🔄 [useUnifiedAuth] Auth state changed: ${event}`, session?.user?.id);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await loadHabboAccount(session.user.id);
+        } else {
+          setHabboAccount(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadHabboAccount = async (userId: string) => {
     try {
-      console.log('🔍 [useUnifiedAuth] Loading Habbo account for user:', userId);
+      console.log(`🔍 [useUnifiedAuth] Loading Habbo account for user: ${userId}`);
+      
       const { data, error } = await supabase
         .from('habbo_accounts')
         .select('*')
         .eq('supabase_user_id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('❌ [useUnifiedAuth] Error loading Habbo account:', error);
-        return;
-      }
-
-      console.log('✅ [useUnifiedAuth] Habbo account loaded:', data?.habbo_name || 'none');
-      setHabboAccount(data || null);
-    } catch (error) {
-      console.error('❌ [useUnifiedAuth] Error in loadHabboAccount:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const getInitialSession = async () => {
-      try {
-        console.log('🚀 [useUnifiedAuth] Getting initial session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        
-        if (!mounted) return;
-        
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Defer habbo account loading to next tick to avoid state update conflicts
-          setTimeout(() => {
-            if (mounted) {
-              loadHabboAccount(session.user.id);
-            }
-          }, 0);
-        }
-      } catch (error) {
-        console.error('❌ [useUnifiedAuth] Error getting initial session:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      
-      console.log('🔄 [useUnifiedAuth] Auth state changed:', event, session?.user?.id);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Defer habbo account loading to next tick
-        setTimeout(() => {
-          if (mounted) {
-            loadHabboAccount(session.user.id);
-          }
-        }, 0);
-      } else {
         setHabboAccount(null);
+      } else {
+        console.log('✅ [useUnifiedAuth] Habbo account loaded:', data.habbo_name);
+        setHabboAccount(data);
       }
-      
+    } catch (error) {
+      console.error('❌ [useUnifiedAuth] Error loading Habbo account:', error);
+      setHabboAccount(null);
+    } finally {
       setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [loadHabboAccount]);
+    }
+  };
 
   const loginWithPassword = async (habboName: string, password: string) => {
     try {
@@ -135,12 +129,21 @@ export const useUnifiedAuth = () => {
 
       if (data.user) {
         console.log('✅ [useUnifiedAuth] Login successful for:', habboName);
+        toast({
+          title: "Login realizado",
+          description: `Bem-vindo de volta, ${habboName}!`
+        });
         return data;
       }
 
       throw new Error('Erro no login');
     } catch (error: any) {
       console.error('❌ [useUnifiedAuth] Login error:', error);
+      toast({
+        title: "Erro no login",
+        description: error.message,
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setLoading(false);
@@ -151,15 +154,16 @@ export const useUnifiedAuth = () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      setUser(null);
-      setHabboAccount(null);
-      
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso."
-      });
+      if (error) {
+        console.error('❌ [useUnifiedAuth] Logout error:', error);
+      } else {
+        setUser(null);
+        setHabboAccount(null);
+        toast({
+          title: "Logout realizado",
+          description: "Você foi desconectado com sucesso."
+        });
+      }
     } catch (error: any) {
       console.error('❌ [useUnifiedAuth] Logout error:', error);
       toast({
@@ -172,38 +176,38 @@ export const useUnifiedAuth = () => {
     }
   };
 
+  const refreshHabboAccount = async () => {
+    if (user) {
+      await loadHabboAccount(user.id);
+    }
+  };
+
   const isAdmin = () => {
     return habboAccount?.is_admin === true;
   };
 
-  // Ensure tracked + sync when we have a habboAccount, then refresh feed
-  useEffect(() => {
-    (async () => {
-      try {
-        if (user && habboAccount?.habbo_id && habboAccount?.hotel && habboAccount?.habbo_name) {
-          console.log('🧭 [useUnifiedAuth] Ensuring tracked and syncing user...');
-          await habboFeedService.ensureTrackedAndSynced({
-            habbo_name: habboAccount.habbo_name,
-            habbo_id: habboAccount.habbo_id,
-            hotel: habboAccount.hotel,
-          });
-          // Notify feed to refresh
-          window.dispatchEvent(new CustomEvent('feed:refresh'));
-        }
-      } catch (e) {
-        console.error('❌ [useUnifiedAuth] ensureTracked failed:', e);
-      }
-    })();
-  }, [user?.id, habboAccount?.habbo_id, habboAccount?.hotel]);
+  return (
+    <UnifiedAuthContext.Provider
+      value={{
+        user,
+        habboAccount,
+        isLoggedIn,
+        loading,
+        loginWithPassword,
+        logout,
+        refreshHabboAccount,
+        isAdmin
+      }}
+    >
+      {children}
+    </UnifiedAuthContext.Provider>
+  );
+};
 
-  return {
-    user,
-    loading,
-    habboAccount,
-    isLoggedIn: !!user,
-    isAdmin,
-    logout,
-    loginWithPassword,
-    loadHabboAccount
-  };
+export const useUnifiedAuth = (): UnifiedAuthContextType => {
+  const context = useContext(UnifiedAuthContext);
+  if (context === undefined) {
+    throw new Error('useUnifiedAuth must be used within an UnifiedAuthProvider');
+  }
+  return context;
 };
