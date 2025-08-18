@@ -291,29 +291,38 @@ export type Database = {
       habbo_accounts: {
         Row: {
           created_at: string
+          figure_string: string | null
           habbo_id: string
           habbo_name: string
           hotel: string
           id: string
           is_admin: boolean
+          is_online: boolean | null
+          motto: string | null
           supabase_user_id: string
         }
         Insert: {
           created_at?: string
+          figure_string?: string | null
           habbo_id: string
           habbo_name: string
           hotel: string
           id?: string
           is_admin?: boolean
+          is_online?: boolean | null
+          motto?: string | null
           supabase_user_id: string
         }
         Update: {
           created_at?: string
+          figure_string?: string | null
           habbo_id?: string
           habbo_name?: string
           hotel?: string
           id?: string
           is_admin?: boolean
+          is_online?: boolean | null
+          motto?: string | null
           supabase_user_id?: string
         }
         Relationships: []
@@ -948,6 +957,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_home_widgets: {
+        Row: {
+          config: Json | null
+          created_at: string
+          height: number
+          id: string
+          is_visible: boolean
+          updated_at: string
+          user_id: string
+          widget_type: string
+          width: number
+          x: number
+          y: number
+          z_index: number
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          height?: number
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          user_id: string
+          widget_type: string
+          width?: number
+          x?: number
+          y?: number
+          z_index?: number
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          height?: number
+          id?: string
+          is_visible?: boolean
+          updated_at?: string
+          user_id?: string
+          widget_type?: string
+          width?: number
+          x?: number
+          y?: number
+          z_index?: number
+        }
+        Relationships: []
+      }
       user_profile_changes: {
         Row: {
           change_description: string | null
@@ -1077,6 +1131,10 @@ export type Database = {
       }
       initialize_user_home: {
         Args: { user_uuid: string }
+        Returns: undefined
+      }
+      initialize_user_home_complete: {
+        Args: { user_habbo_name: string; user_uuid: string }
         Returns: undefined
       }
     }

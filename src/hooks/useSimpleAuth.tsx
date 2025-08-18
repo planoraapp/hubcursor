@@ -1,49 +1,51 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { User } from '@supabase/supabase-js';
 
 interface HabboAccount {
   id: string;
+  supabase_user_id: string;
   habbo_name: string;
   habbo_id: string;
   hotel: string;
-  supabase_user_id: string;
-  is_admin?: boolean;
+  is_admin: boolean;
   motto?: string;
   figure_string?: string;
   is_online?: boolean;
+  created_at: string;
 }
 
 export const useSimpleAuth = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
   const [habboAccount, setHabboAccount] = useState<HabboAccount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isLoggedIn = !!user && !!habboAccount;
 
   useEffect(() => {
     // Get initial session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      
       if (session?.user) {
-        await loadHabboAccount(session.user.id);
-      }
-      
-      setLoading(false);
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await loadHabboAccount(session.user.id);
+        loadHabboAccount(session.user.id);
       } else {
-        setHabboAccount(null);
+        setIsLoading(false);
       }
     });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await loadHabboAccount(session.user.id);
+        } else {
+          setHabboAccount(null);
+          setIsLoading(false);
+        }
+      }
+    );
 
     return () => subscription.unsubscribe();
   }, []);
@@ -56,20 +58,24 @@ export const useSimpleAuth = () => {
         .eq('supabase_user_id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error loading Habbo account:', error);
-        return;
+        setHabboAccount(null);
+      } else {
+        setHabboAccount(data);
       }
-
-      setHabboAccount(data || null);
     } catch (error) {
-      console.error('Error in loadHabboAccount:', error);
+      console.error('Error loading Habbo account:', error);
+      setHabboAccount(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     user,
-    loading,
-    habboAccount
+    habboAccount,
+    isLoggedIn,
+    isLoading
   };
 };

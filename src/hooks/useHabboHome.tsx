@@ -107,48 +107,28 @@ export const useHabboHome = (username: string) => {
         }
       }
 
-      // Carregar widgets (tentar nova estrutura primeiro, depois fallback para antiga)
+      // Carregar widgets (usando estrutura antiga primeiro para compatibilidade)
       let widgetsData = [];
       
       if (userData.supabase_user_id) {
-        const { data: newWidgets, error: newWidgetsError } = await supabase
-          .from('user_home_widgets')
+        // Primeiro tentar carregar da estrutura antiga
+        const { data: oldLayout } = await supabase
+          .from('user_home_layouts')
           .select('*')
           .eq('user_id', userData.supabase_user_id);
 
-        if (newWidgets && newWidgets.length > 0) {
-          widgetsData = newWidgets.map(widget => ({
+        if (oldLayout) {
+          widgetsData = oldLayout.map(widget => ({
             id: widget.id,
-            widget_id: widget.widget_type,
-            widget_type: widget.widget_type,
+            widget_id: widget.widget_id,
+            widget_type: widget.widget_id,
             x: widget.x,
             y: widget.y,
             z_index: widget.z_index,
-            width: widget.width,
-            height: widget.height,
-            is_visible: widget.is_visible,
-            config: widget.config
+            width: widget.width || getDefaultPosition(widget.widget_id).width,
+            height: widget.height || getDefaultPosition(widget.widget_id).height,
+            is_visible: widget.is_visible
           }));
-        } else {
-          // Fallback para estrutura antiga
-          const { data: oldLayout } = await supabase
-            .from('user_home_layouts')
-            .select('*')
-            .eq('user_id', userData.supabase_user_id);
-
-          if (oldLayout) {
-            widgetsData = oldLayout.map(widget => ({
-              id: widget.id,
-              widget_id: widget.widget_id,
-              widget_type: widget.widget_id,
-              x: widget.x,
-              y: widget.y,
-              z_index: widget.z_index,
-              width: widget.width || getDefaultPosition(widget.widget_id).width,
-              height: widget.height || getDefaultPosition(widget.widget_id).height,
-              is_visible: widget.is_visible
-            }));
-          }
         }
       }
 
@@ -205,21 +185,12 @@ export const useHabboHome = (username: string) => {
     try {
       const userId = habboData.id;
       
-      // Tentar atualizar na nova estrutura primeiro
-      const { error: newError } = await supabase
-        .from('user_home_widgets')
+      // Atualizar na estrutura antiga
+      await supabase
+        .from('user_home_layouts')
         .update({ x, y, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
-        .eq('widget_type', widgetId);
-
-      // Se não funcionou, tentar estrutura antiga
-      if (newError) {
-        await supabase
-          .from('user_home_layouts')
-          .update({ x, y, updated_at: new Date().toISOString() })
-          .eq('user_id', userId)
-          .eq('widget_id', widgetId);
-      }
+        .eq('widget_id', widgetId);
 
       // Atualizar estado local
       setWidgets(prev => 
@@ -244,29 +215,16 @@ export const useHabboHome = (username: string) => {
     try {
       const userId = habboData.id;
       
-      // Tentar atualizar na nova estrutura primeiro
-      const { error: newError } = await supabase
-        .from('user_home_widgets')
+      // Atualizar na estrutura antiga
+      await supabase
+        .from('user_home_layouts')
         .update({ 
           width: constrainedWidth, 
           height: constrainedHeight,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', userId)
-        .eq('widget_type', widgetId);
-
-      // Se não funcionou, tentar estrutura antiga
-      if (newError) {
-        await supabase
-          .from('user_home_layouts')
-          .update({ 
-            width: constrainedWidth, 
-            height: constrainedHeight,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId)
-          .eq('widget_id', widgetId);
-      }
+        .eq('widget_id', widgetId);
 
       // Atualizar estado local
       setWidgets(prev => 
