@@ -100,21 +100,62 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'avatar':
       case 'usercard':
         return (
-          <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-3">
-              <CardTitle className="volter-font text-center text-lg habbo-text">
-                👤 {habboData.habbo_name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 text-center">
-              <img
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`}
-                alt={habboData.habbo_name}
-                className="w-20 h-20 mx-auto mb-2"
-                style={{ imageRendering: 'pixelated' }}
-              />
-              <p className="text-sm volter-font">{habboData.motto || 'Sem missão definida'}</p>
-              <Badge className="mt-2 volter-font">Hotel: {habboData.hotel?.toUpperCase() || 'BR'}</Badge>
+          <Card 
+            className="w-full h-full bg-white backdrop-blur-sm shadow-lg border-2 border-black"
+            style={{ background: 'rgba(255, 255, 255, 0.9)' }}
+          >
+            <CardContent className="p-4 h-full">
+              <div className="flex items-center gap-4 h-full">
+                {/* Avatar com fundo transparente */}
+                <div 
+                  className="flex-shrink-0 rounded-lg p-2"
+                  style={{ 
+                    background: 'transparent',
+                    minWidth: '80px',
+                    minHeight: '120px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <img
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`}
+                    alt={habboData.habbo_name}
+                    className="max-w-full max-h-full object-contain"
+                    style={{ 
+                      imageRendering: 'pixelated',
+                      width: 'auto',
+                      height: 'auto',
+                      maxWidth: '80px',
+                      maxHeight: '120px'
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`;
+                    }}
+                  />
+                </div>
+                
+                {/* Informações do usuário */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-gray-800 volter-font habbo-text mb-1 truncate">
+                    {habboData.habbo_name}
+                  </h3>
+                  <p className="text-sm text-gray-600 volter-font mb-2 line-clamp-2">
+                    {habboData.motto || 'Sem missão definida'}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge className="text-xs volter-font bg-blue-100 text-blue-800">
+                      Hotel: {habboData.hotel?.toUpperCase() || 'BR'}
+                    </Badge>
+                    {habboData.is_online && (
+                      <Badge className="text-xs volter-font bg-green-100 text-green-800">
+                        Online
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         );

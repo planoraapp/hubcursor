@@ -1,22 +1,32 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Home, Plus, ExternalLink, Users, Camera, Sparkles } from 'lucide-react';
+import { Home, Plus, ExternalLink, Users, Camera, Sparkles, Search } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const Homes = () => {
   const { habboAccount } = useAuth();
+  const navigate = useNavigate();
+  const [searchUsername, setSearchUsername] = useState('');
 
-  const featuredHomes = [
+  const handleSearchHome = () => {
+    if (searchUsername.trim()) {
+      navigate(`/enhanced-home/${searchUsername.trim()}`);
+    }
+  };
+
+  const recentHomes = [
     {
       id: 1,
-      owner: 'Beebop',
-      title: 'Casa Moderna',
-      description: 'Uma casa com design contemporâneo e móveis exclusivos',
+      owner: habboAccount?.habbo_name || 'Beebop',
+      title: 'Minha Home Personalizada',
+      description: 'Home com widgets exclusivos e decoração única',
       imageUrl: '/assets/bghabbohub.png',
       visitors: 125,
       widgets: 8,
@@ -24,22 +34,22 @@ const Homes = () => {
     },
     {
       id: 2,
-      owner: 'Player123',
-      title: 'Apartamento Aconchegante',
-      description: 'Pequeno mas cheio de personalidade',
+      owner: habboAccount?.habbo_name || 'Beebop',
+      title: 'Versão 2.0 da Home',
+      description: 'Nova versão com mais funcionalidades',
       imageUrl: '/assets/bghabbohub.png',
       visitors: 89,
-      widgets: 5,
+      widgets: 12,
       isOnline: false
     },
     {
       id: 3,
-      owner: 'Designer_Pro',
-      title: 'Estúdio Criativo',
-      description: 'Espaço dedicado à arte e criatividade',
+      owner: habboAccount?.habbo_name || 'Beebop',
+      title: 'Estilo Moderno',
+      description: 'Design clean e contemporâneo',
       imageUrl: '/assets/bghabbohub.png',
       visitors: 234,
-      widgets: 12,
+      widgets: 6,
       isOnline: true
     }
   ];
@@ -101,41 +111,57 @@ const Homes = () => {
                   </CardContent>
                 </Card>
 
-                {/* Explore Homes Card */}
+                {/* Search Homes Card */}
                 <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-8 text-center">
                     <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                      <Users className="w-10 h-10 text-white" />
+                      <Search className="w-10 h-10 text-white" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
-                      Explorar Homes
+                      Buscar Homes
                     </h2>
                     <p className="text-gray-600 mb-6 volter-font">
-                      Descubra as homes mais criativas da comunidade e encontre inspiração
+                      Digite o nome de um usuário para visitar sua Habbo Home
                     </p>
-                    <Button variant="outline" className="border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white px-8 py-3 text-lg volter-font">
-                      <ExternalLink className="w-5 h-5 mr-2" />
-                      Explorar
-                    </Button>
+                    <div className="flex gap-2 mb-4">
+                      <Input
+                        placeholder="Nome do usuário..."
+                        value={searchUsername}
+                        onChange={(e) => setSearchUsername(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearchHome()}
+                        className="volter-font"
+                      />
+                      <Button
+                        onClick={handleSearchHome}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white volter-font"
+                      >
+                        <Search className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Featured Homes */}
+              {/* Recent Homes */}
               <div className="mb-8">
                 <h2 className="text-3xl font-bold text-white mb-8 text-center volter-font drop-shadow-lg">
-                  ⭐ Homes em Destaque
+                  🏡 Homes Recentes
                 </h2>
                 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredHomes.map((home) => (
+                  {recentHomes.map((home) => (
                     <Card key={home.id} className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 overflow-hidden">
                       <div className="relative">
-                        <img
-                          src={home.imageUrl}
-                          alt={home.title}
-                          className="w-full h-48 object-cover"
-                        />
+                        <div className="w-full h-32 bg-gradient-to-br from-blue-400 to-purple-500 flex items-end justify-center p-4">
+                          <div className="text-center">
+                            <div className="bg-white/90 rounded-lg p-2 mb-2 inline-block">
+                              <span className="text-2xl">🏠</span>
+                            </div>
+                            <div className="text-white text-xs volter-font">
+                              Miniatura da Home
+                            </div>
+                          </div>
+                        </div>
                         <div className="absolute top-3 right-3">
                           <Badge variant={home.isOnline ? "default" : "secondary"} className="volter-font">
                             {home.isOnline ? 'Online' : 'Offline'}
@@ -196,14 +222,16 @@ const Homes = () => {
                         <li>• Use widgets para mostrar informações pessoais</li>
                         <li>• Adicione stickers para decorar sua home</li>
                         <li>• Experimente diferentes backgrounds</li>
+                        <li>• Organize elementos com drag & drop</li>
                       </ul>
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-700 mb-2 volter-font">Interação</h4>
                       <ul className="text-gray-600 space-y-1 volter-font text-sm">
                         <li>• Permita que amigos deixem recados</li>
-                        <li>• Compartilhe sua música favorita</li>
+                        <li>• Compartilhe sua home com outros usuários</li>
                         <li>• Mantenha sua home sempre atualizada</li>
+                        <li>• Participe de concursos de homes</li>
                       </ul>
                     </div>
                   </div>

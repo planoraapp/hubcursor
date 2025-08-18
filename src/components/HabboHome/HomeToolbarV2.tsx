@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Eye, Save, Palette, Sticker, Plus } from 'lucide-react';
+import { Edit, Eye, Save, Palette, Sticker, Plus, Image } from 'lucide-react';
 import { AssetSelector } from './AssetSelector';
 
 interface HomeToolbarV2Props {
@@ -61,12 +61,14 @@ export const HomeToolbarV2: React.FC<HomeToolbarV2Props> = ({
   const handleBackgroundImageSelect = (asset: any) => {
     console.log('🖼️ Background de imagem selecionado:', asset);
     onBackgroundChange?.({ type: 'image', value: asset.url || asset.src });
+    setShowBackgrounds(false);
   };
 
   const handleStickerSelect = (asset: any) => {
     console.log('🎯 Sticker selecionado:', asset);
     const stickerSrc = asset.url || asset.src;
     onStickerAdd?.(asset.id, stickerSrc, 'Stickers');
+    setShowStickers(false);
   };
 
   return (
@@ -123,14 +125,15 @@ export const HomeToolbarV2: React.FC<HomeToolbarV2Props> = ({
                     Cores
                   </Button>
                   
-                  {/* Image Background Button */}
+                  {/* Image Background Button - Papéis */}
                   <Button
                     onClick={() => setShowBackgrounds(true)}
                     variant="outline"
                     size="sm"
                     className="bg-white/20 text-white hover:bg-white/30 volter-font border-white/30"
                   >
-                    🖼️ Papéis
+                    <Image className="w-4 h-4 mr-1" />
+                    Papéis
                   </Button>
                   
                   {/* Stickers Button */}
@@ -181,12 +184,13 @@ export const HomeToolbarV2: React.FC<HomeToolbarV2Props> = ({
         </div>
       )}
 
-      {/* Background Image Selector */}
+      {/* Background Image Selector (Papéis) */}
       <AssetSelector
         open={showBackgrounds}
         onOpenChange={setShowBackgrounds}
         onAssetSelect={handleBackgroundImageSelect}
         type="backgrounds"
+        title="Papéis de Parede"
       />
 
       {/* Sticker Selector */}
@@ -195,6 +199,7 @@ export const HomeToolbarV2: React.FC<HomeToolbarV2Props> = ({
         onOpenChange={setShowStickers}
         onAssetSelect={handleStickerSelect}
         type="stickers"
+        title="Stickers"
       />
     </>
   );

@@ -2,238 +2,146 @@
 import React from 'react';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wrench, Palette, Code, Database, Settings, ExternalLink } from 'lucide-react';
+import { Wrench, Image, Code, Palette, Download, Upload } from 'lucide-react';
 
 const Tools = () => {
-  const toolCategories = [
+  const tools = [
     {
-      title: 'Design & Customização',
-      description: 'Ferramentas para personalizar sua experiência no Habbo',
-      icon: Palette,
-      color: 'from-pink-500 to-purple-500',
-      tools: [
-        {
-          name: 'Avatar Builder',
-          description: 'Crie e customize seu avatar Habbo',
-          status: 'Em breve',
-          external: false
-        },
-        {
-          name: 'Room Designer',
-          description: 'Planeje e decore seus quartos',
-          status: 'Em desenvolvimento',
-          external: false
-        },
-        {
-          name: 'Badge Creator',
-          description: 'Crie emblemas personalizados',
-          status: 'Disponível',
-          external: true,
-          url: 'https://habbo.com/badges'
-        }
-      ]
-    },
-    {
-      title: 'Análise & Estatísticas',
-      description: 'Acompanhe suas estatísticas e progresso',
-      icon: Database,
+      id: 1,
+      name: 'Gerador de Avatar',
+      description: 'Crie avatars personalizados com diferentes roupas e cores',
+      icon: <Image className="w-8 h-8" />,
       color: 'from-blue-500 to-cyan-500',
-      tools: [
-        {
-          name: 'Profile Analytics',
-          description: 'Analise estatísticas do seu perfil',
-          status: 'Beta',
-          external: false
-        },
-        {
-          name: 'Friends Tracker',
-          description: 'Monitore atividade dos seus amigos',
-          status: 'Em desenvolvimento',
-          external: false
-        },
-        {
-          name: 'Trading History',
-          description: 'Histórico de suas negociações',
-          status: 'Em breve',
-          external: false
-        }
-      ]
+      available: true
     },
     {
-      title: 'Desenvolvimento',
-      description: 'Ferramentas para desenvolvedores e criadores',
-      icon: Code,
-      color: 'from-green-500 to-teal-500',
-      tools: [
-        {
-          name: 'API Explorer',
-          description: 'Explore a API do Habbo',
-          status: 'Disponível',
-          external: true,
-          url: 'https://habbo.com/api'
-        },
-        {
-          name: 'Bot Framework',
-          description: 'Framework para criar bots do Habbo',
-          status: 'Em desenvolvimento',
-          external: false
-        },
-        {
-          name: 'Widget SDK',
-          description: 'SDK para criar widgets customizados',
-          status: 'Em breve',
-          external: false
-        }
-      ]
+      id: 2,
+      name: 'Editor de Códigos',
+      description: 'Visualize e edite códigos figure do Habbo',
+      icon: <Code className="w-8 h-8" />,
+      color: 'from-green-500 to-emerald-500',
+      available: true
+    },
+    {
+      id: 3,
+      name: 'Paleta de Cores',
+      description: 'Explore todas as cores disponíveis no Habbo',
+      icon: <Palette className="w-8 h-8" />,
+      color: 'from-purple-500 to-pink-500',
+      available: true
+    },
+    {
+      id: 4,
+      name: 'Exportador de Homes',
+      description: 'Exporte sua Habbo Home como imagem',
+      icon: <Download className="w-8 h-8" />,
+      color: 'from-orange-500 to-red-500',
+      available: false
+    },
+    {
+      id: 5,
+      name: 'Importador de Layouts',
+      description: 'Importe layouts de homes de outros usuários',
+      icon: <Upload className="w-8 h-8" />,
+      color: 'from-teal-500 to-green-500',
+      available: false
+    },
+    {
+      id: 6,
+      name: 'Construtor de Emblemas',
+      description: 'Visualize combinações de emblemas',
+      icon: <Wrench className="w-8 h-8" />,
+      color: 'from-indigo-500 to-purple-500',
+      available: false
     }
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Disponível':
-        return 'bg-green-100 text-green-800';
-      case 'Beta':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Em desenvolvimento':
-        return 'bg-blue-100 text-blue-800';
-      case 'Em breve':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
     <SidebarProvider>
-      <div 
-        className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
-      >
+      <div className="min-h-screen flex w-full">
         <NewAppSidebar />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-12">
-              <h1 className="text-5xl font-bold text-white mb-4 volter-font drop-shadow-lg">
-                🔧 Ferramentas HabboHub
-              </h1>
-              <p className="text-xl text-white/90 volter-font drop-shadow">
-                Ferramentas avançadas para aprimorar sua experiência no Habbo
-              </p>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
-              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
-                <CardContent className="p-6 text-center">
-                  <Wrench className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-blue-900 volter-font">12</div>
-                  <div className="text-blue-700 volter-font">Ferramentas</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
-                <CardContent className="p-6 text-center">
-                  <Settings className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-green-900 volter-font">3</div>
-                  <div className="text-green-700 volter-font">Categorias</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
-                <CardContent className="p-6 text-center">
-                  <Code className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-purple-900 volter-font">2</div>
-                  <div className="text-purple-700 volter-font">Disponíveis</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Tool Categories */}
-            <div className="space-y-8">
-              {toolCategories.map((category, index) => (
-                <Card key={index} className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
-                  <CardHeader className={`bg-gradient-to-r ${category.color} text-white rounded-t-lg`}>
-                    <CardTitle className="flex items-center gap-3 text-2xl volter-font">
-                      <category.icon className="w-8 h-8" />
-                      {category.title}
-                    </CardTitle>
-                    <CardDescription className="text-white/90 volter-font text-lg">
-                      {category.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {category.tools.map((tool, toolIndex) => (
-                        <Card key={toolIndex} className="border-2 border-gray-200 hover:border-gray-300 transition-colors">
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <h4 className="font-bold text-gray-800 volter-font">{tool.name}</h4>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium volter-font ${getStatusColor(tool.status)}`}>
-                                {tool.status}
-                              </span>
-                            </div>
-                            <p className="text-gray-600 text-sm mb-4 volter-font">
-                              {tool.description}
-                            </p>
-                            {tool.external && tool.url ? (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full border-2 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white volter-font"
-                                onClick={() => window.open(tool.url, '_blank')}
-                              >
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                Acessar
-                              </Button>
-                            ) : tool.status === 'Disponível' || tool.status === 'Beta' ? (
-                              <Button 
-                                size="sm" 
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white volter-font"
-                                disabled={tool.status !== 'Disponível'}
-                              >
-                                {tool.status === 'Beta' ? 'Testar (Beta)' : 'Usar Ferramenta'}
-                              </Button>
-                            ) : (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full volter-font" 
-                                disabled
-                              >
-                                {tool.status}
-                              </Button>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Information Card */}
-            <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black mt-8">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
-                  🚀 Mais ferramentas em desenvolvimento
-                </h3>
-                <p className="text-gray-600 volter-font mb-6">
-                  Nossa equipe está trabalhando constantemente para trazer novas ferramentas que vão revolucionar sua experiência no Habbo. Fique de olho nas atualizações!
+        <main 
+          className="flex-1 relative bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 via-purple-900/10 to-blue-900/30"></div>
+          
+          <div className="relative z-10 p-8">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h1 className="text-5xl font-bold text-white mb-4 volter-font drop-shadow-lg">
+                  🔧 Ferramentas
+                </h1>
+                <p className="text-xl text-white/90 volter-font drop-shadow">
+                  Utilitários e ferramentas para aprimorar sua experiência no Habbo
                 </p>
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Button variant="outline" className="border-2 border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white volter-font">
-                    Sugerir Ferramenta
-                  </Button>
-                  <Button variant="outline" className="border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white volter-font">
-                    Reportar Bug
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tools.map((tool) => (
+                  <Card key={tool.id} className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300">
+                    <CardHeader className={`bg-gradient-to-r ${tool.color} text-white border-b-2 border-black`}>
+                      <div className="flex items-center gap-3">
+                        {tool.icon}
+                        <CardTitle className="text-xl volter-font">
+                          {tool.name}
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <p className="text-gray-600 mb-6 volter-font">
+                        {tool.description}
+                      </p>
+                      
+                      <Button 
+                        className={`w-full volter-font ${
+                          tool.available 
+                            ? `bg-gradient-to-r ${tool.color} hover:opacity-90 text-white` 
+                            : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        }`}
+                        disabled={!tool.available}
+                      >
+                        {tool.available ? 'Usar Ferramenta' : 'Em Breve'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card className="mt-12 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
+                <CardContent className="p-8 text-center">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
+                    🚀 Mais Ferramentas em Desenvolvimento
+                  </h3>
+                  <p className="text-gray-600 mb-6 volter-font">
+                    Estamos constantemente trabalhando em novas ferramentas para melhorar sua experiência. 
+                    Sugestões são sempre bem-vindas!
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-bold text-gray-700 mb-2 volter-font">Em Desenvolvimento</h4>
+                      <ul className="text-gray-600 space-y-1 volter-font text-sm text-left">
+                        <li>• Calculadora de cores avançada</li>
+                        <li>• Gerador de QR codes para homes</li>
+                        <li>• Comparador de avatars</li>
+                        <li>• Estatísticas detalhadas</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-700 mb-2 volter-font">Planejadas</h4>
+                      <ul className="text-gray-600 space-y-1 volter-font text-sm text-left">
+                        <li>• Editor de badges personalizado</li>
+                        <li>• Simulador de quartos</li>
+                        <li>• Conversor de imagens</li>
+                        <li>• API para desenvolvedores</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </main>
       </div>

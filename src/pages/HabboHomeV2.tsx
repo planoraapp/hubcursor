@@ -9,6 +9,8 @@ import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
 import { useToast } from '@/hooks/use-toast';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
 import { HomeToolbarV2 } from '@/components/HabboHome/HomeToolbarV2';
+import { NewAppSidebar } from '@/components/NewAppSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 const HabboHomeV2: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -87,107 +89,118 @@ const HabboHomeV2: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex w-full bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
-            <div className="text-lg volter-font text-white habbo-text">
-              Carregando Habbo Home...
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <NewAppSidebar />
+          <main className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
+              <div className="text-lg volter-font text-white habbo-text">
+                Carregando Habbo Home...
+              </div>
             </div>
-          </div>
-        </main>
-      </div>
+          </main>
+        </div>
+      </SidebarProvider>
     );
   }
 
   if (!habboData) {
     return (
-      <div className="min-h-screen flex w-full bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <main className="flex-1 flex items-center justify-center">
-          <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
-            <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
-              <CardTitle className="text-center volter-font">Usuário não encontrado</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 text-center">
-              <p className="text-gray-700 mb-4 volter-font">
-                O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
-              </p>
-              <Button onClick={() => navigate('/console')} className="volter-font">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar ao Console
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <NewAppSidebar />
+          <main className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+            <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
+              <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
+                <CardTitle className="text-center volter-font">Usuário não encontrado</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 text-center">
+                <p className="text-gray-700 mb-4 volter-font">
+                  O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
+                </p>
+                <Button onClick={() => navigate('/homes')} className="volter-font">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar às Homes
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      {/* Toolbar */}
-      <HomeToolbarV2
-        isEditMode={isEditMode}
-        isOwner={isOwner}
-        onEditModeChange={setIsEditMode}
-        onSave={handleSave}
-        onBackgroundChange={handleBackgroundChange}
-        onStickerAdd={handleStickerAdd}
-      />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <NewAppSidebar />
+        <main className="flex-1 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+          {/* Toolbar */}
+          <HomeToolbarV2
+            isEditMode={isEditMode}
+            isOwner={isOwner}
+            onEditModeChange={setIsEditMode}
+            onSave={handleSave}
+            onBackgroundChange={handleBackgroundChange}
+            onStickerAdd={handleStickerAdd}
+          />
 
-      {/* Header */}
-      <div className="p-4">
-        <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl volter-font habbo-text flex items-center gap-2">
-                  🏠 {habboData.habbo_name}'s Habbo Home
-                </CardTitle>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className="bg-white/20 text-white volter-font">
-                    Hotel: {habboData.hotel?.toUpperCase() || 'BR'}
-                  </Badge>
-                  <Badge className="bg-white/20 text-white volter-font">
-                    Home V2
-                  </Badge>
-                  <Badge className="bg-white/20 text-white volter-font">
-                    Widgets: {widgets.length} | Stickers: {stickers.length}
-                  </Badge>
-                  {habboData.is_online && (
-                    <Badge className="bg-green-500 text-white volter-font">
-                      Online
-                    </Badge>
-                  )}
+          {/* Header */}
+          <div className="p-4">
+            <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl volter-font habbo-text flex items-center gap-2">
+                      🏠 {habboData.habbo_name}'s Habbo Home
+                    </CardTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="bg-white/20 text-white volter-font">
+                        Hotel: {habboData.hotel?.toUpperCase() || 'BR'}
+                      </Badge>
+                      <Badge className="bg-white/20 text-white volter-font">
+                        Home V2
+                      </Badge>
+                      <Badge className="bg-white/20 text-white volter-font">
+                        Widgets: {widgets.length} | Stickers: {stickers.length}
+                      </Badge>
+                      {habboData.is_online && (
+                        <Badge className="bg-green-500 text-white volter-font">
+                          Online
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/homes')}
+                    className="text-white border-white/30 hover:bg-white/10 volter-font"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
+                  </Button>
                 </div>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/console')}
-                className="text-white border-white/30 hover:bg-white/10 volter-font"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
+              </CardHeader>
+            </Card>
 
-        {/* Home Canvas */}
-        <HomeCanvas
-          widgets={widgets}
-          stickers={stickers}
-          background={background}
-          habboData={habboData}
-          guestbook={guestbook}
-          isEditMode={isEditMode}
-          isOwner={isOwner}
-          onWidgetPositionChange={updateWidgetPosition}
-          onStickerPositionChange={updateStickerPosition}
-          onStickerRemove={removeSticker}
-        />
+            {/* Home Canvas */}
+            <HomeCanvas
+              widgets={widgets}
+              stickers={stickers}
+              background={background}
+              habboData={habboData}
+              guestbook={guestbook}
+              isEditMode={isEditMode}
+              isOwner={isOwner}
+              onWidgetPositionChange={updateWidgetPosition}
+              onStickerPositionChange={updateStickerPosition}
+              onStickerRemove={removeSticker}
+            />
+          </div>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 

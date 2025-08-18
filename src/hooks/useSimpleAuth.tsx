@@ -2,12 +2,12 @@
 import { useAuth } from './useAuth';
 
 export const useSimpleAuth = () => {
-  const { user, habboAccount, isLoggedIn, loading } = useAuth();
+  const auth = useAuth();
   
   return {
-    user,
-    habboAccount,
-    isLoggedIn,
-    loading
+    habboAccount: auth.habboAccount,
+    isLoggedIn: auth.isLoggedIn,
+    user: auth.user,
+    loading: auth.loading
   };
 };

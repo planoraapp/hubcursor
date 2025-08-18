@@ -60,8 +60,8 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       if (isDragging) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        const newX = Math.max(0, Math.min(1200 - 64, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(800 - 64, dragStart.elementY + deltaY));
+        const newX = Math.max(0, Math.min(1200 - 100, dragStart.elementX + deltaX));
+        const newY = Math.max(0, Math.min(800 - 100, dragStart.elementY + deltaY));
         
         onPositionChange(sticker.id, newX, newY);
       }
@@ -113,9 +113,17 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       <img
         src={sticker.sticker_src}
         alt={`Sticker ${sticker.sticker_id}`}
-        className="max-w-16 max-h-16 object-contain select-none pointer-events-none"
+        className="object-contain select-none pointer-events-none"
+        style={{ 
+          imageRendering: 'pixelated',
+          width: 'auto',
+          height: 'auto',
+          maxWidth: '120px',
+          maxHeight: '120px',
+          minWidth: '32px',
+          minHeight: '32px'
+        }}
         draggable={false}
-        style={{ imageRendering: 'pixelated' }}
         onError={(e) => {
           console.error(`❌ Erro ao carregar sticker: ${sticker.sticker_src}`);
           const target = e.target as HTMLImageElement;
