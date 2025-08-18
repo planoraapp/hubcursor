@@ -90,7 +90,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
                   <img
                     src={photo.imageUrl}
                     alt={`Foto de ${photo.userName}`}
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-auto object-contain"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';

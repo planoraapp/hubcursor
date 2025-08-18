@@ -17,7 +17,7 @@ import Emblemas from './pages/Emblemas';
 import Editor from './pages/Editor';
 import Catalogo from './pages/Catalogo';
 import Eventos from './pages/Eventos';
-import Ferramentas from './pages/Ferramentas';
+
 import Console from './pages/Console';
 import Noticias from './pages/Noticias';
 import Forum from './pages/Forum';
@@ -49,7 +49,7 @@ function App() {
                 <Route path="/editor" element={<Editor />} />
                 <Route path="/catalogo" element={<Catalogo />} />
                 <Route path="/eventos" element={<Eventos />} />
-                <Route path="/ferramentas" element={<Ferramentas />} />
+                
                 <Route path="/console" element={<Console />} />
                 <Route path="/noticias" element={<Noticias />} />
                 <Route path="/forum" element={<Forum />} />

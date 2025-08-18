@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { CollapsibleSidebar } from '../components/CollapsibleSidebar';
+import { NewAppSidebar } from '../components/NewAppSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { PageHeader } from '../components/PageHeader';
 import { CleanBadgesGrid } from '../components/CleanBadgesGrid';
 import { useLanguage } from '../hooks/useLanguage';
@@ -50,31 +51,29 @@ const Emblemas = () => {
   }
 
   return (
-    <div 
-      className="flex min-h-screen w-full"
-      style={{ 
-        backgroundImage: "url('/assets/bghabbohub.png')",
-        backgroundRepeat: 'repeat',
-        backgroundSize: 'auto'
-      }}
-    >
-      <CollapsibleSidebar activeSection="emblemas" setActiveSection={() => {}} />
-      
-      <main 
-        className={`flex-1 transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-20' : 'ml-64'
-        }`}
+    <SidebarProvider>
+      <div 
+        className="flex min-h-screen w-full"
+        style={{ 
+          backgroundImage: "url('/assets/bghabbohub.png')",
+          backgroundRepeat: 'repeat',
+          backgroundSize: 'auto'
+        }}
       >
-        <div className="flex flex-col min-h-screen">
-          <PageHeader 
-            title={t('badgesTitle')}
-            icon="/assets/emblemas.png"
-          />
-          
-          {renderContent()}
-        </div>
-      </main>
-    </div>
+        <NewAppSidebar />
+        
+        <main className="flex-1">
+          <div className="flex flex-col min-h-screen">
+            <PageHeader 
+              title={t('badgesTitle')}
+              icon="/assets/emblemas.png"
+            />
+            
+            {renderContent()}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
