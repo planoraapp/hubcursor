@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -1060,19 +1060,19 @@ export type Database = {
       get_habbo_account_public_by_name: {
         Args: { habbo_name_param: string }
         Returns: {
-          supabase_user_id: string
-          habbo_name: string
           habbo_id: string
+          habbo_name: string
           hotel: string
+          supabase_user_id: string
         }[]
       }
       get_habbo_account_public_by_name_and_hotel: {
         Args: { habbo_name_param: string; hotel_param: string }
         Returns: {
-          supabase_user_id: string
-          habbo_name: string
           habbo_id: string
+          habbo_name: string
           hotel: string
+          supabase_user_id: string
         }[]
       }
       initialize_user_home: {
