@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Edit, Eye, Save, Palette, Sticker, Plus, Grid, Settings } from 'lucide-react';
+import { getStickersByCategory } from '@/data/stickerAssets';
 
 interface EnhancedHomeToolbarProps {
   isEditMode: boolean;
@@ -20,14 +20,8 @@ interface EnhancedHomeToolbarProps {
 
 const BACKGROUND_COLORS = [
   '#c7d2dc', '#f0f8ff', '#e6f3e6', '#fff0e6', '#ffe6e6',
-  '#e6e6ff', '#f0e6ff', '#ffe6f0', '#f5f5dc', '#e0ffff'
-];
-
-const BACKGROUND_IMAGES = [
-  '/assets/backgrounds/space.gif',
-  '/assets/backgrounds/nature.gif',
-  '/assets/backgrounds/city.gif',
-  '/assets/backgrounds/ocean.gif'
+  '#e6e6ff', '#f0e6ff', '#ffe6f0', '#f5f5dc', '#e0ffff',
+  '#ffb6c1', '#98fb98', '#87ceeb', '#dda0dd', '#f0e68c'
 ];
 
 const AVAILABLE_WIDGETS = [
@@ -37,13 +31,6 @@ const AVAILABLE_WIDGETS = [
   { id: 'info', name: 'Informações', icon: 'ℹ️' },
   { id: 'music', name: 'Player de Música', icon: '🎵' },
   { id: 'photos', name: 'Fotos', icon: '📷' }
-];
-
-const STICKER_CATEGORIES = [
-  { id: 'emoticons', name: 'Emoticons', icon: '😀' },
-  { id: 'decorative', name: 'Decorativos', icon: '✨' },
-  { id: 'text', name: 'Texto', icon: '📝' },
-  { id: 'animals', name: 'Animais', icon: '🐾' }
 ];
 
 export const EnhancedHomeToolbar = ({ 
@@ -65,6 +52,7 @@ export const EnhancedHomeToolbar = ({
   const handleBackgroundSelect = (type: 'color' | 'image', value: string) => {
     setSelectedBg(value);
     onBackgroundChange?.({ type, value });
+    setShowBackgrounds(false);
   };
 
   const handleStickerAdd = (stickerId: string) => {
@@ -80,7 +68,7 @@ export const EnhancedHomeToolbar = ({
   return (
     <>
       {/* Main Toolbar */}
-      <div className="w-full bg-white/95 backdrop-blur-sm border-b-2 border-black shadow-lg">
+      <div className="w-full toolbar-blur border-b-2 border-black shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -174,80 +162,121 @@ export const EnhancedHomeToolbar = ({
             <DialogTitle className="volter-font">Escolher Fundo da Home</DialogTitle>
           </DialogHeader>
           
-          <Tabs defaultValue="colors" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="colors" className="volter-font">Cores Sólidas</TabsTrigger>
-              <TabsTrigger value="images" className="volter-font">Imagens</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="colors" className="space-y-4">
-              <div className="bg-grid">
-                {BACKGROUND_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handleBackgroundSelect('color', color)}
-                    className={`bg-option ${selectedBg === color ? 'selected' : ''}`}
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="images" className="space-y-4">
-              <div className="grid grid-cols-4 gap-4">
-                {BACKGROUND_IMAGES.map((image, index) => (
-                  <button
-                    key={image}
-                    onClick={() => handleBackgroundSelect('image', image)}
-                    className="bg-option aspect-square rounded-lg overflow-hidden"
-                  >
-                    <img 
-                      src={image} 
-                      alt={`Background ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-4">
+            <h3 className="text-lg volter-font">Cores Sólidas</h3>
+            <div className="bg-grid">
+              {BACKGROUND_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => handleBackgroundSelect('color', color)}
+                  className={`bg-option ${selectedBg === color ? 'selected' : ''}`}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Sticker Selection Dialog */}
       <Dialog open={showStickers} onOpenChange={setShowStickers}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="volter-font">Adicionar Stickers</DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue="emoticons" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              {STICKER_CATEGORIES.map((category) => (
-                <TabsTrigger key={category.id} value={category.id} className="volter-font">
-                  <span className="mr-1">{category.icon}</span>
-                  {category.name}
-                </TabsTrigger>
-              ))}
+              <TabsTrigger value="emoticons" className="volter-font">
+                😀 Emoticons
+              </TabsTrigger>
+              <TabsTrigger value="decorative" className="volter-font">
+                ✨ Decorativos
+              </TabsTrigger>
+              <TabsTrigger value="text" className="volter-font">
+                📝 Texto
+              </TabsTrigger>
+              <TabsTrigger value="animals" className="volter-font">
+                🐾 Animais
+              </TabsTrigger>
             </TabsList>
             
-            {STICKER_CATEGORIES.map((category) => (
-              <TabsContent key={category.id} value={category.id} className="space-y-4">
-                <div className="grid grid-cols-8 gap-3">
-                  {Array.from({ length: 16 }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleStickerAdd(`${category.id}_${i}`)}
-                      className="aspect-square bg-gray-100 rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-colors p-2"
-                    >
-                      <div className="text-2xl">{category.icon}</div>
-                    </button>
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
+            <TabsContent value="emoticons" className="space-y-4">
+              <div className="sticker-grid">
+                {getStickersByCategory('emoticons').map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    onClick={() => handleStickerAdd(sticker.id)}
+                    className="sticker-item"
+                    title={sticker.name}
+                  >
+                    <img
+                      src={sticker.src}
+                      alt={sticker.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="decorative" className="space-y-4">
+              <div className="sticker-grid">
+                {getStickersByCategory('decorative').map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    onClick={() => handleStickerAdd(sticker.id)}
+                    className="sticker-item"
+                    title={sticker.name}
+                  >
+                    <img
+                      src={sticker.src}
+                      alt={sticker.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="text" className="space-y-4">
+              <div className="sticker-grid">
+                {getStickersByCategory('text').map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    onClick={() => handleStickerAdd(sticker.id)}
+                    className="sticker-item"
+                    title={sticker.name}
+                  >
+                    <img
+                      src={sticker.src}
+                      alt={sticker.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="animals" className="space-y-4">
+              <div className="sticker-grid">
+                {getStickersByCategory('animals').map((sticker) => (
+                  <button
+                    key={sticker.id}
+                    onClick={() => handleStickerAdd(sticker.id)}
+                    className="sticker-item"
+                    title={sticker.name}
+                  >
+                    <img
+                      src={sticker.src}
+                      alt={sticker.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>

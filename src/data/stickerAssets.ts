@@ -3,112 +3,38 @@ export interface StickerAsset {
   id: string;
   name: string;
   src: string;
-  category: 'emoticons' | 'decorative' | 'text';
+  category: 'emoticons' | 'decorative' | 'text' | 'animals';
   width: number;
   height: number;
 }
 
-// Stickers baseados nos assets disponíveis no projeto
+// Placeholders usando emojis até termos assets reais
 export const STICKER_ASSETS: StickerAsset[] = [
   // Emoticons
-  {
-    id: 'frank',
-    name: 'Frank (Mascote)',
-    src: '/assets/frank.png',
-    category: 'emoticons',
-    width: 60,
-    height: 60
-  },
-  {
-    id: 'hc_icon',
-    name: 'HC Premium',
-    src: '/assets/HC.png',
-    category: 'emoticons',
-    width: 40,
-    height: 40
-  },
-  {
-    id: 'diamond',
-    name: 'Diamante',
-    src: '/assets/Diamante.png',
-    category: 'emoticons',
-    width: 35,
-    height: 35
-  },
-  {
-    id: 'credits',
-    name: 'Créditos',
-    src: '/assets/credits_icon.gif',
-    category: 'emoticons',
-    width: 30,
-    height: 30
-  },
-  
+  { id: 'emoticon_1', name: 'Happy', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxjaXJjbGUgY3g9IjIyIiBjeT0iMjQiIHI9IjQiIGZpbGw9IiMwMDAiLz4KPGNpcmNsZSBjeD0iNDIiIGN5PSIyNCIgcj0iNCIgZmlsbD0iIzAwMCIvPgo8cGF0aCBkPSJNMjAgNDBRMzIgNTIgNDQgNDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+', category: 'emoticons', width: 64, height: 64 },
+  { id: 'emoticon_2', name: 'Sad', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxjaXJjbGUgY3g9IjIyIiBjeT0iMjQiIHI9IjQiIGZpbGw9IiMwMDAiLz4KPGNpcmNsZSBjeD0iNDIiIGN5PSIyNCIgcj0iNCIgZmlsbD0iIzAwMCIvPgo8cGF0aCBkPSJNNDQgNDhRMzIgMzYgMjAgNDgiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+', category: 'emoticons', width: 64, height: 64 },
+  { id: 'emoticon_3', name: 'Love', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxwYXRoIGQ9Ik0yMiAyMEM5IDE2IDkgMzIgMjIgMzJDMzUgMzIgMzUgMTYgMjIgMjBaIiBmaWxsPSIjRkYwMDAwIi8+CjxwYXRoIGQ9Ik00MiAyMEM0NSAxNiA1NSAxNiA1OCAyMEM1NSAzMiA0MiAzMiA0MiAyMFoiIGZpbGw9IiNGRjAwMDAiLz4KPHBhdGggZD0iTTIwIDQwUTMyIDUyIDQ0IDQwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iNCIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPg==', category: 'emoticons', width: 64, height: 64 },
+  { id: 'emoticon_4', name: 'Cool', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxyZWN0IHg9IjE0IiB5PSIyMCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjEyIiByeD0iNiIgZmlsbD0iIzAwMCIvPgo8bGluZSB4MT0iMzIiIHkxPSIyMCIgeDI9IjMyIiB5Mj0iMzIiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxwYXRoIGQ9Ik0yMCA0MFEzMiA0OCA0NCA0MCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4=', category: 'emoticons', width: 64, height: 64 },
+
   // Decorativos
-  {
-    id: 'habbo_logo',
-    name: 'Logo Habbo',
-    src: '/assets/LogoHabbo.png',
-    category: 'decorative',
-    width: 80,
-    height: 40
-  },
-  {
-    id: 'sulake_logo',
-    name: 'Logo Sulake',
-    src: '/assets/LogoSulake1.png',
-    category: 'decorative',
-    width: 60,
-    height: 30
-  },
-  {
-    id: 'elevator',
-    name: 'Elevador',
-    src: '/assets/Elevador.png',
-    category: 'decorative',
-    width: 50,
-    height: 50
-  },
-  {
-    id: 'home_icon',
-    name: 'Casa',
-    src: '/assets/home.png',
-    category: 'decorative',
-    width: 40,
-    height: 40
-  },
-  
-  // Texto/Badges
-  {
-    id: 'promo_star',
-    name: 'Estrela Promo',
-    src: '/assets/promo_star.gif',
-    category: 'text',
-    width: 45,
-    height: 45
-  },
-  {
-    id: 'check',
-    name: 'Check Verde',
-    src: '/assets/Check2.png',
-    category: 'text',
-    width: 25,
-    height: 25
-  },
-  {
-    id: 'console_on',
-    name: 'Console Ligado',
-    src: '/assets/consoleon1.gif',
-    category: 'decorative',
-    width: 50,
-    height: 30
-  }
+  { id: 'deco_1', name: 'Star', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMyIDRMMzguOTI4MiAyNi4wNzE4TDYyIDMyTDM4LjkyODIgMzcuOTI4MkwzMiA2MEwyNS4wNzE4IDM3LjkyODJMMiAzMkwyNS4wNzE4IDI2LjA3MThMMzIgNFoiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+Cjwvc3ZnPg==', category: 'decorative', width: 64, height: 64 },
+  { id: 'deco_2', name: 'Heart', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMyIDU2QzggNDAgNCAxNiAyMCAxNkMyOCAxNiAzMiAyMCAzMiAyMEMzMiAyMCAzNiAxNiA0NCAxNkM2MCAxNiA1NiA0MCAzMiA1NloiIGZpbGw9IiNGRjAwMDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+Cjwvc3ZnPg==', category: 'decorative', width: 64, height: 64 },
+  { id: 'deco_3', name: 'Diamond', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTMyIDZMNTIgMjJMMzIgNThMMTIgMjJMMzIgNloiIGZpbGw9IiMwMEZGRkYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxsaW5lIHgxPSIxMiIgeTE9IjIyIiB4Mj0iNTIiIHkyPSIyMiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjIiLz4KPGxpbmUgeDE9IjIyIiB5MT0iNiIgeDI9IjMyIiB5Mj0iNTgiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxsaW5lIHgxPSI0MiIgeTE9IjYiIHgyPSIzMiIgeTI9IjU4IiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=', category: 'decorative', width: 64, height: 64 },
+  { id: 'deco_4', name: 'Crown', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3QgeD0iOCIgeT0iNDQiIHdpZHRoPSI0OCIgaGVpZ2h0PSIxMiIgZmlsbD0iI0ZGRDcwMCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjMiLz4KPHBhdGggZD0iTTggNDRMMTYgMTZMMzIgMzJMNDggMTZMNTYgNDRIOFoiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjQiIGZpbGw9IiNGRjAwMDAiLz4KPGNpcmNsZSBjeD0iMzIiIGN5PSI4IiByPSI0IiBmaWxsPSIjRkYwMDAwIi8+CjxjaXJjbGUgY3g9IjQ4IiBjeT0iMTYiIHI9IjQiIGZpbGw9IiNGRjAwMDAiLz4KPC9zdmc+', category: 'decorative', width: 64, height: 64 },
+
+  // Texto
+  { id: 'text_1', name: 'Hello', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTAwIDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNGRkZGRkYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+Cjx0ZXh0IHg9IjUwIiB5PSIyOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMDAwIj5IZWxsbyE8L3RleHQ+Cjwvc3ZnPg==', category: 'text', width: 100, height: 40 },
+  { id: 'text_2', name: 'Cool', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA4MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiMwMEZGRkYiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+Cjx0ZXh0IHg9IjQwIiB5PSIyOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMDAwIj5Db29sITwvdGV4dD4KPC9zdmc+', category: 'text', width: 80, height: 40 },
+
+  // Animais
+  { id: 'animal_1', name: 'Cat', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzNiIgcj0iMjQiIGZpbGw9IiNGRkE1MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+Cjxwb2x5Z29uIHBvaW50cz0iMTgsMjAgMjIsMTIgMjgsMjAiIGZpbGw9IiNGRkE1MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+Cjxwb2x5Z29uIHBvaW50cz0iNDYsMjAgNDIsMTIgMzYsMjAiIGZpbGw9IiNGRkE1MDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxjaXJjbGUgY3g9IjI2IiBjeT0iMzIiIHI9IjMiIGZpbGw9IiMwMDAiLz4KPGNpcmNsZSBjeD0iMzgiIGN5PSIzMiIgcj0iMyIgZmlsbD0iIzAwMCIvPgo8cGF0aCBkPSJNMjggNDBMMzIgNDRMMzYgNDAiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+', category: 'animals', width: 64, height: 64 },
+  { id: 'animal_2', name: 'Dog', src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMzIiIGN5PSIzNiIgcj0iMjQiIGZpbGw9IiM4QjQ1MTMiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxlbGxpcHNlIGN4PSIyMCIgY3k9IjI4IiByeD0iOCIgcnk9IjE2IiBmaWxsPSIjOEI0NTEzIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMyIvPgo8ZWxsaXBzZSBjeD0iNDQiIGN5PSIyOCIgcng9IjgiIHJ5PSIxNiIgZmlsbD0iIzhCNDUxMyIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjMiLz4KPGNpcmNsZSBjeD0iMjYiIGN5PSIzMiIgcj0iMyIgZmlsbD0iIzAwMCIvPgo8Y2lyY2xlIGN4PSIzOCIgY3k9IjMyIiByPSIzIiBmaWxsPSIjMDAwIi8+CjxlbGxpcHNlIGN4PSIzMiIgY3k9IjQwIiByeD0iNCIgcnk9IjIiIGZpbGw9IiMwMDAiLz4KPC9zdmc+', category: 'animals', width: 64, height: 64 }
 ];
 
-export const getStickersByCategory = (category: StickerAsset['category']) => {
+export const getStickersByCategory = (category: StickerAsset['category']): StickerAsset[] => {
   return STICKER_ASSETS.filter(sticker => sticker.category === category);
 };
 
-export const getStickerById = (id: string) => {
+export const getStickerById = (id: string): StickerAsset | undefined => {
   return STICKER_ASSETS.find(sticker => sticker.id === id);
 };
