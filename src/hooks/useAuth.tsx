@@ -42,34 +42,77 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('🚀 [useAuth] Initializing auth...');
     
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log(`🔄 [useAuth] Auth state changed: ${event}`, session?.user?.id);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await loadHabboAccount(session.user.id);
-        } else {
-          setHabboAccount(null);
-          setLoading(false);
+    let mounted = true; // Para evitar updates em componentes desmontados
+    
+    const initializeAuth = async () => {
+      try {
+        // Set up auth state listener first
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return;
+            
+            console.log(`🔄 [useAuth] Auth state changed: ${event}`, session?.user?.id);
+            setUser(session?.user ?? null);
+            
+            if (session?.user) {
+              try {
+                await loadHabboAccount(session.user.id);
+              } catch (error) {
+                console.error('❌ [useAuth] Error loading Habbo account on auth change:', error);
+                setLoading(false);
+              }
+            } else {
+              setHabboAccount(null);
+              setLoading(false);
+            }
+          }
+        );
+
+        // Then get initial session with timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Session timeout')), 10000)
+        );
+
+        try {
+          const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+          
+          if (!mounted) return;
+          
+          console.log('🔍 [useAuth] Initial session check:', session?.user?.id);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            try {
+              await loadHabboAccount(session.user.id);
+            } catch (error) {
+              console.error('❌ [useAuth] Error loading initial Habbo account:', error);
+              setLoading(false);
+            }
+          } else {
+            console.log('🔍 [useAuth] No session found, setting loading to false');
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('❌ [useAuth] Session initialization failed:', error);
+          if (mounted) setLoading(false);
         }
-      }
-    );
 
-    // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔍 [useAuth] Initial session check:', session?.user?.id);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadHabboAccount(session.user.id);
-      } else {
-        setLoading(false);
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('❌ [useAuth] Failed to initialize auth:', error);
+        if (mounted) setLoading(false);
       }
-    });
+    };
 
+    const cleanup = initializeAuth();
+    
     return () => {
-      console.log('🧹 [useAuth] Cleaning up subscription');
-      subscription.unsubscribe();
+      mounted = false;
+      cleanup.then(cleanupFn => cleanupFn && cleanupFn());
     };
   }, []);
 
@@ -84,7 +127,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('❌ [useAuth] Error loading Habbo account:', error);
+        if (error.code === 'PGRST116') {
+          // No Habbo account found - this is ok for new users
+          console.log('ℹ️ [useAuth] No Habbo account found for user, setting to null');
+        } else {
+          console.error('❌ [useAuth] Error loading Habbo account:', error);
+        }
         setHabboAccount(null);
       } else {
         console.log('✅ [useAuth] Habbo account loaded:', data.habbo_name);
