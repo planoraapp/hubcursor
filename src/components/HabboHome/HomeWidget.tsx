@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -95,64 +94,110 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     };
   }, [isDragging, dragStart, onPositionChange, widget]);
 
+  const getCountryFlag = (hotel: string) => {
+    const flags: { [key: string]: string } = {
+      'br': '🇧🇷',
+      'com': '🇺🇸', 
+      'es': '🇪🇸',
+      'fr': '🇫🇷',
+      'de': '🇩🇪',
+      'it': '🇮🇹',
+      'fi': '🇫🇮',
+      'nl': '🇳🇱',
+      'tr': '🇹🇷'
+    };
+    return flags[hotel.toLowerCase()] || '🌍';
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Janeiro 2024';
+    return new Date(dateString).toLocaleDateString('pt-BR', { 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
   const renderWidgetContent = () => {
     switch (widget.widget_type) {
       case 'avatar':
       case 'usercard':
         return (
-          <Card 
-            className="w-full h-full bg-white backdrop-blur-sm shadow-lg border-2 border-black"
-            style={{ background: 'rgba(255, 255, 255, 0.9)' }}
-          >
+          <Card className="w-full h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
             <CardContent className="p-4 h-full">
+              {/* Horizontal layout with proper proportions */}
               <div className="flex items-center gap-4 h-full">
-                {/* Avatar com fundo transparente */}
-                <div 
-                  className="flex-shrink-0 rounded-lg p-2"
-                  style={{ 
-                    background: 'transparent',
-                    minWidth: '80px',
-                    minHeight: '120px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <img
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`}
-                    alt={habboData.habbo_name}
-                    className="max-w-full max-h-full object-contain"
+                {/* Avatar section - fixed size to prevent compression */}
+                <div className="flex-shrink-0">
+                  <div 
+                    className="bg-transparent rounded-lg flex items-center justify-center"
                     style={{ 
-                      imageRendering: 'pixelated',
-                      width: 'auto',
-                      height: 'auto',
-                      maxWidth: '80px',
-                      maxHeight: '120px'
+                      width: '80px',
+                      height: '120px', // Real avatar proportions
+                      minWidth: '80px',
+                      minHeight: '120px'
                     }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`;
-                    }}
-                  />
+                  >
+                    <img
+                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`}
+                      alt={habboData.habbo_name}
+                      className="object-contain"
+                      style={{ 
+                        imageRendering: 'pixelated',
+                        width: '80px',
+                        height: '120px', // Maintain real proportions
+                        maxWidth: 'none',
+                        maxHeight: 'none'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`;
+                      }}
+                    />
+                  </div>
                 </div>
                 
-                {/* Informações do usuário */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-gray-800 volter-font habbo-text mb-1 truncate">
-                    {habboData.habbo_name}
-                  </h3>
-                  <p className="text-sm text-gray-600 volter-font mb-2 line-clamp-2">
-                    {habboData.motto || 'Sem missão definida'}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    <Badge className="text-xs volter-font bg-blue-100 text-blue-800">
-                      Hotel: {habboData.hotel?.toUpperCase() || 'BR'}
-                    </Badge>
-                    {habboData.is_online && (
-                      <Badge className="text-xs volter-font bg-green-100 text-green-800">
-                        Online
+                {/* User info section - flexible width */}
+                <div className="flex-1 min-w-0 h-full flex flex-col justify-between py-2">
+                  {/* User name and status */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold text-gray-800 volter-font habbo-text truncate">
+                        {habboData.habbo_name}
+                      </h3>
+                      <div className="flex items-center gap-1">
+                        {habboData.is_online ? (
+                          <div className="w-2 h-2 bg-green-500 rounded-full" title="Online" />
+                        ) : (
+                          <div className="w-2 h-2 bg-gray-400 rounded-full" title="Offline" />
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Motto */}
+                    <p className="text-sm text-gray-600 volter-font mb-2 line-clamp-2">
+                      {habboData.motto || 'Sem missão definida'}
+                    </p>
+                  </div>
+
+                  {/* Bottom info */}
+                  <div className="space-y-1">
+                    {/* Hotel with flag */}
+                    <div className="flex items-center gap-1 text-xs text-gray-500 volter-font">
+                      <span>{getCountryFlag(habboData.hotel || 'br')}</span>
+                      <span>{(habboData.hotel || 'br').toUpperCase()}</span>
+                    </div>
+                    
+                    {/* Member since */}
+                    <div className="text-xs text-gray-500 volter-font">
+                      📅 Membro desde {formatDate()}
+                    </div>
+
+                    {/* Status badge */}
+                    <div className="flex gap-1 mt-1">
+                      <Badge className="text-xs volter-font bg-blue-100 text-blue-800 px-2 py-0">
+                        {habboData.is_online ? '🟢 Online' : '🔴 Offline'}
                       </Badge>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>

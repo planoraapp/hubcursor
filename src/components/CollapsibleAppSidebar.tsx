@@ -1,0 +1,172 @@
+
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+export function CollapsibleAppSidebar() {
+  const location = useLocation();
+  const { habboAccount, isLoggedIn } = useSimpleAuth();
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
+
+  const menuItems = [
+    { name: 'Início', path: '/', icon: '/assets/home.png' },
+    { name: 'Console', path: '/console', icon: '/assets/console.png' },
+    { name: 'Homes', path: '/homes', icon: '/assets/home.png' },
+    { name: 'Notícias', path: '/noticias', icon: '/assets/news.png' },
+    { name: 'Emblemas', path: '/emblemas', icon: '/assets/badges.png' },
+    { name: 'Catálogo', path: '/catalogo', icon: '/assets/catalog.png' },
+    { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/tools.png' },
+    { name: 'Eventos', path: '/eventos', icon: '/assets/events.png' },
+    { name: 'Mercado', path: '/mercado', icon: '/assets/market.png' },
+  ];
+
+  const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
+    const content = (
+      <Link to={item.path} className="flex items-center gap-3 w-full">
+        <img 
+          src={item.icon} 
+          alt={item.name}
+          className="w-4 h-4 flex-shrink-0"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+          }}
+        />
+        {!isCollapsed && (
+          <span className="habbo-text text-sm font-bold text-[#8B4513]">
+            {item.name}
+          </span>
+        )}
+      </Link>
+    );
+
+    if (isCollapsed) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SidebarMenuButton 
+                asChild
+                isActive={location.pathname === item.path}
+                className="w-full justify-center px-3 py-2 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors"
+              >
+                {content}
+              </SidebarMenuButton>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>{item.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return (
+      <SidebarMenuButton 
+        asChild
+        isActive={location.pathname === item.path}
+        className="w-full justify-start px-3 py-2 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors"
+      >
+        {content}
+      </SidebarMenuButton>
+    );
+  };
+
+  return (
+    <Sidebar className="bg-[#f5f5dc] border-r-2 border-black" collapsible="icon">
+      <SidebarHeader className="p-4">
+        <div className="w-full flex justify-center">
+          {isCollapsed ? (
+            <img 
+              src="/assets/hub.gif" 
+              alt="Hub" 
+              className="w-8 h-8"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/assets/hub.png";
+              }}
+            />
+          ) : (
+            <img 
+              src="/assets/habbohub.gif" 
+              alt="Habbo Hub" 
+              className="w-full h-auto max-w-[200px]"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/assets/habbohub.png";
+              }}
+            />
+          )}
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="px-2">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <MenuItem item={item} />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-4 border-t-2 border-black">
+        <div className="space-y-2">
+          {isLoggedIn && habboAccount ? (
+            <div className={`text-center ${isCollapsed ? 'px-1' : ''}`}>
+              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} mb-2`}>
+                <img
+                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
+                  alt={`Avatar de ${habboAccount.habbo_name}`}
+                  className="w-8 h-8 object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                  }}
+                />
+                {!isCollapsed && (
+                  <span className="habbo-text text-sm font-bold text-[#8B4513] truncate">
+                    {habboAccount.habbo_name}
+                  </span>
+                )}
+              </div>
+              {!isCollapsed && (
+                <Link to="/profile" className="block">
+                  <button className="habbo-button-blue w-full px-3 py-1.5 text-xs font-bold text-white rounded">
+                    Meu Perfil
+                  </button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            !isCollapsed && (
+              <Link to="/login" className="block">
+                <button className="habbo-button-blue w-full px-3 py-2 text-sm font-bold text-white rounded">
+                  Conectar Conta Habbo
+                </button>
+              </Link>
+            )
+          )}
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

@@ -75,29 +75,38 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
     isOwner
   });
 
-  // Estilo do background
-  const backgroundStyle = {
-    backgroundColor: background.background_type === 'color' ? background.background_value : '#c7d2dc',
-    backgroundImage: background.background_type === 'cover' || background.background_type === 'repeat' 
-      ? `url("${background.background_value}")` : undefined,
-    backgroundSize: background.background_type === 'cover' ? 'cover' : 
-                   background.background_type === 'repeat' ? 'auto' : undefined,
-    backgroundPosition: background.background_type === 'cover' ? 'center' : undefined,
-    backgroundRepeat: background.background_type === 'repeat' ? 'repeat' : 
-                     background.background_type === 'cover' ? 'no-repeat' : undefined
+  // Intelligent background style logic
+  const getBackgroundStyle = () => {
+    const baseStyle = {
+      backgroundColor: background.background_type === 'color' ? background.background_value : '#c7d2dc',
+    };
+
+    if (background.background_type === 'cover' || background.background_type === 'repeat') {
+      return {
+        ...baseStyle,
+        backgroundImage: `url("${background.background_value}")`,
+        backgroundSize: background.background_type === 'cover' ? 'cover' : 'auto',
+        backgroundPosition: background.background_type === 'cover' ? 'center' : 'top left',
+        backgroundRepeat: background.background_type === 'repeat' ? 'repeat' : 'no-repeat'
+      };
+    }
+
+    return baseStyle;
   };
 
+  const backgroundStyle = getBackgroundStyle();
+  
   console.log('🎨 Background aplicado:', backgroundStyle);
 
   return (
     <div className="flex justify-center">
       <div 
-        className={`home-canvas relative rounded-lg overflow-hidden shadow-2xl ${
+        className={`relative rounded-lg overflow-hidden shadow-2xl ${
           isEditMode ? 'border-4 border-dashed border-blue-400' : 'border-2 border-gray-300'
         }`}
         style={{
           width: '1200px',
-          height: '800px',
+          height: '1000px', // Increased height from 800px to 1000px
           ...backgroundStyle
         }}
       >
@@ -156,7 +165,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
 
         {/* Debug info */}
         <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs p-2 rounded volter-font">
-          W:{widgets.length} | S:{stickers.length} | Edit:{isEditMode ? 'ON' : 'OFF'} | Owner:{isOwner ? 'YES' : 'NO'}
+          W:{widgets.length} | S:{stickers.length} | Edit:{isEditMode ? 'ON' : 'OFF'} | Owner:{isOwner ? 'YES' : 'NO'} | 1200x1000
         </div>
       </div>
     </div>

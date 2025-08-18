@@ -118,10 +118,10 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
           imageRendering: 'pixelated',
           width: 'auto',
           height: 'auto',
-          maxWidth: '120px',
-          maxHeight: '120px',
-          minWidth: '32px',
-          minHeight: '32px'
+          maxWidth: '150px', // Increased from 120px to allow for real size
+          maxHeight: '150px', // Increased from 120px to allow for real size
+          minWidth: '24px', // Decreased minimum to allow smaller stickers
+          minHeight: '24px' // Decreased minimum to allow smaller stickers
         }}
         draggable={false}
         onError={(e) => {
