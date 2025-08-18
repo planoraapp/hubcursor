@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Search, Users, Loader2, User } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useUserSearch';
 import { InlineProfileView } from './InlineProfileView';
@@ -13,13 +12,13 @@ export const UserSearchColumn: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const { searchResults, isSearching, error, searchUser } = useUserSearch();
 
-  // Debounce search
+  // Debounce search - reduzido para 300ms para melhor responsividade
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
         searchUser(searchQuery.trim());
       }
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery, searchUser]);
@@ -65,7 +64,7 @@ export const UserSearchColumn: React.FC = () => {
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-2">
+      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-2 scrollbar-hide">
         {error && (
           <div className="text-red-300 text-sm text-center py-4">
             {error}
@@ -76,6 +75,9 @@ export const UserSearchColumn: React.FC = () => {
           <div className="text-center py-8">
             <Search className="w-12 h-12 mx-auto mb-4 text-white/40" />
             <p className="text-white/60">Digite um nome para buscar</p>
+            <p className="text-white/40 text-sm mt-2">
+              Encontre usuários por nome exato ou similar
+            </p>
           </div>
         ) : isSearching ? (
           <div className="text-center py-8">
@@ -90,15 +92,17 @@ export const UserSearchColumn: React.FC = () => {
               onClick={() => handleUserClick(user.habbo_name)}
             >
               <div className="flex items-center gap-3">
-                <img
-                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
-                  alt={`Avatar de ${user.habbo_name}`}
-                  className="w-8 h-8 bg-transparent"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
-                  }}
-                />
+                <div className="w-10 h-10 flex-shrink-0">
+                  <img
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
+                    alt={`Avatar de ${user.habbo_name}`}
+                    className="w-full h-full object-contain bg-transparent"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                    }}
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-white truncate">
                     {user.habbo_name}
@@ -107,16 +111,16 @@ export const UserSearchColumn: React.FC = () => {
                     {user.motto || 'Sem motto'}
                   </p>
                 </div>
-                <div className={`w-3 h-3 rounded-full ${user.is_online ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${user.is_online ? 'bg-green-500' : 'bg-gray-400'}`}></div>
               </div>
             </div>
           ))
-        ) : searchQuery.length >= 2 ? (
+        ) : searchQuery.length >= 1 ? (
           <div className="text-center py-8">
             <User className="w-12 h-12 mx-auto mb-4 text-white/40" />
             <p className="text-white/60">Nenhum usuário encontrado</p>
             <p className="text-white/40 text-sm mt-2">
-              Tente outro nome
+              Tente outro nome ou verifique a grafia
             </p>
           </div>
         ) : null}

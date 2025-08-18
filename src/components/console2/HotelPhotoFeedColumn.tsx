@@ -55,7 +55,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3">
+        <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3 scrollbar-hide">
           {isLoading ? (
             <div className="flex justify-center items-center h-32">
               <Loader2 className="w-8 h-8 animate-spin text-white/60" />
@@ -63,17 +63,19 @@ export const HotelPhotoFeedColumn: React.FC = () => {
           ) : friendsPhotos.length > 0 ? (
             friendsPhotos.map((photo, index) => (
               <div key={photo.id || index} className="bg-white/10 rounded-lg p-3 space-y-3">
-                {/* User Info - Avatar apenas cabeça + nome clicável */}
+                {/* User Info - Avatar sem borda circular */}
                 <div className="flex items-center gap-3">
-                  <img
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`}
-                    alt={`Avatar de ${photo.userName}`}
-                    className="w-8 h-8 bg-transparent"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`;
-                    }}
-                  />
+                  <div className="w-10 h-10 flex-shrink-0">
+                    <img
+                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`}
+                      alt={`Avatar de ${photo.userName}`}
+                      className="w-full h-full object-contain bg-transparent"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`;
+                      }}
+                    />
+                  </div>
                   <button
                     onClick={() => handleUserClick(photo.userName)}
                     className="text-white font-semibold hover:text-blue-300 transition-colors"
@@ -90,7 +92,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
                   <img
                     src={photo.imageUrl}
                     alt={`Foto de ${photo.userName}`}
-                    className="w-full h-auto object-contain"
+                    className="w-full h-auto object-contain rounded-lg"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
@@ -123,14 +125,13 @@ export const HotelPhotoFeedColumn: React.FC = () => {
               <Camera className="w-12 h-12 mx-auto mb-4 text-white/40" />
               <p className="text-white/60">Nenhuma foto dos amigos encontrada</p>
               <p className="text-white/40 text-sm mt-2">
-                Suas fotos dos amigos aparecerão aqui
+                As fotos dos seus amigos aparecerão aqui
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Modal para exibir perfil do usuário */}
       <ConsoleProfileModal
         open={isModalOpen}
         setOpen={setIsModalOpen}

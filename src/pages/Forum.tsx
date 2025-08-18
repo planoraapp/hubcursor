@@ -1,217 +1,417 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Users, Pin, Clock, Eye, MessageCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { MessageSquare, Users, Pin, Clock, Eye, MessageCircle, Plus, Heart, Send } from 'lucide-react';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface ForumPost {
+  id: string;
+  title: string;
+  content: string;
+  author_habbo_name: string;
+  created_at: string;
+  likes: number;
+  category: string;
+  comments_count?: number;
+}
+
+interface ForumComment {
+  id: string;
+  post_id: string;
+  content: string;
+  author_habbo_name: string;
+  created_at: string;
+}
 
 const Forum = () => {
-  const forumCategories = [
-    {
-      id: 1,
-      title: "Discussões Gerais",
-      description: "Converse sobre qualquer assunto relacionado ao Habbo",
-      topics: 1247,
-      posts: 15623,
-      lastPost: "há 2 minutos",
-      color: "bg-blue-100 text-blue-800"
-    },
-    {
-      id: 2,
-      title: "Suporte e Ajuda",
-      description: "Precisa de ajuda? Nossa comunidade está aqui!",
-      topics: 532,
-      posts: 3421,
-      lastPost: "há 15 minutos",
-      color: "bg-green-100 text-green-800"
-    },
-    {
-      id: 3,
-      title: "Trading e Mercado",
-      description: "Compre, venda e negocie itens com outros usuários",
-      topics: 2156,
-      posts: 8934,
-      lastPost: "há 5 minutos",
-      color: "bg-yellow-100 text-yellow-800"
-    },
-    {
-      id: 4,
-      title: "Eventos e Competições",
-      description: "Fique por dentro dos eventos da comunidade",
-      topics: 89,
-      posts: 657,
-      lastPost: "há 1 hora",
-      color: "bg-purple-100 text-purple-800"
-    }
+  const { habboAccount } = useUnifiedAuth();
+  const [posts, setPosts] = useState<ForumPost[]>([]);
+  const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
+  const [comments, setComments] = useState<ForumComment[]>([]);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostCategory, setNewPostCategory] = useState('Geral');
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const categories = [
+    { id: 'Geral', name: 'Discussões Gerais', color: 'bg-blue-100 text-blue-800', count: 0 },
+    { id: 'Suporte', name: 'Suporte e Ajuda', color: 'bg-green-100 text-green-800', count: 0 },
+    { id: 'Trading', name: 'Trading e Mercado', color: 'bg-yellow-100 text-yellow-800', count: 0 },
+    { id: 'Eventos', name: 'Eventos e Competições', color: 'bg-purple-100 text-purple-800', count: 0 }
   ];
 
-  const featuredTopics = [
-    {
-      title: "🎉 Evento de Natal 2024 - Participe!",
-      author: "EventTeam",
-      replies: 156,
-      views: 2341,
-      lastReply: "há 3 minutos",
-      isPinned: true
-    },
-    {
-      title: "💰 Guia Completo de Trading para Iniciantes",
-      author: "TradeMaster",
-      replies: 89,
-      views: 1567,
-      lastReply: "há 12 minutos",
-      isPinned: false
-    },
-    {
-      title: "🏠 Compartilhe sua Home mais incrível!",
-      author: "HomeDesigner",
-      replies: 234,
-      views: 3421,
-      lastReply: "há 8 minutos",
-      isPinned: false
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('forum_posts')
+        .select(`
+          *,
+          forum_comments(count)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const postsWithCounts = data.map(post => ({
+        ...post,
+        comments_count: post.forum_comments?.[0]?.count || 0
+      }));
+
+      setPosts(postsWithCounts);
+    } catch (error) {
+      console.error('Erro ao carregar posts:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const loadComments = async (postId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('forum_comments')
+        .select('*')
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setComments(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar comentários:', error);
+    }
+  };
+
+  const createPost = async () => {
+    if (!habboAccount) {
+      toast.error('Faça login para criar um post');
+      return;
+    }
+
+    if (!newPostTitle.trim() || !newPostContent.trim()) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('forum_posts')
+        .insert({
+          title: newPostTitle,
+          content: newPostContent,
+          category: newPostCategory,
+          author_supabase_user_id: habboAccount.supabase_user_id,
+          author_habbo_name: habboAccount.habbo_name,
+          likes: 0
+        });
+
+      if (error) throw error;
+
+      toast.success('Post criado com sucesso!');
+      setNewPostTitle('');
+      setNewPostContent('');
+      setShowCreatePost(false);
+      loadPosts();
+    } catch (error) {
+      console.error('Erro ao criar post:', error);
+      toast.error('Erro ao criar post');
+    }
+  };
+
+  const addComment = async () => {
+    if (!habboAccount || !selectedPost) {
+      toast.error('Faça login para comentar');
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast.error('Digite um comentário');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('forum_comments')
+        .insert({
+          post_id: selectedPost.id,
+          content: newComment,
+          author_supabase_user_id: habboAccount.supabase_user_id,
+          author_habbo_name: habboAccount.habbo_name
+        });
+
+      if (error) throw error;
+
+      toast.success('Comentário adicionado!');
+      setNewComment('');
+      loadComments(selectedPost.id);
+    } catch (error) {
+      console.error('Erro ao comentar:', error);
+      toast.error('Erro ao adicionar comentário');
+    }
+  };
+
+  const openPost = (post: ForumPost) => {
+    setSelectedPost(post);
+    loadComments(post.id);
+  };
+
+  if (selectedPost) {
+    return (
+      <SidebarProvider>
+        <div 
+          className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+        >
+          <NewAppSidebar />
+          <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">
+            <div className="max-w-4xl mx-auto">
+              <Button 
+                onClick={() => setSelectedPost(null)}
+                variant="outline" 
+                className="mb-6 border-2 border-black bg-white/90 backdrop-blur-sm"
+              >
+                ← Voltar ao Fórum
+              </Button>
+
+              {/* Post Principal */}
+              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black mb-6">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-t-lg">
+                  <CardTitle className="text-2xl volter-font">{selectedPost.title}</CardTitle>
+                  <CardDescription className="text-white/90 volter-font">
+                    Por {selectedPost.author_habbo_name} • {new Date(selectedPost.created_at).toLocaleDateString('pt-BR')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <p className="text-gray-700 mb-4 volter-font whitespace-pre-wrap">{selectedPost.content}</p>
+                  <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 volter-font">
+                      <Heart className="w-4 h-4 mr-1" />
+                      {selectedPost.likes}
+                    </Button>
+                    <Badge className={categories.find(c => c.id === selectedPost.category)?.color || 'bg-gray-100 text-gray-800'}>
+                      {categories.find(c => c.id === selectedPost.category)?.name || selectedPost.category}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Comentários */}
+              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
+                  <CardTitle className="volter-font">Comentários ({comments.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {/* Adicionar Comentário */}
+                  {habboAccount ? (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                      <Textarea
+                        placeholder="Deixe seu comentário..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        className="mb-3 volter-font"
+                      />
+                      <Button onClick={addComment} className="bg-blue-600 hover:bg-blue-700 volter-font">
+                        <Send className="w-4 h-4 mr-2" />
+                        Comentar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="mb-6 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200 text-center">
+                      <p className="text-yellow-800 volter-font">Faça login para comentar</p>
+                    </div>
+                  )}
+
+                  {/* Lista de Comentários */}
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-bold text-gray-800 volter-font">{comment.author_habbo_name}</span>
+                          <span className="text-sm text-gray-500 volter-font">
+                            {new Date(comment.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 volter-font whitespace-pre-wrap">{comment.content}</p>
+                      </div>
+                    ))}
+                    
+                    {comments.length === 0 && (
+                      <div className="text-center py-8">
+                        <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                        <p className="text-gray-500 volter-font">Nenhum comentário ainda. Seja o primeiro!</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    );
+  }
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-gray-100">
+      <div 
+        className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+      >
         <NewAppSidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">
           <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-800 mb-4 volter-font">
+              <h1 className="text-4xl font-bold text-white mb-4 volter-font drop-shadow-lg">
                 💬 Fórum HabboHub
               </h1>
-              <p className="text-lg text-gray-600 volter-font">
+              <p className="text-lg text-white/90 volter-font drop-shadow">
                 Conecte-se com a comunidade Habbo! Compartilhe, discuta e faça novos amigos.
               </p>
             </div>
 
-            {/* Stats */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <MessageSquare className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-900 volter-font">4,024</div>
-                  <div className="text-sm text-blue-700 volter-font">Tópicos</div>
+            {/* Criar Post */}
+            {habboAccount && (
+              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black mb-8">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
+                  <CardTitle className="volter-font flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    {showCreatePost ? 'Criar Novo Post' : 'Compartilhe com a Comunidade'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {!showCreatePost ? (
+                    <Button 
+                      onClick={() => setShowCreatePost(true)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white volter-font"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Criar Post
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <select
+                        value={newPostCategory}
+                        onChange={(e) => setNewPostCategory(e.target.value)}
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg volter-font"
+                      >
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                      
+                      <Input
+                        placeholder="Título do post"
+                        value={newPostTitle}
+                        onChange={(e) => setNewPostTitle(e.target.value)}
+                        className="border-2 border-gray-300 volter-font"
+                      />
+                      
+                      <Textarea
+                        placeholder="Conteúdo do post"
+                        value={newPostContent}
+                        onChange={(e) => setNewPostContent(e.target.value)}
+                        rows={5}
+                        className="border-2 border-gray-300 volter-font"
+                      />
+                      
+                      <div className="flex gap-2">
+                        <Button onClick={createPost} className="bg-green-600 hover:bg-green-700 volter-font">
+                          Publicar
+                        </Button>
+                        <Button 
+                          onClick={() => setShowCreatePost(false)} 
+                          variant="outline"
+                          className="border-2 border-gray-300 volter-font"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
+            )}
 
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <MessageCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-green-900 volter-font">28,635</div>
-                  <div className="text-sm text-green-700 volter-font">Posts</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-purple-900 volter-font">1,847</div>
-                  <div className="text-sm text-purple-700 volter-font">Membros</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Eye className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-orange-900 volter-font">156</div>
-                  <div className="text-sm text-orange-700 volter-font">Online Agora</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Featured Topics */}
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 volter-font">
-                  <Pin className="w-5 h-5 text-yellow-600" />
-                  Tópicos em Destaque
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {featuredTopics.map((topic, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          {topic.isPinned && <Pin className="w-4 h-4 text-yellow-600" />}
-                          <h4 className="font-medium text-gray-800 volter-font">{topic.title}</h4>
+            {/* Posts */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+                <p className="text-white mt-4 volter-font">Carregando posts...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {posts.map((post) => (
+                  <Card 
+                    key={post.id} 
+                    className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-shadow cursor-pointer"
+                    onClick={() => openPost(post)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2 volter-font hover:text-blue-600">
+                            {post.title}
+                          </h3>
+                          <p className="text-gray-600 text-sm volter-font line-clamp-2">
+                            {post.content}
+                          </p>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 volter-font">
-                          <span>por {topic.author}</span>
+                        <Badge className={categories.find(c => c.id === post.category)?.color || 'bg-gray-100 text-gray-800'}>
+                          {categories.find(c => c.id === post.category)?.name || post.category}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center gap-4 volter-font">
+                          <span>por {post.author_habbo_name}</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(post.created_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 volter-font">
+                          <span className="flex items-center gap-1">
+                            <Heart className="w-3 h-3" />
+                            {post.likes}
+                          </span>
                           <span className="flex items-center gap-1">
                             <MessageCircle className="w-3 h-3" />
-                            {topic.replies}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" />
-                            {topic.views}
+                            {post.comments_count || 0}
                           </span>
                         </div>
                       </div>
-                      <div className="text-right text-sm text-gray-500 volter-font">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {topic.lastReply}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Forum Categories */}
-            <div className="grid gap-6">
-              {forumCategories.map((category) => (
-                <Card key={category.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2 volter-font">
-                          <MessageSquare className="w-5 h-5" />
-                          {category.title}
-                        </CardTitle>
-                        <CardDescription className="mt-1 volter-font">
-                          {category.description}
-                        </CardDescription>
-                      </div>
-                      <Badge className={category.color + " volter-font"}>
-                        {category.topics} tópicos
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <div className="flex items-center gap-4 volter-font">
-                        <span>{category.posts} posts</span>
-                        <span>Último post: {category.lastPost}</span>
-                      </div>
-                      <Button variant="outline" size="sm" className="volter-font">
-                        Ver Tópicos
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Coming Soon Notice */}
-            <Card className="mt-8 bg-blue-50 border-blue-200">
-              <CardContent className="p-6 text-center">
-                <h3 className="text-lg font-bold text-blue-800 mb-2 volter-font">
-                  🚧 Fórum em Desenvolvimento
-                </h3>
-                <p className="text-blue-700 volter-font">
-                  O sistema completo de fórum está sendo desenvolvido. Em breve você poderá criar tópicos, responder mensagens e interagir com toda a comunidade!
-                </p>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {posts.length === 0 && (
+                  <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
+                    <CardContent className="p-12 text-center">
+                      <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                      <h3 className="text-xl font-bold text-gray-600 mb-2 volter-font">
+                        Nenhum post ainda
+                      </h3>
+                      <p className="text-gray-500 volter-font">
+                        Seja o primeiro a compartilhar algo com a comunidade!
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>
