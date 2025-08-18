@@ -6,11 +6,11 @@ import { MyAccountColumn } from '@/components/console/MyAccountColumn';
 import { HotelPhotoFeedColumn } from '@/components/console2/HotelPhotoFeedColumn';
 import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
 import { FriendsActivityColumn } from '@/components/console2/FriendsActivityColumn';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const Console: React.FC = () => {
   const [activeSection, setActiveSection] = useState('console');
-  const { isLoggedIn } = useUnifiedAuth();
+  const { isLoggedIn } = useAuth();
 
   return (
     <SidebarProvider>
