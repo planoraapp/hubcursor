@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     );
 
     const { hotel = 'br', method = 'random', limit = 20, query } = await req.json();
-    const cacheKey = `${hotel}:${method}:${limit}`;
+    const cacheKey = `${hotel}:${method}:${limit}:${query || ''}`;
     
     // Verificar cache
     const cached = discoveryCache.get(cacheKey);
@@ -56,10 +56,26 @@ Deno.serve(async (req) => {
         users = await discoverRandomUsers(supabase, hotelFilter, limit);
     }
 
+    // Se não encontrou resultados suficientes, tentar buscar na API do Habbo
+    if (users.length < Math.min(limit, 5) && query) {
+      console.log(`🌐 [discover-users] Fallback to Habbo API for "${query}"`);
+      const apiUsers = await searchHabboAPI(query, hotelFilter);
+      
+      // Mergear resultados, removendo duplicatas
+      const existingIds = new Set(users.map(u => u.habbo_id));
+      const newUsers = apiUsers.filter(u => !existingIds.has(u.habbo_id));
+      users = [...users, ...newUsers].slice(0, limit);
+
+      // Cachear novos usuários na base local
+      for (const user of newUsers) {
+        await cacheUserInDatabase(supabase, user, hotelFilter);
+      }
+    }
+
     const result = {
       users,
       meta: {
-        source: 'database',
+        source: 'database_with_api_fallback',
         method,
         timestamp: new Date().toISOString(),
         count: users.length,
@@ -91,38 +107,29 @@ Deno.serve(async (req) => {
 });
 
 async function discoverRandomUsers(supabase: any, hotel: string, limit: number) {
-  // Buscar usuários aleatórios da tabela habbo_accounts
   const { data, error } = await supabase
     .from('habbo_accounts')
     .select('*')
     .eq('hotel', hotel)
-    .gte('created_at', new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString())
     .order('created_at', { ascending: false })
-    .limit(limit * 3);
+    .limit(limit * 2);
 
   if (error) throw error;
 
-  // Randomizar e remover duplicatas
-  const uniqueUsers = new Map();
-  const shuffled = (data || []).sort(() => Math.random() - 0.5);
-  
-  for (const user of shuffled) {
-    if (!uniqueUsers.has(user.habbo_id)) {
-      uniqueUsers.set(user.habbo_id, {
-        id: user.habbo_id,
-        habbo_name: user.habbo_name,
-        habbo_id: user.habbo_id,
-        motto: user.motto || '',
-        figure_string: user.figure_string || '',
-        online: true,
-        last_seen: user.created_at
-      });
-      
-      if (uniqueUsers.size >= limit) break;
-    }
-  }
-
-  return Array.from(uniqueUsers.values());
+  // Randomizar e mapear para formato esperado
+  return (data || [])
+    .sort(() => Math.random() - 0.5)
+    .slice(0, limit)
+    .map(user => ({
+      id: user.habbo_id,
+      habbo_name: user.habbo_name,
+      habbo_id: user.habbo_id,
+      hotel: user.hotel,
+      motto: user.motto || '',
+      figure_string: user.figure_string || '',
+      online: user.is_online || false,
+      last_seen: user.last_access || user.created_at
+    }));
 }
 
 async function discoverRecentUsers(supabase: any, hotel: string, limit: number) {
@@ -139,10 +146,11 @@ async function discoverRecentUsers(supabase: any, hotel: string, limit: number) 
     id: user.habbo_id,
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
+    hotel: user.hotel,
     motto: user.motto || '',
     figure_string: user.figure_string || '',
-    online: true,
-    last_seen: user.created_at
+    online: user.is_online || false,
+    last_seen: user.last_access || user.created_at
   }));
 }
 
@@ -151,8 +159,8 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
     .from('habbo_accounts')
     .select('*')
     .eq('hotel', hotel)
-    .gte('created_at', new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString()) // Last 24 hours
-    .order('created_at', { ascending: false })
+    .eq('is_online', true)
+    .order('last_access', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -161,45 +169,128 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
     id: user.habbo_id,
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
+    hotel: user.hotel,
     motto: user.motto || '',
     figure_string: user.figure_string || '',
-    online: true,
-    last_seen: user.created_at
+    online: user.is_online || false,
+    last_seen: user.last_access || user.created_at
   }));
 }
 
 async function searchUsers(supabase: any, hotel: string, query: string, limit: number) {
-  if (!query || query.trim().length < 2) {
+  if (!query || query.trim().length < 1) {
     return [];
   }
 
   const searchTerm = query.trim().toLowerCase();
   console.log(`🔍 [searchUsers] Searching for "${searchTerm}" in hotel ${hotel}`);
 
-  // Busca por nome usando ILIKE para correspondência parcial
-  const { data, error } = await supabase
-    .from('habbo_accounts')
-    .select('*')
-    .eq('hotel', hotel)
-    .ilike('habbo_name', `%${searchTerm}%`)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  // Busca flexível: exato, começando com, contendo
+  const searches = [
+    // Busca exata (prioridade máxima)
+    supabase
+      .from('habbo_accounts')
+      .select('*')
+      .eq('hotel', hotel)
+      .ilike('habbo_name', searchTerm)
+      .limit(5),
+    
+    // Busca começando com
+    supabase
+      .from('habbo_accounts')
+      .select('*')
+      .eq('hotel', hotel)
+      .ilike('habbo_name', `${searchTerm}%`)
+      .limit(10),
+    
+    // Busca contendo
+    supabase
+      .from('habbo_accounts')
+      .select('*')
+      .eq('hotel', hotel)
+      .ilike('habbo_name', `%${searchTerm}%`)
+      .limit(15)
+  ];
 
-  if (error) {
-    console.error('❌ [searchUsers] Database error:', error);
-    throw error;
-  }
+  const results = await Promise.allSettled(searches);
+  const allUsers: any[] = [];
+  
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled' && result.value.data) {
+      allUsers.push(...result.value.data);
+    }
+  });
 
-  console.log(`✅ [searchUsers] Found ${data?.length || 0} users for "${searchTerm}"`);
+  // Remover duplicatas e limitar
+  const uniqueUsers = Array.from(
+    new Map(allUsers.map(user => [user.habbo_id, user])).values()
+  ).slice(0, limit);
 
-  return (data || []).map(user => ({
+  console.log(`✅ [searchUsers] Found ${uniqueUsers.length} users for "${searchTerm}"`);
+
+  return uniqueUsers.map(user => ({
     id: user.habbo_id,
     habbo_name: user.habbo_name,
     habbo_id: user.habbo_id,
     hotel: user.hotel,
     motto: user.motto || '',
     figure_string: user.figure_string || '',
-    online: true,
-    last_seen: user.created_at
+    online: user.is_online || false,
+    last_seen: user.last_access || user.created_at
   }));
+}
+
+async function searchHabboAPI(query: string, hotel: string): Promise<any[]> {
+  try {
+    const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+    const apiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(query)}`;
+    
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const userData = await response.json();
+    
+    return [{
+      id: userData.uniqueId,
+      habbo_name: userData.name,
+      habbo_id: userData.uniqueId,
+      hotel: hotel,
+      motto: userData.motto || '',
+      figure_string: userData.figureString || '',
+      online: userData.online || false,
+      last_seen: userData.lastAccessTime || new Date().toISOString()
+    }];
+  } catch (error) {
+    console.error('Error searching Habbo API:', error);
+    return [];
+  }
+}
+
+async function cacheUserInDatabase(supabase: any, user: any, hotel: string) {
+  try {
+    await supabase
+      .from('habbo_accounts')
+      .upsert({
+        habbo_id: user.habbo_id,
+        habbo_name: user.habbo_name,
+        hotel: hotel,
+        motto: user.motto,
+        figure_string: user.figure_string,
+        is_online: user.online,
+        last_access: user.last_seen,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'habbo_id'
+      });
+  } catch (error) {
+    console.error('Error caching user:', error);
+  }
 }
