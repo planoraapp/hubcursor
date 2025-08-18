@@ -30,7 +30,21 @@ const ProfileEnhanced = () => {
       try {
         setLoading(true);
         const profileData = await habboProxyService.getUserProfile(username);
-        setProfile(profileData);
+        if (profileData) {
+          // Transform HabboUser to HabboProfile format
+          const transformedProfile: HabboProfile = {
+            name: profileData.name,
+            motto: profileData.motto,
+            figureString: profileData.figureString,
+            online: profileData.online,
+            memberSince: profileData.memberSince,
+            selectedBadges: profileData.selectedBadges || [],
+            totalBadges: profileData.badges?.length || 0,
+          };
+          setProfile(transformedProfile);
+        } else {
+          setError('Perfil não encontrado');
+        }
       } catch (err) {
         console.error('Error loading profile:', err);
         setError('Erro ao carregar perfil');

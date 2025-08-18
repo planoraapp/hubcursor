@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Home, Users, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { habboApiService } from '@/services/habboApiService';
 import { habboProxyService } from '@/services/habboProxyService';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
 
