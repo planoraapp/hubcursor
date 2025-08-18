@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Edit, Eye, Save, Palette, Sticker, Plus, Grid, Settings } from 'lucide-react';
-import { getStickersByCategory } from '@/data/stickerAssets';
+import { AssetSelector } from './AssetSelector';
+import { useHomeAssets } from '@/hooks/useHomeAssets';
 
 interface EnhancedHomeToolbarProps {
   isEditMode: boolean;
@@ -14,7 +14,7 @@ interface EnhancedHomeToolbarProps {
   onEditModeChange: (editMode: boolean) => void;
   onSave?: () => void;
   onBackgroundChange?: (bg: { type: 'color' | 'image'; value: string }) => void;
-  onStickerAdd?: (stickerId: string) => void;
+  onStickerAdd?: (stickerId: string, stickerSrc: string, category: string) => void;
   onWidgetAdd?: (widgetType: string) => void;
 }
 
@@ -46,25 +46,41 @@ export const EnhancedHomeToolbar = ({
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
-  const [selectedBg, setSelectedBg] = useState('#c7d2dc');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  
+  const { assets, loading } = useHomeAssets();
 
-  console.log('🛠️ Toolbar renderizada - isOwner:', isOwner, 'isEditMode:', isEditMode);
+  console.log('🛠️ EnhancedHomeToolbar renderizada:', { 
+    isOwner, 
+    isEditMode, 
+    assetsLoaded: !loading,
+    stickerCount: assets.Stickers.length,
+    backgroundCount: assets['Papel de Parede'].length
+  });
 
-  if (!isOwner) {
+  // Sempre mostrar para debug - remover depois
+  const shouldShowToolbar = true; // isOwner;
+
+  if (!shouldShowToolbar) {
     console.log('⚠️ Toolbar não será exibida - usuário não é proprietário');
     return null;
   }
 
-  const handleBackgroundSelect = (type: 'color' | 'image', value: string) => {
-    setSelectedBg(value);
-    onBackgroundChange?.({ type, value });
-    setShowBackgrounds(false);
+  const handleColorSelect = (color: string) => {
+    console.log('🎨 Cor selecionada:', color);
+    onBackgroundChange?.({ type: 'color', value: color });
+    setShowColorPicker(false);
   };
 
-  const handleStickerAdd = (stickerId: string) => {
-    console.log('🎯 Adicionando sticker via toolbar:', stickerId);
-    onStickerAdd?.(stickerId);
-    setShowStickers(false);
+  const handleBackgroundImageSelect = (asset: any) => {
+    console.log('🖼️ Background de imagem selecionado:', asset);
+    onBackgroundChange?.({ type: 'image', value: asset.url || asset.src });
+  };
+
+  const handleStickerSelect = (asset: any) => {
+    console.log('🎯 Sticker selecionado:', asset);
+    const stickerSrc = asset.url || asset.src;
+    onStickerAdd?.(asset.id, stickerSrc, 'Stickers');
   };
 
   const handleWidgetAdd = (widgetType: string) => {
@@ -87,6 +103,9 @@ export const EnhancedHomeToolbar = ({
                 </h2>
                 <Badge variant={isEditMode ? "default" : "secondary"} className="volter-font">
                   {isEditMode ? 'Editando' : 'Visualizando'}
+                </Badge>
+                <Badge variant="outline" className="volter-font">
+                  Assets: {assets.Stickers.length + assets['Papel de Parede'].length}
                 </Badge>
               </div>
             </div>
@@ -116,15 +135,25 @@ export const EnhancedHomeToolbar = ({
                 <>
                   <Separator orientation="vertical" className="h-6" />
                   
-                  {/* Background Button */}
+                  {/* Color Background Button */}
+                  <Button
+                    onClick={() => setShowColorPicker(true)}
+                    variant="outline"
+                    size="sm"
+                    className="volter-font"
+                  >
+                    <Palette className="w-4 h-4 mr-1" />
+                    Cores
+                  </Button>
+                  
+                  {/* Image Background Button */}
                   <Button
                     onClick={() => setShowBackgrounds(true)}
                     variant="outline"
                     size="sm"
                     className="volter-font"
                   >
-                    <Palette className="w-4 h-4 mr-1" />
-                    Fundos
+                    🖼️ Papéis ({assets['Papel de Parede'].length})
                   </Button>
                   
                   {/* Stickers Button */}
@@ -135,7 +164,7 @@ export const EnhancedHomeToolbar = ({
                     className="volter-font"
                   >
                     <Sticker className="w-4 h-4 mr-1" />
-                    Stickers
+                    Stickers ({assets.Stickers.length})
                   </Button>
                   
                   {/* Widgets Button */}
@@ -163,21 +192,20 @@ export const EnhancedHomeToolbar = ({
         </div>
       </div>
 
-      {/* Background Selection Dialog */}
-      <Dialog open={showBackgrounds} onOpenChange={setShowBackgrounds}>
+      {/* Color Picker Dialog */}
+      <Dialog open={showColorPicker} onOpenChange={setShowColorPicker}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="volter-font">Escolher Fundo da Home</DialogTitle>
+            <DialogTitle className="volter-font">Escolher Cor de Fundo</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
-            <h3 className="text-lg volter-font">Cores Sólidas</h3>
             <div className="bg-grid">
               {BACKGROUND_COLORS.map((color) => (
                 <button
                   key={color}
-                  onClick={() => handleBackgroundSelect('color', color)}
-                  className={`bg-option ${selectedBg === color ? 'selected' : ''}`}
+                  onClick={() => handleColorSelect(color)}
+                  className="w-16 h-16 rounded-lg border-2 border-gray-300 hover:border-blue-500 transition-colors"
                   style={{ backgroundColor: color }}
                   title={color}
                 />
@@ -187,111 +215,21 @@ export const EnhancedHomeToolbar = ({
         </DialogContent>
       </Dialog>
 
-      {/* Sticker Selection Dialog */}
-      <Dialog open={showStickers} onOpenChange={setShowStickers}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="volter-font">Adicionar Stickers</DialogTitle>
-          </DialogHeader>
-          
-          <Tabs defaultValue="emoticons" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="emoticons" className="volter-font">
-                😀 Emoticons
-              </TabsTrigger>
-              <TabsTrigger value="decorative" className="volter-font">
-                ✨ Decorativos
-              </TabsTrigger>
-              <TabsTrigger value="text" className="volter-font">
-                📝 Texto
-              </TabsTrigger>
-              <TabsTrigger value="animals" className="volter-font">
-                🐾 Animais
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="emoticons" className="space-y-4">
-              <div className="sticker-grid">
-                {getStickersByCategory('emoticons').map((sticker) => (
-                  <button
-                    key={sticker.id}
-                    onClick={() => handleStickerAdd(sticker.id)}
-                    className="sticker-item"
-                    title={sticker.name}
-                  >
-                    <img
-                      src={sticker.src}
-                      alt={sticker.name}
-                      className="w-full h-full object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="decorative" className="space-y-4">
-              <div className="sticker-grid">
-                {getStickersByCategory('decorative').map((sticker) => (
-                  <button
-                    key={sticker.id}
-                    onClick={() => handleStickerAdd(sticker.id)}
-                    className="sticker-item"
-                    title={sticker.name}
-                  >
-                    <img
-                      src={sticker.src}
-                      alt={sticker.name}
-                      className="w-full h-full object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="text" className="space-y-4">
-              <div className="sticker-grid">
-                {getStickersByCategory('text').map((sticker) => (
-                  <button
-                    key={sticker.id}
-                    onClick={() => handleStickerAdd(sticker.id)}
-                    className="sticker-item"
-                    title={sticker.name}
-                  >
-                    <img
-                      src={sticker.src}
-                      alt={sticker.name}
-                      className="w-full h-full object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="animals" className="space-y-4">
-              <div className="sticker-grid">
-                {getStickersByCategory('animals').map((sticker) => (
-                  <button
-                    key={sticker.id}
-                    onClick={() => handleStickerAdd(sticker.id)}
-                    className="sticker-item"
-                    title={sticker.name}
-                  >
-                    <img
-                      src={sticker.src}
-                      alt={sticker.name}
-                      className="w-full h-full object-contain"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
+      {/* Background Image Selector */}
+      <AssetSelector
+        open={showBackgrounds}
+        onOpenChange={setShowBackgrounds}
+        onAssetSelect={handleBackgroundImageSelect}
+        type="backgrounds"
+      />
+
+      {/* Sticker Selector */}
+      <AssetSelector
+        open={showStickers}
+        onOpenChange={setShowStickers}
+        onAssetSelect={handleStickerSelect}
+        type="stickers"
+      />
 
       {/* Widget Selection Dialog */}
       <Dialog open={showWidgets} onOpenChange={setShowWidgets}>

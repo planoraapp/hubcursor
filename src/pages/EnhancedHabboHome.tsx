@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { OptimizedDraggableWidget } from '@/components/HabboHome/OptimizedDraggableWidget';
 import { OptimizedDroppedSticker } from '@/components/HabboHome/OptimizedDroppedSticker';
 import { EnhancedHomeToolbar } from '@/components/HabboHome/EnhancedHomeToolbar';
-import { getStickerById } from '@/data/stickerAssets';
 
 const EnhancedHabboHome: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -37,34 +35,57 @@ const EnhancedHabboHome: React.FC = () => {
     getWidgetSizeRestrictions
   } = useHabboHome(username || '');
 
-  // Handle sticker operations
-  const handleStickerAdd = useCallback((stickerId: string) => {
-    const stickerAsset = getStickerById(stickerId);
-    if (!stickerAsset || !addSticker) return;
+  console.log('🏠 EnhancedHabboHome renderizada:', {
+    username,
+    isOwner,
+    isEditMode,
+    widgetsCount: widgets.length,
+    stickersCount: stickers.length,
+    background
+  });
 
-    const x = Math.random() * (1200 - 100);
-    const y = Math.random() * (800 - 100);
+  // Handle sticker operations
+  const handleStickerAdd = useCallback((stickerId: string, stickerSrc: string, category: string) => {
+    console.log('🎯 Tentando adicionar sticker:', { stickerId, stickerSrc, category });
     
-    addSticker(stickerId, x, y, stickerAsset.src, stickerAsset.category);
+    if (!addSticker) {
+      console.error('❌ Função addSticker não disponível');
+      return;
+    }
+
+    const x = Math.random() * (1200 - 200) + 100;
+    const y = Math.random() * (800 - 200) + 100;
     
-    toast({
-      title: "Sticker adicionado!",
-      description: "O sticker foi adicionado à sua home."
-    });
+    const result = addSticker(stickerId, x, y, stickerSrc, category);
+    
+    if (result) {
+      toast({
+        title: "Sticker adicionado!",
+        description: "O sticker foi adicionado à sua home."
+      });
+    } else {
+      toast({
+        title: "Erro ao adicionar sticker",
+        description: "Não foi possível adicionar o sticker.",
+        variant: "destructive"
+      });
+    }
   }, [addSticker, toast]);
 
   const handleStickerPositionChange = useCallback((id: string, x: number, y: number) => {
+    console.log('🎯 Mudando posição do sticker:', { id, x, y });
     if (updateStickerPosition) {
       updateStickerPosition(id, x, y);
     }
   }, [updateStickerPosition]);
 
   const handleStickerZIndexChange = useCallback((id: string, zIndex: number) => {
+    console.log('🎯 Mudando Z-index do sticker:', { id, zIndex });
     // TODO: Implementar Z-index para stickers
-    console.log('Alterando Z-index do sticker:', id, zIndex);
   }, []);
 
   const handleStickerRemove = useCallback((id: string) => {
+    console.log('🎯 Removendo sticker:', id);
     if (removeStickerFromDb) {
       removeStickerFromDb(id);
       toast({
@@ -76,6 +97,7 @@ const EnhancedHabboHome: React.FC = () => {
 
   // Handle background change
   const handleBackgroundChange = useCallback((bg: { type: 'color' | 'image'; value: string }) => {
+    console.log('🎨 Mudando background:', bg);
     if (updateBackground) {
       updateBackground(bg.type === 'image' ? 'cover' : 'color', bg.value);
       toast({
@@ -87,7 +109,7 @@ const EnhancedHabboHome: React.FC = () => {
 
   // Handle widget addition
   const handleWidgetAdd = useCallback((widgetType: string) => {
-    console.log('Adicionando widget:', widgetType);
+    console.log('📦 Adicionando widget:', widgetType);
     toast({
       title: "Widget adicionado!",
       description: `O widget ${widgetType} foi adicionado à sua home.`
@@ -96,6 +118,7 @@ const EnhancedHabboHome: React.FC = () => {
 
   // Handle save
   const handleSave = useCallback(() => {
+    console.log('💾 Salvando home...');
     toast({
       title: "Home salva!",
       description: "Suas alterações foram salvas automaticamente."
@@ -147,6 +170,8 @@ const EnhancedHabboHome: React.FC = () => {
     backgroundPosition: background.background_type === 'cover' ? 'center' : undefined,
     backgroundRepeat: background.background_type === 'cover' ? 'no-repeat' : undefined
   };
+
+  console.log('🎨 Background style aplicado:', backgroundStyle);
 
   const renderWidget = (widget: any) => {
     const widgetType = widget.widget_id || widget.widget_type;
@@ -281,6 +306,9 @@ const EnhancedHabboHome: React.FC = () => {
                   <Badge className="bg-white/20 text-white volter-font">
                     Enhanced Home
                   </Badge>
+                  <Badge className="bg-white/20 text-white volter-font">
+                    Widgets: {widgets.length} | Stickers: {stickers.length}
+                  </Badge>
                   {habboData.is_online && (
                     <Badge className="bg-green-500 text-white volter-font">
                       Online
@@ -303,7 +331,7 @@ const EnhancedHabboHome: React.FC = () => {
         {/* Home Canvas Container */}
         <div className="flex justify-center">
           <div 
-            className="home-canvas"
+            className="home-canvas relative w-[1200px] h-[800px] rounded-lg overflow-hidden shadow-2xl"
             style={backgroundStyle}
           >
             {/* Render Widgets */}
@@ -352,7 +380,7 @@ const EnhancedHabboHome: React.FC = () => {
             {isEditMode && isOwner && (
               <div className="absolute top-4 left-4 bg-blue-100/90 backdrop-blur-sm rounded-lg p-3 border border-blue-300">
                 <p className="text-sm text-blue-800 volter-font">
-                  💡 Modo de edição ativo - arraste widgets e stickers para reorganizar
+                  💡 Modo de edição ativo - use a toolbar para adicionar itens
                 </p>
               </div>
             )}
