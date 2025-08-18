@@ -1,159 +1,265 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { NewAppSidebar } from '@/components/NewAppSidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { useEnhancedHabboHome } from '@/hooks/useEnhancedHabboHome';
+import { HomeCustomizer } from '@/components/HabboHome/HomeCustomizer';
+import { EnhancedStickerInventory } from '@/components/HabboHome/EnhancedStickerInventory';
+import { OptimizedDraggableWidget } from '@/components/HabboHome/OptimizedDraggableWidget';
+import { OptimizedDroppedSticker } from '@/components/HabboHome/OptimizedDroppedSticker';
+import { UserCardWidget } from '@/components/widgets/UserCardWidget';
+import { GuestbookWidget } from '@/components/widgets/GuestbookWidget';
+import { RatingWidget } from '@/components/widgets/RatingWidget';
+import { InfoWidget } from '@/components/widgets/InfoWidget';
+import { TraxPlayerWidget } from '@/components/widgets/TraxPlayerWidget';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CollapsibleSidebar } from '@/components/CollapsibleSidebar';
-import { CompactHotelFeed } from '@/components/home/CompactHotelFeed';
-import { UserActivityTimeline } from '@/components/home/UserActivityTimeline';
-import { ProfileHeader } from '@/components/profile/ProfileHeader';
-import { ProfileBadges } from '@/components/profile/ProfileBadges';
-import { ProfilePhotos } from '@/components/profile/ProfilePhotos';
-import { ProfileStats } from '@/components/profile/ProfileStats';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileLayout from '@/layouts/MobileLayout';
-import { User } from 'lucide-react';
+import { ArrowLeft, User, Globe } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const EnhancedHabboHome = () => {
-  const { username, hotel } = useParams<{ username: string; hotel: string }>();
-  const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState('homes');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const isMobile = useIsMobile();
+  const { username } = useParams<{ username: string }>();
+  const [stickerInventoryOpen, setStickerInventoryOpen] = useState(false);
 
-  const { habboUser, habboProfile, photos, avatarUrl, stats, isLoading, error } = useUserProfile(username || '');
+  const {
+    widgets,
+    stickers,
+    background,
+    guestbook,
+    habboData,
+    loading,
+    error,
+    isEditMode,
+    isOwner,
+    setIsEditMode,
+    addWidget,
+    removeWidget,
+    updateWidgetPosition,
+    updateWidgetSize,
+    getWidgetSizeRestrictions,
+    handleSaveLayout,
+    addGuestbookEntry,
+    handleStickerDrop,
+    handleStickerPositionChange,
+    handleBackgroundChange
+  } = useEnhancedHabboHome(username || '');
 
-  // Set document title and meta tags
-  useEffect(() => {
-    if (!habboUser) return;
-    
-    const title = `${habboUser.habbo_name} • Habbo Home (${habboUser.hotel?.toUpperCase()}) | HabboHub`;
-    document.title = title;
-
-    // Meta description
-    const descText = `Veja o perfil Habbo de ${habboUser.habbo_name} (${habboUser.hotel}). Emblemas, fotos e atividades recentes.`;
-    let desc = document.querySelector('meta[name="description"]');
-    if (!desc) {
-      desc = document.createElement('meta');
-      desc.setAttribute('name', 'description');
-      document.head.appendChild(desc);
+  const getBackgroundStyle = () => {
+    if (background.background_type === 'color') {
+      return { backgroundColor: background.background_value };
+    } else if (background.background_type === 'repeat') {
+      return {
+        backgroundImage: `url(${background.background_value})`,
+        backgroundRepeat: 'repeat',
+        imageRendering: 'pixelated' as const
+      };
+    } else if (background.background_type === 'cover') {
+      return {
+        backgroundImage: `url(${background.background_value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        imageRendering: 'pixelated' as const
+      };
     }
-    desc.setAttribute('content', descText);
+    return { backgroundColor: '#c7d2dc' };
+  };
 
-    // Canonical URL
-    const canonicalHref = `${window.location.origin}/home/${habboUser.hotel}/${habboUser.habbo_name}`;
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', canonicalHref);
-
-    // JSON-LD structured data
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.text = JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Person',
-      name: habboUser.habbo_name,
-      url: canonicalHref,
-      description: descText,
-    });
-    document.head.appendChild(script);
+  const renderWidget = (widget: any) => {
+    let content;
     
-    return () => {
-      if (script && script.parentNode) script.parentNode.removeChild(script);
-    };
-  }, [habboUser]);
+    switch (widget.widget_id) {
+      case 'usercard':
+        content = <UserCardWidget habboData={habboData} />;
+        break;
+      case 'guestbook':
+        content = (
+          <GuestbookWidget
+            entries={guestbook}
+            onAddEntry={addGuestbookEntry}
+            isOwner={isOwner}
+          />
+        );
+        break;
+      case 'rating':
+        content = <RatingWidget />;
+        break;
+      case 'info':
+        content = <InfoWidget habboData={habboData} />;
+        break;
+      case 'traxplayer':
+        content = <TraxPlayerWidget />;
+        break;
+      default:
+        content = (
+          <div className="p-4 text-center text-gray-500 volter-font">
+            Widget: {widget.widget_id}
+          </div>
+        );
+    }
 
-  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg volter-font text-white" style={{
-            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-          }}>
-            Carregando perfil de {username}...
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!habboUser || error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
-          <CardContent className="p-6 text-center">
-            <User className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-xl font-bold mb-2">Usuário não encontrado</h2>
-            <p className="text-gray-600 mb-4">
-              O usuário "{username}" não foi encontrado em nosso banco de dados.
-            </p>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Voltar ao Início
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const renderMainContent = () => {
-    return (
-      <div className="space-y-6">
-        {/* Profile Header */}
-        <ProfileHeader habboUser={habboUser} avatarUrl={avatarUrl} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Stats and Hotel Feed */}
-          <div className="space-y-6">
-            <ProfileStats habboUser={habboUser} stats={stats} />
-            <CompactHotelFeed />
-          </div>
-
-          {/* Middle Column - Badges */}
-          <div>
-            <ProfileBadges 
-              badges={habboProfile?.selectedBadges || []} 
-              habboName={habboUser.habbo_name} 
-            />
-          </div>
-
-          {/* Right Column - Photos and Activity */}
-          <div className="space-y-6">
-            <ProfilePhotos photos={photos} habboName={habboUser.habbo_name} />
-            <UserActivityTimeline hotel={habboUser.hotel} username={habboUser.habbo_name} />
-          </div>
-        </div>
-      </div>
+      <OptimizedDraggableWidget
+        key={widget.id}
+        id={widget.widget_id}
+        x={widget.x}
+        y={widget.y}
+        width={widget.width}
+        height={widget.height}
+        zIndex={widget.z_index}
+        isEditMode={isEditMode}
+        onPositionChange={(x, y) => updateWidgetPosition(widget.id, x, y)}
+        onSizeChange={(width, height) => updateWidgetSize(widget.id, width, height)}
+        onZIndexChange={(zIndex) => {/* implement z-index change */}}
+        onRemove={() => removeWidget(widget.id)}
+        sizeRestrictions={getWidgetSizeRestrictions(widget.widget_id)}
+      >
+        {content}
+      </OptimizedDraggableWidget>
     );
   };
 
-  if (isMobile) {
+  if (loading) {
     return (
-      <MobileLayout>
-        <div className="p-4">
-          {renderMainContent()}
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <NewAppSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 volter-font">Carregando home...</p>
+            </div>
+          </main>
         </div>
-      </MobileLayout>
+      </SidebarProvider>
+    );
+  }
+
+  if (error) {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <NewAppSidebar />
+          <main className="flex-1 flex items-center justify-center">
+            <Card className="p-8 text-center max-w-md">
+              <h2 className="text-xl font-bold text-red-600 mb-4 volter-font">Erro</h2>
+              <p className="text-gray-600 mb-4 volter-font">{error}</p>
+              <Link to="/homes">
+                <Button variant="outline" className="volter-font">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar às Homes
+                </Button>
+              </Link>
+            </Card>
+          </main>
+        </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <div className="flex min-h-screen">
-        <CollapsibleSidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className={`flex-1 p-4 md:p-8 overflow-y-auto transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-          {renderMainContent()}
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <NewAppSidebar />
+        <main className="flex-1 relative">
+          {/* Header */}
+          <div className="bg-white border-b shadow-sm p-4 relative z-40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link to="/homes">
+                  <Button variant="outline" size="sm" className="volter-font">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Voltar
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-800 volter-font">
+                    Home de {habboData?.name}
+                  </h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary" className="volter-font">
+                      <User className="w-3 h-3 mr-1" />
+                      {habboData?.hotel?.toUpperCase()}
+                    </Badge>
+                    <Badge variant="outline" className="volter-font">
+                      <Globe className="w-3 h-3 mr-1" />
+                      {habboData?.online ? 'Online' : 'Offline'}
+                    </Badge>
+                    {isOwner && (
+                      <Badge className="bg-green-100 text-green-800 volter-font">
+                        Sua Home
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Home Canvas */}
+          <div
+            className="relative min-h-[calc(100vh-80px)] overflow-hidden"
+            style={getBackgroundStyle()}
+          >
+            {/* Widgets */}
+            {widgets.map(renderWidget)}
+
+            {/* Stickers */}
+            {stickers.map((sticker) => (
+              <OptimizedDroppedSticker
+                key={sticker.id}
+                id={sticker.id}
+                stickerId={sticker.sticker_id}
+                src={sticker.sticker_src}
+                category={sticker.category}
+                x={sticker.x}
+                y={sticker.y}
+                zIndex={sticker.z_index}
+                scale={sticker.scale}
+                rotation={sticker.rotation}
+                isEditMode={isEditMode}
+                onPositionChange={handleStickerPositionChange}
+                onZIndexChange={(id, zIndex) => {/* implement sticker z-index change */}}
+                onRemove={(id) => {/* implement sticker removal */}}
+              />
+            ))}
+
+            {/* Empty state for edit mode */}
+            {isEditMode && widgets.length === 0 && stickers.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-blue-100/90 backdrop-blur-sm rounded-lg p-8 text-center">
+                  <h3 className="text-lg font-bold text-blue-800 mb-2 volter-font">
+                    🏠 Sua Home está vazia!
+                  </h3>
+                  <p className="text-blue-700 volter-font">
+                    Use o painel de customização para adicionar widgets e stickers
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Customizer */}
+          <HomeCustomizer
+            isEditMode={isEditMode}
+            isOwner={isOwner}
+            onToggleEditMode={() => setIsEditMode(!isEditMode)}
+            onSaveLayout={handleSaveLayout}
+            onBackgroundChange={handleBackgroundChange}
+            onStickerInventoryOpen={() => setStickerInventoryOpen(true)}
+            onWidgetAdd={addWidget}
+          />
+
+          {/* Sticker Inventory */}
+          <EnhancedStickerInventory
+            isOpen={stickerInventoryOpen}
+            onClose={() => setStickerInventoryOpen(false)}
+            onStickerDrop={handleStickerDrop}
+          />
         </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 

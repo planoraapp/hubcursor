@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
@@ -9,6 +10,9 @@ import {
   MessageSquare,
   Crown,
   Building,
+  Settings,
+  Users,
+  Trophy,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -33,6 +37,9 @@ const navigationItems = [
   { title: "Emblemas", url: "/emblemas", icon: Crown },
   { title: "Homes", url: "/homes", icon: Home },
   { title: "Forum", url: "/forum", icon: MessageSquare },
+  { title: "Ranking", url: "/tops", icon: Trophy },
+  { title: "Comunidade", url: "/comunidade", icon: Users },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function NewAppSidebar() {
@@ -41,7 +48,13 @@ export function NewAppSidebar() {
   const { habboAccount } = useUnifiedAuth();
   const currentPath = location.pathname;
 
-  const isActive = (path: string) => currentPath === path;
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return currentPath === '/';
+    }
+    return currentPath.startsWith(path);
+  };
+
   const getNavCls = (active: boolean) =>
     active 
       ? "bg-[#D4B896] text-[#8B4513] font-semibold border-l-4 border-[#8B4513]" 
@@ -104,25 +117,23 @@ export function NewAppSidebar() {
         </SidebarGroup>
 
         {habboAccount && (
-          <>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink 
-                        to={`/home/${habboAccount.habbo_name}`} 
-                        className={getNavCls(isActive(`/home/${habboAccount.habbo_name}`))}
-                      >
-                        <User className="h-4 w-4" />
-                        {state !== "collapsed" && <span className="volter-font">Meu Perfil</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={`/home/${habboAccount.habbo_name}`} 
+                      className={getNavCls(isActive(`/home/${habboAccount.habbo_name}`))}
+                    >
+                      <User className="h-4 w-4" />
+                      {state !== "collapsed" && <span className="volter-font">Meu Perfil</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
       </SidebarContent>
 
