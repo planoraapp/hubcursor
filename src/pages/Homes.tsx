@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
@@ -7,10 +6,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Home, Plus, ExternalLink, Users, Camera, Sparkles } from 'lucide-react';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const Homes = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
 
   const featuredHomes = [
     {
