@@ -1,7 +1,7 @@
 
 export interface GuestbookEntry {
   id: string;
-  author: string;
+  author_habbo_name: string;
   message: string;
-  timestamp: string;
+  created_at: string;
 }

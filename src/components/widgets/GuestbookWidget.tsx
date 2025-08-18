@@ -35,9 +35,9 @@ export const GuestbookWidget = ({ entries = [], onAddEntry, isOwner }: Guestbook
         ) : (
           entries.map((entry) => (
             <div key={entry.id} className="bg-white p-2 rounded text-xs">
-              <div className="font-bold volter-font">{entry.author}</div>
+              <div className="font-bold volter-font">{entry.author_habbo_name}</div>
               <div className="text-gray-600 volter-font">{entry.message}</div>
-              <div className="text-gray-400 text-xs volter-font">{entry.timestamp}</div>
+              <div className="text-gray-400 text-xs volter-font">{new Date(entry.created_at).toLocaleDateString('pt-BR')}</div>
             </div>
           ))
         )}
