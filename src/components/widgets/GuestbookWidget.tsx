@@ -4,13 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare, Send } from 'lucide-react';
-
-interface GuestbookEntry {
-  id: string;
-  author: string;
-  message: string;
-  timestamp: string;
-}
+import { GuestbookEntry } from '@/types/guestbook';
 
 interface GuestbookWidgetProps {
   entries?: GuestbookEntry[];
