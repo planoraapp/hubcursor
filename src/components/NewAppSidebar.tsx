@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   Home,
@@ -45,7 +44,6 @@ const menuItems = [
 ];
 
 export function NewAppSidebar() {
-  const { collapsed } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -61,15 +59,15 @@ export function NewAppSidebar() {
 
   return (
     <Sidebar
-      className={`${collapsed ? 'w-14' : 'w-60'} border-r-2 border-black bg-white/95 backdrop-blur-sm`}
-      collapsible
+      className="w-60 border-r-2 border-black bg-white/95 backdrop-blur-sm"
+      collapsible="icon"
     >
       <SidebarTrigger className="m-2 self-end border-2 border-black" />
 
       <SidebarContent className="scrollbar-hide">
         <SidebarGroup>
           <SidebarGroupLabel className="volter-font text-lg font-bold text-gray-800">
-            {!collapsed && 'HabboHub'}
+            HabboHub
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
@@ -83,7 +81,7 @@ export function NewAppSidebar() {
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${getNavCls(item.url)} volter-font`}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

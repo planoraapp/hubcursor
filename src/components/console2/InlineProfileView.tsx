@@ -1,172 +1,123 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Calendar, MapPin, Users, Image, Trophy, Loader2 } from 'lucide-react';
-import { optimizedFeedService } from '@/services/optimizedFeedService';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Calendar, MapPin, Users, Trophy } from 'lucide-react';
+import { getAvatarUrl } from '@/services/habboApiMultiHotel';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface InlineProfileViewProps {
-  habboName: string;
+  user: any;
   onBack: () => void;
 }
 
-export const InlineProfileView: React.FC<InlineProfileViewProps> = ({
-  habboName,
-  onBack
-}) => {
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        console.log(`[InlineProfileView] Fetching profile for: ${habboName}`);
-        const profileData = await optimizedFeedService.getProfile(habboName);
-        
-        if (profileData) {
-          setProfile(profileData);
-          console.log(`[InlineProfileView] Profile loaded successfully`);
-        } else {
-          setError('Perfil não encontrado');
-        }
-      } catch (err) {
-        console.error('[InlineProfileView] Error fetching profile:', err);
-        setError('Erro ao carregar perfil');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (habboName) {
-      fetchProfile();
-    }
-  }, [habboName]);
+export const InlineProfileView: React.FC<InlineProfileViewProps> = ({ user, onBack }) => {
+  const avatarUrl = getAvatarUrl(user.name || user.habbo_name, user.figureString, user.hotel || 'br');
+  
+  const memberSince = user.memberSince || user.created_at;
+  const formattedDate = memberSince ? 
+    formatDistanceToNow(new Date(memberSince), { addSuffix: true, locale: ptBR }) : 
+    'Data não disponível';
 
   return (
-    <Card className="bg-[#3D4852] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-3 flex-shrink-0">
+    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full">
+      <CardHeader>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
+          <Button 
+            variant="ghost" 
+            size="sm" 
             onClick={onBack}
-            className="text-white/80 hover:text-white hover:bg-white/10 p-2"
+            className="text-white hover:bg-white/10 p-1"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <User className="w-5 h-5" />
-            Perfil do Usuário
-          </CardTitle>
+          <CardTitle className="text-lg">Perfil Detalhado</CardTitle>
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+      <CardContent className="space-y-4">
+        {/* Avatar e informações básicas */}
+        <div className="text-center">
+          <div className="w-24 h-24 mx-auto mb-3">
+            <img
+              src={avatarUrl}
+              alt={`Avatar de ${user.name || user.habbo_name}`}
+              className="w-full h-full object-contain bg-transparent"
+              style={{ imageRendering: 'pixelated' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/assets/habbo-avatar-placeholder.png';
+              }}
+            />
           </div>
-        ) : error ? (
-          <div className="text-center py-8">
-            <User className="w-12 h-12 mx-auto mb-4 text-white/40" />
-            <p className="text-red-300">{error}</p>
-            <Button
-              variant="outline"
-              onClick={onBack}
-              className="mt-4 border-white/20 text-white hover:bg-white/10"
-            >
-              Voltar
-            </Button>
+          
+          <h3 className="font-bold text-xl mb-1">{user.name || user.habbo_name}</h3>
+          <p className="text-white/70 text-sm mb-2">{user.motto || 'Sem missão definida'}</p>
+          
+          <div className="flex justify-center gap-2 mb-3">
+            <Badge variant={user.online ? "default" : "secondary"} className="text-xs">
+              {user.online ? '🟢 Online' : '🔴 Offline'}
+            </Badge>
+            <Badge variant="outline" className="text-xs bg-white/10 border-white/20 text-white">
+              {(user.hotel || 'br').toUpperCase()}
+            </Badge>
           </div>
-        ) : profile ? (
-          <div className="space-y-6">
-            {/* Avatar e Info Principal - Avatar sem borda circular */}
-            <div className="text-center space-y-4">
-              <div className="w-24 h-24 mx-auto">
+        </div>
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-2 gap-3 text-center">
+          <div className="bg-white/10 rounded-lg p-3">
+            <Calendar className="w-4 h-4 mx-auto mb-1 text-white/70" />
+            <p className="text-xs text-white/70">Membro desde</p>
+            <p className="text-sm font-semibold">{formattedDate}</p>
+          </div>
+          
+          <div className="bg-white/10 rounded-lg p-3">
+            <Trophy className="w-4 h-4 mx-auto mb-1 text-white/70" />
+            <p className="text-xs text-white/70">Emblemas</p>
+            <p className="text-sm font-semibold">{user.totalBadges || user.selectedBadges?.length || 0}</p>
+          </div>
+        </div>
+
+        {/* Emblemas selecionados */}
+        {user.selectedBadges && user.selectedBadges.length > 0 && (
+          <div className="bg-white/10 rounded-lg p-3">
+            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
+              <Trophy className="w-3 h-3" />
+              Emblemas Favoritos
+            </h4>
+            <div className="flex flex-wrap gap-1 justify-center">
+              {user.selectedBadges.slice(0, 8).map((badge: any, index: number) => (
                 <img
-                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${profile.habbo_name}&size=l&direction=2&head_direction=3`}
-                  alt={`Avatar de ${profile.habbo_name}`}
-                  className="w-full h-full object-contain bg-transparent"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${profile.habbo_name}&size=l&direction=2&head_direction=3`;
-                  }}
+                  key={index}
+                  src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
+                  alt={badge.name}
+                  className="w-6 h-6"
+                  title={badge.name || badge.code}
+                  style={{ imageRendering: 'pixelated' }}
                 />
-              </div>
-              
-              <div>
-                <h2 className="text-xl font-bold text-white">{profile.habbo_name}</h2>
-                <p className="text-white/60 text-sm mt-1">{profile.motto || 'Sem motto'}</p>
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <Badge variant={profile.is_online ? "default" : "secondary"} className="text-xs">
-                    {profile.is_online ? 'Online' : 'Offline'}
-                  </Badge>
-                </div>
-              </div>
+              ))}
             </div>
-
-            {/* Estatísticas */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/10 rounded-lg p-3 text-center">
-                <Users className="w-5 h-5 mx-auto mb-1 text-blue-400" />
-                <div className="text-lg font-bold">{profile.friends_count || 0}</div>
-                <div className="text-xs text-white/60">Amigos</div>
-              </div>
-              
-              <div className="bg-white/10 rounded-lg p-3 text-center">
-                <Image className="w-5 h-5 mx-auto mb-1 text-purple-400" />
-                <div className="text-lg font-bold">{profile.photos_count || 0}</div>
-                <div className="text-xs text-white/60">Fotos</div>
-              </div>
-            </div>
-
-            {/* Informações Adicionais */}
-            <div className="space-y-3">
-              {profile.member_since && (
-                <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="w-4 h-4 text-white/60" />
-                  <span className="text-white/80">
-                    Membro desde {new Date(profile.member_since).getFullYear()}
-                  </span>
-                </div>
-              )}
-              
-              {profile.hotel && (
-                <div className="flex items-center gap-3 text-sm">
-                  <MapPin className="w-4 h-4 text-white/60" />
-                  <span className="text-white/80">Hotel: {profile.hotel.toUpperCase()}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Emblemas */}
-            {profile.badges && profile.badges.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-white/80 mb-2 flex items-center gap-2">
-                  <Trophy className="w-4 h-4" />
-                  Emblemas
-                </h3>
-                <div className="grid grid-cols-4 gap-2">
-                  {profile.badges.slice(0, 8).map((badge: any, index: number) => (
-                    <div key={index} className="bg-white/10 rounded p-2 text-center">
-                      <img
-                        src={`https://images.habbo.com/c_images/album1584/${badge.code}.gif`}
-                        alt={badge.name}
-                        className="w-6 h-6 mx-auto"
-                        title={badge.name}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
-        ) : null}
+        )}
+
+        {/* Informações adicionais */}
+        <div className="space-y-2 text-sm">
+          {user.currentRoom && (
+            <div className="flex items-center gap-2 text-white/70">
+              <MapPin className="w-3 h-3" />
+              <span>No quarto: {user.currentRoom}</span>
+            </div>
+          )}
+          
+          {user.friendsCount && (
+            <div className="flex items-center gap-2 text-white/70">
+              <Users className="w-3 h-3" />
+              <span>{user.friendsCount} amigos</span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

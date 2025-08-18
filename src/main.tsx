@@ -1,4 +1,3 @@
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -26,7 +25,6 @@ import Catalogo from './pages/Catalogo';
 import Ferramentas from './pages/Ferramentas';
 import EventosPage from './pages/Eventos';
 import EditorPuhekupla from './pages/EditorPuhekupla';
-import EmblemaPuhekupla from './pages/EmblemaPuhekupla';
 import Mercado from './pages/Mercado';
 
 import './index.css';
@@ -97,10 +95,6 @@ const router = createBrowserRouter([
   {
     path: "/editor-puhekupla",
     element: <EditorPuhekupla />,
-  },
-  {
-    path: "/emblema-puhekupla",
-    element: <EmblemaPuhekupla />,
   },
   {
     path: "/mercado",
