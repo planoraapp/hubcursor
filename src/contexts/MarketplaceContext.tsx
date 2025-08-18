@@ -1,22 +1,26 @@
 
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
 export interface MarketItem {
   id: string;
   name: string;
   className: string;
   currentPrice: number;
+  previousPrice?: number;
   trend: 'up' | 'down' | 'stable';
   changePercent: string;
   volume: number;
   openOffers?: number;
   quantity?: number;
   soldItems?: number;
-  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'ltd';
+  rarity: string; // Changed from union to string to match actual usage
   category: string;
   imageUrl: string;
   lastUpdated: string;
   description?: string;
+  hotel?: string;
+  priceHistory?: number[];
+  listedAt?: string;
 }
 
 export interface MarketStats {
@@ -28,7 +32,7 @@ export interface MarketStats {
   featuredItems: number;
   highestPrice: number;
   mostTraded: string;
-  apiStatus: 'success' | 'error' | 'partial' | 'no-data';
+  apiStatus: 'success' | 'error' | 'partial' | 'no-data' | 'unavailable'; // Added 'unavailable'
   apiMessage?: string;
 }
 
@@ -36,7 +40,7 @@ export interface ClubItem {
   id: string;
   name: string;
   price: number;
-  available: number;
+  available: boolean | number; // Allow both boolean and number
   type: 'hc' | 'ca';
   imageUrl: string;
   className: string;

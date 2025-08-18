@@ -114,7 +114,7 @@ export class MarketplaceService {
         className: 'hc31',
         type: 'hc',
         imageUrl: '/assets/hc31.png',
-        available: true
+        available: true // Fixed: keeping as boolean
       },
       {
         id: 'ca_31_days', 
@@ -123,7 +123,7 @@ export class MarketplaceService {
         className: 'ca31',
         type: 'ca',
         imageUrl: '/assets/bc31.png',
-        available: true
+        available: true // Fixed: keeping as boolean
       }
     ];
 
