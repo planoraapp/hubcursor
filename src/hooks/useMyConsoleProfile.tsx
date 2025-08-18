@@ -1,11 +1,11 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { useUnifiedAuth } from './useUnifiedAuth';
+import { useAuth } from './useAuth';
 import { habboProxyService, HabboUser, HabboPhoto } from '@/services/habboProxyService';
 import { consoleInteractionsService, ConsoleFollow } from '@/services/consoleInteractionsService';
 
 export const useMyConsoleProfile = () => {
-  const { habboAccount, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
   
   // Fetch my profile data
   const { 
