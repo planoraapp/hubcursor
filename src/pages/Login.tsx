@@ -16,7 +16,7 @@ const Login = () => {
   }
 
   if (isLoggedIn) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/console" replace />;
   }
 
   return <HabboLoginForm />;
