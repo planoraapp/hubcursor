@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useOptimizedUserDiscovery } from '@/hooks/useOptimizedUserDiscovery';
+import { useOptimizedOnlineUsers } from '@/hooks/useOptimizedOnlineUsers';
 
 export const OptimizedOnlineUsersColumn: React.FC = () => {
   const { 
@@ -16,10 +16,8 @@ export const OptimizedOnlineUsersColumn: React.FC = () => {
     refetch, 
     hotel,
     isEmpty 
-  } = useOptimizedUserDiscovery({
-    method: 'active',
-    limit: 30,
-    refreshInterval: 1 * 60 * 1000 // 1 minute
+  } = useOptimizedOnlineUsers({
+    limit: 30
   });
 
   const formatLastSeen = (lastSeen: string) => {

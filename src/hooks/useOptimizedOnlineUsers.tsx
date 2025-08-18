@@ -21,12 +21,7 @@ export const useOptimizedOnlineUsers = (options?: {
   const refreshInterval = options?.refreshInterval || 60000; // 1 minuto
   const limit = options?.limit || 30;
 
-  const { 
-    data: usersData, 
-    isLoading, 
-    error,
-    refetch 
-  } = useQuery({
+  const query = useQuery({
     queryKey: ['optimized-online-users', hotel, limit],
     queryFn: () => optimizedFeedService.getOnlineUsers(hotel, limit),
     refetchInterval: refreshInterval,
@@ -36,6 +31,7 @@ export const useOptimizedOnlineUsers = (options?: {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
+  const usersData = query.data;
   const users = usersData?.users || [];
   const meta = usersData?.meta;
   const onlineCount = users.length;
@@ -45,10 +41,10 @@ export const useOptimizedOnlineUsers = (options?: {
     onlineCount,
     meta,
     hotel,
-    isLoading,
-    error,
-    refetch,
-    isEmpty: !isLoading && users.length === 0,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+    isEmpty: !query.isLoading && users.length === 0,
     lastUpdate: meta?.timestamp
   };
 };

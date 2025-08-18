@@ -11,7 +11,7 @@ interface DiscoveryOptions {
 export const useOptimizedUserDiscovery = (options: DiscoveryOptions = {}) => {
   const { method = 'random', limit = 20, enabled = true } = options;
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['user-discovery', method, limit],
     queryFn: async () => {
       console.log(`🔍 [useOptimizedUserDiscovery] Discovering users via ${method}`);
@@ -48,4 +48,13 @@ export const useOptimizedUserDiscovery = (options: DiscoveryOptions = {}) => {
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
   });
+
+  return {
+    users: query.data || [],
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+    isEmpty: !query.isLoading && (!query.data || query.data.length === 0),
+    lastUpdate: query.dataUpdatedAt ? new Date(query.dataUpdatedAt).toISOString() : undefined
+  };
 };

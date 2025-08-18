@@ -1,198 +1,180 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Users, Search, Loader2, AlertCircle, UserPlus } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { useUserSearch } from '@/hooks/useUserSearch';
+import { Search, Users, Loader2, User, RefreshCw } from 'lucide-react';
 import { useOptimizedUserDiscovery } from '@/hooks/useOptimizedUserDiscovery';
-import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
-
-interface UserCardProps {
-  user: any;
-  onSelect: (user: any) => void;
-}
-
-const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
-  return (
-    <div
-      onClick={() => onSelect(user)}
-      className="bg-white/5 hover:bg-white/10 transition-colors cursor-pointer rounded-lg p-3 border border-white/10"
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 flex-shrink-0">
-          <img
-            src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name || user.name}&size=s&direction=2&head_direction=3&headonly=1`}
-            alt={`Avatar de ${user.habbo_name || user.name}`}
-            className="w-full h-full object-contain bg-transparent"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.habbo_name || user.name}&size=s&direction=2&head_direction=3&headonly=1`;
-            }}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-white truncate">
-            {user.habbo_name || user.name}
-          </div>
-          {user.motto && (
-            <div className="text-xs text-white/60 truncate">
-              {user.motto}
-            </div>
-          )}
-          <div className="flex items-center gap-2 mt-1">
-            {user.online && (
-              <Badge variant="secondary" className="bg-green-500/20 text-green-300 text-xs">
-                Online
-              </Badge>
-            )}
-            <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
-              {user.hotel || 'br'}
-            </Badge>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const UserSearchInput: React.FC<{
-  onSearch: (query: string) => void;
-  isLoading?: boolean;
-  placeholder?: string;
-}> = ({ onSearch, isLoading = false, placeholder = "Buscar usuários..." }) => {
-  const [searchInput, setSearchInput] = useState('');
-
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      onSearch(searchInput);
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchInput, onSearch]);
-
-  return (
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-        className="w-full pl-10 pr-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-        disabled={isLoading}
-      />
-    </div>
-  );
-};
+import { useUserSearch } from '@/hooks/useUserSearch';
+import { UserProfileDetailView } from '../console/UserProfileDetailView';
 
 export const UserSearchColumn: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedUser, setSelectedUser] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const { 
-    searchResults, 
-    isSearching, 
-    error: searchError,
-    searchUser 
-  } = useUserSearch();
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const { searchUser, searchResults, isSearching, error: searchError } = useUserSearch();
   
   const { 
     users: discoveredUsers, 
-    isLoading: isDiscovering 
+    isLoading: isDiscovering, 
+    refetch 
   } = useOptimizedUserDiscovery({
     method: 'random',
-    limit: 12,
+    limit: 15,
     enabled: !searchQuery.trim()
   });
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (query.trim()) {
-      searchUser(query.trim());
+      await searchUser(query.trim());
     }
+  }, [searchUser]);
+
+  const handleUserClick = (user: any) => {
+    const completeUser = {
+      name: user.habbo_name || user.name || 'Unknown',
+      motto: user.motto || '',
+      online: user.online || false,
+      figureString: user.figure_string || '',
+      memberSince: user.member_since || new Date().toISOString(),
+      selectedBadges: user.selected_badges || [],
+      badges: user.badges || [],
+      ...user
+    };
+    setSelectedUser(completeUser);
   };
 
-  const handleUserSelect = (user: any) => {
-    setSelectedUser(user.habbo_name || user.name);
-    setIsModalOpen(true);
+  const handleBack = () => {
+    setSelectedUser(null);
   };
+
+  if (selectedUser) {
+    return (
+      <Card className="h-full flex flex-col bg-white/10 backdrop-blur-sm border-white/20">
+        <UserProfileDetailView
+          user={selectedUser}
+          hotel="br"
+          onBack={handleBack}
+        />
+      </Card>
+    );
+  }
 
   const displayUsers = searchQuery.trim() ? searchResults : discoveredUsers;
   const isLoading = searchQuery.trim() ? isSearching : isDiscovering;
 
   return (
-    <>
-      <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-        <CardHeader className="pb-3 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="w-5 h-5" />
-              Descobrir Usuários
-            </CardTitle>
-            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-          </div>
-        </CardHeader>
-        
-        <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4 scrollbar-hide">
-          <UserSearchInput 
-            onSearch={handleSearch}
-            isLoading={isLoading}
-            placeholder="Buscar usuários por nome..."
-          />
-
-          {searchError && (
-            <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-400/30 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <span className="text-sm text-red-200">{searchError}</span>
-            </div>
-          )}
-
-          {searchQuery.trim() && (
-            <div className="text-sm text-white/60">
-              {isSearching ? (
-                'Buscando usuários...'
+    <Card className="h-full flex flex-col bg-white/10 backdrop-blur-sm border-white/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Search className="w-5 h-5" />
+            Buscar Usuários
+          </CardTitle>
+          {!searchQuery.trim() && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={isDiscovering}
+              className="border-white/30 text-white hover:bg-white/10"
+            >
+              {isDiscovering ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                `${searchResults.length} resultados para "${searchQuery}"`
+                <RefreshCw className="w-4 h-4" />
               )}
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="flex-1 overflow-hidden space-y-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+          <Input
+            placeholder="Digite o nome do usuário..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+          />
+        </div>
+
+        {searchError && (
+          <div className="text-sm text-red-300 bg-red-500/20 p-2 rounded border border-red-400/30">
+            {searchError}
+          </div>
+        )}
+
+        <div className="text-sm text-white/60">
+          {searchQuery.trim() ? (
+            isSearching ? (
+              'Buscando usuários...'
+            ) : (
+              `${searchResults.length} resultado(s) para "${searchQuery}"`
+            )
+          ) : (
+            `Sugestões (${discoveredUsers.length})`
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-2">
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
+                    <div className="w-12 h-12 bg-white/10 rounded border" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-white/10 rounded w-3/4" />
+                      <div className="h-3 bg-white/10 rounded w-1/2" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : displayUsers.length > 0 ? (
+            displayUsers.map((user, index) => (
+              <div
+                key={user.habbo_name || user.id || index}
+                onClick={() => handleUserClick(user)}
+                className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/10"
+              >
+                <img
+                  src={`https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.habbo_name}&direction=2&head_direction=3&size=s&action=std`}
+                  alt={`Avatar de ${user.habbo_name}`}
+                  className="w-12 h-12 rounded border border-white/20"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&action=std`;
+                  }}
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-white truncate">
+                    {user.habbo_name}
+                  </h4>
+                  <p className="text-sm text-white/60 italic truncate">
+                    "{user.motto || 'Sem motto'}"
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`w-2 h-2 rounded-full ${user.online ? 'bg-green-400' : 'bg-gray-400'}`} />
+                    <span className="text-xs text-white/50">
+                      {user.online ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center h-32 text-white/60">
+              <Users className="w-12 h-12 mb-2 opacity-50" />
+              <p className="text-sm">
+                {searchQuery.trim() ? 'Nenhum usuário encontrado' : 'Nenhuma sugestão disponível'}
+              </p>
             </div>
           )}
-
-          <div className="space-y-3">
-            {displayUsers.length > 0 ? (
-              displayUsers.map((user) => (
-                <UserCard
-                  key={user.habbo_id || user.id}
-                  user={user}
-                  onSelect={handleUserSelect}
-                />
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <Users className="w-8 h-8 mx-auto mb-2 opacity-50 text-white/50" />
-                <p className="text-white/60 text-sm">
-                  {isLoading ? (
-                    'Descobrindo usuários...'
-                  ) : searchQuery.trim() ? (
-                    searchQuery.trim().length < 2 ? 
-                      'Digite pelo menos 2 caracteres para buscar' : 
-                      'Nenhum usuário encontrado'
-                  ) : (
-                    'Nenhum usuário disponível'
-                  )}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <ConsoleProfileModal
-        open={isModalOpen}
-        setOpen={setIsModalOpen}
-        habboName={selectedUser}
-      />
-    </>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
