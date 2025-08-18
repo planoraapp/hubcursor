@@ -11,8 +11,6 @@ import {
   Crown,
   Building,
   Settings,
-  Users,
-  Trophy,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -37,9 +35,6 @@ const navigationItems = [
   { title: "Emblemas", url: "/emblemas", icon: Crown },
   { title: "Homes", url: "/homes", icon: Home },
   { title: "Forum", url: "/forum", icon: MessageSquare },
-  { title: "Ranking", url: "/tops", icon: Trophy },
-  { title: "Comunidade", url: "/comunidade", icon: Users },
-  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function NewAppSidebar() {
@@ -123,8 +118,8 @@ export function NewAppSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink 
-                      to={`/home/${habboAccount.habbo_name}`} 
-                      className={getNavCls(isActive(`/home/${habboAccount.habbo_name}`))}
+                      to={`/enhanced-home/${habboAccount.habbo_name}`} 
+                      className={getNavCls(isActive(`/enhanced-home/${habboAccount.habbo_name}`))}
                     >
                       <User className="h-4 w-4" />
                       {state !== "collapsed" && <span className="volter-font">Meu Perfil</span>}

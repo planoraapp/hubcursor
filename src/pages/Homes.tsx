@@ -1,128 +1,213 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Home, Users, Star, Palette, Plus } from 'lucide-react';
-import { LatestHomesCards } from '@/components/LatestHomesCards';
+import { Badge } from '@/components/ui/badge';
+import { Home, Plus, ExternalLink, Users, Camera, Sparkles } from 'lucide-react';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-import { Link } from 'react-router-dom';
 
 const Homes = () => {
   const { habboAccount } = useUnifiedAuth();
 
-  const features = [
+  const featuredHomes = [
     {
-      icon: <Palette className="w-8 h-8 text-blue-600" />,
-      title: "Personalização Total",
-      description: "Escolha cores, fundos e organize widgets do seu jeito"
+      id: 1,
+      owner: 'Beebop',
+      title: 'Casa Moderna',
+      description: 'Uma casa com design contemporâneo e móveis exclusivos',
+      imageUrl: '/assets/bghabbohub.png',
+      visitors: 125,
+      widgets: 8,
+      isOnline: true
     },
     {
-      icon: <Users className="w-8 h-8 text-green-600" />,
-      title: "Guestbook Interativo", 
-      description: "Receba mensagens dos seus amigos em sua home"
+      id: 2,
+      owner: 'Player123',
+      title: 'Apartamento Aconchegante',
+      description: 'Pequeno mas cheio de personalidade',
+      imageUrl: '/assets/bghabbohub.png',
+      visitors: 89,
+      widgets: 5,
+      isOnline: false
     },
     {
-      icon: <Star className="w-8 h-8 text-yellow-600" />,
-      title: "Sistema de Avaliação",
-      description: "Outros usuários podem avaliar sua home com estrelas"
+      id: 3,
+      owner: 'Designer_Pro',
+      title: 'Estúdio Criativo',
+      description: 'Espaço dedicado à arte e criatividade',
+      imageUrl: '/assets/bghabbohub.png',
+      visitors: 234,
+      widgets: 12,
+      isOnline: true
     }
   ];
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-purple-50 to-pink-100">
+      <div className="min-h-screen flex w-full">
         <NewAppSidebar />
-        <main className="flex-1 p-8">
-          <div className="container mx-auto px-4 py-8 space-y-8">
-            {/* Header */}
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-3">
-                <Home className="w-10 h-10 text-blue-600" />
-                <h1 className="text-4xl font-bold text-gray-800 volter-font">Habbo Homes</h1>
+        <main 
+          className="flex-1 relative bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+        >
+          {/* Background overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 via-purple-900/10 to-blue-900/30"></div>
+          
+          <div className="relative z-10 p-8">
+            <div className="max-w-7xl mx-auto">
+              {/* Header */}
+              <div className="text-center mb-12">
+                <h1 className="text-5xl font-bold text-white mb-4 volter-font drop-shadow-lg">
+                  🏠 Habbo Homes
+                </h1>
+                <p className="text-xl text-white/90 volter-font drop-shadow">
+                  Personalize sua casa virtual e visite as homes dos seus amigos
+                </p>
               </div>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto volter-font">
-                Crie sua própria home personalizada no estilo Habbo! Decore, organize widgets e receba visitas dos seus amigos.
-              </p>
-              <div className="flex gap-4 justify-center">
-                {habboAccount ? (
-                  <Link to={`/home/${habboAccount.habbo_name}`}>
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 volter-font">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Minha Home
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link to="/login">
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 volter-font">
-                      Fazer Login para Criar Home
-                    </Button>
-                  </Link>
-                )}
-                <Button size="lg" variant="outline" className="volter-font">
-                  Explorar Homes
-                </Button>
-              </div>
-            </div>
 
-            {/* Latest Homes */}
-            <div className="mb-8">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2 volter-font">Últimas Homes Atualizadas</h2>
-                <p className="text-gray-600 volter-font">Descubra as homes que foram modificadas recentemente</p>
-              </div>
-              <LatestHomesCards />
-            </div>
-
-            {/* How it Works Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl text-center volter-font">Como funcionam as Homes?</CardTitle>
-                <CardDescription className="text-center text-lg volter-font">
-                  Descubra como criar e personalizar sua home
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-3 gap-8">
-                  {features.map((feature, index) => (
-                    <div key={index} className="text-center space-y-4">
-                      <div className="flex justify-center">
-                        {feature.icon}
-                      </div>
-                      <h3 className="text-xl font-semibold volter-font">{feature.title}</h3>
-                      <p className="text-gray-600 volter-font">{feature.description}</p>
+              {/* Action Cards */}
+              <div className="grid md:grid-cols-2 gap-8 mb-12">
+                {/* Create/View My Home Card */}
+                <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-8 text-center">
+                    <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                      <Home className="w-10 h-10 text-white" />
                     </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
+                      {habboAccount ? 'Minha Home' : 'Fazer Login'}
+                    </h2>
+                    <p className="text-gray-600 mb-6 volter-font">
+                      {habboAccount 
+                        ? 'Customize sua home pessoal com widgets, stickers e backgrounds únicos'
+                        : 'Faça login para criar e personalizar sua home'
+                      }
+                    </p>
+                    {habboAccount ? (
+                      <Link to={`/enhanced-home/${habboAccount.habbo_name}`}>
+                        <Button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-8 py-3 text-lg volter-font">
+                          <Plus className="w-5 h-5 mr-2" />
+                          Ver Minha Home
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/login">
+                        <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3 text-lg volter-font">
+                          Fazer Login
+                        </Button>
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Explore Homes Card */}
+                <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300">
+                  <CardContent className="p-8 text-center">
+                    <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                      <Users className="w-10 h-10 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
+                      Explorar Homes
+                    </h2>
+                    <p className="text-gray-600 mb-6 volter-font">
+                      Descubra as homes mais criativas da comunidade e encontre inspiração
+                    </p>
+                    <Button variant="outline" className="border-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white px-8 py-3 text-lg volter-font">
+                      <ExternalLink className="w-5 h-5 mr-2" />
+                      Explorar
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Featured Homes */}
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-white mb-8 text-center volter-font drop-shadow-lg">
+                  ⭐ Homes em Destaque
+                </h2>
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {featuredHomes.map((home) => (
+                    <Card key={home.id} className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 overflow-hidden">
+                      <div className="relative">
+                        <img
+                          src={home.imageUrl}
+                          alt={home.title}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="absolute top-3 right-3">
+                          <Badge variant={home.isOnline ? "default" : "secondary"} className="volter-font">
+                            {home.isOnline ? 'Online' : 'Offline'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-sm font-bold volter-font">
+                              {home.owner[0]}
+                            </span>
+                          </div>
+                          <span className="font-bold text-gray-800 volter-font">{home.owner}</span>
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-gray-800 mb-2 volter-font">
+                          {home.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-4 volter-font">
+                          {home.description}
+                        </p>
+                        
+                        <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            <span className="volter-font">{home.visitors}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Sparkles className="w-4 h-4" />
+                            <span className="volter-font">{home.widgets} widgets</span>
+                          </div>
+                        </div>
+                        
+                        <Link to={`/enhanced-home/${home.owner}`}>
+                          <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white volter-font">
+                            <Camera className="w-4 h-4 mr-2" />
+                            Visitar Home
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Stats */}
-            <div className="grid md:grid-cols-4 gap-6">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-blue-600 volter-font">1,247</div>
-                  <div className="text-sm text-gray-600 volter-font">Homes Ativas</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-green-600 volter-font">8,532</div>
-                  <div className="text-sm text-gray-600 volter-font">Mensagens no Guestbook</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-yellow-600 volter-font">4.7</div>
-                  <div className="text-sm text-gray-600 volter-font">Média de Avaliações</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="text-3xl font-bold text-purple-600 volter-font">156</div>
-                  <div className="text-sm text-gray-600 volter-font">Widgets Disponíveis</div>
+              {/* Tips Card */}
+              <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
+                    💡 Dicas para sua Home
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-bold text-gray-700 mb-2 volter-font">Personalização</h4>
+                      <ul className="text-gray-600 space-y-1 volter-font text-sm">
+                        <li>• Use widgets para mostrar informações pessoais</li>
+                        <li>• Adicione stickers para decorar sua home</li>
+                        <li>• Experimente diferentes backgrounds</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-700 mb-2 volter-font">Interação</h4>
+                      <ul className="text-gray-600 space-y-1 volter-font text-sm">
+                        <li>• Permita que amigos deixem recados</li>
+                        <li>• Compartilhe sua música favorita</li>
+                        <li>• Mantenha sua home sempre atualizada</li>
+                      </ul>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>

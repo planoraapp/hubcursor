@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera } from 'lucide-react';
-import { useHotelPhotoFeed } from '@/hooks/useHotelPhotoFeed';
+import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
 
@@ -13,10 +13,10 @@ export const HotelPhotoFeedColumn: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { 
-    data: feedPhotos = [], 
+    data: friendsPhotos = [], 
     isLoading, 
     refetch 
-  } = useHotelPhotoFeed(
+  } = useFriendsPhotos(
     habboAccount?.habbo_name || '',
     (habboAccount as any)?.hotel || 'br'
   );
@@ -37,7 +37,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Camera className="w-5 h-5" />
-              Feed do Hotel
+              Feed dos Amigos
             </CardTitle>
             <Button
               size="sm"
@@ -60,8 +60,8 @@ export const HotelPhotoFeedColumn: React.FC = () => {
             <div className="flex justify-center items-center h-32">
               <Loader2 className="w-8 h-8 animate-spin text-white/60" />
             </div>
-          ) : feedPhotos.length > 0 ? (
-            feedPhotos.map((photo, index) => (
+          ) : friendsPhotos.length > 0 ? (
+            friendsPhotos.map((photo, index) => (
               <div key={photo.id || index} className="bg-white/10 rounded-lg p-3 space-y-3">
                 {/* User Info - Avatar apenas cabeça + nome clicável */}
                 <div className="flex items-center gap-3">
@@ -121,9 +121,9 @@ export const HotelPhotoFeedColumn: React.FC = () => {
           ) : (
             <div className="text-center py-8">
               <Camera className="w-12 h-12 mx-auto mb-4 text-white/40" />
-              <p className="text-white/60">Nenhuma foto no feed</p>
+              <p className="text-white/60">Nenhuma foto dos amigos encontrada</p>
               <p className="text-white/40 text-sm mt-2">
-                Tente atualizar ou aguarde novas fotos
+                Suas fotos dos amigos aparecerão aqui
               </p>
             </div>
           )}
