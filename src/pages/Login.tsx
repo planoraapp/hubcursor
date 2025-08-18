@@ -11,10 +11,9 @@ const Login = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
+      <div className="min-h-screen bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url("/assets/bghabbohub.png")' }}>
         <div className="text-center space-y-4">
           <div className="text-lg font-bold text-white">Carregando autenticação...</div>
-          <div className="text-sm text-white/70">Aguarde alguns segundos</div>
         </div>
       </div>
     );
