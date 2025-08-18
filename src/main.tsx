@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from './hooks/useAuth';
 import { UnifiedAuthProvider } from './hooks/useUnifiedAuth';
 import { HotelProvider } from './contexts/HotelContext';
-import { MarketplaceProvider } from './contexts/MarketplaceProvider';
+import { MarketplaceProvider } from './contexts/MarketplaceContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Pages
