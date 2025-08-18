@@ -1,37 +1,29 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Console from './pages/Console';
+import SimpleLogin from './pages/SimpleLogin';
+import SimpleRegister from './pages/SimpleRegister';
 import { Toaster } from '@/components/ui/toaster';
-import Home from '@/pages/Home';
-import Console from '@/pages/Console';
-import HabboHome from '@/pages/HabboHome';
-import Forum from '@/pages/Forum';
-import Mission from '@/pages/Mission';
-import Profile from '@/pages/Profile';
-import ProfileEnhanced from '@/pages/ProfileEnhanced';
-import HabboHomeRedirect from '@/components/HabboHomeRedirect';
-import EnhancedHabboHome from '@/pages/EnhancedHabboHome';
+import { QueryClient } from '@tanstack/react-query';
+import EnhancedHabboHome from './pages/EnhancedHabboHome';
+import HabboHomeV2 from './pages/HabboHomeV2';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background font-sans antialiased">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/console" element={<Console />} />
-          <Route path="/homes" element={<HabboHome />} />
-          <Route path="/forum" element={<Forum />} />
-          <Route path="/mission" element={<Mission />} />
-          <Route path="/profile/:username" element={<Profile />} />
-          <Route path="/enhanced-profile/:username" element={<ProfileEnhanced />} />
-          <Route path="/enhanced-home/:username" element={<EnhancedHabboHome />} />
-          
-          {/* Redirect old routes */}
-          <Route path="/home/:username" element={<HabboHomeRedirect />} />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <Toaster />
-      </div>
+      <QueryClient>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<SimpleLogin />} />
+            <Route path="/login" element={<SimpleLogin />} />
+            <Route path="/register" element={<SimpleRegister />} />
+            <Route path="/console" element={<Console />} />
+            <Route path="/enhanced-home/:username" element={<EnhancedHabboHome />} />
+            <Route path="/enhanced-home/:username" element={<HabboHomeV2 />} />
+          </Routes>
+          <Toaster />
+        </div>
+      </QueryClient>
     </Router>
   );
 }
