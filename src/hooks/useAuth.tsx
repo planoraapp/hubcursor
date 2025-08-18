@@ -40,19 +40,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isLoggedIn = !!user && !!habboAccount;
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadHabboAccount(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
+    console.log('🚀 [useAuth] Initializing auth...');
+    
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log(`🔄 [useAuth] Auth state changed: ${event}`, session?.user?.id);
         setUser(session?.user ?? null);
         if (session?.user) {
           await loadHabboAccount(session.user.id);
@@ -63,11 +56,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Then get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔍 [useAuth] Initial session check:', session?.user?.id);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadHabboAccount(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      console.log('🧹 [useAuth] Cleaning up subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadHabboAccount = async (userId: string) => {
     try {
+      console.log(`🔍 [useAuth] Loading Habbo account for user: ${userId}`);
+      
       const { data, error } = await supabase
         .from('habbo_accounts')
         .select('*')
@@ -75,13 +84,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('Error loading Habbo account:', error);
+        console.error('❌ [useAuth] Error loading Habbo account:', error);
         setHabboAccount(null);
       } else {
+        console.log('✅ [useAuth] Habbo account loaded:', data.habbo_name);
         setHabboAccount(data);
       }
     } catch (error) {
-      console.error('Error loading Habbo account:', error);
+      console.error('❌ [useAuth] Error loading Habbo account:', error);
       setHabboAccount(null);
     } finally {
       setLoading(false);
@@ -91,6 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (habboName: string, hotel: string = 'br'): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log(`🔐 [useAuth] Attempting legacy login for: ${habboName}`);
 
       // Generate a fake email for this Habbo account
       const email = `${habboName.toLowerCase()}.${hotel}@habbohub.com`;
@@ -102,8 +113,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password
       });
 
-      // If sign in failed, try to sign up
       if (signInError) {
+        console.log('🔄 [useAuth] Sign in failed, trying sign up');
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -111,12 +122,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             data: {
               habbo_name: habboName,
               hotel: hotel
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/`
           }
         });
 
         if (signUpError) {
-          console.error('Sign up error:', signUpError);
+          console.error('❌ [useAuth] Sign up error:', signUpError);
+          toast({
+            title: "Erro no cadastro",
+            description: signUpError.message,
+            variant: "destructive"
+          });
           return false;
         }
 
@@ -138,16 +155,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
 
         if (upsertError) {
-          console.error('Error creating Habbo account:', upsertError);
+          console.error('❌ [useAuth] Error creating Habbo account:', upsertError);
+          toast({
+            title: "Erro",
+            description: "Erro ao vincular conta Habbo",
+            variant: "destructive"
+          });
           return false;
         }
 
+        console.log('✅ [useAuth] Legacy login successful');
         return true;
       }
 
       return false;
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (error: any) {
+      console.error('❌ [useAuth] Login error:', error);
+      toast({
+        title: "Erro no login",
+        description: error.message || 'Erro interno',
+        variant: "destructive"
+      });
       return false;
     } finally {
       setLoading(false);
@@ -169,6 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (emailError || !emailResult) {
+        console.error('❌ [useAuth] Email lookup error:', emailError);
         throw new Error('Conta não encontrada. Use a aba "Missão" para se cadastrar.');
       }
 
@@ -182,6 +211,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        console.error('❌ [useAuth] Login error:', error);
         if (error.message.includes('Invalid login credentials')) {
           throw new Error('Senha incorreta. Use a aba "Missão" para redefinir.');
         }
@@ -190,21 +220,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (data.user) {
         console.log('✅ [useAuth] Login successful for:', habboName);
-        toast({
-          title: "Login realizado",
-          description: `Bem-vindo de volta, ${habboName}!`
-        });
         return data;
       }
 
       throw new Error('Erro no login');
     } catch (error: any) {
       console.error('❌ [useAuth] Login error:', error);
-      toast({
-        title: "Erro no login",
-        description: error.message,
-        variant: "destructive"
-      });
       throw error;
     } finally {
       setLoading(false);
@@ -214,12 +235,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setLoading(true);
+      console.log('🚪 [useAuth] Logging out...');
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Logout error:', error);
+        console.error('❌ [useAuth] Logout error:', error);
+        toast({
+          title: "Erro no logout",
+          description: error.message,
+          variant: "destructive"
+        });
       } else {
         setUser(null);
         setHabboAccount(null);
+        console.log('✅ [useAuth] Logout successful');
         toast({
           title: "Logout realizado",
           description: "Você foi desconectado com sucesso."

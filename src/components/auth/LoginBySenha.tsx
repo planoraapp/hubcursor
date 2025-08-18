@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -73,6 +73,7 @@ export const LoginBySenha: React.FC = () => {
           value={habboName}
           onChange={(e) => setHabboName(e.target.value)}
           className="border-2 border-gray-300 focus:border-blue-500"
+          disabled={isLoading}
         />
       </div>
 
@@ -87,6 +88,7 @@ export const LoginBySenha: React.FC = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="border-2 border-gray-300 focus:border-blue-500"
+          disabled={isLoading}
         />
       </div>
 
@@ -103,7 +105,14 @@ export const LoginBySenha: React.FC = () => {
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2"
         disabled={isLoading}
       >
-        {isLoading ? 'Entrando...' : 'Entrar'}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Entrando...
+          </>
+        ) : (
+          'Entrar'
+        )}
       </Button>
 
       <Alert>

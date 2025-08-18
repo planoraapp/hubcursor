@@ -17,22 +17,22 @@ export const HabboLoginForm = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="text-lg volter-font text-white">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
+        <div className="text-lg font-bold text-white">Carregando...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-repeat flex items-center justify-center p-4"
-         style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-      <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-gray-200">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src="/assets/habbohub.gif" alt="Habbo Hub" className="h-16" />
+            <div className="h-16 w-16 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">HH</span>
+            </div>
           </div>
-          <CardTitle className="text-2xl volter-font text-gray-800">
+          <CardTitle className="text-2xl font-bold text-gray-800">
             Habbo Hub
           </CardTitle>
           <CardDescription>

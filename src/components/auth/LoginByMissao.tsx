@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Copy, Check, Info, RefreshCw, Eye } from 'lucide-react';
+import { Copy, Check, Info, RefreshCw, Eye, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserByName } from '@/services/habboApiMultiHotel';
@@ -71,6 +71,7 @@ export const LoginByMissao: React.FC = () => {
         });
       }
     } catch (error) {
+      console.error('Erro ao buscar motto:', error);
       toast({
         title: "Erro",
         description: "Erro ao buscar motto atual",
@@ -115,16 +116,17 @@ export const LoginByMissao: React.FC = () => {
       });
 
       if (error) {
+        console.error('Function error:', error);
         throw new Error(error.message || 'Erro na requisição');
       }
 
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
       }
 
       toast({
         title: "Sucesso!",
-        description: data.message || "Operação realizada com sucesso!"
+        description: data?.message || "Operação realizada com sucesso!"
       });
 
       // Reset form
@@ -171,14 +173,19 @@ export const LoginByMissao: React.FC = () => {
             value={habboName}
             onChange={(e) => setHabboName(e.target.value)}
             className="border-2 border-gray-300 focus:border-blue-500"
+            disabled={isLoading}
           />
           <Button
             type="button"
             onClick={fetchCurrentMotto}
             variant="outline"
-            disabled={isLoadingMotto || !habboName.trim()}
+            disabled={isLoadingMotto || !habboName.trim() || isLoading}
           >
-            <Eye className="w-4 h-4" />
+            {isLoadingMotto ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
           </Button>
         </div>
         {currentMotto && (
@@ -200,6 +207,7 @@ export const LoginByMissao: React.FC = () => {
           onChange={(e) => setNewPassword(e.target.value)}
           className="border-2 border-gray-300 focus:border-blue-500"
           minLength={6}
+          disabled={isLoading}
         />
       </div>
 
@@ -212,6 +220,7 @@ export const LoginByMissao: React.FC = () => {
             onClick={generateVerificationCode}
             variant="outline"
             className="flex-1"
+            disabled={isLoading}
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             {verificationCode ? 'Gerar Novo' : 'Gerar Código'}
@@ -222,6 +231,7 @@ export const LoginByMissao: React.FC = () => {
               onClick={handleCopyCode}
               variant="outline"
               className="px-3"
+              disabled={isLoading}
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </Button>
@@ -250,7 +260,14 @@ export const LoginByMissao: React.FC = () => {
         className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2"
         disabled={isLoading || !verificationCode || !newPassword || !habboName || newPassword.length < 6}
       >
-        {isLoading ? 'Processando...' : 'Confirmar'}
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processando...
+          </>
+        ) : (
+          'Confirmar'
+        )}
       </Button>
 
       <Alert>

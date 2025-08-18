@@ -9,9 +9,8 @@ const Login = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-repeat"
-           style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-        <div className="text-lg volter-font text-white">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
+        <div className="text-lg font-bold text-white">Carregando...</div>
       </div>
     );
   }
