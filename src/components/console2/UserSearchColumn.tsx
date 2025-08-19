@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Users, Loader2, User, RefreshCw } from 'lucide-react';
 import { useOptimizedUserDiscovery } from '@/hooks/useOptimizedUserDiscovery';
 import { useUserSearch } from '@/hooks/useUserSearch';
-import { UserProfileDetailView } from '../console/UserProfileDetailView';
+import { UnifiedProfileView } from '../console/UnifiedProfileView';
 
 export const UserSearchColumn: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,17 +31,7 @@ export const UserSearchColumn: React.FC = () => {
   }, [searchUser]);
 
   const handleUserClick = (user: any) => {
-    const completeUser = {
-      name: user.habbo_name || user.name || 'Unknown',
-      motto: user.motto || '',
-      online: user.online || false,
-      figureString: user.figure_string || '',
-      memberSince: user.member_since || new Date().toISOString(),
-      selectedBadges: user.selected_badges || [],
-      badges: user.badges || [],
-      ...user
-    };
-    setSelectedUser(completeUser);
+    setSelectedUser(user.habbo_name || user.name || 'Unknown');
   };
 
   const handleBack = () => {
@@ -50,13 +40,11 @@ export const UserSearchColumn: React.FC = () => {
 
   if (selectedUser) {
     return (
-      <Card className="h-full flex flex-col bg-[#4A5568] text-white border-0 shadow-none overflow-hidden">
-        <UserProfileDetailView
-          user={selectedUser}
-          hotel="br"
-          onBack={handleBack}
-        />
-      </Card>
+      <UnifiedProfileView
+        habboName={selectedUser}
+        hotel="com.br"
+        onBack={handleBack}
+      />
     );
   }
 

@@ -87,13 +87,8 @@ serve(async (req) => {
 
         // If no previous snapshot, create one and continue
         if (!lastSnapshot) {
-          const { data: badges } = await supabase
-            .from('habbo_badges')
-            .select('badge_code, badge_name')
-            .limit(50);
-
           // Create snapshot
-          await supabase
+          const { error: snapshotError } = await supabase
             .from('profile_snapshots')
             .insert({
               habbo_name: friend.name,
@@ -106,6 +101,12 @@ serve(async (req) => {
               badges: currentProfile.selectedBadges || [],
               raw_profile_data: currentProfile
             });
+          
+          if (snapshotError) {
+            console.warn(`Error creating snapshot for ${friend.name}:`, snapshotError.message);
+          } else {
+            console.log(`📷 [FriendsActivityTracker] Created snapshot for ${friend.name}`);
+          }
           
           continue;
         }
@@ -172,7 +173,7 @@ serve(async (req) => {
         }
 
         // Update snapshot
-        await supabase
+        const { error: updateError } = await supabase
           .from('profile_snapshots')
           .update({
             figure_string: currentProfile.figureString,
@@ -182,6 +183,10 @@ serve(async (req) => {
             snapshot_date: new Date().toISOString()
           })
           .eq('id', lastSnapshot.id);
+
+        if (updateError) {
+          console.warn(`Error updating snapshot for ${friend.name}:`, updateError.message);
+        }
 
       } catch (error) {
         console.warn(`Error processing friend ${friend.name}:`, error.message);
