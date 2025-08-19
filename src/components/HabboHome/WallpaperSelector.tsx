@@ -53,11 +53,12 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
       setLoading(true);
       console.log('🔍 Buscando imagens de fundo no bucket home-assets...');
       
-      // Buscar backgrounds diretamente do bucket backgroundshome
+      // Buscar backgrounds do bucket home-assets com category 'Papel de Parede'
       const { data, error } = await supabase
         .from('home_assets')
         .select('*')
-        .eq('bucket_name', 'backgroundshome')
+        .eq('bucket_name', 'home-assets')
+        .eq('category', 'Papel de Parede')
         .eq('is_active', true)
         .order('name');
 
@@ -69,10 +70,10 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
 
       console.log(`✅ ${data?.length || 0} backgrounds encontrados no banco`);
 
-      // Construir URLs para o bucket backgroundshome
+      // Construir URLs para o bucket home-assets
       const assetsWithUrls = (data || []).map((asset) => {
         const baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public';
-        const url = `${baseUrl}/backgroundshome/${asset.file_path}`;
+        const url = `${baseUrl}/home-assets/${asset.file_path}`;
         
         console.log(`📦 Asset: ${asset.name} -> URL: ${url}`);
         

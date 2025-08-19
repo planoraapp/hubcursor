@@ -28,6 +28,7 @@ interface HabboData {
   motto: string;
   figure_string: string;
   is_online: boolean;
+  memberSince?: string;
 }
 
 interface GuestbookEntry {
@@ -47,20 +48,20 @@ interface HomeWidgetProps {
   onPositionChange: (widgetId: string, x: number, y: number) => void;
 }
 
-// Helper function to get country flag emoji from hotel
-const getCountryFlag = (hotel: string): string => {
+// Helper function to get country flag PNG from hotel
+const getCountryFlagPng = (hotel: string): string => {
   const hotelFlags: Record<string, string> = {
-    'com.br': '🇧🇷', 'br': '🇧🇷',
-    'com': '🇺🇸', 'us': '🇺🇸',
-    'es': '🇪🇸', 'com.es': '🇪🇸',
-    'de': '🇩🇪', 'com.de': '🇩🇪',
-    'fr': '🇫🇷', 'com.fr': '🇫🇷',
-    'fi': '🇫🇮', 'com.fi': '🇫🇮',
-    'it': '🇮🇹', 'com.it': '🇮🇹',
-    'nl': '🇳🇱', 'com.nl': '🇳🇱',
-    'com.tr': '🇹🇷', 'tr': '🇹🇷'
+    'com.br': '/assets/flagbrazil.png', 'br': '/assets/flagbrazil.png',
+    'com': '/assets/flagcom.png', 'us': '/assets/flagcom.png',
+    'es': '/assets/flagspain.png', 'com.es': '/assets/flagspain.png',
+    'de': '/assets/flagdeus.png', 'com.de': '/assets/flagdeus.png',
+    'fr': '/assets/flagfrance.png', 'com.fr': '/assets/flagfrance.png',
+    'fi': '/assets/flafinland.png', 'com.fi': '/assets/flafinland.png',
+    'it': '/assets/flagitaly.png', 'com.it': '/assets/flagitaly.png',
+    'nl': '/assets/flagnetl.png', 'com.nl': '/assets/flagnetl.png',
+    'com.tr': '/assets/flagtrky.png', 'tr': '/assets/flagtrky.png'
   };
-  return hotelFlags[hotel.toLowerCase()] || '🌍';
+  return hotelFlags[hotel.toLowerCase()] || '/assets/flagcom.png';
 };
 
 export const HomeWidget: React.FC<HomeWidgetProps> = ({
@@ -130,15 +131,17 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'avatar':
       case 'usercard':
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
-        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=3&gesture=sml&size=l`;
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=3&head_direction=3&gesture=sml&size=l`;
+        const flagUrl = getCountryFlagPng(habboData.hotel);
         
         return (
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex gap-4 p-4 h-full">
+            {/* Avatar sem borda */}
             <div className="flex-shrink-0">
               <img
                 src={avatarUrl}
                 alt={`${habboData.habbo_name} avatar`}
-                className="w-32 h-32 rounded-lg border-2 border-white shadow-lg"
+                className="w-24 h-32 object-contain"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -146,24 +149,45 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                 }}
               />
             </div>
-            <div className="flex-1 min-w-0">
+            
+            {/* Informações organizadas verticalmente */}
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+              {/* Topo: Bandeira + Nome */}
               <div className="flex items-center gap-2 mb-2">
+                <img
+                  src={flagUrl}
+                  alt={`Hotel ${habboData.hotel.toUpperCase()}`}
+                  className="w-6 h-4 flex-shrink-0"
+                  style={{ imageRendering: 'pixelated' }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/assets/flagcom.png';
+                  }}
+                />
                 <h3 className="text-lg font-bold font-volter text-black truncate">
                   {habboData.habbo_name}
                 </h3>
-                <span className="text-lg" title={`Hotel: ${habboData.hotel.toUpperCase()}`}>
-                  {getCountryFlag(habboData.hotel)}
-                </span>
                 <Badge 
                   variant={habboData.is_online ? "default" : "secondary"}
-                  className="text-xs"
+                  className="text-xs ml-auto flex-shrink-0"
                 >
                   {habboData.is_online ? "Online" : "Offline"}
                 </Badge>
               </div>
-              <p className="text-sm text-gray-700 font-volter italic">
-                "{habboData.motto || 'Sem missão definida'}"
-              </p>
+              
+              {/* Meio: Motto */}
+              <div className="mb-2">
+                <p className="text-sm text-gray-700 font-volter italic">
+                  "{habboData.motto || 'Sem missão definida'}"
+                </p>
+              </div>
+              
+              {/* Embaixo: Data de criação real ou estimada */}
+              <div className="text-xs text-gray-600 font-volter">
+                <p>📅 Membro desde: {habboData.memberSince ? 
+                  new Date(habboData.memberSince).toLocaleDateString('pt-BR') : 
+                  'Janeiro 2010'}</p>
+              </div>
             </div>
           </div>
         );
