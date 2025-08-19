@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -16,9 +17,9 @@ interface HabboUser {
   hotel: string;
   is_online: boolean;
   motto: string;
-  member_since: string;
-  profile_visible: boolean;
-  last_access_time: string;
+  created_at: string;
+  figure_string?: string;
+  last_seen_at?: string;
 }
 
 const Homes: React.FC = () => {
@@ -32,19 +33,28 @@ const Homes: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('discovered_users')
         .select('*')
-        .eq('profile_visible', true)
-        .order('habbo_name', { ascending: true });
+        .eq('is_online', true)
+        .order('habbo_name', { ascending: true })
+        .limit(50);
 
       if (error) {
-        toast.error('Erro ao buscar usuários');
+        toast({
+          title: "Erro ao buscar usuários",
+          description: error.message,
+          variant: "destructive"
+        });
         return;
       }
 
-      setUsers(data);
+      setUsers(data || []);
     } catch (error) {
-      toast.error('Erro ao buscar usuários');
+      toast({
+        title: "Erro ao buscar usuários",
+        description: "Ocorreu um erro inesperado",
+        variant: "destructive"
+      });
     }
   };
 
@@ -54,17 +64,23 @@ const Homes: React.FC = () => {
       setSearchInitiated(true);
 
       const { data, error } = await supabase
-        .from('users')
+        .from('discovered_users')
         .select('*')
         .ilike('habbo_name', `%${searchTerm}%`)
-        .order('habbo_name', { ascending: true });
+        .order('habbo_name', { ascending: true })
+        .limit(50);
 
       if (error) {
-        toast.error('Erro ao buscar usuários');
+        toast({
+          title: "Erro ao buscar usuários",
+          description: error.message,
+          variant: "destructive"
+        });
+        setLoading(false);
         return;
       }
 
-      setUsers(data);
+      setUsers(data || []);
       setLoading(false);
     }
   };
@@ -80,7 +96,7 @@ const Homes: React.FC = () => {
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             <div className="max-w-7xl mx-auto">
               {/* Header */}
               <div className="text-center mb-8">
@@ -164,11 +180,11 @@ const Homes: React.FC = () => {
                           </div>
                         )}
                         
-                        {user.member_since && (
+                        {user.created_at && (
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-blue-500" />
                             <span className="text-xs text-gray-600 volter-font">
-                              Membro desde: {new Date(user.member_since).toLocaleDateString('pt-BR')}
+                              Descoberto em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
                         )}
