@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Asset {
@@ -32,6 +33,8 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
+  const [loadedCount, setLoadedCount] = useState(20);
+  const [hasMoreAssets, setHasMoreAssets] = useState(true);
 
   // Categories for stickers matching Supabase structure
   const stickerCategories = [
@@ -53,7 +56,9 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       let query = supabase
         .from('home_assets')
         .select('*')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .order('name')
+        .range(0, loadedCount - 1);
 
       // Filter by correct asset categories
       if (type === 'backgrounds') {
@@ -114,6 +119,8 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
   useEffect(() => {
     if (open) {
+      setLoadedCount(20);
+      setHasMoreAssets(true);
       fetchAssets();
     }
   }, [open, type, selectedCategory]);
@@ -121,6 +128,11 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const handleAssetClick = (asset: Asset) => {
     onAssetSelect(asset);
     onOpenChange(false);
+  };
+
+  const loadMoreAssets = () => {
+    setLoadedCount(prev => prev + 20);
+    setTimeout(() => fetchAssets(), 100);
   };
 
   return (
@@ -152,36 +164,52 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
           </div>
         )}
 
-        <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
+        <ScrollArea className="flex-1 min-h-0 h-[70vh]">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
             {loading ? (
               <div className="col-span-full text-center py-8">
-                <div className="text-muted-foreground">Carregando assets...</div>
+                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+                <p className="text-muted-foreground">Carregando...</p>
               </div>
             ) : assets.length === 0 ? (
               <div className="col-span-full text-center py-8">
                 <div className="text-muted-foreground">Nenhum asset encontrado</div>
               </div>
             ) : (
-              assets.map((asset) => (
-                <div
-                  key={asset.id}
-                  onClick={() => handleAssetClick(asset)}
-                  className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
-                >
-                  <div className="aspect-square p-2">
-                    <img
-                      src={asset.url}
-                      alt={asset.name}
-                      className="w-full h-full object-contain rounded group-hover:scale-105 transition-transform"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
+              <>
+                {assets.map((asset) => (
+                  <div
+                    key={asset.id}
+                    onClick={() => handleAssetClick(asset)}
+                    className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
+                  >
+                    <div className="aspect-square p-2">
+                      <img
+                        src={asset.url}
+                        alt={asset.name}
+                        className="w-full h-full object-contain rounded group-hover:scale-105 transition-transform"
+                        style={{ imageRendering: 'pixelated' }}
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="p-2 border-t">
+                      <div className="text-xs font-medium truncate">{asset.name}</div>
+                    </div>
                   </div>
-                  <div className="p-2 border-t">
-                    <div className="text-xs font-medium truncate">{asset.name}</div>
+                ))}
+                
+                {hasMoreAssets && !loading && assets.length >= loadedCount && (
+                  <div className="col-span-full text-center py-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={loadMoreAssets}
+                      className="flex items-center gap-2"
+                    >
+                      📦 Carregar mais ({assets.length} itens)
+                    </Button>
                   </div>
-                </div>
-              ))
+                )}
+              </>
             )}
           </div>
         </ScrollArea>

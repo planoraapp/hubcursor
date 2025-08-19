@@ -460,30 +460,27 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
   };
 
   // Fixed sticker drop with proper number handling
-  const handleStickerDrop = async (stickerData: any) => {
+  const handleStickerDrop = async (stickerId: string, stickerSrc: string, category: string) => {
     if (!isOwner || !habboData) {
       console.log('❌ Cannot add sticker: not owner or no habbo data', { isOwner, hasHabboData: !!habboData });
       return;
     }
 
     try {
-      console.log('🎯 Adicionando sticker:', stickerData);
+      console.log('🎯 Adicionando sticker:', { stickerId, stickerSrc, category });
       
       const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0)) + 1;
-      const safeZ = Number.isFinite(stickerData?.z_index)
-        ? Math.min(Math.max(1, Math.round(stickerData.z_index)), 2147483647)
-        : nextZ;
 
       const payload = {
         user_id: habboData.id,
-        sticker_id: stickerData.sticker_id || stickerData.id,
-        sticker_src: stickerData.sticker_src || stickerData.url || stickerData.src,
-        category: stickerData.category || 'decorative',
-        x: Math.round(stickerData.x ?? Math.random() * 200 + 50),
-        y: Math.round(stickerData.y ?? Math.random() * 200 + 50),
-        z_index: safeZ,
-        rotation: Math.round(stickerData.rotation ?? 0),
-        scale: parseFloat((stickerData.scale ?? 1).toString())
+        sticker_id: stickerId,
+        sticker_src: stickerSrc,
+        category: category || 'decorative',
+        x: Math.round(Math.random() * 200 + 50),
+        y: Math.round(Math.random() * 200 + 50),
+        z_index: nextZ,
+        rotation: 0,
+        scale: 1.0
       };
 
       console.log('📦 Payload para inserção:', payload);
@@ -499,7 +496,7 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
         setStickers(prev => [...prev, data]);
         toast({
           title: "Sticker Adicionado",
-          description: "Sticker adicionado à sua home!",
+          description: "Sticker foi adicionado à sua home!"
         });
         return data;
       } else {
@@ -507,13 +504,12 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
         throw error;
       }
     } catch (error) {
-      console.error('Error in handleStickerDrop:', error);
+      console.error('❌ Falha ao adicionar sticker:', error);
       toast({
         title: "Erro",
-        description: "Erro ao adicionar sticker",
+        description: "Falha ao adicionar sticker. Tente novamente.",
         variant: "destructive"
       });
-      throw error;
     }
   };
 

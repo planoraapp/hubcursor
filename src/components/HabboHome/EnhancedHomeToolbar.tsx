@@ -64,8 +64,8 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
   };
 
   const handleStickerSelectInternal = (asset: any) => {
-    const stickerId = `sticker_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    onStickerSelect(stickerId, asset.url, asset.category);
+    console.log('🎯 Asset selecionado no toolbar:', asset);
+    onStickerSelect(asset.id, asset.url, asset.category);
     setShowStickerSelector(false);
   };
 
