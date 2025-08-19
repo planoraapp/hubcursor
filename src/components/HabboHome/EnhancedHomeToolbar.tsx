@@ -15,10 +15,16 @@ interface EnhancedHomeToolbarProps {
   onWidgetAdd?: (widgetType: string) => void;
 }
 
+// Background colors for gradient slider
 const BACKGROUND_COLORS = [
-  '#c7d2dc', '#f0f8ff', '#e6f3e6', '#fff0e6', '#ffe6e6',
-  '#e6e6ff', '#f0e6ff', '#ffe6f0', '#f5f5dc', '#e0ffff',
-  '#ffb6c1', '#98fb98', '#87ceeb', '#dda0dd', '#f0e68c'
+  '#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00',
+  '#bfff00', '#80ff00', '#40ff00', '#00ff00', '#00ff40',
+  '#00ff80', '#00ffbf', '#00ffff', '#00bfff', '#0080ff',
+  '#0040ff', '#0000ff', '#4000ff', '#8000ff', '#bf00ff',
+  '#ff00ff', '#ff00bf', '#ff0080', '#ff0040', '#ffffff',
+  '#f0f0f0', '#e0e0e0', '#d0d0d0', '#c0c0c0', '#b0b0b0',
+  '#a0a0a0', '#909090', '#808080', '#707070', '#606060',
+  '#505050', '#404040', '#303030', '#202020', '#000000'
 ];
 
 const WIDGET_TYPES = [
@@ -198,33 +204,58 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
       {/* Wallpaper Menu */}
       {activeMenu === 'wallpaper' && isEditMode && (
         <div className="w-full bg-white border-b-2 border-gray-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="space-y-3">
-              <h3 className="volter-font text-gray-800 font-semibold">Cores</h3>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {BACKGROUND_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handleColorSelect(color)}
-                    className="w-12 h-12 rounded-lg border-2 border-gray-300 hover:border-blue-500 transition-colors"
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                ))}
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="space-y-6">
+              {/* Background Images */}
+              <div>
+                <h3 className="volter-font text-gray-800 font-semibold mb-3">Imagens de Fundo</h3>
+                <button
+                  onClick={() => setShowBackgrounds(true)}
+                  className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors volter-font text-sm"
+                >
+                  Selecionar Imagem de Fundo
+                </button>
               </div>
               
-              <div className="flex items-center gap-2">
-                <h3 className="volter-font text-gray-800 font-semibold">Papéis de Parede</h3>
-                <Button
-                  onClick={() => setShowBackgrounds(true)}
-                  variant="outline"
-                  size="sm"
-                  className="volter-font"
-                >
-                  <Image className="w-4 h-4 mr-1" />
-                  Escolher Imagem
-                </Button>
+              {/* Color Slider */}
+              <div>
+                <h3 className="volter-font text-gray-800 font-semibold mb-3">Cores Sólidas</h3>
+                <div className="bg-gray-50 rounded-lg p-3 border">
+                  <div className="flex items-center gap-1 overflow-x-auto pb-2">
+                    {BACKGROUND_COLORS.map((color, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleColorSelect(color)}
+                        className="min-w-[24px] h-6 rounded border border-gray-300 hover:border-blue-500 hover:scale-110 transition-all duration-200 shadow-sm flex-shrink-0"
+                        style={{ backgroundColor: color }}
+                        title={`Cor ${color}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 volter-font">
+                    Deslize para ver mais cores →
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stickers Menu */}
+      {activeMenu === 'stickers' && isEditMode && (
+        <div className="w-full bg-white border-b-2 border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <h3 className="volter-font text-gray-800 font-semibold">Stickers</h3>
+              <Button
+                onClick={() => setShowStickers(true)}
+                variant="outline"
+                size="sm"
+                className="volter-font"
+              >
+                Escolher Sticker
+              </Button>
             </div>
           </div>
         </div>

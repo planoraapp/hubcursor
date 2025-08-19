@@ -32,6 +32,7 @@ const HabboHomeV2: React.FC = () => {
     removeSticker,
     updateBackground,
     addWidget,
+    removeWidget,
     reloadData
   } = useHabboHomeV2(username || '');
 
@@ -199,6 +200,7 @@ const HabboHomeV2: React.FC = () => {
                 onWidgetPositionChange={updateWidgetPosition}
                 onStickerPositionChange={updateStickerPosition}
                 onStickerRemove={removeSticker}
+                onWidgetRemove={removeWidget}
               />
             </div>
           </main>

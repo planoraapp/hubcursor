@@ -1,9 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, X } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Asset {
@@ -33,125 +31,135 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 }) => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('todos');
 
-  const getDisplayTitle = () => {
-    if (title) return title;
-    return type === 'backgrounds' ? 'Backgrounds' : 'Stickers';
-  };
+  // Categories for stickers
+  const stickerCategories = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'mockup', label: 'Mockups' },
+    { id: 'icons', label: 'Ícones' },
+    { id: 'animated', label: 'Animados' },
+    { id: 'decorative', label: 'Decorativos' }
+  ];
 
-  const getCategoryFilter = () => {
-    if (type === 'backgrounds') {
-      return ['backgrounds', 'Papel de Parede', 'wallpapers'];
-    }
-    return ['stickers', 'Stickers', 'decorations'];
-  };
-
-  const loadAssets = async () => {
-    if (!open) return;
-    
+  // Fetch assets from Supabase
+  const fetchAssets = async () => {
     setLoading(true);
     try {
-      console.log(`🔍 Carregando assets do tipo: ${type}`);
-      
-      const categories = getCategoryFilter();
-      
       const { data, error } = await supabase
         .from('home_assets')
         .select('*')
-        .in('category', categories)
+        .eq('category', type)
         .eq('is_active', true)
         .order('name');
 
       if (error) {
-        console.error('❌ Erro ao carregar assets:', error);
+        console.error('Error fetching assets:', error);
         return;
       }
 
-      console.log(`✅ Assets carregados:`, data);
+      let filteredData = data || [];
+      
+      // Filter by subcategory for stickers
+      if (type === 'stickers' && selectedCategory !== 'todos') {
+        filteredData = data?.filter(asset => asset.subcategory === selectedCategory) || [];
+      }
 
-      const assetsWithUrls = data?.map(asset => ({
+      const assetsWithUrls = filteredData.map((asset) => ({
         ...asset,
         url: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`,
         src: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
-      })) || [];
+      }));
 
       setAssets(assetsWithUrls);
     } catch (error) {
-      console.error('❌ Erro ao carregar assets:', error);
+      console.error('Error in fetchAssets:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAssets();
-  }, [open, type]);
+    if (open) {
+      fetchAssets();
+    }
+  }, [open, type, selectedCategory]);
 
   const handleAssetClick = (asset: Asset) => {
-    console.log(`🎯 Asset selecionado:`, asset);
     onAssetSelect(asset);
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="sm:max-w-5xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="volter-font text-xl">
-            {getDisplayTitle()}
+          <DialogTitle className="volter-font">
+            {title || (type === 'backgrounds' ? 'Selecionar Background' : 'Selecionar Sticker')}
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-              <span className="ml-2 volter-font">Carregando {type}...</span>
+
+        {type === 'stickers' && (
+          <div className="mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {stickerCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`px-3 py-1 text-xs rounded-md whitespace-nowrap transition-colors ${
+                    selectedCategory === category.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {category.label}
+                </button>
+              ))}
             </div>
-          ) : assets.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500 volter-font">
-                Nenhum {type === 'backgrounds' ? 'papel de parede' : 'sticker'} encontrado
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-4">
-              {assets.map((asset) => (
+          </div>
+        )}
+
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
+            {loading ? (
+              <div className="col-span-full text-center py-8">
+                <div className="text-muted-foreground">Carregando assets...</div>
+              </div>
+            ) : assets.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <div className="text-muted-foreground">Nenhum asset encontrado</div>
+              </div>
+            ) : (
+              assets.map((asset) => (
                 <div
                   key={asset.id}
-                  className="group cursor-pointer border-2 border-gray-200 rounded-lg p-2 hover:border-blue-500 transition-colors"
                   onClick={() => handleAssetClick(asset)}
+                  className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
                 >
-                  <div className="aspect-square bg-gray-100 rounded-lg mb-2 overflow-hidden">
+                  <div className="aspect-square p-2">
                     <img
                       src={asset.url}
                       alt={asset.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                      className="w-full h-full object-contain rounded group-hover:scale-105 transition-transform"
                       style={{ imageRendering: 'pixelated' }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/assets/frank.png';
-                      }}
                     />
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs volter-font text-gray-700 truncate" title={asset.name}>
-                      {asset.name}
-                    </p>
-                    <Badge variant="outline" className="text-xs volter-font mt-1">
-                      {asset.category}
-                    </Badge>
+                  <div className="p-2 border-t">
+                    <div className="text-xs font-medium truncate">{asset.name}</div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-        
-        <div className="flex justify-end p-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="volter-font">
-            <X className="w-4 h-4 mr-2" />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+
+        <div className="flex justify-end pt-4 border-t">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="px-4 py-2 text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md transition-colors"
+          >
             Fechar
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

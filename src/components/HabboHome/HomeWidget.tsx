@@ -28,11 +28,12 @@ interface HabboData {
 
 interface HomeWidgetProps {
   widget: Widget;
-  habboData: HabboData;
+  habboData?: HabboData;
   guestbook: any[];
   isEditMode: boolean;
   isOwner: boolean;
   onPositionChange: (widgetId: string, x: number, y: number) => void;
+  onWidgetRemove?: (widgetId: string) => void;
 }
 
 export const HomeWidget: React.FC<HomeWidgetProps> = ({
@@ -41,7 +42,8 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   guestbook,
   isEditMode,
   isOwner,
-  onPositionChange
+  onPositionChange,
+  onWidgetRemove
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: widget.x, elementY: widget.y });
@@ -69,8 +71,8 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       if (isDragging) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        const newX = Math.max(0, Math.min(1200 - widget.width, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(800 - widget.height, dragStart.elementY + deltaY));
+        const newX = Math.max(0, Math.min(1080 - widget.width, dragStart.elementX + deltaX));
+        const newY = Math.max(0, Math.min(1800 - widget.height, dragStart.elementY + deltaY));
         
         onPositionChange(widget.widget_type, newX, newY);
       }
@@ -256,16 +258,36 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       style={containerStyle}
       onMouseDown={handleMouseDown}
     >
-      {renderWidgetContent()}
-      
-      {/* Controles de edição */}
+      {/* Edit Mode Controls */}
       {isEditMode && isOwner && (
-        <div className="absolute -top-8 left-0 bg-blue-500 text-white px-2 py-1 rounded text-xs volter-font">
-          {widget.widget_type.toUpperCase()}
-        </div>
+        <>
+          <div className="absolute -top-6 left-0 bg-yellow-500 text-black px-2 py-1 text-xs rounded-tl rounded-tr volter-font">
+            {widget.widget_type.toUpperCase()}
+          </div>
+          
+          {/* Remove Button - Only for non-essential widgets */}
+          {widget.widget_type !== 'avatar' && widget.widget_type !== 'usercard' && onWidgetRemove && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onWidgetRemove(widget.id);
+              }}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors z-10"
+              title="Remover Widget"
+            >
+              ×
+            </button>
+          )}
+        </>
       )}
       
-      {/* Indicador de drag */}
+      {/* Content */}
+      <div className="h-full overflow-hidden rounded-lg">
+        {renderWidgetContent()}
+      </div>
+
+      {/* Drag Indicator */}
       {isDragging && (
         <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded pointer-events-none" />
       )}

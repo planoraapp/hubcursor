@@ -53,6 +53,7 @@ interface HomeCanvasProps {
   onWidgetPositionChange: (widgetId: string, x: number, y: number) => void;
   onStickerPositionChange: (stickerId: string, x: number, y: number) => void;
   onStickerRemove: (stickerId: string) => void;
+  onWidgetRemove?: (widgetId: string) => void;
 }
 
 export const HomeCanvas: React.FC<HomeCanvasProps> = ({
@@ -65,7 +66,8 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   isOwner,
   onWidgetPositionChange,
   onStickerPositionChange,
-  onStickerRemove
+  onStickerRemove,
+  onWidgetRemove
 }) => {
   console.log('🖼️ HomeCanvas renderizando:', {
     widgetsCount: widgets.length,
@@ -120,6 +122,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
             isEditMode={isEditMode}
             isOwner={isOwner}
             onPositionChange={onWidgetPositionChange}
+            onWidgetRemove={onWidgetRemove}
           />
         ))}
 

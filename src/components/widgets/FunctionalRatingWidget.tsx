@@ -170,65 +170,60 @@ export const FunctionalRatingWidget: React.FC<FunctionalRatingWidgetProps> = ({
   };
 
   return (
-    <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-      <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-3">
-        <CardTitle className="volter-font text-center text-lg habbo-text flex items-center justify-center gap-2">
-          <Star className="w-5 h-5" />
-          Avaliação
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3 text-center space-y-3">
-        {/* Average Rating Display */}
-        <div>
-          <div className="text-2xl font-bold text-yellow-600 volter-font mb-1">
-            {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
-          </div>
-          <div className="mb-2">
-            {renderStars(averageRating)}
-          </div>
-          <div className="text-sm text-gray-600 volter-font">
-            {totalRatings} avaliação{totalRatings !== 1 ? 'ões' : ''}
-          </div>
+      <div className="bg-gradient-to-b from-card to-card/90 border border-border rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-primary/90 text-primary-foreground p-2 text-center border-b">
+          <h3 className="volter-font text-sm font-bold">AVALIAÇÕES</h3>
         </div>
+        <div className="p-3 text-center space-y-3">
+          {/* Average Rating Display */}
+          <div>
+            <div className="text-2xl font-bold text-primary volter-font mb-1">
+              {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
+            </div>
+            <div className="mb-2">
+              {renderStars(averageRating)}
+            </div>
+            <div className="text-sm text-muted-foreground volter-font">
+              {totalRatings} avaliação{totalRatings !== 1 ? 'ões' : ''}
+            </div>
+          </div>
 
-        {/* User Rating Section */}
-        {!isOwner && (
-          <div className="border-t pt-3">
-            {isLoggedIn ? (
-              <div>
-                <div className="text-sm text-gray-700 volter-font mb-2">
-                  {userRating > 0 ? 'Sua avaliação:' : 'Avaliar esta home:'}
-                </div>
-                <div className="flex justify-center">
-                  {renderStars(userRating || hoverRating, true)}
-                </div>
-                {userRating > 0 && (
-                  <div className="text-xs text-gray-500 volter-font mt-1">
-                    Você avaliou com {userRating} estrela{userRating > 1 ? 's' : ''}
+          {/* User Rating Section */}
+          {!isOwner && (
+            <div className="border-t pt-3">
+              {isLoggedIn ? (
+                <div>
+                  <div className="text-sm text-foreground volter-font mb-2">
+                    {userRating > 0 ? 'Sua avaliação:' : 'Avaliar esta home:'}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-gray-600 volter-font">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => window.location.href = '/login'}
-                  className="volter-font"
-                >
-                  Fazer login para avaliar
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+                  <div className="flex justify-center">
+                    {renderStars(userRating || hoverRating, true)}
+                  </div>
+                  {userRating > 0 && (
+                    <div className="text-xs text-muted-foreground volter-font mt-1">
+                      Você avaliou com {userRating} estrela{userRating > 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground volter-font">
+                  <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="px-3 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded volter-font"
+                  >
+                    Fazer login para avaliar
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-        {isOwner && (
-          <div className="text-xs text-gray-500 volter-font">
-            Esta é sua home
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {isOwner && (
+            <div className="text-xs text-muted-foreground volter-font">
+              Esta é sua home
+            </div>
+          )}
+        </div>
+      </div>
   );
 };

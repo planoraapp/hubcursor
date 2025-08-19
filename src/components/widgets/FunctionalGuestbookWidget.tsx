@@ -127,107 +127,99 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
   };
 
   return (
-    <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-      <CardHeader className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-3">
-        <CardTitle className="volter-font text-center text-lg habbo-text flex items-center justify-center gap-2">
-          <MessageSquare className="w-5 h-5" />
-          Livro de Visitas
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3 space-y-3 h-full flex flex-col">
-        {/* Messages List */}
-        <ScrollArea className="flex-1 pr-2">
-          <div className="space-y-2">
-            {entries.length > 0 ? (
-              entries.map((entry) => (
-                <div key={entry.id} className="bg-gray-50 p-2 rounded-lg border relative">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs text-blue-600 volter-font font-semibold">
-                      {entry.author_habbo_name}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500 volter-font">
-                        {formatDistanceToNow(new Date(entry.created_at), { 
-                          addSuffix: true, 
-                          locale: ptBR 
-                        })}
+      <div className="bg-gradient-to-b from-card to-card/90 border border-border rounded-lg shadow-lg overflow-hidden h-full">
+        <div className="bg-primary/90 text-primary-foreground p-2 text-center border-b">
+          <h3 className="volter-font text-sm font-bold">LIVRO DE VISITAS</h3>
+        </div>
+        <div className="p-3 space-y-3 h-full flex flex-col">
+          {/* Messages List */}
+          <ScrollArea className="flex-1 pr-2">
+            <div className="space-y-2">
+              {entries.length > 0 ? (
+                entries.map((entry) => (
+                  <div key={entry.id} className="bg-muted/50 p-2 rounded-lg border relative">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-xs text-primary volter-font font-semibold">
+                        {entry.author_habbo_name}
                       </span>
-                      {canDeleteEntry(entry) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(entry.id, entry.author_user_id)}
-                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground volter-font">
+                          {formatDistanceToNow(new Date(entry.created_at), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
+                        </span>
+                        {canDeleteEntry(entry) && (
+                          <button
+                            onClick={() => handleDelete(entry.id, entry.author_user_id)}
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10 rounded"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
+                    <p className="text-sm text-foreground volter-font break-words">
+                      {entry.message}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-700 volter-font break-words">
-                    {entry.message}
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground volter-font">
+                    Ainda não há mensagens no livro de visitas
                   </p>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500 volter-font">
-                  Ainda não há mensagens no livro de visitas
-                </p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+              )}
+            </div>
+          </ScrollArea>
 
-        {/* Message Form */}
-        {!isOwner && (
-          <div className="border-t pt-3 space-y-2">
-            {isLoggedIn ? (
-              <>
-                <Textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={`Deixe uma mensagem para ${homeOwnerName}...`}
-                  className="volter-font text-sm resize-none"
-                  rows={3}
-                  maxLength={500}
-                  disabled={isSubmitting}
-                />
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500 volter-font">
-                    {newMessage.length}/500
-                  </span>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!newMessage.trim() || isSubmitting}
-                    size="sm"
-                    className="volter-font bg-green-600 hover:bg-green-700"
+          {/* Message Form */}
+          {!isOwner && (
+            <div className="border-t pt-3 space-y-2">
+              {isLoggedIn ? (
+                <>
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={`Deixe uma mensagem para ${homeOwnerName}...`}
+                    className="w-full p-2 text-sm border rounded resize-none volter-font"
+                    rows={3}
+                    maxLength={500}
+                    disabled={isSubmitting}
+                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground volter-font">
+                      {newMessage.length}/500
+                    </span>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!newMessage.trim() || isSubmitting}
+                      className="px-3 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded volter-font disabled:opacity-50"
+                    >
+                      {isSubmitting ? 'Enviando...' : 'Enviar'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center">
+                  <button 
+                    onClick={() => window.location.href = '/login'}
+                    className="px-3 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded volter-font"
                   >
-                    {isSubmitting ? 'Enviando...' : 'Enviar'}
-                  </Button>
+                    Fazer login para comentar
+                  </button>
                 </div>
-              </>
-            ) : (
-              <div className="text-center">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => window.location.href = '/login'}
-                  className="volter-font"
-                >
-                  Fazer login para comentar
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
 
-        {isOwner && (
-          <div className="text-xs text-gray-500 volter-font text-center border-t pt-2">
-            Esta é sua home - visitantes podem deixar mensagens
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {isOwner && (
+            <div className="text-xs text-muted-foreground volter-font text-center border-t pt-2">
+              Esta é sua home - visitantes podem deixar mensagens
+            </div>
+          )}
+        </div>
+      </div>
   );
 };
