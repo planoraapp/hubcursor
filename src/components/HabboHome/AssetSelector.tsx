@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,17 +36,19 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [displayedCount, setDisplayedCount] = useState(50);
-  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef<boolean>(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  // Refs for scroll management
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Fetch assets from Supabase
   const fetchAssets = useCallback(async () => {
-    if (!open || loadingRef.current) return;
+    if (!open || loading) return;
     
     try {
       setLoading(true);
-      loadingRef.current = true;
       console.log(`🔍 Buscando TODOS os ${type}s...`);
       
       let query = supabase
@@ -83,12 +84,11 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       console.error(`❌ Erro inesperado ao buscar ${type}s:`, err);
     } finally {
       setLoading(false);
-      loadingRef.current = false;
     }
-  }, [open, type]);
+  }, [open, type, loading]);
 
-  // Filter and paginate assets
-  const { filteredAssets, displayedAssets, totalCount } = useMemo(() => {
+  // Filter and get displayed assets
+  const { filteredAssets, displayedAssets, hasMore } = useMemo(() => {
     let filtered = allAssets;
     
     // Filter by category
@@ -123,18 +123,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     }
     
     const displayed = filtered.slice(0, displayedCount);
+    const hasMoreItems = displayed.length < filtered.length;
     
     return {
       filteredAssets: filtered,
       displayedAssets: displayed,
-      totalCount: filtered.length
+      hasMore: hasMoreItems
     };
   }, [allAssets, selectedCategory, searchTerm, displayedCount]);
-
-  // Update hasMoreToLoad when filtered assets change
-  useEffect(() => {
-    setHasMoreToLoad(displayedAssets.length < totalCount);
-  }, [displayedAssets.length, totalCount]);
 
   // Get available categories with counts
   const availableCategories = useMemo(() => {
@@ -159,17 +155,45 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     return categories;
   }, [allAssets]);
 
-  // Handle infinite scroll
-  const handleScroll = useCallback(() => {
-    const scrollDiv = scrollRef.current;
-    if (!scrollDiv || !hasMoreToLoad || loadingRef.current) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = scrollDiv;
+  // Load more items
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
     
-    if (scrollTop + clientHeight >= scrollHeight * 0.9) {
-      setDisplayedCount(prev => prev + 50);
-    }
-  }, [hasMoreToLoad]);
+    setIsLoadingMore(true);
+    
+    // Simulate loading delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    setDisplayedCount(prev => prev + 50);
+    setIsLoadingMore(false);
+  }, [isLoadingMore, hasMore]);
+
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      {
+        rootMargin: '100px',
+        threshold: 0.1
+      }
+    );
+
+    observer.observe(sentinelRef.current);
+    observerRef.current = observer;
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, isLoadingMore, loadMore]);
 
   // Load assets when modal opens
   useEffect(() => {
@@ -180,15 +204,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       fetchAssets();
     }
   }, [open, type, fetchAssets]);
-
-  // Setup scroll listener
-  useEffect(() => {
-    const scrollDiv = scrollRef.current;
-    if (scrollDiv) {
-      scrollDiv.addEventListener('scroll', handleScroll);
-      return () => scrollDiv.removeEventListener('scroll', handleScroll);
-    }
-  }, [handleScroll]);
 
   const handleAssetClick = useCallback((asset: Asset) => {
     console.log('🎯 Asset selecionado:', asset);
@@ -234,44 +249,47 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
             </div>
             
             <h4 className="text-sm font-volter">Categorias</h4>
-            <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-              <div className="flex w-max space-x-2 p-4">
-                <Button
-                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedCategory('all')}
-                  className="font-volter whitespace-nowrap"
-                >
-                  Todos ({allAssets.length})
-                </Button>
-                {Array.from(availableCategories).map(([category, count]) => {
-                  const categoryLabels: Record<string, string> = {
-                    'animated': '🎬 Animados',
-                    'icons': '🔰 Ícones', 
-                    'mockups': '🖼️ Mockups',
-                    'mountable': '📌 Montáveis',
-                    'outros': '✨ Outros'
-                  };
-                  
-                  return (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                      className="font-volter whitespace-nowrap"
-                    >
-                      {categoryLabels[category]} ({count})
-                    </Button>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory('all')}
+                className="font-volter whitespace-nowrap"
+              >
+                Todos ({allAssets.length})
+              </Button>
+              {Array.from(availableCategories).map(([category, count]) => {
+                const categoryLabels: Record<string, string> = {
+                  'animated': '🎬 Animados',
+                  'icons': '🔰 Ícones', 
+                  'mockups': '🖼️ Mockups',
+                  'mountable': '📌 Montáveis',
+                  'outros': '✨ Outros'
+                };
+                
+                return (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className="font-volter whitespace-nowrap"
+                  >
+                    {categoryLabels[category]} ({count})
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 p-2">
+        {/* Custom Scroll Container */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto border rounded-lg bg-background"
+          style={{ maxHeight: '60vh' }}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 p-4">
             {loading ? (
               <div className="col-span-full text-center py-8">
                 <Loader2 className="animate-spin h-8 w-8 mx-auto mb-2 text-primary" />
@@ -326,17 +344,27 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                   </div>
                 ))}
                 
-                {hasMoreToLoad && (
-                  <div className="col-span-full text-center py-4">
-                    <p className="text-xs text-muted-foreground font-volter">
-                      📜 Role para carregar mais ({displayedAssets.length} de {totalCount})
-                    </p>
+                {/* Sentinel element for infinite scroll */}
+                {hasMore && (
+                  <div ref={sentinelRef} className="col-span-full text-center py-4">
+                    {isLoadingMore ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <span className="text-sm text-muted-foreground font-volter">
+                          Carregando mais...
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground font-volter">
+                        📜 Role para carregar mais ({displayedAssets.length} de {filteredAssets.length})
+                      </p>
+                    )}
                   </div>
                 )}
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="flex justify-end pt-4 border-t">
           <Button

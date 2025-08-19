@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AssetSelector } from './AssetSelector';
@@ -66,8 +67,14 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
   };
 
   const handleStickerSelectInternal = (asset: any) => {
-    console.log('🎯 Asset selecionado no toolbar:', asset);
-    onStickerSelect(asset.id, asset.url, asset.category);
+    console.log('🎯 Sticker selecionado no toolbar:', asset);
+    
+    // Generate random position for the sticker
+    const x = Math.random() * (1080 - 100) + 50;
+    const y = Math.random() * (1800 - 100) + 50;
+    
+    // Call the parent callback with proper parameters
+    onStickerSelect(asset.id, asset.url || asset.src, asset.category || 'outros');
     setShowStickerSelector(false);
   };
 

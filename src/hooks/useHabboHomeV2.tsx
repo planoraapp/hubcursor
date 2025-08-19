@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from './useSimpleAuth';
@@ -208,7 +207,6 @@ export const useHabboHomeV2 = (username: string) => {
     }
   };
 
-  // Funções de atualização
   const updateWidgetPosition = async (widgetId: string, x: number, y: number) => {
     if (!isOwner || !habboData) return;
 
@@ -259,44 +257,94 @@ export const useHabboHomeV2 = (username: string) => {
   };
 
   const addSticker = async (stickerId: string, x: number, y: number, stickerSrc: string, category: string) => {
-    if (!isOwner || !habboData) return false;
+    if (!isOwner || !habboData) {
+      console.error('❌ Cannot add sticker: not owner or no habbo data', { 
+        isOwner, 
+        hasHabboData: !!habboData,
+        habboDataId: habboData?.id 
+      });
+      return false;
+    }
 
     try {
+      console.log('🎯 Tentando adicionar sticker:', { 
+        stickerId, 
+        stickerSrc, 
+        category, 
+        x: Math.round(x), 
+        y: Math.round(y),
+        userId: habboData.id,
+        currentStickersCount: stickers.length 
+      });
+      
+      // Calculate next z-index
+      const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0), ...widgets.map(w => w.z_index || 0)) + 1;
+      
+      const payload = {
+        user_id: habboData.id,
+        sticker_id: stickerId,
+        sticker_src: stickerSrc,
+        category: category || 'outros',
+        x: Math.round(x),
+        y: Math.round(y),
+        z_index: nextZ,
+        rotation: 0,
+        scale: 1.0
+      };
+
+      console.log('📦 Payload para inserção:', payload);
+
       const { data, error } = await supabase
         .from('user_stickers')
-        .insert({
-          user_id: habboData.id,
-          sticker_id: stickerId,
-          x: Math.round(x),
-          y: Math.round(y),
-          z_index: Date.now(),
-          scale: 1,
-          rotation: 0,
-          sticker_src: stickerSrc,
-          category: category
-        })
+        .insert(payload)
         .select()
         .single();
 
-      if (!error && data) {
-        const newSticker = {
-          id: data.id,
-          sticker_id: data.sticker_id,
-          x: data.x,
-          y: data.y,
-          z_index: data.z_index,
-          scale: Number(data.scale) || 1,
-          rotation: data.rotation || 0,
-          sticker_src: data.sticker_src,
-          category: data.category
-        };
-        setStickers(prev => [...prev, newSticker]);
-        return true;
+      if (error) {
+        console.error('❌ Erro do Supabase ao inserir sticker:', error);
+        return false;
       }
+
+      if (!data) {
+        console.error('❌ Nenhum dado retornado após inserção');
+        return false;
+      }
+
+      console.log('✅ Sticker inserido com sucesso no banco:', data);
+      
+      // Create new sticker object for local state
+      const newSticker: Sticker = {
+        id: data.id,
+        sticker_id: data.sticker_id,
+        x: data.x,
+        y: data.y,
+        z_index: data.z_index,
+        scale: Number(data.scale) || 1,
+        rotation: data.rotation || 0,
+        sticker_src: data.sticker_src,
+        category: data.category
+      };
+      
+      console.log('📌 Novo sticker formatado:', newSticker);
+      
+      // Update local state
+      setStickers(prev => {
+        const updated = [...prev, newSticker];
+        console.log('🔄 Estado dos stickers atualizado:', { 
+          before: prev.length, 
+          after: updated.length,
+          newSticker: newSticker 
+        });
+        return updated;
+      });
+      
+      console.log('✅ Sticker adicionado com sucesso!');
+      return true;
+      
     } catch (error) {
-      console.error('❌ Erro ao adicionar sticker:', error);
+      console.error('❌ Erro inesperado ao adicionar sticker:', error);
+      return false;
     }
-    return false;
   };
 
   const removeSticker = async (stickerId: string) => {
