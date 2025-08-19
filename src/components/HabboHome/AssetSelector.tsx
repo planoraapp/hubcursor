@@ -60,9 +60,18 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
       let filteredData = data || [];
       
-      // Filter by subcategory for stickers
+      // Filter by category name patterns for stickers
       if (type === 'stickers' && selectedCategory !== 'todos') {
-        filteredData = data?.filter(asset => asset.subcategory === selectedCategory) || [];
+        filteredData = data?.filter(asset => {
+          const name = asset.name.toLowerCase();
+          switch(selectedCategory) {
+            case 'mockup': return name.includes('mockup') || name.includes('mock');
+            case 'icons': return name.includes('icon') || name.includes('ico');
+            case 'animated': return name.includes('anim') || name.includes('gif');
+            case 'decorative': return name.includes('decor') || name.includes('decoration');
+            default: return true;
+          }
+        }) || [];
       }
 
       const assetsWithUrls = filteredData.map((asset) => ({
