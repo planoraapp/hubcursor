@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 
 interface Sticker {
@@ -59,7 +60,6 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
-        // Use requestAnimationFrame for smoother updates
         cancelAnimationFrame(animationId);
         animationId = requestAnimationFrame(() => {
           const deltaX = e.clientX - dragStart.x;
@@ -111,6 +111,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
   return (
     <div
       ref={stickerRef}
+      data-sticker-id={sticker.id}
       className={`absolute pointer-events-auto select-none ${
         isEditMode && isOwner
           ? 'cursor-move hover:scale-110 transition-transform ring-1 ring-blue-300 ring-opacity-50 rounded' 
@@ -127,23 +128,22 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
           imageRendering: 'pixelated',
           width: 'auto',
           height: 'auto',
-          maxWidth: '150px', // Increased from 120px to allow for real size
-          maxHeight: '150px', // Increased from 120px to allow for real size
-          minWidth: '24px', // Decreased minimum to allow smaller stickers
-          minHeight: '24px' // Decreased minimum to allow smaller stickers
+          maxWidth: '150px',
+          maxHeight: '150px',
+          minWidth: '24px',
+          minHeight: '24px'
         }}
         draggable={false}
         onError={(e) => {
           console.error(`❌ Erro ao carregar sticker: ${sticker.sticker_src}`);
           const target = e.target as HTMLImageElement;
-          target.src = '/assets/frank.png'; // Fallback
+          target.src = '/assets/frank.png';
         }}
         onLoad={() => {
           console.log(`✅ Sticker carregado com sucesso: ${sticker.sticker_src}`);
         }}
       />
       
-      {/* Controles de edição */}
       {isEditMode && isOwner && (
         <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 flex gap-1 bg-black/80 rounded px-2 py-1">
           <button
@@ -156,7 +156,6 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         </div>
       )}
 
-      {/* Indicador de drag */}
       {isDragging && (
         <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded pointer-events-none" />
       )}

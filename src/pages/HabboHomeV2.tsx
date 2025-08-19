@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
-import { useToast } from '@/hooks/use-toast';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
 import { EnhancedHomeToolbar } from '@/components/HabboHome/EnhancedHomeToolbar';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
@@ -14,7 +14,6 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 const HabboHomeV2: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const {
     widgets,
@@ -46,69 +45,26 @@ const HabboHomeV2: React.FC = () => {
     loading
   });
 
-  // Handle sticker operations
   const handleStickerAdd = async (stickerId: string, stickerSrc: string, category: string) => {
     console.log('🎯 Tentando adicionar sticker:', { stickerId, stickerSrc, category });
     
     const x = Math.random() * (1080 - 100) + 50;
     const y = Math.random() * (1800 - 100) + 50;
     
-    const success = await addSticker(stickerId, x, y, stickerSrc, category);
-    
-    if (success) {
-      toast({
-        title: "Sticker adicionado!",
-        description: "O sticker foi adicionado à sua home."
-      });
-    } else {
-      toast({
-        title: "Erro ao adicionar sticker",
-        description: "Não foi possível adicionar o sticker.",
-        variant: "destructive"
-      });
-    }
+    await addSticker(stickerId, x, y, stickerSrc, category);
   };
 
-  // Handle background change with new interface
   const handleBackgroundChange = async (type: 'color' | 'cover' | 'repeat', value: string) => {
     console.log('🎨 Mudando background:', { type, value });
-    
     await updateBackground(type, value);
-    
-    let description = '';
-    switch(type) {
-      case 'color':
-        description = 'A cor de fundo da sua home foi alterada.';
-        break;
-      case 'cover':
-        description = 'A imagem de fundo foi aplicada (cobertura completa).';
-        break;
-      case 'repeat':
-        description = 'A imagem de fundo foi aplicada (padrão repetido).';
-        break;
-    }
-    
-    toast({
-      title: "Fundo alterado!",
-      description
-    });
   };
 
-  // Handle save with real functionality
   const handleSave = async () => {
     console.log('💾 Salvando home...');
     try {
       await reloadData();
-      toast({
-        title: "Home salva!",
-        description: "Suas alterações foram salvas com sucesso."
-      });
     } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar as alterações.",
-        variant: "destructive"
-      });
+      console.error('Erro ao salvar:', error);
     }
   };
 
@@ -167,7 +123,6 @@ const HabboHomeV2: React.FC = () => {
         <SidebarInset className="flex-1">
           <main className="flex-1 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             
-            {/* Header - Simplified */}
             <div className="p-4">
               <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
@@ -177,7 +132,6 @@ const HabboHomeV2: React.FC = () => {
                 </CardHeader>
               </Card>
 
-              {/* Enhanced Toolbar - Positioned between header and canvas */}
               <div className="relative mb-6">
                 <EnhancedHomeToolbar
                   isEditMode={isEditMode}
@@ -190,76 +144,45 @@ const HabboHomeV2: React.FC = () => {
                 />
               </div>
 
-              {/* Home Canvas Container with Notch */}
               <div className="relative">
-                {/* Edit Notch Button - Overlapping top-right corner */}
+                {/* Novo botão de edição com ícone no canto esquerdo */}
                 {isOwner && (
-                  <div className="absolute -top-4 -right-4 z-50">
+                  <div className="absolute -top-4 -left-4 z-50">
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
                       className={`
-                        relative overflow-hidden group
-                        bg-gradient-to-br from-primary to-primary/80 
-                        hover:from-primary/90 hover:to-primary/70
-                        text-primary-foreground
-                        border-2 border-primary-foreground/20
+                        w-12 h-12 bg-transparent hover:bg-black/10 rounded-full
+                        border-2 border-transparent hover:border-blue-400/50
                         transition-all duration-300 ease-out
-                        ${isEditMode 
-                          ? 'rounded-t-xl rounded-b-none px-4 py-3 shadow-xl scale-105' 
-                          : 'rounded-full px-3 py-2 shadow-lg hover:scale-110'
-                        }
+                        ${isEditMode ? 'scale-110 brightness-110' : 'hover:scale-105'}
                       `}
                       title={isEditMode ? 'Sair do modo edição' : 'Entrar no modo edição'}
                     >
-                      {/* Background Glow Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      {/* Content */}
-                      <div className="relative flex items-center gap-2 font-volter text-sm font-medium">
-                        <div className={`transition-transform duration-300 ${isEditMode ? 'rotate-45' : ''}`}>
-                          {isEditMode ? '⚙️' : '✏️'}
-                        </div>
-                        <span className={`transition-all duration-300 ${isEditMode ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-                          EDITANDO
-                        </span>
-                      </div>
-
-                      {/* Notch Connector - Shows when active */}
-                      {isEditMode && (
-                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary" />
-                        </div>
-                      )}
-
-                      {/* Subtle Animation Ring */}
-                      <div className={`
-                        absolute inset-0 rounded-full border-2 border-primary-foreground/30
-                        transition-all duration-500 ease-out
-                        ${isEditMode 
-                          ? 'scale-125 opacity-0' 
-                          : 'scale-100 opacity-0 group-hover:opacity-100 group-hover:scale-110'
-                        }
-                      `} />
+                      <img
+                        src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png"
+                        alt="Editar Home"
+                        className="w-full h-full object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
                     </button>
                   </div>
                 )}
 
-                {/* Home Canvas with new dimensions */}
-                  <HomeCanvas
-                    widgets={widgets}
-                    stickers={stickers}
-                    background={background}
-                    habboData={habboData}
-                    guestbook={guestbook}
-                    isEditMode={isEditMode}
-                    isOwner={isOwner}
-                    onWidgetPositionChange={updateWidgetPosition}
-                    onStickerPositionChange={updateStickerPosition}
-                    onStickerRemove={removeSticker}
-                    onWidgetRemove={removeWidget}
-                  />
-                </div>
+                <HomeCanvas
+                  widgets={widgets}
+                  stickers={stickers}
+                  background={background}
+                  habboData={habboData}
+                  guestbook={guestbook}
+                  isEditMode={isEditMode}
+                  isOwner={isOwner}
+                  onWidgetPositionChange={updateWidgetPosition}
+                  onStickerPositionChange={updateStickerPosition}
+                  onStickerRemove={removeSticker}
+                  onWidgetRemove={removeWidget}
+                />
               </div>
+            </div>
           </main>
         </SidebarInset>
       </div>

@@ -39,12 +39,10 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [fetchingComplete, setFetchingComplete] = useState(false);
   
-  // Refs para scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Fetch assets - removido 'loading' das dependências para evitar loop
   const fetchAssets = useCallback(async () => {
     if (fetchingComplete) return;
     
@@ -57,11 +55,9 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         .select('*')
         .eq('is_active', true);
 
-      // Para stickers: excluir papel de parede
       if (type === 'stickers') {
         query = query.not('category', 'eq', 'Papel de Parede');
       } else {
-        // Para backgrounds: só papel de parede ou backgrounds específicos
         query = query.like('file_path', '%bg_%');
       }
       
@@ -93,11 +89,9 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     }
   }, [type, fetchingComplete]);
 
-  // Assets filtrados e exibidos
   const { filteredAssets, displayedAssets, hasMore } = useMemo(() => {
     let filtered = allAssets;
     
-    // Filtro por categoria (usando nomes corretos da base)
     if (selectedCategory !== 'all') {
       const categoryMap: Record<string, string[]> = {
         'animados': ['Animados'],
@@ -114,7 +108,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       });
     }
     
-    // Filtro por busca
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(asset =>
@@ -133,14 +126,12 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     };
   }, [allAssets, selectedCategory, searchTerm, displayedCount]);
 
-  // Categorias disponíveis com contadores
   const availableCategories = useMemo(() => {
     const categories = new Map<string, number>();
     
     allAssets.forEach(asset => {
       const category = asset.category || 'outros';
       
-      // Mapear para nomes amigáveis
       let friendlyName = 'outros';
       switch (category) {
         case 'Animados': friendlyName = 'animados'; break;
@@ -157,20 +148,15 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     return categories;
   }, [allAssets]);
 
-  // Carregar mais itens
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     
     setIsLoadingMore(true);
-    
-    // Simular delay para UX
     await new Promise(resolve => setTimeout(resolve, 300));
-    
     setDisplayedCount(prev => prev + 30);
     setIsLoadingMore(false);
   }, [isLoadingMore, hasMore]);
 
-  // Setup intersection observer para scroll infinito
   useEffect(() => {
     if (!sentinelRef.current || !hasMore || loading) return;
 
@@ -197,7 +183,6 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     };
   }, [hasMore, isLoadingMore, loadMore, loading]);
 
-  // Carregar assets quando modal abre
   useEffect(() => {
     if (open && !fetchingComplete) {
       setSelectedCategory('all');
@@ -222,7 +207,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-7xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-volter text-xl">
             {title || (type === 'backgrounds' ? 'Selecionar Background' : '✨ Escolher Adesivo')}
@@ -250,85 +235,91 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 🔄 Limpar
               </Button>
             </div>
-            
-            <h4 className="text-sm font-volter">Categorias</h4>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              <Button
-                variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory('all')}
-                className="font-volter whitespace-nowrap"
-              >
-                Todos ({allAssets.length})
-              </Button>
-              {Array.from(availableCategories).map(([category, count]) => {
-                const categoryLabels: Record<string, string> = {
-                  'animados': '🎬 Animados',
-                  'icones': '🔰 Ícones', 
-                  'mockups': '🖼️ Mockups',
-                  'montaveis': '📌 Montáveis',
-                  'outros': '✨ Outros'
-                };
-                
-                return (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className="font-volter whitespace-nowrap"
-                  >
-                    {categoryLabels[category] || category} ({count})
-                  </Button>
-                );
-              })}
-            </div>
           </div>
         )}
 
-        {/* Container de Scroll Nativo */}
-        <div 
-          ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto border rounded-lg bg-background"
-          style={{ height: '60vh' }}
-        >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 p-4">
-            {loading && displayedAssets.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                <Loader2 className="animate-spin h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="text-muted-foreground font-volter">Carregando adesivos...</p>
+        {/* Layout principal: navegação à esquerda, grid à direita */}
+        <div className="flex-1 flex gap-4 min-h-0">
+          {/* Navegação de categorias à esquerda */}
+          {type === 'stickers' && (
+            <div className="w-48 flex-shrink-0 bg-muted/30 rounded-lg p-3">
+              <h4 className="text-sm font-volter mb-3 text-foreground">Categorias</h4>
+              <div className="space-y-2">
+                <Button
+                  variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setSelectedCategory('all')}
+                  className="w-full justify-start font-volter text-xs"
+                >
+                  Todos ({allAssets.length})
+                </Button>
+                {Array.from(availableCategories).map(([category, count]) => {
+                  const categoryLabels: Record<string, string> = {
+                    'animados': '🎬 Animados',
+                    'icones': '🔰 Ícones', 
+                    'mockups': '🖼️ Mockups',
+                    'montaveis': '📌 Montáveis',
+                    'outros': '✨ Outros'
+                  };
+                  
+                  return (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category)}
+                      className="w-full justify-start font-volter text-xs"
+                    >
+                      {categoryLabels[category] || category} ({count})
+                    </Button>
+                  );
+                })}
               </div>
-            ) : displayedAssets.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                <div className="text-muted-foreground font-volter">
-                  {searchTerm || selectedCategory !== 'all' 
-                    ? `Nenhum resultado encontrado` 
-                    : 'Nenhum adesivo encontrado'
-                  }
+            </div>
+          )}
+
+          {/* Grid de stickers à direita */}
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto border rounded-lg bg-background"
+            style={{ height: '60vh' }}
+          >
+            <div className="grid grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2 p-3">
+              {loading && displayedAssets.length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <Loader2 className="animate-spin h-8 w-8 mx-auto mb-2 text-primary" />
+                  <p className="text-muted-foreground font-volter">Carregando adesivos...</p>
                 </div>
-                {(searchTerm || selectedCategory !== 'all') && (
-                  <Button 
-                    variant="link" 
-                    onClick={handleClearFilters}
-                    className="mt-2 font-volter"
-                  >
-                    Limpar filtros
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <>
-                {displayedAssets.map((asset) => (
-                  <div
-                    key={asset.id}
-                    onClick={() => handleAssetClick(asset)}
-                    className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-all hover:scale-105 active:scale-95"
-                  >
-                    <div className="aspect-square p-2">
+              ) : displayedAssets.length === 0 ? (
+                <div className="col-span-full text-center py-8">
+                  <div className="text-muted-foreground font-volter">
+                    {searchTerm || selectedCategory !== 'all' 
+                      ? `Nenhum resultado encontrado` 
+                      : 'Nenhum adesivo encontrado'
+                    }
+                  </div>
+                  {(searchTerm || selectedCategory !== 'all') && (
+                    <Button 
+                      variant="link" 
+                      onClick={handleClearFilters}
+                      className="mt-2 font-volter"
+                    >
+                      Limpar filtros
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {displayedAssets.map((asset) => (
+                    <div
+                      key={asset.id}
+                      onClick={() => handleAssetClick(asset)}
+                      className="cursor-pointer group hover:scale-110 active:scale-95 transition-transform"
+                    >
                       <img
                         src={asset.url}
                         alt={asset.name}
-                        className="w-full h-full object-contain rounded group-hover:scale-110 transition-transform"
+                        className="w-full h-auto object-contain"
                         style={{ imageRendering: 'pixelated' }}
                         loading="lazy"
                         onError={(e) => {
@@ -336,36 +327,27 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                         }}
                       />
                     </div>
-                    <div className="p-2 border-t">
-                      <div className="text-xs font-volter truncate" title={asset.name}>
-                        {asset.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {asset.category || 'Sem categoria'}
-                      </div>
+                  ))}
+                  
+                  {hasMore && (
+                    <div ref={sentinelRef} className="col-span-full text-center py-4">
+                      {isLoadingMore ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                          <span className="text-sm text-muted-foreground font-volter">
+                            Carregando mais...
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground font-volter">
+                          📜 Role para carregar mais ({displayedAssets.length} de {filteredAssets.length})
+                        </p>
+                      )}
                     </div>
-                  </div>
-                ))}
-                
-                {/* Elemento sentinela para scroll infinito */}
-                {hasMore && (
-                  <div ref={sentinelRef} className="col-span-full text-center py-4">
-                    {isLoadingMore ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                        <span className="text-sm text-muted-foreground font-volter">
-                          Carregando mais...
-                        </span>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground font-volter">
-                        📜 Role para carregar mais ({displayedAssets.length} de {filteredAssets.length})
-                      </p>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
 

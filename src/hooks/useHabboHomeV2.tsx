@@ -280,13 +280,17 @@ export const useHabboHomeV2 = (username: string) => {
       // Calculate next z-index
       const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0), ...widgets.map(w => w.z_index || 0)) + 1;
       
+      // Centralizar na home (540px x 900px é o centro de 1080px x 1800px)
+      const centerX = 540;
+      const centerY = 900;
+      
       const payload = {
         user_id: habboData.id,
         sticker_id: stickerId,
         sticker_src: stickerSrc,
         category: category || 'outros',
-        x: Math.round(x),
-        y: Math.round(y),
+        x: centerX,
+        y: centerY,
         z_index: nextZ,
         rotation: 0,
         scale: 1.0
@@ -337,6 +341,18 @@ export const useHabboHomeV2 = (username: string) => {
         });
         return updated;
       });
+      
+      // Scroll para o sticker recém adicionado após um delay
+      setTimeout(() => {
+        const stickerElement = document.querySelector(`[data-sticker-id="${data.id}"]`);
+        if (stickerElement) {
+          stickerElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'center'
+          });
+        }
+      }, 100);
       
       console.log('✅ Sticker adicionado com sucesso!');
       return true;
