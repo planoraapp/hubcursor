@@ -12,7 +12,7 @@ interface EnhancedHomeToolbarProps {
   onSave: () => void;
   onBackgroundChange: (type: 'color' | 'cover' | 'repeat', value: string) => void;
   onStickerSelect: (stickerId: string, stickerSrc: string, category: string) => void;
-  onWidgetAdd: (widgetType: string) => void;
+  onWidgetAdd: (widgetType: string) => Promise<boolean>;
 }
 
 // 7 Pastel colors matching design system
@@ -78,9 +78,17 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
     setShowStickerSelector(false);
   };
 
-  const handleWidgetAdd = (widgetType: string) => {
-    onWidgetAdd(widgetType);
-    setShowWidgetSelector(false);
+  const handleWidgetAdd = async (widgetType: string): Promise<boolean> => {
+    try {
+      const success = await onWidgetAdd(widgetType);
+      if (success) {
+        setShowWidgetSelector(false);
+      }
+      return success;
+    } catch (error) {
+      console.error('❌ Erro ao adicionar widget:', error);
+      return false;
+    }
   };
 
   const handleCancel = () => {
