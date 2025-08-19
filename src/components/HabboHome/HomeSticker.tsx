@@ -123,15 +123,16 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       <img
         src={sticker.sticker_src}
         alt={`Sticker ${sticker.sticker_id}`}
-        className="object-contain select-none pointer-events-none"
+        className="select-none pointer-events-none"
         style={{ 
           imageRendering: 'pixelated',
+          // Manter proporções originais - não forçar tamanhos específicos
           width: 'auto',
           height: 'auto',
-          maxWidth: '150px',
-          maxHeight: '150px',
-          minWidth: '24px',
-          minHeight: '24px'
+          objectFit: 'contain',
+          // Permitir tamanhos naturais dos stickers
+          maxWidth: 'none',
+          maxHeight: 'none'
         }}
         draggable={false}
         onError={(e) => {
@@ -139,8 +140,9 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
           const target = e.target as HTMLImageElement;
           target.src = '/assets/frank.png';
         }}
-        onLoad={() => {
-          console.log(`✅ Sticker carregado com sucesso: ${sticker.sticker_src}`);
+        onLoad={(e) => {
+          const img = e.target as HTMLImageElement;
+          console.log(`✅ Sticker carregado: ${sticker.sticker_src} - Tamanho natural: ${img.naturalWidth}x${img.naturalHeight}`);
         }}
       />
       

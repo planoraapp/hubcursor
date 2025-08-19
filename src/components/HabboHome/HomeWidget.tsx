@@ -24,6 +24,7 @@ interface HabboData {
   motto: string;
   figure_string: string;
   is_online: boolean;
+  memberSince?: string; // Data de criação da conta do Habbo
 }
 
 interface HomeWidgetProps {
@@ -108,27 +109,39 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     };
   }, [isDragging, dragStart, onPositionChange, widget]);
 
-  const getCountryFlag = (hotel: string) => {
-    const flags: { [key: string]: string } = {
-      'br': '🇧🇷',
-      'com': '🇺🇸', 
-      'es': '🇪🇸',
-      'fr': '🇫🇷',
-      'de': '🇩🇪',
-      'it': '🇮🇹',
-      'fi': '🇫🇮',
-      'nl': '🇳🇱',
-      'tr': '🇹🇷'
+  const getCountryFlag = (hotel: string): string => {
+    const flagMap: { [key: string]: string } = {
+      'br': '/assets/flagbrazil.png',
+      'com': '/assets/flagcom.png',
+      'de': '/assets/flagdeus.png',
+      'es': '/assets/flagspain.png',
+      'fr': '/assets/flagfrance.png',
+      'it': '/assets/flagitaly.png',
+      'nl': '/assets/flagnetl.png',
+      'fi': '/assets/flafinland.png',
+      'tr': '/assets/flagtrky.png'
     };
-    return flags[hotel.toLowerCase()] || '🌍';
+    return flagMap[hotel.toLowerCase()] || '/assets/flagcom.png'; // fallback
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Janeiro 2024';
-    return new Date(dateString).toLocaleDateString('pt-BR', { 
-      month: 'long', 
-      year: 'numeric' 
-    });
+  const formatDate = (memberSince?: string) => {
+    if (!memberSince) return 'Janeiro 2024';
+    
+    try {
+      // API do Habbo retorna formato "2006-01-01T00:00:00.000+0000" 
+      const date = new Date(memberSince);
+      
+      if (isNaN(date.getTime())) {
+        return 'Janeiro 2024';
+      }
+      
+      return date.toLocaleDateString('pt-BR', { 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    } catch {
+      return 'Janeiro 2024';
+    }
   };
 
   const renderWidgetContent = () => {
@@ -197,13 +210,22 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                   <div className="space-y-1">
                     {/* Hotel with flag */}
                     <div className="flex items-center gap-1 text-xs text-gray-500 volter-font">
-                      <span>{getCountryFlag(habboData.hotel || 'br')}</span>
+                      <img 
+                        src={getCountryFlag(habboData.hotel || 'br')}
+                        alt={`${habboData.hotel} flag`}
+                        className="w-4 h-3 object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/assets/flagcom.png';
+                        }}
+                      />
                       <span>{(habboData.hotel || 'br').toUpperCase()}</span>
                     </div>
                     
-                    {/* Member since */}
+                    {/* Member since - usar dados reais da API */}
                     <div className="text-xs text-gray-500 volter-font">
-                      📅 Membro desde {formatDate()}
+                      📅 Membro desde {formatDate(habboData?.memberSince)}
                     </div>
 
                     {/* Status badge */}

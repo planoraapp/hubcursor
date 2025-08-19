@@ -4,7 +4,7 @@ interface HabboUser {
   motto: string;
   figureString: string;
   uniqueId: string;
-  memberSince: string;
+  memberSince: string; // Data real da criação da conta
   profileVisible: boolean;
   lastWebAccess: string;
   selectedBadges: Array<{
@@ -46,10 +46,12 @@ export const getUserByName = async (username: string): Promise<HabboUser | null>
       if (response.ok) {
         const data = await response.json();
         if (data && data.name) {
-          console.log(`✅ [HabboAPI] Found ${username} on ${domain}`);
+          console.log(`✅ [HabboAPI] Found ${username} on ${domain}`, data);
           return {
             ...data,
-            uniqueId: data.uniqueId || `hh${domain.replace('.', '')}-${data.name.toLowerCase()}`
+            uniqueId: data.uniqueId || `hh${domain.replace('.', '')}-${data.name.toLowerCase()}`,
+            // Garantir que memberSince está presente com dados reais da API
+            memberSince: data.memberSince || data.registeredDate || '2006-01-01T00:00:00.000+0000'
           };
         }
       } else if (response.status === 404) {

@@ -56,29 +56,42 @@ export const StarRating: React.FC<StarRatingProps> = ({
 
   return (
     <div 
-      className={`flex items-center gap-1 ${className}`}
+      className={`flex items-center justify-center gap-1 ${className}`}
       onMouseLeave={handleMouseLeave}
     >
       {[1, 2, 3, 4, 5].map((starIndex) => (
         <div
           key={starIndex}
-          className={`relative ${!readonly ? 'cursor-pointer' : ''}`}
+          className={`relative ${!readonly ? 'cursor-pointer hover:scale-110' : ''} transition-transform`}
           onClick={() => handleStarClick(starIndex)}
           onMouseEnter={() => handleStarHover(starIndex)}
         >
+          {/* Base star (sempre visível em opacidade baixa) */}
           <img
             src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/starrating.png"
             alt={`Estrela ${starIndex}`}
-            className={`${sizeClasses[size]} transition-opacity duration-200`}
+            className={`${sizeClasses[size]} transition-all duration-200`}
+            style={{ 
+              opacity: 0.3,
+              imageRendering: 'pixelated'
+            }}
+          />
+          
+          {/* Filled star (sobreposta com opacity baseada no rating) */}
+          <img
+            src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/starrating.png"
+            alt={`Estrela preenchida ${starIndex}`}
+            className={`${sizeClasses[size]} absolute top-0 left-0 transition-all duration-200`}
             style={{ 
               opacity: getStarOpacity(starIndex),
-              imageRendering: 'pixelated'
+              imageRendering: 'pixelated',
+              filter: getStarOpacity(starIndex) > 0.5 ? 'brightness(1.2) saturate(1.3)' : 'none'
             }}
           />
         </div>
       ))}
       {!readonly && (
-        <span className="ml-2 text-sm text-gray-600">
+        <span className="ml-2 text-sm text-gray-600 font-volter">
           {hoverRating || rating}/5
         </span>
       )}

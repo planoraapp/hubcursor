@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 
 // Cores disponíveis para o slider
@@ -54,11 +53,20 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
       setLoading(true);
       console.log('🔍 Buscando imagens de fundo...');
       
+      // Buscar TODOS os backgrounds incluindo os específicos mencionados
       const { data, error } = await supabase
         .from('home_assets')
         .select('*')
         .eq('is_active', true)
-        .or('category.eq.Background,category.eq.Backgrounds,category.eq.Papel de Parede,name.ilike.%bg%,name.ilike.%background%,name.ilike.%wallpaper%');
+        .or(`
+          category.eq.Background,
+          category.eq.Backgrounds,
+          category.eq.Papel de Parede,
+          name.ilike.%bg%,
+          name.ilike.%background%,
+          name.ilike.%wallpaper%,
+          name.in.(17,28,ABRIL-DIADOJORNALISTA,AU_Australia_Campaign_bg_01_v1,bg_bathroom_tile,bg_colour_01,bg_colour_04,bg_colour_05,bg_colour_07,bg_colour_08,bg_colour_09,bg_colour_11,bg_colour_15,bg_generic_pattern_purple,bg_home_4,bg_image_submarine,bg_pattern_abstract1,bg_pattern_bobbaskulls1,bg_pattern_carpants,bg_pattern_cars,bg_pattern_clouds,bg-awards,bg35,bganimated_rain,bgdisco)
+        `);
 
       if (error) {
         console.error('❌ Erro ao buscar backgrounds:', error);
@@ -68,9 +76,12 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
 
       console.log(`✅ Backgrounds encontrados (${data?.length || 0})`);
 
+      // Construir URLs corretas considerando os buckets home-assets e backgroundshome  
       const assetsWithUrls = (data || []).map((asset) => ({
         ...asset,
-        url: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
+        url: asset.file_path.startsWith('backgroundshome/') 
+          ? `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
+          : `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/${asset.bucket_name}/${asset.file_path}`
       }));
 
       setBackgroundImages(assetsWithUrls);
@@ -114,78 +125,70 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="colors" className="flex-1 min-h-0 flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="colors" className="font-volter">Cores Sólidas</TabsTrigger>
-            <TabsTrigger value="images" className="font-volter">Imagens de Fundo</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="colors" className="flex-1 min-h-0 mt-4">
-            <div className="space-y-4">
-              <h3 className="text-lg font-volter">Selecione uma Cor</h3>
-              
-              {/* Slider horizontal de cores */}
-              <div className="w-full overflow-x-auto pb-2">
-                <div className="flex gap-2 min-w-fit">
-                  {AVAILABLE_COLORS.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => handleColorSelect(color.value)}
-                      className="flex-shrink-0 flex flex-col items-center gap-2 p-2 rounded-lg border-2 border-transparent hover:border-primary transition-all hover:scale-105 bg-card min-w-[80px]"
-                      title={color.name}
-                    >
-                      <div 
-                        className="w-16 h-16 rounded-md border-2 border-white shadow-sm"
-                        style={{ backgroundColor: color.value }}
-                      />
-                      <span className="font-volter text-xs text-center leading-tight">{color.name}</span>
-                    </button>
-                  ))}
-                </div>
+        {/* Layout unificado: cores à esquerda, imagens à direita */}
+        <div className="flex gap-6 flex-1 min-h-0">
+          {/* Seção de cores - vertical à esquerda */}
+          <div className="w-64 flex-shrink-0">
+            <h3 className="text-lg font-volter mb-4">Cores Sólidas</h3>
+            <ScrollArea className="h-96">
+              <div className="space-y-2">
+                {AVAILABLE_COLORS.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => handleColorSelect(color.value)}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg border-2 border-transparent hover:border-primary transition-all hover:scale-[1.02] bg-card"
+                    title={color.name}
+                  >
+                    <div 
+                      className="w-12 h-12 rounded-md border-2 border-white shadow-sm flex-shrink-0"
+                      style={{ backgroundColor: color.value }}
+                    />
+                    <span className="font-volter text-sm text-left">{color.name}</span>
+                  </button>
+                ))}
               </div>
-            </div>
-          </TabsContent>
+            </ScrollArea>
+          </div>
 
-          <TabsContent value="images" className="flex-1 min-h-0 mt-4">
-            <div className="space-y-4 flex flex-col min-h-0">
-              <h3 className="text-lg font-volter">Imagens de Fundo</h3>
-              
-              <ScrollArea className="flex-1 min-h-0">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2">
-                  {loading ? (
-                    <div className="col-span-full text-center py-8">
-                      <div className="text-muted-foreground">Carregando imagens...</div>
-                    </div>
-                  ) : backgroundImages.length === 0 ? (
-                    <div className="col-span-full text-center py-8">
-                      <div className="text-muted-foreground">Nenhuma imagem encontrada</div>
-                    </div>
-                  ) : (
-                    backgroundImages.map((asset) => (
-                      <div
-                        key={asset.id}
-                        onClick={() => handleImageSelect(asset)}
-                        className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
-                      >
-                        <div className="aspect-square p-2">
-                          <img
-                            src={asset.url}
-                            alt={asset.name}
-                            className="w-full h-full object-cover rounded group-hover:scale-105 transition-transform"
-                            style={{ imageRendering: 'pixelated' }}
-                          />
-                        </div>
-                        <div className="p-2 border-t">
-                          <div className="text-xs font-medium truncate font-volter">{asset.name}</div>
-                        </div>
+          {/* Seção de imagens - grid à direita (maior) */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            <h3 className="text-lg font-volter mb-4">Imagens de Fundo</h3>
+            
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 p-2">
+                {loading ? (
+                  <div className="col-span-full text-center py-8">
+                    <div className="text-muted-foreground">Carregando imagens...</div>
+                  </div>
+                ) : backgroundImages.length === 0 ? (
+                  <div className="col-span-full text-center py-8">
+                    <div className="text-muted-foreground">Nenhuma imagem encontrada</div>
+                  </div>
+                ) : (
+                  backgroundImages.map((asset) => (
+                    <div
+                      key={asset.id}
+                      onClick={() => handleImageSelect(asset)}
+                      className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors aspect-square"
+                    >
+                      <div className="w-full h-full p-2">
+                        <img
+                          src={asset.url}
+                          alt={asset.name}
+                          className="w-full h-full object-cover rounded group-hover:scale-105 transition-transform"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
                       </div>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </TabsContent>
-        </Tabs>
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-1">
+                        <div className="text-xs font-medium truncate font-volter">{asset.name}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
 
         <div className="flex justify-end pt-4 border-t">
           <Button

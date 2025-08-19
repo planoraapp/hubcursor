@@ -123,24 +123,23 @@ const HabboHomeV2: React.FC = () => {
         <SidebarInset className="flex-1 ml-0 transition-all duration-300">
           <main className="flex-1 bg-repeat relative" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             
-            {/* Botão de edição fixo no canto superior esquerdo - rotacionado */}
+            {/* Botão de edição posicionado junto ao toolbar para não sobrepor sidebar */}
             {isOwner && (
-              <div className="fixed top-4 left-4 z-50">
+              <div className="absolute top-2 right-4 z-50">
                 <button
                   onClick={() => setIsEditMode(!isEditMode)}
                   className={`
-                    w-12 h-12 bg-transparent hover:bg-black/10 rounded-full
-                    border-2 border-transparent hover:border-blue-400/50
+                    w-12 h-12 bg-white/90 hover:bg-white rounded-full shadow-lg
+                    border-2 border-blue-400/50 hover:border-blue-600
                     transition-all duration-300 ease-out
-                    ${isEditMode ? 'scale-110 brightness-110' : 'hover:scale-105'}
+                    ${isEditMode ? 'scale-110 brightness-110 bg-blue-50' : 'hover:scale-105'}
                   `}
                   title={isEditMode ? 'Sair do modo edição' : 'Entrar no modo edição'}
-                  style={{ transform: 'scaleX(-1)' }}
                 >
                   <img
                     src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png"
                     alt="Editar Home"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain p-1"
                     style={{ imageRendering: 'pixelated' }}
                   />
                 </button>
