@@ -42,21 +42,34 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     { id: 'decorative', label: 'Decorativos' }
   ];
 
-  // Fetch assets from Supabase
   const fetchAssets = async () => {
-    setLoading(true);
+    if (!open) return;
+    
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      console.log(`🔍 Buscando assets do tipo: ${type}, categoria: ${selectedCategory}`);
+      
+      let query = supabase
         .from('home_assets')
         .select('*')
-        .eq('category', type)
-        .eq('is_active', true)
-        .order('name');
+        .eq('is_active', true);
+
+      // Filter by correct asset categories
+      if (type === 'backgrounds') {
+        query = query.or('category.eq.Background,category.eq.Backgrounds,category.eq.Papel de Parede,name.ilike.%bg%,name.ilike.%background%,name.ilike.%wallpaper%');
+      } else if (type === 'stickers') {
+        query = query.or('category.eq.Sticker,category.eq.Stickers,category.eq.Adesivo,name.ilike.%sticker%,name.ilike.%adesivo%');
+      }
+
+      const { data, error } = await query;
 
       if (error) {
-        console.error('Error fetching assets:', error);
+        console.error('❌ Erro ao buscar assets:', error);
+        setAssets([]);
         return;
       }
+
+      console.log(`✅ Assets encontrados (${data?.length || 0}):`, data?.map(a => ({name: a.name, category: a.category})));
 
       let filteredData = data || [];
       
@@ -64,12 +77,19 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       if (type === 'stickers' && selectedCategory !== 'todos') {
         filteredData = data?.filter(asset => {
           const name = asset.name.toLowerCase();
+          const category = asset.category?.toLowerCase() || '';
+          
           switch(selectedCategory) {
-            case 'mockup': return name.includes('mockup') || name.includes('mock');
-            case 'icons': return name.includes('icon') || name.includes('ico');
-            case 'animated': return name.includes('anim') || name.includes('gif');
-            case 'decorative': return name.includes('decor') || name.includes('decoration');
-            default: return true;
+            case 'mockup': 
+              return name.includes('mockup') || name.includes('mock') || category.includes('mockup');
+            case 'icons': 
+              return name.includes('icon') || name.includes('ico') || category.includes('icon');
+            case 'animated': 
+              return name.includes('anim') || name.includes('gif') || category.includes('animated') || name.includes('mov');
+            case 'decorative': 
+              return name.includes('decor') || name.includes('decoration') || category.includes('decorative') || name.includes('ornament');
+            default: 
+              return true;
           }
         }) || [];
       }
@@ -80,9 +100,11 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         src: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
       }));
 
+      console.log(`✅ Assets processados (${assetsWithUrls.length}):`, assetsWithUrls.map(a => a.name));
       setAssets(assetsWithUrls);
-    } catch (error) {
-      console.error('Error in fetchAssets:', error);
+    } catch (err) {
+      console.error('❌ Erro inesperado ao buscar assets:', err);
+      setAssets([]);
     } finally {
       setLoading(false);
     }

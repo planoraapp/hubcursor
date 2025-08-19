@@ -283,10 +283,10 @@ const EnhancedHabboHome: React.FC = () => {
       <EnhancedHomeToolbar
         isEditMode={isEditMode}
         isOwner={isOwner}
-        onEditModeChange={setIsEditMode}
+        onToggleEditMode={() => setIsEditMode(!isEditMode)}
         onSave={handleSave}
-        onBackgroundChange={handleBackgroundChange}
-        onStickerAdd={handleStickerAdd}
+        onBackgroundChange={(type, value) => handleBackgroundChange({ type: type === 'cover' || type === 'repeat' ? 'image' : 'color', value })}
+        onStickerSelect={handleStickerAdd}
         onWidgetAdd={handleWidgetAdd}
       />
 

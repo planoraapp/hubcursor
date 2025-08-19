@@ -67,34 +67,44 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   }, [isEditMode, isOwner, widget.x, widget.y, widget.widget_type]);
 
   React.useEffect(() => {
+    let animationId: number;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
-        const deltaX = e.clientX - dragStart.x;
-        const deltaY = e.clientY - dragStart.y;
-        const newX = Math.max(0, Math.min(1080 - widget.width, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(1800 - widget.height, dragStart.elementY + deltaY));
-        
-        onPositionChange(widget.widget_type, newX, newY);
+        // Use requestAnimationFrame for smoother updates
+        cancelAnimationFrame(animationId);
+        animationId = requestAnimationFrame(() => {
+          const deltaX = e.clientX - dragStart.x;
+          const deltaY = e.clientY - dragStart.y;
+          const newX = Math.max(0, Math.min(1080 - (widget.width || 300), dragStart.elementX + deltaX));
+          const newY = Math.max(0, Math.min(1800 - (widget.height || 200), dragStart.elementY + deltaY));
+          
+          onPositionChange(widget.widget_type, newX, newY);
+        });
       }
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
+        cancelAnimationFrame(animationId);
         console.log(`✅ Drag completo do widget ${widget.widget_type}`);
         setIsDragging(false);
       }
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'grabbing';
     }
 
     return () => {
+      cancelAnimationFrame(animationId);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'auto';
+      document.body.style.cursor = 'auto';
     };
   }, [isDragging, dragStart, onPositionChange, widget]);
 

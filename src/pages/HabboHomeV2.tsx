@@ -69,30 +69,29 @@ const HabboHomeV2: React.FC = () => {
     }
   };
 
-  // Handle background change with intelligent logic
-  const handleBackgroundChange = async (bg: { type: 'color' | 'image'; value: string }) => {
-    console.log('🎨 Mudando background:', bg);
+  // Handle background change with new interface
+  const handleBackgroundChange = async (type: 'color' | 'cover' | 'repeat', value: string) => {
+    console.log('🎨 Mudando background:', { type, value });
     
-    if (bg.type === 'image') {
-      // Check image dimensions to determine background behavior
-      const img = new Image();
-      img.onload = async () => {
-        const isSmall = img.width < 200 || img.height < 200;
-        const backgroundType = isSmall ? 'repeat' : 'cover';
-        await updateBackground(backgroundType, bg.value);
-        toast({
-          title: "Fundo alterado!",
-          description: `O fundo da sua home foi alterado (${isSmall ? 'padrão repetido' : 'imagem única'}).`
-        });
-      };
-      img.src = bg.value;
-    } else {
-      await updateBackground('color', bg.value);
-      toast({
-        title: "Fundo alterado!",
-        description: "A cor de fundo da sua home foi alterada."
-      });
+    await updateBackground(type, value);
+    
+    let description = '';
+    switch(type) {
+      case 'color':
+        description = 'A cor de fundo da sua home foi alterada.';
+        break;
+      case 'cover':
+        description = 'A imagem de fundo foi aplicada (cobertura completa).';
+        break;
+      case 'repeat':
+        description = 'A imagem de fundo foi aplicada (padrão repetido).';
+        break;
     }
+    
+    toast({
+      title: "Fundo alterado!",
+      description
+    });
   };
 
   // Handle save with real functionality
@@ -167,17 +166,7 @@ const HabboHomeV2: React.FC = () => {
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
           <main className="flex-1 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-            {/* Toolbar */}
-            <EnhancedHomeToolbar
-              isEditMode={isEditMode}
-              isOwner={isOwner}
-              onEditModeChange={setIsEditMode}
-              onSave={handleSave}
-              onBackgroundChange={handleBackgroundChange}
-              onStickerAdd={handleStickerAdd}
-              onWidgetAdd={addWidget}
-            />
-
+            
             {/* Header - Simplified */}
             <div className="p-4">
               <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
@@ -187,6 +176,19 @@ const HabboHomeV2: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
               </Card>
+
+              {/* Enhanced Toolbar - Below Header */}
+              <div className="relative mb-6">
+                <EnhancedHomeToolbar
+                  isEditMode={isEditMode}
+                  isOwner={isOwner}
+                  onToggleEditMode={() => setIsEditMode(!isEditMode)}
+                  onSave={handleSave}
+                  onBackgroundChange={handleBackgroundChange}
+                  onStickerSelect={handleStickerAdd}
+                  onWidgetAdd={addWidget}
+                />
+              </div>
 
               {/* Home Canvas with new dimensions */}
               <HomeCanvas

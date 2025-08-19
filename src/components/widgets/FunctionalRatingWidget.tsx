@@ -193,11 +193,33 @@ export const FunctionalRatingWidget: React.FC<FunctionalRatingWidgetProps> = ({
             <div className="border-t pt-3">
               {isLoggedIn ? (
                 <div>
-                  <div className="text-sm text-foreground volter-font mb-2">
+                <div className="text-sm text-foreground volter-font mb-2">
                     {userRating > 0 ? 'Sua avaliação:' : 'Avaliar esta home:'}
                   </div>
-                  <div className="flex justify-center">
-                    {renderStars(userRating || hoverRating, true)}
+                  <div className="flex justify-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const filled = userRating >= star || hoverRating >= star;
+                      
+                      return (
+                        <div 
+                          key={star}
+                          className="relative cursor-pointer"
+                          onClick={() => handleRating(star)}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onMouseLeave={() => setHoverRating(0)}
+                        >
+                          <img
+                            src="/assets/home/starrating.png"
+                            alt={`Estrela ${star}`}
+                            className="w-7 h-7"
+                            style={{ 
+                              imageRendering: 'pixelated',
+                              opacity: filled ? 1 : 0.3
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                   {userRating > 0 && (
                     <div className="text-xs text-muted-foreground volter-font mt-1">

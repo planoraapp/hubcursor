@@ -55,34 +55,44 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
   }, [sticker.id, onRemove]);
 
   React.useEffect(() => {
+    let animationId: number;
+    
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
-        const deltaX = e.clientX - dragStart.x;
-        const deltaY = e.clientY - dragStart.y;
-        const newX = Math.max(0, Math.min(1080 - 100, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(1800 - 100, dragStart.elementY + deltaY));
-        
-        onPositionChange(sticker.id, newX, newY);
+        // Use requestAnimationFrame for smoother updates
+        cancelAnimationFrame(animationId);
+        animationId = requestAnimationFrame(() => {
+          const deltaX = e.clientX - dragStart.x;
+          const deltaY = e.clientY - dragStart.y;
+          const newX = Math.max(0, Math.min(1080 - 100, dragStart.elementX + deltaX));
+          const newY = Math.max(0, Math.min(1800 - 100, dragStart.elementY + deltaY));
+          
+          onPositionChange(sticker.id, newX, newY);
+        });
       }
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
+        cancelAnimationFrame(animationId);
         console.log(`✅ Drag completo do sticker ${sticker.sticker_id}`);
         setIsDragging(false);
       }
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'grabbing';
     }
 
     return () => {
+      cancelAnimationFrame(animationId);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'auto';
+      document.body.style.cursor = 'auto';
     };
   }, [isDragging, dragStart, onPositionChange, sticker]);
 
