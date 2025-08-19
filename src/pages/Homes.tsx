@@ -1,247 +1,212 @@
-
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { Card, CardContent } from '@/components/ui/card';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Home, Plus, ExternalLink, Users, Camera, Sparkles, Search } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Search, User, Home, Calendar, MapPin, Star, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-const Homes = () => {
-  const { habboAccount } = useAuth();
+interface HabboUser {
+  id: string;
+  habbo_name: string;
+  hotel: string;
+  is_online: boolean;
+  motto: string;
+  member_since: string;
+  profile_visible: boolean;
+  last_access_time: string;
+}
+
+const Homes: React.FC = () => {
   const navigate = useNavigate();
-  const [searchUsername, setSearchUsername] = useState('');
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState<HabboUser[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchInitiated, setSearchInitiated] = useState(false);
 
-  const handleSearchHome = () => {
-    if (searchUsername.trim()) {
-      navigate(`/enhanced-home/${searchUsername.trim()}`);
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('profile_visible', true)
+        .order('habbo_name', { ascending: true });
+
+      if (error) {
+        toast.error('Erro ao buscar usuários');
+        return;
+      }
+
+      setUsers(data);
+    } catch (error) {
+      toast.error('Erro ao buscar usuários');
     }
   };
 
-  const recentHomes = [
-    {
-      id: 1,
-      owner: habboAccount?.habbo_name || 'Beebop',
-      title: 'Minha Home Personalizada',
-      description: 'Home com widgets exclusivos e decoração única',
-      imageUrl: '/assets/bghabbohub.png',
-      visitors: 125,
-      widgets: 8,
-      isOnline: true
-    },
-    {
-      id: 2,
-      owner: habboAccount?.habbo_name || 'Beebop',
-      title: 'Versão 2.0 da Home',
-      description: 'Nova versão com mais funcionalidades',
-      imageUrl: '/assets/bghabbohub.png',
-      visitors: 89,
-      widgets: 12,
-      isOnline: false
-    },
-    {
-      id: 3,
-      owner: habboAccount?.habbo_name || 'Beebop',
-      title: 'Estilo Moderno',
-      description: 'Design clean e contemporâneo',
-      imageUrl: '/assets/bghabbohub.png',
-      visitors: 234,
-      widgets: 6,
-      isOnline: true
+  const handleSearch = async () => {
+    if (searchTerm.trim()) {
+      setLoading(true);
+      setSearchInitiated(true);
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .ilike('habbo_name', `%${searchTerm}%`)
+        .order('habbo_name', { ascending: true });
+
+      if (error) {
+        toast.error('Erro ao buscar usuários');
+        return;
+      }
+
+      setUsers(data);
+      setLoading(false);
     }
-  ];
+  };
+
+  const filteredUsers = users.filter((user) => user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-          </header>
-          <main 
-            className="flex-1 relative bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
-          >
-            {/* Background overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 via-purple-900/10 to-blue-900/30"></div>
-            
-            <div className="relative z-10 p-8">
-              <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-12">
-                  <h1 className="text-5xl font-bold text-white mb-4 volter-font drop-shadow-lg">
-                    🏠 Habbo Homes
-                  </h1>
-                  <p className="text-xl text-white/90 volter-font drop-shadow">
-                    Personalize sua casa virtual e visite as homes dos seus amigos
-                  </p>
-                </div>
+          <main className="flex-1 p-8 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+            <div className="max-w-7xl mx-auto">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-white mb-4 volter-font drop-shadow-lg">
+                  🏠 Habbo Homes
+                </h1>
+                <p className="text-lg text-white/90 volter-font drop-shadow">
+                  Explore as homes dos usuários do HabboHub
+                </p>
+              </div>
 
-                {/* Action Cards */}
-                <div className="grid md:grid-cols-2 gap-8 mb-12">
-                  {/* Create/View My Home Card */}
-                  <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-8 text-center">
-                      <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                        <Home className="w-10 h-10 text-white" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
-                        {habboAccount ? 'Minha Home' : 'Fazer Login'}
-                      </h2>
-                      <p className="text-gray-600 mb-6 volter-font">
-                        {habboAccount 
-                          ? 'Customize sua home pessoal com widgets, stickers e backgrounds únicos'
-                          : 'Faça login para criar e personalizar sua home'
-                        }
-                      </p>
-                      {habboAccount ? (
-                        <Link to={`/enhanced-home/${habboAccount.habbo_name}`}>
-                          <Button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-8 py-3 text-lg volter-font">
-                            <Plus className="w-5 h-5 mr-2" />
-                            Ver Minha Home
-                          </Button>
-                        </Link>
-                      ) : (
-                        <Link to="/login">
-                          <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-8 py-3 text-lg volter-font">
-                            Fazer Login
-                          </Button>
-                        </Link>
-                      )}
-                    </CardContent>
-                  </Card>
+              {/* Search Section */}
+              <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
+                  <CardTitle className="text-xl volter-font habbo-text flex items-center gap-2">
+                    <Search className="w-5 h-5" />
+                    Buscar Usuários
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex gap-4">
+                    <Input
+                      type="text"
+                      placeholder="Digite o nome do usuário Habbo..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                      className="flex-1 border-2 border-gray-300 focus:border-purple-500 volter-font"
+                    />
+                    <Button 
+                      onClick={handleSearch}
+                      disabled={loading}
+                      className="habbo-button-purple volter-font"
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      {loading ? 'Buscando...' : 'Buscar'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-                  {/* Search Homes Card */}
-                  <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300">
-                    <CardContent className="p-8 text-center">
-                      <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                        <Search className="w-10 h-10 text-white" />
-                      </div>
-                      <h2 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
-                        Buscar Homes
-                      </h2>
-                      <p className="text-gray-600 mb-6 volter-font">
-                        Digite o nome de um usuário para visitar sua Habbo Home
-                      </p>
-                      <div className="flex gap-2 mb-4">
-                        <Input
-                          placeholder="Nome do usuário..."
-                          value={searchUsername}
-                          onChange={(e) => setSearchUsername(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSearchHome()}
-                          className="volter-font"
-                        />
-                        <Button
-                          onClick={handleSearchHome}
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white volter-font"
-                        >
-                          <Search className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Recent Homes */}
-                <div className="mb-8">
-                  <h2 className="text-3xl font-bold text-white mb-8 text-center volter-font drop-shadow-lg">
-                    🏡 Homes Recentes
-                  </h2>
-                  
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {recentHomes.map((home) => (
-                      <Card key={home.id} className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 overflow-hidden">
-                        <div className="relative">
-                          <div className="w-full h-32 bg-gradient-to-br from-blue-400 to-purple-500 flex items-end justify-center p-4">
-                            <div className="text-center">
-                              <div className="bg-white/90 rounded-lg p-2 mb-2 inline-block">
-                                <span className="text-2xl">🏠</span>
-                              </div>
-                              <div className="text-white text-xs volter-font">
-                                Miniatura da Home
-                              </div>
+              {/* Users Grid */}
+              {searchInitiated && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredUsers.map((user) => (
+                    <Card key={user.id} className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105">
+                      <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-b-2 border-black p-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
+                            alt={`Avatar de ${user.habbo_name}`}
+                            className="w-12 h-12 object-contain bg-white/20 rounded border border-white/30"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg volter-font habbo-text truncate">
+                              {user.habbo_name}
+                            </CardTitle>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge className={`text-xs volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
+                                {user.is_online ? 'Online' : 'Offline'}
+                              </Badge>
+                              <Badge className="bg-white/20 text-white text-xs volter-font">
+                                {user.hotel?.toUpperCase() || 'BR'}
+                              </Badge>
                             </div>
-                          </div>
-                          <div className="absolute top-3 right-3">
-                            <Badge variant={home.isOnline ? "default" : "secondary"} className="volter-font">
-                              {home.isOnline ? 'Online' : 'Offline'}
-                            </Badge>
                           </div>
                         </div>
+                      </CardHeader>
+                      
+                      <CardContent className="p-4 space-y-3">
+                        {user.motto && (
+                          <div className="flex items-start gap-2">
+                            <Star className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-sm text-gray-700 volter-font italic">
+                              "{user.motto}"
+                            </p>
+                          </div>
+                        )}
                         
-                        <CardContent className="p-6">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-sm font-bold volter-font">
-                                {home.owner[0]}
-                              </span>
-                            </div>
-                            <span className="font-bold text-gray-800 volter-font">{home.owner}</span>
+                        {user.member_since && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <span className="text-xs text-gray-600 volter-font">
+                              Membro desde: {new Date(user.member_since).toLocaleDateString('pt-BR')}
+                            </span>
                           </div>
-                          
-                          <h3 className="text-xl font-bold text-gray-800 mb-2 volter-font">
-                            {home.title}
-                          </h3>
-                          <p className="text-gray-600 text-sm mb-4 volter-font">
-                            {home.description}
-                          </p>
-                          
-                          <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                            <div className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              <span className="volter-font">{home.visitors}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Sparkles className="w-4 h-4" />
-                              <span className="volter-font">{home.widgets} widgets</span>
-                            </div>
-                          </div>
-                          
-                          <Link to={`/enhanced-home/${home.owner}`}>
-                            <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white volter-font">
-                              <Camera className="w-4 h-4 mr-2" />
-                              Visitar Home
-                            </Button>
-                          </Link>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-red-500" />
+                          <span className="text-xs text-gray-600 volter-font">
+                            Hotel: {user.hotel?.toUpperCase() || 'Brasil'}
+                          </span>
+                        </div>
+                        
+                        <Button 
+                          onClick={() => navigate(`/homes/${user.habbo_name}`)}
+                          className="w-full habbo-button-blue volter-font"
+                        >
+                          <Home className="w-4 h-4 mr-2" />
+                          Ver Home
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
+              )}
 
-                {/* Tips Card */}
-                <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
-                  <CardContent className="p-8">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 volter-font">
-                      💡 Dicas para sua Home
+              {searchInitiated && filteredUsers.length === 0 && !loading && (
+                <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                  <CardContent className="p-8 text-center">
+                    <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-700 mb-2 volter-font">
+                      Nenhum usuário encontrado
                     </h3>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-bold text-gray-700 mb-2 volter-font">Personalização</h4>
-                        <ul className="text-gray-600 space-y-1 volter-font text-sm">
-                          <li>• Use widgets para mostrar informações pessoais</li>
-                          <li>• Adicione stickers para decorar sua home</li>
-                          <li>• Experimente diferentes backgrounds</li>
-                          <li>• Organize elementos com drag & drop</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-gray-700 mb-2 volter-font">Interação</h4>
-                        <ul className="text-gray-600 space-y-1 volter-font text-sm">
-                          <li>• Permita que amigos deixem recados</li>
-                          <li>• Compartilhe sua home com outros usuários</li>
-                          <li>• Mantenha sua home sempre atualizada</li>
-                          <li>• Participe de concursos de homes</li>
-                        </ul>
-                      </div>
-                    </div>
+                    <p className="text-gray-600 volter-font">
+                      Tente buscar por um nome diferente ou verifique a ortografia.
+                    </p>
                   </CardContent>
                 </Card>
-              </div>
+              )}
             </div>
           </main>
         </SidebarInset>

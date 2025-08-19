@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
 import { HomeToolbarV2 } from '@/components/HabboHome/HomeToolbarV2';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 const HabboHomeV2: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -118,9 +117,6 @@ const HabboHomeV2: React.FC = () => {
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-            </header>
             <main className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
               <div className="text-center">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
@@ -141,9 +137,6 @@ const HabboHomeV2: React.FC = () => {
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
-            </header>
             <main className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
               <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
@@ -171,9 +164,6 @@ const HabboHomeV2: React.FC = () => {
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-          </header>
           <main className="flex-1 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             {/* Toolbar */}
             <HomeToolbarV2

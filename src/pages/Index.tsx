@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card } from '@/components/ui/card';
 
 const Index = () => {
@@ -10,9 +10,6 @@ const Index = () => {
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-          </header>
           <main className="flex-1 p-8 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8">

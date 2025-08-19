@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
 import { HotelPhotoFeedColumn } from '@/components/console2/HotelPhotoFeedColumn';
 import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
@@ -14,18 +14,15 @@ const Console: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-gradient-to-br from-[#1a365d] via-[#2d3748] to-[#1a202c] flex">
+      <div className="min-h-screen bg-repeat flex" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="ml-4">
-              <h1 className="text-2xl font-bold text-white mb-2">Console do Habbo</h1>
-              <p className="text-white/70">Gerencie sua experiência no HabboHub</p>
-            </div>
-          </header>
-
           <div className="p-4 overflow-hidden">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-white mb-2 volter-font drop-shadow-lg">Console do Habbo</h1>
+              <p className="text-white/70 volter-font drop-shadow">Gerencie sua experiência no HabboHub</p>
+            </div>
+
             {/* Layout Responsivo - 4 colunas com scroll horizontal no mobile */}
             <div className="flex gap-4 h-[calc(100vh-10rem)] overflow-x-auto overflow-y-hidden">
               {/* Left Column - My Account */}
