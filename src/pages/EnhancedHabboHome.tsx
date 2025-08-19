@@ -107,13 +107,29 @@ const EnhancedHabboHome: React.FC = () => {
     }
   }, [updateBackground, toast]);
 
-  // Handle widget addition
-  const handleWidgetAdd = useCallback((widgetType: string) => {
+  // Handle widget addition - Updated to return Promise<boolean>
+  const handleWidgetAdd = useCallback(async (widgetType: string): Promise<boolean> => {
     console.log('📦 Adicionando widget:', widgetType);
-    toast({
-      title: "Widget adicionado!",
-      description: `O widget ${widgetType} foi adicionado à sua home.`
-    });
+    
+    try {
+      // TODO: Implement actual widget addition logic here
+      // For now, just show success message
+      toast({
+        title: "Widget adicionado!",
+        description: `O widget ${widgetType} foi adicionado à sua home.`
+      });
+      
+      return true; // Return success
+    } catch (error) {
+      console.error('❌ Erro ao adicionar widget:', error);
+      toast({
+        title: "Erro ao adicionar widget",
+        description: "Não foi possível adicionar o widget.",
+        variant: "destructive"
+      });
+      
+      return false; // Return failure
+    }
   }, [toast]);
 
   // Handle save
