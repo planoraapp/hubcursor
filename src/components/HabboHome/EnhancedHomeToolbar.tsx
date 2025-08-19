@@ -1,12 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Edit, Eye, Save, Palette, Sticker, Plus, Grid, Settings } from 'lucide-react';
+import { Edit, Eye, Palette, Image, Sticker, Grid3X3, Save, X } from 'lucide-react';
 import { AssetSelector } from './AssetSelector';
-import { useHomeAssets } from '@/hooks/useHomeAssets';
 
 interface EnhancedHomeToolbarProps {
   isEditMode: boolean;
@@ -21,20 +18,15 @@ interface EnhancedHomeToolbarProps {
 const BACKGROUND_COLORS = [
   '#c7d2dc', '#f0f8ff', '#e6f3e6', '#fff0e6', '#ffe6e6',
   '#e6e6ff', '#f0e6ff', '#ffe6f0', '#f5f5dc', '#e0ffff',
-  '#ffb6c1', '#98fb98', '#87ceeb', '#dda0dd', '#f0e68c',
-  '#fafad2', '#d3d3d3', '#ffe4b5', '#ffd700', '#ffc0cb'
+  '#ffb6c1', '#98fb98', '#87ceeb', '#dda0dd', '#f0e68c'
 ];
 
-const AVAILABLE_WIDGETS = [
-  { id: 'avatar', name: 'Avatar', icon: '👤' },
-  { id: 'guestbook', name: 'Livro de Visitas', icon: '📝' },
-  { id: 'rating', name: 'Avaliação', icon: '⭐' },
-  { id: 'info', name: 'Informações', icon: 'ℹ️' },
-  { id: 'music', name: 'Player de Música', icon: '🎵' },
-  { id: 'photos', name: 'Fotos', icon: '📷' }
+const WIDGET_TYPES = [
+  { id: 'guestbook', name: 'Livro de Visitas', description: 'Permite que visitantes deixem mensagens' },
+  { id: 'rating', name: 'Avaliação', description: 'Sistema de avaliação com estrelas' }
 ];
 
-export const EnhancedHomeToolbar = ({ 
+export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({ 
   isEditMode, 
   isOwner, 
   onEditModeChange, 
@@ -42,72 +34,82 @@ export const EnhancedHomeToolbar = ({
   onBackgroundChange,
   onStickerAdd,
   onWidgetAdd
-}: EnhancedHomeToolbarProps) => {
+}) => {
+  const [activeMenu, setActiveMenu] = useState<'wallpaper' | 'stickers' | 'widgets' | null>(null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBackgrounds, setShowBackgrounds] = useState(false);
   const [showStickers, setShowStickers] = useState(false);
   const [showWidgets, setShowWidgets] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  
-  const { assets, loading } = useHomeAssets();
 
-  console.log('🛠️ EnhancedHomeToolbar renderizada:', { 
-    isOwner, 
-    isEditMode, 
-    assetsLoaded: !loading,
-    stickerCount: assets.Stickers.length,
-    backgroundCount: assets['Papel de Parede'].length
-  });
-
-  // Sempre mostrar para debug - remover depois
-  const shouldShowToolbar = true; // isOwner;
-
-  if (!shouldShowToolbar) {
-    console.log('⚠️ Toolbar não será exibida - usuário não é proprietário');
-    return null;
+  if (!isOwner) {
+    return (
+      <div className="w-full bg-gray-100 border-b-2 border-gray-300 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-center">
+            <Badge variant="secondary" className="volter-font">
+              <Eye className="w-3 h-3 mr-1" />
+              Modo Visitante
+            </Badge>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+  const handleMenuToggle = (menu: 'wallpaper' | 'stickers' | 'widgets') => {
+    if (activeMenu === menu) {
+      setActiveMenu(null);
+      setShowColorPicker(false);
+      setShowBackgrounds(false);
+      setShowStickers(false);
+      setShowWidgets(false);
+    } else {
+      setActiveMenu(menu);
+      setShowColorPicker(menu === 'wallpaper');
+      setShowBackgrounds(false);
+      setShowStickers(menu === 'stickers');
+      setShowWidgets(menu === 'widgets');
+    }
+  };
+
   const handleColorSelect = (color: string) => {
-    console.log('🎨 Cor selecionada:', color);
     onBackgroundChange?.({ type: 'color', value: color });
     setShowColorPicker(false);
+    setActiveMenu(null);
   };
 
   const handleBackgroundImageSelect = (asset: any) => {
-    console.log('🖼️ Background de imagem selecionado:', asset);
     onBackgroundChange?.({ type: 'image', value: asset.url || asset.src });
+    setShowBackgrounds(false);
+    setActiveMenu(null);
   };
 
   const handleStickerSelect = (asset: any) => {
-    console.log('🎯 Sticker selecionado:', asset);
     const stickerSrc = asset.url || asset.src;
-    onStickerAdd?.(asset.id, stickerSrc, 'Stickers');
+    onStickerAdd?.(asset.id, stickerSrc, asset.category || 'Stickers');
+    setShowStickers(false);
+    setActiveMenu(null);
   };
 
   const handleWidgetAdd = (widgetType: string) => {
-    console.log('📦 Adicionando widget via toolbar:', widgetType);
     onWidgetAdd?.(widgetType);
     setShowWidgets(false);
+    setActiveMenu(null);
   };
 
   return (
     <>
       {/* Main Toolbar */}
-      <div className="w-full toolbar-blur border-b-2 border-black shadow-lg sticky top-0 z-50">
+      <div className="w-full bg-blue-600 border-b-2 border-blue-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg volter-font text-gray-800">
-                  Personalizar Home
-                </h2>
-                <Badge variant={isEditMode ? "default" : "secondary"} className="volter-font">
-                  {isEditMode ? 'Editando' : 'Visualizando'}
-                </Badge>
-                <Badge variant="outline" className="volter-font">
-                  Assets: {assets.Stickers.length + assets['Papel de Parede'].length}
-                </Badge>
-              </div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg volter-font text-white">
+                Personalizar Home
+              </h2>
+              <Badge variant={isEditMode ? "default" : "secondary"} className="volter-font bg-white text-blue-600">
+                {isEditMode ? 'Editando' : 'Visualizando'}
+              </Badge>
             </div>
 
             <div className="flex items-center gap-2">
@@ -116,7 +118,10 @@ export const EnhancedHomeToolbar = ({
                 onClick={() => onEditModeChange(!isEditMode)}
                 variant={isEditMode ? "default" : "outline"}
                 size="sm"
-                className="volter-font"
+                className={isEditMode ? 
+                  "bg-yellow-500 text-black hover:bg-yellow-400 volter-font" : 
+                  "bg-white/20 text-white hover:bg-white/30 volter-font border-white/30"
+                }
               >
                 {isEditMode ? (
                   <>
@@ -133,57 +138,55 @@ export const EnhancedHomeToolbar = ({
 
               {isEditMode && (
                 <>
-                  <Separator orientation="vertical" className="h-6" />
+                  <Separator orientation="vertical" className="h-6 bg-white/30" />
                   
-                  {/* Color Background Button */}
+                  {/* 3 Category Menus */}
                   <Button
-                    onClick={() => setShowColorPicker(true)}
+                    onClick={() => handleMenuToggle('wallpaper')}
                     variant="outline"
                     size="sm"
-                    className="volter-font"
+                    className={`bg-white/20 text-white hover:bg-white/30 volter-font border-white/30 ${
+                      activeMenu === 'wallpaper' ? 'bg-white/30' : ''
+                    }`}
                   >
                     <Palette className="w-4 h-4 mr-1" />
-                    Cores
+                    Wallpaper
                   </Button>
                   
-                  {/* Image Background Button */}
                   <Button
-                    onClick={() => setShowBackgrounds(true)}
+                    onClick={() => handleMenuToggle('stickers')}
                     variant="outline"
                     size="sm"
-                    className="volter-font"
-                  >
-                    🖼️ Papéis ({assets['Papel de Parede'].length})
-                  </Button>
-                  
-                  {/* Stickers Button */}
-                  <Button
-                    onClick={() => setShowStickers(true)}
-                    variant="outline"
-                    size="sm"
-                    className="volter-font"
+                    className={`bg-white/20 text-white hover:bg-white/30 volter-font border-white/30 ${
+                      activeMenu === 'stickers' ? 'bg-white/30' : ''
+                    }`}
                   >
                     <Sticker className="w-4 h-4 mr-1" />
-                    Stickers ({assets.Stickers.length})
+                    Stickers
                   </Button>
-                  
-                  {/* Widgets Button */}
+
                   <Button
-                    onClick={() => setShowWidgets(true)}
+                    onClick={() => handleMenuToggle('widgets')}
                     variant="outline"
                     size="sm"
-                    className="volter-font"
+                    className={`bg-white/20 text-white hover:bg-white/30 volter-font border-white/30 ${
+                      activeMenu === 'widgets' ? 'bg-white/30' : ''
+                    }`}
                   >
-                    <Grid className="w-4 h-4 mr-1" />
+                    <Grid3X3 className="w-4 h-4 mr-1" />
                     Widgets
                   </Button>
 
-                  <Separator orientation="vertical" className="h-6" />
+                  <Separator orientation="vertical" className="h-6 bg-white/30" />
                   
-                  {/* Save Button */}
-                  <Button onClick={onSave} size="sm" className="volter-font">
-                    <Save className="w-4 h-4 mr-1" />
-                    Salvar
+                  {/* Save with Icon Only */}
+                  <Button 
+                    onClick={onSave} 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700 text-white volter-font p-2"
+                    title="Salvar alterações"
+                  >
+                    <Save className="w-4 h-4" />
                   </Button>
                 </>
               )}
@@ -192,67 +195,82 @@ export const EnhancedHomeToolbar = ({
         </div>
       </div>
 
-      {/* Color Picker Dialog */}
-      <Dialog open={showColorPicker} onOpenChange={setShowColorPicker}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="volter-font">Escolher Cor de Fundo</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="bg-grid">
-              {BACKGROUND_COLORS.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => handleColorSelect(color)}
-                  className="w-16 h-16 rounded-lg border-2 border-gray-300 hover:border-blue-500 transition-colors"
-                  style={{ backgroundColor: color }}
-                  title={color}
-                />
+      {/* Wallpaper Menu */}
+      {activeMenu === 'wallpaper' && isEditMode && (
+        <div className="w-full bg-white border-b-2 border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="space-y-3">
+              <h3 className="volter-font text-gray-800 font-semibold">Cores</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {BACKGROUND_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => handleColorSelect(color)}
+                    className="w-12 h-12 rounded-lg border-2 border-gray-300 hover:border-blue-500 transition-colors"
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <h3 className="volter-font text-gray-800 font-semibold">Papéis de Parede</h3>
+                <Button
+                  onClick={() => setShowBackgrounds(true)}
+                  variant="outline"
+                  size="sm"
+                  className="volter-font"
+                >
+                  <Image className="w-4 h-4 mr-1" />
+                  Escolher Imagem
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Widgets Menu */}
+      {activeMenu === 'widgets' && isEditMode && (
+        <div className="w-full bg-white border-b-2 border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <h3 className="volter-font text-gray-800 font-semibold mb-3">Widgets Disponíveis</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {WIDGET_TYPES.map((widget) => (
+                <div
+                  key={widget.id}
+                  className="bg-gray-50 p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition-colors"
+                  onClick={() => handleWidgetAdd(widget.id)}
+                >
+                  <h4 className="volter-font text-sm font-semibold text-gray-800 mb-1">
+                    {widget.name}
+                  </h4>
+                  <p className="text-xs text-gray-600 volter-font">
+                    {widget.description}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
-      {/* Background Image Selector */}
+      {/* Asset Selectors */}
       <AssetSelector
         open={showBackgrounds}
         onOpenChange={setShowBackgrounds}
         onAssetSelect={handleBackgroundImageSelect}
         type="backgrounds"
+        title="Papéis de Parede"
       />
 
-      {/* Sticker Selector */}
       <AssetSelector
         open={showStickers}
         onOpenChange={setShowStickers}
         onAssetSelect={handleStickerSelect}
         type="stickers"
+        title="Stickers"
       />
-
-      {/* Widget Selection Dialog */}
-      <Dialog open={showWidgets} onOpenChange={setShowWidgets}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="volter-font">Adicionar Widget</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-2">
-            {AVAILABLE_WIDGETS.map((widget) => (
-              <Button
-                key={widget.id}
-                onClick={() => handleWidgetAdd(widget.id)}
-                variant="outline"
-                className="w-full justify-start volter-font"
-              >
-                <span className="mr-2 text-lg">{widget.icon}</span>
-                {widget.name}
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

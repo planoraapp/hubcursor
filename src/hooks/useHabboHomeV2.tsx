@@ -315,6 +315,73 @@ export const useHabboHomeV2 = (username: string) => {
     }
   };
 
+  const addWidget = async (widgetType: string) => {
+    if (!isOwner || !habboData) return false;
+
+    // Check if widget already exists
+    const existingWidget = widgets.find(w => w.widget_type === widgetType);
+    if (existingWidget) {
+      console.log(`Widget ${widgetType} já existe`);
+      return false;
+    }
+
+    try {
+      const x = Math.random() * (1080 - 300) + 50;
+      const y = Math.random() * (1800 - 200) + 50;
+      
+      const { data, error } = await supabase
+        .from('user_home_widgets')
+        .insert({
+          user_id: habboData.id,
+          widget_type: widgetType,
+          x: Math.round(x),
+          y: Math.round(y),
+          z_index: Date.now(),
+          width: 320,
+          height: widgetType === 'guestbook' ? 380 : 160,
+          is_visible: true,
+          config: {}
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const newWidget: Widget = {
+          id: data.id,
+          widget_type: data.widget_type,
+          x: data.x,
+          y: data.y,
+          z_index: data.z_index,
+          width: data.width,
+          height: data.height,
+          is_visible: data.is_visible,
+          config: data.config
+        };
+        setWidgets(prev => [...prev, newWidget]);
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao adicionar widget:', error);
+    }
+    return false;
+  };
+
+  const removeWidget = async (widgetId: string) => {
+    if (!isOwner || !habboData) return;
+
+    try {
+      await supabase
+        .from('user_home_widgets')
+        .delete()
+        .eq('id', widgetId)
+        .eq('user_id', habboData.id);
+
+      setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
+    } catch (error) {
+      console.error('❌ Erro ao remover widget:', error);
+    }
+  };
+
   const updateBackground = async (bgType: 'color' | 'cover' | 'repeat', bgValue: string) => {
     if (!isOwner || !habboData) return;
 
@@ -357,6 +424,8 @@ export const useHabboHomeV2 = (username: string) => {
     addSticker,
     removeSticker,
     updateBackground,
+    addWidget,
+    removeWidget,
     reloadData: loadHabboHomeData
   };
 };

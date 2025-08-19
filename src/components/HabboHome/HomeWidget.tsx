@@ -1,6 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { FunctionalRatingWidget } from '@/components/widgets/FunctionalRatingWidget';
+import { FunctionalGuestbookWidget } from '@/components/widgets/FunctionalGuestbookWidget';
 
 interface Widget {
   id: string;
@@ -207,50 +209,18 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
 
       case 'guestbook':
         return (
-          <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardHeader className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-3">
-              <CardTitle className="volter-font text-center text-lg habbo-text">
-                📝 Livro de Visitas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
-                {guestbook.slice(0, 5).map((entry) => (
-                  <div key={entry.id} className="bg-gray-50 p-2 rounded-lg border">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-xs text-blue-600 volter-font">
-                        {entry.author_habbo_name}
-                      </span>
-                      <span className="text-xs text-gray-500 volter-font">
-                        {new Date(entry.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700 volter-font">{entry.message}</p>
-                  </div>
-                ))}
-                {guestbook.length === 0 && (
-                  <p className="text-sm text-gray-500 volter-font text-center py-4">
-                    Nenhuma mensagem ainda
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <FunctionalGuestbookWidget
+            homeOwnerUserId={habboData.id}
+            homeOwnerName={habboData.habbo_name}
+          />
         );
 
       case 'rating':
         return (
-          <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-3">
-              <CardTitle className="volter-font text-center text-lg habbo-text">
-                ⭐ Avaliação
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 text-center">
-              <div className="text-3xl mb-2 volter-font text-yellow-600">4.8</div>
-              <div className="text-sm text-gray-600 volter-font">Baseado em 25 avaliações</div>
-            </CardContent>
-          </Card>
+          <FunctionalRatingWidget
+            homeOwnerUserId={habboData.id}
+            homeOwnerName={habboData.habbo_name}
+          />
         );
 
       default:

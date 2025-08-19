@@ -7,7 +7,7 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
 import { useToast } from '@/hooks/use-toast';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
-import { HomeToolbarV2 } from '@/components/HabboHome/HomeToolbarV2';
+import { EnhancedHomeToolbar } from '@/components/HabboHome/EnhancedHomeToolbar';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
@@ -31,6 +31,7 @@ const HabboHomeV2: React.FC = () => {
     addSticker,
     removeSticker,
     updateBackground,
+    addWidget,
     reloadData
   } = useHabboHomeV2(username || '');
 
@@ -166,50 +167,23 @@ const HabboHomeV2: React.FC = () => {
         <SidebarInset className="flex-1">
           <main className="flex-1 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             {/* Toolbar */}
-            <HomeToolbarV2
+            <EnhancedHomeToolbar
               isEditMode={isEditMode}
               isOwner={isOwner}
               onEditModeChange={setIsEditMode}
               onSave={handleSave}
               onBackgroundChange={handleBackgroundChange}
               onStickerAdd={handleStickerAdd}
+              onWidgetAdd={addWidget}
             />
 
-            {/* Header */}
+            {/* Header - Simplified */}
             <div className="p-4">
               <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-2xl volter-font habbo-text flex items-center gap-2">
-                        🏠 {habboData.habbo_name}'s Habbo Home
-                      </CardTitle>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge className="bg-white/20 text-white volter-font">
-                          Hotel: {habboData.hotel?.toUpperCase() || 'BR'}
-                        </Badge>
-                        <Badge className="bg-white/20 text-white volter-font">
-                          Home V2
-                        </Badge>
-                        <Badge className="bg-white/20 text-white volter-font">
-                          Widgets: {widgets.length} | Stickers: {stickers.length}
-                        </Badge>
-                        {habboData.is_online && (
-                          <Badge className="bg-green-500 text-white volter-font">
-                            Online
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate('/homes')}
-                      className="text-white border-white/30 hover:bg-white/10 volter-font"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Voltar
-                    </Button>
-                  </div>
+                  <CardTitle className="text-2xl volter-font habbo-text text-center">
+                    🏠 {habboData.habbo_name}'s Habbo Home
+                  </CardTitle>
                 </CardHeader>
               </Card>
 

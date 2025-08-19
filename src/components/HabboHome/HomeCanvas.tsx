@@ -163,10 +163,6 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
           </div>
         )}
 
-        {/* Debug info */}
-        <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs p-2 rounded volter-font">
-          W:{widgets.length} | S:{stickers.length} | Edit:{isEditMode ? 'ON' : 'OFF'} | Owner:{isOwner ? 'YES' : 'NO'} | 1080x1800
-        </div>
       </div>
     </div>
   );
