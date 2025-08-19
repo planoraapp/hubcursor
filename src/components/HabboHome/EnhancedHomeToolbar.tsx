@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { AssetSelector } from './AssetSelector';
@@ -104,8 +103,8 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
     <>
       {/* Single Horizontal Bar */}
       <div className={`
-        w-full max-w-5xl mx-auto bg-card border border-border rounded-lg shadow-xl overflow-hidden
-        transform transition-all duration-700 ease-out z-30 relative
+        w-full max-w-3xl mx-auto ml-64 bg-card border border-border rounded-lg shadow-xl overflow-hidden
+        transform transition-all duration-700 ease-out z-50 relative pointer-events-auto
         ${isEditMode 
           ? 'translate-y-0 opacity-100 scale-100 visible' 
           : '-translate-y-full opacity-0 scale-95 pointer-events-none invisible'
@@ -114,11 +113,11 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
         <div className="bg-gradient-to-r from-primary/10 to-accent/10 px-6 py-3">
           <div className="flex items-center justify-between">
             
-            {/* Left: Edit Button + Title */}
-            <div className="flex items-center gap-4">
+            {/* Left: Only Edit Button */}
+            <div className="flex items-center">
               <button
                 onClick={onToggleEditMode}
-                className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-105"
+                className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-105 pointer-events-auto"
                 style={{
                   width: '48px',
                   height: '48px',
@@ -131,10 +130,6 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
                 }}
                 title="Sair do Modo de Edição"
               />
-              
-              <h3 className="text-lg font-volter text-foreground flex items-center gap-2">
-                🎨 Personalizar Home
-              </h3>
             </div>
 
             {/* Center: Action Buttons */}
@@ -143,7 +138,7 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowWallpaperSelector(true)}
-                className="flex items-center gap-2 text-xs font-volter"
+                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
               >
                 🖼️ Papel de Parede
               </Button>
@@ -152,7 +147,7 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowStickerSelector(true)}
-                className="flex items-center gap-2 text-xs font-volter"
+                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
               >
                 ✨ Adesivos
               </Button>
@@ -161,7 +156,7 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowWidgetSelector(true)}
-                className="flex items-center gap-2 text-xs font-volter"
+                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
               >
                 📦 Widgets
               </Button>
@@ -173,14 +168,14 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
                 variant="outline" 
                 size="sm"
                 onClick={handleCancel}
-                className="flex items-center gap-2 text-xs font-volter"
+                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
               >
                 ❌ Cancelar
               </Button>
               <Button 
                 size="sm"
                 onClick={handleSave}
-                className="flex items-center gap-2 text-xs font-volter bg-primary hover:bg-primary/90"
+                className="flex items-center gap-2 text-xs font-volter bg-primary hover:bg-primary/90 pointer-events-auto"
               >
                 ✅ Salvar
               </Button>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -177,15 +176,17 @@ const HabboHomeV2: React.FC = () => {
       {/* Enhanced Toolbar - Desktop only */}
       {!isMobile && (
         <div className="fixed top-0 left-0 right-0 z-40 p-4 pointer-events-none">
-          <EnhancedHomeToolbar
-            isEditMode={isEditMode}
-            isOwner={isOwner}
-            onToggleEditMode={() => setIsEditMode(!isEditMode)}
-            onSave={handleSave}
-            onBackgroundChange={handleBackgroundChange}
-            onStickerSelect={handleStickerAdd}
-            onWidgetAdd={addWidget}
-          />
+          <div className="pointer-events-auto">
+            <EnhancedHomeToolbar
+              isEditMode={isEditMode}
+              isOwner={isOwner}
+              onToggleEditMode={() => setIsEditMode(!isEditMode)}
+              onSave={handleSave}
+              onBackgroundChange={handleBackgroundChange}
+              onStickerSelect={handleStickerAdd}
+              onWidgetAdd={addWidget}
+            />
+          </div>
         </div>
       )}
 
@@ -228,7 +229,7 @@ const HabboHomeV2: React.FC = () => {
             onWidgetPositionChange={updateWidgetPosition}
             onStickerPositionChange={updateStickerPosition}
             onStickerRemove={removeSticker}
-            onWidgetRemove={removeWidget}
+            onRemove={removeWidget}
           />
         </div>
       </div>
