@@ -35,28 +35,33 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [displayedCount, setDisplayedCount] = useState(50);
+  const [displayedCount, setDisplayedCount] = useState(30);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [fetchingComplete, setFetchingComplete] = useState(false);
   
-  // Refs for scroll management
+  // Refs para scroll
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Fetch assets from Supabase
+  // Fetch assets - removido 'loading' das dependências para evitar loop
   const fetchAssets = useCallback(async () => {
-    if (!open || loading) return;
+    if (fetchingComplete) return;
     
     try {
       setLoading(true);
-      console.log(`🔍 Buscando TODOS os ${type}s...`);
+      console.log(`🔍 Buscando ${type}s...`);
       
       let query = supabase
         .from('home_assets')
         .select('*')
         .eq('is_active', true);
 
-      if (type === 'backgrounds') {
+      // Para stickers: excluir papel de parede
+      if (type === 'stickers') {
+        query = query.not('category', 'eq', 'Papel de Parede');
+      } else {
+        // Para backgrounds: só papel de parede ou backgrounds específicos
         query = query.like('file_path', '%bg_%');
       }
       
@@ -69,7 +74,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         return;
       }
 
-      console.log(`✅ Assets carregados: ${data?.length || 0}`);
+      console.log(`✅ ${type}s carregados:`, data?.length || 0);
       
       const assetsWithUrls = (data || []).map((asset) => ({
         ...asset,
@@ -78,47 +83,43 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       }));
 
       setAllAssets(assetsWithUrls);
-      setDisplayedCount(50);
+      setDisplayedCount(30);
+      setFetchingComplete(true);
       
     } catch (err) {
       console.error(`❌ Erro inesperado ao buscar ${type}s:`, err);
     } finally {
       setLoading(false);
     }
-  }, [open, type, loading]);
+  }, [type, fetchingComplete]);
 
-  // Filter and get displayed assets
+  // Assets filtrados e exibidos
   const { filteredAssets, displayedAssets, hasMore } = useMemo(() => {
     let filtered = allAssets;
     
-    // Filter by category
+    // Filtro por categoria (usando nomes corretos da base)
     if (selectedCategory !== 'all') {
       const categoryMap: Record<string, string[]> = {
-        'animated': ['animated'],
-        'icons': ['icons', 'icon'],
-        'mockups': ['mockups', 'mockup'],
-        'mountable': ['mountable', 'mount'],
-        'outros': ['stickers', 'sticker']
+        'animados': ['Animados'],
+        'icones': ['Ícones'], 
+        'mockups': ['Mockups'],
+        'montaveis': ['Montáveis'],
+        'outros': ['Stickers']
       };
       
       const validCategories = categoryMap[selectedCategory.toLowerCase()] || [selectedCategory];
       filtered = allAssets.filter(asset => {
-        const assetCategory = asset.category?.toLowerCase() || '';
-        const assetPath = asset.file_path?.toLowerCase() || '';
-        
-        return validCategories.some(cat => 
-          assetCategory.includes(cat) || 
-          assetPath.includes(`/${cat}/`) || 
-          assetPath.includes(`${cat}_`)
-        );
+        const assetCategory = asset.category || '';
+        return validCategories.some(cat => assetCategory === cat);
       });
     }
     
-    // Filter by search term
+    // Filtro por busca
     if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(asset =>
-        asset.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.category?.toLowerCase().includes(searchTerm.toLowerCase())
+        asset.name?.toLowerCase().includes(searchLower) ||
+        asset.category?.toLowerCase().includes(searchLower)
       );
     }
     
@@ -132,45 +133,46 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     };
   }, [allAssets, selectedCategory, searchTerm, displayedCount]);
 
-  // Get available categories with counts
+  // Categorias disponíveis com contadores
   const availableCategories = useMemo(() => {
     const categories = new Map<string, number>();
     
     allAssets.forEach(asset => {
-      const path = asset.file_path?.toLowerCase() || '';
+      const category = asset.category || 'outros';
       
-      if (path.includes('/animated/') || path.includes('anim')) {
-        categories.set('animated', (categories.get('animated') || 0) + 1);
-      } else if (path.includes('/icons/') || path.includes('icon')) {
-        categories.set('icons', (categories.get('icons') || 0) + 1);
-      } else if (path.includes('/mockups/') || path.includes('mockup')) {
-        categories.set('mockups', (categories.get('mockups') || 0) + 1);
-      } else if (path.includes('/mountable/') || path.includes('mount')) {
-        categories.set('mountable', (categories.get('mountable') || 0) + 1);
-      } else if (path.includes('/stickers/') || path.includes('sticker')) {
-        categories.set('outros', (categories.get('outros') || 0) + 1);
+      // Mapear para nomes amigáveis
+      let friendlyName = 'outros';
+      switch (category) {
+        case 'Animados': friendlyName = 'animados'; break;
+        case 'Ícones': friendlyName = 'icones'; break;
+        case 'Mockups': friendlyName = 'mockups'; break;
+        case 'Montáveis': friendlyName = 'montaveis'; break;
+        case 'Stickers': friendlyName = 'outros'; break;
+        default: friendlyName = 'outros'; break;
       }
+      
+      categories.set(friendlyName, (categories.get(friendlyName) || 0) + 1);
     });
     
     return categories;
   }, [allAssets]);
 
-  // Load more items
+  // Carregar mais itens
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     
     setIsLoadingMore(true);
     
-    // Simulate loading delay for better UX
+    // Simular delay para UX
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    setDisplayedCount(prev => prev + 50);
+    setDisplayedCount(prev => prev + 30);
     setIsLoadingMore(false);
   }, [isLoadingMore, hasMore]);
 
-  // Setup intersection observer for infinite scroll
+  // Setup intersection observer para scroll infinito
   useEffect(() => {
-    if (!sentinelRef.current || !hasMore) return;
+    if (!sentinelRef.current || !hasMore || loading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -180,7 +182,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         }
       },
       {
-        rootMargin: '100px',
+        rootMargin: '50px',
         threshold: 0.1
       }
     );
@@ -193,17 +195,18 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoadingMore, loadMore]);
+  }, [hasMore, isLoadingMore, loadMore, loading]);
 
-  // Load assets when modal opens
+  // Carregar assets quando modal abre
   useEffect(() => {
-    if (open && type) {
+    if (open && !fetchingComplete) {
       setSelectedCategory('all');
       setSearchTerm('');
-      setDisplayedCount(50);
+      setDisplayedCount(30);
+      setFetchingComplete(false);
       fetchAssets();
     }
-  }, [open, type, fetchAssets]);
+  }, [open, fetchAssets, fetchingComplete]);
 
   const handleAssetClick = useCallback((asset: Asset) => {
     console.log('🎯 Asset selecionado:', asset);
@@ -214,7 +217,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const handleClearFilters = useCallback(() => {
     setSelectedCategory('all');
     setSearchTerm('');
-    setDisplayedCount(50);
+    setDisplayedCount(30);
   }, []);
 
   return (
@@ -260,10 +263,10 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
               </Button>
               {Array.from(availableCategories).map(([category, count]) => {
                 const categoryLabels: Record<string, string> = {
-                  'animated': '🎬 Animados',
-                  'icons': '🔰 Ícones', 
+                  'animados': '🎬 Animados',
+                  'icones': '🔰 Ícones', 
                   'mockups': '🖼️ Mockups',
-                  'mountable': '📌 Montáveis',
+                  'montaveis': '📌 Montáveis',
                   'outros': '✨ Outros'
                 };
                 
@@ -275,7 +278,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                     onClick={() => setSelectedCategory(category)}
                     className="font-volter whitespace-nowrap"
                   >
-                    {categoryLabels[category]} ({count})
+                    {categoryLabels[category] || category} ({count})
                   </Button>
                 );
               })}
@@ -283,14 +286,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
           </div>
         )}
 
-        {/* Custom Scroll Container */}
+        {/* Container de Scroll Nativo */}
         <div 
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto border rounded-lg bg-background"
-          style={{ maxHeight: '60vh' }}
+          style={{ height: '60vh' }}
         >
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 p-4">
-            {loading ? (
+            {loading && displayedAssets.length === 0 ? (
               <div className="col-span-full text-center py-8">
                 <Loader2 className="animate-spin h-8 w-8 mx-auto mb-2 text-primary" />
                 <p className="text-muted-foreground font-volter">Carregando adesivos...</p>
@@ -344,7 +347,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                   </div>
                 ))}
                 
-                {/* Sentinel element for infinite scroll */}
+                {/* Elemento sentinela para scroll infinito */}
                 {hasMore && (
                   <div ref={sentinelRef} className="col-span-full text-center py-4">
                     {isLoadingMore ? (
