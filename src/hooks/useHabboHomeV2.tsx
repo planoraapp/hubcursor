@@ -379,55 +379,86 @@ export const useHabboHomeV2 = (username: string) => {
     }
   };
 
-  const addWidget = async (widgetType: string) => {
-    if (!isOwner || !habboData) return false;
+  const addWidget = async (widgetType: string): Promise<boolean> => {
+    if (!isOwner || !habboData) {
+      console.error('❌ Cannot add widget: not owner or no habbo data');
+      return false;
+    }
 
     // Check if widget already exists
     const existingWidget = widgets.find(w => w.widget_type === widgetType);
     if (existingWidget) {
-      console.log(`Widget ${widgetType} já existe`);
+      console.log(`⚠️ Widget ${widgetType} já existe`);
       return false;
     }
 
     try {
+      console.log(`🔧 Adicionando widget: ${widgetType}`);
+      
       const x = Math.random() * (1080 - 300) + 50;
       const y = Math.random() * (1800 - 200) + 50;
+      const nextZ = Math.max(0, ...widgets.map(w => w.z_index || 0), ...stickers.map(s => s.z_index || 0)) + 1;
       
+      const payload = {
+        user_id: habboData.id,
+        widget_type: widgetType,
+        x: Math.round(x),
+        y: Math.round(y),
+        z_index: nextZ,
+        width: 320,
+        height: widgetType === 'guestbook' ? 380 : 160,
+        is_visible: true,
+        config: {}
+      };
+
+      console.log('📦 Payload do widget:', payload);
+
       const { data, error } = await supabase
         .from('user_home_widgets')
-        .insert({
-          user_id: habboData.id,
-          widget_type: widgetType,
-          x: Math.round(x),
-          y: Math.round(y),
-          z_index: Date.now(),
-          width: 320,
-          height: widgetType === 'guestbook' ? 380 : 160,
-          is_visible: true,
-          config: {}
-        })
+        .insert(payload)
         .select()
         .single();
 
-      if (!error && data) {
-        const newWidget: Widget = {
-          id: data.id,
-          widget_type: data.widget_type,
-          x: data.x,
-          y: data.y,
-          z_index: data.z_index,
-          width: data.width,
-          height: data.height,
-          is_visible: data.is_visible,
-          config: data.config
-        };
-        setWidgets(prev => [...prev, newWidget]);
-        return true;
+      if (error) {
+        console.error('❌ Erro do Supabase ao inserir widget:', error);
+        return false;
       }
+
+      if (!data) {
+        console.error('❌ Nenhum dado retornado após inserção do widget');
+        return false;
+      }
+
+      console.log('✅ Widget inserido com sucesso no banco:', data);
+
+      const newWidget: Widget = {
+        id: data.id,
+        widget_type: data.widget_type,
+        x: data.x,
+        y: data.y,
+        z_index: data.z_index,
+        width: data.width,
+        height: data.height,
+        is_visible: data.is_visible,
+        config: data.config
+      };
+      
+      setWidgets(prev => {
+        const updated = [...prev, newWidget];
+        console.log('🔄 Estado dos widgets atualizado:', { 
+          before: prev.length, 
+          after: updated.length,
+          newWidget: newWidget 
+        });
+        return updated;
+      });
+      
+      console.log(`✅ Widget ${widgetType} adicionado com sucesso!`);
+      return true;
     } catch (error) {
-      console.error('❌ Erro ao adicionar widget:', error);
+      console.error('❌ Erro inesperado ao adicionar widget:', error);
+      return false;
     }
-    return false;
   };
 
   const removeWidget = async (widgetId: string) => {

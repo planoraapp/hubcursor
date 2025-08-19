@@ -111,8 +111,9 @@ export const getAvatarUrl = (username: string, figureString?: string, hotel: str
   const baseUrl = `https://www.habbo.${domain}`;
   
   if (figureString) {
-    return `${baseUrl}/habbo-imaging/avatarimage?figure=${encodeURIComponent(figureString)}&direction=2&head_direction=2&size=l`;
+    // Alterando para direção 3,3 (diagonal direita e frente)
+    return `${baseUrl}/habbo-imaging/avatarimage?figure=${encodeURIComponent(figureString)}&direction=3&head_direction=3&size=l`;
   }
   
-  return `${baseUrl}/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&size=l`;
+  return `${baseUrl}/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=3&head_direction=3&size=l`;
 };

@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Removendo 'avatar' da lista já que não é removível e já existe por padrão
 const WIDGET_TYPES = [
-  { id: 'avatar', name: 'Perfil do Usuário', description: 'Mostra avatar e informações', icon: '👤' },
   { id: 'guestbook', name: 'Livro de Visitas', description: 'Permite visitantes deixarem mensagens', icon: '📝' },
   { id: 'rating', name: 'Avaliação', description: 'Sistema de like/dislike', icon: '⭐' },
 ];
@@ -13,7 +13,7 @@ const WIDGET_TYPES = [
 interface WidgetSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  onWidgetAdd?: (widgetType: string) => void;
+  onWidgetAdd?: (widgetType: string) => Promise<boolean>;
 }
 
 export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
@@ -22,10 +22,18 @@ export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
   onWidgetAdd
 }) => {
   
-  const handleWidgetAdd = (widgetType: string) => {
-    onWidgetAdd?.(widgetType);
-    onClose();
+  const handleWidgetAdd = async (widgetType: string) => {
+    if (onWidgetAdd) {
+      const success = await onWidgetAdd(widgetType);
+      if (success) {
+        console.log(`✅ Widget ${widgetType} adicionado com sucesso`);
+        onClose();
+      } else {
+        console.error(`❌ Falha ao adicionar widget ${widgetType}`);
+      }
+    }
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl max-h-[85vh] flex flex-col">
@@ -38,7 +46,7 @@ export const WidgetSelector: React.FC<WidgetSelectorProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 min-h-0 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 py-4">
           {WIDGET_TYPES.map((widget) => (
             <Card key={widget.id} className="group cursor-pointer hover:bg-accent transition-colors" onClick={() => handleWidgetAdd(widget.id)}>
               <CardHeader className="text-center">

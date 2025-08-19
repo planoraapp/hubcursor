@@ -9,7 +9,7 @@ import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
 import { EnhancedHomeToolbar } from '@/components/HabboHome/EnhancedHomeToolbar';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, useSidebar } from '@/components/ui/sidebar';
 
 const HabboHomeV2: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -73,7 +73,7 @@ const HabboHomeV2: React.FC = () => {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
-          <SidebarInset className="flex-1">
+          <SidebarInset className="flex-1 ml-0 transition-all duration-300">
             <main className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
               <div className="text-center">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
@@ -93,7 +93,7 @@ const HabboHomeV2: React.FC = () => {
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
-          <SidebarInset className="flex-1">
+          <SidebarInset className="flex-1 ml-0 transition-all duration-300">
             <main className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
               <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
@@ -120,8 +120,32 @@ const HabboHomeV2: React.FC = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
-        <SidebarInset className="flex-1">
-          <main className="flex-1 bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+        <SidebarInset className="flex-1 ml-0 transition-all duration-300">
+          <main className="flex-1 bg-repeat relative" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+            
+            {/* Botão de edição fixo no canto superior esquerdo - rotacionado */}
+            {isOwner && (
+              <div className="fixed top-4 left-4 z-50">
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`
+                    w-12 h-12 bg-transparent hover:bg-black/10 rounded-full
+                    border-2 border-transparent hover:border-blue-400/50
+                    transition-all duration-300 ease-out
+                    ${isEditMode ? 'scale-110 brightness-110' : 'hover:scale-105'}
+                  `}
+                  title={isEditMode ? 'Sair do modo edição' : 'Entrar no modo edição'}
+                  style={{ transform: 'scaleX(-1)' }}
+                >
+                  <img
+                    src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png"
+                    alt="Editar Home"
+                    className="w-full h-full object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </button>
+              </div>
+            )}
             
             <div className="p-4">
               <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
@@ -145,29 +169,6 @@ const HabboHomeV2: React.FC = () => {
               </div>
 
               <div className="relative">
-                {/* Novo botão de edição com ícone no canto esquerdo */}
-                {isOwner && (
-                  <div className="absolute -top-4 -left-4 z-50">
-                    <button
-                      onClick={() => setIsEditMode(!isEditMode)}
-                      className={`
-                        w-12 h-12 bg-transparent hover:bg-black/10 rounded-full
-                        border-2 border-transparent hover:border-blue-400/50
-                        transition-all duration-300 ease-out
-                        ${isEditMode ? 'scale-110 brightness-110' : 'hover:scale-105'}
-                      `}
-                      title={isEditMode ? 'Sair do modo edição' : 'Entrar no modo edição'}
-                    >
-                      <img
-                        src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png"
-                        alt="Editar Home"
-                        className="w-full h-full object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
-                    </button>
-                  </div>
-                )}
-
                 <HomeCanvas
                   widgets={widgets}
                   stickers={stickers}

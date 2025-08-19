@@ -1,18 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 
-// 7 Pastel colors matching design system
-const PASTEL_COLORS = [
+// Cores disponíveis para o slider
+const AVAILABLE_COLORS = [
+  { name: 'Azul Claro', value: '#c7d2dc' },
   { name: 'Rosa Suave', value: 'hsl(350 100% 88%)' },    
   { name: 'Azul Céu', value: 'hsl(200 100% 85%)' },     
   { name: 'Verde Menta', value: 'hsl(160 100% 85%)' },  
   { name: 'Amarelo Sol', value: 'hsl(50 100% 85%)' },   
   { name: 'Roxo Lavanda', value: 'hsl(280 100% 88%)' }, 
   { name: 'Laranja Pêssego', value: 'hsl(30 100% 85%)' }, 
-  { name: 'Cinza Neutro', value: 'hsl(220 20% 88%)' }   
+  { name: 'Cinza Neutro', value: 'hsl(220 20% 88%)' },
+  { name: 'Branco', value: '#ffffff' },
+  { name: 'Preto', value: '#000000' },
+  { name: 'Vermelho', value: '#ff6b6b' },
+  { name: 'Verde', value: '#51cf66' },
+  { name: 'Azul', value: '#339af0' },
+  { name: 'Roxo', value: '#845ef7' }
 ];
 
 interface Asset {
@@ -88,6 +97,7 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
     // Detectar se é bg_colour (pequeno, para repeat) ou imagem grande (para cover)
     const isSmallBg = asset.name.toLowerCase().includes('bg_colour') || 
                      asset.name.toLowerCase().includes('small') ||
+                     asset.name.toLowerCase().includes('tile') ||
                      asset.file_path.includes('bg_colour');
     
     const backgroundType = isSmallBg ? 'repeat' : 'cover';
@@ -104,67 +114,78 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
-          
-          {/* Colors Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-volter">Cores Pastéis</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {PASTEL_COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  onClick={() => handleColorSelect(color.value)}
-                  className="flex flex-col items-center gap-2 p-3 rounded-lg border-2 border-transparent hover:border-primary transition-all hover:scale-105 bg-card"
-                >
-                  <div 
-                    className="w-full h-16 rounded-md border-2 border-white shadow-sm"
-                    style={{ backgroundColor: color.value }}
-                  />
-                  <span className="font-volter text-xs text-center">{color.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        <Tabs defaultValue="colors" className="flex-1 min-h-0 flex flex-col">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="colors" className="font-volter">Cores Sólidas</TabsTrigger>
+            <TabsTrigger value="images" className="font-volter">Imagens de Fundo</TabsTrigger>
+          </TabsList>
 
-          {/* Images Section */}
-          <div className="space-y-4 flex flex-col min-h-0">
-            <h3 className="text-lg font-volter">Imagens de Fundo</h3>
-            
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-2">
-                {loading ? (
-                  <div className="col-span-full text-center py-8">
-                    <div className="text-muted-foreground">Carregando imagens...</div>
-                  </div>
-                ) : backgroundImages.length === 0 ? (
-                  <div className="col-span-full text-center py-8">
-                    <div className="text-muted-foreground">Nenhuma imagem encontrada</div>
-                  </div>
-                ) : (
-                  backgroundImages.map((asset) => (
-                    <div
-                      key={asset.id}
-                      onClick={() => handleImageSelect(asset)}
-                      className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
+          <TabsContent value="colors" className="flex-1 min-h-0 mt-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-volter">Selecione uma Cor</h3>
+              
+              {/* Slider horizontal de cores */}
+              <div className="w-full overflow-x-auto pb-2">
+                <div className="flex gap-2 min-w-fit">
+                  {AVAILABLE_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => handleColorSelect(color.value)}
+                      className="flex-shrink-0 flex flex-col items-center gap-2 p-2 rounded-lg border-2 border-transparent hover:border-primary transition-all hover:scale-105 bg-card min-w-[80px]"
+                      title={color.name}
                     >
-                      <div className="aspect-video p-2">
-                        <img
-                          src={asset.url}
-                          alt={asset.name}
-                          className="w-full h-full object-cover rounded group-hover:scale-105 transition-transform"
-                          style={{ imageRendering: 'pixelated' }}
-                        />
-                      </div>
-                      <div className="p-2 border-t">
-                        <div className="text-xs font-medium truncate font-volter">{asset.name}</div>
-                      </div>
-                    </div>
-                  ))
-                )}
+                      <div 
+                        className="w-16 h-16 rounded-md border-2 border-white shadow-sm"
+                        style={{ backgroundColor: color.value }}
+                      />
+                      <span className="font-volter text-xs text-center leading-tight">{color.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </ScrollArea>
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="images" className="flex-1 min-h-0 mt-4">
+            <div className="space-y-4 flex flex-col min-h-0">
+              <h3 className="text-lg font-volter">Imagens de Fundo</h3>
+              
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2">
+                  {loading ? (
+                    <div className="col-span-full text-center py-8">
+                      <div className="text-muted-foreground">Carregando imagens...</div>
+                    </div>
+                  ) : backgroundImages.length === 0 ? (
+                    <div className="col-span-full text-center py-8">
+                      <div className="text-muted-foreground">Nenhuma imagem encontrada</div>
+                    </div>
+                  ) : (
+                    backgroundImages.map((asset) => (
+                      <div
+                        key={asset.id}
+                        onClick={() => handleImageSelect(asset)}
+                        className="cursor-pointer group relative overflow-hidden rounded-lg border bg-card hover:bg-accent transition-colors"
+                      >
+                        <div className="aspect-square p-2">
+                          <img
+                            src={asset.url}
+                            alt={asset.name}
+                            className="w-full h-full object-cover rounded group-hover:scale-105 transition-transform"
+                            style={{ imageRendering: 'pixelated' }}
+                          />
+                        </div>
+                        <div className="p-2 border-t">
+                          <div className="text-xs font-medium truncate font-volter">{asset.name}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <div className="flex justify-end pt-4 border-t">
           <Button
