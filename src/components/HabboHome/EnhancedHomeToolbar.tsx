@@ -91,9 +91,12 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
     <>
       {/* Sliding Toolbar Container */}
       <div className={`
-        w-full max-w-4xl mx-auto bg-card border border-border rounded-lg shadow-lg overflow-hidden
-        transform transition-all duration-500 ease-out z-40 relative
-        ${isEditMode ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-full opacity-0 scale-95 pointer-events-none'}
+        w-full max-w-4xl mx-auto bg-card border border-border rounded-lg shadow-xl overflow-hidden
+        transform transition-all duration-700 ease-out z-30 relative
+        ${isEditMode 
+          ? 'translate-y-0 opacity-100 scale-100 visible' 
+          : '-translate-y-full opacity-0 scale-95 pointer-events-none invisible'
+        }
       `}>
         <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4">
           

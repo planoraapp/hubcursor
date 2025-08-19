@@ -177,7 +177,7 @@ const HabboHomeV2: React.FC = () => {
                 </CardHeader>
               </Card>
 
-              {/* Enhanced Toolbar - Below Header */}
+              {/* Enhanced Toolbar - Positioned between header and canvas */}
               <div className="relative mb-6">
                 <EnhancedHomeToolbar
                   isEditMode={isEditMode}
@@ -190,21 +190,76 @@ const HabboHomeV2: React.FC = () => {
                 />
               </div>
 
-              {/* Home Canvas with new dimensions */}
-              <HomeCanvas
-                widgets={widgets}
-                stickers={stickers}
-                background={background}
-                habboData={habboData}
-                guestbook={guestbook}
-                isEditMode={isEditMode}
-                isOwner={isOwner}
-                onWidgetPositionChange={updateWidgetPosition}
-                onStickerPositionChange={updateStickerPosition}
-                onStickerRemove={removeSticker}
-                onWidgetRemove={removeWidget}
-              />
-            </div>
+              {/* Home Canvas Container with Notch */}
+              <div className="relative">
+                {/* Edit Notch Button - Only for owners */}
+                {isOwner && (
+                  <div className="absolute -top-6 right-4 z-50">
+                    <button
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className={`
+                        relative overflow-hidden group
+                        bg-gradient-to-br from-primary to-primary/80 
+                        hover:from-primary/90 hover:to-primary/70
+                        text-primary-foreground
+                        border-2 border-primary-foreground/20
+                        transition-all duration-300 ease-out
+                        ${isEditMode 
+                          ? 'rounded-t-xl rounded-b-none px-4 py-3 shadow-xl scale-105' 
+                          : 'rounded-full px-3 py-2 shadow-lg hover:scale-110'
+                        }
+                      `}
+                      title={isEditMode ? 'Sair do modo edição' : 'Entrar no modo edição'}
+                    >
+                      {/* Background Glow Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      {/* Content */}
+                      <div className="relative flex items-center gap-2 font-volter text-sm font-medium">
+                        <div className={`transition-transform duration-300 ${isEditMode ? 'rotate-45' : ''}`}>
+                          {isEditMode ? '⚙️' : '✏️'}
+                        </div>
+                        <span className={`transition-all duration-300 ${isEditMode ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
+                          EDITANDO
+                        </span>
+                      </div>
+
+                      {/* Notch Connector - Shows when active */}
+                      {isEditMode && (
+                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                          <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary" />
+                        </div>
+                      )}
+
+                      {/* Subtle Animation Ring */}
+                      <div className={`
+                        absolute inset-0 rounded-full border-2 border-primary-foreground/30
+                        transition-all duration-500 ease-out
+                        ${isEditMode 
+                          ? 'scale-125 opacity-0' 
+                          : 'scale-100 opacity-0 group-hover:opacity-100 group-hover:scale-110'
+                        }
+                      `} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Home Canvas with new dimensions */}
+                  <HomeCanvas
+                    widgets={widgets}
+                    stickers={stickers}
+                    background={background}
+                    habboData={habboData}
+                    guestbook={guestbook}
+                    isEditMode={isEditMode}
+                    isOwner={isOwner}
+                    onWidgetPositionChange={updateWidgetPosition}
+                    onStickerPositionChange={updateStickerPosition}
+                    onStickerRemove={removeSticker}
+                    onWidgetRemove={removeWidget}
+                  />
+                </div>
+              </div>
           </main>
         </SidebarInset>
       </div>
