@@ -192,9 +192,9 @@ const HabboHomeV2: React.FC = () => {
 
               {/* Home Canvas Container with Notch */}
               <div className="relative">
-                {/* Edit Notch Button - Only for owners */}
+                {/* Edit Notch Button - Overlapping top-right corner */}
                 {isOwner && (
-                  <div className="absolute -top-6 right-4 z-50">
+                  <div className="absolute -top-4 -right-4 z-50">
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
                       className={`

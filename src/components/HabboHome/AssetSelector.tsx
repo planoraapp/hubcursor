@@ -33,13 +33,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
 
-  // Categories for stickers
+  // Categories for stickers matching Supabase structure
   const stickerCategories = [
     { id: 'todos', label: 'Todos' },
-    { id: 'mockup', label: 'Mockups' },
-    { id: 'icons', label: 'Ícones' },
     { id: 'animated', label: 'Animados' },
-    { id: 'decorative', label: 'Decorativos' }
+    { id: 'icons', label: 'Ícones' },
+    { id: 'mockups', label: 'Mockups' },
+    { id: 'mountable', label: 'Montáveis' },
+    { id: 'stickers', label: 'Stickers' }
   ];
 
   const fetchAssets = async () => {
@@ -73,21 +74,22 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
 
       let filteredData = data || [];
       
-      // Filter by category name patterns for stickers
+      // Filter by exact category matching for stickers
       if (type === 'stickers' && selectedCategory !== 'todos') {
         filteredData = data?.filter(asset => {
-          const name = asset.name.toLowerCase();
           const category = asset.category?.toLowerCase() || '';
           
           switch(selectedCategory) {
-            case 'mockup': 
-              return name.includes('mockup') || name.includes('mock') || category.includes('mockup');
-            case 'icons': 
-              return name.includes('icon') || name.includes('ico') || category.includes('icon');
             case 'animated': 
-              return name.includes('anim') || name.includes('gif') || category.includes('animated') || name.includes('mov');
-            case 'decorative': 
-              return name.includes('decor') || name.includes('decoration') || category.includes('decorative') || name.includes('ornament');
+              return category === 'animated';
+            case 'icons': 
+              return category === 'icons';
+            case 'mockups': 
+              return category === 'mockups';
+            case 'mountable': 
+              return category === 'mountable';
+            case 'stickers': 
+              return category === 'stickers';
             default: 
               return true;
           }
