@@ -459,15 +459,27 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
     }
   };
 
-  // Fixed sticker drop with proper number handling
+  // Enhanced sticker drop with better error handling and feedback
   const handleStickerDrop = async (stickerId: string, stickerSrc: string, category: string) => {
     if (!isOwner || !habboData) {
       console.log('❌ Cannot add sticker: not owner or no habbo data', { isOwner, hasHabboData: !!habboData });
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado como dono desta home para adicionar stickers.",
+        variant: "destructive"
+      });
       return;
     }
 
     try {
-      console.log('🎯 Adicionando sticker:', { stickerId, stickerSrc, category });
+      console.log('🎯 Adicionando sticker detalhado:', { 
+        stickerId, 
+        stickerSrc, 
+        category, 
+        userId: habboData.id,
+        isOwner,
+        currentStickersCount: stickers.length 
+      });
       
       const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0)) + 1;
 
@@ -475,15 +487,15 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
         user_id: habboData.id,
         sticker_id: stickerId,
         sticker_src: stickerSrc,
-        category: category || 'decorative',
-        x: Math.round(Math.random() * 200 + 50),
-        y: Math.round(Math.random() * 200 + 50),
+        category: category || 'outros',
+        x: Math.round(Math.random() * 300 + 100), // Área mais visível
+        y: Math.round(Math.random() * 300 + 100),
         z_index: nextZ,
         rotation: 0,
         scale: 1.0
       };
 
-      console.log('📦 Payload para inserção:', payload);
+      console.log('📦 Payload completo para inserção:', payload);
 
       const { data, error } = await supabase
         .from('user_stickers')
@@ -492,11 +504,29 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
         .single();
 
       if (!error && data) {
-        console.log('✅ Sticker adicionado com sucesso:', data);
-        setStickers(prev => [...prev, data]);
+        console.log('✅ Sticker adicionado com sucesso no banco:', data);
+        
+        const newSticker: Sticker = {
+          id: data.id,
+          sticker_id: data.sticker_id,
+          sticker_src: data.sticker_src,
+          category: data.category,
+          x: data.x,
+          y: data.y,
+          z_index: data.z_index,
+          rotation: data.rotation || 0,
+          scale: data.scale || 1
+        };
+        
+        setStickers(prev => {
+          const updated = [...prev, newSticker];
+          console.log('🔄 Stickers atualizados:', updated.length);
+          return updated;
+        });
+        
         toast({
-          title: "Sticker Adicionado",
-          description: "Sticker foi adicionado à sua home!"
+          title: "✨ Sticker Adicionado!",
+          description: `Sticker "${stickerId}" adicionado à sua home!`
         });
         return data;
       } else {
