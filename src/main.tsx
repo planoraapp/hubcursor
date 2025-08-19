@@ -12,6 +12,7 @@ import Console from './pages/Console'
 import HabboHomeV2 from './pages/HabboHomeV2'
 import Home from './pages/Home'
 import Homes from './pages/Homes'
+import Login from './pages/Login'
 import Noticias from './pages/Noticias'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
@@ -29,6 +30,14 @@ const router = createBrowserRouter([
   {
     path: "/console",
     element: <Console />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/connect-habbo",
+    element: <Login />,
   },
   {
     path: "/homes",

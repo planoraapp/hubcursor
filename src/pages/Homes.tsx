@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useLatestHomes } from '@/hooks/useLatestHomes';
+import { HomePreviewCard } from '@/components/HomePreviewCard';
 
 interface HabboUser {
   id: string;
@@ -27,6 +29,7 @@ const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { habboAccount, isLoggedIn } = useSimpleAuth();
+  const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -116,8 +119,8 @@ const Homes: React.FC = () => {
                 </p>
                 
                 {/* Botão Minha Home */}
-                {isLoggedIn && habboAccount && (
-                  <div className="mt-4">
+                <div className="mt-4">
+                  {isLoggedIn && habboAccount ? (
                     <Button 
                       onClick={() => navigate(`/homes/${habboAccount.habbo_name}`)}
                       className="habbo-button-green volter-font px-6 py-2"
@@ -126,8 +129,16 @@ const Homes: React.FC = () => {
                       Ver Minha Home
                       <Home className="w-4 h-4 ml-2" />
                     </Button>
-                  </div>
-                )}
+                  ) : (
+                    <Button 
+                      onClick={() => navigate('/login')}
+                      className="habbo-button-orange volter-font px-6 py-2"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Fazer Login para Ver Minha Home
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
@@ -161,6 +172,38 @@ const Homes: React.FC = () => {
                   </p>
                 </CardContent>
               </Card>
+
+              {/* Seção de Últimas Homes Editadas */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-white mb-4 volter-font text-center"
+                    style={{
+                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                    }}>
+                  🎨 Últimas Homes Editadas
+                </h2>
+                
+                {loadingLatest ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-white/20 border-t-white rounded-full"></div>
+                    <span className="ml-3 text-white volter-font">Carregando homes...</span>
+                  </div>
+                ) : latestHomes && latestHomes.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                    {latestHomes.map((home) => (
+                      <HomePreviewCard key={home.user_id} home={home} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+                    <CardContent className="p-6 text-center">
+                      <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600 volter-font">
+                        Ainda não há homes editadas recentemente
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
               {searchInitiated && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
