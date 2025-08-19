@@ -35,6 +35,10 @@ const router = createBrowserRouter([
     element: <Homes />,
   },
   {
+    path: "/homes/:username",
+    element: <HabboHomeV2 />,
+  },
+  {
     path: "/enhanced-home/:username",
     element: <HabboHomeV2 />,
   },
