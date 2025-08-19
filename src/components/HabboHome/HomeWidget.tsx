@@ -130,7 +130,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'avatar':
       case 'usercard':
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
-        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l`;
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=3&gesture=sml&size=l`;
         
         return (
           <div className="flex items-center gap-4 p-4">
@@ -138,7 +138,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
               <img
                 src={avatarUrl}
                 alt={`${habboData.habbo_name} avatar`}
-                className="w-24 h-24 object-contain"
+                className="w-32 h-32 rounded-lg border-2 border-white shadow-lg"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

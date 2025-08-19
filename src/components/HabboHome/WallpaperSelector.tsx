@@ -53,19 +53,12 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
       setLoading(true);
       console.log('🔍 Buscando imagens de fundo no bucket home-assets...');
       
-      // Buscar especificamente backgrounds no bucket home-assets
+      // Buscar backgrounds diretamente do bucket backgroundshome
       const { data, error } = await supabase
         .from('home_assets')
         .select('*')
+        .eq('bucket_name', 'backgroundshome')
         .eq('is_active', true)
-        .or(`
-          category.ilike.%background%,
-          category.ilike.%bg%,
-          name.ilike.%bg_%,
-          name.ilike.%background%,
-          file_path.ilike.%bg_%,
-          file_path.ilike.%background%
-        `)
         .order('name');
 
       if (error) {
@@ -76,21 +69,10 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
 
       console.log(`✅ ${data?.length || 0} backgrounds encontrados no banco`);
 
-      // Construir URLs corretas para o bucket home-assets
+      // Construir URLs para o bucket backgroundshome
       const assetsWithUrls = (data || []).map((asset) => {
         const baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public';
-        let url = '';
-        
-        // Construir URL correta baseada no bucket_name e file_path
-        if (asset.bucket_name === 'home-assets' && asset.file_path.startsWith('backgroundshome/')) {
-          // Caso especial: bucket home-assets mas arquivo em backgroundshome/
-          url = `${baseUrl}/home-assets/${asset.file_path}`;
-        } else if (asset.bucket_name === 'backgroundshome') {
-          url = `${baseUrl}/backgroundshome/${asset.file_path}`;
-        } else {
-          // Para outros casos, usar bucket_name + file_path
-          url = `${baseUrl}/${asset.bucket_name}/${asset.file_path}`;
-        }
+        const url = `${baseUrl}/backgroundshome/${asset.file_path}`;
         
         console.log(`📦 Asset: ${asset.name} -> URL: ${url}`);
         

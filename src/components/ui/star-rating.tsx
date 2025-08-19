@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Star } from 'lucide-react';
 
 interface StarRatingProps {
   rating: number;
@@ -62,31 +63,13 @@ export const StarRating: React.FC<StarRatingProps> = ({
             onClick={() => !readonly && handleStarClick(starIndex)}
             onMouseEnter={() => !readonly && handleStarHover(starIndex)}
           >
-            {/* Base star (empty) */}
-            <img
-              src="/assets/star_empty.png"
-              alt={`Star ${starIndex} empty`}
-              className="select-none"
-              style={{ 
-                imageRendering: 'pixelated',
-                width: getStarSize(),
-                height: getStarSize()
-              }}
-              draggable={false}
-            />
-            
-            {/* Filled star overlay */}
-            <img
-              src="/assets/star_filled.png"
-              alt={`Star ${starIndex} filled`}
-              className="absolute top-0 left-0 select-none transition-opacity duration-200"
-              style={{ 
-                imageRendering: 'pixelated',
-                opacity: getStarOpacity(starIndex),
-                width: getStarSize(),
-                height: getStarSize()
-              }}
-              draggable={false}
+            <Star
+              size={getStarSize()}
+              className={`select-none transition-opacity duration-200 ${
+                getStarOpacity(starIndex) === 1 
+                  ? 'fill-yellow-400 text-yellow-400' 
+                  : 'fill-transparent text-gray-300'
+              }`}
             />
           </div>
         ))}
