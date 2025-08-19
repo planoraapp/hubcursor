@@ -122,7 +122,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
             isEditMode={isEditMode}
             isOwner={isOwner}
             onPositionChange={onWidgetPositionChange}
-            onWidgetRemove={onWidgetRemove}
+            onRemove={onWidgetRemove}
           />
         ))}
 
