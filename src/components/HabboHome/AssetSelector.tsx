@@ -59,7 +59,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       if (type === 'backgrounds') {
         query = query.or('category.eq.Background,category.eq.Backgrounds,category.eq.Papel de Parede,name.ilike.%bg%,name.ilike.%background%,name.ilike.%wallpaper%');
       } else if (type === 'stickers') {
-        query = query.or('category.eq.Sticker,category.eq.Stickers,category.eq.Adesivo,name.ilike.%sticker%,name.ilike.%adesivo%');
+        query = query.in('category', ['Animados', 'Ícones', 'Mockups', 'Montáveis', 'Stickers']);
       }
 
       const { data, error } = await query;
@@ -81,13 +81,13 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
           
           switch(selectedCategory) {
             case 'animated': 
-              return category === 'animated';
+              return category === 'animados';
             case 'icons': 
-              return category === 'icons';
+              return category === 'ícones';
             case 'mockups': 
               return category === 'mockups';
             case 'mountable': 
-              return category === 'mountable';
+              return category === 'montáveis';
             case 'stickers': 
               return category === 'stickers';
             default: 
@@ -152,7 +152,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
           </div>
         )}
 
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4">
             {loading ? (
               <div className="col-span-full text-center py-8">
