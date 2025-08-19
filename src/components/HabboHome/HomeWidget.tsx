@@ -1,8 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FunctionalGuestbookWidget } from '@/components/widgets/FunctionalGuestbookWidget';
-import { FunctionalRatingWidget } from './FunctionalRatingWidget';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { RatingWidget } from './widgets/RatingWidget';
 
 interface Widget {
   id: string;
@@ -24,18 +27,40 @@ interface HabboData {
   motto: string;
   figure_string: string;
   is_online: boolean;
-  memberSince?: string; // Data de criação da conta do Habbo
+}
+
+interface GuestbookEntry {
+  id: string;
+  author_habbo_name: string;
+  message: string;
+  created_at: string;
 }
 
 interface HomeWidgetProps {
   widget: Widget;
-  habboData?: HabboData;
-  guestbook: any[];
+  habboData: HabboData;
+  guestbook: GuestbookEntry[];
   isEditMode: boolean;
   isOwner: boolean;
+  onRemove: (widgetId: string) => void;
   onPositionChange: (widgetId: string, x: number, y: number) => void;
-  onWidgetRemove?: (widgetId: string) => void;
 }
+
+// Helper function to get country flag emoji from hotel
+const getCountryFlag = (hotel: string): string => {
+  const hotelFlags: Record<string, string> = {
+    'com.br': '🇧🇷', 'br': '🇧🇷',
+    'com': '🇺🇸', 'us': '🇺🇸',
+    'es': '🇪🇸', 'com.es': '🇪🇸',
+    'de': '🇩🇪', 'com.de': '🇩🇪',
+    'fr': '🇫🇷', 'com.fr': '🇫🇷',
+    'fi': '🇫🇮', 'com.fi': '🇫🇮',
+    'it': '🇮🇹', 'com.it': '🇮🇹',
+    'nl': '🇳🇱', 'com.nl': '🇳🇱',
+    'com.tr': '🇹🇷', 'tr': '🇹🇷'
+  };
+  return hotelFlags[hotel.toLowerCase()] || '🌍';
+};
 
 export const HomeWidget: React.FC<HomeWidgetProps> = ({
   widget,
@@ -43,14 +68,14 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   guestbook,
   isEditMode,
   isOwner,
-  onPositionChange,
-  onWidgetRemove
+  onRemove,
+  onPositionChange
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: widget.x, elementY: widget.y });
-  const widgetRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0, elementX: widget.x, elementY: widget.y });
+  const [newMessage, setNewMessage] = React.useState('');
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
     
     e.preventDefault();
@@ -63,204 +88,149 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       elementX: widget.x,
       elementY: widget.y
     });
-
-    console.log(`🎯 Iniciando drag do widget ${widget.widget_type}`);
-  }, [isEditMode, isOwner, widget.x, widget.y, widget.widget_type]);
+  };
 
   React.useEffect(() => {
-    let animationId: number;
-    
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
-        // Use requestAnimationFrame for smoother updates
-        cancelAnimationFrame(animationId);
-        animationId = requestAnimationFrame(() => {
-          const deltaX = e.clientX - dragStart.x;
-          const deltaY = e.clientY - dragStart.y;
-          const newX = Math.max(0, Math.min(1080 - (widget.width || 300), dragStart.elementX + deltaX));
-          const newY = Math.max(0, Math.min(1800 - (widget.height || 200), dragStart.elementY + deltaY));
-          
-          onPositionChange(widget.widget_type, newX, newY);
-        });
+        const deltaX = e.clientX - dragStart.x;
+        const deltaY = e.clientY - dragStart.y;
+        const newX = Math.max(0, Math.min(1080 - widget.width, dragStart.elementX + deltaX));
+        const newY = Math.max(0, Math.min(1800 - widget.height, dragStart.elementY + deltaY));
+        
+        onPositionChange(widget.id, newX, newY);
       }
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
-        cancelAnimationFrame(animationId);
-        console.log(`✅ Drag completo do widget ${widget.widget_type}`);
         setIsDragging(false);
       }
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove, { passive: true });
+      document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'grabbing';
     }
 
     return () => {
-      cancelAnimationFrame(animationId);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'auto';
-      document.body.style.cursor = 'auto';
     };
   }, [isDragging, dragStart, onPositionChange, widget]);
-
-  const getCountryFlag = (hotel: string): string => {
-    const flagMap: { [key: string]: string } = {
-      'br': '/assets/flagbrazil.png',
-      'com': '/assets/flagcom.png',
-      'de': '/assets/flagdeus.png',
-      'es': '/assets/flagspain.png',
-      'fr': '/assets/flagfrance.png',
-      'it': '/assets/flagitaly.png',
-      'nl': '/assets/flagnetl.png',
-      'fi': '/assets/flafinland.png',
-      'tr': '/assets/flagtrky.png'
-    };
-    return flagMap[hotel.toLowerCase()] || '/assets/flagcom.png'; // fallback
-  };
-
-  const formatDate = (memberSince?: string) => {
-    if (!memberSince) return 'Janeiro 2024';
-    
-    try {
-      // API do Habbo retorna formato "2006-01-01T00:00:00.000+0000" 
-      const date = new Date(memberSince);
-      
-      if (isNaN(date.getTime())) {
-        return 'Janeiro 2024';
-      }
-      
-      return date.toLocaleDateString('pt-BR', { 
-        month: 'long', 
-        year: 'numeric' 
-      });
-    } catch {
-      return 'Janeiro 2024';
-    }
-  };
 
   const renderWidgetContent = () => {
     switch (widget.widget_type) {
       case 'avatar':
       case 'usercard':
+        const avatarUrl = `https://www.habbo.${habboData.hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l`;
+        
         return (
-          <Card className="w-full h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardContent className="p-4 h-full">
-              {/* Horizontal layout with proper proportions */}
-              <div className="flex items-center gap-4 h-full">
-                {/* Avatar section - fixed size to prevent compression */}
-                <div className="flex-shrink-0">
-                  <div 
-                    className="bg-transparent rounded-lg flex items-center justify-center"
-                    style={{ 
-                      width: '80px',
-                      height: '120px', // Real avatar proportions
-                      minWidth: '80px',
-                      minHeight: '120px'
-                    }}
-                  >
-                    <img
-                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`}
-                      alt={habboData.habbo_name}
-                      className="object-contain"
-                      style={{ 
-                        imageRendering: 'pixelated',
-                        width: '80px',
-                        height: '120px', // Maintain real proportions
-                        maxWidth: 'none',
-                        maxHeight: 'none'
-                      }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboData.habbo_name}&direction=2&head_direction=3&size=l`;
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                {/* User info section - flexible width */}
-                <div className="flex-1 min-w-0 h-full flex flex-col justify-between py-2">
-                  {/* User name and status */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold text-gray-800 volter-font habbo-text truncate">
-                        {habboData.habbo_name}
-                      </h3>
-                      <div className="flex items-center gap-1">
-                        {habboData.is_online ? (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" title="Online" />
-                        ) : (
-                          <div className="w-2 h-2 bg-gray-400 rounded-full" title="Offline" />
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Motto */}
-                    <p className="text-sm text-gray-600 volter-font mb-2 line-clamp-2">
-                      {habboData.motto || 'Sem missão definida'}
-                    </p>
-                  </div>
-
-                  {/* Bottom info */}
-                  <div className="space-y-1">
-                    {/* Hotel with flag */}
-                    <div className="flex items-center gap-1 text-xs text-gray-500 volter-font">
-                      <img 
-                        src={getCountryFlag(habboData.hotel || 'br')}
-                        alt={`${habboData.hotel} flag`}
-                        className="w-4 h-3 object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/assets/flagcom.png';
-                        }}
-                      />
-                      <span>{(habboData.hotel || 'br').toUpperCase()}</span>
-                    </div>
-                    
-                    {/* Member since - usar dados reais da API */}
-                    <div className="text-xs text-gray-500 volter-font">
-                      📅 Membro desde {formatDate(habboData?.memberSince)}
-                    </div>
-
-                    {/* Status badge */}
-                    <div className="flex gap-1 mt-1">
-                      <Badge className="text-xs volter-font bg-blue-100 text-blue-800 px-2 py-0">
-                        {habboData.is_online ? '🟢 Online' : '🔴 Offline'}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+          <div className="flex items-center gap-4 p-4">
+            <div className="flex-shrink-0">
+              <img
+                src={avatarUrl}
+                alt={`${habboData.habbo_name} avatar`}
+                className="w-24 h-24 object-contain"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/assets/frank.png';
+                }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-lg font-bold font-volter text-black truncate">
+                  {habboData.habbo_name}
+                </h3>
+                <span className="text-lg" title={`Hotel: ${habboData.hotel.toUpperCase()}`}>
+                  {getCountryFlag(habboData.hotel)}
+                </span>
+                <Badge 
+                  variant={habboData.is_online ? "default" : "secondary"}
+                  className="text-xs"
+                >
+                  {habboData.is_online ? "Online" : "Offline"}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-gray-700 font-volter italic">
+                "{habboData.motto || 'Sem missão definida'}"
+              </p>
+            </div>
+          </div>
         );
 
       case 'guestbook':
         return (
-          <FunctionalGuestbookWidget
-            homeOwnerUserId={habboData.id}
-            homeOwnerName={habboData.habbo_name}
-          />
+          <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
+            <h4 className="font-volter font-bold text-black border-b pb-2">
+              📝 Livro de Visitas
+            </h4>
+            
+            {guestbook.length === 0 ? (
+              <div className="text-center text-gray-500 py-4">
+                <p className="font-volter">Seja o primeiro a deixar uma mensagem!</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {guestbook.slice(0, 5).map((entry) => (
+                  <div key={entry.id} className="bg-gray-50 rounded p-2 border">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-volter text-sm font-bold text-blue-600">
+                        {entry.author_habbo_name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(entry.created_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">{entry.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Área para nova mensagem - apenas se não for o dono */}
+            {!isOwner && (
+              <div className="border-t pt-3">
+                <Textarea
+                  placeholder="Deixe sua mensagem..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  className="text-sm resize-none"
+                  rows={2}
+                />
+                <Button 
+                  size="sm" 
+                  className="mt-2 w-full font-volter"
+                  disabled={!newMessage.trim()}
+                >
+                  Enviar Mensagem
+                </Button>
+              </div>
+            )}
+          </div>
         );
 
-        case 'rating':
-          return (
-            <FunctionalRatingWidget homeOwnerId={habboData.id} />
-          );
+      case 'rating':
+        return (
+          <div className="p-2">
+            <RatingWidget
+              homeOwnerId={habboData.id}
+              className="border-0 bg-transparent"
+            />
+          </div>
+        );
 
       default:
         return (
-          <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardContent className="p-4 text-center">
-              <p className="volter-font">Widget: {widget.widget_type}</p>
-            </CardContent>
-          </Card>
+          <div className="p-4 text-center">
+            <p className="text-gray-500 font-volter">
+              Widget: {widget.widget_type}
+            </p>
+          </div>
         );
     }
   };
@@ -271,52 +241,36 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     width: widget.width,
     height: widget.height,
     zIndex: isDragging ? 9999 : widget.z_index,
+    opacity: isDragging ? 0.8 : 1,
     transform: isDragging ? 'scale(1.02)' : 'scale(1)',
-    transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-    opacity: isDragging ? 0.8 : 1
+    transition: isDragging ? 'none' : 'all 0.2s ease-out'
   };
 
   return (
     <div
-      ref={widgetRef}
-      className={`absolute select-none ${
-        isEditMode && isOwner
-          ? 'cursor-move border-2 border-dashed border-blue-400 hover:border-blue-600' 
-          : 'cursor-default'
-      }`}
+      className={`absolute ${isEditMode && isOwner ? 'cursor-move' : 'cursor-default'}`}
       style={containerStyle}
       onMouseDown={handleMouseDown}
     >
-      {/* Edit Mode Controls */}
-      {isEditMode && isOwner && (
-        <>
-          <div className="absolute -top-6 left-0 bg-yellow-500 text-black px-2 py-1 text-xs rounded-tl rounded-tr volter-font">
-            {widget.widget_type.toUpperCase()}
-          </div>
-          
-          {/* Remove Button - Only for non-essential widgets */}
-          {widget.widget_type !== 'avatar' && widget.widget_type !== 'usercard' && onWidgetRemove && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onWidgetRemove(widget.id);
-              }}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors z-10"
-              title="Remover Widget"
-            >
-              ×
-            </button>
-          )}
-        </>
-      )}
-      
-      {/* Content */}
-      <div className="h-full overflow-hidden rounded-lg">
-        {renderWidgetContent()}
-      </div>
+      <Card className="h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black overflow-hidden">
+        {isEditMode && isOwner && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(widget.id);
+            }}
+            className="absolute top-2 right-2 z-10 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md"
+            title="Remover Widget"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        
+        <div className="h-full overflow-hidden">
+          {renderWidgetContent()}
+        </div>
+      </Card>
 
-      {/* Drag Indicator */}
       {isDragging && (
         <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded pointer-events-none" />
       )}

@@ -84,6 +84,16 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     handleRotationChange(newRotation);
   }, [localRotation, handleRotationChange]);
 
+  const handleRotateClockwise = useCallback(() => {
+    const newRotation = (localRotation + 90) % 360;
+    handleRotationChange(newRotation);
+  }, [localRotation, handleRotationChange]);
+
+  const handleRotateCounterClockwise = useCallback(() => {
+    const newRotation = (localRotation - 90 + 360) % 360;
+    handleRotationChange(newRotation);
+  }, [localRotation, handleRotationChange]);
+
   React.useEffect(() => {
     let animationId: number;
     
@@ -148,7 +158,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       }`}
       style={containerStyle}
       onMouseDown={handleMouseDown}
-      onMouseEnter={() => setShowControls(true)}
+      onMouseEnter={() => isEditMode && isOwner && setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
       <img
@@ -157,11 +167,9 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         className="select-none pointer-events-none"
         style={{ 
           imageRendering: 'pixelated',
-          // Manter proporções originais - não forçar tamanhos específicos
           width: 'auto',
           height: 'auto',
           objectFit: 'contain',
-          // Permitir tamanhos naturais dos stickers
           maxWidth: 'none',
           maxHeight: 'none'
         }}
@@ -179,33 +187,48 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       
       {isEditMode && isOwner && showControls && (
         <>
-          {/* Controles Principais */}
-          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 flex gap-1 bg-black/90 rounded px-2 py-1">
+          {/* Controles Principais - Linha Superior */}
+          <div className="absolute -top-14 left-1/2 transform -translate-x-1/2 flex gap-1 bg-black/90 rounded px-2 py-1">
+            <button
+              onClick={handleRotateCounterClockwise}
+              className="w-7 h-7 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors flex items-center justify-center"
+              title="Girar Anti-horário"
+            >
+              ↺
+            </button>
+            <button
+              onClick={handleRotateClockwise}
+              className="w-7 h-7 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors flex items-center justify-center"
+              title="Girar Horário"
+            >
+              ↻
+            </button>
             <button
               onClick={handleFlipHorizontal}
-              className="w-6 h-6 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+              className="w-7 h-7 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center"
               title="Inverter Horizontal"
             >
               ↔
             </button>
             <button
               onClick={handleFlipVertical}
-              className="w-6 h-6 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors"
+              className="w-7 h-7 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center"
               title="Inverter Vertical"
             >
               ↕
             </button>
             <button
               onClick={handleRemove}
-              className="w-6 h-6 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+              className="w-7 h-7 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors flex items-center justify-center"
               title="Remover"
             >
               ×
             </button>
           </div>
 
-          {/* Controle de Rotação */}
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/90 rounded px-3 py-1">
+          {/* Controle de Rotação Precisa - Linha Inferior */}
+          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black/90 rounded px-3 py-1 flex items-center gap-2">
+            <span className="text-white text-xs font-volter">{localRotation}°</span>
             <input
               type="range"
               min="0"

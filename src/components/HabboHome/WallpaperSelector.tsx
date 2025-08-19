@@ -51,22 +51,22 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
     
     try {
       setLoading(true);
-      console.log('🔍 Buscando imagens de fundo...');
+      console.log('🔍 Buscando imagens de fundo no bucket home-assets...');
       
-      // Buscar TODOS os backgrounds incluindo os específicos mencionados
+      // Buscar especificamente backgrounds no bucket home-assets
       const { data, error } = await supabase
         .from('home_assets')
         .select('*')
         .eq('is_active', true)
         .or(`
-          category.eq.Background,
-          category.eq.Backgrounds,
-          category.eq.Papel de Parede,
-          name.ilike.%bg%,
+          category.ilike.%background%,
+          category.ilike.%bg%,
+          name.ilike.%bg_%,
           name.ilike.%background%,
-          name.ilike.%wallpaper%,
-          name.in.(17,28,ABRIL-DIADOJORNALISTA,AU_Australia_Campaign_bg_01_v1,bg_bathroom_tile,bg_colour_01,bg_colour_04,bg_colour_05,bg_colour_07,bg_colour_08,bg_colour_09,bg_colour_11,bg_colour_15,bg_generic_pattern_purple,bg_home_4,bg_image_submarine,bg_pattern_abstract1,bg_pattern_bobbaskulls1,bg_pattern_carpants,bg_pattern_cars,bg_pattern_clouds,bg-awards,bg35,bganimated_rain,bgdisco)
-        `);
+          file_path.ilike.%bg_%,
+          file_path.ilike.%background%
+        `)
+        .order('name');
 
       if (error) {
         console.error('❌ Erro ao buscar backgrounds:', error);
@@ -74,15 +74,28 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
         return;
       }
 
-      console.log(`✅ Backgrounds encontrados (${data?.length || 0})`);
+      console.log(`✅ ${data?.length || 0} backgrounds encontrados no banco`);
 
-      // Construir URLs corretas considerando os buckets home-assets e backgroundshome  
-      const assetsWithUrls = (data || []).map((asset) => ({
-        ...asset,
-        url: asset.bucket_name === 'backgroundshome' || asset.file_path.includes('backgroundshome') 
-          ? `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/backgroundshome/${asset.file_path.replace('backgroundshome/', '')}`
-          : `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/${asset.bucket_name}/${asset.file_path}`
-      }));
+      // Construir URLs corretas para o bucket home-assets
+      const assetsWithUrls = (data || []).map((asset) => {
+        const baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public';
+        let url = '';
+        
+        // Verificar se é do bucket backgroundshome ou home-assets
+        if (asset.bucket_name === 'backgroundshome') {
+          url = `${baseUrl}/backgroundshome/${asset.file_path}`;
+        } else {
+          // Para home-assets, usar o file_path direto
+          url = `${baseUrl}/${asset.bucket_name}/${asset.file_path}`;
+        }
+        
+        console.log(`📦 Asset: ${asset.name} -> URL: ${url}`);
+        
+        return {
+          ...asset,
+          url
+        };
+      });
 
       setBackgroundImages(assetsWithUrls);
     } catch (err) {
@@ -100,11 +113,14 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
   }, [open]);
 
   const handleColorSelect = (color: string) => {
+    console.log('🎨 Cor selecionada:', color);
     onWallpaperSelect('color', color);
     onOpenChange(false);
   };
 
   const handleImageSelect = (asset: Asset) => {
+    console.log('🖼️ Imagem selecionada:', asset);
+    
     // Detectar se é bg_colour (pequeno, para repeat) ou imagem grande (para cover)
     const isSmallBg = asset.name.toLowerCase().includes('bg_colour') || 
                      asset.name.toLowerCase().includes('small') ||
@@ -112,6 +128,8 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
                      asset.file_path.includes('bg_colour');
     
     const backgroundType = isSmallBg ? 'repeat' : 'cover';
+    console.log(`📐 Tipo detectado: ${backgroundType} para ${asset.name}`);
+    
     onWallpaperSelect(backgroundType, asset.url!);
     onOpenChange(false);
   };
@@ -152,7 +170,9 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
 
           {/* Seção de imagens - grid à direita (maior) */}
           <div className="flex-1 min-w-0 flex flex-col">
-            <h3 className="text-lg font-volter mb-4">Imagens de Fundo</h3>
+            <h3 className="text-lg font-volter mb-4">
+              Imagens de Fundo ({backgroundImages.length})
+            </h3>
             
             <ScrollArea className="flex-1 min-h-0">
               <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 p-2">
@@ -162,7 +182,9 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
                   </div>
                 ) : backgroundImages.length === 0 ? (
                   <div className="col-span-full text-center py-8">
-                    <div className="text-muted-foreground">Nenhuma imagem encontrada</div>
+                    <div className="text-muted-foreground">
+                      Nenhuma imagem encontrada. Verifique o bucket home-assets.
+                    </div>
                   </div>
                 ) : (
                   backgroundImages.map((asset) => (
@@ -177,6 +199,15 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
                           alt={asset.name}
                           className="w-full h-full object-cover rounded group-hover:scale-105 transition-transform"
                           style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            console.error('❌ Falha ao carregar imagem:', asset.url);
+                            const target = e.target as HTMLImageElement;
+                            target.style.backgroundColor = '#f0f0f0';
+                            target.alt = 'Erro ao carregar';
+                          }}
+                          onLoad={() => {
+                            console.log('✅ Imagem carregada:', asset.name);
+                          }}
                         />
                       </div>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-1">
