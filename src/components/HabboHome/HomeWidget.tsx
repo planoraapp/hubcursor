@@ -129,7 +129,8 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     switch (widget.widget_type) {
       case 'avatar':
       case 'usercard':
-        const avatarUrl = `https://www.habbo.${habboData.hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l`;
+        const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l`;
         
         return (
           <div className="flex items-center gap-4 p-4">

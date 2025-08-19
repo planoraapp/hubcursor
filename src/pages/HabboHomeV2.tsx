@@ -188,25 +188,6 @@ const HabboHomeV2: React.FC = () => {
         </div>
       )}
 
-      {/* Edit button for owner when not in edit mode - Position between banner and home */}
-      {isOwner && !isEditMode && (
-        <div className="flex justify-center my-6">
-          <button
-            onClick={() => setIsEditMode(true)}
-            className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110 shadow-lg"
-            style={{
-              width: '48px',
-              height: '48px',
-              backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              imageRendering: 'pixelated'
-            }}
-            title="Entrar no Modo de Edição"
-          />
-        </div>
-      )}
 
       <div className={`p-4 ${isMobile ? 'pb-24' : ''}`}>
         <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
@@ -216,6 +197,26 @@ const HabboHomeV2: React.FC = () => {
             </CardTitle>
           </CardHeader>
         </Card>
+
+        {/* Edit button for owner when not in edit mode - Position between banner and home */}
+        {isOwner && !isEditMode && (
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => setIsEditMode(true)}
+              className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110 shadow-lg bg-yellow-500 hover:bg-yellow-600 border-2 border-black cursor-pointer z-20"
+              style={{
+                width: '48px',
+                height: '48px',
+                backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                imageRendering: 'pixelated'
+              }}
+              title="Entrar no Modo de Edição"
+            />
+          </div>
+        )}
 
         <div className="relative">
           <HomeCanvas
