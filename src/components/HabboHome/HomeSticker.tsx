@@ -32,10 +32,17 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: sticker.x, elementY: sticker.y });
-  const [showControls, setShowControls] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const [localRotation, setLocalRotation] = useState(sticker.rotation);
   const [localScale, setLocalScale] = useState(sticker.scale);
   const stickerRef = useRef<HTMLDivElement>(null);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (!isEditMode || !isOwner) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsSelected(prev => !prev);
+  }, [isEditMode, isOwner]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
@@ -103,8 +110,10 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         animationId = requestAnimationFrame(() => {
           const deltaX = e.clientX - dragStart.x;
           const deltaY = e.clientY - dragStart.y;
-          const newX = Math.max(0, Math.min(1080 - 100, dragStart.elementX + deltaX));
-          const newY = Math.max(0, Math.min(1800 - 100, dragStart.elementY + deltaY));
+          const canvasWidth = 768; // Use mobile width for consistency
+          const canvasHeight = 1280; // Use mobile height for consistency
+          const newX = Math.max(0, Math.min(canvasWidth - 100, dragStart.elementX + deltaX));
+          const newY = Math.max(0, Math.min(canvasHeight - 100, dragStart.elementY + deltaY));
           
           onPositionChange(sticker.id, newX, newY);
         });
@@ -157,9 +166,8 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
           : 'cursor-default'
       }`}
       style={containerStyle}
+      onClick={handleClick}
       onMouseDown={handleMouseDown}
-      onMouseEnter={() => isEditMode && isOwner && setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
     >
       <img
         src={sticker.sticker_src}
@@ -185,59 +193,45 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         }}
       />
       
-      {isEditMode && isOwner && showControls && (
+      {isEditMode && isOwner && isSelected && (
         <>
-          {/* Controles Principais - Linha Superior */}
-          <div className="absolute -top-14 left-1/2 transform -translate-x-1/2 flex gap-1 bg-black/90 rounded px-2 py-1">
-            <button
-              onClick={handleRotateCounterClockwise}
-              className="w-7 h-7 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors flex items-center justify-center"
-              title="Girar Anti-horário"
-            >
-              ↺
-            </button>
-            <button
-              onClick={handleRotateClockwise}
-              className="w-7 h-7 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors flex items-center justify-center"
-              title="Girar Horário"
-            >
-              ↻
-            </button>
+          {/* Botão X - Canto superior direito */}
+          <button
+            onClick={handleRemove}
+            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg z-10"
+            title="Remover"
+          >
+            ×
+          </button>
+
+          {/* Botões Flip - Canto superior esquerdo */}
+          <div className="absolute -top-2 -left-2 flex gap-1">
             <button
               onClick={handleFlipHorizontal}
-              className="w-7 h-7 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center"
+              className="w-5 h-5 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center shadow-lg"
               title="Inverter Horizontal"
             >
               ↔
             </button>
             <button
               onClick={handleFlipVertical}
-              className="w-7 h-7 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center"
+              className="w-5 h-5 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center shadow-lg"
               title="Inverter Vertical"
             >
               ↕
             </button>
-            <button
-              onClick={handleRemove}
-              className="w-7 h-7 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors flex items-center justify-center"
-              title="Remover"
-            >
-              ×
-            </button>
           </div>
 
-          {/* Controle de Rotação Precisa - Linha Inferior */}
-          <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black/90 rounded px-3 py-1 flex items-center gap-2">
+          {/* Botão de Rotação - Parte inferior central */}
+          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/90 rounded px-2 py-1">
+            <button
+              onClick={handleRotateCounterClockwise}
+              className="w-6 h-6 bg-blue-500 text-white rounded-full text-xs hover:bg-blue-600 transition-colors flex items-center justify-center"
+              title="Girar"
+            >
+              ↻
+            </button>
             <span className="text-white text-xs font-volter">{localRotation}°</span>
-            <input
-              type="range"
-              min="0"
-              max="360"
-              value={localRotation}
-              onChange={(e) => handleRotationChange(parseInt(e.target.value))}
-              className="w-20 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-              title={`Rotação: ${localRotation}°`}
-            />
           </div>
         </>
       )}

@@ -81,11 +81,14 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
         const baseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public';
         let url = '';
         
-        // Verificar se é do bucket backgroundshome ou home-assets
-        if (asset.bucket_name === 'backgroundshome') {
+        // Construir URL correta baseada no bucket_name e file_path
+        if (asset.bucket_name === 'home-assets' && asset.file_path.startsWith('backgroundshome/')) {
+          // Caso especial: bucket home-assets mas arquivo em backgroundshome/
+          url = `${baseUrl}/home-assets/${asset.file_path}`;
+        } else if (asset.bucket_name === 'backgroundshome') {
           url = `${baseUrl}/backgroundshome/${asset.file_path}`;
         } else {
-          // Para home-assets, usar o file_path direto
+          // Para outros casos, usar bucket_name + file_path
           url = `${baseUrl}/${asset.bucket_name}/${asset.file_path}`;
         }
         

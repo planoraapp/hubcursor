@@ -188,22 +188,24 @@ const HabboHomeV2: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Button - Outside banner but visible */}
+      {/* Edit button for owner when not in edit mode - Position between banner and home */}
       {isOwner && !isEditMode && (
-        <button
-          onClick={() => setIsEditMode(true)}
-          className="fixed top-4 right-4 z-50 group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110"
-          style={{
-            width: '48px',
-            height: '48px',
-            backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            imageRendering: 'pixelated'
-          }}
-          title="Entrar no Modo de Edição"
-        />
+        <div className="flex justify-center my-6">
+          <button
+            onClick={() => setIsEditMode(true)}
+            className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110 shadow-lg"
+            style={{
+              width: '48px',
+              height: '48px',
+              backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              imageRendering: 'pixelated'
+            }}
+            title="Entrar no Modo de Edição"
+          />
+        </div>
       )}
 
       <div className={`p-4 ${isMobile ? 'pb-24' : ''}`}>

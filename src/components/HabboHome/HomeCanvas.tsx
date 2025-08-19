@@ -2,6 +2,7 @@
 import React from 'react';
 import { HomeWidget } from './HomeWidget';
 import { HomeSticker } from './HomeSticker';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Widget {
   id: string;
@@ -69,6 +70,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   onStickerRemove,
   onWidgetRemove
 }) => {
+  const isMobile = useIsMobile();
   console.log('🖼️ HomeCanvas renderizando:', {
     widgetsCount: widgets.length,
     stickersCount: stickers.length,
@@ -107,8 +109,8 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
           isEditMode ? 'border-4 border-dashed border-blue-400' : 'border-2 border-gray-300'
         }`}
         style={{
-          width: '1080px',
-          height: '1800px',
+          width: isMobile ? '768px' : '1080px',
+          height: isMobile ? '1280px' : '1800px',
           ...backgroundStyle
         }}
       >

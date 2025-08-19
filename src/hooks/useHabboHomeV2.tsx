@@ -147,6 +147,58 @@ export const useHabboHomeV2 = (username: string) => {
       }
 
       console.log('📦 Widgets carregados:', widgetsData);
+      
+      // Garantir que existe um widget avatar e está centralizado
+      const avatarWidget = widgetsData.find(w => w.widget_type === 'avatar');
+      if (currentUserIsOwner && !avatarWidget) {
+        // Criar widget avatar automaticamente se não existir
+        console.log('🎯 Criando widget avatar automaticamente...');
+        const centerX = 384; // Centro horizontal (768px/2 - 150px/2 para mobile)
+        const centerY = 100;  // Posição superior
+        
+        const newAvatarWidget: Widget = {
+          id: `avatar-${userId}`,
+          widget_type: 'avatar',
+          x: centerX,
+          y: centerY,
+          z_index: 1,
+          width: 300,
+          height: 150,
+          is_visible: true,
+          config: {}
+        };
+        
+        // Adicionar ao Supabase
+        await supabase
+          .from('user_home_widgets')
+          .insert({
+            user_id: userId,
+            widget_type: 'avatar',
+            x: centerX,
+            y: centerY,
+            z_index: 1,
+            width: 300,
+            height: 150,
+            is_visible: true,
+            config: {}
+          });
+          
+        widgetsData.push(newAvatarWidget);
+      } else if (avatarWidget && (avatarWidget.x < 0 || avatarWidget.y < 0 || avatarWidget.x > 768)) {
+        // Centralizar avatar se estiver fora dos limites visíveis
+        console.log('🎯 Centralizando widget avatar...');
+        const centerX = 384;
+        const centerY = 100;
+        
+        await supabase
+          .from('user_home_widgets')
+          .update({ x: centerX, y: centerY })
+          .eq('id', avatarWidget.id);
+          
+        avatarWidget.x = centerX;
+        avatarWidget.y = centerY;
+      }
+      
       setWidgets(widgetsData);
 
       // 4. Carregar stickers
@@ -216,7 +268,7 @@ export const useHabboHomeV2 = (username: string) => {
         .from('user_home_widgets')
         .update({ x, y })
         .eq('user_id', habboData.id)
-        .eq('widget_type', widgetId);
+        .eq('id', widgetId);
 
       // Atualizar na estrutura antiga para compatibilidade
       await supabase
@@ -228,7 +280,7 @@ export const useHabboHomeV2 = (username: string) => {
       // Atualizar estado local
       setWidgets(prev => 
         prev.map(widget => 
-          widget.widget_type === widgetId ? { ...widget, x, y } : widget
+          widget.id === widgetId ? { ...widget, x, y } : widget
         )
       );
     } catch (error) {

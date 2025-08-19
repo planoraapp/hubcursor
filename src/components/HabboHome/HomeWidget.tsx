@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RatingWidget } from './widgets/RatingWidget';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Widget {
   id: string;
@@ -74,6 +75,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   const [isDragging, setIsDragging] = React.useState(false);
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0, elementX: widget.x, elementY: widget.y });
   const [newMessage, setNewMessage] = React.useState('');
+  const isMobile = useIsMobile();
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
@@ -95,8 +97,10 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       if (isDragging) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        const newX = Math.max(0, Math.min(1080 - widget.width, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(1800 - widget.height, dragStart.elementY + deltaY));
+        const canvasWidth = isMobile ? 768 : 1080;
+        const canvasHeight = isMobile ? 1280 : 1800;
+        const newX = Math.max(0, Math.min(canvasWidth - widget.width, dragStart.elementX + deltaX));
+        const newY = Math.max(0, Math.min(canvasHeight - widget.height, dragStart.elementY + deltaY));
         
         onPositionChange(widget.id, newX, newY);
       }
