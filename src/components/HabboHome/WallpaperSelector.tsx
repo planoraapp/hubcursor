@@ -104,16 +104,27 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
     onOpenChange(false);
   };
 
+  // Lista completa de backgrounds que devem usar "repeat"
+  const REPEAT_BACKGROUNDS = [
+    '17', '28', 'ABRIL-DIADOJORNALISTA', 'AU_Australia_Campaign_bg_01_v1',
+    'bg_bathroom_tile', 'bg_colour_01', 'bg_colour_04', 'bg_colour_05',
+    'bg_colour_07', 'bg_colour_08', 'bg_colour_09', 'bg_colour_11', 
+    'bg_colour_15', 'bg_image_submarine', 'bg_pattern_abstract1',
+    'bg_pattern_bobbaskulls1', 'bg_pattern_carpants', 'bg_pattern_cars',
+    'bg_pattern_clouds', 'bg_pattern_cloud', 'bganimated_rain', 'bubble',
+    'DE_Background_Summer', 'metal', 'xmas_bgpattern_', 'email_bg'
+  ];
+
   const handleImageSelect = (asset: Asset) => {
     console.log('🖼️ Imagem selecionada:', asset);
     
-    // Detectar se é bg_colour (pequeno, para repeat) ou imagem grande (para cover)
-    const isSmallBg = asset.name.toLowerCase().includes('bg_colour') || 
-                     asset.name.toLowerCase().includes('small') ||
-                     asset.name.toLowerCase().includes('tile') ||
-                     asset.file_path.includes('bg_colour');
+    // Verificar se o nome do asset está na lista de repeat backgrounds
+    const isRepeatBg = REPEAT_BACKGROUNDS.some(bgName => 
+      asset.name.toLowerCase().includes(bgName.toLowerCase()) ||
+      asset.file_path.toLowerCase().includes(bgName.toLowerCase())
+    );
     
-    const backgroundType = isSmallBg ? 'repeat' : 'cover';
+    const backgroundType = isRepeatBg ? 'repeat' : 'cover';
     console.log(`📐 Tipo detectado: ${backgroundType} para ${asset.name}`);
     
     onWallpaperSelect(backgroundType, asset.url!);

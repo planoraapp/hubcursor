@@ -131,17 +131,17 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'avatar':
       case 'usercard':
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
-        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=3&head_direction=3&gesture=sml&size=l`;
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=3&gesture=sml&size=l`;
         const flagUrl = getCountryFlagPng(habboData.hotel);
         
         return (
           <div className="flex gap-4 p-4 h-full">
-            {/* Avatar sem borda */}
+            {/* Avatar sem borda - diagonal esquerda */}
             <div className="flex-shrink-0">
               <img
                 src={avatarUrl}
                 alt={`${habboData.habbo_name} avatar`}
-                className="w-24 h-32 object-contain"
+                className="w-28 h-36 object-contain"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
