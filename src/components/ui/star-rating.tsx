@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 
 interface StarRatingProps {
-  rating?: number; // Current rating (0-5, supports decimals)
-  onRate?: (rating: number) => void; // Callback when user rates
-  readonly?: boolean; // If true, shows rating but doesn't allow interaction
+  rating: number;
+  onRate?: (rating: number) => void;
+  readonly?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
@@ -17,23 +17,18 @@ export const StarRating: React.FC<StarRatingProps> = ({
   className = ''
 }) => {
   const [hoverRating, setHoverRating] = useState(0);
-
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8'
-  };
-
+  
   const getStarOpacity = (starIndex: number): number => {
-    const currentRating = readonly ? rating : (hoverRating || rating);
-    
-    if (currentRating >= starIndex) {
-      return 1; // Full star
-    } else if (currentRating > starIndex - 1) {
-      // Partial star - calculate opacity based on decimal part
-      return currentRating - (starIndex - 1);
+    const currentValue = hoverRating || rating;
+    return currentValue >= starIndex ? 1 : 0.2;
+  };
+  
+  const getStarSize = () => {
+    switch(size) {
+      case 'sm': return 16;
+      case 'lg': return 32;
+      default: return 24;
     }
-    return 0.3; // Empty star (low opacity)
   };
 
   const handleStarClick = (starIndex: number) => {
@@ -55,44 +50,51 @@ export const StarRating: React.FC<StarRatingProps> = ({
   };
 
   return (
-    <div 
-      className={`flex items-center justify-center gap-1 ${className}`}
-      onMouseLeave={handleMouseLeave}
-    >
-      {[1, 2, 3, 4, 5].map((starIndex) => (
-        <div
-          key={starIndex}
-          className={`relative ${!readonly ? 'cursor-pointer hover:scale-110' : ''} transition-transform`}
-          onClick={() => handleStarClick(starIndex)}
-          onMouseEnter={() => handleStarHover(starIndex)}
-        >
-          {/* Base star (sempre visível em opacidade baixa) */}
-          <img
-            src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/starrating.png"
-            alt={`Estrela ${starIndex}`}
-            className={`${sizeClasses[size]} transition-all duration-200`}
-            style={{ 
-              opacity: 0.3,
-              imageRendering: 'pixelated'
-            }}
-          />
-          
-          {/* Filled star (sobreposta com opacity baseada no rating) */}
-          <img
-            src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/site_images/starrating.png"
-            alt={`Estrela preenchida ${starIndex}`}
-            className={`${sizeClasses[size]} absolute top-0 left-0 transition-all duration-200`}
-            style={{ 
-              opacity: getStarOpacity(starIndex),
-              imageRendering: 'pixelated',
-              filter: getStarOpacity(starIndex) > 0.5 ? 'brightness(1.2) saturate(1.3)' : 'none'
-            }}
-          />
-        </div>
-      ))}
+    <div className={`flex flex-col items-center gap-1 ${className}`}>
+      <div 
+        className="flex items-center gap-1 relative justify-center"
+        onMouseLeave={handleMouseLeave}
+      >
+        {[1, 2, 3, 4, 5].map((starIndex) => (
+          <div
+            key={starIndex}
+            className={`relative ${!readonly ? 'cursor-pointer hover:scale-110' : ''} transition-transform`}
+            onClick={() => !readonly && handleStarClick(starIndex)}
+            onMouseEnter={() => !readonly && handleStarHover(starIndex)}
+          >
+            {/* Base star (empty) */}
+            <img
+              src="/assets/star_empty.png"
+              alt={`Star ${starIndex} empty`}
+              className="select-none"
+              style={{ 
+                imageRendering: 'pixelated',
+                width: getStarSize(),
+                height: getStarSize()
+              }}
+              draggable={false}
+            />
+            
+            {/* Filled star overlay */}
+            <img
+              src="/assets/star_filled.png"
+              alt={`Star ${starIndex} filled`}
+              className="absolute top-0 left-0 select-none transition-opacity duration-200"
+              style={{ 
+                imageRendering: 'pixelated',
+                opacity: getStarOpacity(starIndex),
+                width: getStarSize(),
+                height: getStarSize()
+              }}
+              draggable={false}
+            />
+          </div>
+        ))}
+      </div>
+      
       {!readonly && (
-        <span className="ml-2 text-sm text-gray-600 font-volter">
-          {hoverRating || rating}/5
+        <span className="text-xs text-muted-foreground font-volter">
+          {rating > 0 ? `${rating}/5` : 'Avalie'}
         </span>
       )}
     </div>

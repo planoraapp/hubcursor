@@ -79,8 +79,8 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
       // Construir URLs corretas considerando os buckets home-assets e backgroundshome  
       const assetsWithUrls = (data || []).map((asset) => ({
         ...asset,
-        url: asset.file_path.startsWith('backgroundshome/') 
-          ? `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
+        url: asset.bucket_name === 'backgroundshome' || asset.file_path.includes('backgroundshome') 
+          ? `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/backgroundshome/${asset.file_path.replace('backgroundshome/', '')}`
           : `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/${asset.bucket_name}/${asset.file_path}`
       }));
 

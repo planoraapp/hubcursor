@@ -123,29 +123,37 @@ const HabboHomeV2: React.FC = () => {
         <SidebarInset className="flex-1 ml-0 transition-all duration-300">
           <main className="flex-1 bg-repeat relative" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             
-            {/* Botão de edição posicionado junto ao toolbar para não sobrepor sidebar */}
-            {isOwner && (
-              <div className="absolute top-2 right-4 z-50">
-                <button
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className={`
-                    w-12 h-12 bg-white/90 hover:bg-white rounded-full shadow-lg
-                    border-2 border-blue-400/50 hover:border-blue-600
-                    transition-all duration-300 ease-out
-                    ${isEditMode ? 'scale-110 brightness-110 bg-blue-50' : 'hover:scale-105'}
-                  `}
-                  title={isEditMode ? 'Sair do modo edição' : 'Entrar no modo edição'}
-                >
-                  <img
-                    src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png"
-                    alt="Editar Home"
-                    className="w-full h-full object-contain p-1"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                </button>
-              </div>
-            )}
-            
+      {/* Enhanced Toolbar */}
+      <div className="fixed top-0 left-0 right-0 z-40 p-4 pointer-events-none">
+        <EnhancedHomeToolbar
+          isEditMode={isEditMode}
+          isOwner={isOwner}
+          onToggleEditMode={() => setIsEditMode(!isEditMode)}
+          onSave={handleSave}
+          onBackgroundChange={handleBackgroundChange}
+          onStickerSelect={handleStickerAdd}
+          onWidgetAdd={addWidget}
+        />
+      </div>
+
+      {/* Edit Button - Only shown when NOT in edit mode */}
+      {isOwner && !isEditMode && (
+        <button
+          onClick={() => setIsEditMode(true)}
+          className="fixed top-4 right-4 z-50 group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110"
+          style={{
+            width: '48px',
+            height: '48px',
+            backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+            imageRendering: 'pixelated'
+          }}
+          title="Entrar no Modo de Edição"
+        />
+      )}
+
             <div className="p-4">
               <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
@@ -154,18 +162,6 @@ const HabboHomeV2: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
               </Card>
-
-              <div className="relative mb-6">
-                <EnhancedHomeToolbar
-                  isEditMode={isEditMode}
-                  isOwner={isOwner}
-                  onToggleEditMode={() => setIsEditMode(!isEditMode)}
-                  onSave={handleSave}
-                  onBackgroundChange={handleBackgroundChange}
-                  onStickerSelect={handleStickerAdd}
-                  onWidgetAdd={addWidget}
-                />
-              </div>
 
               <div className="relative">
                 <HomeCanvas

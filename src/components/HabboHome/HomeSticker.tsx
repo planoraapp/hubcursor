@@ -19,6 +19,7 @@ interface HomeStickerProps {
   isOwner: boolean;
   onPositionChange: (stickerId: string, x: number, y: number) => void;
   onRemove: (stickerId: string) => void;
+  onStickerUpdate?: (stickerId: string, updates: Partial<Sticker>) => void;
 }
 
 export const HomeSticker: React.FC<HomeStickerProps> = ({
@@ -26,10 +27,14 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
   isEditMode,
   isOwner,
   onPositionChange,
-  onRemove
+  onRemove,
+  onStickerUpdate
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: sticker.x, elementY: sticker.y });
+  const [showControls, setShowControls] = useState(false);
+  const [localRotation, setLocalRotation] = useState(sticker.rotation);
+  const [localScale, setLocalScale] = useState(sticker.scale);
   const stickerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -54,6 +59,30 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     e.stopPropagation();
     onRemove(sticker.id);
   }, [sticker.id, onRemove]);
+
+  const handleRotationChange = useCallback((rotation: number) => {
+    setLocalRotation(rotation);
+    if (onStickerUpdate) {
+      onStickerUpdate(sticker.id, { rotation });
+    }
+  }, [sticker.id, onStickerUpdate]);
+
+  const handleScaleChange = useCallback((scale: number) => {
+    setLocalScale(scale);
+    if (onStickerUpdate) {
+      onStickerUpdate(sticker.id, { scale });
+    }
+  }, [sticker.id, onStickerUpdate]);
+
+  const handleFlipHorizontal = useCallback(() => {
+    const newScale = localScale < 0 ? Math.abs(localScale) : -localScale;
+    handleScaleChange(newScale);
+  }, [localScale, handleScaleChange]);
+
+  const handleFlipVertical = useCallback(() => {
+    const newRotation = (localRotation + 180) % 360;
+    handleRotationChange(newRotation);
+  }, [localRotation, handleRotationChange]);
 
   React.useEffect(() => {
     let animationId: number;
@@ -100,7 +129,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     left: sticker.x,
     top: sticker.y,
     zIndex: isDragging ? 9999 : sticker.z_index,
-    transform: `scale(${isDragging ? sticker.scale * 1.1 : sticker.scale}) rotate(${sticker.rotation}deg)`,
+    transform: `scale(${isDragging ? Math.abs(localScale) * 1.1 : localScale}) rotate(${localRotation}deg)`,
     transformOrigin: 'center',
     transition: isDragging ? 'none' : 'transform 0.2s ease-out',
     opacity: isDragging ? 0.8 : 1
@@ -119,6 +148,8 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       }`}
       style={containerStyle}
       onMouseDown={handleMouseDown}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
     >
       <img
         src={sticker.sticker_src}
@@ -146,16 +177,46 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         }}
       />
       
-      {isEditMode && isOwner && (
-        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 flex gap-1 bg-black/80 rounded px-2 py-1">
-          <button
-            onClick={handleRemove}
-            className="w-5 h-5 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
-            title="Remover"
-          >
-            ×
-          </button>
-        </div>
+      {isEditMode && isOwner && showControls && (
+        <>
+          {/* Controles Principais */}
+          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 flex gap-1 bg-black/90 rounded px-2 py-1">
+            <button
+              onClick={handleFlipHorizontal}
+              className="w-6 h-6 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+              title="Inverter Horizontal"
+            >
+              ↔
+            </button>
+            <button
+              onClick={handleFlipVertical}
+              className="w-6 h-6 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors"
+              title="Inverter Vertical"
+            >
+              ↕
+            </button>
+            <button
+              onClick={handleRemove}
+              className="w-6 h-6 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+              title="Remover"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Controle de Rotação */}
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black/90 rounded px-3 py-1">
+            <input
+              type="range"
+              min="0"
+              max="360"
+              value={localRotation}
+              onChange={(e) => handleRotationChange(parseInt(e.target.value))}
+              className="w-20 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+              title={`Rotação: ${localRotation}°`}
+            />
+          </div>
+        </>
       )}
 
       {isDragging && (

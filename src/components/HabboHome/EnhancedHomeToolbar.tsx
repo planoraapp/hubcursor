@@ -114,10 +114,28 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
         <div className="bg-gradient-to-r from-primary/10 to-accent/10 px-6 py-3">
           <div className="flex items-center justify-between">
             
-            {/* Left: Title */}
-            <h3 className="text-lg font-volter text-foreground flex items-center gap-2">
-              🎨 Personalizar Home
-            </h3>
+            {/* Left: Edit Button + Title */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onToggleEditMode}
+                className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-105"
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center',
+                  imageRendering: 'pixelated',
+                  transform: 'scaleX(-1)'
+                }}
+                title="Sair do Modo de Edição"
+              />
+              
+              <h3 className="text-lg font-volter text-foreground flex items-center gap-2">
+                🎨 Personalizar Home
+              </h3>
+            </div>
 
             {/* Center: Action Buttons */}
             <div className="flex items-center gap-3">

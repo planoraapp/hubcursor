@@ -39,19 +39,19 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Define os 5 itens principais da dock usando os ícones da sidebar
+  // Define os 5 itens principais da dock
   const mainDockItems: DockItem[] = useMemo(() => {
     const homeItem: DockItem = { 
       id: 'home', 
-      label: t('home'), 
+      label: 'Início', 
       icon: '/assets/home.png',
       order: 1 
     };
     
-    const forumItem: DockItem = { 
-      id: 'forum', 
-      label: t('forum'), 
-      icon: '/assets/BatePapo1.png',
+    const homesItem: DockItem = { 
+      id: 'homes', 
+      label: 'Home', 
+      icon: '/assets/homepadrao.png',
       order: 2 
     };
     
@@ -62,38 +62,42 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     
     const avatarItem: DockItem = { 
       id: 'console', 
-      label: t('console'), 
+      label: 'Console', 
       icon: avatarUrl, 
       isAvatar: true,
       order: 3
     };
     
-    const toolsItem: DockItem = { 
-      id: 'tools', 
-      label: t('tools'), 
-      icon: '/assets/ferramentas.png',
+    const newsItem: DockItem = { 
+      id: 'noticias', 
+      label: 'Notícias', 
+      icon: '/assets/news.png',
       order: 4 
     };
     
-    const moreItem: DockItem = { 
-      id: 'more', 
-      label: t('more'), 
-      icon: Menu, 
+    const toolsItem: DockItem = { 
+      id: 'tools', 
+      label: 'Ferramentas', 
+      icon: '/assets/ferramentas.png',
       order: 5 
     };
 
-    return [homeItem, forumItem, avatarItem, toolsItem, moreItem];
-  }, [t, userAvatarUrl, isLoggedIn]);
+    return [homeItem, homesItem, avatarItem, newsItem, toolsItem];
+  }, [userAvatarUrl, isLoggedIn]);
 
-  // Items para o dropdown "Mais" (excluindo os principais e ferramentas)
+  // Items para o dropdown "Mais" (todas as outras páginas)
   const dropdownItems: DockItem[] = useMemo(() => {
-    const mainIds = new Set(['home', 'forum', 'console', 'tools', 'more', 'catalogo', 'emblemas', 'editor', 'mercado']);
+    const mainIds = new Set(['home', 'homes', 'console', 'noticias', 'tools']);
     const filtered = menuItems.filter(item => !mainIds.has(item.id));
     
     // Adicionar itens padrão se não existirem
     const defaultItems: DockItem[] = [
-      { id: 'noticias', label: t('noticias'), icon: '/assets/news.png', order: 6 },
+      { id: 'forum', label: 'Forum', icon: '/assets/BatePapo1.png', order: 6 },
       { id: 'eventos', label: 'Eventos', icon: '/assets/eventos.png', order: 7 },
+      { id: 'catalogo', label: 'Catálogo', icon: '/assets/catalogo.png', order: 8 },
+      { id: 'emblemas', label: 'Emblemas', icon: '/assets/emblemas.png', order: 9 },
+      { id: 'editor', label: 'Editor', icon: '/assets/editingfigure.png', order: 10 },
+      { id: 'mercado', label: 'Mercado', icon: '/assets/mercado.png', order: 11 },
     ];
 
     const combined = [...filtered];
@@ -106,7 +110,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     });
 
     return combined.sort((a, b) => (a.order || 999) - (b.order || 999));
-  }, [menuItems, t]);
+  }, [menuItems]);
 
   const handleMoreClick = useCallback(() => {
     setIsDropdownOpen(prev => !prev);
@@ -114,8 +118,8 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   }, []);
 
   const handleToolsClick = useCallback(() => {
-    setIsToolsOpen(prev => !prev);
-    setIsDropdownOpen(false);
+    // Expandir dock para mostrar ferramentas
+    setIsDropdownOpen(prev => !prev);
   }, []);
 
   const handleDropdownItemClick = useCallback((itemId: string) => {
@@ -124,16 +128,13 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
   }, [onItemClick]);
 
   const handleMainDockItemClick = useCallback((item: DockItem) => {
-    if (item.id === 'more') {
-      handleMoreClick();
-    } else if (item.id === 'tools') {
+    if (item.id === 'tools') {
       handleToolsClick();
     } else {
       onItemClick(item.id);
       setIsDropdownOpen(false);
-      setIsToolsOpen(false);
     }
-  }, [onItemClick, handleMoreClick, handleToolsClick]);
+  }, [onItemClick, handleToolsClick]);
 
   // Fecha os popups ao clicar fora
   useEffect(() => {
@@ -158,14 +159,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
       
       {/* Container principal da dock */}
       <div className="p-0 flex justify-center w-full" style={{ backgroundColor: '#ffefd5' }}>
-        {/* Tools Popover */}
-        <ToolsPopover 
-          isOpen={isToolsOpen} 
-          onClose={() => setIsToolsOpen(false)}
-          currentPath={currentPath}
-        />
-
-        {/* Dropdown Menu "Mais" - Ajustado para aparecer acima da dock */}
+        {/* Tools Expanded Menu */}
         {isDropdownOpen && (
           <div 
             ref={dropdownRef}
@@ -183,7 +177,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                   textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                 }}
               >
-                {t('more')}
+                Ferramentas
               </span>
             </div>
 
@@ -223,17 +217,15 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               </div>
             ) : (
               <p className="text-center py-4 text-gray-600">
-                Nenhuma página adicional.
+                Nenhuma ferramenta adicional.
               </p>
             )}
           </div>
         )}
 
-        {/* Main Dock */}
         <nav className="w-full max-w-sm flex justify-around items-center py-4 px-3">
           {mainDockItems.map((item) => {
             const isActive = activeItemId === item.id;
-            const isMore = item.id === 'more';
             const isTools = item.id === 'tools';
             
             let IconDisplay;
@@ -288,13 +280,13 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
               <button
                 key={item.id}
                 className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
-                  isMore ? 'dock-more-button' : ''
-                } ${isTools ? 'dock-tools-button' : ''}`}
+                  isTools ? 'dock-tools-button' : ''
+                }`}
                 style={{
-                  backgroundColor: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
+                  backgroundColor: isActive || (isTools && isDropdownOpen)
                     ? 'rgba(0, 0, 0, 0.2)' 
                     : 'transparent',
-                  boxShadow: isActive || (isMore && isDropdownOpen) || (isTools && isToolsOpen)
+                  boxShadow: isActive || (isTools && isDropdownOpen)
                     ? '0 0 15px rgba(0, 0, 0, 0.4)' 
                     : 'none',
                   minWidth: '60px'
@@ -302,7 +294,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                 onClick={() => handleMainDockItemClick(item)}
               >
                 <div className={item.isAvatar ? '' : 'relative'}>
-                  {isMore && isDropdownOpen ? (
+                  {isTools && isDropdownOpen ? (
                     <X className="w-8 h-8 text-black" />
                   ) : (
                     IconDisplay

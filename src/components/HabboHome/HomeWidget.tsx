@@ -1,8 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FunctionalRatingWidget } from '@/components/widgets/FunctionalRatingWidget';
 import { FunctionalGuestbookWidget } from '@/components/widgets/FunctionalGuestbookWidget';
+import { FunctionalRatingWidget } from './FunctionalRatingWidget';
 
 interface Widget {
   id: string;
@@ -249,13 +249,10 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
           />
         );
 
-      case 'rating':
-        return (
-          <FunctionalRatingWidget
-            homeOwnerUserId={habboData.id}
-            homeOwnerName={habboData.habbo_name}
-          />
-        );
+        case 'rating':
+          return (
+            <FunctionalRatingWidget homeOwnerId={habboData.id} />
+          );
 
       default:
         return (
