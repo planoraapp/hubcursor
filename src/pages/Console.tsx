@@ -3,9 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
-import { HotelPhotoFeedColumn } from '@/components/console2/HotelPhotoFeedColumn';
+import { FeedActivityTabbedColumn } from '@/components/console2/FeedActivityTabbedColumn';
 import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
-import { FriendsActivityColumn } from '@/components/console2/FriendsActivityColumn';
 import { useAuth } from '@/hooks/useAuth';
 
 const Console: React.FC = () => {
@@ -34,11 +33,7 @@ const Console: React.FC = () => {
               </div>
 
               <div className="w-[320px] flex-shrink-0">
-                <HotelPhotoFeedColumn />
-              </div>
-
-              <div className="w-[320px] flex-shrink-0">
-                <FriendsActivityColumn />
+                <FeedActivityTabbedColumn />
               </div>
 
               <div className="w-[320px] flex-shrink-0">

@@ -19,7 +19,7 @@ export const UserSearchColumn: React.FC = () => {
     refetch 
   } = useOptimizedUserDiscovery({
     method: 'random',
-    limit: 15,
+    limit: 30,
     enabled: !searchQuery.trim()
   });
 
@@ -50,7 +50,7 @@ export const UserSearchColumn: React.FC = () => {
 
   if (selectedUser) {
     return (
-      <Card className="h-full flex flex-col bg-white/10 backdrop-blur-sm border-white/20">
+      <Card className="h-full flex flex-col bg-[#4A5568] text-white border-0 shadow-none overflow-hidden">
         <UserProfileDetailView
           user={selectedUser}
           hotel="br"
@@ -64,7 +64,7 @@ export const UserSearchColumn: React.FC = () => {
   const isLoading = searchQuery.trim() ? isSearching : isDiscovering;
 
   return (
-    <Card className="h-full flex flex-col bg-white/10 backdrop-blur-sm border-white/20">
+    <Card className="h-full flex flex-col bg-[#4A5568] text-white border-0 shadow-none">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -77,7 +77,7 @@ export const UserSearchColumn: React.FC = () => {
               variant="outline"
               onClick={() => refetch()}
               disabled={isDiscovering}
-              className="border-white/30 text-white hover:bg-white/10"
+              className="text-white/80 hover:text-white hover:bg-white/10 border-white/30"
             >
               {isDiscovering ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
