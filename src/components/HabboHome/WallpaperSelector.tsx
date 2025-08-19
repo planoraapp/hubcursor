@@ -27,7 +27,7 @@ interface Asset {
 interface WallpaperSelectorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onWallpaperSelect: (type: 'color' | 'image', value: string) => void;
+  onWallpaperSelect: (type: 'color' | 'image' | 'repeat' | 'cover', value: string) => void;
 }
 
 export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
@@ -85,7 +85,13 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
   };
 
   const handleImageSelect = (asset: Asset) => {
-    onWallpaperSelect('image', asset.url!);
+    // Detectar se é bg_colour (pequeno, para repeat) ou imagem grande (para cover)
+    const isSmallBg = asset.name.toLowerCase().includes('bg_colour') || 
+                     asset.name.toLowerCase().includes('small') ||
+                     asset.file_path.includes('bg_colour');
+    
+    const backgroundType = isSmallBg ? 'repeat' : 'cover';
+    onWallpaperSelect(backgroundType, asset.url!);
     onOpenChange(false);
   };
 
@@ -103,18 +109,18 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
           {/* Colors Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-volter">Cores Pastéis</h3>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {PASTEL_COLORS.map((color) => (
                 <button
                   key={color.value}
                   onClick={() => handleColorSelect(color.value)}
-                  className="flex items-center gap-4 p-3 rounded-lg border-2 border-transparent hover:border-primary transition-all hover:scale-105 bg-card"
+                  className="flex flex-col items-center gap-2 p-3 rounded-lg border-2 border-transparent hover:border-primary transition-all hover:scale-105 bg-card"
                 >
                   <div 
-                    className="w-16 h-12 rounded-md border-2 border-white shadow-sm"
+                    className="w-full h-16 rounded-md border-2 border-white shadow-sm"
                     style={{ backgroundColor: color.value }}
                   />
-                  <span className="font-volter text-sm">{color.name}</span>
+                  <span className="font-volter text-xs text-center">{color.name}</span>
                 </button>
               ))}
             </div>

@@ -54,9 +54,11 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
     );
   }
 
-  const handleWallpaperSelect = (type: 'color' | 'image', value: string) => {
+  const handleWallpaperSelect = (type: 'color' | 'image' | 'repeat' | 'cover', value: string) => {
     if (type === 'color') {
       onBackgroundChange('color', value);
+    } else if (type === 'repeat') {
+      onBackgroundChange('repeat', value);
     } else {
       onBackgroundChange('cover', value);
     }
@@ -140,16 +142,14 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
                 onClick={handleCancel}
                 className="flex items-center gap-2 text-xs font-volter"
               >
-                <img src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/forum-images/NO.png" alt="Cancel" className="w-4 h-4" />
-                Cancelar
+                ❌ Cancelar
               </Button>
               <Button 
                 size="sm"
                 onClick={handleSave}
                 className="flex items-center gap-2 text-xs font-volter bg-primary hover:bg-primary/90"
               >
-                <img src="https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/forum-images/YES.png" alt="Save" className="w-4 h-4" />
-                Salvar
+                ✅ Salvar
               </Button>
             </div>
           </div>
