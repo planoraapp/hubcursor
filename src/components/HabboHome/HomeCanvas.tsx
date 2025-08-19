@@ -105,8 +105,8 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
           isEditMode ? 'border-4 border-dashed border-blue-400' : 'border-2 border-gray-300'
         }`}
         style={{
-          width: '1200px',
-          height: '1000px', // Increased height from 800px to 1000px
+          width: '1080px',
+          height: '1800px',
           ...backgroundStyle
         }}
       >
@@ -165,7 +165,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
 
         {/* Debug info */}
         <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs p-2 rounded volter-font">
-          W:{widgets.length} | S:{stickers.length} | Edit:{isEditMode ? 'ON' : 'OFF'} | Owner:{isOwner ? 'YES' : 'NO'} | 1200x1000
+          W:{widgets.length} | S:{stickers.length} | Edit:{isEditMode ? 'ON' : 'OFF'} | Owner:{isOwner ? 'YES' : 'NO'} | 1080x1800
         </div>
       </div>
     </div>

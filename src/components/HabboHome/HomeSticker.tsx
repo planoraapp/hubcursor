@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 
 interface Sticker {
@@ -60,8 +59,8 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       if (isDragging) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        const newX = Math.max(0, Math.min(1200 - 100, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(800 - 100, dragStart.elementY + deltaY));
+        const newX = Math.max(0, Math.min(1080 - 100, dragStart.elementX + deltaX));
+        const newY = Math.max(0, Math.min(1800 - 100, dragStart.elementY + deltaY));
         
         onPositionChange(sticker.id, newX, newY);
       }

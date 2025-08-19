@@ -48,8 +48,8 @@ const HabboHomeV2: React.FC = () => {
   const handleStickerAdd = async (stickerId: string, stickerSrc: string, category: string) => {
     console.log('🎯 Tentando adicionar sticker:', { stickerId, stickerSrc, category });
     
-    const x = Math.random() * (1200 - 100) + 50;
-    const y = Math.random() * (1000 - 100) + 50; // Increased canvas height
+    const x = Math.random() * (1080 - 100) + 50;
+    const y = Math.random() * (1800 - 100) + 50;
     
     const success = await addSticker(stickerId, x, y, stickerSrc, category);
     
@@ -213,7 +213,7 @@ const HabboHomeV2: React.FC = () => {
                 </CardHeader>
               </Card>
 
-              {/* Home Canvas with increased height */}
+              {/* Home Canvas with new dimensions */}
               <HomeCanvas
                 widgets={widgets}
                 stickers={stickers}
