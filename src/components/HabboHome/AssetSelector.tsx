@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -31,47 +32,43 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   type,
   title
 }) => {
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [allAssets, setAllAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [allAssets, setAllAssets] = useState<Asset[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [displayedCount, setDisplayedCount] = useState(50);
+  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const loadingRef = useRef<boolean>(false);
 
-  const fetchAssets = async () => {
-    if (!open) return;
+  // Fetch assets from Supabase
+  const fetchAssets = useCallback(async () => {
+    if (!open || loadingRef.current) return;
     
     try {
       setLoading(true);
-      console.log(`🔍 Buscando TODOS os ${type}s sem filtros limitantes...`);
+      loadingRef.current = true;
+      console.log(`🔍 Buscando TODOS os ${type}s...`);
       
       let query = supabase
         .from('home_assets')
         .select('*')
         .eq('is_active', true);
 
-      if (type === 'stickers') {
-        // Para stickers, buscar TODOS sem filtros complexos
-        // Os buckets são: animated, icons, mockups, mountable, stickers
-        console.log('🎯 Buscando todos os assets para stickers (sem filtros limitantes)');
-      } else if (type === 'backgrounds') {
+      if (type === 'backgrounds') {
         query = query.like('file_path', '%bg_%');
       }
       
       const { data, error } = await query
         .order('name', { ascending: true })
-        .limit(1000); // Limite alto para garantir que pegamos todos
+        .limit(1000);
 
       if (error) {
         console.error(`❌ Erro ao buscar ${type}s:`, error);
-        setAllAssets([]);
         return;
       }
 
-      console.log(`✅ TODOS ${type}s carregados: ${data?.length || 0}`);
-      console.log('📊 Amostra de categorias encontradas:', [...new Set(data?.map(d => d.category)?.filter(Boolean))]);
+      console.log(`✅ Assets carregados: ${data?.length || 0}`);
       
       const assetsWithUrls = (data || []).map((asset) => ({
         ...asset,
@@ -80,118 +77,72 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       }));
 
       setAllAssets(assetsWithUrls);
-      filterAndDisplayAssets(assetsWithUrls, selectedCategory, searchTerm);
+      setDisplayedCount(50);
+      
     } catch (err) {
       console.error(`❌ Erro inesperado ao buscar ${type}s:`, err);
-      setAllAssets([]);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  };
+  }, [open, type]);
 
-  const filterAndDisplayAssets = (allAssets: Asset[], category: string, search: string) => {
+  // Filter and paginate assets
+  const { filteredAssets, displayedAssets, totalCount } = useMemo(() => {
     let filtered = allAssets;
     
-    // Filtro por categoria
-    if (category !== 'all') {
-      // Mapear categorias corretas dos buckets do Supabase
+    // Filter by category
+    if (selectedCategory !== 'all') {
       const categoryMap: Record<string, string[]> = {
         'animated': ['animated'],
         'icons': ['icons', 'icon'],
         'mockups': ['mockups', 'mockup'],
         'mountable': ['mountable', 'mount'],
-        'outros': ['stickers', 'sticker', 'outros'] // Renomear "stickers" para "outros"
+        'outros': ['stickers', 'sticker']
       };
       
-      const validCategories = categoryMap[category.toLowerCase()] || [category];
+      const validCategories = categoryMap[selectedCategory.toLowerCase()] || [selectedCategory];
       filtered = allAssets.filter(asset => {
         const assetCategory = asset.category?.toLowerCase() || '';
         const assetPath = asset.file_path?.toLowerCase() || '';
         
-        // Verificar categoria OU path do arquivo para maior compatibilidade
         return validCategories.some(cat => 
-          assetCategory.includes(cat) || assetPath.includes(`/${cat}/`) || assetPath.includes(`${cat}_`)
+          assetCategory.includes(cat) || 
+          assetPath.includes(`/${cat}/`) || 
+          assetPath.includes(`${cat}_`)
         );
       });
     }
     
-    // Filtro por busca
-    if (search.trim()) {
+    // Filter by search term
+    if (searchTerm.trim()) {
       filtered = filtered.filter(asset =>
-        asset.name?.toLowerCase().includes(search.toLowerCase()) ||
-        asset.category?.toLowerCase().includes(search.toLowerCase())
+        asset.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
-    console.log(`🔍 Filtrando categoria "${category}" + busca "${search}": ${filtered.length} itens`);
+    const displayed = filtered.slice(0, displayedCount);
     
-    // Mostrar apenas os primeiros displayedCount itens (scroll infinito)
-    const paginated = filtered.slice(0, displayedCount);
-    setAssets(paginated);
-    
-    return filtered.length; // Retorna o total para verificação
-  };
+    return {
+      filteredAssets: filtered,
+      displayedAssets: displayed,
+      totalCount: filtered.length
+    };
+  }, [allAssets, selectedCategory, searchTerm, displayedCount]);
 
-  // Carregar assets quando modal abre
+  // Update hasMoreToLoad when filtered assets change
   useEffect(() => {
-    if (open && type) {
-      setSelectedCategory('all');
-      setSearchTerm('');
-      setDisplayedCount(50);
-      fetchAssets();
-    }
-  }, [open, type]);
+    setHasMoreToLoad(displayedAssets.length < totalCount);
+  }, [displayedAssets.length, totalCount]);
 
-  // Filtrar e exibir assets quando dados ou filtros mudam  
-  useEffect(() => {
-    if (allAssets.length > 0) {
-      filterAndDisplayAssets(allAssets, selectedCategory, searchTerm);
-    }
-  }, [selectedCategory, searchTerm, displayedCount, allAssets]);
-
-  // Scroll infinito
-  const handleScroll = useCallback(() => {
-    const scrollDiv = scrollRef.current;
-    if (!scrollDiv || loadingMore) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = scrollDiv;
-    
-    // Se chegou a 90% do fim, carregar mais
-    if (scrollTop + clientHeight >= scrollHeight * 0.9) {
-      const totalFiltered = filterAndDisplayAssets(allAssets, selectedCategory, searchTerm);
-      
-      if (displayedCount < totalFiltered) {
-        setLoadingMore(true);
-        setTimeout(() => {
-          setDisplayedCount(prev => prev + 50);
-          setLoadingMore(false);
-        }, 300);
-      }
-    }
-  }, [allAssets, selectedCategory, searchTerm, displayedCount, loadingMore]);
-
-  useEffect(() => {
-    const scrollDiv = scrollRef.current;
-    if (scrollDiv) {
-      scrollDiv.addEventListener('scroll', handleScroll);
-      return () => scrollDiv.removeEventListener('scroll', handleScroll);
-    }
-  }, [handleScroll]);
-
-  const handleAssetClick = (asset: Asset) => {
-    console.log('🎯 Asset selecionado:', asset);
-    onAssetSelect(asset);
-    onOpenChange(false);
-  };
-
-  // Obter categorias reais dos dados carregados
-  const getAvailableCategories = () => {
+  // Get available categories with counts
+  const availableCategories = useMemo(() => {
     const categories = new Map<string, number>();
     
     allAssets.forEach(asset => {
       const path = asset.file_path?.toLowerCase() || '';
       
-      // Detectar categoria pelo path do arquivo (mais confiável)
       if (path.includes('/animated/') || path.includes('anim')) {
         categories.set('animated', (categories.get('animated') || 0) + 1);
       } else if (path.includes('/icons/') || path.includes('icon')) {
@@ -206,7 +157,50 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     });
     
     return categories;
-  };
+  }, [allAssets]);
+
+  // Handle infinite scroll
+  const handleScroll = useCallback(() => {
+    const scrollDiv = scrollRef.current;
+    if (!scrollDiv || !hasMoreToLoad || loadingRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollDiv;
+    
+    if (scrollTop + clientHeight >= scrollHeight * 0.9) {
+      setDisplayedCount(prev => prev + 50);
+    }
+  }, [hasMoreToLoad]);
+
+  // Load assets when modal opens
+  useEffect(() => {
+    if (open && type) {
+      setSelectedCategory('all');
+      setSearchTerm('');
+      setDisplayedCount(50);
+      fetchAssets();
+    }
+  }, [open, type, fetchAssets]);
+
+  // Setup scroll listener
+  useEffect(() => {
+    const scrollDiv = scrollRef.current;
+    if (scrollDiv) {
+      scrollDiv.addEventListener('scroll', handleScroll);
+      return () => scrollDiv.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
+  const handleAssetClick = useCallback((asset: Asset) => {
+    console.log('🎯 Asset selecionado:', asset);
+    onAssetSelect(asset);
+    onOpenChange(false);
+  }, [onAssetSelect, onOpenChange]);
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedCategory('all');
+    setSearchTerm('');
+    setDisplayedCount(50);
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -232,10 +226,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setSelectedCategory('all');
-                  setSearchTerm('');
-                }}
+                onClick={handleClearFilters}
                 className="font-volter whitespace-nowrap"
               >
                 🔄 Limpar
@@ -253,7 +244,7 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 >
                   Todos ({allAssets.length})
                 </Button>
-                {Array.from(getAvailableCategories()).map(([category, count]) => {
+                {Array.from(availableCategories).map(([category, count]) => {
                   const categoryLabels: Record<string, string> = {
                     'animated': '🎬 Animados',
                     'icons': '🔰 Ícones', 
@@ -279,31 +270,34 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
           </div>
         )}
 
-        <ScrollArea className="flex-1 min-h-0 max-h-[60vh]" ref={scrollRef}>
+        <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 p-2">
             {loading ? (
               <div className="col-span-full text-center py-8">
                 <Loader2 className="animate-spin h-8 w-8 mx-auto mb-2 text-primary" />
                 <p className="text-muted-foreground font-volter">Carregando adesivos...</p>
               </div>
-            ) : assets.length === 0 ? (
+            ) : displayedAssets.length === 0 ? (
               <div className="col-span-full text-center py-8">
                 <div className="text-muted-foreground font-volter">
-                  {searchTerm ? `Nenhum resultado para "${searchTerm}"` : 'Nenhum adesivo encontrado'}
+                  {searchTerm || selectedCategory !== 'all' 
+                    ? `Nenhum resultado encontrado` 
+                    : 'Nenhum adesivo encontrado'
+                  }
                 </div>
-                {searchTerm && (
+                {(searchTerm || selectedCategory !== 'all') && (
                   <Button 
                     variant="link" 
-                    onClick={() => setSearchTerm('')}
+                    onClick={handleClearFilters}
                     className="mt-2 font-volter"
                   >
-                    Limpar busca
+                    Limpar filtros
                   </Button>
                 )}
               </div>
             ) : (
               <>
-                {assets.map((asset) => (
+                {displayedAssets.map((asset) => (
                   <div
                     key={asset.id}
                     onClick={() => handleAssetClick(asset)}
@@ -332,19 +326,10 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                   </div>
                 ))}
                 
-                {loadingMore && (
-                  <div className="col-span-full text-center py-4">
-                    <Loader2 className="animate-spin h-6 w-6 mx-auto text-primary" />
-                    <p className="text-xs text-muted-foreground font-volter mt-2">
-                      Carregando mais...
-                    </p>
-                  </div>
-                )}
-                
-                {displayedCount < filterAndDisplayAssets(allAssets, selectedCategory, searchTerm) && !loadingMore && (
+                {hasMoreToLoad && (
                   <div className="col-span-full text-center py-4">
                     <p className="text-xs text-muted-foreground font-volter">
-                      📜 Scroll para carregar mais ({displayedCount} de {filterAndDisplayAssets(allAssets, selectedCategory, searchTerm)})
+                      📜 Role para carregar mais ({displayedAssets.length} de {totalCount})
                     </p>
                   </div>
                 )}
