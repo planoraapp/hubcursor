@@ -1,262 +1,233 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-}
+};
 
-// Cache para buscas de usuários
-const searchCache = new Map();
+// Cache para evitar requests excessivos
+const searchCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-Deno.serve(async (req) => {
+serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      'https://wueccgeizznjmjgmuscy.supabase.co',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
     const { query, hotel = 'br', limit = 20 } = await req.json();
     
     if (!query || query.trim().length < 1) {
-      return new Response(JSON.stringify({ 
-        users: [],
-        meta: { source: 'empty_query', count: 0, timestamp: new Date().toISOString() }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ users: [], message: 'Query too short' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const cacheKey = `search:${query.trim().toLowerCase()}:${hotel}:${limit}`;
+    const searchTerm = query.trim();
+    const cacheKey = `${searchTerm}-${hotel}-${limit}`;
     
-    // Verificar cache
+    // Check cache first
     const cached = searchCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      console.log(`📦 [habbo-user-search] Cache hit for "${query}"`);
-      return new Response(JSON.stringify(cached.data), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+      console.log(`🎯 [UserSearch] Using cached result for "${searchTerm}"`);
+      return new Response(
+        JSON.stringify({ users: cached.data, source: 'cache' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log(`🔍 [habbo-user-search] Searching for "${query}" in hotel ${hotel}`);
+    console.log(`🔍 [UserSearch] Searching for: "${searchTerm}" on hotel: ${hotel}`);
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Search in local database first (both tracked users and discovered users)
+    const localResults = await searchLocalDatabase(supabase, searchTerm, hotel, limit);
     
-    const searchTerm = query.trim().toLowerCase();
-    const hotelFilter = hotel === 'com.br' ? 'br' : hotel;
+    // If we have good local results, return them
+    if (localResults.length >= Math.min(5, limit)) {
+      searchCache.set(cacheKey, { data: localResults, timestamp: Date.now() });
+      return new Response(
+        JSON.stringify({ users: localResults, source: 'database' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Try to search via Habbo official API
+    const apiResult = await searchHabboAPI(searchTerm, hotel);
+    let allResults = [...localResults];
     
-    // Busca no banco local (prioridade)
-    let localUsers = await searchLocalDatabase(supabase, searchTerm, hotelFilter, limit);
-    
-    // Se não encontrou resultados suficientes, buscar na API oficial do Habbo
-    if (localUsers.length === 0) {
-      console.log(`🌐 [habbo-user-search] No local results, trying Habbo API for "${query}"`);
-      const apiUser = await searchHabboAPI(query, hotelFilter);
-      if (apiUser) {
-        // Cachear o usuário encontrado na API
-        await cacheUserInDatabase(supabase, apiUser, hotelFilter);
-        localUsers = [apiUser];
+    if (apiResult) {
+      // Cache user in database for future searches
+      await cacheUserInDatabase(supabase, apiResult, hotel);
+      
+      // Add to results if not already included
+      const existsInLocal = allResults.some(user => 
+        user.habbo_name.toLowerCase() === apiResult.habbo_name.toLowerCase()
+      );
+      
+      if (!existsInLocal) {
+        allResults.unshift(apiResult); // Add at beginning
       }
     }
 
-    const result = {
-      users: localUsers,
-      meta: {
-        source: localUsers.length > 0 ? 'database_with_api_fallback' : 'no_results',
-        query: query.trim(),
-        timestamp: new Date().toISOString(),
-        count: localUsers.length,
-        hotel: hotelFilter
-      }
-    };
+    // Remove duplicates and limit results
+    const uniqueResults = allResults
+      .filter((user, index, self) => 
+        index === self.findIndex(u => u.habbo_id === user.habbo_id)
+      )
+      .slice(0, limit);
 
-    // Salvar no cache
-    searchCache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now()
-    });
+    searchCache.set(cacheKey, { data: uniqueResults, timestamp: Date.now() });
+
+    console.log(`✅ [UserSearch] Found ${uniqueResults.length} users for "${searchTerm}"`);
     
-    console.log(`✅ [habbo-user-search] Found ${localUsers.length} users for "${query}"`);
-    
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({ users: uniqueResults, source: 'mixed' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
-    console.error(`❌ [habbo-user-search] Error:`, error);
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      users: [],
-      meta: { source: 'error', count: 0, timestamp: new Date().toISOString() }
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    console.error('[UserSearch] Error:', error);
+    return new Response(
+      JSON.stringify({ 
+        users: [], 
+        error: 'Search failed', 
+        message: error.message 
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
 
 async function searchLocalDatabase(supabase: any, searchTerm: string, hotel: string, limit: number) {
-  console.log(`🔍 [searchLocalDatabase] Searching for "${searchTerm}" in hotel ${hotel}`);
+  const results = [];
+  
+  try {
+    // Search in habbo_accounts (exact and fuzzy)
+    const { data: accounts } = await supabase
+      .from('habbo_accounts')
+      .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online')
+      .or(`habbo_name.ilike.%${searchTerm}%,habbo_id.ilike.%${searchTerm}%`)
+      .eq('hotel', hotel)
+      .limit(Math.ceil(limit / 2));
 
-  // Busca múltipla com diferentes prioridades
-  const searches = [
-    // 1. Busca exata (máxima prioridade)
-    supabase
-      .from('habbo_accounts')
-      .select('*')
-      .eq('hotel', hotel)
-      .ilike('habbo_name', searchTerm)
-      .limit(3),
-    
-    // 2. Busca começando com
-    supabase
-      .from('habbo_accounts')
-      .select('*')
-      .eq('hotel', hotel)
-      .ilike('habbo_name', `${searchTerm}%`)
-      .limit(8),
-    
-    // 3. Busca contendo
-    supabase
-      .from('habbo_accounts')
-      .select('*')
-      .eq('hotel', hotel)
-      .ilike('habbo_name', `%${searchTerm}%`)
-      .limit(15),
+    if (accounts) {
+      results.push(...accounts.map((acc: any) => ({
+        habbo_name: acc.habbo_name,
+        habbo_id: acc.habbo_id,
+        hotel: acc.hotel,
+        motto: acc.motto || '',
+        figure_string: acc.figure_string || '',
+        is_online: acc.is_online || false,
+        source: 'accounts'
+      })));
+    }
 
-    // 4. Busca em usuários descobertos (fallback)
-    supabase
+    // Search in discovered_users 
+    const { data: discovered } = await supabase
       .from('discovered_users')
-      .select('*')
+      .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online')
+      .or(`habbo_name.ilike.%${searchTerm}%,habbo_id.ilike.%${searchTerm}%`)
       .eq('hotel', hotel)
-      .ilike('habbo_name', `%${searchTerm}%`)
-      .limit(10)
-  ];
+      .limit(Math.ceil(limit / 2));
 
-  const results = await Promise.allSettled(searches);
-  const allUsers: any[] = [];
-  
-  results.forEach((result, index) => {
-    if (result.status === 'fulfilled' && result.value.data) {
-      allUsers.push(...result.value.data);
+    if (discovered) {
+      results.push(...discovered.map((disc: any) => ({
+        habbo_name: disc.habbo_name,
+        habbo_id: disc.habbo_id,
+        hotel: disc.hotel,
+        motto: disc.motto || '',
+        figure_string: disc.figure_string || '',
+        is_online: disc.is_online || false,
+        source: 'discovered'
+      })));
     }
-  });
 
-  // Remover duplicatas baseado no habbo_id e priorizar resultados mais exatos
-  const userMap = new Map();
-  
-  allUsers.forEach(user => {
-    const key = user.habbo_id || user.id;
-    if (!userMap.has(key)) {
-      userMap.set(key, {
-        id: user.habbo_id || user.id,
-        habbo_name: user.habbo_name,
-        habbo_id: user.habbo_id || user.id,
-        hotel: user.hotel,
-        motto: user.motto || '',
-        figure_string: user.figure_string,
-        online: user.is_online || false,
-        last_seen: user.updated_at || user.last_seen_at || user.created_at
+    // Remove duplicates based on habbo_id and prioritize exact matches
+    const uniqueResults = results
+      .filter((user, index, self) => 
+        index === self.findIndex(u => u.habbo_id === user.habbo_id)
+      )
+      .sort((a, b) => {
+        // Exact name matches first
+        const aExact = a.habbo_name.toLowerCase() === searchTerm.toLowerCase();
+        const bExact = b.habbo_name.toLowerCase() === searchTerm.toLowerCase();
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        
+        // Then by source (accounts > discovered)
+        if (a.source === 'accounts' && b.source !== 'accounts') return -1;
+        if (a.source !== 'accounts' && b.source === 'accounts') return 1;
+        
+        return 0;
       });
-    }
-  });
 
-  // Ordenar por relevância (exato > começa com > contém)
-  const uniqueUsers = Array.from(userMap.values())
-    .sort((a, b) => {
-      const aName = a.habbo_name.toLowerCase();
-      const bName = b.habbo_name.toLowerCase();
-      
-      // Exato tem prioridade máxima
-      if (aName === searchTerm && bName !== searchTerm) return -1;
-      if (bName === searchTerm && aName !== searchTerm) return 1;
-      
-      // Começa com tem prioridade sobre contém
-      if (aName.startsWith(searchTerm) && !bName.startsWith(searchTerm)) return -1;
-      if (bName.startsWith(searchTerm) && !aName.startsWith(searchTerm)) return 1;
-      
-      // Ordem alfabética para o resto
-      return aName.localeCompare(bName);
-    })
-    .slice(0, limit);
+    return uniqueResults;
 
-  console.log(`✅ [searchLocalDatabase] Found ${uniqueUsers.length} users locally`);
-  return uniqueUsers;
+  } catch (error) {
+    console.error('[UserSearch] Local search error:', error);
+    return [];
+  }
 }
 
-async function searchHabboAPI(query: string, hotel: string): Promise<any | null> {
+async function searchHabboAPI(query: string, hotel: string) {
   try {
-    const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
-    const apiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(query)}`;
+    const domain = hotel === 'br' ? 'com.br' : hotel;
+    const response = await fetch(`https://www.habbo.${domain}/api/public/users?name=${encodeURIComponent(query)}`);
     
-    console.log(`🌐 [searchHabboAPI] Trying Habbo API: ${apiUrl}`);
-    
-    const response = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; HabboHub/1.0)',
-        'Accept': 'application/json',
-      },
-    });
-
     if (!response.ok) {
-      console.log(`❌ [searchHabboAPI] API returned ${response.status}`);
+      console.warn(`[UserSearch] Habbo API returned ${response.status} for ${query}`);
       return null;
     }
 
     const userData = await response.json();
-    
     if (!userData || !userData.name) {
-      console.log(`❌ [searchHabboAPI] No user data in response`);
       return null;
     }
 
-    console.log(`✅ [searchHabboAPI] Found user via API: ${userData.name}`);
-    
     return {
-      id: userData.uniqueId,
       habbo_name: userData.name,
       habbo_id: userData.uniqueId,
       hotel: hotel,
       motto: userData.motto || '',
       figure_string: userData.figureString || '',
-      online: userData.online || false,
-      last_seen: userData.lastAccessTime || new Date().toISOString()
+      is_online: userData.online || false,
+      source: 'api'
     };
+
   } catch (error) {
-    console.error('❌ [searchHabboAPI] Error:', error);
+    console.warn(`[UserSearch] Habbo API error for ${query}:`, error.message);
     return null;
   }
 }
 
 async function cacheUserInDatabase(supabase: any, user: any, hotel: string) {
   try {
-    // Adicionar tanto na tabela principal quanto na de descobertos
-    const userData = {
-      habbo_id: user.habbo_id,
-      habbo_name: user.habbo_name,
-      hotel: hotel,
-      motto: user.motto,
-      figure_string: user.figure_string,
-      is_online: user.online,
-      updated_at: new Date().toISOString()
-    };
-
-    // Tentar inserir na tabela principal (pode falhar se não tiver supabase_user_id)
-    await supabase
+    const { error } = await supabase
       .from('discovered_users')
       .upsert({
-        ...userData,
-        last_seen_at: user.last_seen,
-        discovery_source: 'api_search'
+        habbo_name: user.habbo_name,
+        habbo_id: user.habbo_id,
+        hotel: hotel,
+        motto: user.motto,
+        figure_string: user.figure_string,
+        is_online: user.is_online,
+        discovery_source: 'user_search',
+        last_seen_at: new Date().toISOString()
       }, {
         onConflict: 'habbo_name,hotel'
       });
-      
-    console.log(`📥 [cacheUserInDatabase] Cached user ${user.habbo_name} in discovered_users`);
+
+    if (error) {
+      console.warn('[UserSearch] Cache error:', error.message);
+    }
   } catch (error) {
-    console.error('❌ [cacheUserInDatabase] Error:', error);
+    console.warn('[UserSearch] Failed to cache user:', error.message);
   }
 }

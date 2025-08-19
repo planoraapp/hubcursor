@@ -56,6 +56,27 @@ export const FeedActivityTabbedColumn: React.FC = () => {
     }
   };
 
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'badge':
+        return '🏆';
+      case 'motto_change':
+        return '💬';
+      case 'look_change':
+        return '👕';
+      case 'friend_added':
+        return '👥';
+      case 'status_change':
+        return '🟢';
+      case 'photo_uploaded':
+        return '📸';
+      case 'room_visited':
+        return '🏠';
+      default:
+        return '✨';
+    }
+  };
+
   return (
     <>
       <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
@@ -223,14 +244,25 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                       {/* Activities */}
                       <div className="space-y-1">
                         {friendActivity.activities.length > 0 ? (
-                          friendActivity.activities.slice(0, 3).map((activity, index) => (
-                            <div key={index} className="text-sm text-white/80 pl-11">
-                              {activity.activity || activity.description || 'fez uma atividade'}
-                            </div>
-                          ))
+                          friendActivity.activities.slice(0, 3).map((activity, index) => {
+                            // Handle real activities vs ticker activities
+                            const isRealActivity = 'activity_type' in activity;
+                            const activityText = isRealActivity 
+                              ? (activity as any).activity_description
+                              : (activity as any).activity || (activity as any).description || 'fez uma atividade';
+                            
+                            const activityIcon = isRealActivity ? getActivityIcon((activity as any).activity_type) : '📍';
+                            
+                            return (
+                              <div key={index} className="text-sm text-white/80 pl-11 flex items-center gap-1">
+                                <span className="text-xs">{activityIcon}</span>
+                                <span>{activityText}</span>
+                              </div>
+                            );
+                          })
                         ) : (
                           <div className="text-sm text-white/60 italic pl-11">
-                            Nenhuma atividade recente
+                            Sem atividades recentes
                           </div>
                         )}
                       </div>

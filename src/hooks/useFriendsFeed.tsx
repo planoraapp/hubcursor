@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { habboProxyService, HabboFriend, TickerActivity } from '@/services/habboProxyService';
+import { useRealFriendsActivities, RealFriendActivity } from './useRealFriendsActivities';
 import { useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface FriendActivity {
   friend: HabboFriend;
-  activities: TickerActivity[];
+  activities: (TickerActivity | RealFriendActivity)[];
   lastActivityTime: string;
+  activityType: 'real' | 'ticker';
 }
 
 export const useFriendsFeed = () => {
@@ -52,89 +56,77 @@ export const useFriendsFeed = () => {
 
   const hotelTicker = tickerResponse?.activities || [];
 
-  // Process friends activities from hotel ticker
+  // Get real friends activities
+  const { activities: realActivities, isLoading: realActivitiesLoading } = useRealFriendsActivities();
+
+  // Process friends activities (combine real activities with ticker)
   const friendsActivities = useMemo(() => {
-    if (!friends.length || !hotelTicker.length) {
-      console.log(`[useFriendsFeed] No processing: friends=${friends.length}, ticker=${hotelTicker.length}`);
+    if (!friends.length) {
+      console.log(`[useFriendsFeed] No friends to process`);
       return [];
     }
 
-    console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends against ${hotelTicker.length} ticker activities (source: ${tickerResponse?.meta.source || 'unknown'})`);
+    console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends with ${realActivities.length} real activities`);
     
     const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
-    console.log(`[useFriendsFeed] Friend names:`, Array.from(friendNameSet));
     
-    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000; // 6 horas
-
-    // Filter ticker activities for friends only
-    let friendsTickerActivities = hotelTicker.filter(activity => {
-      const activityTime = activity.timestamp ? 
-        new Date(activity.timestamp).getTime() : 
-        new Date(activity.time).getTime();
-      
-      const isFriend = friendNameSet.has(activity.username.toLowerCase());
-      const isRecent = activityTime >= sixHoursAgo;
-      
-      if (isFriend) {
-        console.log(`[useFriendsFeed] Found friend activity: ${activity.username} - ${activity.activity || activity.description || 'fez uma atividade'}`);
+    // Group real activities by friend
+    const realActivityGroups: { [friendName: string]: RealFriendActivity[] } = {};
+    realActivities.forEach(activity => {
+      const friendName = activity.habbo_name.toLowerCase();
+      if (friendNameSet.has(friendName)) {
+        if (!realActivityGroups[friendName]) {
+          realActivityGroups[friendName] = [];
+        }
+        realActivityGroups[friendName].push(activity);
       }
-      
-      return isFriend && isRecent;
     });
 
-    console.log(`📊 [useFriendsFeed] Found ${friendsTickerActivities.length} friend activities in last 6 hours`);
-
-    // Fallback: se não houver atividades nas últimas 6 horas, pegar qualquer atividade de amigos
-    if (friendsTickerActivities.length === 0) {
-      friendsTickerActivities = hotelTicker.filter(activity => 
-        friendNameSet.has(activity.username.toLowerCase())
-      );
-      console.log(`🔄 [useFriendsFeed] Fallback: Using ${friendsTickerActivities.length} activities from any time`);
-    }
-
-    // Group activities by friend
-    const friendGroups: { [friendName: string]: TickerActivity[] } = {};
-    friendsTickerActivities.forEach(activity => {
-      if (!friendGroups[activity.username]) {
-        friendGroups[activity.username] = [];
-      }
-      friendGroups[activity.username].push(activity);
-    });
-
-    // Convert to FriendActivity format
-    const result: FriendActivity[] = Object.entries(friendGroups).map(([friendName, activities]) => {
-      const friend = friends.find(f => f.name.toLowerCase() === friendName.toLowerCase());
+    // Create FriendActivity objects from real activities
+    const result: FriendActivity[] = Object.entries(realActivityGroups).map(([friendName, activities]) => {
+      const friend = friends.find(f => f.name.toLowerCase() === friendName);
       if (!friend) return null;
 
-      const sortedActivities = activities.sort((a, b) => {
-        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : new Date(a.time).getTime();
-        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : new Date(b.time).getTime();
-        return timeB - timeA;
-      });
+      const sortedActivities = activities.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
 
       return {
         friend,
         activities: sortedActivities,
-        lastActivityTime: sortedActivities[0]?.timestamp || sortedActivities[0]?.time || '',
+        lastActivityTime: sortedActivities[0]?.created_at || new Date().toISOString(),
+        activityType: 'real' as const
       };
     }).filter(Boolean) as FriendActivity[];
 
+    // Add friends without real activities but show them in the list
+    const friendsWithoutActivities = friends.filter(friend => 
+      !realActivityGroups[friend.name.toLowerCase()]
+    ).slice(0, 5).map(friend => ({
+      friend,
+      activities: [],
+      lastActivityTime: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+      activityType: 'real' as const
+    }));
+
+    const allResults = [...result, ...friendsWithoutActivities];
+
     // Sort by most recent activity
-    const sortedResult = result.sort((a, b) => {
+    const sortedResult = allResults.sort((a, b) => {
       const timeA = new Date(a.lastActivityTime).getTime();
       const timeB = new Date(b.lastActivityTime).getTime();
       return timeB - timeA;
     });
 
     console.log(`✅ [useFriendsFeed] Processed ${sortedResult.length} friends with activities`);
-    return sortedResult;
-  }, [friends, hotelTicker, tickerResponse?.meta.source]);
+    return sortedResult.slice(0, 10); // Limit to 10 friends
+  }, [friends, realActivities]);
 
   return {
     friends,
     friendsActivities,
-    isLoading: friendsLoading || tickerLoading,
+    isLoading: friendsLoading || realActivitiesLoading,
     hasFriends: friends.length > 0,
-    tickerMetadata: tickerResponse?.meta
+    tickerMetadata: { source: 'real_activities', timestamp: new Date().toISOString(), count: realActivities.length, onlineCount: 0 }
   };
 };

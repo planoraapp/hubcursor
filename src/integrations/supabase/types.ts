@@ -258,6 +258,45 @@ export type Database = {
           },
         ]
       }
+      friends_activities: {
+        Row: {
+          activity_description: string
+          activity_type: string
+          created_at: string
+          detected_at: string
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          new_data: Json
+          old_data: Json | null
+        }
+        Insert: {
+          activity_description: string
+          activity_type: string
+          created_at?: string
+          detected_at?: string
+          habbo_id: string
+          habbo_name: string
+          hotel?: string
+          id?: string
+          new_data: Json
+          old_data?: Json | null
+        }
+        Update: {
+          activity_description?: string
+          activity_type?: string
+          created_at?: string
+          detected_at?: string
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          new_data?: Json
+          old_data?: Json | null
+        }
+        Relationships: []
+      }
       guestbook_entries: {
         Row: {
           author_habbo_name: string
@@ -1092,6 +1131,10 @@ export type Database = {
     }
     Functions: {
       cleanup_old_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_friends_activities: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
