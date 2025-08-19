@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, User, Home, Calendar, MapPin, Star, ExternalLink } from 'lucide-react';
+import { Search, User, Home, Calendar, MapPin, Star, ExternalLink, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 
 interface HabboUser {
   id: string;
@@ -25,6 +26,7 @@ interface HabboUser {
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { habboAccount, isLoggedIn } = useSimpleAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -82,6 +84,10 @@ const Homes: React.FC = () => {
 
       setUsers(data || []);
       setLoading(false);
+    } else {
+      // Se não há termo de busca, mostra usuários online
+      setSearchInitiated(true);
+      await fetchUsers();
     }
   };
 
@@ -98,29 +104,44 @@ const Homes: React.FC = () => {
         <SidebarInset className="flex-1">
           <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             <div className="max-w-7xl mx-auto">
-              {/* Header */}
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-white mb-4 volter-font drop-shadow-lg">
+                <h1 className="text-4xl font-bold text-white mb-4 volter-font"
+                    style={{
+                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                    }}>
                   🏠 Habbo Homes
                 </h1>
                 <p className="text-lg text-white/90 volter-font drop-shadow">
                   Explore as homes dos usuários do HabboHub
                 </p>
+                
+                {/* Botão Minha Home */}
+                {isLoggedIn && habboAccount && (
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => navigate(`/homes/${habboAccount.habbo_name}`)}
+                      className="habbo-button-green volter-font px-6 py-2"
+                    >
+                      <UserCheck className="w-4 h-4 mr-2" />
+                      Ver Minha Home
+                      <Home className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                )}
               </div>
 
-              {/* Search Section */}
               <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
                   <CardTitle className="text-xl volter-font habbo-text flex items-center gap-2">
                     <Search className="w-5 h-5" />
-                    Buscar Usuários
+                    Buscar Usuários com Homes
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="flex gap-4">
                     <Input
                       type="text"
-                      placeholder="Digite o nome do usuário Habbo..."
+                      placeholder="Digite o nome do usuário Habbo ou deixe vazio para ver usuários online..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -135,10 +156,12 @@ const Homes: React.FC = () => {
                       {loading ? 'Buscando...' : 'Buscar'}
                     </Button>
                   </div>
+                  <p className="text-sm text-gray-600 mt-2 volter-font">
+                    💡 Dica: Deixe o campo vazio e clique em "Buscar" para ver usuários online com homes descobertas
+                  </p>
                 </CardContent>
               </Card>
 
-              {/* Users Grid */}
               {searchInitiated && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredUsers.map((user) => (
@@ -218,7 +241,7 @@ const Homes: React.FC = () => {
                       Nenhum usuário encontrado
                     </h3>
                     <p className="text-gray-600 volter-font">
-                      Tente buscar por um nome diferente ou verifique a ortografia.
+                      Tente buscar por um nome diferente ou deixe o campo vazio para ver usuários online.
                     </p>
                   </CardContent>
                 </Card>

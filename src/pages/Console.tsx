@@ -19,28 +19,28 @@ const Console: React.FC = () => {
         <SidebarInset className="flex-1">
           <div className="p-4 overflow-hidden">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-white mb-2 volter-font drop-shadow-lg">Console do Habbo</h1>
+              <h1 className="text-2xl font-bold text-white mb-2 volter-font drop-shadow-lg" 
+                  style={{
+                    textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                  }}>
+                Console do Habbo
+              </h1>
               <p className="text-white/70 volter-font drop-shadow">Gerencie sua experiência no HabboHub</p>
             </div>
 
-            {/* Layout Responsivo - 4 colunas com scroll horizontal no mobile */}
             <div className="flex gap-4 h-[calc(100vh-10rem)] overflow-x-auto overflow-y-hidden">
-              {/* Left Column - My Account */}
               <div className="w-[320px] flex-shrink-0">
                 <MyAccountColumn />
               </div>
 
-              {/* Center Left - Hotel Feed */}
               <div className="w-[320px] flex-shrink-0">
                 <HotelPhotoFeedColumn />
               </div>
 
-              {/* Center Right - Friends Activity */} 
               <div className="w-[320px] flex-shrink-0">
                 <FriendsActivityColumn />
               </div>
 
-              {/* Right Column - User Discovery */}
               <div className="w-[320px] flex-shrink-0">
                 <UserSearchColumn />
               </div>

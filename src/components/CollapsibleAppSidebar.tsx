@@ -41,7 +41,7 @@ export function CollapsibleAppSidebar() {
         <img 
           src={item.icon} 
           alt={item.name}
-          className={`flex-shrink-0 ${isCollapsed ? 'w-6 h-6' : 'w-4 h-4'}`}
+          className={`flex-shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-4 h-4'}`}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
@@ -96,7 +96,7 @@ export function CollapsibleAppSidebar() {
               <img 
                 src="/assets/hub.gif" 
                 alt="Hub" 
-                className="w-8 h-8"
+                className="w-12 h-12"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/assets/hub.png";
@@ -138,7 +138,7 @@ export function CollapsibleAppSidebar() {
                   <img
                     src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
                     alt={`Avatar de ${habboAccount.habbo_name}`}
-                    className="w-8 h-8 object-contain"
+                    className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
@@ -171,7 +171,6 @@ export function CollapsibleAppSidebar() {
         </SidebarFooter>
       </Sidebar>
 
-      {/* Toggle Button - Positioned on the right edge of sidebar */}
       <button
         onClick={toggleSidebar}
         className="absolute top-20 -right-3 z-50 w-6 h-8 bg-[#f5f5dc] border-2 border-black border-l-0 rounded-r-md hover:bg-yellow-200/70 transition-colors flex items-center justify-center"
