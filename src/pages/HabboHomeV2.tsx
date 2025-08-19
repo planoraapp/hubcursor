@@ -175,18 +175,16 @@ const HabboHomeV2: React.FC = () => {
     <div className="flex-1 bg-repeat relative" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
       {/* Enhanced Toolbar - Desktop only */}
       {!isMobile && (
-        <div className="fixed top-0 left-0 right-0 z-40 p-4 pointer-events-none">
-          <div className="pointer-events-auto">
-            <EnhancedHomeToolbar
-              isEditMode={isEditMode}
-              isOwner={isOwner}
-              onToggleEditMode={() => setIsEditMode(!isEditMode)}
-              onSave={handleSave}
-              onBackgroundChange={handleBackgroundChange}
-              onStickerSelect={handleStickerAdd}
-              onWidgetAdd={addWidget}
-            />
-          </div>
+        <div className="fixed top-0 left-0 right-0 z-50 p-4">
+          <EnhancedHomeToolbar
+            isEditMode={isEditMode}
+            isOwner={isOwner}
+            onToggleEditMode={() => setIsEditMode(!isEditMode)}
+            onSave={handleSave}
+            onBackgroundChange={handleBackgroundChange}
+            onStickerSelect={handleStickerAdd}
+            onWidgetAdd={addWidget}
+          />
         </div>
       )}
 
@@ -229,7 +227,7 @@ const HabboHomeV2: React.FC = () => {
             onWidgetPositionChange={updateWidgetPosition}
             onStickerPositionChange={updateStickerPosition}
             onStickerRemove={removeSticker}
-            onRemove={removeWidget}
+            onWidgetRemove={removeWidget}
           />
         </div>
       </div>
