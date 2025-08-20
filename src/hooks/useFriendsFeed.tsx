@@ -62,18 +62,22 @@ export const useFriendsFeed = () => {
   // Process friends activities (combine real activities with ticker)
   const friendsActivities = useMemo(() => {
     if (!friends.length) {
-      console.log(`[useFriendsFeed] No friends to process`);
+      console.log(`[useFriendsFeed] No friends to process (${friends.length} friends)`);
       return [];
     }
 
     console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends with ${realActivities.length} real activities`);
+    console.log(`[useFriendsFeed] Friends list:`, friends.map(f => f.name));
+    console.log(`[useFriendsFeed] Real activities:`, realActivities.map(a => ({ name: a.habbo_name, type: a.activity_type, time: a.created_at })));
     
     const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
+    console.log(`[useFriendsFeed] Friend names set:`, Array.from(friendNameSet));
     
     // Group real activities by friend
     const realActivityGroups: { [friendName: string]: RealFriendActivity[] } = {};
     realActivities.forEach(activity => {
       const friendName = activity.habbo_name.toLowerCase();
+      console.log(`[useFriendsFeed] Checking activity from ${friendName}, is friend: ${friendNameSet.has(friendName)}`);
       if (friendNameSet.has(friendName)) {
         if (!realActivityGroups[friendName]) {
           realActivityGroups[friendName] = [];
@@ -82,14 +86,21 @@ export const useFriendsFeed = () => {
       }
     });
 
+    console.log(`[useFriendsFeed] Activity groups:`, Object.keys(realActivityGroups));
+
     // Create FriendActivity objects from real activities
     const result: FriendActivity[] = Object.entries(realActivityGroups).map(([friendName, activities]) => {
       const friend = friends.find(f => f.name.toLowerCase() === friendName);
-      if (!friend) return null;
+      if (!friend) {
+        console.log(`[useFriendsFeed] Friend not found for activities: ${friendName}`);
+        return null;
+      }
 
       const sortedActivities = activities.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+
+      console.log(`[useFriendsFeed] Created activity group for ${friend.name} with ${sortedActivities.length} activities`);
 
       return {
         friend,
@@ -99,18 +110,19 @@ export const useFriendsFeed = () => {
       };
     }).filter(Boolean) as FriendActivity[];
 
-    // Only show friends with actual activities
-    const allResults = result;
-
     // Sort by most recent activity
-    const sortedResult = allResults.sort((a, b) => {
+    const sortedResult = result.sort((a, b) => {
       const timeA = new Date(a.lastActivityTime).getTime();
       const timeB = new Date(b.lastActivityTime).getTime();
       return timeB - timeA;
     });
 
-    console.log(`✅ [useFriendsFeed] Processed ${sortedResult.length} friends with activities`);
-    return sortedResult.slice(0, 10); // Limit to 10 friends
+    console.log(`✅ [useFriendsFeed] Final result: ${sortedResult.length} friends with activities`);
+    sortedResult.forEach(fa => {
+      console.log(`  - ${fa.friend.name}: ${fa.activities.length} activities, last: ${fa.lastActivityTime}`);
+    });
+    
+    return sortedResult.slice(0, 15); // Increased limit to 15 for better visibility
   }, [friends, realActivities]);
 
   return {

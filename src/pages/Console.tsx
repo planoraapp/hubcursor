@@ -28,6 +28,7 @@ const Console: React.FC = () => {
             </div>
 
             <div className="flex gap-4 h-[calc(100vh-12rem)] overflow-x-auto overflow-y-hidden">
+              {/* Fixed container heights for proper scrolling */}
               <div className="w-[320px] flex-shrink-0">
                 <MyAccountColumn />
               </div>

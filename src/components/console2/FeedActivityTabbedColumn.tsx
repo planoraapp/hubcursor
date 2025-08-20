@@ -150,8 +150,8 @@ export const FeedActivityTabbedColumn: React.FC = () => {
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 min-h-0 flex flex-col">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
             <TabsList className="grid w-full grid-cols-2 bg-white/10 mb-4">
               <TabsTrigger 
                 value="photos" 
@@ -169,7 +169,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
               {photosLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <Loader2 className="w-8 h-8 animate-spin text-white/60" />
@@ -196,7 +196,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
               {activitiesLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60"></div>
