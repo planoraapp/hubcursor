@@ -81,13 +81,8 @@ export const MyAccountColumn: React.FC = () => {
       <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4">
         {/* Profile Header with Full Avatar */}
         <div className="relative">
-          {/* Country Flag - Top Right */}
-          <div className="absolute top-2 right-2 z-10">
-            <CountryFlag hotel={(habboAccount as any)?.hotel || 'br'} />
-          </div>
-          
           <div className="flex items-start space-x-4">
-            {/* Full Body Avatar - Left Side */}
+            {/* Full Body Avatar with Flag */}
             <div className="relative flex-shrink-0">
               <img 
                 src={`https://www.habbo.${(habboAccount as any)?.hotel === 'br' ? 'com.br' : ((habboAccount as any)?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${myProfile?.figureString || completeProfile?.figureString}&size=l&direction=2&head_direction=3&action=std`}
@@ -97,7 +92,12 @@ export const MyAccountColumn: React.FC = () => {
                   (e.target as HTMLImageElement).src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&action=std`;
                 }}
               />
+              {/* Online Status */}
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#5A6573] rounded-full"></div>
+              {/* Country Flag - Bottom Right Corner of Avatar */}
+              <div className="absolute bottom-1 right-1">
+                <CountryFlag hotel={(habboAccount as any)?.hotel || 'br'} />
+              </div>
             </div>
             
             {/* Profile Info - Right Side */}
@@ -112,23 +112,19 @@ export const MyAccountColumn: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Grid - Centered */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Social Stats - Information Only */}
+        <div className="grid grid-cols-3 gap-3">
           <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
-            <div className="text-2xl font-bold text-white">{photoCount}</div>
+            <div className="text-xl font-bold text-white">{photoCount}</div>
             <div className="text-xs text-white/60">Fotos</div>
           </div>
           <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
-            <div className="text-2xl font-bold text-white">{0}</div>
+            <div className="text-xl font-bold text-white">{0}</div>
             <div className="text-xs text-white/60">Seguidores</div>
           </div>
           <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
-            <div className="text-2xl font-bold text-white">{0}</div>
+            <div className="text-xl font-bold text-white">{0}</div>
             <div className="text-xs text-white/60">Seguindo</div>
-          </div>
-          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
-            <div className="text-2xl font-bold text-white">{completeProfile?.stats?.experience || 0}</div>
-            <div className="text-xs text-white/60">Pontos</div>
           </div>
         </div>
 

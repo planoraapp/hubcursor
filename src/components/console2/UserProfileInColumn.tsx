@@ -120,53 +120,52 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
       </CardHeader>
 
       <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
-        {/* Avatar and Basic Info */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        {/* Avatar and Basic Info with Full Body Avatar */}
+        <div className="flex items-start space-x-4">
+          {/* Full Body Avatar with Flag */}
+          <div className="relative flex-shrink-0">
             <img
-              src={avatarUrl}
+              src={`https://www.habbo.${habboUser?.hotel === 'br' ? 'com.br' : (habboUser?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${completeProfile?.figureString}&size=l&direction=2&head_direction=3&action=std`}
               alt={`Avatar de ${habboUser?.habbo_name || username}`}
-              className="w-12 h-12 rounded-full bg-white/10"
+              className="w-24 h-32 object-contain"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=m&direction=2&head_direction=3&action=std`;
+                target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=3&action=std`;
               }}
             />
+            {/* Online Status */}
             {completeProfile?.online && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#4A5568] rounded-full"></div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#4A5568] rounded-full"></div>
             )}
+            {/* Country Flag - Bottom Right Corner of Avatar */}
+            <div className="absolute bottom-1 right-1">
+              <CountryFlag hotel={habboUser?.hotel || 'br'} />
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-white truncate">{habboUser?.habbo_name || username}</h3>
-            <p className="text-white/60 text-sm">
+          
+          {/* Profile Info - Right Side */}
+          <div className="flex-1 min-w-0 pt-2">
+            <h3 className="text-xl font-bold text-white truncate">{habboUser?.habbo_name || username}</h3>
+            <p className="text-sm text-white/60 mt-1 break-words">
               {completeProfile?.motto || habboUser?.motto || 'Sem motto definido'}
             </p>
           </div>
         </div>
 
-        {/* Social Stats - Fotos, Seguidores, Seguindo */}
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Button
-            variant="ghost"
-            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
-          >
-            <div className="text-lg font-bold">{photoCount}</div>
+        {/* Social Stats - Information Only */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
+            <div className="text-xl font-bold text-white">{photoCount}</div>
             <div className="text-xs text-white/60">Fotos</div>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
-          >
-            <div className="text-lg font-bold">{followersCount}</div>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
+            <div className="text-xl font-bold text-white">{followersCount}</div>
             <div className="text-xs text-white/60">Seguidores</div>
-          </Button>
-          <Button
-            variant="ghost"
-            className="flex flex-col p-2 h-auto text-white hover:bg-white/10"
-          >
-            <div className="text-lg font-bold">{followingCount}</div>
+          </div>
+          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
+            <div className="text-xl font-bold text-white">{followingCount}</div>
             <div className="text-xs text-white/60">Seguindo</div>
-          </Button>
+          </div>
         </div>
 
         {/* Follow Button */}
@@ -189,55 +188,51 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
           {isToggling ? 'Carregando...' : isFollowing ? 'Seguindo' : 'Seguir'}
         </Button>
 
-        {/* Complete Stats Grid - Horizontal Layout */}
+        {/* Action Buttons - Centralized Layout */}
         <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="ghost"
+          <button
             onClick={() => setActiveModal('badges')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
           >
-            <Trophy className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
+            <Trophy className="h-5 w-5 text-yellow-400" />
+            <div className="text-center">
+              <div className="text-sm font-medium text-white">{completeProfile?.data?.badges?.length || 0}</div>
               <div className="text-xs text-white/60">Emblemas</div>
             </div>
-          </Button>
-
-          <Button
-            variant="ghost"
+          </button>
+          
+          <button
             onClick={() => setActiveModal('rooms')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
           >
-            <Home className="w-4 h-4 text-green-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
+            <Home className="h-5 w-5 text-green-400" />
+            <div className="text-center">
+              <div className="text-sm font-medium text-white">{completeProfile?.data?.rooms?.length || 0}</div>
               <div className="text-xs text-white/60">Quartos</div>
             </div>
-          </Button>
+          </button>
 
-          <Button
-            variant="ghost"
+          <button
             onClick={() => setActiveModal('friends')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
           >
-            <Users className="w-4 h-4 text-pink-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
+            <Users className="h-5 w-5 text-pink-400" />
+            <div className="text-center">
+              <div className="text-sm font-medium text-white">{completeProfile?.data?.friends?.length || 0}</div>
               <div className="text-xs text-white/60">Amigos</div>
             </div>
-          </Button>
+          </button>
 
-          <Button
-            variant="ghost"
+          <button
             onClick={() => setActiveModal('groups')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
+            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
           >
-            <Crown className="w-4 h-4 text-purple-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
+            <Crown className="h-5 w-5 text-purple-400" />
+            <div className="text-center">
+              <div className="text-sm font-medium text-white">{completeProfile?.data?.groups?.length || 0}</div>
               <div className="text-xs text-white/60">Grupos</div>
             </div>
-          </Button>
+          </button>
         </div>
 
         {/* Refresh Button */}
