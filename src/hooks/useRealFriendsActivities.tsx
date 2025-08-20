@@ -52,14 +52,17 @@ export const useRealFriendsActivities = () => {
 
       console.log(`[🔍 REAL ACTIVITIES] Querying activities for ${friendNames.length} friends:`, friendNames);
 
-      // Create normalized friend names for matching
+      // Extract friend names (case insensitive) - maintain original order
       const normalizedFriendNames = friendNames.map(name => name.toLowerCase().trim());
+      
+      console.log(`[🔍 REAL ACTIVITIES] Friend names:`, normalizedFriendNames);
 
+      // Query activities from friends only (last 24 hours for performance)
       const { data, error } = await supabase
         .from('friends_activities')
         .select('*')
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false }) // CRITICAL: Order by timestamp, not alphabetically
         .limit(200); // Get more to filter properly
 
       if (error) {
@@ -73,7 +76,7 @@ export const useRealFriendsActivities = () => {
       const filteredActivities = (data || []).filter(activity => {
         let activityName = activity.habbo_name.toLowerCase().trim();
         
-        // Handle names that start with comma
+        // Handle names that start with comma or special characters
         if (activityName.startsWith(',')) {
           activityName = activityName.substring(1).trim();
         }
@@ -85,7 +88,9 @@ export const useRealFriendsActivities = () => {
         }
         
         return isMatch;
-      });
+      })
+      // Ensure final sort by timestamp (most recent first) - CRITICAL FOR CHRONOLOGICAL ORDER
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       console.log(`[✅ REAL ACTIVITIES] Filtered to ${filteredActivities.length} activities from friends`);
 

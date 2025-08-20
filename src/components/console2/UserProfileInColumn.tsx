@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Camera, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Camera, RefreshCw, ExternalLink } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useFollowProfile } from '@/hooks/useFollowProfile';
@@ -14,6 +14,7 @@ import { BadgesModal } from '@/components/profile/modals/BadgesModal';
 import { FriendsModal } from '@/components/profile/modals/FriendsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
 import { RoomsModal } from '@/components/profile/modals/RoomsModal';
+import { CountryFlag } from '@/components/shared/CountryFlag';
 
 interface UserProfileInColumnProps {
   username: string;
