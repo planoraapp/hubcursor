@@ -107,29 +107,52 @@ Deno.serve(async (req) => {
 });
 
 async function discoverRandomUsers(supabase: any, hotel: string, limit: number) {
-  const { data, error } = await supabase
+  // Limit to 5-10 users as requested, prefer online users
+  const actualLimit = Math.min(limit, 10);
+  
+  // First try to get online users
+  const { data: onlineUsers, error: onlineError } = await supabase
     .from('habbo_accounts')
     .select('*')
     .eq('hotel', hotel)
-    .order('created_at', { ascending: false })
-    .limit(limit * 2);
+    .eq('is_online', true)
+    .order('last_access', { ascending: false })
+    .limit(actualLimit * 2);
 
-  if (error) throw error;
+  // Then get some offline users to mix in
+  const { data: offlineUsers, error: offlineError } = await supabase
+    .from('habbo_accounts')
+    .select('*')
+    .eq('hotel', hotel)
+    .eq('is_online', false)
+    .order('last_access', { ascending: false })
+    .limit(actualLimit);
 
-  // Randomizar e mapear para formato esperado
-  return (data || [])
-    .sort(() => Math.random() - 0.5)
-    .slice(0, limit)
-    .map(user => ({
-      id: user.habbo_id,
-      habbo_name: user.habbo_name,
-      habbo_id: user.habbo_id,
-      hotel: user.hotel,
-      motto: user.motto || '',
-      figure_string: user.figure_string || '',
-      online: user.is_online || false,
-      last_seen: user.last_access || user.created_at
-    }));
+  if (onlineError && offlineError) throw onlineError;
+
+  const allUsers = [
+    ...(onlineUsers || []),
+    ...(offlineUsers || [])
+  ];
+
+  // Truly randomize the selection with current timestamp as seed
+  const seed = Date.now();
+  const shuffled = allUsers
+    .map(user => ({ user, sort: Math.sin(seed * user.habbo_id) }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ user }) => user)
+    .slice(0, actualLimit);
+
+  return shuffled.map(user => ({
+    id: user.habbo_id,
+    habbo_name: user.habbo_name,
+    habbo_id: user.habbo_id,
+    hotel: user.hotel,
+    motto: user.motto || '',
+    figure_string: user.figure_string || '',
+    online: user.is_online || false,
+    last_seen: user.last_access || user.created_at
+  }));
 }
 
 async function discoverRecentUsers(supabase: any, hotel: string, limit: number) {

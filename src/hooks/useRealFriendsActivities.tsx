@@ -10,9 +10,11 @@ export interface RealFriendActivity {
   habbo_name: string;
   activity_type: string;
   activity_description: string;
-  new_data: any;
+  new_data?: any;
   created_at: string;
   detected_at: string;
+  badgeImageUrl?: string;
+  avatarPreviewUrl?: string;
 }
 
 export const useRealFriendsActivities = () => {
@@ -87,16 +89,51 @@ export const useRealFriendsActivities = () => {
 
       console.log(`[✅ REAL ACTIVITIES] Filtered to ${filteredActivities.length} activities from friends`);
 
-      // Transform to RealFriendActivity format
-      const transformedActivities: RealFriendActivity[] = filteredActivities.map(activity => ({
-        id: activity.id,
-        habbo_name: activity.habbo_name,
-        activity_type: activity.activity_type,
-        activity_description: activity.activity_description,
-        new_data: activity.new_data,
-        created_at: activity.created_at,
-        detected_at: activity.detected_at
-      }));
+      // Transform raw data to RealFriendActivity format with enriched descriptions
+      const transformedActivities: RealFriendActivity[] = filteredActivities.map(activity => {
+        let enrichedDescription = activity.activity_description;
+        let badgeImageUrl = '';
+        let avatarPreviewUrl = '';
+        
+        // Process new_data to extract visual information
+        if (activity.new_data) {
+          try {
+            const newData = typeof activity.new_data === 'string' ? JSON.parse(activity.new_data) : activity.new_data;
+            
+            // For badge activities
+            if (activity.activity_type === 'badge' && newData.badge_code) {
+              badgeImageUrl = `https://images.habbo.com/c_images/album1584/${newData.badge_code}.gif`;
+              enrichedDescription = `Conquistou o emblema "${newData.badge_name || newData.badge_code}"`;
+            }
+            
+            // For look changes
+            if (activity.activity_type === 'look_change' && newData.new_figure) {
+              avatarPreviewUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${newData.new_figure}&size=s&direction=2&head_direction=3&action=std`;
+              enrichedDescription = `Mudou o visual`;
+            }
+            
+            // For motto changes
+            if (activity.activity_type === 'motto_change' && newData.new_motto) {
+              enrichedDescription = `Mudou o lema para "${newData.new_motto}"`;
+            }
+            
+          } catch (error) {
+            console.log(`[useRealFriendsActivities] Could not parse new_data for activity ${activity.id}`);
+          }
+        }
+        
+        return {
+          id: activity.id,
+          habbo_name: activity.habbo_name,
+          activity_type: activity.activity_type,
+          activity_description: enrichedDescription,
+          new_data: activity.new_data,
+          created_at: activity.created_at,
+          detected_at: activity.detected_at,
+          badgeImageUrl,
+          avatarPreviewUrl
+        };
+      });
 
       return transformedActivities;
     },

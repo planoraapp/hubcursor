@@ -59,14 +59,26 @@ Deno.serve(async (req: Request) => {
           
           // Pegar apenas as 5 fotos mais recentes de cada amigo
           const recentPhotos = photosData.slice(0, 5).map((photo: any) => {
-            // Parse timestamp correctly
+            // Parse timestamp correctly - use 'time' field instead of 'creationTime'
             let timestamp = Date.now();
-            if (photo.creationTime) {
+            if (photo.time) {
+              // Handle Unix timestamp (seconds) vs milliseconds
+              let parsedTime = parseInt(photo.time);
+              if (!isNaN(parsedTime)) {
+                // If timestamp is in seconds (less than year 2000 in milliseconds), convert to milliseconds
+                if (parsedTime < 946684800000) {
+                  parsedTime = parsedTime * 1000;
+                }
+                timestamp = parsedTime;
+              }
+            } else if (photo.creationTime) {
               const parsedTime = new Date(photo.creationTime).getTime();
               if (!isNaN(parsedTime)) {
                 timestamp = parsedTime;
               }
             }
+            
+            console.log(`[habbo-friends-photos] Photo ${photo.id} time: ${photo.time} -> ${new Date(timestamp).toISOString()}`);
             
             return {
               id: photo.id,

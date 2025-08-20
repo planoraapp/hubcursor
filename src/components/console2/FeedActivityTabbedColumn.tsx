@@ -180,34 +180,38 @@ export const FeedActivityTabbedColumn: React.FC = () => {
             
             <TabsContent 
               value="photos" 
-              ref={scrollContainerRef}
-              className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" 
-              style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}
+              className="flex-1 min-h-0 space-y-3 pr-2 max-h-[calc(100vh-20rem)]"
             >
-              {photosLoading ? (
-                <div className="flex justify-center items-center h-32">
-                  <Loader2 className="w-8 h-8 animate-spin text-white/60" />
-                </div>
-              ) : friendsPhotos.length > 0 ? (
-                friendsPhotos.map((photo, index) => (
-                  <PhotoCard
-                    key={photo.id || index}
-                    photo={photo}
-                    onUserClick={handleUserClick}
-                    onLikesClick={handleLikesClick}
-                    onCommentsClick={handleCommentsClick}
-                    showDivider={index < friendsPhotos.length - 1}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Camera className="w-12 h-12 mx-auto mb-4 text-white/40" />
-                  <p className="text-white/60">Nenhuma foto dos amigos encontrada</p>
-                  <p className="text-white/40 text-sm mt-2">
-                    As fotos dos seus amigos aparecerão aqui
-                  </p>
-                </div>
-              )}
+              <div 
+                ref={activeTab === 'photos' ? scrollContainerRef : undefined}
+                className="overflow-y-auto h-full space-y-3"
+                style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}
+              >
+                {photosLoading ? (
+                  <div className="flex justify-center items-center h-32">
+                    <Loader2 className="w-8 h-8 animate-spin text-white/60" />
+                  </div>
+                ) : friendsPhotos.length > 0 ? (
+                  friendsPhotos.map((photo, index) => (
+                    <PhotoCard
+                      key={photo.id || index}
+                      photo={photo}
+                      onUserClick={handleUserClick}
+                      onLikesClick={handleLikesClick}
+                      onCommentsClick={handleCommentsClick}
+                      showDivider={index < friendsPhotos.length - 1}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Camera className="w-12 h-12 mx-auto mb-4 text-white/40" />
+                    <p className="text-white/60">Nenhuma foto dos amigos encontrada</p>
+                    <p className="text-white/40 text-sm mt-2">
+                      As fotos dos seus amigos aparecerão aqui
+                    </p>
+                  </div>
+                )}
+              </div>
             </TabsContent>
             
             <TabsContent 
@@ -272,9 +276,35 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                             const activityIcon = isRealActivity ? getActivityIcon((activity as any).activity_type) : '📍';
                             
                             return (
-                              <div key={actIndex} className="text-sm text-white/80 pl-11 flex items-center gap-1">
+                              <div key={actIndex} className="text-sm text-white/80 pl-11 flex items-center gap-2">
                                 <span className="text-xs">{activityIcon}</span>
-                                <span>{activityText}</span>
+                                <div className="flex items-center gap-2 flex-1">
+                                  <span>{activityText}</span>
+                                  {/* Show badge image for badge activities */}
+                                  {isRealActivity && (activity as any).badgeImageUrl && (
+                                    <img 
+                                      src={(activity as any).badgeImageUrl} 
+                                      alt="Badge" 
+                                      className="w-4 h-4 object-contain"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                  {/* Show avatar preview for look changes */}
+                                  {isRealActivity && (activity as any).avatarPreviewUrl && (
+                                    <img 
+                                      src={(activity as any).avatarPreviewUrl} 
+                                      alt="Novo visual" 
+                                      className="w-6 h-6 object-contain border border-white/20 rounded"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                </div>
                               </div>
                             );
                           })

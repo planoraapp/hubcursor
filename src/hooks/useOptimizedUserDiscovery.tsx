@@ -9,7 +9,7 @@ interface DiscoveryOptions {
 }
 
 export const useOptimizedUserDiscovery = (options: DiscoveryOptions = {}) => {
-  const { method = 'random', limit = 30, enabled = true } = options;
+  const { method = 'random', limit = 8, enabled = true } = options;
 
   const query = useQuery({
     queryKey: ['user-discovery', method, limit],

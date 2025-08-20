@@ -19,7 +19,7 @@ export const UserSearchColumn: React.FC = () => {
     refetch 
   } = useOptimizedUserDiscovery({
     method: 'random',
-    limit: 30,
+    limit: 8,
     enabled: !searchQuery.trim()
   });
 
