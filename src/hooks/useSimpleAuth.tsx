@@ -8,6 +8,7 @@ export const useSimpleAuth = () => {
     habboAccount: auth.habboAccount,
     isLoggedIn: auth.isLoggedIn,
     user: auth.user,
-    loading: auth.loading
+    loading: auth.loading,
+    logout: auth.logout
   };
 };

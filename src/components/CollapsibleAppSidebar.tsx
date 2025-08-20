@@ -15,11 +15,11 @@ import {
 } from '@/components/ui/sidebar';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
-  const { habboAccount, isLoggedIn } = useSimpleAuth();
+  const { habboAccount, isLoggedIn, logout } = useSimpleAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
@@ -151,11 +151,22 @@ export function CollapsibleAppSidebar() {
                   )}
                 </div>
                 {!isCollapsed && (
-                  <Link to="/profile" className="block">
-                    <button className="habbo-button-blue w-full px-3 py-1.5 text-xs font-bold text-white rounded">
-                      Meu Perfil
-                    </button>
-                  </Link>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button 
+                          onClick={logout}
+                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
+                        >
+                          <LogOut className="w-3 h-3" />
+                          Sair
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Desconectar conta Habbo</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             ) : (
