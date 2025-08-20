@@ -220,9 +220,9 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                   <div key={entry.id} className="bg-gray-50 rounded p-2 border">
                     <div className="flex items-center gap-2 mb-2">
                       <img
-                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`}
+                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s&headonly=1`}
                         alt={entry.author_habbo_name}
-                        className="w-8 h-8 rounded object-contain"
+                        className="w-6 h-6 rounded object-contain"
                         style={{ imageRendering: 'pixelated' }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;

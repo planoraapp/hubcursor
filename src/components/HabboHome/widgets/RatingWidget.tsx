@@ -102,7 +102,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
   }
 
   return (
-    <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-64 ${className}`}>
+    <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-48 ${className}`}>
       {/* Média no topo */}
       <div className="text-2xl font-bold text-black mb-2">
         {averageRating > 0 ? averageRating.toFixed(1) : '—'}

@@ -572,6 +572,8 @@ export const useHabboHomeV2 = (username: string) => {
           user_id: habboData.id,
           background_type: bgType,
           background_value: bgValue
+        }, {
+          onConflict: 'user_id'
         })
         .select();
 
