@@ -1,143 +1,138 @@
 
 import { useAuth } from './useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { useOptimizedQuery } from './useOptimizedQuery';
-import { useDebounce } from './useRateLimit';
+import { supabase } from '@/integrations/supabase/client';
+import { useDebounce } from './useDebounce';
 import { useCompleteProfile } from './useCompleteProfile';
 
 export interface RealFriendActivity {
   id: string;
   habbo_name: string;
-  habbo_id: string;
-  hotel: string;
   activity_type: string;
   activity_description: string;
-  old_data?: any;
   new_data: any;
-  detected_at: string;
   created_at: string;
+  detected_at: string;
 }
 
 export const useRealFriendsActivities = () => {
   const { habboAccount } = useAuth();
-
-  // Get complete profile to access friends list (synced with other components)
-  const { data: completeProfile } = useCompleteProfile(
-    habboAccount?.habbo_name || '',
-    (habboAccount as any)?.hotel === 'br' ? 'com.br' : (habboAccount as any)?.hotel || 'br'
+  
+  // Get complete profile to access friends list - use same source as useFriendsPhotos
+  const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(
+    habboAccount?.habbo_name || '', 
+    habboAccount?.hotel === 'br' ? 'com.br' : (habboAccount?.hotel || 'com.br')
   );
 
-  // Use completeProfile friends instead of fetching them separately
-  const friendNames = completeProfile?.data.friends?.map(f => f.name.toLowerCase()) || [];
+  // Extract friend names with proper normalization
+  const friendNames = completeProfile?.data?.friends?.map(friend => {
+    // Normalize friend names (remove special characters, trim)
+    let name = friend.name;
+    if (name.startsWith(',')) {
+      name = name.substring(1);
+    }
+    return name.trim();
+  }).filter(name => name.length > 0) || [];
 
-  console.log(`🔗 [useRealFriendsActivities] Synced with completeProfile: ${friendNames.length} friends`);
-  if (friendNames.length > 0) {
-    console.log(`📋 [useRealFriendsActivities] Friends sample:`, friendNames.slice(0, 5));
-  }
+  console.log(`[🔍 REAL ACTIVITIES] Friends from completeProfile (${friendNames.length}):`, friendNames);
 
-  // Atividades dos amigos com controle otimizado
-  const { 
-    data: activitiesData = [], 
-    isLoading,
-    refetch 
-  } = useOptimizedQuery({
-    queryKey: ['real-friends-activities', friendNames.join(','), habboAccount?.habbo_name],
+  // Fetch friends activities with optimized query
+  const baseRefetchInterval = 30 * 1000; // 30 segundos
+  const aggressiveCacheTime = 2 * 60 * 1000; // 2 minutos
+
+  const activitiesQuery = useOptimizedQuery<RealFriendActivity[]>({
+    queryKey: ['friends-activities', friendNames.join(','), completeProfile?.data?.friends?.length],
     queryFn: async (): Promise<RealFriendActivity[]> => {
       if (friendNames.length === 0) {
-        console.log(`⚠️ [useRealFriendsActivities] No friends found, skipping activities fetch`);
+        console.log(`[🔍 REAL ACTIVITIES] No friends to query activities for`);
         return [];
       }
 
-      console.log(`🔍 [useRealFriendsActivities] Fetching activities for ${friendNames.length} friends`);
+      console.log(`[🔍 REAL ACTIVITIES] Querying activities for ${friendNames.length} friends:`, friendNames);
 
-      // Enhanced query with case-insensitive matching
+      // Create normalized friend names for matching
+      const normalizedFriendNames = friendNames.map(name => name.toLowerCase().trim());
+
       const { data, error } = await supabase
         .from('friends_activities')
-        .select('id, habbo_name, habbo_id, hotel, activity_type, activity_description, new_data, detected_at, created_at')
-        .or(friendNames.map(name => `habbo_name.ilike.${name}`).join(','))
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .select('*')
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(200); // Get more to filter properly
 
       if (error) {
-        console.error('[❌ useRealFriendsActivities] Error fetching friends activities:', error);
+        console.error('[❌ REAL ACTIVITIES] Database error:', error);
         throw error;
       }
 
-      console.log(`✅ [useRealFriendsActivities] Found ${data?.length || 0} activities from database`);
-      
-      // Additional client-side filtering for better matching
-      const filteredData = (data || []).filter(activity => {
-        const activityName = activity.habbo_name.toLowerCase();
-        const isMatch = friendNames.some(friendName => 
-          friendName === activityName || 
-          friendName.includes(activityName) || 
-          activityName.includes(friendName)
-        );
+      console.log(`[📊 REAL ACTIVITIES] Raw query returned ${data?.length || 0} activities`);
+
+      // Client-side filtering for accurate matching with normalization
+      const filteredActivities = (data || []).filter(activity => {
+        let activityName = activity.habbo_name.toLowerCase().trim();
+        
+        // Handle names that start with comma
+        if (activityName.startsWith(',')) {
+          activityName = activityName.substring(1).trim();
+        }
+        
+        const isMatch = normalizedFriendNames.includes(activityName);
+        
+        if (isMatch) {
+          console.log(`[✅ REAL ACTIVITIES] Matched activity from ${activity.habbo_name}`);
+        }
+        
         return isMatch;
       });
 
-      console.log(`🎯 [useRealFriendsActivities] Filtered to ${filteredData.length} matching activities`);
-      
-      // Transform the data to match RealFriendActivity interface
-      return filteredData.map(item => ({
-        id: item.id,
-        habbo_name: item.habbo_name,
-        habbo_id: item.habbo_id || '',
-        hotel: item.hotel || 'br',
-        activity_type: item.activity_type,
-        activity_description: item.activity_description,
-        new_data: item.new_data,
-        detected_at: item.detected_at,
-        created_at: item.created_at
+      console.log(`[✅ REAL ACTIVITIES] Filtered to ${filteredActivities.length} activities from friends`);
+
+      // Transform to RealFriendActivity format
+      const transformedActivities: RealFriendActivity[] = filteredActivities.map(activity => ({
+        id: activity.id,
+        habbo_name: activity.habbo_name,
+        activity_type: activity.activity_type,
+        activity_description: activity.activity_description,
+        new_data: activity.new_data,
+        created_at: activity.created_at,
+        detected_at: activity.detected_at
       }));
+
+      return transformedActivities;
     },
-    enabled: friendNames.length > 0,
-    baseRefetchInterval: 5 * 60 * 1000, // 5 minutos
-    aggressiveCacheTime: 10 * 60 * 1000, // 10 minutos de cache
+    enabled: !profileLoading && friendNames.length > 0,
+    baseRefetchInterval,
+    aggressiveCacheTime,
     enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 20, windowMs: 60 * 1000 }, // 20 requests por minuto
+    rateLimitConfig: { maxRequests: 20, windowMs: 60 * 1000 }
   });
 
-  // Activity tracker com debounce e rate limiting mais rigoroso
-  const debouncedTriggerTracker = useDebounce(async () => {
+  // Activity tracker invocation with debounce
+  const debouncedTriggerTracker = useDebounce(() => {
     if (!habboAccount?.habbo_name) return null;
-
-    try {
-      const { data, error } = await supabase.functions.invoke('habbo-friends-activity-tracker', {
-        body: { 
-          username: habboAccount.habbo_name,
-          hotel: (habboAccount as any)?.hotel || 'br'
-        }
-      });
-
-      if (error) {
-        console.error('Activity tracker error:', error);
-        return null;
+    
+    return supabase.functions.invoke('habbo-friends-activity-tracker', {
+      body: { 
+        username: habboAccount.habbo_name,
+        hotel: habboAccount?.hotel || 'br'
       }
-
-      console.log('Activity tracker result:', data);
-      return data;
-    } catch (error) {
-      console.error('Failed to trigger activity tracker:', error);
-      return null;
-    }
-  }, 2000); // 2 seconds debounce
+    });
+  }, 2000);
 
   const { data: trackerResult } = useOptimizedQuery({
     queryKey: ['trigger-activity-tracker', habboAccount?.habbo_name],
     queryFn: debouncedTriggerTracker,
     enabled: !!habboAccount?.habbo_name,
-    baseRefetchInterval: 30 * 60 * 1000, // 30 minutos (era 10 minutos)
-    aggressiveCacheTime: 60 * 60 * 1000, // 1 hora de cache
+    baseRefetchInterval: 30 * 60 * 1000, // 30 minutes
+    aggressiveCacheTime: 60 * 60 * 1000, // 1 hour
     enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 5, windowMs: 60 * 1000 }, // Apenas 5 requests por minuto
+    rateLimitConfig: { maxRequests: 5, windowMs: 60 * 1000 }
   });
 
   return {
-    activities: activitiesData,
-    isLoading,
-    refetch,
+    activities: activitiesQuery.data || [],
+    isLoading: profileLoading || activitiesQuery.isLoading,
+    refetch: activitiesQuery.refetch,
     trackerResult
   };
 };

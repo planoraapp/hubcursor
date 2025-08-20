@@ -58,15 +58,26 @@ Deno.serve(async (req: Request) => {
           const photosData = await photosResponse.json();
           
           // Pegar apenas as 5 fotos mais recentes de cada amigo
-          const recentPhotos = photosData.slice(0, 5).map((photo: any) => ({
-            id: photo.id,
-            imageUrl: photo.url.startsWith('//') ? `https:${photo.url}` : photo.url,
-            date: new Date(photo.creationTime).toLocaleDateString('pt-BR'),
-            likes: photo.likesCount || 0,
-            userName: friend.name,
-            userAvatar: `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
-            timestamp: new Date(photo.creationTime).getTime()
-          }));
+          const recentPhotos = photosData.slice(0, 5).map((photo: any) => {
+            // Parse timestamp correctly
+            let timestamp = Date.now();
+            if (photo.creationTime) {
+              const parsedTime = new Date(photo.creationTime).getTime();
+              if (!isNaN(parsedTime)) {
+                timestamp = parsedTime;
+              }
+            }
+            
+            return {
+              id: photo.id,
+              imageUrl: photo.url.startsWith('//') ? `https:${photo.url}` : photo.url,
+              date: new Date(timestamp).toLocaleDateString('pt-BR'),
+              likes: photo.likesCount || 0,
+              userName: friend.name,
+              userAvatar: `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
+              timestamp: timestamp
+            };
+          });
           
           allPhotos.push(...recentPhotos);
         }

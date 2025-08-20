@@ -1,78 +1,76 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCompleteProfile } from '@/hooks/useCompleteProfile';
+import { useCompleteProfile } from './useCompleteProfile';
 
-interface FriendPhoto {
+export interface FriendPhoto {
   id: string;
   imageUrl: string;
   date: string;
   likes: number;
   userName: string;
   userAvatar: string;
+  timestamp?: number;
 }
 
 export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') => {
   // Get complete profile to access friends list
-  const { data: completeProfile } = useCompleteProfile(
-    currentUserName,
-    hotel === 'br' ? 'com.br' : hotel
-  );
-
+  const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(currentUserName, hotel === 'br' ? 'com.br' : hotel);
+  
   return useQuery({
-    queryKey: ['friends-photos', currentUserName, hotel, completeProfile?.data.friends?.length],
+    queryKey: ['friends-photos', currentUserName, hotel, completeProfile?.data?.friends?.length],
     queryFn: async (): Promise<FriendPhoto[]> => {
-      if (!currentUserName) return [];
-
-      console.log(`[🔄 FRIENDS PHOTOS] Fetching friends photos for ${currentUserName}`);
-      console.log(`[📋 FRIENDS PHOTOS] User has ${completeProfile?.data.friends?.length || 0} friends`);
-
-      // Log some friend names for debugging
-      if (completeProfile?.data.friends?.length) {
-        console.log(`[👥 FRIENDS PHOTOS] Friends sample:`, 
-          completeProfile.data.friends.slice(0, 5).map(f => f.name)
-        );
+      if (!currentUserName) {
+        throw new Error('Username is required');
       }
 
-      try {
-        // Chamar edge function para buscar fotos dos amigos
-        const { data, error } = await supabase.functions.invoke('habbo-friends-photos', {
-          body: { username: currentUserName, hotel }
+      if (!completeProfile?.data?.friends?.length) {
+        console.log(`[🎯 FRIENDS PHOTOS] No friends found for ${currentUserName}`);
+        return [];
+      }
+
+      console.log(`[🎯 FRIENDS PHOTOS] Fetching photos for ${completeProfile.data.friends.length} friends of ${currentUserName}`);
+      
+      const { data, error } = await supabase.functions.invoke('habbo-friends-photos', {
+        body: { username: currentUserName, hotel }
+      });
+
+      if (error) {
+        console.error('[❌ FRIENDS PHOTOS] Error:', error);
+        throw new Error(error.message || 'Failed to fetch friends photos');
+      }
+
+      if (!data || data.error) {
+        console.error('[❌ FRIENDS PHOTOS] API Error:', data?.error || 'No data returned');
+        return [];
+      }
+
+      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${Array.isArray(data) ? data.length : 0} photos`);
+      
+      // Filter and sort photos chronologically (most recent first)
+      const photos = Array.isArray(data) ? data : [];
+      const validPhotos = photos
+        .filter(photo => photo.imageUrl && photo.userName && photo.timestamp)
+        .map(photo => ({
+          ...photo,
+          timestamp: photo.timestamp || Date.now(),
+          date: photo.timestamp ? new Date(photo.timestamp).toLocaleDateString('pt-BR') : 'Data inválida'
+        }))
+        .sort((a, b) => {
+          // Sort by timestamp (most recent first)
+          const timestampA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp).getTime();
+          const timestampB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp).getTime();
+          return timestampB - timestampA;
         });
 
-        if (error) {
-          console.error('[❌ FRIENDS PHOTOS] Error:', error);
-          throw new Error(error.message || 'Failed to fetch friends photos');
-        }
-
-        if (data.error) {
-          console.error('[❌ FRIENDS PHOTOS] API Error:', data.error);
-          throw new Error(data.error);
-        }
-
-        console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${data.length} photos from friends`);
-        
-        // Sort by date descending (most recent first) and validate dates
-        const validPhotos = (data as FriendPhoto[]).filter(photo => {
-          const isValidDate = photo.date && !isNaN(new Date(photo.date).getTime());
-          if (!isValidDate) {
-            console.warn(`[⚠️ FRIENDS PHOTOS] Invalid date for photo ${photo.id}: ${photo.date}`);
-          }
-          return isValidDate;
-        }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-        console.log(`[📅 FRIENDS PHOTOS] Sorted ${validPhotos.length} photos chronologically`);
-        
-        return validPhotos;
-      } catch (error: any) {
-        console.error('[❌ FRIENDS PHOTOS] Fetch failed:', error);
-        throw error;
-      }
+      console.log(`[📊 FRIENDS PHOTOS] Filtered to ${validPhotos.length} valid photos, ordered chronologically`);
+      
+      return validPhotos;
     },
-    enabled: !!currentUserName && !!completeProfile?.data.friends?.length,
-    staleTime: 3 * 60 * 1000, // 3 minutes (reduced for more frequent updates)
+    enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
-    refetchInterval: 5 * 60 * 1000, // Auto-refresh every 5 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes auto refresh
   });
 };

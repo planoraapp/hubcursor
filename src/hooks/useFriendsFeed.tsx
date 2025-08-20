@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { habboProxyService, HabboFriend, TickerActivity } from '@/services/habboProxyService';
 import { useRealFriendsActivities, RealFriendActivity } from './useRealFriendsActivities';
+import { useCompleteProfile } from './useCompleteProfile';
 import { useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -24,23 +25,25 @@ export const useFriendsFeed = () => {
     return 'com.br';
   }, [habboAccount?.hotel]);
   
-  // Fetch friends list
-  const { 
-    data: friends = [], 
-    isLoading: friendsLoading 
-  } = useQuery({
-    queryKey: ['habbo-friends', habboAccount?.habbo_name],
-    queryFn: async () => {
-      if (!habboAccount?.habbo_name) return [];
-      
-      console.log(`[useFriendsFeed] Fetching friends for ${habboAccount.habbo_name}`);
-      const friendsData = await habboProxyService.getUserFriends(habboAccount.habbo_name, hotelDomain);
-      console.log(`[useFriendsFeed] Retrieved ${friendsData.length} friends:`, friendsData);
-      return friendsData;
-    },
-    enabled: !!habboAccount?.habbo_name,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
+  // Use complete profile as unified source of friends data
+  const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(
+    habboAccount?.habbo_name || '', 
+    hotelDomain
+  );
+  
+  // Convert complete profile friends to HabboFriend format
+  const friends: HabboFriend[] = useMemo(() => {
+    if (!completeProfile?.data?.friends) return [];
+    
+    return completeProfile.data.friends.map(friend => ({
+      name: friend.name,
+      figureString: friend.figureString || '',
+      online: friend.online || false,
+      uniqueId: friend.uniqueId || ''
+    }));
+  }, [completeProfile?.data?.friends]);
+  
+  const friendsLoading = profileLoading;
 
   // Fetch hotel ticker
   const { 
@@ -49,7 +52,7 @@ export const useFriendsFeed = () => {
   } = useQuery({
     queryKey: ['hotel-ticker-for-friends', hotelDomain],
     queryFn: () => habboProxyService.getHotelTicker(hotelDomain),
-    enabled: friends.length > 0 && !!hotelDomain,
+    enabled: friends.length > 0 && !!hotelDomain && !friendsLoading,
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
   });
