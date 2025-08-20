@@ -12,10 +12,12 @@ import {
   MessageSquare,
   Image,
   Cog,
+  LogOut,
 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -28,6 +30,8 @@ import {
 } from '@/components/ui/sidebar';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const mainItems = [
   { title: "Início", url: "/", icon: Home },
@@ -51,12 +55,16 @@ const toolsItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount, logout } = useUnifiedAuth();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = (active: boolean) =>
     active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "hover:bg-sidebar-accent/50";
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -162,22 +170,41 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      {habboAccount && state !== "collapsed" && (
-        <div className="mt-auto p-4 border-t">
+      <SidebarFooter>
+        {habboAccount && (
           <div className="flex items-center gap-3">
             <Avatar className="w-8 h-8">
               <AvatarImage src={`https://www.habbo.com.br/habbo-imaging/avatarimage?size=s&user=${habboAccount.habbo_name}&action=wav&direction=2&head_direction=2&gesture=sml`} />
               <AvatarFallback>{habboAccount.habbo_name[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {habboAccount.habbo_name}
-              </p>
-              <p className="text-xs text-sidebar-foreground/70">Habbo Membro</p>
-            </div>
+            {state !== "collapsed" && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {habboAccount.habbo_name}
+                </p>
+                <p className="text-xs text-sidebar-foreground/70">Habbo Membro</p>
+              </div>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLogout}
+                    className="h-8 w-8 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sair</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-        </div>
-      )}
+        )}
+      </SidebarFooter>
     </Sidebar>
   );
 }
