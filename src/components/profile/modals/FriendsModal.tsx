@@ -30,10 +30,10 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="max-w-4xl max-h-[80vh] bg-[#4A5568] text-white border-0">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Users className="w-5 h-5 text-pink-400" />
               Amigos de {userName} ({friends.length})
             </DialogTitle>
           </DialogHeader>
@@ -49,24 +49,33 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                   <div className="relative">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={getAvatarUrl(friend.figureString)} />
-                      <AvatarFallback>{friend.name[0]?.toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="bg-white/20 text-white">
+                        {friend.name[0]?.toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#4A5568] ${
                       friend.online ? 'bg-green-500' : 'bg-red-500'
                     }`}></div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-sm truncate">{friend.name}</p>
-                      <Badge variant={friend.online ? "default" : "secondary"} className="text-xs">
+                      <p className="font-medium text-sm truncate text-white">{friend.name}</p>
+                      <Badge 
+                        variant={friend.online ? "default" : "secondary"} 
+                        className={`text-xs ${
+                          friend.online 
+                            ? "bg-green-500/20 text-green-300 border-green-400/30" 
+                            : "bg-white/10 text-white/60 border-white/20"
+                        }`}
+                      >
                         {friend.online ? 'Online' : 'Offline'}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate italic">
+                    <p className="text-xs text-white/60 truncate italic">
                       "{friend.motto || 'Sem motto'}"
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm" className="p-1">
+                  <Button variant="ghost" size="sm" className="p-1 text-white/60 hover:text-white hover:bg-white/10">
                     <ExternalLink className="w-4 h-4" />
                   </Button>
                 </div>
@@ -74,7 +83,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
             </div>
             
             {friends.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
+              <div className="text-center text-white/60 py-8">
                 <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>Nenhum amigo encontrado</p>
               </div>

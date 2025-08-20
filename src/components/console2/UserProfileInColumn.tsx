@@ -188,54 +188,54 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
           {isToggling ? 'Carregando...' : isFollowing ? 'Seguindo' : 'Seguir'}
         </Button>
 
-        {/* Complete Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Complete Stats Grid - Horizontal Layout */}
+        <div className="grid grid-cols-2 gap-2">
           <Button
             variant="ghost"
             onClick={() => setActiveModal('badges')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
           >
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Trophy className="w-4 h-4 text-yellow-400" />
+            <Trophy className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
+              <div className="text-xs text-white/60">Emblemas</div>
             </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.badgesCount || 0}</div>
-            <div className="text-xs text-white/60">Emblemas</div>
           </Button>
 
           <Button
             variant="ghost"
             onClick={() => setActiveModal('rooms')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
           >
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Home className="w-4 h-4 text-green-400" />
+            <Home className="w-4 h-4 text-green-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
+              <div className="text-xs text-white/60">Quartos</div>
             </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.roomsCount || 0}</div>
-            <div className="text-xs text-white/60">Quartos</div>
           </Button>
 
           <Button
             variant="ghost"
             onClick={() => setActiveModal('friends')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
           >
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Users className="w-4 h-4 text-pink-400" />
+            <Users className="w-4 h-4 text-pink-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
+              <div className="text-xs text-white/60">Amigos</div>
             </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.friendsCount || 0}</div>
-            <div className="text-xs text-white/60">Amigos</div>
           </Button>
 
           <Button
             variant="ghost"
             onClick={() => setActiveModal('groups')}
-            className="bg-white/10 hover:bg-white/20 rounded-lg p-3 text-center h-auto flex flex-col"
+            className="bg-white/10 hover:bg-white/20 rounded-lg p-2 h-auto flex items-center gap-2 text-left"
           >
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Crown className="w-4 h-4 text-purple-400" />
+            <Crown className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
+              <div className="text-xs text-white/60">Grupos</div>
             </div>
-            <div className="text-lg font-bold text-white">{completeProfile?.stats.groupsCount || 0}</div>
-            <div className="text-xs text-white/60">Grupos</div>
           </Button>
         </div>
 

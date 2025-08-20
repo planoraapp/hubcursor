@@ -21,10 +21,10 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
+      <DialogContent className="max-w-4xl max-h-[80vh] bg-[#4A5568] text-white border-0">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Trophy className="w-5 h-5" />
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Trophy className="w-5 h-5 text-yellow-400" />
             Emblemas de {userName} ({badges.length})
           </DialogTitle>
         </DialogHeader>
@@ -41,17 +41,17 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                   <img
                     src={habboProxyService.getBadgeUrl(badge.code)}
                     alt={badge.name}
-                    className="w-12 h-12 mx-auto border border-gray-200 rounded bg-white p-1 group-hover:scale-110 transition-transform"
+                    className="w-12 h-12 mx-auto border border-white/20 rounded bg-white p-1 group-hover:scale-110 transition-transform"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2 truncate leading-tight">
+                <p className="text-xs text-white/60 mt-2 truncate leading-tight">
                   {badge.name}
                 </p>
                 {badge.description && (
-                  <p className="text-xs text-muted-foreground/70 mt-1 line-clamp-2 leading-tight">
+                  <p className="text-xs text-white/40 mt-1 line-clamp-2 leading-tight">
                     {badge.description}
                   </p>
                 )}
@@ -60,7 +60,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
           </div>
           
           {badges.length === 0 && (
-            <div className="text-center text-gray-500 py-8">
+            <div className="text-center text-white/60 py-8">
               <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p>Nenhum emblema encontrado</p>
             </div>

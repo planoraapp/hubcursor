@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, MessageCircle, Send } from 'lucide-react';
+import { Loader2, MessageCircle, Send, Trash2, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -20,7 +20,11 @@ interface PhotoCommentsModalProps {
   comments: PhotoComment[];
   isLoading: boolean;
   onAddComment?: (comment: string) => void;
-  isAddingComment?: boolean;
+  onDeleteComment?: (commentId: string) => void;
+  onReportComment?: (commentId: string) => void;
+  canDeleteComment?: (comment: PhotoComment) => boolean;
+  isAddingComment?: boolean;  
+  isDeletingComment?: boolean;
 }
 
 export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
@@ -29,7 +33,11 @@ export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
   comments,
   isLoading,
   onAddComment,
-  isAddingComment = false
+  onDeleteComment,
+  onReportComment,
+  canDeleteComment,
+  isAddingComment = false,
+  isDeletingComment = false
 }) => {
   const [newComment, setNewComment] = useState('');
 
@@ -71,7 +79,7 @@ export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
             ) : comments.length > 0 ? (
               <div className="space-y-4">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
+                  <div key={comment.id} className="flex gap-3 group">
                     <Avatar className="w-8 h-8 flex-shrink-0">
                       <AvatarImage 
                         src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${comment.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
@@ -82,11 +90,34 @@ export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-medium text-white">{comment.habbo_name}</p>
-                        <span className="text-xs text-white/50">
-                          {formatTime(comment.created_at)}
-                        </span>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-white">{comment.habbo_name}</p>
+                          <span className="text-xs text-white/50">
+                            {formatTime(comment.created_at)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {canDeleteComment && canDeleteComment(comment) && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => onDeleteComment?.(comment.id)}
+                              disabled={isDeletingComment}
+                              className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-400/20"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onReportComment?.(comment.id)}
+                            className="h-6 w-6 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/20"
+                          >
+                            <AlertTriangle className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-sm text-white/80 break-words">
                         {comment.comment_text}

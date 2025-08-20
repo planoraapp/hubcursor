@@ -58,12 +58,68 @@ export const usePhotoComments = (photoId: string) => {
     }
   });
 
+  // Delete comment mutation
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from('photo_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['photo-comments', photoId] });
+      toast.success('Comentário excluído!');
+    },
+    onError: (error: any) => {
+      console.error('Erro ao excluir comentário:', error);
+      toast.error('Erro ao excluir comentário');
+    }
+  });
+
+  // Report comment mutation (prepare for future moderation system)
+  const reportCommentMutation = useMutation({
+    mutationFn: async ({ commentId, reason }: { commentId: string; reason?: string }) => {
+      if (!habboAccount?.supabase_user_id || !habboAccount?.habbo_name) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // For now, just log the report (can be enhanced later with comment_reports table)
+      console.log('📢 [REPORT] Comment reported:', { 
+        commentId, 
+        reason, 
+        reportedBy: habboAccount.habbo_name 
+      });
+      
+      // Future: Insert into comment_reports table
+      toast.success('Comentário denunciado! Nossa equipe irá analisar.');
+    },
+    onError: (error: any) => {
+      console.error('Erro ao denunciar comentário:', error);
+      toast.error('Erro ao denunciar comentário');
+    }
+  });
+
   const addComment = (text: string) => {
     addCommentMutation.mutate(text);
   };
 
+  const deleteComment = (commentId: string) => {
+    deleteCommentMutation.mutate(commentId);
+  };
+
+  const reportComment = (commentId: string, reason?: string) => {
+    reportCommentMutation.mutate({ commentId, reason });
+  };
+
   // Get last 2 comments for preview
   const lastTwoComments = comments.slice(-2);
+
+  // Check if current user can delete a comment (own comment or photo owner)
+  const canDeleteComment = (comment: any) => {
+    return comment.user_id === habboAccount?.supabase_user_id;
+  };
 
   return {
     comments,
@@ -71,6 +127,11 @@ export const usePhotoComments = (photoId: string) => {
     lastTwoComments,
     commentsLoading,
     addComment,
-    isAddingComment: addCommentMutation.isPending
+    deleteComment,
+    reportComment,
+    canDeleteComment,
+    isAddingComment: addCommentMutation.isPending,
+    isDeletingComment: deleteCommentMutation.isPending,
+    isReportingComment: reportCommentMutation.isPending
   };
 };

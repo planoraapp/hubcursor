@@ -105,17 +105,70 @@ serve(async (req) => {
   }
 });
 
+// Levenshtein distance for fuzzy matching
+function levenshteinDistance(str1: string, str2: string): number {
+  const matrix: number[][] = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+}
+
+// Calculate similarity score for fuzzy matching
+function calculateSimilarity(searchTerm: string, username: string): number {
+  const search = searchTerm.toLowerCase();
+  const name = username.toLowerCase();
+  
+  // Exact match gets highest score
+  if (name === search) return 100;
+  
+  // Starts with search term gets high score
+  if (name.startsWith(search)) return 90;
+  
+  // Contains search term gets good score
+  if (name.includes(search)) return 80;
+  
+  // Use Levenshtein distance for fuzzy matching
+  const distance = levenshteinDistance(search, name);
+  const maxLen = Math.max(search.length, name.length);
+  
+  // Convert distance to similarity percentage
+  const similarity = ((maxLen - distance) / maxLen) * 70;
+  
+  return Math.max(0, similarity);
+}
+
 async function searchLocalDatabase(supabase: any, searchTerm: string, hotel: string, limit: number) {
   const results = [];
   
   try {
-    // Search in habbo_accounts (exact and fuzzy)
+    // Enhanced search in habbo_accounts 
     const { data: accounts } = await supabase
       .from('habbo_accounts')
       .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online')
-      .or(`habbo_name.ilike.%${searchTerm}%,habbo_id.ilike.%${searchTerm}%`)
+      .or(`habbo_name.ilike.%${searchTerm}%,habbo_id.ilike.%${searchTerm}%,motto.ilike.%${searchTerm}%`)
       .eq('hotel', hotel)
-      .limit(Math.ceil(limit / 2));
+      .limit(limit * 2); // Get more results for better filtering
 
     if (accounts) {
       results.push(...accounts.map((acc: any) => ({
@@ -125,17 +178,18 @@ async function searchLocalDatabase(supabase: any, searchTerm: string, hotel: str
         motto: acc.motto || '',
         figure_string: acc.figure_string || '',
         is_online: acc.is_online || false,
-        source: 'accounts'
+        source: 'accounts',
+        similarity: calculateSimilarity(searchTerm, acc.habbo_name)
       })));
     }
 
-    // Search in discovered_users 
+    // Enhanced search in discovered_users 
     const { data: discovered } = await supabase
       .from('discovered_users')
       .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online')
-      .or(`habbo_name.ilike.%${searchTerm}%,habbo_id.ilike.%${searchTerm}%`)
+      .or(`habbo_name.ilike.%${searchTerm}%,habbo_id.ilike.%${searchTerm}%,motto.ilike.%${searchTerm}%`)
       .eq('hotel', hotel)
-      .limit(Math.ceil(limit / 2));
+      .limit(limit * 2);
 
     if (discovered) {
       results.push(...discovered.map((disc: any) => ({
@@ -145,28 +199,37 @@ async function searchLocalDatabase(supabase: any, searchTerm: string, hotel: str
         motto: disc.motto || '',
         figure_string: disc.figure_string || '',
         is_online: disc.is_online || false,
-        source: 'discovered'
+        source: 'discovered',
+        similarity: calculateSimilarity(searchTerm, disc.habbo_name)
       })));
     }
 
-    // Remove duplicates based on habbo_id and prioritize exact matches
+    // Remove duplicates and apply intelligent sorting
     const uniqueResults = results
       .filter((user, index, self) => 
         index === self.findIndex(u => u.habbo_id === user.habbo_id)
       )
+      .filter(user => user.similarity > 30) // Only include reasonably similar results
       .sort((a, b) => {
-        // Exact name matches first
-        const aExact = a.habbo_name.toLowerCase() === searchTerm.toLowerCase();
-        const bExact = b.habbo_name.toLowerCase() === searchTerm.toLowerCase();
-        if (aExact && !bExact) return -1;
-        if (!aExact && bExact) return 1;
+        // Primary sort: similarity score (higher is better)
+        if (b.similarity !== a.similarity) {
+          return b.similarity - a.similarity;
+        }
         
-        // Then by source (accounts > discovered)
+        // Secondary sort: source priority (accounts > discovered)
         if (a.source === 'accounts' && b.source !== 'accounts') return -1;
         if (a.source !== 'accounts' && b.source === 'accounts') return 1;
         
+        // Tertiary sort: online status (online users first)  
+        if (a.is_online && !b.is_online) return -1;
+        if (!a.is_online && b.is_online) return 1;
+        
         return 0;
-      });
+      })
+      .slice(0, limit); // Final limit after sorting
+
+    console.log(`🔍 [UserSearch] Local search found ${uniqueResults.length} results with similarities:`, 
+      uniqueResults.map(u => `${u.habbo_name}(${u.similarity})`));
 
     return uniqueResults;
 

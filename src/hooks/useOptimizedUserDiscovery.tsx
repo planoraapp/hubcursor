@@ -9,7 +9,7 @@ interface DiscoveryOptions {
 }
 
 export const useOptimizedUserDiscovery = (options: DiscoveryOptions = {}) => {
-  const { method = 'random', limit = 8, enabled = true } = options;
+  const { method = 'random', limit = 6, enabled = true } = options; // Reduced from 8 to 6 users (5-10 range)
 
   const query = useQuery({
     queryKey: ['user-discovery', method, limit],

@@ -110,55 +110,95 @@ async function discoverRandomUsers(supabase: any, hotel: string, limit: number) 
   // Limit to 5-10 users as requested, prefer online users
   const actualLimit = Math.min(limit, 10);
   
-  // First try to get online users
-  const { data: onlineUsers, error: onlineError } = await supabase
-    .from('habbo_accounts')
-    .select('*')
-    .eq('hotel', hotel)
-    .eq('is_online', true)
-    .order('last_access', { ascending: false })
-    .limit(actualLimit * 2);
+  try {
+    // First try to get diverse users from both habbo_accounts and discovered_users
+    const { data: accountUsers, error: accountError } = await supabase
+      .from('habbo_accounts')
+      .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, created_at')
+      .eq('hotel', hotel)
+      .order('created_at', { ascending: false })
+      .limit(actualLimit * 2);
 
-  // Then get some offline users to mix in
-  const { data: offlineUsers, error: offlineError } = await supabase
-    .from('habbo_accounts')
-    .select('*')
-    .eq('hotel', hotel)
-    .eq('is_online', false)
-    .order('last_access', { ascending: false })
-    .limit(actualLimit);
+    const { data: discoveredUsers, error: discoveredError } = await supabase
+      .from('discovered_users')
+      .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, last_seen_at')
+      .eq('hotel', hotel)
+      .order('last_seen_at', { ascending: false })
+      .limit(actualLimit * 2);
 
-  if (onlineError && offlineError) throw onlineError;
+    // Combine users from both sources
+    const allUsers = [
+      ...(accountUsers || []).map(user => ({
+        ...user,
+        source: 'accounts',
+        last_activity: user.created_at
+      })),
+      ...(discoveredUsers || []).map(user => ({
+        ...user,
+        source: 'discovered',
+        last_activity: user.last_seen_at
+      }))
+    ];
 
-  const allUsers = [
-    ...(onlineUsers || []),
-    ...(offlineUsers || [])
-  ];
+    // Remove duplicates based on habbo_id
+    const uniqueUsers = allUsers.filter((user, index, self) => 
+      index === self.findIndex(u => u.habbo_id === user.habbo_id)
+    );
 
-  // Truly randomize the selection with current timestamp as seed
-  const seed = Date.now();
-  const shuffled = allUsers
-    .map(user => ({ user, sort: Math.sin(seed * user.habbo_id) }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ user }) => user)
-    .slice(0, actualLimit);
+    // Truly randomize with Fisher-Yates shuffle
+    const shuffled = [...uniqueUsers];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
 
-  return shuffled.map(user => ({
-    id: user.habbo_id,
-    habbo_name: user.habbo_name,
-    habbo_id: user.habbo_id,
-    hotel: user.hotel,
-    motto: user.motto || '',
-    figure_string: user.figure_string || '',
-    online: user.is_online || false,
-    last_seen: user.last_access || user.created_at
-  }));
+    // Prefer online users but keep variety
+    const selected = shuffled
+      .sort((a, b) => {
+        if (a.is_online && !b.is_online) return -1;
+        if (!a.is_online && b.is_online) return 1;
+        return 0;
+      })
+      .slice(0, actualLimit);
+
+    return selected.map(user => ({
+      id: user.habbo_id,
+      habbo_name: user.habbo_name,
+      habbo_id: user.habbo_id,
+      hotel: user.hotel,
+      motto: user.motto || '',
+      figure_string: user.figure_string || '',
+      online: user.is_online || false,
+      last_seen: user.last_activity || user.created_at
+    }));
+
+  } catch (error) {
+    console.error('❌ [discoverRandomUsers] Error:', error);
+    
+    // Fallback: try to get just from discovered_users if habbo_accounts fails
+    const { data: fallbackUsers } = await supabase
+      .from('discovered_users')
+      .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, last_seen_at')
+      .eq('hotel', hotel)
+      .limit(actualLimit);
+
+    return (fallbackUsers || []).map(user => ({
+      id: user.habbo_id,
+      habbo_name: user.habbo_name,
+      habbo_id: user.habbo_id,
+      hotel: user.hotel,
+      motto: user.motto || '',
+      figure_string: user.figure_string || '',
+      online: user.is_online || false,
+      last_seen: user.last_seen_at
+    }));
+  }
 }
 
 async function discoverRecentUsers(supabase: any, hotel: string, limit: number) {
   const { data, error } = await supabase
     .from('habbo_accounts')
-    .select('*')
+    .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, created_at')
     .eq('hotel', hotel)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -173,17 +213,17 @@ async function discoverRecentUsers(supabase: any, hotel: string, limit: number) 
     motto: user.motto || '',
     figure_string: user.figure_string || '',
     online: user.is_online || false,
-    last_seen: user.last_access || user.created_at
+    last_seen: user.created_at
   }));
 }
 
 async function discoverActiveUsers(supabase: any, hotel: string, limit: number) {
   const { data, error } = await supabase
     .from('habbo_accounts')
-    .select('*')
+    .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, created_at')
     .eq('hotel', hotel)
     .eq('is_online', true)
-    .order('last_access', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -196,7 +236,7 @@ async function discoverActiveUsers(supabase: any, hotel: string, limit: number) 
     motto: user.motto || '',
     figure_string: user.figure_string || '',
     online: user.is_online || false,
-    last_seen: user.last_access || user.created_at
+    last_seen: user.created_at
   }));
 }
 
@@ -208,32 +248,32 @@ async function searchUsers(supabase: any, hotel: string, query: string, limit: n
   const searchTerm = query.trim().toLowerCase();
   console.log(`🔍 [searchUsers] Searching for "${searchTerm}" in hotel ${hotel}`);
 
-  // Busca flexível: exato, começando com, contendo
-  const searches = [
-    // Busca exata (prioridade máxima)
-    supabase
-      .from('habbo_accounts')
-      .select('*')
-      .eq('hotel', hotel)
-      .ilike('habbo_name', searchTerm)
-      .limit(5),
-    
-    // Busca começando com
-    supabase
-      .from('habbo_accounts')
-      .select('*')
-      .eq('hotel', hotel)
-      .ilike('habbo_name', `${searchTerm}%`)
-      .limit(10),
-    
-    // Busca contendo
-    supabase
-      .from('habbo_accounts')
-      .select('*')
-      .eq('hotel', hotel)
-      .ilike('habbo_name', `%${searchTerm}%`)
-      .limit(15)
-  ];
+    // Busca flexível: exato, começando com, contendo
+    const searches = [
+      // Busca exata (prioridade máxima)
+      supabase
+        .from('habbo_accounts')
+        .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, created_at')
+        .eq('hotel', hotel)
+        .ilike('habbo_name', searchTerm)
+        .limit(5),
+      
+      // Busca começando com
+      supabase
+        .from('habbo_accounts')
+        .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, created_at')
+        .eq('hotel', hotel)
+        .ilike('habbo_name', `${searchTerm}%`)
+        .limit(10),
+      
+      // Busca contendo
+      supabase
+        .from('habbo_accounts')
+        .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, created_at')
+        .eq('hotel', hotel)
+        .ilike('habbo_name', `%${searchTerm}%`)
+        .limit(15)
+    ];
 
   const results = await Promise.allSettled(searches);
   const allUsers: any[] = [];
@@ -251,16 +291,16 @@ async function searchUsers(supabase: any, hotel: string, query: string, limit: n
 
   console.log(`✅ [searchUsers] Found ${uniqueUsers.length} users for "${searchTerm}"`);
 
-  return uniqueUsers.map(user => ({
-    id: user.habbo_id,
-    habbo_name: user.habbo_name,
-    habbo_id: user.habbo_id,
-    hotel: user.hotel,
-    motto: user.motto || '',
-    figure_string: user.figure_string || '',
-    online: user.is_online || false,
-    last_seen: user.last_access || user.created_at
-  }));
+    return uniqueUsers.map(user => ({
+      id: user.habbo_id,
+      habbo_name: user.habbo_name,
+      habbo_id: user.habbo_id,
+      hotel: user.hotel,
+      motto: user.motto || '',
+      figure_string: user.figure_string || '',
+      online: user.is_online || false,
+      last_seen: user.created_at
+    }));
 }
 
 async function searchHabboAPI(query: string, hotel: string): Promise<any[]> {
@@ -308,7 +348,7 @@ async function cacheUserInDatabase(supabase: any, user: any, hotel: string) {
         motto: user.motto,
         figure_string: user.figure_string,
         is_online: user.online,
-        last_access: user.last_seen,
+        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'habbo_id'
