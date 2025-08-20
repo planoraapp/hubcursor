@@ -7,15 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User } from 'lucide-react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [habboName, setHabboName] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { connectHabboAccount } = useSimpleAuth();
+  const { loginWithPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -30,9 +31,18 @@ const Login = () => {
       return;
     }
 
+    if (!password.trim()) {
+      toast({
+        title: "Erro", 
+        description: "Digite sua senha",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await connectHabboAccount(habboName.trim());
+      await loginWithPassword(habboName.trim(), password.trim());
       toast({
         title: "Sucesso!",
         description: "Login realizado com sucesso!"
@@ -67,14 +77,14 @@ const Login = () => {
                   </h1>
                 </div>
                 <p className="text-lg text-white/90 volter-font drop-shadow">
-                  Conecte sua conta Habbo ao HabboHub
+                  Entre com sua conta Habbo
                 </p>
               </div>
               
               <Card className="bg-white/90 backdrop-blur-sm border-2 border-black">
                 <CardHeader>
                   <CardTitle className="volter-font text-2xl text-gray-900 text-center">
-                    Conectar Conta Habbo
+                    Entrar na Conta
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -93,17 +103,31 @@ const Login = () => {
                         disabled={isLoading}
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="password" className="volter-font text-gray-700">
+                        Senha
+                      </Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Digite sua senha"
+                        className="mt-1"
+                        disabled={isLoading}
+                      />
+                    </div>
                     <Button 
                       type="submit" 
                       className="w-full habbo-button-blue volter-font"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Conectando...' : 'Conectar'}
+                      {isLoading ? 'Entrando...' : 'Entrar'}
                     </Button>
                   </form>
                   <div className="mt-4 text-center">
                     <p className="text-sm text-gray-600 volter-font">
-                      Digite apenas seu nome de usuário Habbo para conectar sua conta.
+                      Use suas credenciais Habbo para fazer login.
                     </p>
                   </div>
                 </CardContent>
