@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from './useSimpleAuth';
 import { habboProxyService } from '@/services/habboProxyService';
+import { habboCache } from '@/services/habboCache';
 
 interface Widget {
   id: string;
@@ -60,6 +61,48 @@ export const useHabboHomeV2 = (username: string) => {
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [habboData, setHabboData] = useState<HabboData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Função para carregar perfil do Habbo em background
+  const loadHabboProfile = async (userData: any, currentHabboInfo: HabboData) => {
+    try {
+      const hotel = userData.hotel === 'br' ? 'com.br' : (userData.hotel || 'com.br');
+      
+      // Verificar cache primeiro
+      const cachedProfile = habboCache.get(userData.habbo_name, hotel);
+      if (cachedProfile) {
+        console.log('📦 Perfil do Habbo carregado do cache');
+        setHabboData(prev => ({
+          ...prev!,
+          motto: cachedProfile.motto || prev!.motto,
+          figure_string: cachedProfile.figureString || prev!.figure_string,
+          is_online: cachedProfile.online ?? prev!.is_online,
+          memberSince: cachedProfile.memberSince || prev!.memberSince
+        }));
+        return;
+      }
+
+      // Buscar da API se não estiver em cache
+      console.log('🌐 Carregando perfil do Habbo da API...');
+      const profileData = await habboProxyService.getUserProfile(userData.habbo_name, hotel);
+      
+      if (profileData) {
+        // Salvar no cache
+        habboCache.set(userData.habbo_name, hotel, profileData);
+        
+        // Atualizar estado com dados completos
+        setHabboData(prev => ({
+          ...prev!,
+          motto: profileData.motto || prev!.motto,
+          figure_string: profileData.figureString || prev!.figure_string,
+          is_online: profileData.online ?? prev!.is_online,
+          memberSince: profileData.memberSince || prev!.memberSince
+        }));
+        console.log('✅ Perfil do Habbo atualizado');
+      }
+    } catch (error) {
+      console.warn('⚠️ Falha ao carregar perfil do Habbo (não crítico):', error);
+    }
+  };
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
@@ -85,22 +128,19 @@ export const useHabboHomeV2 = (username: string) => {
 
       console.log('✅ Dados do usuário carregados:', userData);
 
-      // Buscar dados completos da API do Habbo
-      const hotel = userData.hotel === 'br' ? 'com.br' : (userData.hotel || 'com.br');
-      const profileData = await habboProxyService.getUserProfile(userData.habbo_name, hotel);
-
-      const habboInfo: HabboData = {
+      // Criar dados básicos primeiro (sem API externa)
+      const basicHabboInfo: HabboData = {
         id: userData.supabase_user_id,
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
         hotel: userData.hotel || 'br',
-        motto: profileData?.motto || userData.motto || '',
-        figure_string: profileData?.figureString || userData.figure_string || '',
-        is_online: profileData?.online || userData.is_online || false,
-        memberSince: profileData?.memberSince || ''
+        motto: userData.motto || '',
+        figure_string: userData.figure_string || '',
+        is_online: userData.is_online || false,
+        memberSince: ''
       };
 
-      setHabboData(habboInfo);
+      setHabboData(basicHabboInfo);
 
       // 2. Verificar proprietário
       const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
@@ -109,8 +149,8 @@ export const useHabboHomeV2 = (username: string) => {
 
       const userId = userData.supabase_user_id;
 
-      // 3. Carregar todos os dados em paralelo para melhor performance
-      console.log('🚀 Carregando dados em paralelo...');
+      // 3. Carregar dados da home em paralelo (sem bloquear com API externa)
+      console.log('🚀 Carregando dados da home em paralelo...');
       
       const [
         { data: newWidgets },
@@ -238,9 +278,13 @@ export const useHabboHomeV2 = (username: string) => {
         console.log('📝 Guestbook carregado:', guestbookData);
       }
 
+      console.log('✅ Dados da home carregados com sucesso');
+      setLoading(false);
+
+      // 4. Carregar perfil do Habbo em background (não-bloqueante)
+      loadHabboProfile(userData, basicHabboInfo);
     } catch (error) {
-      console.error('❌ Erro ao carregar Habbo Home:', error);
-    } finally {
+      console.error('❌ Erro ao carregar dados da Habbo Home:', error);
       setLoading(false);
     }
   };

@@ -284,7 +284,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
         return (
           <RatingWidget
             homeOwnerId={habboData.id}
-            className=""
+            className="w-full h-full"
           />
         );
 
@@ -330,9 +330,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
           </button>
         )}
         
-        <div className="h-full overflow-hidden">
-          {renderWidgetContent()}
-        </div>
+        {renderWidgetContent()}
       </Card>
 
       {isDragging && (
