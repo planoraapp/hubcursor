@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
   const [habboName, setHabboName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useSimpleAuth();
+  const { connectHabboAccount } = useSimpleAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -32,7 +32,7 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      await login(habboName.trim());
+      await connectHabboAccount(habboName.trim());
       toast({
         title: "Sucesso!",
         description: "Login realizado com sucesso!"
