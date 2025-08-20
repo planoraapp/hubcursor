@@ -169,7 +169,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
               {photosLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <Loader2 className="w-8 h-8 animate-spin text-white/60" />
@@ -196,7 +196,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
               {activitiesLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60"></div>

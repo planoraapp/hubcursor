@@ -77,35 +77,35 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <span className="text-white font-medium">{habboUser.habbo_name}</span>
+        <span className="text-white font-medium">{habboUser?.habbo_name || username}</span>
       </div>
 
       {/* Profile content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
         {/* Avatar and basic info */}
         <div className="text-center">
           <Avatar className="w-20 h-20 mx-auto mb-3">
-            <AvatarImage src={avatarUrl} alt={habboUser.habbo_name} />
+            <AvatarImage src={avatarUrl} alt={habboUser?.habbo_name || username} />
             <AvatarFallback className="bg-white/20 text-white text-lg">
-              {habboUser.habbo_name.substring(0, 2).toUpperCase()}
+              {(habboUser?.habbo_name || username || '??').substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           
-          <h2 className="text-xl font-bold text-white mb-1">{habboUser.habbo_name}</h2>
+          <h2 className="text-xl font-bold text-white mb-1">{habboUser?.habbo_name || username}</h2>
           
-          {habboUser.motto && (
+          {habboUser?.motto && (
             <p className="text-white/70 text-sm mb-3 italic">"{habboUser.motto}"</p>
           )}
 
           <div className="flex justify-center">
             <Badge 
-              variant={habboUser.is_online ? "default" : "secondary"}
-              className={`text-xs ${habboUser.is_online 
+              variant={habboUser?.is_online ? "default" : "secondary"}
+              className={`text-xs ${habboUser?.is_online 
                 ? "bg-green-500/20 text-green-300 border-green-500/30" 
                 : "bg-white/10 text-white/60 border-white/20"
               }`}
             >
-              {habboUser.is_online ? "Online" : "Offline"}
+              {habboUser?.is_online ? "Online" : "Offline"}
             </Badge>
           </div>
         </div>
@@ -129,10 +129,10 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({
           <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-white/60">Hotel:</span>
-              <span className="text-white">{habboUser.hotel?.toUpperCase() || 'BR'}</span>
+              <span className="text-white">{habboUser?.hotel?.toUpperCase() || 'BR'}</span>
             </div>
             
-            {habboUser.created_at && (
+            {habboUser?.created_at && (
               <div className="flex justify-between">
                 <span className="text-white/60">Membro desde:</span>
                 <span className="text-white">
@@ -155,7 +155,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({
                 <div key={index} className="aspect-square rounded-lg overflow-hidden bg-white/5">
                   <img
                     src={photo.url}
-                    alt={`Foto de ${habboUser.habbo_name}`}
+                    alt={`Foto de ${habboUser?.habbo_name || username}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
