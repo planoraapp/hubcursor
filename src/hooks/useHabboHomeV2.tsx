@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSimpleAuth } from './useSimpleAuth';
+import { habboProxyService } from '@/services/habboProxyService';
 
 interface Widget {
   id: string;
@@ -46,6 +47,7 @@ interface HabboData {
   motto: string;
   figure_string: string;
   is_online: boolean;
+  memberSince?: string;
 }
 
 export const useHabboHomeV2 = (username: string) => {
@@ -83,14 +85,19 @@ export const useHabboHomeV2 = (username: string) => {
 
       console.log('✅ Dados do usuário carregados:', userData);
 
+      // Buscar dados completos da API do Habbo
+      const hotel = userData.hotel === 'br' ? 'com.br' : (userData.hotel || 'com.br');
+      const profileData = await habboProxyService.getUserProfile(userData.habbo_name, hotel);
+
       const habboInfo: HabboData = {
         id: userData.supabase_user_id,
         habbo_name: userData.habbo_name,
         habbo_id: userData.habbo_id,
         hotel: userData.hotel || 'br',
-        motto: userData.motto || '',
-        figure_string: userData.figure_string || '',
-        is_online: userData.is_online || false
+        motto: profileData?.motto || userData.motto || '',
+        figure_string: profileData?.figureString || userData.figure_string || '',
+        is_online: profileData?.online || userData.is_online || false,
+        memberSince: profileData?.memberSince || ''
       };
 
       setHabboData(habboInfo);
@@ -530,23 +537,41 @@ export const useHabboHomeV2 = (username: string) => {
   };
 
   const updateBackground = async (bgType: 'color' | 'cover' | 'repeat', bgValue: string) => {
-    if (!isOwner || !habboData) return;
+    if (!isOwner || !habboData) {
+      console.error('❌ Cannot update background: not owner or no habbo data', { 
+        isOwner, 
+        hasHabboData: !!habboData 
+      });
+      return;
+    }
 
     try {
-      await supabase
+      console.log('🎨 Iniciando updateBackground:', { bgType, bgValue, userId: habboData.id });
+      
+      const { data, error } = await supabase
         .from('user_home_backgrounds')
         .upsert({
           user_id: habboData.id,
           background_type: bgType,
           background_value: bgValue
-        });
+        })
+        .select();
+
+      if (error) {
+        console.error('❌ Erro do Supabase ao atualizar background:', error);
+        return;
+      }
+
+      console.log('✅ Background atualizado no banco:', data);
 
       setBackground({
         background_type: bgType,
         background_value: bgValue
       });
+
+      console.log('✅ Estado local do background atualizado!');
     } catch (error) {
-      console.error('❌ Erro ao atualizar background:', error);
+      console.error('❌ Erro inesperado ao atualizar background:', error);
     }
   };
 

@@ -131,63 +131,71 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'avatar':
       case 'usercard':
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
-        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=3&gesture=sml&size=l`;
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=3&head_direction=3&gesture=sml&size=l`;
         const flagUrl = getCountryFlagPng(habboData.hotel);
         
+        // Formatar data do memberSince
+        const formatMemberSince = (memberSince: string) => {
+          if (!memberSince) return '2021';
+          try {
+            const date = new Date(memberSince);
+            return date.getFullYear().toString();
+          } catch {
+            return '2021';
+          }
+        };
+        
         return (
-          <div className="flex gap-4 p-4 h-full">
-            {/* Avatar sem borda - diagonal esquerda */}
+          <div className="flex gap-3 p-4 h-full">
+            {/* Avatar - proporção 64x110 */}
             <div className="flex-shrink-0">
               <img
                 src={avatarUrl}
                 alt={`${habboData.habbo_name} avatar`}
-                className="w-28 h-36 object-contain"
+                className="w-16 h-28 object-contain"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/assets/frank.png';
+                  target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=l`;
                 }}
               />
             </div>
             
-            {/* Informações organizadas verticalmente */}
-            <div className="flex-1 min-w-0 flex flex-col justify-between">
-              {/* Topo: Bandeira + Nome */}
+            {/* Informações do usuário - layout vertical organizado */}
+            <div className="flex-1 flex flex-col justify-start pt-1 min-w-0">
+              {/* Linha 1: Bandeira + Nome + Status online/offline */}
               <div className="flex items-center gap-2 mb-2">
-                <img
+                <img 
                   src={flagUrl}
-                  alt={`Hotel ${habboData.hotel.toUpperCase()}`}
-                  className="w-6 h-4 flex-shrink-0"
+                  alt={`${habboData.hotel} flag`}
+                  className="w-4 h-3 flex-shrink-0"
                   style={{ imageRendering: 'pixelated' }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = '/assets/flagcom.png';
                   }}
                 />
-                <h3 className="text-lg font-bold font-volter text-black truncate">
+                <h3 className="text-sm font-bold text-gray-800 truncate flex-1 font-volter">
                   {habboData.habbo_name}
                 </h3>
-                <Badge 
-                  variant={habboData.is_online ? "default" : "secondary"}
-                  className="text-xs ml-auto flex-shrink-0"
-                >
-                  {habboData.is_online ? "Online" : "Offline"}
-                </Badge>
+                <div className="flex-shrink-0" title={habboData.is_online ? 'Online' : 'Offline'}>
+                  <span className={`inline-block w-2 h-2 rounded-full ${
+                    habboData.is_online ? 'bg-green-500' : 'bg-red-500'
+                  }`}></span>
+                </div>
               </div>
               
-              {/* Meio: Motto */}
-              <div className="mb-2">
-                <p className="text-sm text-gray-700 font-volter italic">
-                  "{habboData.motto || 'Sem missão definida'}"
+              {/* Linha 2: Motto em itálico */}
+              {habboData.motto && (
+                <p className="text-xs text-gray-600 italic mb-2 line-clamp-2 font-volter">
+                  "{habboData.motto}"
                 </p>
-              </div>
+              )}
               
-              {/* Embaixo: Data de criação real ou estimada */}
-              <div className="text-xs text-gray-600 font-volter">
-                <p>📅 Membro desde: {habboData.memberSince ? 
-                  new Date(habboData.memberSince).toLocaleDateString('pt-BR') : 
-                  'Janeiro 2010'}</p>
-              </div>
+              {/* Linha 3: Data de criação formatada */}
+              <p className="text-xs text-gray-500 font-volter">
+                Membro desde: {formatMemberSince(habboData.memberSince || '')}
+              </p>
             </div>
           </div>
         );

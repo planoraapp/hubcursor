@@ -41,6 +41,7 @@ interface HabboData {
   motto: string;
   figure_string: string;
   is_online: boolean;
+  memberSince?: string;
 }
 
 interface HomeCanvasProps {
