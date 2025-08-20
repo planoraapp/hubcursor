@@ -27,7 +27,7 @@ const Console: React.FC = () => {
               <p className="text-white/70 volter-font drop-shadow">Gerencie sua experiência no HabboHub</p>
             </div>
 
-            <div className="flex gap-4 h-[calc(100vh-10rem)] overflow-x-auto overflow-y-hidden">
+            <div className="flex gap-4 h-[calc(100vh-12rem)] overflow-x-auto overflow-y-hidden">
               <div className="w-[320px] flex-shrink-0">
                 <MyAccountColumn />
               </div>

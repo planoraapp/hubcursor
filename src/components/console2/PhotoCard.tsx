@@ -61,7 +61,7 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({
           {photo.userName}
         </button>
         <span className="text-white/60 text-xs ml-auto">
-          {photo.date}
+          {photo.date === "Invalid Date" ? "Há alguns dias" : photo.date}
         </span>
       </div>
 
