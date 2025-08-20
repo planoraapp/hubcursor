@@ -127,7 +127,7 @@ export const MyAccountColumn: React.FC = () => {
             <div className="text-xs text-white/60">Seguindo</div>
           </div>
           <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
-            <div className="text-2xl font-bold text-white">{completeProfile?.data?.achievementScore || 0}</div>
+            <div className="text-2xl font-bold text-white">{completeProfile?.stats?.experience || 0}</div>
             <div className="text-xs text-white/60">Pontos</div>
           </div>
         </div>
