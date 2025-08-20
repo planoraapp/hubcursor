@@ -92,6 +92,26 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     handleScaleChange(newScale);
   }, [localScale, handleScaleChange]);
 
+  // Handle click outside to deselect
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!isSelected || !stickerRef.current) return;
+      
+      const target = e.target as HTMLElement;
+      const stickerElement = stickerRef.current;
+      
+      // Check if click is outside this sticker
+      if (!stickerElement.contains(target)) {
+        setIsSelected(false);
+      }
+    };
+
+    if (isSelected && isEditMode && isOwner) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isSelected, isEditMode, isOwner]);
+
   React.useEffect(() => {
     let animationId: number;
     

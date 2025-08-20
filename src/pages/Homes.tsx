@@ -188,7 +188,7 @@ const Homes: React.FC = () => {
                     <span className="ml-3 text-white volter-font">Carregando homes...</span>
                   </div>
                 ) : latestHomes && latestHomes.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     {latestHomes.map((home) => (
                       <HomePreviewCard key={home.user_id} home={home} />
                     ))}

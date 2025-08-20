@@ -11,6 +11,8 @@ interface LatestHomeData {
   updated_at: string;
   background_type?: string;
   background_value?: string;
+  average_rating?: number;
+  ratings_count?: number;
 }
 
 interface HomePreviewCardProps {
@@ -44,55 +46,88 @@ export const HomePreviewCard: React.FC<HomePreviewCardProps> = ({ home }) => {
     return { backgroundColor: '#c7d2dc' };
   };
 
+  const avatarUrl = home.habbo_name
+    ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${home.habbo_name}&size=l&direction=2&head_direction=3&action=std`
+    : null;
+
   return (
     <Card 
-      className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/95 backdrop-blur-sm border-2 border-black"
+      className="group cursor-pointer transition-all duration-300 bg-white/95 backdrop-blur-sm border-2 border-black hover:shadow-2xl hover:shadow-black/20 relative overflow-hidden"
       onClick={handleClick}
     >
-      <CardContent className="p-0">
-        {/* Miniatura da Home */}
+      <CardContent className="p-0 relative">
+        {/* Home Background as Thumbnail */}
         <div 
-          className="w-full h-32 relative overflow-hidden border-b-2 border-black"
+          className="w-full h-40 relative overflow-hidden"
           style={getBackgroundStyle()}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {/* Gradient overlay for better text visibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
           
-          {/* Ícone de Home no canto */}
-          <div className="absolute top-2 right-2 bg-white/20 backdrop-blur-sm rounded-full p-1">
-            <Home className="w-4 h-4 text-white" />
-          </div>
+          {/* Hover shadow effect */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
           
-          {/* Indicador de atividade recente */}
-          <div className="absolute top-2 left-2 bg-green-500/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs text-white volter-font">
-            ● Editada
-          </div>
-        </div>
-
-        {/* Informações da Home */}
-        <div className="p-4 space-y-2">
-          <h3 className="font-bold text-lg text-gray-800 volter-font truncate">
-            {home.habbo_name || 'Usuário'}
-          </h3>
-          
-          {/* Rating fictício por enquanto */}
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star 
-                key={star}
-                className={`w-4 h-4 ${star <= 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+          {/* User Avatar - Bottom Right, trunk up */}
+          {avatarUrl && (
+            <div className="absolute bottom-0 right-2 w-16 h-20 overflow-hidden">
+              <img
+                src={avatarUrl}
+                alt={`Avatar de ${home.habbo_name}`}
+                className="absolute bottom-0 right-0 w-full object-cover object-top transform translate-y-2"
+                style={{ 
+                  imageRendering: 'pixelated',
+                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.8))'
+                }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${home.habbo_name}&size=l&direction=2&head_direction=3&action=std`;
+                }}
               />
-            ))}
-            <span className="text-sm text-gray-600 ml-1 volter-font">4.0</span>
+            </div>
+          )}
+          
+          {/* Username - Top Left */}
+          <div className="absolute top-2 left-2">
+            <h3 className="font-bold text-sm text-white volter-font drop-shadow-lg truncate max-w-32">
+              {home.habbo_name || 'Usuário'}
+            </h3>
           </div>
           
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <Clock className="w-3 h-3" />
-            <span className="volter-font">
-              {formatDistanceToNow(new Date(home.updated_at), { 
-                addSuffix: true,
-                locale: ptBR 
-              })}
-            </span>
+          {/* Hover Info Overlay */}
+          <div className="absolute inset-0 flex flex-col justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 backdrop-blur-sm">
+            <div className="text-center text-white space-y-2 p-4">
+              {/* Rating */}
+              {home.average_rating && home.average_rating > 0 ? (
+                <div className="flex items-center justify-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star 
+                      key={star}
+                      className={`w-4 h-4 ${star <= Math.round(home.average_rating!) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`}
+                    />
+                  ))}
+                  <span className="text-sm text-white ml-1 volter-font">
+                    {home.average_rating.toFixed(1)} ({home.ratings_count} avaliações)
+                  </span>
+                </div>
+              ) : (
+                <div className="text-sm text-white/70 volter-font">Sem avaliações ainda</div>
+              )}
+              
+              {/* Last Updated */}
+              <div className="flex items-center justify-center gap-1 text-xs text-white/90">
+                <Clock className="w-3 h-3" />
+                <span className="volter-font">
+                  {formatDistanceToNow(new Date(home.updated_at), { 
+                    addSuffix: true,
+                    locale: ptBR 
+                  })}
+                </span>
+              </div>
+              
+              <div className="text-xs text-white/70 volter-font">
+                Clique para visitar
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

@@ -8,34 +8,50 @@ interface LatestHomeData {
   updated_at: string;
   background_type?: string;
   background_value?: string;
+  average_rating?: number;
+  ratings_count?: number;
 }
 
 export const useLatestHomes = () => {
   return useQuery({
     queryKey: ['latest-homes'],
     queryFn: async (): Promise<LatestHomeData[]> => {
-      console.log('🏠 [LatestHomes] Fetching latest updated homes');
+      console.log('🏠 [LatestHomes] Fetching latest created and updated homes');
       
-      // Get the 5 most recently updated homes by joining background and layout tables
-      const { data: latestHomes, error } = await supabase
+      // Get the most recent homes by combining created and updated homes
+      const { data: updatedHomes, error: updateError } = await supabase
         .from('user_home_layouts')
         .select(`
           user_id,
-          updated_at
+          updated_at,
+          created_at
         `)
         .order('updated_at', { ascending: false })
-        .limit(100); // Get more to ensure we have enough unique users
+        .limit(100);
 
-      if (error) {
-        console.error('❌ [LatestHomes] Error fetching homes:', error);
-        throw error;
+      const { data: createdHomes, error: createError } = await supabase
+        .from('user_home_backgrounds')
+        .select(`
+          user_id,
+          created_at,
+          updated_at
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (updateError || createError) {
+        console.error('❌ [LatestHomes] Error fetching homes:', updateError || createError);
+        throw updateError || createError;
       }
 
-      // Group by user_id and get the latest 5 unique users
+      // Combine and get unique users with most recent activity
       const uniqueUsers = new Map<string, LatestHomeData>();
       
-      latestHomes?.forEach(home => {
-        if (!uniqueUsers.has(home.user_id)) {
+      // Process updated homes
+      updatedHomes?.forEach(home => {
+        const lastActivity = new Date(home.updated_at).getTime();
+        const existing = uniqueUsers.get(home.user_id);
+        if (!existing || new Date(existing.updated_at).getTime() < lastActivity) {
           uniqueUsers.set(home.user_id, {
             user_id: home.user_id,
             updated_at: home.updated_at
@@ -43,9 +59,21 @@ export const useLatestHomes = () => {
         }
       });
 
+      // Process created homes
+      createdHomes?.forEach(home => {
+        const lastActivity = new Date(home.created_at).getTime();
+        const existing = uniqueUsers.get(home.user_id);
+        if (!existing || new Date(existing.updated_at).getTime() < lastActivity) {
+          uniqueUsers.set(home.user_id, {
+            user_id: home.user_id,
+            updated_at: home.created_at // Use created_at for newly created homes
+          });
+        }
+      });
+
       const latestUniqueHomes = Array.from(uniqueUsers.values())
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-        .slice(0, 5);
+        .slice(0, 8); // Increase to 8 to show more homes
 
       // Now fetch additional data for these users
       const userIds = latestUniqueHomes.map(home => home.user_id);
@@ -62,16 +90,30 @@ export const useLatestHomes = () => {
         .select('user_id, background_type, background_value')
         .in('user_id', userIds);
 
+      // Get average ratings for these homes
+      const { data: ratings } = await supabase
+        .from('user_home_ratings')
+        .select('home_owner_user_id, rating')
+        .in('home_owner_user_id', userIds);
+
       // Combine the data
       const enrichedHomes = latestUniqueHomes.map(home => {
         const account = accounts?.find(acc => acc.supabase_user_id === home.user_id);
         const background = backgrounds?.find(bg => bg.user_id === home.user_id);
         
+        // Calculate average rating
+        const homeRatings = ratings?.filter(r => r.home_owner_user_id === home.user_id) || [];
+        const averageRating = homeRatings.length > 0 
+          ? homeRatings.reduce((sum, r) => sum + r.rating, 0) / homeRatings.length 
+          : 0;
+        
         return {
           ...home,
           habbo_name: account?.habbo_name,
           background_type: background?.background_type,
-          background_value: background?.background_value
+          background_value: background?.background_value,
+          average_rating: Math.round(averageRating * 10) / 10,
+          ratings_count: homeRatings.length
         };
       });
 
