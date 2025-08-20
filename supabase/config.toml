@@ -4,58 +4,68 @@ project_id = "wueccgeizznjmjgmuscy"
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage", "graphql_public"]
+schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
-[auth]
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
 enabled = true
 port = 54324
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
-jwt_expiry = 3600
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+port = 54327
+
+[auth]
+enabled = true
+port = 54328
+
+[auth.email]
 enable_signup = true
-email_confirm_changes = true
-email_double_confirm_changes = true
+double_confirm_changes = true
+enable_confirmations = false
 
-[functions.habbo-api-proxy]
+[edge_functions]
+enabled = true
+
+[functions.get-habbo-official-data]
 verify_jwt = false
 
-[functions.habbo-sync-user]
-verify_jwt = false
-
-[functions.habbo-sync-batch]
-verify_jwt = false
-
-[functions.habbo-feed]
-verify_jwt = false
-
-[functions.habbo-widgets-proxy]
+[functions.register-or-reset-via-motto]
 verify_jwt = false
 
 [functions.habbo-ensure-tracked]
 verify_jwt = false
 
-[functions.habbo-official-ticker]
+[functions.get-real-habbo-data]
 verify_jwt = false
 
-[functions.habbo-discover-online]
+[functions.habbo-real-assets]
 verify_jwt = false
 
-[functions.habbo-activity-detector]
+[functions.habbo-hotel-feed]
 verify_jwt = false
 
-[functions.habbo-feed-optimized]
+[functions.get-unified-clothing-data]
 verify_jwt = false
 
-[functions.habbo-discover-users]
+[functions.habbo-emotion-clothing]
 verify_jwt = false
 
-[functions.habbo-complete-profile]
+[functions.habbo-furni-api]
 verify_jwt = false
 
-[functions.test-habbo-photos]
+[functions.real-badges-system]
 verify_jwt = false
 
-[functions.habbo-photo-discovery]
+[functions.templarios-figuredata]
 verify_jwt = false

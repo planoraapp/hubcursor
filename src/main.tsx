@@ -19,6 +19,8 @@ import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
 import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
+import Profile from './pages/Profile'
+import NotFound from './pages/NotFound'
 
 const queryClient = new QueryClient()
 
@@ -78,6 +80,18 @@ const router = createBrowserRouter([
   {
     path: "/mercado",
     element: <Mercado />,
+  },
+  {
+    path: "/profile/:username",
+    element: <Profile />,
+  },
+  {
+    path: "/profile",
+    element: <Profile />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ])
 

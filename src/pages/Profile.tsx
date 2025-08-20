@@ -1,34 +1,53 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import { NewAppSidebar } from '@/components/NewAppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { ProfileChecker } from '../components/ProfileChecker';
+import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { User } from 'lucide-react';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const { habboAccount } = useSimpleAuth();
+  
+  const displayName = username || habboAccount?.habbo_name || 'Usuário';
 
   return (
     <SidebarProvider>
-      <div 
-        className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
-      >
-        <NewAppSidebar />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-4 volter-font drop-shadow-lg">
-                Perfil de {username}
-              </h1>
-              <p className="text-lg text-white/90 volter-font drop-shadow">
-                Visualizando informações públicas do usuário Habbo.
-              </p>
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset className="flex-1">
+          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <User className="w-8 h-8 text-white" />
+                  <h1 className="text-4xl font-bold text-white volter-font"
+                      style={{
+                        textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                      }}>
+                    👤 Perfil de {displayName}
+                  </h1>
+                </div>
+                <p className="text-lg text-white/90 volter-font drop-shadow">
+                  Visualizando informações do perfil
+                </p>
+              </div>
+              
+              <Card className="p-8 text-center bg-white/90 backdrop-blur-sm border-2 border-black">
+                <CardHeader>
+                  <CardTitle className="volter-font text-2xl text-gray-900">Perfil em desenvolvimento...</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 volter-font">
+                    Sistema de perfis em desenvolvimento. Em breve você poderá ver informações detalhadas dos usuários!
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-            
-            <ProfileChecker />
-          </div>
-        </main>
+          </main>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );

@@ -1,77 +1,46 @@
 
-import React, { useState, useEffect } from 'react';
-import { NewAppSidebar } from '../components/NewAppSidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { PageHeader } from '../components/PageHeader';
-import { CleanBadgesGrid } from '../components/CleanBadgesGrid';
-import { useLanguage } from '../hooks/useLanguage';
-import { useIsMobile } from '../hooks/use-mobile';
-import MobileLayout from '../layouts/MobileLayout';
+import React from 'react';
+import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Star } from 'lucide-react';
 
 const Emblemas = () => {
-  const { t } = useLanguage();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const isMobile = useIsMobile();
-
-  // Listen for sidebar state changes
-  useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      setSidebarCollapsed(event.detail.isCollapsed);
-    };
-
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener);
-    };
-  }, []);
-
-  const renderContent = () => (
-    <div className="flex-1 p-6">
-      <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg h-full flex flex-col overflow-hidden">
-        <CleanBadgesGrid />
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <MobileLayout>
-        <div className="p-4">
-          <PageHeader 
-            title={t('badgesTitle')}
-            icon="/assets/emblemas.png"
-          />
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
-            <CleanBadgesGrid />
-          </div>
-        </div>
-      </MobileLayout>
-    );
-  }
-
   return (
     <SidebarProvider>
-      <div 
-        className="flex min-h-screen w-full"
-        style={{ 
-          backgroundImage: "url('/assets/bghabbohub.png')",
-          backgroundRepeat: 'repeat',
-          backgroundSize: 'auto'
-        }}
-      >
-        <NewAppSidebar />
-        
-        <main className="flex-1">
-          <div className="flex flex-col min-h-screen">
-            <PageHeader 
-              title={t('badgesTitle')}
-              icon="/assets/emblemas.png"
-            />
-            
-            {renderContent()}
-          </div>
-        </main>
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset className="flex-1">
+          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Star className="w-8 h-8 text-white" />
+                  <h1 className="text-4xl font-bold text-white volter-font"
+                      style={{
+                        textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                      }}>
+                    ⭐ Emblemas
+                  </h1>
+                </div>
+                <p className="text-lg text-white/90 volter-font drop-shadow">
+                  Descubra e colecione emblemas exclusivos da comunidade
+                </p>
+              </div>
+              
+              <Card className="p-8 text-center bg-white/90 backdrop-blur-sm border-2 border-black">
+                <CardHeader>
+                  <CardTitle className="volter-font text-2xl text-gray-900">Em desenvolvimento...</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 volter-font">
+                    Sistema de emblemas em desenvolvimento. Em breve você poderá colecionar emblemas exclusivos!
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   );
