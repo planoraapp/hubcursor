@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { useFriendsFeed } from '@/hooks/useFriendsFeed';
 import { useAuth } from '@/hooks/useAuth';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
 import { usePhotoComments } from '@/hooks/usePhotoComments';
-import { PhotoLikesModal } from './PhotoLikesModal';
-import { PhotoCommentsModal } from './PhotoCommentsModal';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { PhotoLikesModal } from '@/components/shared/PhotoLikesModal';
+import { PhotoCommentsModal } from '@/components/shared/PhotoCommentsModal';
 import { PhotoCard } from './PhotoCard';
 import { UserProfileInColumn } from './UserProfileInColumn';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,6 +25,10 @@ export const FeedActivityTabbedColumn: React.FC = () => {
   const [selectedPhotoForComments, setSelectedPhotoForComments] = useState<string>('');
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  
+  // Ref for scroll container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollDirection = useScrollDirection(scrollContainerRef.current);
 
   // Always call hooks at the top level to prevent violations
   const { 
@@ -152,7 +157,11 @@ export const FeedActivityTabbedColumn: React.FC = () => {
         
         <CardContent className="flex-1 min-h-0 flex flex-col p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
-            <TabsList className="grid w-full grid-cols-2 bg-white/10 mb-4">
+            <TabsList 
+              className={`grid w-full grid-cols-2 bg-white/10 mb-4 transition-all duration-300 ${
+                scrollDirection === 'down' ? '-translate-y-2 opacity-75 scale-95' : 'translate-y-0 opacity-100 scale-100'
+              }`}
+            >
               <TabsTrigger 
                 value="photos" 
                 className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70"
@@ -169,7 +178,12 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+            <TabsContent 
+              value="photos" 
+              ref={scrollContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" 
+              style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}
+            >
               {photosLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <Loader2 className="w-8 h-8 animate-spin text-white/60" />
@@ -196,7 +210,12 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+            <TabsContent 
+              value="activities" 
+              ref={activeTab === 'activities' ? scrollContainerRef : undefined}
+              className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" 
+              style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}
+            >
               {activitiesLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60"></div>

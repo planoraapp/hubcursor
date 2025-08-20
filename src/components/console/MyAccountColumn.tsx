@@ -8,6 +8,8 @@ import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { PhotoGrid } from './PhotoGrid';
+import { PhotoLikesModal } from '@/components/shared/PhotoLikesModal';
+import { PhotoCommentsModal } from '@/components/shared/PhotoCommentsModal';
 import { BadgesModal } from '@/components/profile/modals/BadgesModal';
 import { FriendsModal } from '@/components/profile/modals/FriendsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
