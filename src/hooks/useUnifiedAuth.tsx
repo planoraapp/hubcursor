@@ -153,23 +153,35 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setLoading(true);
+      
+      // Limpar estado local primeiro
+      setUser(null);
+      setHabboAccount(null);
+      
+      // Tentar fazer logout no Supabase
       const { error } = await supabase.auth.signOut();
-      if (error) {
+      
+      // Se houver erro de sessão ausente, não é um problema crítico
+      if (error && error.message !== 'Auth session missing!') {
         console.error('❌ [useUnifiedAuth] Logout error:', error);
-      } else {
-        setUser(null);
-        setHabboAccount(null);
-        toast({
-          title: "Logout realizado",
-          description: "Você foi desconectado com sucesso."
-        });
+        // Mas ainda mostramos sucesso porque o estado local foi limpo
       }
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
+      });
+      
     } catch (error: any) {
       console.error('❌ [useUnifiedAuth] Logout error:', error);
+      
+      // Mesmo com erro, limpar estado local e mostrar sucesso
+      setUser(null);
+      setHabboAccount(null);
+      
       toast({
-        title: "Erro no logout",
-        description: error.message,
-        variant: "destructive"
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso."
       });
     } finally {
       setLoading(false);
