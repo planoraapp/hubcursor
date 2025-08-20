@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { habboProxyService, TickerActivity, TickerResponse } from '@/services/habboProxyService';
 import { useUnifiedAuth } from './useUnifiedAuth';
+import { useOptimizedQuery } from './useOptimizedQuery';
 
 interface AggregatedActivity {
   username: string;
@@ -28,16 +28,17 @@ export const useHotelTicker = () => {
     isLoading, 
     error,
     refetch
-  } = useQuery({
+  } = useOptimizedQuery({
     queryKey: ['hotel-ticker', hotel],
     queryFn: () => {
       console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (user: ${habboAccount?.habbo_name || 'guest'})`);
       return habboProxyService.getHotelTicker(hotel);
     },
-    refetchInterval: 30 * 1000, // 30 seconds
-    staleTime: 15 * 1000, // 15 seconds
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    baseRefetchInterval: 2 * 60 * 1000, // 2 minutos (era 30s)
+    aggressiveCacheTime: 5 * 60 * 1000, // 5 minutos de cache
+    enableRateLimit: true,
+    rateLimitConfig: { maxRequests: 15, windowMs: 60 * 1000 }, // 15 requests por minuto
+    retry: 2, // Reduzido de 3 para 2
   });
 
   // Extract activities and metadata
@@ -90,7 +91,7 @@ export const useHotelTicker = () => {
     
     if (result.length < 5 && rawActivities.length > 0) {
       console.warn('⚠️ [useHotelTicker] Few recent activities, using complete snapshot');
-      result = groupByUser(rawActivities).slice(0, 20);
+      result = groupByUser(rawActivities).slice(0, 15); // Reduzido de 20 para 15
     }
 
     console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel}, source: ${metadata.source})`);

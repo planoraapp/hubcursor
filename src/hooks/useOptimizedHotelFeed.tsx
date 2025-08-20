@@ -1,7 +1,7 @@
 
-import { useQuery } from '@tanstack/react-query';
 import { optimizedFeedService } from '@/services/optimizedFeedService';
 import { useUnifiedAuth } from './useUnifiedAuth';
+import { useOptimizedQuery } from './useOptimizedQuery';
 import { useMemo } from 'react';
 
 export const useOptimizedHotelFeed = (options?: {
@@ -18,22 +18,22 @@ export const useOptimizedHotelFeed = (options?: {
     return 'br'; // Default para BR por enquanto
   }, [habboAccount?.hotel]);
 
-  const refreshInterval = options?.refreshInterval || 30000; // 30 segundos
-  const limit = options?.limit || 50;
+  const refreshInterval = options?.refreshInterval || 3 * 60 * 1000; // 3 minutos (era 30s)
+  const limit = options?.limit || 30; // Reduzido de 50 para 30
 
   const { 
     data: feedData, 
     isLoading, 
     error,
     refetch 
-  } = useQuery({
+  } = useOptimizedQuery({
     queryKey: ['optimized-hotel-feed', hotel, limit],
     queryFn: () => optimizedFeedService.getHotelFeed(hotel, limit),
-    refetchInterval: refreshInterval,
-    staleTime: 1 * 60 * 1000, // Considera stale após 1 minuto
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    baseRefetchInterval: refreshInterval,
+    aggressiveCacheTime: 10 * 60 * 1000, // 10 minutos de cache
+    enableRateLimit: true,
+    rateLimitConfig: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 requests por minuto
+    retry: 1, // Reduzido para 1 retry apenas
   });
 
   const activities = feedData?.activities || [];
