@@ -80,7 +80,7 @@ export const FriendsActivityColumn: React.FC = () => {
                 {friendActivity.activities.length > 0 ? (
                   friendActivity.activities.slice(0, 3).map((activity, index) => (
                     <div key={index} className="text-sm text-white/80 pl-11">
-                      {activity.activity || activity.description || 'fez uma atividade'}
+                      <span className="font-semibold">{(activity as any).username || (activity as any).habbo_name}</span> {(activity as any).activity_description || (activity as any).activity || (activity as any).description || 'fez uma atividade'}
                     </div>
                   ))
                 ) : (

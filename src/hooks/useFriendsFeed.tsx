@@ -99,17 +99,8 @@ export const useFriendsFeed = () => {
       };
     }).filter(Boolean) as FriendActivity[];
 
-    // Add friends without real activities but show them in the list
-    const friendsWithoutActivities = friends.filter(friend => 
-      !realActivityGroups[friend.name.toLowerCase()]
-    ).slice(0, 5).map(friend => ({
-      friend,
-      activities: [],
-      lastActivityTime: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-      activityType: 'real' as const
-    }));
-
-    const allResults = [...result, ...friendsWithoutActivities];
+    // Only show friends with actual activities
+    const allResults = result;
 
     // Sort by most recent activity
     const sortedResult = allResults.sort((a, b) => {

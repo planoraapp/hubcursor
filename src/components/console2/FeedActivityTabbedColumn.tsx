@@ -6,15 +6,23 @@ import { Loader2, RefreshCw, Heart, MessageCircle, Camera, Activity, Clock, User
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
 import { useFriendsFeed } from '@/hooks/useFriendsFeed';
 import { useAuth } from '@/hooks/useAuth';
-import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
+import { usePhotoLikes } from '@/hooks/usePhotoLikes';
+import { usePhotoComments } from '@/hooks/usePhotoComments';
+import { PhotoLikesModal } from './PhotoLikesModal';
+import { PhotoCommentsModal } from './PhotoCommentsModal';
+import { PhotoCard } from './PhotoCard';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const FeedActivityTabbedColumn: React.FC = () => {
   const { habboAccount } = useAuth();
   const [selectedUser, setSelectedUser] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [activeTab, setActiveTab] = useState('photos');
+  const [selectedPhotoForLikes, setSelectedPhotoForLikes] = useState<string>('');
+  const [selectedPhotoForComments, setSelectedPhotoForComments] = useState<string>('');
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   
   // Hooks para fotos dos amigos
   const { 
@@ -35,7 +43,17 @@ export const FeedActivityTabbedColumn: React.FC = () => {
 
   const handleUserClick = (userName: string) => {
     setSelectedUser(userName);
-    setIsModalOpen(true);
+    setShowProfile(true);
+  };
+
+  const handleLikesClick = (photoId: string) => {
+    setSelectedPhotoForLikes(photoId);
+    setShowLikesModal(true);
+  };
+
+  const handleCommentsClick = (photoId: string) => {
+    setSelectedPhotoForComments(photoId);
+    setShowCommentsModal(true);
   };
 
   const handleRefresh = () => {
@@ -128,63 +146,14 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                 </div>
               ) : friendsPhotos.length > 0 ? (
                 friendsPhotos.map((photo, index) => (
-                  <div key={photo.id || index} className="bg-white/10 rounded-lg p-3 space-y-3">
-                    {/* User Info */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 flex-shrink-0">
-                        <img
-                          src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`}
-                          alt={`Avatar de ${photo.userName}`}
-                          className="w-full h-full object-contain bg-transparent"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`;
-                          }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => handleUserClick(photo.userName)}
-                        className="text-white font-semibold hover:text-blue-300 transition-colors"
-                      >
-                        {photo.userName}
-                      </button>
-                      <span className="text-white/60 text-xs ml-auto">
-                        {photo.date}
-                      </span>
-                    </div>
-
-                    {/* Photo */}
-                    <div className="relative">
-                      <img
-                        src={photo.imageUrl}
-                        alt={`Foto de ${photo.userName}`}
-                        className="w-full h-auto object-contain rounded-lg"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
-                      />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-4">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-white/80 hover:text-red-400 hover:bg-white/10 p-2"
-                      >
-                        <Heart className="w-4 h-4 mr-1" />
-                        {photo.likes}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-white/80 hover:text-white hover:bg-white/10 p-2"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
+                  <PhotoCard
+                    key={photo.id || index}
+                    photo={photo}
+                    onUserClick={handleUserClick}
+                    onLikesClick={handleLikesClick}
+                    onCommentsClick={handleCommentsClick}
+                    showDivider={index < friendsPhotos.length - 1}
+                  />
                 ))
               ) : (
                 <div className="text-center py-8">
@@ -209,10 +178,10 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                       Fonte: {tickerMetadata.source} • {friendsActivities.length} atividades
                     </div>
                   )}
-                  {friendsActivities.map((friendActivity) => (
-                    <div key={friendActivity.friend.uniqueId} className="bg-white/10 rounded-lg p-3 space-y-2">
+                  {friendsActivities.map((friendActivity, index) => (
+                    <div key={friendActivity.friend.uniqueId} className="space-y-3">
                       {/* Friend Header */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 px-1">
                         <div className="w-8 h-8 flex-shrink-0">
                           <img
                             src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${friendActivity.friend.name}&size=s&direction=2&head_direction=3&headonly=1`}
@@ -242,9 +211,9 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                       </div>
 
                       {/* Activities */}
-                      <div className="space-y-1">
+                      <div className="space-y-1 px-1">
                         {friendActivity.activities.length > 0 ? (
-                          friendActivity.activities.slice(0, 3).map((activity, index) => {
+                          friendActivity.activities.slice(0, 3).map((activity, actIndex) => {
                             // Handle real activities vs ticker activities
                             const isRealActivity = 'activity_type' in activity;
                             const activityText = isRealActivity 
@@ -254,7 +223,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                             const activityIcon = isRealActivity ? getActivityIcon((activity as any).activity_type) : '📍';
                             
                             return (
-                              <div key={index} className="text-sm text-white/80 pl-11 flex items-center gap-1">
+                              <div key={actIndex} className="text-sm text-white/80 pl-11 flex items-center gap-1">
                                 <span className="text-xs">{activityIcon}</span>
                                 <span>{activityText}</span>
                               </div>
@@ -266,6 +235,11 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Subtle divider between activities */}
+                      {index < friendsActivities.length - 1 && (
+                        <div className="w-full h-px bg-white/10 my-4" />
+                      )}
                     </div>
                   ))}
                 </>
@@ -283,10 +257,41 @@ export const FeedActivityTabbedColumn: React.FC = () => {
         </CardContent>
       </Card>
 
-      <ConsoleProfileModal
-        open={isModalOpen}
-        setOpen={setIsModalOpen}
-        habboName={selectedUser}
+      {/* Photo Modals */}
+      <PhotoLikesModal
+        open={showLikesModal}
+        onOpenChange={setShowLikesModal}
+        likes={selectedPhotoForLikes ? (() => {
+          const { likes, likesLoading } = usePhotoLikes(selectedPhotoForLikes);
+          return likes;
+        })() : []}
+        isLoading={selectedPhotoForLikes ? (() => {
+          const { likesLoading } = usePhotoLikes(selectedPhotoForLikes);
+          return likesLoading;
+        })() : false}
+      />
+
+      <PhotoCommentsModal
+        open={showCommentsModal}
+        onOpenChange={setShowCommentsModal}
+        comments={selectedPhotoForComments ? (() => {
+          const { comments, commentsLoading } = usePhotoComments(selectedPhotoForComments);
+          return comments;
+        })() : []}
+        isLoading={selectedPhotoForComments ? (() => {
+          const { commentsLoading } = usePhotoComments(selectedPhotoForComments);
+          return commentsLoading;
+        })() : false}
+        onAddComment={(text) => {
+          if (selectedPhotoForComments) {
+            const { addComment } = usePhotoComments(selectedPhotoForComments);
+            addComment(text);
+          }
+        }}
+        isAddingComment={selectedPhotoForComments ? (() => {
+          const { isAddingComment } = usePhotoComments(selectedPhotoForComments);
+          return isAddingComment;
+        })() : false}
       />
     </>
   );
