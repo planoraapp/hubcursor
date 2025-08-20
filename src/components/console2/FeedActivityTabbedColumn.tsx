@@ -11,6 +11,7 @@ import { usePhotoComments } from '@/hooks/usePhotoComments';
 import { PhotoLikesModal } from './PhotoLikesModal';
 import { PhotoCommentsModal } from './PhotoCommentsModal';
 import { PhotoCard } from './PhotoCard';
+import { UserProfileInColumn } from './UserProfileInColumn';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -23,6 +24,20 @@ export const FeedActivityTabbedColumn: React.FC = () => {
   const [selectedPhotoForComments, setSelectedPhotoForComments] = useState<string>('');
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+
+  // Always call hooks at the top level to prevent violations
+  const { 
+    likes: photoLikes, 
+    likesLoading, 
+    toggleLike 
+  } = usePhotoLikes(selectedPhotoForLikes || '');
+  
+  const { 
+    comments: photoComments, 
+    commentsLoading, 
+    addComment,
+    isAddingComment 
+  } = usePhotoComments(selectedPhotoForComments || '');
   
   // Hooks para fotos dos amigos
   const { 
@@ -95,6 +110,21 @@ export const FeedActivityTabbedColumn: React.FC = () => {
     }
   };
 
+  // Show profile if selected
+  if (showProfile && selectedUser) {
+    return (
+      <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+        <UserProfileInColumn 
+          username={selectedUser} 
+          onBack={() => {
+            setShowProfile(false);
+            setSelectedUser('');
+          }} 
+        />
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
@@ -139,7 +169,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 scrollbar-hide">
+            <TabsContent value="photos" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
               {photosLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <Loader2 className="w-8 h-8 animate-spin text-white/60" />
@@ -166,7 +196,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 scrollbar-hide">
+            <TabsContent value="activities" className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
               {activitiesLoading ? (
                 <div className="flex justify-center items-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60"></div>
@@ -261,37 +291,17 @@ export const FeedActivityTabbedColumn: React.FC = () => {
       <PhotoLikesModal
         open={showLikesModal}
         onOpenChange={setShowLikesModal}
-        likes={selectedPhotoForLikes ? (() => {
-          const { likes, likesLoading } = usePhotoLikes(selectedPhotoForLikes);
-          return likes;
-        })() : []}
-        isLoading={selectedPhotoForLikes ? (() => {
-          const { likesLoading } = usePhotoLikes(selectedPhotoForLikes);
-          return likesLoading;
-        })() : false}
+        likes={selectedPhotoForLikes ? photoLikes : []}
+        isLoading={selectedPhotoForLikes ? likesLoading : false}
       />
 
       <PhotoCommentsModal
         open={showCommentsModal}
         onOpenChange={setShowCommentsModal}
-        comments={selectedPhotoForComments ? (() => {
-          const { comments, commentsLoading } = usePhotoComments(selectedPhotoForComments);
-          return comments;
-        })() : []}
-        isLoading={selectedPhotoForComments ? (() => {
-          const { commentsLoading } = usePhotoComments(selectedPhotoForComments);
-          return commentsLoading;
-        })() : false}
-        onAddComment={(text) => {
-          if (selectedPhotoForComments) {
-            const { addComment } = usePhotoComments(selectedPhotoForComments);
-            addComment(text);
-          }
-        }}
-        isAddingComment={selectedPhotoForComments ? (() => {
-          const { isAddingComment } = usePhotoComments(selectedPhotoForComments);
-          return isAddingComment;
-        })() : false}
+        comments={selectedPhotoForComments ? photoComments : []}
+        isLoading={selectedPhotoForComments ? commentsLoading : false}
+        onAddComment={addComment}
+        isAddingComment={isAddingComment}
       />
     </>
   );
