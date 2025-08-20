@@ -12,6 +12,7 @@ interface OptimizedQueryOptions<T> extends Omit<UseQueryOptions<T>, 'refetchInte
     windowMs: number;
   };
   enableVisibilityControl?: boolean;
+  enabled?: boolean;
 }
 
 export const useOptimizedQuery = <T,>(
@@ -24,6 +25,7 @@ export const useOptimizedQuery = <T,>(
     enableRateLimit = true,
     rateLimitConfig = { maxRequests: 30, windowMs: 60 * 1000 }, // 30 requests por minuto
     enableVisibilityControl = true,
+    enabled = true,
     ...queryOptions
   } = options;
 
@@ -34,9 +36,9 @@ export const useOptimizedQuery = <T,>(
     ? (isVisible ? baseRefetchInterval : baseRefetchInterval * 5) // 5x mais lento quando não visível
     : baseRefetchInterval;
 
-  const shouldEnable = enableVisibilityControl 
+  const shouldEnable = enabled && (enableVisibilityControl 
     ? isRecentlyActive && (!enableRateLimit || rateLimit.canMakeRequest())
-    : (!enableRateLimit || rateLimit.canMakeRequest());
+    : (!enableRateLimit || rateLimit.canMakeRequest()));
 
   return useQuery({
     ...queryOptions,

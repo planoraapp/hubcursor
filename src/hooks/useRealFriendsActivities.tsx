@@ -67,7 +67,7 @@ export const useRealFriendsActivities = () => {
 
       const { data, error } = await supabase
         .from('friends_activities')
-        .select('id, habbo_name, activity_type, activity_description, new_data, detected_at, created_at') // Select específico
+        .select('id, habbo_name, habbo_id, hotel, activity_type, activity_description, new_data, detected_at, created_at')
         .in('habbo_name', friends.map(f => typeof f === 'string' ? f : f.toLowerCase()))
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false })
@@ -79,7 +79,19 @@ export const useRealFriendsActivities = () => {
       }
 
       console.log(`✅ [useRealFriendsActivities] Found ${data.length} activities`);
-      return data || [];
+      
+      // Transform the data to match RealFriendActivity interface
+      return (data || []).map(item => ({
+        id: item.id,
+        habbo_name: item.habbo_name,
+        habbo_id: item.habbo_id || '',
+        hotel: item.hotel || 'br',
+        activity_type: item.activity_type,
+        activity_description: item.activity_description,
+        new_data: item.new_data,
+        detected_at: item.detected_at,
+        created_at: item.created_at
+      }));
     },
     enabled: friends.length > 0,
     baseRefetchInterval: 5 * 60 * 1000, // 5 minutos (era 60s)
