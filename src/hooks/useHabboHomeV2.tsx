@@ -524,13 +524,31 @@ export const useHabboHomeV2 = (username: string) => {
     if (!isOwner || !habboData) return;
 
     try {
-      await supabase
-        .from('user_home_widgets')
-        .delete()
-        .eq('id', widgetId)
-        .eq('user_id', habboData.id);
+      // Find the widget to check its type
+      const widget = widgets.find(w => w.id === widgetId);
+      if (!widget) return;
 
-      setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
+      // For guestbook and rating widgets, just hide them (preserve data)
+      if (widget.widget_type === 'guestbook' || widget.widget_type === 'rating') {
+        await supabase
+          .from('user_home_widgets')
+          .update({ is_visible: false })
+          .eq('id', widgetId)
+          .eq('user_id', habboData.id);
+
+        setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
+        console.log(`🙈 Widget ${widget.widget_type} ocultado (dados preservados)`);
+      } else {
+        // For other widgets, delete normally
+        await supabase
+          .from('user_home_widgets')
+          .delete()
+          .eq('id', widgetId)
+          .eq('user_id', habboData.id);
+
+        setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
+        console.log(`🗑️ Widget ${widget.widget_type} removido completamente`);
+      }
     } catch (error) {
       console.error('❌ Erro ao remover widget:', error);
     }

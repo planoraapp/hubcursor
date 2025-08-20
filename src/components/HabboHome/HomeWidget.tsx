@@ -131,17 +131,20 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'avatar':
       case 'usercard':
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
-        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=3&head_direction=3&gesture=sml&size=l`;
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=4&gesture=sml&size=l`;
         const flagUrl = getCountryFlagPng(habboData.hotel);
         
         // Formatar data do memberSince
         const formatMemberSince = (memberSince: string) => {
-          if (!memberSince) return '2021';
+          if (!memberSince) return 'Criado em: 2021';
           try {
             const date = new Date(memberSince);
-            return date.getFullYear().toString();
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `Criado em: ${day}/${month}/${year}`;
           } catch {
-            return '2021';
+            return 'Criado em: 2021';
           }
         };
         
@@ -194,7 +197,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
               
               {/* Linha 3: Data de criação formatada */}
               <p className="text-xs text-gray-500 font-volter">
-                Membro desde: {formatMemberSince(habboData.memberSince || '')}
+                {formatMemberSince(habboData.memberSince || '')}
               </p>
             </div>
           </div>
@@ -215,15 +218,41 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
               <div className="space-y-2">
                 {guestbook.slice(0, 5).map((entry) => (
                   <div key={entry.id} className="bg-gray-50 rounded p-2 border">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-volter text-sm font-bold text-blue-600">
+                    <div className="flex items-center gap-2 mb-2">
+                      <img
+                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`}
+                        alt={entry.author_habbo_name}
+                        className="w-8 h-8 rounded object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`;
+                        }}
+                      />
+                      <a
+                        href={`/homes/${entry.author_habbo_name}`}
+                        className="font-volter text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {entry.author_habbo_name}
-                      </span>
+                      </a>
                       <span className="text-xs text-gray-500">
                         {new Date(entry.created_at).toLocaleDateString('pt-BR')}
                       </span>
+                      {(isOwner || entry.author_habbo_name === habboData?.habbo_name) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // TODO: Implement delete comment
+                          }}
+                          className="text-red-500 hover:text-red-700 text-xs px-1"
+                          title="Excluir comentário"
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-700">{entry.message}</p>
+                    <p className="text-sm text-gray-700 ml-10">{entry.message}</p>
                   </div>
                 ))}
               </div>
@@ -290,7 +319,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       onMouseDown={handleMouseDown}
     >
       <Card className="h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black overflow-hidden">
-        {isEditMode && isOwner && (
+        {isEditMode && isOwner && widget.widget_type !== 'avatar' && widget.widget_type !== 'usercard' && (
           <button
             onClick={(e) => {
               e.stopPropagation();

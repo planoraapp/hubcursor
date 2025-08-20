@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
+import { RotationControl } from './RotationControl';
 
 interface Sticker {
   id: string;
@@ -81,25 +82,15 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     }
   }, [sticker.id, onStickerUpdate]);
 
-  const handleFlipHorizontal = useCallback(() => {
-    const newScale = localScale < 0 ? Math.abs(localScale) : -localScale;
+  const handleScaleUp = useCallback(() => {
+    const newScale = Math.min(3, localScale + 0.1);
     handleScaleChange(newScale);
   }, [localScale, handleScaleChange]);
 
-  const handleFlipVertical = useCallback(() => {
-    const newRotation = (localRotation + 180) % 360;
-    handleRotationChange(newRotation);
-  }, [localRotation, handleRotationChange]);
-
-  const handleRotateClockwise = useCallback(() => {
-    const newRotation = (localRotation + 90) % 360;
-    handleRotationChange(newRotation);
-  }, [localRotation, handleRotationChange]);
-
-  const handleRotateCounterClockwise = useCallback(() => {
-    const newRotation = (localRotation - 90 + 360) % 360;
-    handleRotationChange(newRotation);
-  }, [localRotation, handleRotationChange]);
+  const handleScaleDown = useCallback(() => {
+    const newScale = Math.max(0.3, localScale - 0.1);
+    handleScaleChange(newScale);
+  }, [localScale, handleScaleChange]);
 
   React.useEffect(() => {
     let animationId: number;
@@ -204,35 +195,30 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
             ×
           </button>
 
-          {/* Botões Flip - Canto superior esquerdo */}
+          {/* Controles de escala - Canto superior esquerdo */}
           <div className="absolute -top-2 -left-2 flex gap-1">
             <button
-              onClick={handleFlipHorizontal}
-              className="w-5 h-5 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center shadow-lg"
-              title="Inverter Horizontal"
+              onClick={handleScaleDown}
+              className="w-5 h-5 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg"
+              title="Diminuir"
             >
-              ↔
+              −
             </button>
             <button
-              onClick={handleFlipVertical}
-              className="w-5 h-5 bg-purple-500 text-white rounded text-xs hover:bg-purple-600 transition-colors flex items-center justify-center shadow-lg"
-              title="Inverter Vertical"
+              onClick={handleScaleUp}
+              className="w-5 h-5 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg"
+              title="Aumentar"
             >
-              ↕
+              +
             </button>
           </div>
 
-          {/* Botão de Rotação - Parte inferior central */}
-          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-black/90 rounded px-2 py-1">
-            <button
-              onClick={handleRotateCounterClockwise}
-              className="w-6 h-6 bg-blue-500 text-white rounded-full text-xs hover:bg-blue-600 transition-colors flex items-center justify-center"
-              title="Girar"
-            >
-              ↻
-            </button>
-            <span className="text-white text-xs font-volter">{localRotation}°</span>
-          </div>
+          {/* Controle de Rotação 360° */}
+          <RotationControl
+            rotation={localRotation}
+            onRotationChange={handleRotationChange}
+            className="opacity-80 hover:opacity-100 transition-opacity"
+          />
         </>
       )}
 

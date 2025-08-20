@@ -95,14 +95,14 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
 
   if (loading) {
     return (
-      <div className={`flex flex-col items-center p-4 bg-white border-2 border-black rounded-md font-volter min-h-[120px] justify-center ${className}`}>
+      <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-64 justify-center ${className}`}>
         <div className="text-sm text-gray-500">Carregando avaliações...</div>
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col items-center p-4 bg-white border-2 border-black rounded-md font-volter min-h-[120px] ${className}`}>
+    <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-64 ${className}`}>
       {/* Média no topo */}
       <div className="text-2xl font-bold text-black mb-2">
         {averageRating > 0 ? averageRating.toFixed(1) : '—'}
