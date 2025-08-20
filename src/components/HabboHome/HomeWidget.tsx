@@ -282,12 +282,10 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
 
       case 'rating':
         return (
-          <div className="p-2">
-            <RatingWidget
-              homeOwnerId={habboData.id}
-              className="border-0 bg-transparent"
-            />
-          </div>
+          <RatingWidget
+            homeOwnerId={habboData.id}
+            className=""
+          />
         );
 
       default:

@@ -109,15 +109,47 @@ export const useHabboHomeV2 = (username: string) => {
 
       const userId = userData.supabase_user_id;
 
-      // 3. Carregar widgets (tentar estrutura nova primeiro, depois antiga)
+      // 3. Carregar todos os dados em paralelo para melhor performance
+      console.log('🚀 Carregando dados em paralelo...');
+      
+      const [
+        { data: newWidgets },
+        { data: stickersData },
+        { data: bgData },
+        { data: guestbookData }
+      ] = await Promise.all([
+        // Widgets
+        supabase
+          .from('user_home_widgets')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_visible', true),
+        
+        // Stickers
+        supabase
+          .from('user_stickers')
+          .select('*')
+          .eq('user_id', userId),
+        
+        // Background
+        supabase
+          .from('user_home_backgrounds')
+          .select('*')
+          .eq('user_id', userId)
+          .single(),
+        
+        // Guestbook
+        supabase
+          .from('guestbook_entries')
+          .select('*')
+          .eq('home_owner_user_id', userId)
+          .eq('moderation_status', 'approved')
+          .order('created_at', { ascending: false })
+          .limit(10)
+      ]);
+
+      // Processar widgets
       let widgetsData: Widget[] = [];
-
-      const { data: newWidgets } = await supabase
-        .from('user_home_widgets')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_visible', true);
-
       if (newWidgets && newWidgets.length > 0) {
         widgetsData = newWidgets.map(widget => ({
           id: widget.id,
@@ -130,38 +162,16 @@ export const useHabboHomeV2 = (username: string) => {
           is_visible: widget.is_visible,
           config: widget.config
         }));
-      } else {
-        // Fallback para estrutura antiga
-        const { data: oldWidgets } = await supabase
-          .from('user_home_layouts')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('is_visible', true);
-
-        if (oldWidgets && oldWidgets.length > 0) {
-          widgetsData = oldWidgets.map(widget => ({
-            id: widget.id,
-            widget_type: widget.widget_id,
-            x: widget.x,
-            y: widget.y,
-            z_index: widget.z_index,
-            width: widget.width || 300,
-            height: widget.height || 200,
-            is_visible: widget.is_visible,
-            config: {}
-          }));
-        }
       }
 
       console.log('📦 Widgets carregados:', widgetsData);
       
-      // Garantir que existe um widget avatar e está centralizado
+      // Garantir que existe um widget avatar e está centralizado (só para o proprietário)
       const avatarWidget = widgetsData.find(w => w.widget_type === 'avatar');
       if (currentUserIsOwner && !avatarWidget) {
-        // Criar widget avatar automaticamente se não existir
         console.log('🎯 Criando widget avatar automaticamente...');
-        const centerX = 384; // Centro horizontal (768px/2 - 150px/2 para mobile)
-        const centerY = 100;  // Posição superior
+        const centerX = 384;
+        const centerY = 100;
         
         const newAvatarWidget: Widget = {
           id: `avatar-${userId}`,
@@ -175,8 +185,8 @@ export const useHabboHomeV2 = (username: string) => {
           config: {}
         };
         
-        // Adicionar ao Supabase
-        await supabase
+        // Criar em background sem bloquear o carregamento
+        supabase
           .from('user_home_widgets')
           .insert({
             user_id: userId,
@@ -188,32 +198,15 @@ export const useHabboHomeV2 = (username: string) => {
             height: 150,
             is_visible: true,
             config: {}
-          });
+          })
+          .then(() => console.log('✅ Widget avatar criado'));
           
         widgetsData.push(newAvatarWidget);
-      } else if (avatarWidget && (avatarWidget.x < 0 || avatarWidget.y < 0 || avatarWidget.x > 768)) {
-        // Centralizar avatar se estiver fora dos limites visíveis
-        console.log('🎯 Centralizando widget avatar...');
-        const centerX = 384;
-        const centerY = 100;
-        
-        await supabase
-          .from('user_home_widgets')
-          .update({ x: centerX, y: centerY })
-          .eq('id', avatarWidget.id);
-          
-        avatarWidget.x = centerX;
-        avatarWidget.y = centerY;
       }
       
       setWidgets(widgetsData);
 
-      // 4. Carregar stickers
-      const { data: stickersData } = await supabase
-        .from('user_stickers')
-        .select('*')
-        .eq('user_id', userId);
-
+      // Processar stickers
       if (stickersData) {
         const formattedStickers = stickersData.map(sticker => ({
           id: sticker.id,
@@ -230,13 +223,7 @@ export const useHabboHomeV2 = (username: string) => {
         setStickers(formattedStickers);
       }
 
-      // 5. Carregar background
-      const { data: bgData } = await supabase
-        .from('user_home_backgrounds')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
+      // Processar background
       if (bgData) {
         setBackground({
           background_type: bgData.background_type as 'color' | 'cover' | 'repeat',
@@ -245,15 +232,7 @@ export const useHabboHomeV2 = (username: string) => {
         console.log('🎨 Background carregado:', bgData);
       }
 
-      // 6. Carregar guestbook
-      const { data: guestbookData } = await supabase
-        .from('guestbook_entries')
-        .select('*')
-        .eq('home_owner_user_id', userId)
-        .eq('moderation_status', 'approved')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
+      // Processar guestbook
       if (guestbookData) {
         setGuestbook(guestbookData);
         console.log('📝 Guestbook carregado:', guestbookData);
