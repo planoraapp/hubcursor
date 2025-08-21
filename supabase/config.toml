@@ -75,3 +75,6 @@ verify_jwt = false
 
 [functions.verify-and-register-via-motto]
 verify_jwt = false
+
+[functions.habbo-hotel-general-feed]
+verify_jwt = false

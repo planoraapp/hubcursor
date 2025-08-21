@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, RefreshCw, Activity, Clock, Loader2 } from 'lucide-react';
 import { useFriendsActivitiesDirect } from '@/hooks/useFriendsActivitiesDirect';
-import { DirectActivityPreview } from './DirectActivityPreview';
+import { EnhancedActivityRenderer } from './EnhancedActivityRenderer';
 
 export const FriendsActivityColumn: React.FC = () => {
   const { 
@@ -114,7 +114,10 @@ export const FriendsActivityColumn: React.FC = () => {
           <>
             <div className="space-y-1">
               {directActivities.map((activity, index) => (
-                <DirectActivityPreview key={`${activity.username}-${activity.timestamp}-${index}`} activity={activity} />
+                <EnhancedActivityRenderer 
+                  key={`${activity.username}-${activity.timestamp}-${index}`} 
+                  activity={activity} 
+                />
               ))}
             </div>
             

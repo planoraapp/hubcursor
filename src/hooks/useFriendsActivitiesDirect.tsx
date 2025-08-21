@@ -11,6 +11,15 @@ export interface DirectFriendActivity {
   timestamp: string;
   figureString?: string;
   hotel: string;
+  type?: 'look_change' | 'motto_change' | 'badge' | 'friends' | 'photos' | 'groups' | 'online';
+  details?: {
+    newFriends?: Array<{ name: string; avatar?: string }>;
+    newBadges?: Array<{ code: string; name?: string }>;
+    newGroups?: Array<{ name: string; badge?: string }>;
+    newPhotos?: Array<{ url: string; roomName?: string }>;
+    newMotto?: string;
+    previousMotto?: string;
+  };
 }
 
 interface DirectActivityResponse {
