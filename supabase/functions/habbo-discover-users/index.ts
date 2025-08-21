@@ -107,8 +107,8 @@ Deno.serve(async (req) => {
 });
 
 async function discoverRandomUsers(supabase: any, hotel: string, limit: number) {
-  // Limit to 5-10 users as requested, prefer online users
-  const actualLimit = Math.min(limit, 10);
+  // Limit to 5-8 users as requested, prefer online users
+  const actualLimit = Math.min(Math.max(limit, 5), 8);
   
   try {
     // First try to get diverse users from both habbo_accounts and discovered_users
@@ -119,12 +119,20 @@ async function discoverRandomUsers(supabase: any, hotel: string, limit: number) 
       .order('created_at', { ascending: false })
       .limit(actualLimit * 2);
 
+    if (accountError) {
+      console.error('❌ [discoverRandomUsers] habbo_accounts error:', accountError);
+    }
+
     const { data: discoveredUsers, error: discoveredError } = await supabase
       .from('discovered_users')
       .select('habbo_name, habbo_id, hotel, motto, figure_string, is_online, last_seen_at')
       .eq('hotel', hotel)
       .order('last_seen_at', { ascending: false })
       .limit(actualLimit * 2);
+
+    if (discoveredError) {
+      console.error('❌ [discoverRandomUsers] discovered_users error:', discoveredError);
+    }
 
     // Combine users from both sources
     const allUsers = [

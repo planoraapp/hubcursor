@@ -57,10 +57,21 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
           date: photo.timestamp ? new Date(photo.timestamp).toLocaleDateString('pt-BR') : 'Data inválida'
         }))
         .sort((a, b) => {
-          // Sort by timestamp (most recent first)
+          // Sort by timestamp (most recent first) - Add debugging
           const timestampA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp).getTime();
           const timestampB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp).getTime();
-          return timestampB - timestampA;
+          const result = timestampB - timestampA;
+          
+          // Log ordenação para debug
+          if (Math.abs(result) < 1000 * 60) { // Se diferença for menos de 1 minuto
+            console.log('🔍 [useFriendsPhotos] Photos with similar timestamp:', { 
+              a: { id: a.id, date: new Date(timestampA).toISOString(), timestamp: timestampA }, 
+              b: { id: b.id, date: new Date(timestampB).toISOString(), timestamp: timestampB },
+              result 
+            });
+          }
+          
+          return result;
         });
 
       console.log(`[📊 FRIENDS PHOTOS] Filtered to ${validPhotos.length} valid photos, ordered chronologically`);

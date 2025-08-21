@@ -35,11 +35,11 @@ export const CountryFlag: React.FC<CountryFlagProps> = ({ hotel, className = "" 
   const flagData = getFlagData(hotel);
 
   return (
-    <div className={`inline-flex items-center gap-1 ${className}`} title={flagData.country}>
+    <div className={`absolute bottom-1 right-1 z-10 ${className}`} title={flagData.country}>
       <img 
         src={flagData.src} 
         alt={flagData.alt}
-        className="w-4 h-3 object-cover rounded-sm shadow-sm"
+        className="w-6 h-4 object-cover rounded-sm shadow-lg border border-white/20"
         onError={(e) => {
           (e.target as HTMLImageElement).src = '/flags/br.png';
         }}

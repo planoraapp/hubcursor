@@ -28,7 +28,7 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ isOpen, onClose, photo }
           <X className="w-4 h-4" />
         </Button>
         
-        <div className="relative bg-white rounded-lg overflow-hidden border-2 border-white shadow-2xl">
+        <div className="relative bg-background rounded-lg overflow-hidden border shadow-2xl">
           <img
             src={photo.imageUrl}
             alt="Foto ampliada"
@@ -54,8 +54,8 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ isOpen, onClose, photo }
           </div>
           
           {/* Informações abaixo da foto */}
-          <div className="p-3 bg-white border-t">
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+          <div className="p-3 bg-background border-t">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Heart className="w-4 h-4 text-red-500" />
               <span>{photo.likes} curtidas</span>
             </div>

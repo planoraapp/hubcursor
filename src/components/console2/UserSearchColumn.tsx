@@ -19,7 +19,7 @@ export const UserSearchColumn: React.FC = () => {
     refetch 
   } = useOptimizedUserDiscovery({
     method: 'random',
-    limit: 6, // Reduced from 8 to 6 users (5-10 range)
+    limit: 8, // Aumentado para 8 usuários (range 5-8)
     enabled: !searchQuery.trim()
   });
 
@@ -109,7 +109,7 @@ export const UserSearchColumn: React.FC = () => {
         <div className="flex-1 overflow-y-auto space-y-2">
           {isLoading ? (
             <div className="space-y-2">
-              {[...Array(6)].map((_, i) => ( // Reduced loading states to match new limit
+              {[...Array(8)].map((_, i) => ( // Ajustado para 8 usuários
                 <div key={i} className="animate-pulse">
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
                     <div className="w-12 h-12 bg-white/10 rounded border" />
