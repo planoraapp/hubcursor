@@ -1,6 +1,6 @@
 
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
-import { useOptimizedQuery } from './useOptimizedQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from './useDebounce';
 import { useCompleteProfile } from './useCompleteProfile';
@@ -8,19 +8,28 @@ import { useCompleteProfile } from './useCompleteProfile';
 export interface RealFriendActivity {
   id: string;
   habbo_name: string;
+  habbo_id: string;
+  hotel: string;
   activity_type: string;
   activity_description: string;
-  new_data?: any;
   created_at: string;
   detected_at: string;
+  old_data?: any;
+  new_data: any;
   badgeImageUrl?: string;
   avatarPreviewUrl?: string;
 }
 
-export const useRealFriendsActivities = () => {
+interface ActivitiesPage {
+  activities: RealFriendActivity[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export const useRealFriendsActivities = (initialLimit = 100) => {
   const { habboAccount } = useAuth();
   
-  // Get complete profile to access friends list - use same source as useFriendsPhotos
+  // Get complete profile to access friends list
   const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(
     habboAccount?.habbo_name || '', 
     habboAccount?.hotel === 'br' ? 'com.br' : (habboAccount?.hotel || 'com.br')
@@ -28,7 +37,6 @@ export const useRealFriendsActivities = () => {
 
   // Extract friend names with proper normalization
   const friendNames = completeProfile?.data?.friends?.map(friend => {
-    // Normalize friend names (remove special characters, trim)
     let name = friend.name;
     if (name.startsWith(',')) {
       name = name.substring(1);
@@ -38,32 +46,41 @@ export const useRealFriendsActivities = () => {
 
   console.log(`[🔍 REAL ACTIVITIES] Friends from completeProfile (${friendNames.length}):`, friendNames);
 
-  // Fetch friends activities with optimized query
-  const baseRefetchInterval = 30 * 1000; // 30 segundos
-  const aggressiveCacheTime = 2 * 60 * 1000; // 2 minutos
-
-  const activitiesQuery = useOptimizedQuery<RealFriendActivity[]>({
-    queryKey: ['friends-activities', friendNames.join(','), completeProfile?.data?.friends?.length],
-    queryFn: async (): Promise<RealFriendActivity[]> => {
+  // Infinite query for paginated activities
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchActivities
+  } = useInfiniteQuery({
+    queryKey: ['realFriendsActivities', friendNames.join(','), completeProfile?.data?.friends?.length],
+    queryFn: async ({ pageParam }): Promise<ActivitiesPage> => {
       if (friendNames.length === 0) {
-        console.log(`[🔍 REAL ACTIVITIES] No friends to query activities for`);
-        return [];
+        console.log('[❌ REAL ACTIVITIES] No friends to query activities for');
+        return { activities: [], nextCursor: null, hasMore: false };
       }
 
-      console.log(`[🔍 REAL ACTIVITIES] Querying activities for ${friendNames.length} friends:`, friendNames);
-
-      // Extract friend names (case insensitive) - maintain original order
-      const normalizedFriendNames = friendNames.map(name => name.toLowerCase().trim());
+      console.log(`[🔍 REAL ACTIVITIES] Fetching page with cursor: ${pageParam || 'initial'}`);
+      console.log(`[🔍 REAL ACTIVITIES] Querying activities for ${friendNames.length} friends`);
       
-      console.log(`[🔍 REAL ACTIVITIES] Friend names:`, normalizedFriendNames);
+      // Create a case-insensitive set of friend names with normalization
+      const normalizedFriendNames = friendNames.map(name => name.toLowerCase().trim());
 
-      // Query activities from friends only (last 24 hours for performance)
-      const { data, error } = await supabase
+      // Build query with cursor-based pagination
+      let query = supabase
         .from('friends_activities')
         .select('*')
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
-        .order('created_at', { ascending: false }) // CRITICAL: Order by timestamp, not alphabetically
-        .limit(500); // Increased limit to get more activities
+        .order('created_at', { ascending: false })
+        .limit(initialLimit);
+
+      // Apply cursor pagination if we have a cursor
+      if (pageParam) {
+        query = query.lt('created_at', pageParam);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('[❌ REAL ACTIVITIES] Database error:', error);
@@ -72,114 +89,94 @@ export const useRealFriendsActivities = () => {
 
       console.log(`[📊 REAL ACTIVITIES] Raw query returned ${data?.length || 0} activities`);
       
-      // Debug: Log database query details
-      console.log(`[🔍 REAL ACTIVITIES] Query details:`, {
-        table: 'friends_activities',
-        timeFilter: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        limit: 500,
-        orderBy: 'created_at DESC'
-      });
-      
-      // Debug: Log first few activities to see what we're getting
+      // Debug: Show unique user names in activities
       if (data && data.length > 0) {
-        console.log(`[🔍 REAL ACTIVITIES] Sample activities:`, data.slice(0, 5).map(act => ({
-          name: act.habbo_name,
-          type: act.activity_type,
-          description: act.activity_description,
-          created_at: act.created_at,
-          new_data: act.new_data ? (typeof act.new_data === 'string' ? JSON.parse(act.new_data) : act.new_data) : null
-        })));
-        
-        // Debug: Show unique user names in activities
         const uniqueUsers = [...new Set(data.map(act => act.habbo_name))];
-        console.log(`[🔍 REAL ACTIVITIES] Unique users in database (${uniqueUsers.length}):`, uniqueUsers.slice(0, 20));
+        console.log(`[🔍 REAL ACTIVITIES] Unique users in this page (${uniqueUsers.length}):`, uniqueUsers.slice(0, 10));
       }
 
       // Client-side filtering for accurate matching with normalization
       const filteredActivities = (data || []).filter(activity => {
         let activityName = activity.habbo_name.toLowerCase().trim();
         
-        // Handle names that start with comma or special characters
         if (activityName.startsWith(',')) {
           activityName = activityName.substring(1).trim();
         }
         
-        const isMatch = normalizedFriendNames.includes(activityName);
-        
-        if (isMatch) {
-          console.log(`[✅ REAL ACTIVITIES] Matched activity from ${activity.habbo_name}`);
-        }
-        
-        return isMatch;
-      })
-      // Ensure final sort by timestamp (most recent first) - CRITICAL FOR CHRONOLOGICAL ORDER
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      console.log(`[✅ REAL ACTIVITIES] Filtered to ${filteredActivities.length} activities from friends`);
-
-      // Transform raw data to RealFriendActivity format with enriched descriptions
-      const transformedActivities: RealFriendActivity[] = filteredActivities.map(activity => {
-        let enrichedDescription = activity.activity_description;
-        let badgeImageUrl = '';
-        let avatarPreviewUrl = '';
-        
-        // Process new_data to extract visual information
-        if (activity.new_data) {
-          try {
-            const newData = typeof activity.new_data === 'string' ? JSON.parse(activity.new_data) : activity.new_data;
-            
-            // For badge activities
-            if (activity.activity_type === 'badge' && newData.badge_code) {
-              badgeImageUrl = `https://images.habbo.com/c_images/album1584/${newData.badge_code}.gif`;
-              enrichedDescription = `Conquistou o emblema "${newData.badge_name || newData.badge_code}"`;
-              console.log(`[🏆 REAL ACTIVITIES] Badge activity for ${activity.habbo_name}:`, {
-                badge_code: newData.badge_code,
-                badge_name: newData.badge_name,
-                imageUrl: badgeImageUrl
-              });
-            }
-            
-            // For look changes
-            if (activity.activity_type === 'look_change' && newData.new_figure) {
-              avatarPreviewUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${newData.new_figure}&size=s&direction=2&head_direction=3&action=std`;
-              enrichedDescription = `Mudou o visual`;
-              console.log(`[👕 REAL ACTIVITIES] Look change activity for ${activity.habbo_name}:`, {
-                new_figure: newData.new_figure,
-                avatarUrl: avatarPreviewUrl
-              });
-            }
-            
-            // For motto changes
-            if (activity.activity_type === 'motto_change' && newData.new_motto) {
-              enrichedDescription = `Mudou o lema para "${newData.new_motto}"`;
-            }
-            
-          } catch (error) {
-            console.log(`[useRealFriendsActivities] Could not parse new_data for activity ${activity.id}`);
-          }
-        }
-        
-        return {
-          id: activity.id,
-          habbo_name: activity.habbo_name,
-          activity_type: activity.activity_type,
-          activity_description: enrichedDescription,
-          new_data: activity.new_data,
-          created_at: activity.created_at,
-          detected_at: activity.detected_at,
-          badgeImageUrl,
-          avatarPreviewUrl
-        };
+        return normalizedFriendNames.includes(activityName);
       });
 
-      return transformedActivities;
+      console.log(`[✅ REAL ACTIVITIES] After filtering: ${filteredActivities.length} activities from friends`);
+
+      // Process and enhance the activities data
+      const processedActivities: RealFriendActivity[] = filteredActivities.map((activity) => {
+        let badgeImageUrl: string | undefined;
+        let avatarPreviewUrl: string | undefined;
+        let enrichedDescription = activity.activity_description;
+        
+        try {
+          // Parse new_data if it's a string
+          const newData = activity.new_data ? 
+            (typeof activity.new_data === 'string' ? JSON.parse(activity.new_data) : activity.new_data) 
+            : {};
+            
+          // For badge activities
+          if (activity.activity_type === 'badge' && newData.badge_code) {
+            badgeImageUrl = `https://images.habbo.com/c_images/album1584/${newData.badge_code}.gif`;
+            enrichedDescription = `Conquistou o emblema "${newData.badge_name || newData.badge_code}"`;
+          }
+          
+          // For look changes
+          if (activity.activity_type === 'look_change' && newData.figureString) {
+            avatarPreviewUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${newData.figureString}&size=s&direction=2&head_direction=3&action=std`;
+            enrichedDescription = `Mudou o visual`;
+          }
+          
+          // For motto changes
+          if (activity.activity_type === 'motto_change') {
+            enrichedDescription = activity.activity_description || `Mudou seu motto`;
+          }
+          
+          // For status changes (online)
+          if (activity.activity_type === 'status_change') {
+            enrichedDescription = activity.activity_description || `Está online agora`;
+          }
+          
+        } catch (parseError) {
+          console.warn(`[⚠️ REAL ACTIVITIES] Error parsing new_data for activity ${activity.id}:`, parseError);
+        }
+
+        return {
+          ...activity,
+          activity_description: enrichedDescription,
+          badgeImageUrl,
+          avatarPreviewUrl
+        } as RealFriendActivity;
+      });
+
+      // Determine next cursor and if there are more pages
+      const nextCursor = data && data.length === initialLimit ? data[data.length - 1].created_at : null;
+      const hasMore = data && data.length === initialLimit;
+
+      console.log(`[🎯 REAL ACTIVITIES] Page processed: ${processedActivities.length} activities, hasMore: ${hasMore}`);
+      
+      return { 
+        activities: processedActivities, 
+        nextCursor, 
+        hasMore 
+      };
     },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: undefined,
     enabled: !profileLoading && friendNames.length > 0,
-    baseRefetchInterval,
-    aggressiveCacheTime,
-    enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 20, windowMs: 60 * 1000 }
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    refetchInterval: 60 * 1000, // 1 minute
   });
+
+  // Flatten all pages into single array
+  const activities = data?.pages.flatMap(page => page.activities) ?? [];
 
   // Activity tracker invocation with debounce
   const debouncedTriggerTracker = useDebounce(() => {
@@ -193,20 +190,15 @@ export const useRealFriendsActivities = () => {
     });
   }, 2000);
 
-  const { data: trackerResult } = useOptimizedQuery({
-    queryKey: ['trigger-activity-tracker', habboAccount?.habbo_name],
-    queryFn: debouncedTriggerTracker,
-    enabled: !!habboAccount?.habbo_name,
-    baseRefetchInterval: 30 * 60 * 1000, // 30 minutes
-    aggressiveCacheTime: 60 * 60 * 1000, // 1 hour
-    enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 5, windowMs: 60 * 1000 }
-  });
+  const trackerResult = null; // Simplified for now
 
   return {
-    activities: activitiesQuery.data || [],
-    isLoading: profileLoading || activitiesQuery.isLoading,
-    refetch: activitiesQuery.refetch,
+    activities,
+    isLoading: profileLoading || isLoading,
+    fetchNextPage,
+    hasNextPage: !!hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchActivities,
     trackerResult
   };
 };

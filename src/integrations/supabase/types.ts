@@ -297,6 +297,57 @@ export type Database = {
         }
         Relationships: []
       }
+      friends_processing_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          friend_habbo_id: string | null
+          friend_habbo_name: string
+          hotel: string
+          id: string
+          last_processed_at: string | null
+          max_retries: number
+          priority: number
+          retry_count: number
+          status: string
+          updated_at: string
+          user_habbo_id: string
+          user_habbo_name: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          friend_habbo_id?: string | null
+          friend_habbo_name: string
+          hotel?: string
+          id?: string
+          last_processed_at?: string | null
+          max_retries?: number
+          priority?: number
+          retry_count?: number
+          status?: string
+          updated_at?: string
+          user_habbo_id: string
+          user_habbo_name: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          friend_habbo_id?: string | null
+          friend_habbo_name?: string
+          hotel?: string
+          id?: string
+          last_processed_at?: string | null
+          max_retries?: number
+          priority?: number
+          retry_count?: number
+          status?: string
+          updated_at?: string
+          user_habbo_id?: string
+          user_habbo_name?: string
+        }
+        Relationships: []
+      }
       guestbook_entries: {
         Row: {
           author_habbo_name: string
@@ -1138,6 +1189,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_processed_queue_items: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       ensure_user_home_exists: {
         Args: { user_uuid: string }
         Returns: undefined
@@ -1172,6 +1227,19 @@ export type Database = {
           supabase_user_id: string
         }[]
       }
+      get_next_queue_batch: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          friend_habbo_id: string
+          friend_habbo_name: string
+          hotel: string
+          id: string
+          priority: number
+          retry_count: number
+          user_habbo_id: string
+          user_habbo_name: string
+        }[]
+      }
       initialize_user_home: {
         Args: { user_uuid: string }
         Returns: undefined
@@ -1179,6 +1247,22 @@ export type Database = {
       initialize_user_home_complete: {
         Args: { user_habbo_name: string; user_uuid: string }
         Returns: undefined
+      }
+      mark_queue_item_completed: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      mark_queue_item_failed: {
+        Args: { p_error_message?: string; p_id: string }
+        Returns: undefined
+      }
+      populate_friends_queue: {
+        Args: {
+          p_hotel?: string
+          p_user_habbo_id: string
+          p_user_habbo_name: string
+        }
+        Returns: number
       }
     }
     Enums: {

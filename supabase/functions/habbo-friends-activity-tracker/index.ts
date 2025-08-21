@@ -65,8 +65,14 @@ serve(async (req) => {
 
     const detectedActivities: FriendActivity[] = [];
 
-    // Process each friend to detect activity changes
-    for (const friend of friends.slice(0, 20)) { // Limit to avoid rate limits
+    // ETAPA 2: Otimização - Aumentar limite e implementar processamento inteligente
+    const BATCH_SIZE = Math.min(100, friends.length); // Processo até 100 amigos por vez
+    const DELAY_BETWEEN_REQUESTS = 120; // Delay mais conservador (120ms)
+    
+    console.log(`🚀 [FriendsActivityTracker] Processing ${BATCH_SIZE} friends out of ${friends.length} total`);
+    
+    // Process friends in optimized batches
+    for (const friend of friends.slice(0, BATCH_SIZE)) {
       try {
         // Get current profile
         const currentProfileResponse = await fetch(`https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/api/public/users?name=${friend.name}`);
@@ -192,8 +198,8 @@ serve(async (req) => {
         console.warn(`Error processing friend ${friend.name}:`, error.message);
       }
 
-      // Small delay to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Optimized delay to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS));
     }
 
     // Save detected activities
