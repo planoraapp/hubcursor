@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Copy, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 interface LoginByMottoProps {
   onLoginSuccess?: () => void;
@@ -13,15 +15,16 @@ interface LoginByMottoProps {
 export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) => {
   const [habboName, setHabboName] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [password, setPassword] = useState('');
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [step, setStep] = useState<'generate' | 'verify'>('generate');
+  const [isCompletingRegistration, setIsCompletingRegistration] = useState(false);
+  const [step, setStep] = useState<'generate' | 'verify' | 'password'>('generate');
+  const [habboData, setHabboData] = useState<any>(null);
+  const [hotel, setHotel] = useState<string>('');
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-
-  const generateVerificationCode = () => {
-    const randomNum = Math.floor(Math.random() * 99999).toString().padStart(5, '0');
-    return `HUB-${randomNum}`;
-  };
+  const { loginWithPassword } = useUnifiedAuth();
 
   const handleGenerateCode = async () => {
     if (!habboName.trim()) {
@@ -35,36 +38,137 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
 
     setIsGeneratingCode(true);
     
-    // Simular delay de processamento
-    setTimeout(() => {
-      const code = generateVerificationCode();
-      setVerificationCode(code);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
+        body: {
+          habbo_name: habboName.trim(),
+          action: 'generate'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setVerificationCode(data.verification_code);
+      setHabboData(data.habbo_data);
+      setHotel(data.hotel);
       setStep('verify');
-      setIsGeneratingCode(false);
       
       toast({
         title: "Código Gerado!",
-        description: `Código de verificação: ${code}`,
+        description: `Código de verificação: ${data.verification_code}`,
       });
-    }, 1500);
+    } catch (error: any) {
+      console.error('❌ Error generating code:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao gerar código. Verifique se o usuário Habbo existe.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingCode(false);
+    }
   };
 
   const handleVerifyCode = async () => {
     setIsVerifying(true);
     
-    // Simular verificação (aqui seria implementada a lógica real)
-    setTimeout(() => {
-      setIsVerifying(false);
-      
-      toast({
-        title: "Verificação Concluída!",
-        description: `Login realizado com sucesso via motto!`,
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
+        body: {
+          habbo_name: habboName.trim(),
+          verification_code: verificationCode,
+          action: 'verify'
+        }
       });
-      
-      if (onLoginSuccess) {
-        onLoginSuccess();
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
       }
-    }, 2000);
+
+      if (data.verified) {
+        setStep('password');
+        toast({
+          title: "Código Verificado!",
+          description: "Agora crie uma senha de 6 caracteres para sua conta.",
+        });
+      }
+    } catch (error: any) {
+      console.error('❌ Error verifying code:', error);
+      toast({
+        title: "Erro na Verificação",
+        description: error.message || "Código não encontrado na missão. Verifique se colocou o código completo na sua missão no Hotel.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleCompleteRegistration = async () => {
+    if (password.length !== 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter exatamente 6 caracteres",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsCompletingRegistration(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
+        body: {
+          habbo_name: habboName.trim(),
+          verification_code: verificationCode,
+          password: password,
+          action: 'complete'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      toast({
+        title: data.user_created ? "Conta Criada!" : "Senha Redefinida!",
+        description: `${data.user_created ? 'Bem-vindo ao Habbo Hub' : 'Senha atualizada com sucesso'}! Fazendo login...`,
+      });
+
+      // Auto-login após registro/redefinição
+      setTimeout(async () => {
+        try {
+          await loginWithPassword(habboName.trim(), password);
+          if (onLoginSuccess) {
+            onLoginSuccess();
+          }
+        } catch (loginError: any) {
+          console.error('❌ Auto-login error:', loginError);
+          toast({
+            title: "Conta criada com sucesso!",
+            description: "Use a aba 'Por Senha' para fazer login com sua nova senha.",
+          });
+        }
+      }, 1000);
+
+    } catch (error: any) {
+      console.error('❌ Error completing registration:', error);
+      toast({
+        title: "Erro no Registro",
+        description: error.message || "Erro ao completar o registro. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCompletingRegistration(false);
+    }
   };
 
   const copyToClipboard = () => {
@@ -78,7 +182,10 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
   const resetProcess = () => {
     setStep('generate');
     setVerificationCode('');
+    setPassword('');
     setHabboName('');
+    setHabboData(null);
+    setHotel('');
   };
 
   return (
@@ -94,7 +201,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
           onChange={(e) => setHabboName(e.target.value)}
           placeholder="Digite seu nome Habbo"
           className="mt-1"
-          disabled={step === 'verify' || isGeneratingCode}
+          disabled={step !== 'generate' || isGeneratingCode}
         />
       </div>
 
@@ -141,12 +248,12 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
                 </Button>
               </div>
               
-              <div className="text-sm text-blue-700 volter-font space-y-2">
+              <div className="text-sm text-primary volter-font space-y-2">
                 <p className="font-bold">📋 INSTRUÇÕES:</p>
                 <ol className="list-decimal list-inside space-y-1 pl-2">
                   <li>Copie o código acima</li>
                   <li>Vá para o Hotel Habbo</li>
-                  <li>Mude seu <strong>motto/missão</strong> para: <code className="bg-blue-100 px-1 rounded">{verificationCode}</code></li>
+                  <li>Mude seu <strong>motto/missão</strong> para: <code className="bg-primary/10 px-1 rounded">{verificationCode}</code></li>
                   <li>Clique em "Verificar Login" abaixo</li>
                 </ol>
               </div>
@@ -178,8 +285,84 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
             </Button>
           </div>
           
-          <div className="text-xs text-gray-500 text-center volter-font">
+          <div className="text-xs text-muted-foreground text-center volter-font">
             💡 O sistema verificará se o código está na sua missão no Hotel
+          </div>
+        </div>
+      )}
+
+      {step === 'password' && (
+        <div className="space-y-4">
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-primary volter-font text-lg flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5" />
+                Criar Senha
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-sm text-primary volter-font space-y-2">
+                <p>✅ Código verificado com sucesso!</p>
+                <p>Agora crie uma senha de <strong>6 caracteres</strong> para sua conta:</p>
+              </div>
+              
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Digite 6 caracteres"
+                  maxLength={6}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
+              
+              <div className="text-xs text-muted-foreground">
+                Senha: {password.length}/6 caracteres
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleCompleteRegistration}
+              className="flex-1 habbo-button-green volter-font"
+              disabled={isCompletingRegistration || password.length !== 6}
+            >
+              {isCompletingRegistration ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Criando Conta...
+                </>
+              ) : (
+                'Criar Conta & Login'
+              )}
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={resetProcess}
+              disabled={isCompletingRegistration}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          <div className="text-xs text-muted-foreground text-center volter-font">
+            🏠 Sua Habbo Home será criada automaticamente!
           </div>
         </div>
       )}

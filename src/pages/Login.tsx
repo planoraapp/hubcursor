@@ -74,14 +74,16 @@ const Login = () => {
           <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             <div className="max-w-md mx-auto mt-20">
               <div className="text-center mb-8">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <User className="w-8 h-8 text-white" />
-                  <h1 className="text-4xl font-bold text-white volter-font"
-                      style={{
-                        textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                      }}>
-                    🔐 Login
-                  </h1>
+                <div className="flex items-center justify-center mb-4">
+                  <img 
+                    src="/assets/habbohub.gif" 
+                    alt="Habbo Hub" 
+                    className="h-16 w-auto"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/assets/habbohub.png";
+                    }}
+                  />
                 </div>
                 <p className="text-lg text-white/90 volter-font drop-shadow">
                   Entre com sua conta Habbo
@@ -155,8 +157,8 @@ const Login = () => {
                     <TabsContent value="motto" className="mt-4">
                       <LoginByMotto onLoginSuccess={handleMottoLoginSuccess} />
                       <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600 volter-font">
-                          Login seguro via verificação de motto no Hotel.
+                        <p className="text-sm text-muted-foreground volter-font">
+                          Login seguro via verificação de motto no Hotel. Para novos usuários.
                         </p>
                       </div>
                     </TabsContent>
