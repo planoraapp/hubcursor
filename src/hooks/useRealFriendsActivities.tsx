@@ -63,7 +63,7 @@ export const useRealFriendsActivities = () => {
         .select('*')
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
         .order('created_at', { ascending: false }) // CRITICAL: Order by timestamp, not alphabetically
-        .limit(200); // Get more to filter properly
+        .limit(500); // Increased limit to get more activities
 
       if (error) {
         console.error('[❌ REAL ACTIVITIES] Database error:', error);
@@ -71,6 +71,29 @@ export const useRealFriendsActivities = () => {
       }
 
       console.log(`[📊 REAL ACTIVITIES] Raw query returned ${data?.length || 0} activities`);
+      
+      // Debug: Log database query details
+      console.log(`[🔍 REAL ACTIVITIES] Query details:`, {
+        table: 'friends_activities',
+        timeFilter: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        limit: 500,
+        orderBy: 'created_at DESC'
+      });
+      
+      // Debug: Log first few activities to see what we're getting
+      if (data && data.length > 0) {
+        console.log(`[🔍 REAL ACTIVITIES] Sample activities:`, data.slice(0, 5).map(act => ({
+          name: act.habbo_name,
+          type: act.activity_type,
+          description: act.activity_description,
+          created_at: act.created_at,
+          new_data: act.new_data ? (typeof act.new_data === 'string' ? JSON.parse(act.new_data) : act.new_data) : null
+        })));
+        
+        // Debug: Show unique user names in activities
+        const uniqueUsers = [...new Set(data.map(act => act.habbo_name))];
+        console.log(`[🔍 REAL ACTIVITIES] Unique users in database (${uniqueUsers.length}):`, uniqueUsers.slice(0, 20));
+      }
 
       // Client-side filtering for accurate matching with normalization
       const filteredActivities = (data || []).filter(activity => {
@@ -109,12 +132,21 @@ export const useRealFriendsActivities = () => {
             if (activity.activity_type === 'badge' && newData.badge_code) {
               badgeImageUrl = `https://images.habbo.com/c_images/album1584/${newData.badge_code}.gif`;
               enrichedDescription = `Conquistou o emblema "${newData.badge_name || newData.badge_code}"`;
+              console.log(`[🏆 REAL ACTIVITIES] Badge activity for ${activity.habbo_name}:`, {
+                badge_code: newData.badge_code,
+                badge_name: newData.badge_name,
+                imageUrl: badgeImageUrl
+              });
             }
             
             // For look changes
             if (activity.activity_type === 'look_change' && newData.new_figure) {
               avatarPreviewUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${newData.new_figure}&size=s&direction=2&head_direction=3&action=std`;
               enrichedDescription = `Mudou o visual`;
+              console.log(`[👕 REAL ACTIVITIES] Look change activity for ${activity.habbo_name}:`, {
+                new_figure: newData.new_figure,
+                avatarUrl: avatarPreviewUrl
+              });
             }
             
             // For motto changes

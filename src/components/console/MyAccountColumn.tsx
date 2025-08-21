@@ -95,9 +95,7 @@ export const MyAccountColumn: React.FC = () => {
               {/* Online Status */}
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#5A6573] rounded-full"></div>
               {/* Country Flag - Bottom Right Corner of Avatar */}
-              <div className="absolute bottom-1 right-1">
-                <CountryFlag hotel={(habboAccount as any)?.hotel || 'br'} />
-              </div>
+              <CountryFlag hotel={(habboAccount as any)?.hotel || 'br'} className="absolute bottom-1 right-1" />
             </div>
             
             {/* Profile Info - Right Side */}
