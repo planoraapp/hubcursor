@@ -234,41 +234,45 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                    {activities.map((activity, index) => (
                      <div key={`${activity.username}-${activity.timestamp}-${index}`} className="space-y-3">
                        {/* Activity Card */}
-                       <div className="flex items-start gap-2 p-2 rounded-lg bg-card/30 hover:bg-card/50 transition-colors">
-                         <div className="w-8 h-8 flex-shrink-0">
-                           <img
-                             src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`}
-                             alt={`Avatar de ${activity.username}`}
-                             className="w-full h-full object-contain bg-transparent border-0"
-                             onError={(e) => {
-                               const target = e.target as HTMLImageElement;
-                               target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`;
-                             }}
-                           />
-                         </div>
-                          <div className="flex-1 min-w-0 ml-1">
-                            <div className="flex items-center gap-2 mb-1">
+                        <div className="relative p-3 rounded-lg bg-card/30 hover:bg-card/50 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 flex-shrink-0">
+                              <img
+                                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`}
+                                alt={`Avatar de ${activity.username}`}
+                                className="w-full h-full object-contain bg-transparent border-0 rounded"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`;
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
                               <button
                                 onClick={() => handleUserClick(activity.username)}
-                                className="font-medium text-sm text-white hover:text-blue-300 transition-colors truncate"
+                                className="font-medium text-sm text-white hover:text-blue-300 transition-colors truncate block mb-1"
                               >
                                 {activity.username}
                               </button>
-                              <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
-                                {formatActivityTime(activity.timestamp)}
-                              </span>
+                              <BadgeActivityRenderer 
+                                activityText={activity.activity}
+                                className="text-sm text-muted-foreground/90"
+                                username={activity.username}
+                                figureString={activity.figureString}
+                                hotel={activity.hotel}
+                              />
                             </div>
-                            <BadgeActivityRenderer 
-                              activityText={activity.activity}
-                              className="text-sm text-muted-foreground/90 -ml-1"
-                            />
+                            {activity.hotel && (
+                              <div className="text-xs text-white/40 bg-white/10 px-2 py-1 rounded flex-shrink-0 self-start">
+                                .{activity.hotel}
+                              </div>
+                            )}
                           </div>
-                         {activity.hotel && (
-                           <div className="text-xs text-white/40 bg-white/10 px-2 py-1 rounded flex-shrink-0 self-start">
-                             .{activity.hotel}
-                           </div>
-                         )}
-                       </div>
+                          {/* Timestamp no canto inferior direito */}
+                          <div className="absolute bottom-2 right-2 text-xs text-muted-foreground/60">
+                            {formatActivityTime(activity.timestamp)}
+                          </div>
+                        </div>
 
                       {/* Subtle divider between activities */}
                       {index < activities.length - 1 && (

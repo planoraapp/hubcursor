@@ -252,15 +252,9 @@ serve(async (req) => {
           }
           
           if (!userData) {
-            console.log(`❌ [FRIEND] Sem dados para: ${cleanName}`);
-            // ETAPA 4: Gerar atividade mock mesmo sem dados da API
-            return [{
-              username: cleanName,
-              activity: `usuário não encontrado ou privado`,
-              timestamp: new Date().toISOString(),
-              figureString: 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62',
-              hotel
-            }];
+            console.log(`❌ [FRIEND] Sem dados para: ${cleanName} - Usuário privado/não encontrado`);
+            // FILTRO: Não retornar atividades para usuários privados
+            return null;
           }
           
           console.log(`✅ [FRIEND] Dados obtidos para: ${cleanName}`, {

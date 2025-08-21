@@ -8,6 +8,28 @@ interface BadgeActivityInfo {
 export const extractBadgeFromActivity = (activityText: string): BadgeActivityInfo => {
   const text = activityText.toLowerCase().trim();
   
+  // Mapeamentos de badges conhecidos para melhor detecção
+  const knownBadges: { [key: string]: string } = {
+    'HC1': 'HC Membro',
+    'ADM': 'Administrador',
+    'VIP': 'VIP Premium',
+    'MOD': 'Moderador',
+    'SUP': 'Suporte',
+    'BOT': 'Robot',
+    'PUB': 'Usuário Público',
+    'DEV': 'Desenvolvedor',
+    'COM': 'Comerciante',
+    'MEMBER': 'Membro Especial',
+    'ACTIVE': 'Usuário Ativo',
+    'REGULAR': 'Frequentador',
+    'OLD': 'Veterano',
+    'NEW': 'Novato',
+    'COLLECTOR': 'Colecionador',
+    'PHOTOGRAPHER': 'Fotógrafo',
+    'BUILDER': 'Construtor',
+    'FRIEND': 'Amigo Leal'
+  };
+
   // Regex patterns expandidos para detectar atividades de badge
   const badgePatterns = [
     /conquistou o emblema (.+)/i,
@@ -21,15 +43,28 @@ export const extractBadgeFromActivity = (activityText: string): BadgeActivityInf
     /achieved badge (.+)/i,
     /unlocked badge (.+)/i,
     /earned (.+) badge/i,
-    /got (.+) badge/i
+    /got (.+) badge/i,
+    /conquistou (.+)/i,
+    /ganhou (.+)/i,
+    /recebeu (.+)/i
   ];
 
   for (const pattern of badgePatterns) {
     const match = activityText.match(pattern);
     if (match && match[1]) {
+      let badgeName = match[1].trim();
+      
+      // Verificar se é um badge conhecido e usar o nome completo
+      for (const [code, fullName] of Object.entries(knownBadges)) {
+        if (badgeName.toUpperCase().includes(code) || badgeName.toLowerCase().includes(fullName.toLowerCase())) {
+          badgeName = fullName;
+          break;
+        }
+      }
+      
       return {
         isBadgeActivity: true,
-        badgeName: match[1].trim(),
+        badgeName: badgeName,
         activityType: 'badge',
         originalText: activityText
       };
