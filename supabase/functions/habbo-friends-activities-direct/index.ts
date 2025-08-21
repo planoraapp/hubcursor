@@ -129,17 +129,91 @@ serve(async (req) => {
 
     console.log(`🔄 [CACHE MISS] Cache não encontrado, processando...`);
 
+    // FASE 1: Buscar atividades reais do banco de dados
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    console.log(`🗄️ [DB] Buscando atividades reais dos amigos...`);
+    
+    const { data: dbActivities, error: dbError } = await supabase
+      .from('habbo_activities')
+      .select('*')
+      .in('habbo_name', friends)
+      .eq('hotel', hotel === 'com.br' ? 'br' : hotel)
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Últimas 24h
+      .order('created_at', { ascending: false })
+      .limit(100);
+    
+    if (dbError) {
+      console.error(`❌ [DB ERROR] Erro ao buscar atividades:`, dbError);
+    } else {
+      console.log(`✅ [DB] Encontradas ${dbActivities?.length || 0} atividades reais no banco`);
+    }
+
     const activities: FriendActivity[] = [];
     const baseUrl = hotel === 'com.br' ? 'https://www.habbo.com.br' : `https://www.habbo.${hotel}`;
     
-    // ETAPA 3: Processamento mais eficiente
-    const batchSize = 5; // Reduzido para melhor performance
+    // FASE 1: Converter atividades reais do banco para o formato esperado
+    if (dbActivities && dbActivities.length > 0) {
+      console.log(`🔄 [DB CONVERSION] Convertendo atividades reais...`);
+      
+      for (const dbActivity of dbActivities) {
+        // Buscar informações atuais do usuário para figureString
+        let userData = null;
+        try {
+          const url = `${baseUrl}/api/public/users?name=${encodeURIComponent(dbActivity.habbo_name)}`;
+          userData = await fetchHabboAPI(url, 1);
+        } catch (error) {
+          console.warn(`⚠️ [USER API] Erro ao buscar ${dbActivity.habbo_name}:`, error);
+        }
+        
+        let activityDescription = dbActivity.description || dbActivity.activity_description || 'realizou uma atividade';
+        
+        // Melhorar descrições baseadas no tipo de atividade
+        switch (dbActivity.activity_type) {
+          case 'badge':
+            const badgeDetails = dbActivity.details?.new_badges || dbActivity.new_data?.selectedBadges;
+            if (badgeDetails && badgeDetails.length > 0) {
+              const badge = badgeDetails[0];
+              activityDescription = `conquistou o emblema ${badge.name || badge.code}`;
+            }
+            break;
+          case 'motto_change':
+            const newMotto = dbActivity.details?.new_motto || dbActivity.new_data?.motto;
+            if (newMotto) {
+              activityDescription = `mudou a missão: "${newMotto}"`;
+            }
+            break;
+          case 'look_change':
+            activityDescription = `mudou o visual`;
+            break;
+          case 'status_change':
+            const isOnline = dbActivity.details?.online || dbActivity.new_data?.online;
+            activityDescription = isOnline ? 'ficou online' : 'saiu do hotel';
+            break;
+        }
+        
+        activities.push({
+          username: dbActivity.habbo_name,
+          activity: activityDescription,
+          timestamp: dbActivity.created_at || dbActivity.detected_at,
+          figureString: userData?.figureString || 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62',
+          hotel: hotel
+        });
+      }
+      
+      console.log(`✅ [DB CONVERSION] Convertidas ${activities.length} atividades reais`);
+    }
+    
+    // ETAPA 3: Processamento de amigos para atividades sintéticas complementares
+    const batchSize = 5;
     const startIndex = offset;
     const endIndex = Math.min(startIndex + limit, friends.length);
     const friendsToProcess = friends.slice(startIndex, endIndex);
     
-    console.log(`🔍 [PROCESSING] Processando amigos ${startIndex}-${endIndex} de ${friends.length}`);
-    console.log(`🔍 [PROCESSING] Amigos desta batch:`, friendsToProcess);
+    console.log(`🔍 [PROCESSING] Processando ${friendsToProcess.length} amigos para atividades sintéticas...`);
 
     let processedCount = 0;
     
@@ -297,18 +371,20 @@ serve(async (req) => {
       }
     }
     
-    // Sort by timestamp
+    // FASE 1: Ordenar por timestamp real (atividades mais recentes primeiro)
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
-    console.log(`🎯 [FINAL] Geradas ${activities.length} atividades de ${processedCount} amigos processados`);
+    console.log(`🎯 [FINAL] Total de ${activities.length} atividades (${dbActivities?.length || 0} reais + ${activities.length - (dbActivities?.length || 0)} sintéticas)`);
     
     const response: ActivityResponse = {
       activities: activities.slice(0, 50),
       metadata: {
-        source: 'direct_api_enhanced',
+        source: dbActivities && dbActivities.length > 0 ? 'mixed_real_synthetic' : 'synthetic_only',
         timestamp: new Date().toISOString(),
         count: activities.length,
-        friends_processed: processedCount
+        friends_processed: friends.length,
+        real_activities: dbActivities?.length || 0,
+        synthetic_activities: activities.length - (dbActivities?.length || 0)
       }
     };
 

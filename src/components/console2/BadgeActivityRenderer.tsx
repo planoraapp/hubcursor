@@ -34,12 +34,12 @@ export const BadgeActivityRenderer: React.FC<BadgeActivityRendererProps> = ({
           code={badgeInfo.code}
           name={badgeInfo.name}
           size="sm"
-          className="flex-shrink-0"
+          className="flex-shrink-0 !border-0 !bg-transparent"
           showFallback={true}
           priority={false}
         />
       ) : (
-        <div className="w-8 h-8 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded border border-yellow-400/30 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 bg-transparent flex items-center justify-center flex-shrink-0">
           <span className="text-xs">🏆</span>
         </div>
       )}

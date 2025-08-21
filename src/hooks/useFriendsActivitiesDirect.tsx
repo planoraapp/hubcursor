@@ -185,7 +185,7 @@ export const useFriendsActivitiesDirect = () => {
       return failureCount < 2; // Máximo 3 tentativas
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // ETAPA 4: Retry exponencial
-    refetchInterval: 2 * 60 * 1000, // Auto-refresh a cada 2 minutos
+    refetchInterval: 30 * 1000, // Auto-refresh a cada 30 segundos para atividades em tempo real
   });
 
   // Flatten all pages into single array
