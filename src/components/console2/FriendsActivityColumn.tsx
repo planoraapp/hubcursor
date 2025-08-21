@@ -104,14 +104,17 @@ export const FriendsActivityColumn: React.FC = () => {
             </div>
             
             {/* ETAPA 3: Scroll infinito melhorado */}
-            {isFetchingNextPage && (
-              <div className="text-center py-4 border-t border-white/10">
-                <div className="flex items-center justify-center gap-2 text-white/60">
+            <div 
+              ref={loadingRef}
+              className="h-4 flex items-center justify-center"
+            >
+              {isFetchingNextPage && (
+                <div className="flex items-center gap-2 text-white/60">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-xs">Buscando mais atividades...</span>
+                  <span className="text-xs">Carregando mais atividades...</span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {hasNextPage && !isFetchingNextPage && realActivities.length >= 10 && (
               <div className="text-center py-4 border-t border-white/10">
