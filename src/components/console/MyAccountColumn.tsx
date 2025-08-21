@@ -41,9 +41,31 @@ export const MyAccountColumn: React.FC = () => {
   if (!isLoggedIn || !habboAccount) {
     return (
       <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full">
-        <CardContent className="p-6 text-center">
-          <User className="w-12 h-12 text-white/50 mx-auto mb-4" />
-          <p className="text-white/80">Faça login para ver seu perfil</p>
+        <CardContent className="p-6 text-center space-y-4">
+          <User className="w-16 h-16 text-white/50 mx-auto mb-4" />
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-white volter-font">
+              🔐 Área Restrita
+            </h3>
+            <p className="text-white/80 text-sm">
+              Faça login para acessar sua conta Habbo e ver seu perfil completo
+            </p>
+          </div>
+          
+          <div className="space-y-3 pt-4">
+            <a 
+              href="/login" 
+              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors volter-font"
+            >
+              🚪 Entrar na Conta
+            </a>
+            
+            <div className="text-xs text-white/60 space-y-1">
+              <p>✓ Login por senha ou motto</p>
+              <p>✓ Acesso seguro via Hotel Habbo</p>
+              <p>✓ Perfil completo com fotos e emblemas</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     );

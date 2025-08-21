@@ -3,19 +3,22 @@ import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User } from 'lucide-react';
+import { User, Key, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { LoginByMotto } from '@/components/auth/LoginByMotto';
 
 const Login = () => {
   const [habboName, setHabboName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('password');
   const { loginWithPassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -59,6 +62,10 @@ const Login = () => {
     }
   };
 
+  const handleMottoLoginSuccess = () => {
+    navigate('/');
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -88,48 +95,72 @@ const Login = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                      <Label htmlFor="habboName" className="volter-font text-gray-700">
-                        Nome de usuário Habbo
-                      </Label>
-                      <Input
-                        id="habboName"
-                        type="text"
-                        value={habboName}
-                        onChange={(e) => setHabboName(e.target.value)}
-                        placeholder="Digite seu nome Habbo"
-                        className="mt-1"
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="password" className="volter-font text-gray-700">
-                        Senha
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Digite sua senha"
-                        className="mt-1"
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full habbo-button-blue volter-font"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Entrando...' : 'Entrar'}
-                    </Button>
-                  </form>
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-gray-600 volter-font">
-                      Use suas credenciais Habbo para fazer login.
-                    </p>
-                  </div>
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="password" className="volter-font flex items-center gap-2">
+                        <Key className="w-4 h-4" />
+                        Por Senha
+                      </TabsTrigger>
+                      <TabsTrigger value="motto" className="volter-font flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        Por Motto
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="password" className="mt-4">
+                      <form onSubmit={handleLogin} className="space-y-4">
+                        <div>
+                          <Label htmlFor="habboName" className="volter-font text-gray-700">
+                            Nome de usuário Habbo
+                          </Label>
+                          <Input
+                            id="habboName"
+                            type="text"
+                            value={habboName}
+                            onChange={(e) => setHabboName(e.target.value)}
+                            placeholder="Digite seu nome Habbo"
+                            className="mt-1"
+                            disabled={isLoading}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="password" className="volter-font text-gray-700">
+                            Senha
+                          </Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Digite sua senha"
+                            className="mt-1"
+                            disabled={isLoading}
+                          />
+                        </div>
+                        <Button 
+                          type="submit" 
+                          className="w-full habbo-button-blue volter-font"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Entrando...' : 'Entrar com Senha'}
+                        </Button>
+                      </form>
+                      <div className="mt-4 text-center">
+                        <p className="text-sm text-gray-600 volter-font">
+                          Use suas credenciais Habbo para fazer login.
+                        </p>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="motto" className="mt-4">
+                      <LoginByMotto onLoginSuccess={handleMottoLoginSuccess} />
+                      <div className="mt-4 text-center">
+                        <p className="text-sm text-gray-600 volter-font">
+                          Login seguro via verificação de motto no Hotel.
+                        </p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </div>

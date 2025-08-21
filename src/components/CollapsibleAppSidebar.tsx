@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
@@ -170,13 +170,31 @@ export function CollapsibleAppSidebar() {
                 )}
               </div>
             ) : (
-              !isCollapsed && (
-                <Link to="/login" className="block">
-                  <button className="habbo-button-blue w-full px-3 py-2 text-sm font-bold text-white rounded">
-                    Conectar Conta Habbo
-                  </button>
-                </Link>
-              )
+              <div className="space-y-2">
+                {!isCollapsed ? (
+                  <Link to="/login" className="block">
+                    <button className="bg-blue-600 hover:bg-blue-700 w-full px-3 py-2 text-sm font-bold text-white rounded transition-colors flex items-center justify-center gap-2">
+                      <User className="w-3 h-3" />
+                      Conectar Conta Habbo
+                    </button>
+                  </Link>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link to="/login">
+                          <button className="bg-blue-600 hover:bg-blue-700 w-full p-3 text-white rounded transition-colors flex items-center justify-center">
+                            <User className="w-4 h-4" />
+                          </button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <p>Fazer Login</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             )}
           </div>
         </SidebarFooter>
