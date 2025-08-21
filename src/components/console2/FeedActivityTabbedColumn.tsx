@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera, Activity, Clock, Users } from 'lucide-react';
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
-import { useFriendsFeed } from '@/hooks/useFriendsFeed';
+import { useFriendsActivitiesDirect } from '@/hooks/useFriendsActivitiesDirect';
 import { useAuth } from '@/hooks/useAuth';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
 import { usePhotoComments } from '@/hooks/usePhotoComments';
@@ -56,10 +56,11 @@ export const FeedActivityTabbedColumn: React.FC = () => {
 
   // Hooks para atividades dos amigos
   const { 
-    friendsActivities, 
+    activities, 
     isLoading: activitiesLoading, 
-    tickerMetadata 
-  } = useFriendsFeed();
+    fetchNextPage,
+    hasNextPage
+  } = useFriendsActivitiesDirect();
 
   const handleUserClick = (userName: string) => {
     setSelectedUser(userName);
@@ -224,103 +225,66 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                 <div className="flex justify-center items-center h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60"></div>
                 </div>
-              ) : friendsActivities.length > 0 ? (
+              ) : activities.length > 0 ? (
                 <>
-                  {tickerMetadata && (
-                    <div className="text-xs text-white/60 text-center py-2">
-                      Fonte: {tickerMetadata.source} • {friendsActivities.length} atividades
-                    </div>
-                  )}
-                  {friendsActivities.map((friendActivity, index) => (
-                    <div key={friendActivity.friend.uniqueId} className="space-y-3">
-                      {/* Friend Header */}
-                      <div className="flex items-center gap-3 px-1">
+                  <div className="text-xs text-white/60 text-center py-2">
+                    Atividades recentes • {activities.length} encontradas
+                  </div>
+                  {activities.map((activity, index) => (
+                    <div key={`${activity.username}-${activity.timestamp}-${index}`} className="space-y-3">
+                      {/* Activity Card */}
+                      <div className="flex items-start gap-3 px-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
                         <div className="w-8 h-8 flex-shrink-0">
                           <img
-                            src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${friendActivity.friend.name}&size=s&direction=2&head_direction=3&headonly=1`}
-                            alt={`Avatar de ${friendActivity.friend.name}`}
+                            src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`}
+                            alt={`Avatar de ${activity.username}`}
                             className="w-full h-full object-contain bg-transparent"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${friendActivity.friend.name}&size=s&direction=2&head_direction=3&headonly=1`;
+                              target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`;
                             }}
                           />
                         </div>
                         <div className="flex-1">
                           <button
-                            onClick={() => handleUserClick(friendActivity.friend.name)}
-                            className="font-semibold text-white hover:text-blue-300 transition-colors"
+                            onClick={() => handleUserClick(activity.username)}
+                            className="font-semibold text-white hover:text-blue-300 transition-colors text-left"
                           >
-                            {friendActivity.friend.name}
+                            {activity.username}
                           </button>
-                          <div className="text-xs text-white/60 flex items-center gap-1">
+                          <div className="text-sm text-white/80 mt-1 flex items-center gap-2">
+                            <span className="text-xs">✨</span>
+                            <span>{activity.activity}</span>
+                          </div>
+                          <div className="text-xs text-white/60 flex items-center gap-1 mt-1">
                             <Clock className="w-3 h-3" />
-                            {formatActivityTime(friendActivity.lastActivityTime)}
+                            {formatActivityTime(activity.timestamp)}
                           </div>
                         </div>
-                        {friendActivity.friend.online && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" title="Online" />
-                        )}
-                      </div>
-
-                      {/* Activities */}
-                      <div className="space-y-1 px-1">
-                        {friendActivity.activities.length > 0 ? (
-                          friendActivity.activities.slice(0, 3).map((activity, actIndex) => {
-                            // Handle real activities vs ticker activities
-                            const isRealActivity = 'activity_type' in activity;
-                            const activityText = isRealActivity 
-                              ? (activity as any).activity_description
-                              : (activity as any).activity || (activity as any).description || 'fez uma atividade';
-                            
-                            const activityIcon = isRealActivity ? getActivityIcon((activity as any).activity_type) : '📍';
-                            
-                            return (
-                              <div key={actIndex} className="text-sm text-white/80 pl-11 flex items-center gap-2">
-                                <span className="text-xs">{activityIcon}</span>
-                                <div className="flex items-center gap-2 flex-1">
-                                  <span>{activityText}</span>
-                                  {/* Show badge image for badge activities */}
-                                  {isRealActivity && (activity as any).badgeImageUrl && (
-                                    <img 
-                                      src={(activity as any).badgeImageUrl} 
-                                      alt="Badge" 
-                                      className="w-4 h-4 object-contain"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                      }}
-                                    />
-                                  )}
-                                  {/* Show avatar preview for look changes */}
-                                  {isRealActivity && (activity as any).avatarPreviewUrl && (
-                                    <img 
-                                      src={(activity as any).avatarPreviewUrl} 
-                                      alt="Novo visual" 
-                                      className="w-6 h-6 object-contain border border-white/20 rounded"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <div className="text-sm text-white/60 italic pl-11">
-                            Sem atividades recentes
+                        {activity.hotel && (
+                          <div className="text-xs text-white/40 bg-white/10 px-2 py-1 rounded">
+                            .{activity.hotel}
                           </div>
                         )}
                       </div>
 
                       {/* Subtle divider between activities */}
-                      {index < friendsActivities.length - 1 && (
-                        <div className="w-full h-px bg-white/10 my-4" />
+                      {index < activities.length - 1 && (
+                        <div className="w-full h-px bg-white/10 my-2" />
                       )}
                     </div>
                   ))}
+                  {hasNextPage && (
+                    <div className="flex justify-center py-4">
+                      <Button
+                        variant="ghost"
+                        onClick={() => fetchNextPage()}
+                        className="text-white/70 hover:text-white hover:bg-white/10"
+                      >
+                        Carregar mais atividades
+                      </Button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-8">
