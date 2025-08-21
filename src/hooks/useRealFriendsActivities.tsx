@@ -108,55 +108,97 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
 
       console.log(`[✅ REAL ACTIVITIES] After filtering: ${filteredActivities.length} activities from friends`);
 
-      // Process and enhance the activities data
-      const processedActivities: RealFriendActivity[] = filteredActivities.map((activity) => {
-        let badgeImageUrl: string | undefined;
-        let avatarPreviewUrl: string | undefined;
-        let enrichedDescription = activity.activity_description;
-        
-        try {
-          // Parse new_data if it's a string
-          const newData = activity.new_data ? 
-            (typeof activity.new_data === 'string' ? JSON.parse(activity.new_data) : activity.new_data) 
-            : {};
-            
-          // For badge activities
-          if (activity.activity_type === 'badge' && newData.badge_code) {
-            badgeImageUrl = `https://images.habbo.com/c_images/album1584/${newData.badge_code}.gif`;
-            enrichedDescription = `Conquistou o emblema "${newData.badge_name || newData.badge_code}"`;
-          }
-          
-          // For look changes
-          if (activity.activity_type === 'look_change' && newData.figureString) {
-            avatarPreviewUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${newData.figureString}&size=s&direction=2&head_direction=3&action=std`;
-            enrichedDescription = `Mudou o visual`;
-          }
-          
-          // For motto changes
-          if (activity.activity_type === 'motto_change') {
-            enrichedDescription = activity.activity_description || `Mudou seu motto`;
-          }
-          
-          // For status changes (online)
-          if (activity.activity_type === 'status_change') {
-            enrichedDescription = activity.activity_description || `Está online agora`;
-          }
-          
-        } catch (parseError) {
-          console.warn(`[⚠️ REAL ACTIVITIES] Error parsing new_data for activity ${activity.id}:`, parseError);
-        }
+  // ETAPA 2: Deduplicação e Melhoria da Apresentação
+  // Group and deduplicate activities by user and type within a time window
+  const activityGroups = new Map<string, RealFriendActivity[]>();
+  
+  filteredActivities.forEach((activity) => {
+    // Create a key for grouping similar activities
+    const timeWindow = Math.floor(new Date(activity.created_at).getTime() / (60 * 1000)); // 1 minute window
+    const groupKey = `${activity.habbo_name}-${activity.activity_type}-${timeWindow}`;
+    
+    if (!activityGroups.has(groupKey)) {
+      activityGroups.set(groupKey, []);
+    }
+    activityGroups.get(groupKey)!.push(activity);
+  });
 
-        return {
-          ...activity,
-          activity_description: enrichedDescription,
-          badgeImageUrl,
-          avatarPreviewUrl
-        } as RealFriendActivity;
+  // Process and enhance the activities data with deduplication
+  const processedActivities: RealFriendActivity[] = [];
+  
+  activityGroups.forEach((activities, groupKey) => {
+    // Use the most recent activity from each group
+    const latestActivity = activities.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+    
+    let badgeImageUrl: string | undefined;
+    let avatarPreviewUrl: string | undefined;
+    let enrichedDescription = latestActivity.activity_description;
+    let combinedData: any = {};
+    
+    try {
+      // Merge all new_data from grouped activities for richer information
+      activities.forEach(act => {
+        const newData = act.new_data ? 
+          (typeof act.new_data === 'string' ? JSON.parse(act.new_data) : act.new_data) 
+          : {};
+        combinedData = { ...combinedData, ...newData };
       });
+      
+      // For badge activities - show multiple badges if earned together
+      if (latestActivity.activity_type === 'badge' && combinedData.badge_code) {
+        badgeImageUrl = `https://images.habbo.com/c_images/album1584/${combinedData.badge_code}.gif`;
+        const badgeName = combinedData.badge_name || combinedData.badge_code;
+        const badgeCount = activities.length;
+        enrichedDescription = badgeCount > 1 
+          ? `Conquistou ${badgeCount} emblemas (incluindo "${badgeName}")`
+          : `Conquistou o emblema "${badgeName}"`;
+      }
+      
+      // For look changes - use larger avatar for better preview
+      if (latestActivity.activity_type === 'look_change' && combinedData.figureString) {
+        avatarPreviewUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${combinedData.figureString}&size=m&direction=2&head_direction=3&action=std`;
+        const changeCount = activities.length;
+        enrichedDescription = changeCount > 1 
+          ? `Fez ${changeCount} mudanças no visual`
+          : `Mudou o visual`;
+      }
+      
+      // For motto changes - show the actual motto
+      if (latestActivity.activity_type === 'motto_change') {
+        const newMotto = combinedData.motto || combinedData.new_motto;
+        enrichedDescription = newMotto 
+          ? `Mudou seu motto para: "${newMotto}"`
+          : `Mudou seu motto`;
+      }
+      
+      // For status changes (online)
+      if (latestActivity.activity_type === 'status_change') {
+        enrichedDescription = `Está online no hotel`;
+      }
+      
+    } catch (parseError) {
+      console.warn(`[⚠️ REAL ACTIVITIES] Error parsing new_data for activity ${latestActivity.id}:`, parseError);
+    }
 
-      // Determine next cursor and if there are more pages
-      const nextCursor = data && data.length === initialLimit ? data[data.length - 1].created_at : null;
-      const hasMore = data && data.length === initialLimit;
+    processedActivities.push({
+      ...latestActivity,
+      activity_description: enrichedDescription,
+      badgeImageUrl,
+      avatarPreviewUrl,
+      new_data: combinedData // Store merged data
+    } as RealFriendActivity);
+  });
+
+  // Sort deduplicated activities by time
+  processedActivities.sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  // ETAPA 3: Fix do Scroll Infinito - melhorar lógica de paginação
+  const nextCursor = processedActivities.length > 0 ? processedActivities[processedActivities.length - 1].created_at : null;
+  const hasMore = data && data.length === initialLimit && processedActivities.length > 0;
 
       console.log(`[🎯 REAL ACTIVITIES] Page processed: ${processedActivities.length} activities, hasMore: ${hasMore}`);
       

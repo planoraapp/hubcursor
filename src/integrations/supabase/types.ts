@@ -1264,6 +1264,10 @@ export type Database = {
         }
         Returns: number
       }
+      restart_stalled_queue_processing: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       trigger_emergency_processing: {
         Args: {
           p_hotel?: string
