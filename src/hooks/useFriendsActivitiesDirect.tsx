@@ -70,7 +70,8 @@ export const useFriendsActivitiesDirect = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    refetch: refetchActivities
+    refetch: refetchActivities,
+    error
   } = useInfiniteQuery({
     queryKey: ['friendsActivitiesDirect', hotel, friends.join(','), friends.length],
     queryFn: async ({ pageParam = 0 }): Promise<ActivitiesPage> => {
@@ -81,39 +82,55 @@ export const useFriendsActivitiesDirect = () => {
 
       console.log(`[🚀 DIRECT ACTIVITIES] Fetching page with offset: ${pageParam}`);
       console.log(`[🚀 DIRECT ACTIVITIES] Querying activities for ${friends.length} friends (hotel: ${hotel})`);
+      console.log(`[🚀 DIRECT ACTIVITIES] First 5 friends: [${friends.slice(0, 5).join(', ')}]`);
 
-      const { data: response, error } = await supabase.functions.invoke('habbo-friends-activities-direct', {
-        body: {
-          friends,
-          hotel,
-          limit: 50,
-          offset: pageParam
+      try {
+        const { data: response, error } = await supabase.functions.invoke('habbo-friends-activities-direct', {
+          body: {
+            friends,
+            hotel,
+            limit: 50,
+            offset: pageParam
+          }
+        });
+
+        if (error) {
+          console.error('[❌ DIRECT ACTIVITIES] Function error:', error);
+          throw error;
         }
-      });
 
-      if (error) {
-        console.error('[❌ DIRECT ACTIVITIES] Function error:', error);
-        throw error;
+        if (!response) {
+          console.error('[❌ DIRECT ACTIVITIES] No response from function');
+          throw new Error('No response from function');
+        }
+
+        const typedResponse = response as DirectActivityResponse;
+        console.log(`[✅ DIRECT ACTIVITIES] Received ${typedResponse.activities.length} activities`);
+        console.log(`[📊 DIRECT ACTIVITIES] Metadata:`, typedResponse.metadata);
+
+        const nextOffset = typedResponse.activities.length === 50 ? pageParam + 50 : null;
+        const hasMore = nextOffset !== null && nextOffset < friends.length;
+
+        return {
+          activities: typedResponse.activities,
+          nextOffset,
+          hasMore
+        };
+
+      } catch (functionError) {
+        console.error('[❌ DIRECT ACTIVITIES] Function invocation failed:', functionError);
+        throw functionError;
       }
-
-      const typedResponse = response as DirectActivityResponse;
-      console.log(`[✅ DIRECT ACTIVITIES] Received ${typedResponse.activities.length} activities`);
-
-      const nextOffset = typedResponse.activities.length === 50 ? pageParam + 50 : null;
-      const hasMore = nextOffset !== null && nextOffset < friends.length;
-
-      return {
-        activities: typedResponse.activities,
-        nextOffset,
-        hasMore
-      };
     },
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
-    enabled: !profileLoading && friends.length > 0,
+    enabled: !profileLoading && friends.length > 0, // More explicit condition
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      console.log(`[🔄 DIRECT ACTIVITIES] Retry attempt ${failureCount}, error:`, error);
+      return failureCount < 3;
+    },
     refetchInterval: 60 * 1000, // Auto-refresh every minute
   });
 
@@ -134,6 +151,9 @@ export const useFriendsActivitiesDirect = () => {
   };
 
   console.log(`[📊 DIRECT ACTIVITIES] Total activities loaded: ${activities.length}`);
+  console.log(`[📊 DIRECT ACTIVITIES] Query enabled: ${!profileLoading && friends.length > 0}`);
+  console.log(`[📊 DIRECT ACTIVITIES] Profile loading: ${profileLoading}, Friends count: ${friends.length}`);
+  console.log(`[📊 DIRECT ACTIVITIES] Is loading: ${isLoading}, Has error:`, error);
 
   return {
     activities,
@@ -144,6 +164,7 @@ export const useFriendsActivitiesDirect = () => {
     refetch: refetchActivities,
     hotel,
     metadata,
-    friends
+    friends,
+    error
   };
 };
