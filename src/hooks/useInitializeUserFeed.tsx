@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { habboFeedService } from '@/services/habboFeedService';
 import { useUnifiedAuth } from './useUnifiedAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useInitializeUserFeed = () => {
   const { habboAccount } = useUnifiedAuth();
@@ -24,6 +25,21 @@ export const useInitializeUserFeed = () => {
           habbo_id: habboAccount.habbo_id,
           hotel: habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel
         });
+
+        // EMERGENCIAL: Disparar processamento em lote de todos os amigos
+        console.log(`🚨 [InitializeFeed] Disparando processamento emergencial para ${habboAccount.habbo_name}`);
+        
+        const { data, error } = await supabase.rpc('trigger_emergency_processing', {
+          p_user_habbo_name: habboAccount.habbo_name,
+          p_user_habbo_id: habboAccount.habbo_id,
+          p_hotel: habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel
+        });
+
+        if (error) {
+          console.error('❌ [InitializeFeed] Erro no processamento emergencial:', error);
+        } else {
+          console.log('✅ [InitializeFeed] Processamento emergencial disparado:', data);
+        }
 
         // Descobrir usuários online baseado no hotel do usuário
         const hotel = habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel;

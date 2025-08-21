@@ -1264,6 +1264,14 @@ export type Database = {
         }
         Returns: number
       }
+      trigger_emergency_processing: {
+        Args: {
+          p_hotel?: string
+          p_user_habbo_id: string
+          p_user_habbo_name: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
