@@ -34,13 +34,13 @@ export const BadgeActivityRenderer: React.FC<BadgeActivityRendererProps> = ({
           code={badgeInfo.code}
           name={badgeInfo.name}
           size="sm"
-          className="flex-shrink-0 !border-0 !bg-transparent"
+          className="flex-shrink-0 !border-0 !bg-transparent !shadow-none !ring-0 !outline-0 !rounded-none"
           showFallback={true}
           priority={false}
         />
       ) : (
-        <div className="w-8 h-8 bg-transparent flex items-center justify-center flex-shrink-0">
-          <span className="text-xs">🏆</span>
+        <div className="w-8 h-8 bg-transparent border-0 shadow-none flex items-center justify-center flex-shrink-0">
+          <span className="text-xs opacity-60">🏆</span>
         </div>
       )}
       <span className="flex-1">{activityText}</span>

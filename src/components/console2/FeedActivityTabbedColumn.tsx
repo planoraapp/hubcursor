@@ -234,7 +234,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                    {activities.map((activity, index) => (
                      <div key={`${activity.username}-${activity.timestamp}-${index}`} className="space-y-3">
                        {/* Activity Card */}
-                       <div className="flex items-start gap-3 px-2 py-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                       <div className="flex items-start gap-2 p-2 rounded-lg bg-card/30 hover:bg-card/50 transition-colors">
                          <div className="w-8 h-8 flex-shrink-0">
                            <img
                              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${activity.username}&size=s&direction=2&head_direction=3&headonly=1`}
@@ -246,24 +246,23 @@ export const FeedActivityTabbedColumn: React.FC = () => {
                              }}
                            />
                          </div>
-                         <div className="flex-1 min-w-0 -ml-1">
-                           <button
-                             onClick={() => handleUserClick(activity.username)}
-                             className="font-semibold text-white hover:text-blue-300 transition-colors text-left block mb-1"
-                           >
-                             {activity.username}
-                           </button>
-                           <div className="text-sm text-white/80">
-                             <BadgeActivityRenderer
-                               activityText={activity.activity}
-                               className=""
-                             />
-                           </div>
-                           <div className="text-xs text-white/60 flex items-center gap-1 mt-2">
-                             <Clock className="w-3 h-3" />
-                             {formatActivityTime(activity.timestamp)}
-                           </div>
-                         </div>
+                          <div className="flex-1 min-w-0 ml-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <button
+                                onClick={() => handleUserClick(activity.username)}
+                                className="font-medium text-sm text-white hover:text-blue-300 transition-colors truncate"
+                              >
+                                {activity.username}
+                              </button>
+                              <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
+                                {formatActivityTime(activity.timestamp)}
+                              </span>
+                            </div>
+                            <BadgeActivityRenderer 
+                              activityText={activity.activity}
+                              className="text-sm text-muted-foreground/90 -ml-1"
+                            />
+                          </div>
                          {activity.hotel && (
                            <div className="text-xs text-white/40 bg-white/10 px-2 py-1 rounded flex-shrink-0 self-start">
                              .{activity.hotel}

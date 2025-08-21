@@ -8,14 +8,20 @@ interface BadgeActivityInfo {
 export const extractBadgeFromActivity = (activityText: string): BadgeActivityInfo => {
   const text = activityText.toLowerCase().trim();
   
-  // Regex patterns para detectar atividades de badge
+  // Regex patterns expandidos para detectar atividades de badge
   const badgePatterns = [
     /conquistou o emblema (.+)/i,
     /ganhou o badge (.+)/i,
     /recebeu o emblema (.+)/i,
     /obteve o badge (.+)/i,
     /earned badge (.+)/i,
-    /received badge (.+)/i
+    /received badge (.+)/i,
+    /won badge (.+)/i,
+    /got badge (.+)/i,
+    /achieved badge (.+)/i,
+    /unlocked badge (.+)/i,
+    /earned (.+) badge/i,
+    /got (.+) badge/i
   ];
 
   for (const pattern of badgePatterns) {

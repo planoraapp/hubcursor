@@ -178,14 +178,14 @@ export const useFriendsActivitiesDirect = () => {
     initialPageParam: 0,
     // ETAPA 1: Forçar execução sempre (para teste)
     enabled: true, // Removido condição complexa, sempre executar
-    staleTime: 30 * 1000, // Reduzido para 30 segundos
-    gcTime: 2 * 60 * 1000, // Reduzido para 2 minutos
+    staleTime: 15 * 1000, // 15 segundos
+    gcTime: 2 * 60 * 1000, // 2 minutos
     retry: (failureCount, error) => {
       console.log(`🔄 [RETRY] Tentativa ${failureCount + 1}, erro:`, error);
       return failureCount < 2; // Máximo 3 tentativas
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // ETAPA 4: Retry exponencial
-    refetchInterval: 30 * 1000, // Auto-refresh a cada 30 segundos para atividades em tempo real
+    refetchInterval: 15 * 1000, // Auto-refresh a cada 15 segundos para tempo real
   });
 
   // Flatten all pages into single array

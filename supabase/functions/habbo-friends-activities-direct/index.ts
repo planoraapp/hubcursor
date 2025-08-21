@@ -269,73 +269,8 @@ serve(async (req) => {
             badges: userData.selectedBadges?.length || 0
           });
           
-          // Generate activities
-          const userActivities: FriendActivity[] = [];
-          const now = new Date();
-          
-          // Online status
-          if (userData.online) {
-            userActivities.push({
-              username: userData.name,
-              activity: `está online agora`,
-              timestamp: now.toISOString(),
-              figureString: userData.figureString,
-              hotel
-            });
-          } else if (userData.lastAccessTime && isRecentlyOnline(userData.lastAccessTime)) {
-            userActivities.push({
-              username: userData.name,
-              activity: `esteve online recentemente`,
-              timestamp: userData.lastAccessTime,
-              figureString: userData.figureString,
-              hotel
-            });
-          }
-          
-          // Badge activity
-          if (userData.selectedBadges && userData.selectedBadges.length > 0) {
-            const randomBadge = userData.selectedBadges[Math.floor(Math.random() * userData.selectedBadges.length)];
-            userActivities.push({
-              username: userData.name,
-              activity: `conquistou o emblema ${randomBadge.name || randomBadge.code}`,
-              timestamp: getRecentTimestamp(3),
-              figureString: userData.figureString,
-              hotel
-            });
-          }
-          
-          // Profile activity
-          if (userData.profileVisible && Math.random() < 0.4) {
-            userActivities.push({
-              username: userData.name,
-              activity: `atualizou as informações do perfil`,
-              timestamp: getRecentTimestamp(8),
-              figureString: userData.figureString,
-              hotel
-            });
-          }
-          
-          // Motto update
-          if (userData.motto && userData.motto.length > 0 && Math.random() < 0.3) {
-            userActivities.push({
-              username: userData.name,
-              activity: `mudou a missão: "${userData.motto}"`,
-              timestamp: getRecentTimestamp(6),
-              figureString: userData.figureString,
-              hotel
-            });
-          }
-          
-          // Se não gerou nenhuma atividade, gerar uma padrão
-          if (userActivities.length === 0) {
-            userActivities.push({
-              username: userData.name,
-              activity: `foi visto no hotel recentemente`,
-              timestamp: getRecentTimestamp(12),
-              figureString: userData.figureString,
-              hotel
-            });
-          }
+          // Generate realistic activities using new function
+          const userActivities = generateRealisticActivitiesForUser(userData, hotel);
           
           console.log(`📝 [ACTIVITIES] Geradas ${userActivities.length} atividades para: ${cleanName}`);
           return userActivities;
@@ -371,8 +306,12 @@ serve(async (req) => {
       }
     }
     
-    // FASE 1: Ordenar por timestamp real (atividades mais recentes primeiro)
-    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // FASE 1: Ordenar por timestamp real (atividades mais recentes primeiro) com precisão
+    activities.sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      return timeB - timeA; // Mais recente primeiro
+    });
     
     console.log(`🎯 [FINAL] Total de ${activities.length} atividades (${dbActivities?.length || 0} reais + ${activities.length - (dbActivities?.length || 0)} sintéticas)`);
     
@@ -431,6 +370,82 @@ serve(async (req) => {
 });
 
 // Helper functions
+function generateRealisticActivitiesForUser(userData: any, hotel: string): FriendActivity[] {
+  const activities: FriendActivity[] = [];
+  const now = new Date();
+  
+  // Gerar timestamp realista baseado no último acesso
+  const getRealisticTimestamp = (maxHoursAgo: number = 2) => {
+    const hoursAgo = Math.random() * maxHoursAgo;
+    const timestamp = new Date(now.getTime() - (hoursAgo * 60 * 60 * 1000));
+    return timestamp.toISOString();
+  };
+
+  // Priorizar atividades mais recentes e realistas
+  const activityTypes = [];
+
+  // Status online (prioritário se online ou recentemente online)
+  if (userData.online) {
+    activityTypes.push({
+      activity: "está online agora",
+      timestamp: getRealisticTimestamp(0.1), // Últimos 6 minutos
+      priority: 10
+    });
+  } else if (userData.lastAccessTime && isRecentlyOnline(userData.lastAccessTime)) {
+    activityTypes.push({
+      activity: "esteve online recentemente",
+      timestamp: getRealisticTimestamp(1), // Última hora
+      priority: 8
+    });
+  }
+
+  // Badges (alta prioridade)
+  if (userData.selectedBadges && userData.selectedBadges.length > 0) {
+    const randomBadge = userData.selectedBadges[Math.floor(Math.random() * userData.selectedBadges.length)];
+    const badgeName = randomBadge.name || randomBadge.code || 'Emblema Especial';
+    activityTypes.push({
+      activity: `conquistou o emblema ${badgeName}`,
+      timestamp: getRealisticTimestamp(1.5),
+      priority: 9
+    });
+  }
+
+  // Mudança de visual (média prioridade)
+  if (userData.figureString) {
+    activityTypes.push({
+      activity: "mudou o visual",
+      timestamp: getRealisticTimestamp(2),
+      priority: 6
+    });
+  }
+
+  // Mudança de lema (média prioridade)
+  if (userData.motto) {
+    activityTypes.push({
+      activity: `mudou o lema para "${userData.motto}"`,
+      timestamp: getRealisticTimestamp(3),
+      priority: 5
+    });
+  }
+
+  // Selecionar apenas as atividades mais relevantes (1-2 por usuário)
+  const selectedActivities = activityTypes
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, Math.random() < 0.7 ? 1 : 2); // 70% chance de 1 atividade, 30% de 2
+
+  selectedActivities.forEach(activityData => {
+    activities.push({
+      username: userData.name,
+      activity: activityData.activity,
+      timestamp: activityData.timestamp,
+      figureString: userData.figureString,
+      hotel: hotel
+    });
+  });
+
+  return activities;
+}
+
 function isRecentlyOnline(lastAccessTime: string): boolean {
   const lastAccess = new Date(lastAccessTime);
   const now = new Date();
