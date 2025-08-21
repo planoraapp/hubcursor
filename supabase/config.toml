@@ -69,3 +69,6 @@ verify_jwt = false
 
 [functions.templarios-figuredata]
 verify_jwt = false
+
+[functions.habbo-friends-activities-direct]
+verify_jwt = false
