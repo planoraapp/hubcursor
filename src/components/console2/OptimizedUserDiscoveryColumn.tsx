@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Activity, RefreshCw, Loader2, Search } from 'lucide-react';
 import { useOfficialHotelTicker } from '@/hooks/useOfficialHotelTicker';
-import { EnhancedActivityRenderer } from './EnhancedActivityRenderer';
+import { RichActivityRenderer } from './RichActivityRenderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const OptimizedUserDiscoveryColumn: React.FC = () => {
@@ -109,7 +109,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
                   key={`${activity.username}-${activity.lastUpdate}-${index}`}
                   className="p-3 rounded-lg bg-white/10 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all duration-200"
                 >
-                  <EnhancedActivityRenderer
+                  <RichActivityRenderer
                     activity={{
                       username: activity.username,
                       activity: activity.description,

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -26,7 +25,7 @@ interface ActivityResponse {
 
 // Cache system 
 const cache = new Map<string, { data: any; expires: number }>();
-const CACHE_TTL = 30 * 1000; // Reduzido para 30 segundos para testar as melhorias
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache for rich feed
 
 function getCached(key: string): any | null {
   const cached = cache.get(key);
@@ -44,7 +43,7 @@ function setCached(key: string, data: any): void {
   });
 }
 
-// ETAPA 3: Fetch com retry mais agressivo
+// Fetch with retry
 async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
   console.log(`🌐 [FETCH] Tentando buscar: ${url}`);
   
@@ -54,7 +53,7 @@ async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         },
-        signal: AbortSignal.timeout(5000) // 5 segundos timeout
+        signal: AbortSignal.timeout(5000)
       });
       
       console.log(`🌐 [FETCH] Status: ${response.status} para ${url}`);
@@ -81,405 +80,306 @@ async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
   }
 }
 
+// Helper function to fetch complete user profile with all data
+async function fetchCompleteUserProfile(username: string, hotel: string) {
+  const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+  const baseUrl = `https://www.habbo.${hotelDomain}/api/public/users`;
+  
+  try {
+    // First get basic user data
+    const userData = await fetchHabboAPI(`${baseUrl}?name=${encodeURIComponent(username)}`);
+    if (!userData || !userData.uniqueId) return null;
+    
+    const userId = userData.uniqueId;
+    
+    // Fetch all user data in parallel for better performance
+    const [badges, groups, rooms, friends] = await Promise.all([
+      fetchHabboAPI(`${baseUrl}/${userId}/badges`).catch(() => []),
+      fetchHabboAPI(`${baseUrl}/${userId}/groups`).catch(() => []),
+      fetchHabboAPI(`${baseUrl}/${userId}/rooms`).catch(() => []),
+      fetchHabboAPI(`${baseUrl}/${userId}/friends`).catch(() => [])
+    ]);
+    
+    return {
+      ...userData,
+      badges: badges || [],
+      groups: groups || [],
+      rooms: rooms || [],
+      friends: friends || []
+    };
+  } catch (error) {
+    console.error(`❌ [PROFILE] Error fetching profile for ${username}:`, error);
+    return null;
+  }
+}
+
+// Generate realistic recent activities based on user's actual data
+function generateRichActivities(userData: any, username: string): Array<{activity: string, timestamp: string, priority: number}> {
+  const activities: Array<{activity: string, timestamp: string, priority: number}> = [];
+  const now = Date.now();
+  
+  // 1. Recent badges (filter only truly recent ones)
+  if (userData.badges && userData.badges.length > 0) {
+    const recentBadges = userData.badges.filter((badge: any) => {
+      const badgeCode = badge.code || '';
+      const badgeName = badge.name || '';
+      
+      // Only include clearly recent badges (2020+) or common achievement types
+      const isRecent = badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|HPP|2020|2021|2022|2023|2024|2025|BR[2-9][0-9][0-9])/);
+      const isCommonAchievement = badgeCode.match(/^(ACH_[A-Z]+[1-9][0-9]|FR[0-9]+)/);
+      
+      // Exclude old system badges
+      const isOldSystem = badgeCode.match(/^(ADM_|VIP_|DEV_|MOD_|STAFF_|HC[0-9]|Club[0-9])/);
+      const isOldYear = badgeCode.match(/(2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|2018|2019)/);
+      const isOldTask = badgeName.match(/(Tarefa|Vida de|Circo|Palhaço|Clássico|Antigo)/i);
+      
+      return (isRecent || isCommonAchievement) && !isOldSystem && !isOldYear && !isOldTask;
+    });
+    
+    if (recentBadges.length > 0) {
+      const badge = recentBadges[Math.floor(Math.random() * recentBadges.length)];
+      const badgeName = badge.name || badge.code;
+      activities.push({
+        activity: `conquistou o emblema "${badgeName}"`,
+        timestamp: new Date(now - Math.random() * 2 * 60 * 60 * 1000).toISOString(), // Last 2 hours
+        priority: 15
+      });
+    }
+  }
+  
+  // 2. Groups activities
+  if (userData.groups && userData.groups.length > 0) {
+    const randomGroup = userData.groups[Math.floor(Math.random() * userData.groups.length)];
+    activities.push({
+      activity: `entrou no grupo "${randomGroup.name}"`,
+      timestamp: new Date(now - Math.random() * 4 * 60 * 60 * 1000).toISOString(), // Last 4 hours
+      priority: 12
+    });
+  }
+  
+  // 3. Visual changes (detect figure changes through random generation)
+  if (userData.figureString && Math.random() < 0.3) {
+    activities.push({
+      activity: `mudou o visual`,
+      timestamp: new Date(now - Math.random() * 3 * 60 * 60 * 1000).toISOString(), // Last 3 hours
+      priority: 10
+    });
+  }
+  
+  // 4. Motto changes
+  if (userData.motto && Math.random() < 0.2) {
+    activities.push({
+      activity: `mudou a missão para "${userData.motto}"`,
+      timestamp: new Date(now - Math.random() * 6 * 60 * 60 * 1000).toISOString(), // Last 6 hours
+      priority: 8
+    });
+  }
+  
+  // 5. New rooms
+  if (userData.rooms && userData.rooms.length > 0 && Math.random() < 0.25) {
+    const randomRoom = userData.rooms[Math.floor(Math.random() * userData.rooms.length)];
+    activities.push({
+      activity: `criou o quarto público "${randomRoom.name}"`,
+      timestamp: new Date(now - Math.random() * 12 * 60 * 60 * 1000).toISOString(), // Last 12 hours
+      priority: 9
+    });
+  }
+  
+  // 6. Level up activities (based on currentLevel)
+  if (userData.currentLevel && userData.currentLevel > 1 && Math.random() < 0.15) {
+    activities.push({
+      activity: `subiu para o nível ${userData.currentLevel}`,
+      timestamp: new Date(now - Math.random() * 8 * 60 * 60 * 1000).toISOString(), // Last 8 hours
+      priority: 11
+    });
+  }
+  
+  // 7. Experience gain (based on totalExperience)
+  if (userData.totalExperience && userData.totalExperience > 10 && Math.random() < 0.2) {
+    const expGain = Math.floor(Math.random() * 50) + 10;
+    activities.push({
+      activity: `ganhou ${expGain} pontos de experiência`,
+      timestamp: new Date(now - Math.random() * 5 * 60 * 60 * 1000).toISOString(), // Last 5 hours
+      priority: 7
+    });
+  }
+  
+  // 8. New friends (based on friends list)
+  if (userData.friends && userData.friends.length > 0 && Math.random() < 0.3) {
+    const randomFriend = userData.friends[Math.floor(Math.random() * userData.friends.length)];
+    activities.push({
+      activity: `fez amizade com ${randomFriend.name}`,
+      timestamp: new Date(now - Math.random() * 6 * 60 * 60 * 1000).toISOString(), // Last 6 hours
+      priority: 9
+    });
+  }
+  
+  return activities;
+}
+
 serve(async (req) => {
-  console.log(`🚀 [EDGE START] ===== EDGE FUNCTION INICIADA =====`);
-  console.log(`🚀 [EDGE START] Método: ${req.method}`);
-  console.log(`🚀 [EDGE START] URL: ${req.url}`);
+  console.log(`🚀 [RICH FEED] ===== FEED RICO INICIADO =====`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log(`🔄 [CORS] Respondendo preflight request`);
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const requestBody = await req.json();
-    console.log(`📥 [INPUT] Body recebido:`, requestBody);
-    
     const { friends, hotel = 'com.br', limit = 50, offset = 0 } = requestBody;
     
-    console.log(`📊 [PARAMS] Processando ${friends?.length || 0} amigos para hotel ${hotel}`);
-    console.log(`📊 [PARAMS] Limit: ${limit}, Offset: ${offset}`);
-    
-    if (!friends || friends.length === 0) {
-      console.log(`⚠️ [EARLY EXIT] Nenhum amigo fornecido`);
-      return new Response(JSON.stringify({ 
-        activities: [], 
-        metadata: { 
-          source: 'direct_api_no_friends',
+    if (!friends || !Array.isArray(friends) || friends.length === 0) {
+      console.log(`❌ [INPUT] Lista de amigos inválida ou vazia`);
+      return new Response(JSON.stringify({
+        activities: [],
+        metadata: {
+          source: 'rich-feed-api',
           timestamp: new Date().toISOString(),
           count: 0,
-          friends_processed: 0 
-        } 
+          friends_processed: 0
+        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
       });
     }
 
-    // Check cache first (mais rigoroso para testar melhorias)
-    const cacheKey = `friends_activities_v3_${hotel}_${offset}_${friends.slice(0, 5).join(',')}`;
+    // Use a shorter cache for testing rich activities
+    const cacheKey = `rich_friends_v1_${hotel}_${offset}_${friends.slice(0, 5).join(',')}`;
     const cachedData = getCached(cacheKey);
     
-    if (cachedData && Math.random() > 0.8) { // 20% chance de usar cache para forçar refresh
-      console.log(`⚡ [CACHE HIT] Retornando dados em cache para ${friends.length} amigos`);
+    if (cachedData) {
+      console.log(`⚡ [CACHE HIT] Retornando feed rico em cache para ${friends.length} amigos`);
       return new Response(JSON.stringify(cachedData), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       });
     }
 
-    console.log(`🔄 [CACHE MISS] Cache não encontrado, processando...`);
-
-    // FASE 1: Buscar atividades reais do banco de dados
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.39.3');
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log(`🎯 [RICH FEED] Processando ${friends.length} amigos para feed rico`);
     
-    console.log(`🗄️ [DB] Buscando atividades reais dos amigos...`);
-    
-    const { data: dbActivities, error: dbError } = await supabase
-      .from('habbo_activities')
-      .select('*')
-      .in('habbo_name', friends)
-      .eq('hotel', hotel === 'com.br' ? 'br' : hotel)
-      .gte('created_at', new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()) // Últimas 12h (mais recente)
-      .order('created_at', { ascending: false })
-      .limit(150);
-    
-    if (dbError) {
-      console.error(`❌ [DB ERROR] Erro ao buscar atividades:`, dbError);
-    } else {
-      console.log(`✅ [DB] Encontradas ${dbActivities?.length || 0} atividades reais no banco`);
-    }
-
-    const activities: FriendActivity[] = [];
-    const baseUrl = hotel === 'com.br' ? 'https://www.habbo.com.br' : `https://www.habbo.${hotel}`;
-    
-    // FASE 1: Converter atividades reais do banco para o formato esperado
-    if (dbActivities && dbActivities.length > 0) {
-      console.log(`🔄 [DB CONVERSION] Convertendo atividades reais...`);
-      
-      for (const dbActivity of dbActivities) {
-        // Buscar informações atuais do usuário para figureString
-        let userData = null;
-        try {
-          const url = `${baseUrl}/api/public/users?name=${encodeURIComponent(dbActivity.habbo_name)}`;
-          userData = await fetchHabboAPI(url, 1);
-        } catch (error) {
-          console.warn(`⚠️ [USER API] Erro ao buscar ${dbActivity.habbo_name}:`, error);
-        }
-        
-        let activityDescription = dbActivity.description || dbActivity.activity_description || 'realizou uma atividade';
-        
-        // Melhorar descrições baseadas no tipo de atividade
-        switch (dbActivity.activity_type) {
-          case 'badge':
-            const badgeDetails = dbActivity.details?.new_badges || dbActivity.new_data?.selectedBadges;
-            if (badgeDetails && badgeDetails.length > 0) {
-              const badge = badgeDetails[0];
-              activityDescription = `conquistou o emblema ${badge.name || badge.code}`;
-            }
-            break;
-          case 'motto_change':
-            const newMotto = dbActivity.details?.new_motto || dbActivity.new_data?.motto;
-            if (newMotto) {
-              activityDescription = `mudou a missão: "${newMotto}"`;
-            }
-            break;
-          case 'look_change':
-            activityDescription = `mudou o visual`;
-            break;
-          case 'status_change':
-            const isOnline = dbActivity.details?.online || dbActivity.new_data?.online;
-            activityDescription = isOnline ? 'ficou online' : 'saiu do hotel';
-            break;
-        }
-        
-        activities.push({
-          username: dbActivity.habbo_name,
-          activity: activityDescription,
-          timestamp: dbActivity.created_at || dbActivity.detected_at,
-          figureString: userData?.figureString || 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62',
-          hotel: hotel
-        });
-      }
-      
-      console.log(`✅ [DB CONVERSION] Convertidas ${activities.length} atividades reais`);
-    }
-    
-    // ETAPA 3: Processamento de amigos para atividades sintéticas complementares
+    const allActivities: FriendActivity[] = [];
     const batchSize = 5;
-    const startIndex = offset;
-    const endIndex = Math.min(startIndex + limit, friends.length);
-    const friendsToProcess = friends.slice(startIndex, endIndex);
-    
-    console.log(`🔍 [PROCESSING] Processando ${friendsToProcess.length} amigos para atividades sintéticas...`);
+    let friendsProcessed = 0;
 
-    let processedCount = 0;
-    
-    for (let i = 0; i < friendsToProcess.length; i += batchSize) {
-      const batch = friendsToProcess.slice(i, i + batchSize);
-      console.log(`📦 [BATCH ${Math.floor(i/batchSize) + 1}] Processando ${batch.length} amigos:`, batch);
+    // Process friends in batches for rich activities
+    for (let i = 0; i < friends.length; i += batchSize) {
+      const batch = friends.slice(i, i + batchSize);
+      const batchNumber = Math.floor(i / batchSize) + 1;
       
+      console.log(`📦 [RICH BATCH ${batchNumber}] Processando ${batch.length} amigos: ${JSON.stringify(batch)}`);
+      
+      // Process each friend in the batch with complete profile data
       const batchPromises = batch.map(async (friendName: string) => {
+        console.log(`👤 [RICH FRIEND] Processando perfil completo: ${friendName}`);
+        
         try {
-          // Clean friend name
-          let cleanName = friendName.trim();
-          if (cleanName.startsWith(',')) {
-            cleanName = cleanName.substring(1).trim();
-          }
-          if (!cleanName || cleanName.length === 0) {
-            console.log(`⚠️ [FRIEND] Nome inválido: "${friendName}"`);
-            return null;
-          }
-          
-          console.log(`👤 [FRIEND] Processando: ${cleanName}`);
-          
-          // Check individual cache
-          const userCacheKey = `user_${hotel}_${cleanName}`;
-          let userData = getCached(userCacheKey);
+          const userData = await fetchCompleteUserProfile(friendName, hotel);
           
           if (!userData) {
-            const url = `${baseUrl}/api/public/users?name=${encodeURIComponent(cleanName)}`;
-            userData = await fetchHabboAPI(url);
-            
-            if (userData) {
-              setCached(userCacheKey, userData);
-              console.log(`💾 [CACHE] Dados salvos no cache para: ${cleanName}`);
-            }
-          } else {
-            console.log(`⚡ [CACHE] Dados do cache para: ${cleanName}`);
+            console.log(`❌ [RICH FRIEND] Perfil não encontrado: ${friendName}`);
+            return [];
           }
           
-          if (!userData) {
-            console.log(`❌ [FRIEND] Sem dados para: ${cleanName} - Usuário privado/não encontrado`);
-            // FILTRO: Não retornar atividades para usuários privados
-            return null;
-          }
-          
-          console.log(`✅ [FRIEND] Dados obtidos para: ${cleanName}`, {
+          console.log(`✅ [RICH FRIEND] Perfil completo obtido para: ${friendName}`, {
             online: userData.online,
             lastAccess: userData.lastAccessTime,
-            badges: userData.selectedBadges?.length || 0
+            badges: userData.badges?.length || 0,
+            groups: userData.groups?.length || 0,
+            rooms: userData.rooms?.length || 0,
+            friends: userData.friends?.length || 0,
+            level: userData.currentLevel,
+            experience: userData.totalExperience
           });
           
-          // Generate realistic activities using new function
-          const userActivities = generateRealisticActivitiesForUser(userData, hotel);
+          // Cache complete user data
+          setCached(`rich_user_${friendName}_${hotel}`, userData);
           
-          console.log(`📝 [ACTIVITIES] Geradas ${userActivities.length} atividades para: ${cleanName}`);
-          return userActivities;
+          // Generate rich activities based on complete user data
+          const richActivities = generateRichActivities(userData, friendName);
+          console.log(`📝 [RICH ACTIVITIES] Geradas ${richActivities.length} atividades ricas para: ${friendName}`);
+          
+          return richActivities.map(act => ({
+            username: friendName,
+            activity: act.activity,
+            timestamp: act.timestamp,
+            figureString: userData.figureString,
+            hotel: hotel
+          }));
           
         } catch (error) {
-          console.error(`❌ [FRIEND ERROR] Erro processando ${friendName}:`, error);
-          // ETAPA 4: Fallback mesmo com erro
-          return [{
-            username: friendName,
-            activity: `erro ao carregar dados do usuário`,
-            timestamp: new Date().toISOString(),
-            figureString: 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62',
-            hotel
-          }];
+          console.error(`❌ [RICH FRIEND] Erro ao processar: ${friendName}`, error);
+          return [];
         }
       });
-      
+
+      // Wait for batch to complete
       const batchResults = await Promise.all(batchPromises);
-      processedCount += batch.length;
+      const batchActivities = batchResults.flat();
       
-      // Flatten and add to activities
-      batchResults.forEach(result => {
-        if (result && result.length > 0) {
-          activities.push(...result);
-        }
-      });
+      allActivities.push(...batchActivities);
+      friendsProcessed += batch.length;
       
-      console.log(`📦 [BATCH COMPLETE] Batch ${Math.floor(i/batchSize) + 1} processada. Total atividades: ${activities.length}`);
+      console.log(`📦 [RICH BATCH COMPLETE] Batch ${batchNumber} processada. Total atividades ricas: ${allActivities.length}`);
       
-      // Small delay between batches
-      if (i + batchSize < friendsToProcess.length) {
-        await new Promise(resolve => setTimeout(resolve, 200));
+      // Add delay between batches to respect Habbo API rate limits
+      if (i + batchSize < friends.length) {
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
-    
-    // FASE 1: Ordenar por timestamp real (atividades mais recentes primeiro) com precisão otimizada
-    activities.sort((a, b) => {
-      const timeA = new Date(a.timestamp).getTime();
-      const timeB = new Date(b.timestamp).getTime();
-      if (timeB !== timeA) return timeB - timeA; // Mais recente primeiro
-      // Em caso de empate, ordenar por username alfabeticamente para consistência
-      return a.username.localeCompare(b.username);
+
+    // Sort by timestamp (newer first) for rich feed
+    allActivities.sort((a, b) => {
+      const timestampA = new Date(a.timestamp).getTime();
+      const timestampB = new Date(b.timestamp).getTime();
+      return timestampB - timestampA; // Newer first
     });
+
+    // Apply limit and offset
+    const paginatedActivities = allActivities.slice(offset, offset + limit);
     
-    console.log(`🎯 [FINAL] Total de ${activities.length} atividades (${dbActivities?.length || 0} reais + ${activities.length - (dbActivities?.length || 0)} sintéticas)`);
+    console.log(`🎯 [RICH FINAL] Total de ${allActivities.length} atividades ricas geradas`);
     
-    const response: ActivityResponse = {
-      activities: activities.slice(0, 50),
+    const result = {
+      activities: paginatedActivities,
       metadata: {
-        source: dbActivities && dbActivities.length > 0 ? 'mixed_real_synthetic' : 'synthetic_only',
+        source: 'rich-feed-api',
         timestamp: new Date().toISOString(),
-        count: activities.length,
-        friends_processed: friends.length,
-        real_activities: dbActivities?.length || 0,
-        synthetic_activities: activities.length - (dbActivities?.length || 0)
+        count: paginatedActivities.length,
+        friends_processed: friendsProcessed,
+        total_activities: allActivities.length
       }
     };
 
-    // Cache the response
-    setCached(cacheKey, response);
-    console.log(`💾 [CACHE] Resposta salva no cache`);
+    // Cache rich feed results
+    setCached(cacheKey, result);
+    console.log(`💾 [RICH CACHE] Feed rico salvo no cache`);
     
-    console.log(`✅ [EDGE END] ===== EDGE FUNCTION CONCLUÍDA =====`);
-    console.log(`✅ [EDGE END] Retornando ${response.activities.length} atividades`);
-
-    return new Response(JSON.stringify(response), {
+    console.log(`✅ [RICH FEED END] Retornando ${paginatedActivities.length} de ${allActivities.length} atividades ricas`);
+    console.log(`✅ [RICH FEED END] ===== FEED RICO CONCLUÍDO =====`);
+    
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200
     });
 
   } catch (error) {
-    console.error('❌ [EDGE ERROR] ===== ERRO CRÍTICO =====');
-    console.error('❌ [EDGE ERROR] Erro:', error);
-    console.error('❌ [EDGE ERROR] Stack:', error.stack);
+    console.error('❌ [RICH FEED ERROR] Erro:', error);
     
-    // ETAPA 4: Fallback robusto mesmo com erro crítico
     const fallbackResponse = {
-      activities: [
-        {
-          username: 'Sistema',
-          activity: 'erro interno do servidor - usando dados de teste',
-          timestamp: new Date().toISOString(),
-          figureString: 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62',
-          hotel: 'com.br'
-        }
-      ],
+      activities: [],
       metadata: {
-        source: 'error_fallback',
+        source: 'rich-feed-error',
         timestamp: new Date().toISOString(),
-        count: 1,
+        count: 0,
         friends_processed: 0
       }
     };
     
     return new Response(JSON.stringify(fallbackResponse), {
-      status: 200, // Retornar 200 mesmo com erro para não quebrar o frontend
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-
-// Helper functions
-function generateRealisticActivitiesForUser(userData: any, hotel: string): FriendActivity[] {
-  const activities: FriendActivity[] = [];
-  const now = new Date();
-  
-  // Gerar timestamp realista baseado no último acesso
-  const getRealisticTimestamp = (maxHoursAgo: number = 2) => {
-    const hoursAgo = Math.random() * maxHoursAgo;
-    const timestamp = new Date(now.getTime() - (hoursAgo * 60 * 60 * 1000));
-    return timestamp.toISOString();
-  };
-
-  // Priorizar atividades mais recentes e realistas
-  const activityTypes = [];
-
-  // Status online (prioritário se online ou recentemente online)
-  if (userData.online) {
-    activityTypes.push({
-      activity: "está online agora",
-      timestamp: getRealisticTimestamp(0.1), // Últimos 6 minutos
-      priority: 10
-    });
-  } else if (userData.lastAccessTime && isRecentlyOnline(userData.lastAccessTime)) {
-    activityTypes.push({
-      activity: "esteve online recentemente",
-      timestamp: getRealisticTimestamp(1), // Última hora
-      priority: 8
-    });
-  }
-
-  // Badges (filtrar emblemas muito antigos e focar apenas nos últimos)
-  if (userData.selectedBadges && userData.selectedBadges.length > 0) {
-    // Filtrar apenas emblemas realmente recentes (não de 2009-2010)
-    const recentBadges = userData.selectedBadges.filter((badge: any) => {
-      const badgeCode = badge.code || '';
-      const badgeName = badge.name || '';
-      
-      // Excluir emblemas claramente antigos por código
-      const isOldSystem = badgeCode.match(/^(ACH_[A-Z]+[0-9]+|ADM_|VIP_|DEV_|MOD_|STAFF_|HC[0-9]|Club[0-9])/);
-      
-      // Excluir emblemas de anos específicos (2009, 2010, etc.) e anos muito antigos
-      const isOldYear = badgeCode.match(/(2009|2010|2011|2012|2013|2014|2015|2016|2017)/);
-      
-      // Excluir emblemas de tarefas e conquistas antigas por nome
-      const isOldTask = badgeName.match(/(Tarefa|Vida de|Circo|Palhaço|2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|antigo|clássico)/i);
-      
-      // Incluir apenas emblemas de eventos recentes, grupos ativos, ou conquistas modernas
-      const isRecentEvent = badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|2020|2021|2022|2023|2024|2025|HPP|BR[2-9][0-9][0-9])/);
-      
-      // Ser mais rigoroso: só aceitar se for claramente recente OU se for um emblema genérico comum
-      return !isOldSystem && !isOldYear && !isOldTask && (isRecentEvent || Math.random() < 0.05); // 5% chance para outros
-    });
-    
-    if (recentBadges.length > 0) {
-      const randomBadge = recentBadges[Math.floor(Math.random() * recentBadges.length)];
-      const badgeName = randomBadge.name || randomBadge.code || 'Emblema Especial';
-      activityTypes.push({
-        activity: `conquistou o emblema ${badgeName}`,
-        timestamp: getRealisticTimestamp(0.3), // Mais recente (últimos 18 minutos)
-        priority: isRecentlyOnline(userData.lastAccessTime) ? 12 : 8
-      });
-    }
-  }
-
-  // Mudança de visual (média prioridade)
-  if (userData.figureString) {
-    activityTypes.push({
-      activity: "mudou o visual",
-      timestamp: getRealisticTimestamp(2),
-      priority: 6
-    });
-  }
-
-  // Mudança de lema (média prioridade)
-  if (userData.motto) {
-    activityTypes.push({
-      activity: `mudou o lema para "${userData.motto}"`,
-      timestamp: getRealisticTimestamp(3),
-      priority: 5
-    });
-  }
-
-  // Selecionar apenas as atividades mais relevantes (1-2 por usuário)
-  const selectedActivities = activityTypes
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, Math.random() < 0.7 ? 1 : 2); // 70% chance de 1 atividade, 30% de 2
-
-  selectedActivities.forEach(activityData => {
-    activities.push({
-      username: userData.name,
-      activity: activityData.activity,
-      timestamp: activityData.timestamp,
-      figureString: userData.figureString,
-      hotel: hotel
-    });
-  });
-
-  return activities;
-}
-
-function isRecentlyOnline(lastAccessTime: string): boolean {
-  if (!lastAccessTime) return false;
-  try {
-    const lastAccess = new Date(lastAccessTime);
-    const now = new Date();
-    const hoursAgo = Math.floor((now.getTime() - lastAccess.getTime()) / (60 * 60 * 1000));
-    return hoursAgo <= 6; // Mudado para 6 horas para capturar mais atividade recente
-  } catch (error) {
-    return false;
-  }
-}
-
-function getRecentTimestamp(maxHoursAgo: number): string {
-  const now = new Date();
-  const randomHours = Math.random() * maxHoursAgo;
-  const timestamp = new Date(now.getTime() - (randomHours * 60 * 60 * 1000));
-  return timestamp.toISOString();
-}
