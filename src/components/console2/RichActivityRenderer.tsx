@@ -162,21 +162,13 @@ export const RichActivityRenderer: React.FC<RichActivityRendererProps> = ({
   }, [activity.figureString, avatarError]);
 
   return (
-    <div className={cn("flex items-start gap-3 p-3 transition-all duration-200", className)}>
-      {/* Avatar - Larger with transparent background */}
-      <div className="flex-shrink-0 relative">
-        {isImageLoading && (
-          <div className="w-12 h-12 rounded-full animate-pulse flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full bg-white/30"></div>
-          </div>
-        )}
+    <div className={cn("flex items-start gap-3", className)}>
+      {/* Avatar - larger and no border */}
+      <div className="flex-shrink-0">
         <img
           src={avatarUrl}
           alt={`Avatar de ${activity.username}`}
-          className={cn(
-            "w-12 h-12 transition-opacity",
-            isImageLoading ? "opacity-0 absolute inset-0" : "opacity-100"
-          )}
+          className="w-12 h-12 habbo-avatar-no-border"
           onError={() => setAvatarError(true)}
           onLoad={() => setIsImageLoading(false)}
           loading="lazy"
@@ -184,30 +176,29 @@ export const RichActivityRenderer: React.FC<RichActivityRendererProps> = ({
       </div>
       
       {/* Content aligned to the left */}
-      <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">
           {onUserClick ? (
             <button
               onClick={() => onUserClick(activity.username)}
-              className="font-bold text-white hover:text-blue-300 transition-colors cursor-pointer text-sm hover:underline volter-font"
-              style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
+              className="font-bold text-white hover:text-yellow-300 transition-colors text-xs habbo-text-shadow"
             >
               {activity.username}
             </button>
           ) : (
-            <span className="font-bold text-white text-sm volter-font" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+            <span className="font-bold text-white text-xs habbo-text-shadow">
               {activity.username}
             </span>
           )}
-          <span className="text-xs flex-shrink-0">
+          <span className="text-sm flex-shrink-0">
             {getActivityIcon(activity.activity)}
           </span>
-          <span className="text-xs text-white/70 ml-auto tabular-nums font-medium">
+          <span className="text-[10px] text-white/40 ml-auto">
             {formatActivityTime(activity.timestamp)}
           </span>
         </div>
         
-        <p className="text-sm text-white/90 leading-relaxed font-medium" style={{ textShadow: '1px 1px 1px rgba(0,0,0,0.6)' }}>
+        <p className="text-xs text-white/80 leading-tight">
           {activity.activity}
         </p>
 

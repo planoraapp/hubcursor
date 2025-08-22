@@ -78,95 +78,77 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
   }, [activities]);
 
   return (
-    <Card className="h-full flex flex-col bg-[#4A5568] backdrop-blur-md border-white/10 shadow-xl">
-      <CardHeader className="pb-3 border-b border-white/10">
+    <div className="h-full flex flex-col bg-transparent">
+      {/* Header */}
+      <div className="flex-shrink-0 mb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-white font-bold volter-font" style={{ textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black' }}>
-            <Activity className="w-5 h-5" />
-            Ticker Oficial
-          </CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/90 bg-white/10 px-2 py-1 rounded-md border border-white/20 font-bold volter-font">
-              {hotel}
+            <Activity className="w-4 h-4 text-white habbo-text-shadow" />
+            <span className="text-sm font-bold text-white habbo-text-shadow">
+              Ticker Oficial
             </span>
-            <span className="text-xs text-white/80 bg-green-500/20 px-2 py-1 rounded-md border border-green-500/30 font-bold volter-font">
-              {metadata?.count || 0} usuários
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-colors"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-            </Button>
+            {metadata?.hotel && (
+              <span className="text-xs text-white/60 habbo-text-shadow">
+                • {metadata.hotel.toUpperCase()}
+              </span>
+            )}
           </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="text-white/80 hover:text-white p-1 transition-colors"
+          >
+            {isLoading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3" />
+            )}
+          </button>
         </div>
-        {lastUpdate && !isLoading && (
-          <p className="text-xs text-white/70 mt-1 font-medium">
-            Última atualização: {formatTimeAgo(lastUpdate)}
-          </p>
-        )}
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 overflow-hidden p-4">
-        <ScrollArea className="h-full pr-2">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-white/80">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-blue-400" />
-                <p className="text-sm font-bold volter-font">Carregando ticker oficial...</p>
-                <p className="text-xs text-white/60 mt-1">Conectando ao servidor do Habbo</p>
+      {/* Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+          </div>
+        ) : isEmpty ? (
+          <div className="text-center py-6">
+            <Search className="w-8 h-8 mx-auto mb-3 text-white/40" />
+            <p className="text-white/60 text-xs">Nenhuma atividade encontrada</p>
+            <button
+              onClick={handleRefresh}
+              className="mt-3 text-white/80 hover:text-white text-xs border border-black px-2 py-1 hover:bg-white/10 transition-colors"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredActivities.map((userGroup, index) => (
+              <div key={`${userGroup.username}-${userGroup.lastUpdate}-${index}`}>
+                {userGroup.activities.map((activity: any, actIndex: number) => (
+                  <RichActivityRenderer
+                    key={`${activity.username}-${activity.lastUpdate}-${actIndex}`}
+                    activity={{
+                      username: activity.username,
+                      activity: activity.description,
+                      timestamp: activity.lastUpdate,
+                      figureString: activity.profile?.figureString,
+                      hotel: hotel
+                    }}
+                    className="bg-transparent border border-black hover:bg-white/10 transition-colors p-2"
+                  />
+                ))}
+                {index < filteredActivities.length - 1 && (
+                  <div className="w-full h-px bg-white/20 my-1" />
+                )}
               </div>
-            </div>
-          ) : isEmpty ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-white/80">
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-30 text-blue-400" />
-                <p className="text-sm font-bold mb-2 volter-font">Nenhuma atividade no ticker</p>
-                <p className="text-xs text-white/60 mb-4">O servidor oficial pode estar indisponível</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleRefresh}
-                  className="border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-colors"
-                >
-                  <RefreshCw className="w-3 h-3 mr-2" />
-                  Tentar novamente
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredActivities.map((userGroup, index) => (
-                <div
-                  key={`${userGroup.username}-${userGroup.lastUpdate}-${index}`}
-                  className="rounded-lg hover:bg-white/5 transition-all duration-200 border-l-4 border-blue-400/50"
-                >
-                  {userGroup.activities.map((activity: any, actIndex: number) => (
-                    <RichActivityRenderer
-                      key={`${activity.username}-${activity.lastUpdate}-${actIndex}`}
-                      activity={{
-                        username: activity.username,
-                        activity: activity.description,
-                        timestamp: activity.lastUpdate,
-                        figureString: activity.profile?.figureString,
-                        hotel: hotel
-                      }}
-                      className={actIndex > 0 ? "border-t border-white/10 mt-2 pt-2" : ""}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

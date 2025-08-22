@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera, Activity, Clock, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
 import { useFriendsActivitiesDirect } from '@/hooks/useFriendsActivitiesDirect';
 import { useAuth } from '@/hooks/useAuth';
@@ -134,140 +135,137 @@ export const FeedActivityTabbedColumn: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-        <CardHeader className="pb-3 flex-shrink-0">
+      <div className="h-full flex flex-col bg-transparent">
+        <div className="flex-shrink-0 mb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="w-5 h-5" />
-              Feed dos Amigos
-            </CardTitle>
-            <Button
-              size="sm"
-              variant="ghost"
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-white habbo-text-shadow" />
+              <span className="text-sm font-bold text-white habbo-text-shadow">
+                Feed dos Amigos
+              </span>
+            </div>
+            <button
               onClick={handleRefresh}
               disabled={photosLoading || activitiesLoading}
-              className="text-white/80 hover:text-white hover:bg-white/10"
+              className="text-white/80 hover:text-white p-1 transition-colors"
             >
               {(photosLoading || activitiesLoading) ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-3 h-3" />
               )}
-            </Button>
+            </button>
           </div>
-        </CardHeader>
+        </div>
         
-        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col h-full">
-            <TabsList 
-              className={`grid w-full grid-cols-2 bg-white/10 mb-4 transition-all duration-300 ${
-                scrollDirection === 'down' ? '-translate-y-2 opacity-75 scale-95' : 'translate-y-0 opacity-100 scale-100'
-              }`}
-            >
-              <TabsTrigger 
-                value="photos" 
-                className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70"
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                Fotos
-              </TabsTrigger>
-              <TabsTrigger 
-                value="activities" 
-                className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-white/70"
-              >
-                <Activity className="w-4 h-4 mr-2" />
-                Atividades
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent 
-              value="photos" 
-              className="flex-1 min-h-0 space-y-3 pr-2 max-h-[calc(100vh-20rem)]"
-            >
-              <div 
-                ref={activeTab === 'photos' ? scrollContainerRef : undefined}
-                className="overflow-y-auto h-full space-y-3"
-                style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}
-              >
-                {photosLoading ? (
-                  <div className="flex justify-center items-center h-32">
-                    <Loader2 className="w-8 h-8 animate-spin text-white/60" />
-                  </div>
-                ) : friendsPhotos.length > 0 ? (
-                  friendsPhotos.map((photo, index) => (
-                    <PhotoCard
-                      key={photo.id || index}
-                      photo={photo}
-                      onUserClick={handleUserClick}
-                      onLikesClick={handleLikesClick}
-                      onCommentsClick={handleCommentsClick}
-                      showDivider={index < friendsPhotos.length - 1}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <Camera className="w-12 h-12 mx-auto mb-4 text-white/40" />
-                    <p className="text-white/60">Nenhuma foto dos amigos encontrada</p>
-                    <p className="text-white/40 text-sm mt-2">
-                      As fotos dos seus amigos aparecerão aqui
-                    </p>
-                  </div>
+        <div className="flex-1 min-h-0 flex flex-col">
+          {/* Tabs */}
+          <div className="flex-shrink-0 mb-3">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                onClick={() => setActiveTab('photos')}
+                className={cn(
+                  "pixel-nav-button text-[10px] p-2 h-8",
+                  activeTab === 'photos' ? "active" : ""
                 )}
-              </div>
-            </TabsContent>
-            
-            <TabsContent 
-              value="activities" 
-              ref={activeTab === 'activities' ? scrollContainerRef : undefined}
-              className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 max-h-[calc(100vh-20rem)]" 
-              style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}
-            >
-              {activitiesLoading ? (
+                style={{
+                  backgroundColor: activeTab === 'photos' ? '#FDCC00' : '#666666',
+                  color: activeTab === 'photos' ? '#2B2300' : '#FFFFFF'
+                }}
+              >
+                <Camera className="w-3 h-3 mr-1" />
+                Fotos
+              </button>
+              <button
+                onClick={() => setActiveTab('activities')}
+                className={cn(
+                  "pixel-nav-button text-[10px] p-2 h-8",
+                  activeTab === 'activities' ? "active" : ""
+                )}
+                style={{
+                  backgroundColor: activeTab === 'activities' ? '#FDCC00' : '#666666',
+                  color: activeTab === 'activities' ? '#2B2300' : '#FFFFFF'
+                }}
+              >
+                <Activity className="w-3 h-3 mr-1" />
+                Atividades
+              </button>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+            {activeTab === 'photos' ? (
+              photosLoading ? (
                 <div className="flex justify-center items-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/60"></div>
+                  <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+                </div>
+              ) : friendsPhotos.length > 0 ? (
+                friendsPhotos.map((photo, index) => (
+                  <PhotoCard
+                    key={photo.id || index}
+                    photo={photo}
+                    onUserClick={handleUserClick}
+                    onLikesClick={handleLikesClick}
+                    onCommentsClick={handleCommentsClick}
+                    showDivider={index < friendsPhotos.length - 1}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <Camera className="w-8 h-8 mx-auto mb-3 text-white/40" />
+                  <p className="text-white/60 text-xs">Nenhuma foto dos amigos encontrada</p>
+                  <p className="text-white/40 text-[10px] mt-1">
+                    As fotos dos seus amigos aparecerão aqui
+                  </p>
+                </div>
+              )
+            ) : (
+              activitiesLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
                 </div>
               ) : activities.length > 0 ? (
                 <>
-                  <div className="text-xs text-white/60 text-center py-2">
+                  <div className="text-[10px] text-white/60 text-center py-1">
                     Atividades recentes • {activities.length} encontradas
                   </div>
                   {activities.map((activity, index) => (
-                    <div key={`${activity.username}-${activity.timestamp}-${index}`} className="space-y-2">
+                    <div key={`${activity.username}-${activity.timestamp}-${index}`}>
                       <EnhancedActivityRenderer 
                         activity={activity}
-                        className="bg-card/30 hover:bg-card/50 transition-colors border border-white/10"
+                        className="bg-transparent border border-black hover:bg-white/10 transition-colors p-2"
                         onUserClick={handleUserClick}
                       />
                       {index < activities.length - 1 && (
-                        <div className="w-full h-px bg-white/10 my-2" />
+                        <div className="w-full h-px bg-white/20 my-1" />
                       )}
                     </div>
                   ))}
                   {hasNextPage && (
-                    <div className="flex justify-center py-4">
-                      <Button
-                        variant="ghost"
+                    <div className="flex justify-center py-2">
+                      <button
                         onClick={() => fetchNextPage()}
-                        className="text-white/70 hover:text-white hover:bg-white/10"
+                        className="text-white/70 hover:text-white text-xs border border-black px-2 py-1 hover:bg-white/10 transition-colors"
                       >
                         Carregar mais atividades
-                      </Button>
+                      </button>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <Activity className="w-12 h-12 mx-auto mb-4 text-white/40" />
-                  <p className="text-white/60">Nenhuma atividade de amigos encontrada</p>
-                  <p className="text-white/40 text-sm mt-2">
+                <div className="text-center py-6">
+                  <Activity className="w-8 h-8 mx-auto mb-3 text-white/40" />
+                  <p className="text-white/60 text-xs">Nenhuma atividade de amigos encontrada</p>
+                  <p className="text-white/40 text-[10px] mt-1">
                     Atividades dos seus amigos aparecerão aqui
                   </p>
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+              )
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Photo Modals */}
       <PhotoLikesModal
