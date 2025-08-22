@@ -4,7 +4,7 @@ import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MyAccountColumn } from '@/components/console/MyAccountColumn';
 import { FeedActivityTabbedColumn } from '@/components/console2/FeedActivityTabbedColumn';
-import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
+import { OptimizedUserDiscoveryColumn } from '@/components/console2/OptimizedUserDiscoveryColumn';
 import { useAuth } from '@/hooks/useAuth';
 
 const Console: React.FC = () => {
@@ -38,7 +38,7 @@ const Console: React.FC = () => {
               </div>
 
               <div className="w-[320px] flex-shrink-0">
-                <UserSearchColumn />
+                <OptimizedUserDiscoveryColumn />
               </div>
             </div>
           </div>

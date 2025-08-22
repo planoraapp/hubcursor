@@ -6,6 +6,7 @@ import { habboProxyService } from '@/services/habboProxyService';
 interface EnhancedActivityRendererProps {
   activity: HotelFeedActivity | DirectFriendActivity;
   className?: string;
+  onUserClick?: (username: string) => void;
 }
 
 const formatActivityTime = (timestamp: string): string => {
@@ -143,7 +144,8 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
 
 export const EnhancedActivityRenderer: React.FC<EnhancedActivityRendererProps> = ({ 
   activity, 
-  className = "" 
+  className = "",
+  onUserClick
 }) => {
   // Generate avatar URL with fallback
   const avatarUrl = React.useMemo(() => {
@@ -167,11 +169,20 @@ export const EnhancedActivityRenderer: React.FC<EnhancedActivityRendererProps> =
       />
       
       {/* Content */}
-      <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <p className="text-sm text-white/90 font-medium truncate">
-            {activity.username}
-          </p>
+          {onUserClick ? (
+            <button
+              onClick={() => onUserClick(activity.username)}
+              className="text-sm text-white/90 font-medium truncate hover:text-blue-300 transition-colors"
+            >
+              {activity.username}
+            </button>
+          ) : (
+            <p className="text-sm text-white/90 font-medium truncate">
+              {activity.username}
+            </p>
+          )}
           <span className="text-sm flex-shrink-0">
             {getActivityIcon(activity)}
           </span>

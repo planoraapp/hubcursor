@@ -142,9 +142,9 @@ serve(async (req) => {
       .select('*')
       .in('habbo_name', friends)
       .eq('hotel', hotel === 'com.br' ? 'br' : hotel)
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Últimas 24h
+      .gte('created_at', new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()) // Últimas 12h (mais recente)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(150);
     
     if (dbError) {
       console.error(`❌ [DB ERROR] Erro ao buscar atividades:`, dbError);
@@ -300,11 +300,13 @@ serve(async (req) => {
       }
     }
     
-    // FASE 1: Ordenar por timestamp real (atividades mais recentes primeiro) com precisão
+    // FASE 1: Ordenar por timestamp real (atividades mais recentes primeiro) com precisão otimizada
     activities.sort((a, b) => {
       const timeA = new Date(a.timestamp).getTime();
       const timeB = new Date(b.timestamp).getTime();
-      return timeB - timeA; // Mais recente primeiro
+      if (timeB !== timeA) return timeB - timeA; // Mais recente primeiro
+      // Em caso de empate, ordenar por username alfabeticamente para consistência
+      return a.username.localeCompare(b.username);
     });
     
     console.log(`🎯 [FINAL] Total de ${activities.length} atividades (${dbActivities?.length || 0} reais + ${activities.length - (dbActivities?.length || 0)} sintéticas)`);
