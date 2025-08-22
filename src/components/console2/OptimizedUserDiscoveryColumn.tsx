@@ -9,10 +9,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const OptimizedUserDiscoveryColumn: React.FC = () => {
   const { activities, isLoading, error, refetch, hotel, metadata } = useOfficialHotelTicker({
-    limit: 20
+    limit: 15
   });
   
-  const isEmpty = !isLoading && activities.length === 0;
+  const isEmpty = !isLoading && (!activities || activities.length === 0);
   const lastUpdate = metadata?.timestamp;
 
   const handleRefresh = () => {

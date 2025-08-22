@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const hotel = url.searchParams.get('hotel') || 'com.br';
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
 
     console.log(`🎯 [ticker] Official ticker request for hotel: ${hotel}, limit: ${limit}`);
 

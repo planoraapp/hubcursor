@@ -26,7 +26,7 @@ interface ActivityResponse {
 
 // Cache system 
 const cache = new Map<string, { data: any; expires: number }>();
-const CACHE_TTL = 1 * 60 * 1000; // Reduzido para 1 minuto
+const CACHE_TTL = 30 * 1000; // Reduzido para 30 segundos para testar as melhorias
 
 function getCached(key: string): any | null {
   const cached = cache.get(key);
@@ -116,11 +116,11 @@ serve(async (req) => {
       });
     }
 
-    // Check cache first
-    const cacheKey = `friends_activities_${hotel}_${offset}_${friends.slice(0, 5).join(',')}`;
+    // Check cache first (mais rigoroso para testar melhorias)
+    const cacheKey = `friends_activities_v3_${hotel}_${offset}_${friends.slice(0, 5).join(',')}`;
     const cachedData = getCached(cacheKey);
     
-    if (cachedData) {
+    if (cachedData && Math.random() > 0.8) { // 20% chance de usar cache para forçar refresh
       console.log(`⚡ [CACHE HIT] Retornando dados em cache para ${friends.length} amigos`);
       return new Response(JSON.stringify(cachedData), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -400,17 +400,22 @@ function generateRealisticActivitiesForUser(userData: any, hotel: string): Frien
     // Filtrar apenas emblemas realmente recentes (não de 2009-2010)
     const recentBadges = userData.selectedBadges.filter((badge: any) => {
       const badgeCode = badge.code || '';
+      const badgeName = badge.name || '';
       
-      // Excluir emblemas de conquistas antigas, admins, VIPs, etc.
+      // Excluir emblemas claramente antigos por código
       const isOldSystem = badgeCode.match(/^(ACH_[A-Z]+[0-9]+|ADM_|VIP_|DEV_|MOD_|STAFF_|HC[0-9]|Club[0-9])/);
       
-      // Excluir emblemas de anos específicos (2009, 2010, etc.)
-      const isOldYear = badgeCode.match(/(2009|2010|2011|2012|2013|2014|2015)/);
+      // Excluir emblemas de anos específicos (2009, 2010, etc.) e anos muito antigos
+      const isOldYear = badgeCode.match(/(2009|2010|2011|2012|2013|2014|2015|2016|2017)/);
+      
+      // Excluir emblemas de tarefas e conquistas antigas por nome
+      const isOldTask = badgeName.match(/(Tarefa|Vida de|Circo|Palhaço|2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|antigo|clássico)/i);
       
       // Incluir apenas emblemas de eventos recentes, grupos ativos, ou conquistas modernas
-      const isRecentEvent = badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|2020|2021|2022|2023|2024|2025)/);
+      const isRecentEvent = badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|2020|2021|2022|2023|2024|2025|HPP|BR[2-9][0-9][0-9])/);
       
-      return !isOldSystem && !isOldYear && (isRecentEvent || Math.random() < 0.1); // 10% chance para outros
+      // Ser mais rigoroso: só aceitar se for claramente recente OU se for um emblema genérico comum
+      return !isOldSystem && !isOldYear && !isOldTask && (isRecentEvent || Math.random() < 0.05); // 5% chance para outros
     });
     
     if (recentBadges.length > 0) {
@@ -418,7 +423,7 @@ function generateRealisticActivitiesForUser(userData: any, hotel: string): Frien
       const badgeName = randomBadge.name || randomBadge.code || 'Emblema Especial';
       activityTypes.push({
         activity: `conquistou o emblema ${badgeName}`,
-        timestamp: getRealisticTimestamp(0.5), // Mais recente (últimos 30 minutos)
+        timestamp: getRealisticTimestamp(0.3), // Mais recente (últimos 18 minutos)
         priority: isRecentlyOnline(userData.lastAccessTime) ? 12 : 8
       });
     }
