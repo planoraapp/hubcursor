@@ -51,11 +51,11 @@ const renderActivityThumbnail = (activity: DirectFriendActivity) => {
     return (
       <div className="mt-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/60">Novo visual:</span>
+          <span className="text-xs text-white/70">Novo visual:</span>
           <img
             src={habboProxyService.getAvatarUrl(activity.figureString, 'xs', false)}
             alt="Novo visual"
-            className="w-6 h-6 rounded border border-white/20 bg-[#4A5568]"
+            className="w-8 h-8 rounded-lg"
             loading="lazy"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
@@ -66,18 +66,29 @@ const renderActivityThumbnail = (activity: DirectFriendActivity) => {
     );
   }
   
-  // For badges, extract badge code and show badge image
+  // For badges, extract badge code and show real badge image
   if (activityText.includes('emblema') || activityText.includes('badge')) {
-    // Try to extract badge name from activity text
     const badgeMatch = activity.activity.match(/emblema "([^"]+)"/);
     if (badgeMatch) {
       const badgeName = badgeMatch[1];
+      // Try to extract badge code for real image
+      const codeMatch = activity.activity.match(/([A-Z0-9]{3,})/);
+      const badgeCode = codeMatch ? codeMatch[1] : 'ADM';
+      
       return (
         <div className="mt-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/60">Emblema conquistado:</span>
-            <div className="flex items-center gap-1 bg-yellow-500/20 px-2 py-1 rounded border border-yellow-500/30">
-              <span className="text-xs">🏆</span>
+            <span className="text-xs text-white/70">Emblema:</span>
+            <div className="flex items-center gap-2">
+              <img
+                src={`https://images.habbo.com/c_images/album1584/${badgeCode}.png`}
+                alt={badgeName}
+                className="w-6 h-6"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="gold" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9 8.91 8.26 12 2"/></svg>';
+                }}
+              />
               <span className="text-xs text-yellow-200 font-medium">{badgeName}</span>
             </div>
           </div>
@@ -86,7 +97,7 @@ const renderActivityThumbnail = (activity: DirectFriendActivity) => {
     }
   }
   
-  // For groups, show group info
+  // For groups, show group info with badge
   if (activityText.includes('grupo')) {
     const groupMatch = activity.activity.match(/grupo "([^"]+)"/);
     if (groupMatch) {
@@ -94,9 +105,11 @@ const renderActivityThumbnail = (activity: DirectFriendActivity) => {
       return (
         <div className="mt-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/60">Grupo:</span>
-            <div className="flex items-center gap-1 bg-blue-500/20 px-2 py-1 rounded border border-blue-500/30">
-              <span className="text-xs">🏷️</span>
+            <span className="text-xs text-white/70">Grupo:</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-blue-500/20 border border-blue-500/30 rounded flex items-center justify-center">
+                <span className="text-xs">🏷️</span>
+              </div>
               <span className="text-xs text-blue-200 font-medium">{groupName}</span>
             </div>
           </div>
@@ -113,9 +126,11 @@ const renderActivityThumbnail = (activity: DirectFriendActivity) => {
       return (
         <div className="mt-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/60">Quarto criado:</span>
-            <div className="flex items-center gap-1 bg-green-500/20 px-2 py-1 rounded border border-green-500/30">
-              <span className="text-xs">🏠</span>
+            <span className="text-xs text-white/70">Quarto:</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-green-500/20 border border-green-500/30 rounded flex items-center justify-center">
+                <span className="text-xs">🏠</span>
+              </div>
               <span className="text-xs text-green-200 font-medium">{roomName}</span>
             </div>
           </div>
@@ -147,19 +162,19 @@ export const RichActivityRenderer: React.FC<RichActivityRendererProps> = ({
   }, [activity.figureString, avatarError]);
 
   return (
-    <div className={cn("flex items-start gap-3 transition-all duration-200", className)}>
-      {/* Avatar */}
+    <div className={cn("flex items-start gap-3 p-3 transition-all duration-200", className)}>
+      {/* Avatar - Larger with transparent background */}
       <div className="flex-shrink-0 relative">
         {isImageLoading && (
-          <div className="w-8 h-8 rounded-lg bg-[#4A5568]/40 border border-white/20 animate-pulse flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-white/30"></div>
+          <div className="w-12 h-12 rounded-full animate-pulse flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-white/30"></div>
           </div>
         )}
         <img
           src={avatarUrl}
           alt={`Avatar de ${activity.username}`}
           className={cn(
-            "w-8 h-8 rounded-lg bg-[#4A5568] border border-white/20 transition-opacity",
+            "w-12 h-12 transition-opacity",
             isImageLoading ? "opacity-0 absolute inset-0" : "opacity-100"
           )}
           onError={() => setAvatarError(true)}
@@ -168,30 +183,31 @@ export const RichActivityRenderer: React.FC<RichActivityRendererProps> = ({
         />
       </div>
       
-      {/* Content */}
-      <div className="flex-1 min-w-0 space-y-1">
+      {/* Content aligned to the left */}
+      <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-2">
           {onUserClick ? (
             <button
               onClick={() => onUserClick(activity.username)}
-              className="font-medium text-white hover:text-blue-300 transition-colors cursor-pointer text-sm truncate max-w-[120px] hover:underline"
+              className="font-bold text-white hover:text-blue-300 transition-colors cursor-pointer text-sm hover:underline volter-font"
+              style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
             >
               {activity.username}
             </button>
           ) : (
-            <span className="font-medium text-white text-sm truncate max-w-[120px]">
+            <span className="font-bold text-white text-sm volter-font" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
               {activity.username}
             </span>
           )}
           <span className="text-xs flex-shrink-0">
             {getActivityIcon(activity.activity)}
           </span>
-          <span className="text-xs text-white/60 ml-auto tabular-nums">
+          <span className="text-xs text-white/70 ml-auto tabular-nums font-medium">
             {formatActivityTime(activity.timestamp)}
           </span>
         </div>
         
-        <p className="text-sm text-white/80 leading-relaxed">
+        <p className="text-sm text-white/90 leading-relaxed font-medium" style={{ textShadow: '1px 1px 1px rgba(0,0,0,0.6)' }}>
           {activity.activity}
         </p>
 
