@@ -121,7 +121,7 @@ export const FeedActivityTabbedColumn: React.FC = () => {
   // Show profile if selected
   if (showProfile && selectedUser) {
     return (
-      <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+      <Card className="bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
         <UserProfileInColumn 
           username={selectedUser} 
           onBack={() => {

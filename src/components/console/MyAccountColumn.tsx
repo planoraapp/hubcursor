@@ -40,7 +40,7 @@ export const MyAccountColumn: React.FC = () => {
 
   if (!isLoggedIn || !habboAccount) {
     return (
-      <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full">
+      <Card className="bg-transparent text-white border-0 shadow-none h-full">
         <CardContent className="p-6 text-center space-y-4">
           <User className="w-16 h-16 text-white/50 mx-auto mb-4" />
           <div className="space-y-3">
@@ -55,7 +55,7 @@ export const MyAccountColumn: React.FC = () => {
           <div className="space-y-3 pt-4">
             <a 
               href="/login" 
-              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors volter-font"
+              className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 border border-black transition-colors volter-font"
             >
               🚪 Entrar na Conta
             </a>
@@ -90,11 +90,11 @@ export const MyAccountColumn: React.FC = () => {
   }));
 
   return (
-    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+    <Card className="bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-3 flex-shrink-0">
         <CardTitle className="flex items-center justify-between text-lg">
           <span>Minha Conta</span>
-          <Badge className="bg-green-500/20 text-green-300 border-green-400/30">
+          <Badge className="bg-green-500/20 text-green-300 border border-black">
             Online
           </Badge>
         </CardTitle>
@@ -115,7 +115,7 @@ export const MyAccountColumn: React.FC = () => {
                 }}
               />
               {/* Online Status */}
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#5A6573] rounded-full"></div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-black rounded-full"></div>
               {/* Country Flag - Bottom Right Corner of Avatar */}
               <CountryFlag hotel={(habboAccount as any)?.hotel || 'br'} className="absolute bottom-1 right-1" />
             </div>
@@ -134,15 +134,15 @@ export const MyAccountColumn: React.FC = () => {
 
         {/* Social Stats - Information Only */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
+          <div className="bg-transparent border border-black p-3 text-center">
             <div className="text-xl font-bold text-white">{photoCount}</div>
             <div className="text-xs text-white/60">Fotos</div>
           </div>
-          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
+          <div className="bg-transparent border border-black p-3 text-center">
             <div className="text-xl font-bold text-white">{0}</div>
             <div className="text-xs text-white/60">Seguidores</div>
           </div>
-          <div className="bg-white/10 rounded-lg p-3 text-center border border-white/20">
+          <div className="bg-transparent border border-black p-3 text-center">
             <div className="text-xl font-bold text-white">{0}</div>
             <div className="text-xs text-white/60">Seguindo</div>
           </div>
@@ -152,7 +152,7 @@ export const MyAccountColumn: React.FC = () => {
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setActiveModal('badges')}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
+            className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/20 transition-colors border border-black hover:border-white/30"
           >
             <Trophy className="h-5 w-5 text-yellow-400" />
             <div className="text-center">
@@ -163,7 +163,7 @@ export const MyAccountColumn: React.FC = () => {
           
           <button
             onClick={() => setActiveModal('rooms')}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
+            className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/20 transition-colors border border-black hover:border-white/30"
           >
             <Home className="h-5 w-5 text-green-400" />
             <div className="text-center">
@@ -174,7 +174,7 @@ export const MyAccountColumn: React.FC = () => {
 
           <button
             onClick={() => setActiveModal('friends')}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
+            className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/20 transition-colors border border-black hover:border-white/30"
           >
             <Users className="h-5 w-5 text-pink-400" />
             <div className="text-center">
@@ -185,7 +185,7 @@ export const MyAccountColumn: React.FC = () => {
 
           <button
             onClick={() => setActiveModal('groups')}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-colors border border-white/20 hover:border-white/30"
+            className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/20 transition-colors border border-black hover:border-white/30"
           >
             <Crown className="h-5 w-5 text-purple-400" />
             <div className="text-center">
