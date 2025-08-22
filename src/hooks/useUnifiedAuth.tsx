@@ -53,11 +53,14 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log(`🔄 [useUnifiedAuth] Auth state changed: ${event}`, session?.user?.id);
         setUser(session?.user ?? null);
         if (session?.user) {
-          await loadHabboAccount(session.user.id);
+          // Usar setTimeout para evitar conflitos
+          setTimeout(() => {
+            loadHabboAccount(session.user.id);
+          }, 0);
         } else {
           setHabboAccount(null);
           setLoading(false);
