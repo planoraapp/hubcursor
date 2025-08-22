@@ -395,15 +395,26 @@ function generateRealisticActivitiesForUser(userData: any, hotel: string): Frien
     });
   }
 
-  // Badges (alta prioridade)
+  // Badges (filtrar emblemas muito antigos)
   if (userData.selectedBadges && userData.selectedBadges.length > 0) {
-    const randomBadge = userData.selectedBadges[Math.floor(Math.random() * userData.selectedBadges.length)];
-    const badgeName = randomBadge.name || randomBadge.code || 'Emblema Especial';
-    activityTypes.push({
-      activity: `conquistou o emblema ${badgeName}`,
-      timestamp: getRealisticTimestamp(1.5),
-      priority: 9
+    // Filtrar emblemas muito antigos ou de conquista básica
+    const recentBadges = userData.selectedBadges.filter((badge: any) => {
+      const badgeCode = badge.code || '';
+      // Evitar emblemas muito antigos ou de conquistas básicas dos anos 2000
+      const isOldAchievement = badgeCode.match(/^(ACH_[A-Z]+[0-9]+|ADM_|VIP_|DEV_|MOD_)/);
+      const isBasicClub = badgeCode.match(/^(HC[0-9]|Club[0-9])/);
+      return !isOldAchievement && !isBasicClub;
     });
+    
+    if (recentBadges.length > 0) {
+      const randomBadge = recentBadges[Math.floor(Math.random() * recentBadges.length)];
+      const badgeName = randomBadge.name || randomBadge.code || 'Emblema Especial';
+      activityTypes.push({
+        activity: `conquistou o emblema ${badgeName}`,
+        timestamp: getRealisticTimestamp(1.5),
+        priority: isRecentlyOnline(userData.lastAccessTime) ? 11 : 7
+      });
+    }
   }
 
   // Mudança de visual (média prioridade)
@@ -443,10 +454,15 @@ function generateRealisticActivitiesForUser(userData: any, hotel: string): Frien
 }
 
 function isRecentlyOnline(lastAccessTime: string): boolean {
-  const lastAccess = new Date(lastAccessTime);
-  const now = new Date();
-  const minutesAgo = Math.floor((now.getTime() - lastAccess.getTime()) / 60000);
-  return minutesAgo <= 30;
+  if (!lastAccessTime) return false;
+  try {
+    const lastAccess = new Date(lastAccessTime);
+    const now = new Date();
+    const hoursAgo = Math.floor((now.getTime() - lastAccess.getTime()) / (60 * 60 * 1000));
+    return hoursAgo <= 2; // Mudado de 30 minutos para 2 horas
+  } catch (error) {
+    return false;
+  }
 }
 
 function getRecentTimestamp(maxHoursAgo: number): string {

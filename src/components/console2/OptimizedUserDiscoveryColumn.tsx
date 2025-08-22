@@ -37,15 +37,15 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
   };
 
   return (
-    <Card className="h-full flex flex-col bg-white/10 backdrop-blur-sm border-white/20">
-      <CardHeader className="pb-3">
+    <Card className="h-full flex flex-col bg-gradient-to-b from-background/95 to-background/80 backdrop-blur-md border-primary/20 shadow-xl">
+      <CardHeader className="pb-3 border-b border-primary/10">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-white">
+          <CardTitle className="flex items-center gap-2 text-primary font-semibold">
             <Activity className="w-5 h-5" />
             Feed do Hotel
           </CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/60 bg-white/10 px-2 py-1 rounded">
+            <span className="text-xs text-muted-foreground/80 bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
               {hotel}
             </span>
             <Button
@@ -53,7 +53,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
               variant="outline"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="border-white/30 text-white hover:bg-white/10"
+              className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -64,43 +64,50 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
           </div>
         </div>
         {lastUpdate && !isLoading && (
-          <p className="text-xs text-white/40 mt-1">
+          <p className="text-xs text-muted-foreground/60 mt-1">
             Última atualização: {formatTimeAgo(lastUpdate)}
           </p>
         )}
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+      <CardContent className="flex-1 overflow-hidden p-4">
+        <ScrollArea className="h-full pr-2">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-white/70">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                <p>Carregando atividades...</p>
+              <div className="text-center text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
+                <p className="text-sm font-medium">Carregando atividades...</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Buscando feed do hotel</p>
               </div>
             </div>
           ) : isEmpty ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-white/70">
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma atividade encontrada</p>
+              <div className="text-center text-muted-foreground">
+                <Search className="w-12 h-12 mx-auto mb-4 opacity-30 text-primary" />
+                <p className="text-sm font-medium mb-2">Nenhuma atividade encontrada</p>
+                <p className="text-xs text-muted-foreground/60 mb-4">Tente novamente em alguns instantes</p>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleRefresh}
-                  className="mt-2 border-white/30 text-white hover:bg-white/10"
+                  className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
                 >
+                  <RefreshCw className="w-3 h-3 mr-2" />
                   Tentar novamente
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {activities.map((activity, index) => (
-                <EnhancedActivityRenderer
+                <div
                   key={`${activity.username}-${activity.timestamp}-${index}`}
-                  activity={activity}
-                />
+                  className="p-3 rounded-lg bg-card/50 border border-border/50 hover:bg-card/70 hover:border-primary/20 transition-all duration-200"
+                >
+                  <EnhancedActivityRenderer
+                    activity={activity}
+                  />
+                </div>
               ))}
             </div>
           )}

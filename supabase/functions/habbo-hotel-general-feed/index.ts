@@ -228,26 +228,54 @@ serve(async (req) => {
       console.log(`✅ [DB PROCESSING] Processadas ${activities.length} atividades do banco`);
     }
 
-    // If we don't have enough activities, fetch some random users
+    // If we don't have enough activities, get random users from the database
     if (activities.length < limit) {
       console.log(`🎲 [RANDOM USERS] Buscando usuários aleatórios para completar feed...`);
       
-      // Get some random users from our database or use fallback
+      // Get random users from our database (using created_at since last_seen doesn't exist)
       const { data: randomUsers } = await supabase
         .from('habbo_accounts')
-        .select('habbo_name')
+        .select('habbo_name, figure_string, motto')
         .eq('hotel', hotel === 'com.br' ? 'br' : hotel)
-        .gte('last_seen', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .order('last_seen', { ascending: false })
-        .limit(20);
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 7 dias
+        .order('created_at', { ascending: false })
+        .limit(30);
       
-      const usernames = randomUsers?.map(u => u.habbo_name) || [
-        'HabboUser1', 'CoolPlayer', 'PixelArt', 'RoomMaster', 'FashionStar'
-      ];
-      
-      // Generate synthetic activities for random users
-      for (const username of usernames.slice(0, Math.min(10, limit - activities.length))) {
-        try {
+      if (randomUsers && randomUsers.length > 0) {
+        console.log(`📋 [DB USERS] Encontrados ${randomUsers.length} usuários do banco de dados`);
+        
+        // Use database users for synthetic activities
+        for (const dbUser of randomUsers.slice(0, Math.min(15, limit - activities.length))) {
+          try {
+            const url = `${baseUrl}/api/public/users?name=${encodeURIComponent(dbUser.habbo_name)}`;
+            const userData = await fetchHabboAPI(url, 1);
+            
+            if (userData) {
+              const syntheticActivities = generateSyntheticActivities(userData, hotel);
+              activities.push(...syntheticActivities.slice(0, 1));
+            } else {
+              // Create minimal activity from database data
+              activities.push({
+                username: dbUser.habbo_name,
+                activity: 'fez login no hotel',
+                timestamp: new Date(Date.now() - Math.random() * 3 * 60 * 60 * 1000).toISOString(),
+                figureString: dbUser.figure_string || 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62',
+                hotel: hotel,
+                type: 'online'
+              });
+            }
+          } catch (error) {
+            console.warn(`⚠️ [RANDOM USER] Erro ao processar ${dbUser.habbo_name}:`, error);
+          }
+          
+          if (activities.length >= limit) break;
+        }
+      } else {
+        console.log(`⚠️ [FALLBACK] Nenhum usuário encontrado no banco, usando dados de fallback mínimos`);
+        
+        // Minimal fallback if no users found
+        const fallbackUsers = ['CoolPlayer', 'PixelArt', 'RoomMaster'];
+        for (const username of fallbackUsers.slice(0, Math.min(3, limit - activities.length))) {
           const url = `${baseUrl}/api/public/users?name=${encodeURIComponent(username)}`;
           const userData = await fetchHabboAPI(url, 1);
           
@@ -255,12 +283,7 @@ serve(async (req) => {
             const syntheticActivities = generateSyntheticActivities(userData, hotel);
             activities.push(...syntheticActivities.slice(0, 1));
           }
-        } catch (error) {
-          console.warn(`⚠️ [RANDOM USER] Erro ao processar ${username}:`, error);
         }
-        
-        // Avoid too many requests
-        if (activities.length >= limit) break;
       }
     }
     
@@ -326,62 +349,82 @@ function generateSyntheticActivities(userData: any, hotel: string): HotelFeedAct
   const activities: HotelFeedActivity[] = [];
   const now = new Date();
   
-  const getRecentTimestamp = (maxHoursAgo: number = 2) => {
+  const getRecentTimestamp = (maxHoursAgo: number = 1.5) => {
     const hoursAgo = Math.random() * maxHoursAgo;
     const timestamp = new Date(now.getTime() - (hoursAgo * 60 * 60 * 1000));
     return timestamp.toISOString();
   };
 
+  // Check if user is recently active
+  const isRecentlyActive = userData.online || (userData.lastAccessTime && 
+    new Date(userData.lastAccessTime).getTime() > (now.getTime() - 2 * 60 * 60 * 1000));
+
   const possibleActivities = [];
 
-  // Online status
+  // Online status - higher priority for recently active users
   if (userData.online) {
     possibleActivities.push({
       type: 'online' as const,
-      activity: "está online",
-      timestamp: getRecentTimestamp(0.1),
-      priority: 10
+      activity: "está online agora",
+      timestamp: getRecentTimestamp(0.05), // Últimos 3 minutos
+      priority: 15
     });
-  }
-
-  // Badges
-  if (userData.selectedBadges && userData.selectedBadges.length > 0) {
-    const badge = userData.selectedBadges[0];
+  } else if (isRecentlyActive) {
     possibleActivities.push({
-      type: 'badge' as const,
-      activity: `conquistou um emblema`,
-      timestamp: getRecentTimestamp(1),
-      priority: 8,
-      details: {
-        newBadges: [{ code: badge.code, name: badge.name || badge.code }]
-      }
+      type: 'online' as const,
+      activity: "esteve online recentemente",
+      timestamp: getRecentTimestamp(0.5),
+      priority: 12
     });
   }
 
-  // Visual change
-  if (userData.figureString) {
+  // Badges - only recent ones, avoid old badges
+  if (userData.selectedBadges && userData.selectedBadges.length > 0) {
+    // Filter out very old achievement badges
+    const recentBadges = userData.selectedBadges.filter((badge: any) => {
+      const badgeCode = badge.code || '';
+      // Avoid very old achievement badges
+      return !badgeCode.match(/^(ACH_|ADM_|VIP_)/);
+    });
+    
+    if (recentBadges.length > 0) {
+      const badge = recentBadges[Math.floor(Math.random() * recentBadges.length)];
+      possibleActivities.push({
+        type: 'badge' as const,
+        activity: `conquistou o emblema ${badge.name || badge.code}`,
+        timestamp: getRecentTimestamp(0.8),
+        priority: isRecentlyActive ? 10 : 6,
+        details: {
+          newBadges: [{ code: badge.code, name: badge.name || badge.code }]
+        }
+      });
+    }
+  }
+
+  // Visual change - only for recently active users
+  if (userData.figureString && isRecentlyActive) {
     possibleActivities.push({
       type: 'look_change' as const,
       activity: "mudou o visual",
-      timestamp: getRecentTimestamp(2),
-      priority: 6
+      timestamp: getRecentTimestamp(1),
+      priority: 8
     });
   }
 
-  // Motto change
-  if (userData.motto) {
+  // Motto change - only if motto exists and user is active
+  if (userData.motto && userData.motto.length > 0 && isRecentlyActive) {
     possibleActivities.push({
       type: 'motto_change' as const,
-      activity: `mudou a missão`,
-      timestamp: getRecentTimestamp(3),
-      priority: 5,
+      activity: `mudou a missão: "${userData.motto}"`,
+      timestamp: getRecentTimestamp(1.2),
+      priority: 7,
       details: {
         newMotto: userData.motto
       }
     });
   }
 
-  // Select the most relevant activity
+  // Select the most relevant activity based on user activity level
   const selectedActivity = possibleActivities
     .sort((a, b) => b.priority - a.priority)[0];
 

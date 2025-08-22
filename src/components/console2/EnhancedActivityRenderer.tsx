@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HotelFeedActivity } from '@/hooks/useHotelGeneralFeed';
 import { DirectFriendActivity } from '@/hooks/useFriendsActivitiesDirect';
 import { habboProxyService } from '@/services/habboProxyService';
+import { cn } from '@/lib/utils';
 
 interface EnhancedActivityRendererProps {
   activity: HotelFeedActivity | DirectFriendActivity;
@@ -67,15 +68,15 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
       {/* New Friends */}
       {details.newFriends && details.newFriends.length > 0 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50">Novos amigos:</span>
+          <span className="text-xs text-muted-foreground/70">Novos amigos:</span>
           <div className="flex gap-1">
             {details.newFriends.slice(0, 3).map((friend, idx) => (
-              <span key={idx} className="text-xs text-white/70 bg-white/10 px-1.5 py-0.5 rounded">
+              <span key={idx} className="text-xs text-foreground/80 bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/20">
                 {friend.name}
               </span>
             ))}
             {details.newFriends.length > 3 && (
-              <span className="text-xs text-white/50">+{details.newFriends.length - 3}</span>
+              <span className="text-xs text-muted-foreground/60">+{details.newFriends.length - 3}</span>
             )}
           </div>
         </div>
@@ -84,10 +85,10 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
       {/* New Badges */}
       {details.newBadges && details.newBadges.length > 0 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50">Emblemas:</span>
+          <span className="text-xs text-muted-foreground/70">Emblemas:</span>
           <div className="flex gap-1">
             {details.newBadges.slice(0, 2).map((badge, idx) => (
-              <div key={idx} className="flex items-center gap-1">
+              <div key={idx} className="flex items-center gap-1 bg-secondary/50 px-2 py-1 rounded-md border border-secondary/30">
                 <img 
                   src={`https://images.habbo.com/c_images/album1584/${badge.code}.png`}
                   alt={badge.name || badge.code}
@@ -96,7 +97,7 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
                     e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/badge/${badge.code}.gif`;
                   }}
                 />
-                <span className="text-xs text-white/70">{badge.name || badge.code}</span>
+                <span className="text-xs text-foreground/80">{badge.name || badge.code}</span>
               </div>
             ))}
           </div>
@@ -106,10 +107,10 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
       {/* New Groups */}
       {details.newGroups && details.newGroups.length > 0 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50">Grupos:</span>
+          <span className="text-xs text-muted-foreground/70">Grupos:</span>
           <div className="flex gap-1">
             {details.newGroups.slice(0, 2).map((group, idx) => (
-              <span key={idx} className="text-xs text-white/70 bg-white/10 px-1.5 py-0.5 rounded">
+              <span key={idx} className="text-xs text-foreground/80 bg-accent/40 px-1.5 py-0.5 rounded-md border border-accent/30">
                 {group.name}
               </span>
             ))}
@@ -120,10 +121,10 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
       {/* New Photos */}
       {details.newPhotos && details.newPhotos.length > 0 && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50">Fotos:</span>
+          <span className="text-xs text-muted-foreground/70">Fotos:</span>
           <div className="flex gap-1">
             {details.newPhotos.slice(0, 2).map((photo, idx) => (
-              <div key={idx} className="w-8 h-8 bg-white/10 rounded border border-white/20 flex items-center justify-center">
+              <div key={idx} className="w-8 h-8 bg-muted/50 rounded border border-border/30 flex items-center justify-center">
                 <span className="text-xs">📸</span>
               </div>
             ))}
@@ -134,8 +135,8 @@ const renderActivityDetails = (activity: HotelFeedActivity | DirectFriendActivit
       {/* New Motto */}
       {details.newMotto && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-white/50">Nova missão:</span>
-          <span className="text-xs text-white/70 italic">"{details.newMotto}"</span>
+          <span className="text-xs text-muted-foreground/70">Nova missão:</span>
+          <span className="text-xs text-foreground/80 italic bg-muted/30 px-2 py-1 rounded-md">"{details.newMotto}"</span>
         </div>
       )}
     </div>
@@ -147,51 +148,66 @@ export const EnhancedActivityRenderer: React.FC<EnhancedActivityRendererProps> =
   className = "",
   onUserClick
 }) => {
+  const [avatarError, setAvatarError] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
   // Generate avatar URL with fallback
   const avatarUrl = React.useMemo(() => {
+    if (avatarError) {
+      return habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
+    }
     if (activity.figureString) {
       return habboProxyService.getAvatarUrl(activity.figureString, 'xs', true);
     }
-    // Default fallback figure
     return habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
-  }, [activity.figureString]);
+  }, [activity.figureString, avatarError]);
 
   return (
-    <div className={`flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border border-white/10 ${className}`}>
+    <div className={cn("flex items-start gap-3 transition-all duration-200", className)}>
       {/* Avatar */}
-      <img
-        src={avatarUrl}
-        alt={activity.username}
-        className="w-8 h-8 rounded-full flex-shrink-0"
-        onError={(e) => {
-          e.currentTarget.src = habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
-        }}
-      />
+      <div className="flex-shrink-0 relative">
+        {isImageLoading && (
+          <div className="w-8 h-8 rounded-lg bg-muted/30 border border-border/20 animate-pulse flex items-center justify-center">
+            <div className="w-3 h-3 rounded-full bg-muted/50"></div>
+          </div>
+        )}
+        <img
+          src={avatarUrl}
+          alt={`Avatar de ${activity.username}`}
+          className={cn(
+            "w-8 h-8 rounded-lg bg-card border border-border/30 transition-opacity",
+            isImageLoading ? "opacity-0 absolute inset-0" : "opacity-100"
+          )}
+          onError={() => setAvatarError(true)}
+          onLoad={() => setIsImageLoading(false)}
+          loading="lazy"
+        />
+      </div>
       
       {/* Content */}
-        <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex items-center gap-2">
           {onUserClick ? (
             <button
               onClick={() => onUserClick(activity.username)}
-              className="text-sm text-white/90 font-medium truncate hover:text-blue-300 transition-colors"
+              className="font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer text-sm truncate max-w-[120px] hover:underline"
             >
               {activity.username}
             </button>
           ) : (
-            <p className="text-sm text-white/90 font-medium truncate">
+            <span className="font-medium text-primary text-sm truncate max-w-[120px]">
               {activity.username}
-            </p>
+            </span>
           )}
-          <span className="text-sm flex-shrink-0">
+          <span className="text-xs flex-shrink-0">
             {getActivityIcon(activity)}
           </span>
-          <p className="text-xs text-white/40 flex-shrink-0">
+          <span className="text-xs text-muted-foreground/70 ml-auto tabular-nums">
             {formatActivityTime(activity.timestamp)}
-          </p>
+          </span>
         </div>
         
-        <p className="text-sm text-white/70 mb-1">
+        <p className="text-sm text-foreground/80 leading-relaxed">
           {activity.activity}
         </p>
 
