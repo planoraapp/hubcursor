@@ -87,9 +87,9 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
             <span className="text-sm font-bold text-white habbo-text-shadow">
               Ticker Oficial
             </span>
-            {metadata?.hotel && (
+            {hotel && (
               <span className="text-xs text-white/60 habbo-text-shadow">
-                • {metadata.hotel.toUpperCase()}
+                • {hotel.toUpperCase()}
               </span>
             )}
           </div>
