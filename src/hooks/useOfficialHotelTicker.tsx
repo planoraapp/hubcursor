@@ -63,10 +63,8 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
   } = useQuery({
     queryKey: ['official-hotel-ticker', hotel, limit],
     queryFn: async (): Promise<OfficialTickerResponse> => {
-      console.log(`📡 [useOfficialHotelTicker] DESABILITADO: Edge function obsoleta`);
+      console.log(`📡 [useOfficialHotelTicker] Fetching from official ticker for ${hotel}`);
       
-      // COMENTADO: Edge function habbo-official-ticker não existe mais
-      /*
       const { data, error } = await supabase.functions.invoke('habbo-official-ticker', {
         body: { hotel, limit }
       });
@@ -82,41 +80,26 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
 
       console.log(`✅ [useOfficialHotelTicker] Retrieved ${data.activities?.length || 0} activities`);
       return data;
-      */
-      
-      // Retorna dados vazios para manter compatibilidade
-      return {
-        success: true,
-        hotel,
-        activities: [],
-        meta: {
-          source: 'database' as const,
-          timestamp: new Date().toISOString(),
-          count: 0,
-          onlineCount: 0,
-          message: 'Sistema em manutenção'
-        }
-      };
     },
-    enabled: false, // DESABILITADO: Edge function não existe
-    refetchInterval: false, // Remove polling
-    staleTime: Infinity,
-    retry: 0,
-    retryDelay: () => 0,
+    enabled: true,
+    refetchInterval: 30 * 1000, // 30 segundos
+    staleTime: 25 * 1000, // 25 segundos
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   return {
-    activities: [],
-    isLoading: false,
-    error: null,
+    activities: response?.activities || [],
+    isLoading,
+    error,
     hotel,
-    metadata: {
-      source: 'database' as const,
+    metadata: response?.meta || {
+      source: 'official' as const,
       timestamp: new Date().toISOString(),
       count: 0,
       onlineCount: 0
     },
-    success: true,
-    refetch: () => Promise.resolve()
+    success: response?.success || false,
+    refetch
   };
 };

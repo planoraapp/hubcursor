@@ -167,15 +167,15 @@ export const EnhancedActivityRenderer: React.FC<EnhancedActivityRendererProps> =
       {/* Avatar */}
       <div className="flex-shrink-0 relative">
         {isImageLoading && (
-          <div className="w-8 h-8 rounded-lg bg-muted/30 border border-border/20 animate-pulse flex items-center justify-center">
-            <div className="w-3 h-3 rounded-full bg-muted/50"></div>
+          <div className="w-8 h-8 rounded-lg bg-[#4A5568]/40 border border-white/20 animate-pulse flex items-center justify-center">
+            <div className="w-3 h-3 rounded-full bg-white/30"></div>
           </div>
         )}
         <img
           src={avatarUrl}
           alt={`Avatar de ${activity.username}`}
           className={cn(
-            "w-8 h-8 rounded-lg bg-card border border-border/30 transition-opacity",
+            "w-8 h-8 rounded-lg bg-[#4A5568] border border-white/20 transition-opacity",
             isImageLoading ? "opacity-0 absolute inset-0" : "opacity-100"
           )}
           onError={() => setAvatarError(true)}
@@ -190,24 +190,24 @@ export const EnhancedActivityRenderer: React.FC<EnhancedActivityRendererProps> =
           {onUserClick ? (
             <button
               onClick={() => onUserClick(activity.username)}
-              className="font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer text-sm truncate max-w-[120px] hover:underline"
+              className="font-medium text-white hover:text-blue-300 transition-colors cursor-pointer text-sm truncate max-w-[120px] hover:underline"
             >
               {activity.username}
             </button>
           ) : (
-            <span className="font-medium text-primary text-sm truncate max-w-[120px]">
+            <span className="font-medium text-white text-sm truncate max-w-[120px]">
               {activity.username}
             </span>
           )}
           <span className="text-xs flex-shrink-0">
             {getActivityIcon(activity)}
           </span>
-          <span className="text-xs text-muted-foreground/70 ml-auto tabular-nums">
+          <span className="text-xs text-white/60 ml-auto tabular-nums">
             {formatActivityTime(activity.timestamp)}
           </span>
         </div>
         
-        <p className="text-sm text-foreground/80 leading-relaxed">
+        <p className="text-sm text-white/80 leading-relaxed">
           {activity.activity}
         </p>
 

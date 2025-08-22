@@ -395,15 +395,22 @@ function generateRealisticActivitiesForUser(userData: any, hotel: string): Frien
     });
   }
 
-  // Badges (filtrar emblemas muito antigos)
+  // Badges (filtrar emblemas muito antigos e focar apenas nos últimos)
   if (userData.selectedBadges && userData.selectedBadges.length > 0) {
-    // Filtrar emblemas muito antigos ou de conquista básica
+    // Filtrar apenas emblemas realmente recentes (não de 2009-2010)
     const recentBadges = userData.selectedBadges.filter((badge: any) => {
       const badgeCode = badge.code || '';
-      // Evitar emblemas muito antigos ou de conquistas básicas dos anos 2000
-      const isOldAchievement = badgeCode.match(/^(ACH_[A-Z]+[0-9]+|ADM_|VIP_|DEV_|MOD_)/);
-      const isBasicClub = badgeCode.match(/^(HC[0-9]|Club[0-9])/);
-      return !isOldAchievement && !isBasicClub;
+      
+      // Excluir emblemas de conquistas antigas, admins, VIPs, etc.
+      const isOldSystem = badgeCode.match(/^(ACH_[A-Z]+[0-9]+|ADM_|VIP_|DEV_|MOD_|STAFF_|HC[0-9]|Club[0-9])/);
+      
+      // Excluir emblemas de anos específicos (2009, 2010, etc.)
+      const isOldYear = badgeCode.match(/(2009|2010|2011|2012|2013|2014|2015)/);
+      
+      // Incluir apenas emblemas de eventos recentes, grupos ativos, ou conquistas modernas
+      const isRecentEvent = badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|2020|2021|2022|2023|2024|2025)/);
+      
+      return !isOldSystem && !isOldYear && (isRecentEvent || Math.random() < 0.1); // 10% chance para outros
     });
     
     if (recentBadges.length > 0) {
@@ -411,8 +418,8 @@ function generateRealisticActivitiesForUser(userData: any, hotel: string): Frien
       const badgeName = randomBadge.name || randomBadge.code || 'Emblema Especial';
       activityTypes.push({
         activity: `conquistou o emblema ${badgeName}`,
-        timestamp: getRealisticTimestamp(1.5),
-        priority: isRecentlyOnline(userData.lastAccessTime) ? 11 : 7
+        timestamp: getRealisticTimestamp(0.5), // Mais recente (últimos 30 minutos)
+        priority: isRecentlyOnline(userData.lastAccessTime) ? 12 : 8
       });
     }
   }
@@ -459,7 +466,7 @@ function isRecentlyOnline(lastAccessTime: string): boolean {
     const lastAccess = new Date(lastAccessTime);
     const now = new Date();
     const hoursAgo = Math.floor((now.getTime() - lastAccess.getTime()) / (60 * 60 * 1000));
-    return hoursAgo <= 2; // Mudado de 30 minutos para 2 horas
+    return hoursAgo <= 6; // Mudado para 6 horas para capturar mais atividade recente
   } catch (error) {
     return false;
   }
