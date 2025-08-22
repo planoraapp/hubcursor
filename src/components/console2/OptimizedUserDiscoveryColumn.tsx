@@ -37,15 +37,15 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
   };
 
   return (
-    <Card className="h-full flex flex-col bg-gradient-to-b from-background/95 to-background/80 backdrop-blur-md border-primary/20 shadow-xl">
-      <CardHeader className="pb-3 border-b border-primary/10">
+    <Card className="h-full flex flex-col bg-[hsl(var(--card))] backdrop-blur-md border-white/10 shadow-xl">
+      <CardHeader className="pb-3 border-b border-white/10">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-primary font-semibold">
             <Activity className="w-5 h-5" />
             Feed do Hotel
           </CardTitle>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground/80 bg-primary/10 px-2 py-1 rounded-md border border-primary/20">
+            <span className="text-xs text-[hsl(var(--muted-foreground))]/80 bg-white/5 px-2 py-1 rounded-md border border-white/10">
               {hotel}
             </span>
             <Button
@@ -53,7 +53,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
               variant="outline"
               onClick={handleRefresh}
               disabled={isLoading}
-              className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
+              className="border-white/20 text-[hsl(var(--foreground))] hover:bg-white/10 hover:border-white/30 transition-colors"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -64,7 +64,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
           </div>
         </div>
         {lastUpdate && !isLoading && (
-          <p className="text-xs text-muted-foreground/60 mt-1">
+          <p className="text-xs text-[hsl(var(--muted-foreground))]/60 mt-1">
             Última atualização: {formatTimeAgo(lastUpdate)}
           </p>
         )}
@@ -74,23 +74,23 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
         <ScrollArea className="h-full pr-2">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
+              <div className="text-center text-[hsl(var(--muted-foreground))]">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-primary" />
                 <p className="text-sm font-medium">Carregando atividades...</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Buscando feed do hotel</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]/60 mt-1">Buscando feed do hotel</p>
               </div>
             </div>
           ) : isEmpty ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center text-muted-foreground">
+              <div className="text-center text-[hsl(var(--muted-foreground))]">
                 <Search className="w-12 h-12 mx-auto mb-4 opacity-30 text-primary" />
                 <p className="text-sm font-medium mb-2">Nenhuma atividade encontrada</p>
-                <p className="text-xs text-muted-foreground/60 mb-4">Tente novamente em alguns instantes</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]/60 mb-4">Tente novamente em alguns instantes</p>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleRefresh}
-                  className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
+                  className="border-white/20 text-[hsl(var(--foreground))] hover:bg-white/10 hover:border-white/30 transition-colors"
                 >
                   <RefreshCw className="w-3 h-3 mr-2" />
                   Tentar novamente
@@ -102,7 +102,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
               {activities.map((activity, index) => (
                 <div
                   key={`${activity.username}-${activity.timestamp}-${index}`}
-                  className="p-3 rounded-lg bg-card/50 border border-border/50 hover:bg-card/70 hover:border-primary/20 transition-all duration-200"
+                  className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
                 >
                   <EnhancedActivityRenderer
                     activity={activity}

@@ -378,22 +378,24 @@ function generateSyntheticActivities(userData: any, hotel: string): HotelFeedAct
     });
   }
 
-  // Badges - only recent ones, avoid old badges
-  if (userData.selectedBadges && userData.selectedBadges.length > 0) {
-    // Filter out very old achievement badges
+  // Badges - filtrar emblemas antigos mais rigorosamente
+  if (userData.selectedBadges && userData.selectedBadges.length > 0 && isRecentlyActive) {
+    // Filtrar emblemas antigos de forma muito mais rigorosa
     const recentBadges = userData.selectedBadges.filter((badge: any) => {
       const badgeCode = badge.code || '';
-      // Avoid very old achievement badges
-      return !badgeCode.match(/^(ACH_|ADM_|VIP_)/);
+      // Lista expandida de códigos antigos para filtrar
+      const isOldBadge = badgeCode.match(/^(ACH_|ADM_|VIP_|DEV_|MOD_|HC[0-9]|Club[0-9]|DE[0-9]|HABBO[0-9]|2009|2008|2007|2010|2006|2005|oldschool|vintage|classic|retro)/i);
+      const isSystemBadge = badgeCode.match(/^(SYS_|TEMP_|TEST_|BOT_)/i);
+      return !isOldBadge && !isSystemBadge;
     });
     
-    if (recentBadges.length > 0) {
+    if (recentBadges.length > 0 && Math.random() < 0.15) { // Reduzir chance para 15%
       const badge = recentBadges[Math.floor(Math.random() * recentBadges.length)];
       possibleActivities.push({
         type: 'badge' as const,
         activity: `conquistou o emblema ${badge.name || badge.code}`,
-        timestamp: getRecentTimestamp(0.8),
-        priority: isRecentlyActive ? 10 : 6,
+        timestamp: getRecentTimestamp(0.3), // Muito mais recente - 18 minutos
+        priority: 8,
         details: {
           newBadges: [{ code: badge.code, name: badge.name || badge.code }]
         }
