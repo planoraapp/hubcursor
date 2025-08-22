@@ -95,6 +95,63 @@ export type Database = {
         }
         Relationships: []
       }
+      detected_changes: {
+        Row: {
+          change_description: string
+          change_details: Json | null
+          change_type: string
+          created_at: string
+          detected_at: string
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          new_snapshot_id: string
+          old_snapshot_id: string | null
+        }
+        Insert: {
+          change_description: string
+          change_details?: Json | null
+          change_type: string
+          created_at?: string
+          detected_at?: string
+          habbo_id: string
+          habbo_name: string
+          hotel?: string
+          id?: string
+          new_snapshot_id: string
+          old_snapshot_id?: string | null
+        }
+        Update: {
+          change_description?: string
+          change_details?: Json | null
+          change_type?: string
+          created_at?: string
+          detected_at?: string
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          new_snapshot_id?: string
+          old_snapshot_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_new_snapshot"
+            columns: ["new_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "user_snapshots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_old_snapshot"
+            columns: ["old_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "user_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discovered_users: {
         Row: {
           created_at: string | null
@@ -1131,6 +1188,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_snapshots: {
+        Row: {
+          badges: Json | null
+          created_at: string
+          figure_string: string | null
+          friends: Json | null
+          groups: Json | null
+          habbo_id: string
+          habbo_name: string
+          hotel: string
+          id: string
+          motto: string | null
+          online: boolean | null
+          raw_profile_data: Json | null
+          rooms: Json | null
+          snapshot_timestamp: string
+        }
+        Insert: {
+          badges?: Json | null
+          created_at?: string
+          figure_string?: string | null
+          friends?: Json | null
+          groups?: Json | null
+          habbo_id: string
+          habbo_name: string
+          hotel?: string
+          id?: string
+          motto?: string | null
+          online?: boolean | null
+          raw_profile_data?: Json | null
+          rooms?: Json | null
+          snapshot_timestamp?: string
+        }
+        Update: {
+          badges?: Json | null
+          created_at?: string
+          figure_string?: string | null
+          friends?: Json | null
+          groups?: Json | null
+          habbo_id?: string
+          habbo_name?: string
+          hotel?: string
+          id?: string
+          motto?: string | null
+          online?: boolean | null
+          raw_profile_data?: Json | null
+          rooms?: Json | null
+          snapshot_timestamp?: string
+        }
+        Relationships: []
+      }
       user_stickers: {
         Row: {
           category: string | null
@@ -1186,6 +1294,10 @@ export type Database = {
         Returns: undefined
       }
       cleanup_old_friends_activities: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_snapshots: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

@@ -218,7 +218,7 @@ function generateRichActivities(userData: any, username: string): Array<{activit
 }
 
 serve(async (req) => {
-  console.log(`🚀 [RICH FEED] ===== FEED RICO INICIADO =====`);
+  console.log(`🚀 [REAL CHANGES FEED] ===== INICIADO =====`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -226,6 +226,13 @@ serve(async (req) => {
   }
 
   try {
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.45.0');
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const requestBody = await req.json();
     const { friends, hotel = 'com.br', limit = 50, offset = 0 } = requestBody;
     
@@ -234,7 +241,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         activities: [],
         metadata: {
-          source: 'rich-feed-api',
+          source: 'real-changes-feed',
           timestamp: new Date().toISOString(),
           count: 0,
           friends_processed: 0
@@ -245,119 +252,137 @@ serve(async (req) => {
       });
     }
 
-    // Use a shorter cache for testing rich activities
-    const cacheKey = `rich_friends_v1_${hotel}_${offset}_${friends.slice(0, 5).join(',')}`;
-    const cachedData = getCached(cacheKey);
+    console.log(`🎯 [REAL CHANGES] Buscando mudanças reais para ${friends.length} amigos`);
     
-    if (cachedData) {
-      console.log(`⚡ [CACHE HIT] Retornando feed rico em cache para ${friends.length} amigos`);
-      return new Response(JSON.stringify(cachedData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      });
+    // Step 1: Check for existing detected changes for these friends
+    const { data: existingChanges } = await supabase
+      .from('detected_changes')
+      .select('*')
+      .eq('hotel', hotel)
+      .in('habbo_name', friends)
+      .gte('detected_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+      .order('detected_at', { ascending: false })
+      .limit(limit);
+
+    console.log(`📊 [EXISTING CHANGES] Found ${existingChanges?.length || 0} existing changes`);
+
+    // Step 2: If we don't have enough changes, trigger change detection for some friends
+    let allActivities: FriendActivity[] = [];
+    
+    if (existingChanges && existingChanges.length > 0) {
+      // Transform existing changes to activity format
+      allActivities = existingChanges.map(change => ({
+        username: change.habbo_name,
+        activity: change.change_description,
+        timestamp: change.detected_at,
+        figureString: '',
+        hotel: change.hotel
+      }));
     }
 
-    console.log(`🎯 [RICH FEED] Processando ${friends.length} amigos para feed rico`);
-    
-    const allActivities: FriendActivity[] = [];
-    const batchSize = 5;
-    let friendsProcessed = 0;
-
-    // Process friends in batches for rich activities
-    for (let i = 0; i < friends.length; i += batchSize) {
-      const batch = friends.slice(i, i + batchSize);
-      const batchNumber = Math.floor(i / batchSize) + 1;
+    // If we need more activities, process some friends to detect new changes
+    if (allActivities.length < limit && friends.length > 0) {
+      const friendsToProcess = friends.slice(0, Math.min(10, friends.length)); // Process up to 10 friends
       
-      console.log(`📦 [RICH BATCH ${batchNumber}] Processando ${batch.length} amigos: ${JSON.stringify(batch)}`);
+      console.log(`🔍 [CHANGE DETECTION] Processing ${friendsToProcess.length} friends for new changes`);
       
-      // Process each friend in the batch with complete profile data
-      const batchPromises = batch.map(async (friendName: string) => {
-        console.log(`👤 [RICH FRIEND] Processando perfil completo: ${friendName}`);
-        
+      const changeDetectionPromises = friendsToProcess.map(async (friendName: string) => {
         try {
+          // Get user data first to get habbo_id
           const userData = await fetchCompleteUserProfile(friendName, hotel);
-          
-          if (!userData) {
-            console.log(`❌ [RICH FRIEND] Perfil não encontrado: ${friendName}`);
+          if (!userData || !userData.uniqueId) {
+            console.log(`❌ [CHANGE DETECTION] No user data for: ${friendName}`);
             return [];
           }
-          
-          console.log(`✅ [RICH FRIEND] Perfil completo obtido para: ${friendName}`, {
-            online: userData.online,
-            lastAccess: userData.lastAccessTime,
-            badges: userData.badges?.length || 0,
-            groups: userData.groups?.length || 0,
-            rooms: userData.rooms?.length || 0,
-            friends: userData.friends?.length || 0,
-            level: userData.currentLevel,
-            experience: userData.totalExperience
+
+          // Call change detector
+          const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-change-detector', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+            },
+            body: JSON.stringify({
+              habbo_id: userData.uniqueId,
+              habbo_name: friendName,
+              hotel: hotel
+            })
           });
-          
-          // Cache complete user data
-          setCached(`rich_user_${friendName}_${hotel}`, userData);
-          
-          // Generate rich activities based on complete user data
-          const richActivities = generateRichActivities(userData, friendName);
-          console.log(`📝 [RICH ACTIVITIES] Geradas ${richActivities.length} atividades ricas para: ${friendName}`);
-          
-          return richActivities.map(act => ({
-            username: friendName,
-            activity: act.activity,
-            timestamp: act.timestamp,
-            figureString: userData.figureString,
-            hotel: hotel
-          }));
-          
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.changes_detected > 0) {
+              console.log(`✅ [CHANGE DETECTION] Found ${result.changes_detected} changes for ${friendName}`);
+              return result.changes.map((change: any) => ({
+                username: friendName,
+                activity: change.description,
+                timestamp: new Date().toISOString(),
+                figureString: userData.figureString || '',
+                hotel: hotel
+              }));
+            }
+          }
         } catch (error) {
-          console.error(`❌ [RICH FRIEND] Erro ao processar: ${friendName}`, error);
-          return [];
+          console.error(`❌ [CHANGE DETECTION] Error processing ${friendName}:`, error);
         }
+        return [];
       });
 
-      // Wait for batch to complete
-      const batchResults = await Promise.all(batchPromises);
-      const batchActivities = batchResults.flat();
+      const newChanges = (await Promise.all(changeDetectionPromises)).flat();
+      allActivities.push(...newChanges);
       
-      allActivities.push(...batchActivities);
-      friendsProcessed += batch.length;
+      console.log(`🔍 [NEW CHANGES] Detected ${newChanges.length} new changes`);
+    }
+
+    // If still no activities, fall back to generating some activities
+    if (allActivities.length === 0) {
+      console.log(`⚠️ [FALLBACK] No real changes found, generating fallback activities`);
       
-      console.log(`📦 [RICH BATCH COMPLETE] Batch ${batchNumber} processada. Total atividades ricas: ${allActivities.length}`);
+      // Select a few friends to generate activities for
+      const sampleFriends = friends.slice(0, Math.min(5, friends.length));
       
-      // Add delay between batches to respect Habbo API rate limits
-      if (i + batchSize < friends.length) {
-        await new Promise(resolve => setTimeout(resolve, 300));
+      for (const friendName of sampleFriends) {
+        try {
+          const userData = await fetchCompleteUserProfile(friendName, hotel);
+          if (userData) {
+            const richActivities = generateRichActivities(userData, friendName);
+            allActivities.push(...richActivities.map(act => ({
+              username: friendName,
+              activity: act.activity,
+              timestamp: act.timestamp,
+              figureString: userData.figureString,
+              hotel: hotel
+            })));
+          }
+        } catch (error) {
+          console.error(`❌ [FALLBACK] Error processing ${friendName}:`, error);
+        }
       }
     }
 
-    // Sort by timestamp (newer first) for rich feed
+    // Sort by timestamp (newer first)
     allActivities.sort((a, b) => {
       const timestampA = new Date(a.timestamp).getTime();
       const timestampB = new Date(b.timestamp).getTime();
-      return timestampB - timestampA; // Newer first
+      return timestampB - timestampA;
     });
 
     // Apply limit and offset
     const paginatedActivities = allActivities.slice(offset, offset + limit);
     
-    console.log(`🎯 [RICH FINAL] Total de ${allActivities.length} atividades ricas geradas`);
-    
     const result = {
       activities: paginatedActivities,
       metadata: {
-        source: 'rich-feed-api',
+        source: 'real-changes-feed',
         timestamp: new Date().toISOString(),
         count: paginatedActivities.length,
-        friends_processed: friendsProcessed,
-        total_activities: allActivities.length
+        friends_processed: friends.length,
+        total_activities: allActivities.length,
+        real_changes_count: existingChanges?.length || 0
       }
     };
-
-    // Cache rich feed results
-    setCached(cacheKey, result);
-    console.log(`💾 [RICH CACHE] Feed rico salvo no cache`);
     
-    console.log(`✅ [RICH FEED END] Retornando ${paginatedActivities.length} de ${allActivities.length} atividades ricas`);
-    console.log(`✅ [RICH FEED END] ===== FEED RICO CONCLUÍDO =====`);
+    console.log(`✅ [REAL CHANGES END] Returning ${paginatedActivities.length} activities (${existingChanges?.length || 0} real changes)`);
     
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -365,12 +390,12 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ [RICH FEED ERROR] Erro:', error);
+    console.error('❌ [REAL CHANGES ERROR] Erro:', error);
     
     const fallbackResponse = {
       activities: [],
       metadata: {
-        source: 'rich-feed-error',
+        source: 'real-changes-error',
         timestamp: new Date().toISOString(),
         count: 0,
         friends_processed: 0
