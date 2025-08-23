@@ -58,15 +58,15 @@ export const UserDiscoveryColumn: React.FC = () => {
   const isLoading = searchQuery.trim() ? isSearching : isDiscovering;
 
   return (
-    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full">
-      <CardHeader>
+    <Card className="bg-[#5A6573] text-white border-0 shadow-none h-full backdrop-blur-sm">
+      <CardHeader className="border-b border-dashed border-white/20">
         <CardTitle className="flex items-center gap-2">
           <Users className="w-5 h-5" />
           Descobrir Usuários
           {isLoading && <Loader2 className="w-4 h-4 animate-spin ml-auto" />}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-4">
         <UserSearchInput 
           onSearch={handleSearch}
           isLoading={isLoading}
@@ -74,7 +74,7 @@ export const UserDiscoveryColumn: React.FC = () => {
         />
 
         {searchError && (
-          <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-red-400/30 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-red-500/20 border border-dashed border-red-400/50 rounded-lg">
             <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
             <span className="text-sm text-red-200">{searchError}</span>
           </div>
@@ -91,7 +91,7 @@ export const UserDiscoveryColumn: React.FC = () => {
         )}
 
         <div 
-          className="grid gap-3 max-h-[calc(100vh-20rem)] overflow-y-auto custom-scrollbar"
+          className="grid gap-4 max-h-[calc(100vh-20rem)] overflow-y-auto custom-scrollbar"
           onScroll={useCallback((e) => {
             const target = e.target as HTMLDivElement;
             const { scrollTop, scrollHeight, clientHeight } = target;

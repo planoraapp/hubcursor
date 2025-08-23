@@ -32,7 +32,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-[#4A5568] text-white border-none h-full flex flex-col overflow-hidden">
+      <Card className="bg-[#4A5568] text-white border-0 h-full flex flex-col overflow-hidden backdrop-blur-sm">
         <CardHeader className="border-b border-dashed border-white/20 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -55,14 +55,14 @@ export const HotelPhotoFeedColumn: React.FC = () => {
           </div>
         </CardHeader>
         
-        <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3 scrollbar-hide">
+        <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4 scrollbar-hide p-4">
           {isLoading ? (
             <div className="flex justify-center items-center h-32">
               <Loader2 className="w-8 h-8 animate-spin text-white/60" />
             </div>
           ) : friendsPhotos.length > 0 ? (
             friendsPhotos.map((photo, index) => (
-              <div key={photo.id || index} className="bg-white/10 p-3 border-t border-dashed border-white/20 first:border-t-0 space-y-3">
+              <div key={photo.id || index} className="bg-white/5 p-4 border border-dashed border-white/10 rounded-lg hover:bg-white/10 hover:border-white/20 transition-all duration-200 space-y-3">
                 {/* User Info - Avatar sem borda circular */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 flex-shrink-0">

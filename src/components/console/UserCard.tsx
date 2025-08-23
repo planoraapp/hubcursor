@@ -49,7 +49,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
   };
 
   return (
-    <Card className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer group">
+    <Card className="bg-white/5 border border-dashed border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer group">
       <CardContent className="p-3">
         <div className="flex items-center gap-3">
           {/* Avatar */}
@@ -147,7 +147,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
 
         {/* Photos Preview */}
         {scrapedPhotos.length > 0 && (
-          <div className="mt-3 pt-2 border-t border-white/10">
+          <div className="mt-3 pt-2 border-t border-dashed border-white/10">
             <div className="flex gap-1 overflow-hidden">
               {scrapedPhotos.slice(0, 3).map((photo, index) => (
                 <div key={index} className="w-8 h-8 bg-white/5 rounded flex-shrink-0 overflow-hidden">

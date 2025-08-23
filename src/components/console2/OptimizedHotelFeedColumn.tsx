@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Radio, RefreshCw, Clock, Wifi, Activity } from 'lucide-react';
@@ -30,8 +29,8 @@ export const OptimizedHotelFeedColumn: React.FC = () => {
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="h-full flex flex-col border-0 bg-background/50 backdrop-blur-sm">
+      <CardHeader className="pb-3 border-b border-dashed border-border/30">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Radio className="w-5 h-5 text-blue-500" />
@@ -112,11 +111,11 @@ export const OptimizedHotelFeedColumn: React.FC = () => {
           )}
 
           {activities.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {activities.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors border-l-2 border-dashed border-primary/20 hover:border-primary/40 pl-4"
                 >
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center">
