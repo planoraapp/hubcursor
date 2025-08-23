@@ -45,8 +45,10 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[habbo-friends-photos] Found ${friends.length} friends for ${username}`);
 
-    // 3. Buscar fotos dos primeiros 20 amigos
-    const friendsToProcess = friends.slice(0, 20);
+    // 3. Buscar fotos de amigos variados, não sempre os mesmos
+    // Randomizar a ordem para ter variedade nas fotos mostradas
+    const shuffledFriends = [...friends].sort(() => Math.random() - 0.5);
+    const friendsToProcess = shuffledFriends.slice(0, Math.min(25, friends.length));
     const allPhotos: any[] = [];
 
     for (const friend of friendsToProcess) {
@@ -57,8 +59,15 @@ Deno.serve(async (req: Request) => {
         if (photosResponse.ok) {
           const photosData = await photosResponse.json();
           
-          // Pegar apenas as 5 fotos mais recentes de cada amigo
-          const recentPhotos = photosData.slice(0, 5).map((photo: any) => {
+          // Ordenar fotos do amigo por timestamp primeiro, depois pegar as mais recentes
+          const sortedPhotos = photosData.sort((a: any, b: any) => {
+            const timeA = parseInt(a.time) || 0;
+            const timeB = parseInt(b.time) || 0;
+            return timeB - timeA; // Mais recente primeiro
+          });
+          
+          // Pegar apenas as 3 fotos mais recentes de cada amigo (reduzido para mais variedade)
+          const recentPhotos = sortedPhotos.slice(0, 3).map((photo: any) => {
             // Parse timestamp correctly - use 'time' field instead of 'creationTime'
             let timestamp = Date.now();
             if (photo.time) {

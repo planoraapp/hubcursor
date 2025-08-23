@@ -282,7 +282,22 @@ serve(async (req) => {
 
     // If we need more activities, process some friends to detect new changes
     if (allActivities.length < limit && friends.length > 0) {
-      const friendsToProcess = friends.slice(0, Math.min(10, friends.length)); // Process up to 10 friends
+      // Use offset to get different friends on each page - circular rotation through all friends
+      const totalFriends = friends.length;
+      const startIndex = offset % totalFriends;
+      const friendsPerBatch = Math.min(15, Math.max(5, Math.floor(totalFriends / 4))); // Dynamic batch size
+      
+      // Get circular slice of friends based on offset
+      let friendsToProcess = [];
+      for (let i = 0; i < friendsPerBatch; i++) {
+        const index = (startIndex + i) % totalFriends;
+        friendsToProcess.push(friends[index]);
+      }
+      
+      // Ensure we get variety by shuffling if we have many friends
+      if (totalFriends > 20) {
+        friendsToProcess = friendsToProcess.sort(() => Math.random() - 0.5);
+      }
       
       console.log(`🔍 [CHANGE DETECTION] Processing ${friendsToProcess.length} friends for new changes`);
       
@@ -338,8 +353,16 @@ serve(async (req) => {
     if (allActivities.length === 0) {
       console.log(`⚠️ [FALLBACK] No real changes found, generating fallback activities`);
       
-      // Select a few friends to generate activities for
-      const sampleFriends = friends.slice(0, Math.min(5, friends.length));
+      // Select different friends based on offset for variety in fallback
+      const totalFriends = friends.length;
+      const startIndex = (offset * 3) % totalFriends; // Different rotation for fallback
+      const sampleSize = Math.min(8, Math.max(3, totalFriends));
+      
+      let sampleFriends = [];
+      for (let i = 0; i < sampleSize; i++) {
+        const index = (startIndex + i) % totalFriends;
+        sampleFriends.push(friends[index]);
+      }
       
       for (const friendName of sampleFriends) {
         try {
