@@ -87,3 +87,6 @@ verify_jwt = false
 
 [functions.habbo-official-ticker]
 verify_jwt = false
+
+[functions.habbo-daily-activities-tracker]
+verify_jwt = false

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompleteProfile } from './useCompleteProfile';
+import { useDailyActivitiesTracker } from './useDailyActivitiesTracker';
 
 interface ChronologicalPhoto {
   id: string;
@@ -21,6 +22,7 @@ interface ChronologicalPhoto {
 
 export const useChronologicalFeedPhotos = (currentUserName: string, hotel: string = 'br') => {
   const { data: profileData, isLoading: profileLoading } = useCompleteProfile(currentUserName, hotel);
+  const { trackUserActivities } = useDailyActivitiesTracker();
   const friends = profileData?.data?.friends || [];
 
   const queryResult = useQuery({
@@ -34,6 +36,11 @@ export const useChronologicalFeedPhotos = (currentUserName: string, hotel: strin
       }
 
       try {
+        // Trigger daily activities tracking for the user first (async, don't wait)
+        if (currentUserName && profileData?.uniqueId) {
+          trackUserActivities(currentUserName, profileData.uniqueId, hotel).catch(console.error);
+        }
+
         // Get friend names for the query
         const friendNames = friends.map(f => f.name).slice(0, 100); // Limit to 100 friends for performance
         
