@@ -27,7 +27,7 @@ serve(async (req) => {
     
     console.log(`🔍 [USER SEARCH] Searching for "${query}" on hotel: ${hotel}`);
 
-    if (!query || query.trim().length < 1) {
+    if (!query || query.trim().length < 2) {
       return new Response(
         JSON.stringify({ users: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -59,7 +59,6 @@ serve(async (req) => {
     // If we need more results, try fuzzy search with common patterns
     if (users.length < limit) {
       const searchPatterns = [
-        searchTerm,
         `!${searchTerm}!`,
         `${searchTerm}!`,
         `!${searchTerm}`,
@@ -67,7 +66,10 @@ serve(async (req) => {
         `_${searchTerm}`,
         `${searchTerm}123`,
         `${searchTerm}1`,
-        `x${searchTerm}x`
+        `x${searchTerm}x`,
+        `${searchTerm}2024`,
+        `${searchTerm}br`,
+        `_${searchTerm}_`
       ];
 
       for (const pattern of searchPatterns) {

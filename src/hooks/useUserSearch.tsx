@@ -14,7 +14,7 @@ export const useUserSearch = () => {
       return;
     }
 
-    if (query.trim().length < 1) {
+    if (query.trim().length < 2) {
       setSearchResults([]);
       setError(null);
       return;
@@ -31,7 +31,7 @@ export const useUserSearch = () => {
         body: { 
           query: query.trim(),
           hotel: 'br',
-          limit: 20 
+          limit: 15 
         }
       });
 
