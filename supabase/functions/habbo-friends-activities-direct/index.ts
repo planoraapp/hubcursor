@@ -375,22 +375,50 @@ serve(async (req) => {
     }
 
     // If still no activities, fall back to generating some activities
+    // Enhanced alphabetical diversity system - rotate through alphabet over time
+    const currentHour = new Date().getHours();
+    const alphabetGroups = [
+      ['A', 'B', 'C', 'D', 'E'], // Group 0
+      ['F', 'G', 'H', 'I', 'J'], // Group 1
+      ['K', 'L', 'M', 'N', 'O'], // Group 2
+      ['P', 'Q', 'R', 'S', 'T'], // Group 3
+      ['U', 'V', 'W', 'X', 'Y', 'Z'] // Group 4
+    ];
+    
+    const currentGroup = currentHour % alphabetGroups.length;
+    const targetLetters = alphabetGroups[currentGroup];
+    
+    console.log(`🔤 [DIVERSITY] Hora ${currentHour}, grupo ${currentGroup}, letras: ${targetLetters.join(',')}`);
+    
+    // If no real activities, use enhanced alphabetical fallback
     if (allActivities.length === 0) {
-      console.log(`⚠️ [FALLBACK] No real changes found, generating fallback activities`);
+      console.log(`⚠️ [FALLBACK] No real changes found, generating fallback with alphabetical diversity`);
       
-      // NOVO: Fallback com rotação melhorada para evitar repetição
-      const totalFriends = friends.length;
+      // Filter friends by current target letters first
+      const priorityFriends = friends.filter(friend => 
+        targetLetters.some(letter => friend.toUpperCase().startsWith(letter))
+      );
+      
+      // Fill remaining slots with other friends
+      const otherFriends = friends.filter(friend => 
+        !targetLetters.some(letter => friend.toUpperCase().startsWith(letter))
+      );
+      
+      // Combine priority friends first, then others
+      const orderedFriends = [...priorityFriends, ...otherFriends];
+      
       const pageNumber = Math.floor(offset / limit);
-      const startIndex = (pageNumber * 5 + Math.floor(Date.now() / (60 * 60 * 1000))) % totalFriends; // Rotação horária
-      const sampleSize = Math.min(12, Math.max(6, Math.floor(totalFriends / 2)));
+      const startIndex = (pageNumber * 3) % orderedFriends.length; // Smaller rotation for better distribution
+      const sampleSize = Math.min(12, orderedFriends.length);
       
       let sampleFriends = [];
       for (let i = 0; i < sampleSize; i++) {
-        const index = (startIndex + i * 2) % totalFriends; // Pular de 2 em 2 para mais variedade
-        sampleFriends.push(friends[index]);
+        const index = (startIndex + i) % orderedFriends.length;
+        sampleFriends.push(orderedFriends[index]);
       }
       
-      console.log(`🎭 [FALLBACK] Página ${pageNumber}, usando amigos ${startIndex} + ${sampleSize} com rotação`);
+      console.log(`🎭 [FALLBACK] Página ${pageNumber}, usando ${sampleFriends.length} amigos (${priorityFriends.length} prioridade)`);
+      console.log(`🎭 [FALLBACK] Amigos selecionados: ${sampleFriends.slice(0, 5).join(', ')}...`);
       
       for (const friendName of sampleFriends) {
         try {

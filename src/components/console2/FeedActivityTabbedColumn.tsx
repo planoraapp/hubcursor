@@ -61,7 +61,8 @@ export const FeedActivityTabbedColumn: React.FC = () => {
     activities, 
     isLoading: activitiesLoading, 
     fetchNextPage,
-    hasNextPage
+    hasNextPage,
+    refetch: refetchActivities
   } = useFriendsActivitiesDirect();
 
   const handleUserClick = (userName: string) => {
@@ -82,8 +83,9 @@ export const FeedActivityTabbedColumn: React.FC = () => {
   const handleRefresh = () => {
     if (activeTab === 'photos') {
       refetchPhotos();
+    } else if (activeTab === 'activities') {
+      refetchActivities();
     }
-    // Para atividades, o hook já tem refetch automático via interval
   };
 
   const formatActivityTime = (timestamp: string) => {

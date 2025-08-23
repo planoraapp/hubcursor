@@ -203,14 +203,14 @@ export const useFriendsActivitiesDirect = () => {
     initialPageParam: 0,
     // ETAPA 1: Forçar execução sempre (para teste)
     enabled: !!habboAccount?.habbo_name && friends.length > 0, // Only execute when user is logged in and has friends
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours cache
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
     retry: (failureCount, error) => {
       console.log(`🔄 [RETRY] Tentativa ${failureCount + 1}, erro:`, error);
       return failureCount < 2; // Máximo 3 tentativas
     },
     retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 2000), // Retry mais rápido
-    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds for better performance
+    refetchInterval: false, // Disabled automatic polling - now on-demand only
   });
 
   // Flatten all pages into single array
