@@ -66,8 +66,8 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
 
   return (
     <>
-      <Card className="h-full flex flex-col">
-        <CardHeader className="pb-3">
+      <Card className="bg-[#4A5568] text-white border-none h-full flex flex-col">
+        <CardHeader className="border-b border-dashed border-white/20 pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Users className="w-5 h-5 text-blue-500" />
@@ -134,7 +134,7 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
             {friendsPhotos.length > 0 && (
               <div className="space-y-6">
                 {friendsPhotos.map((photo) => (
-                  <div key={`${photo.userName}-${photo.id}`} className="space-y-3">
+                  <div key={`${photo.userName}-${photo.id}`} className="p-3 border-t border-dashed border-white/20 first:border-t-0 space-y-3">
                     {/* Header do post */}
                     <div className="flex items-center gap-3">
                       <img

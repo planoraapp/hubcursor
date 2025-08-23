@@ -70,8 +70,8 @@ export const FriendsActivityColumn: React.FC = () => {
   };
 
   return (
-    <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-3 flex-shrink-0">
+    <Card className="bg-[#4A5568] text-white border-none h-full flex flex-col overflow-hidden">
+      <CardHeader className="border-b border-dashed border-white/20 pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Activity className="w-5 h-5" />

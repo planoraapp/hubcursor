@@ -32,8 +32,8 @@ export const HotelPhotoFeedColumn: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-        <CardHeader className="pb-3 flex-shrink-0">
+      <Card className="bg-[#4A5568] text-white border-none h-full flex flex-col overflow-hidden">
+        <CardHeader className="border-b border-dashed border-white/20 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Camera className="w-5 h-5" />
@@ -62,7 +62,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
             </div>
           ) : friendsPhotos.length > 0 ? (
             friendsPhotos.map((photo, index) => (
-              <div key={photo.id || index} className="bg-white/10 rounded-lg p-3 space-y-3">
+              <div key={photo.id || index} className="bg-white/10 p-3 border-t border-dashed border-white/20 first:border-t-0 space-y-3">
                 {/* User Info - Avatar sem borda circular */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 flex-shrink-0">

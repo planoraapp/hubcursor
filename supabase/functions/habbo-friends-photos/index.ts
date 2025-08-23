@@ -45,20 +45,72 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[habbo-friends-photos] Found ${friends.length} friends for ${username}`);
 
-    // 3. NOVO: Sistema inteligente de seleção de amigos para variedade real
+    // 3. NOVO: Sistema inteligente baseado na recência das fotos (não alfabético)
     const totalFriends = friends.length;
-    const maxFriendsToProcess = Math.min(30, Math.max(10, Math.floor(totalFriends * 0.6)));
+    console.log(`[habbo-friends-photos] Analisando atividade fotográfica de ${totalFriends} amigos`);
     
-    // Usar timestamp para criar rotação determinística mas variada
-    const timeBasedSeed = Math.floor(Date.now() / (20 * 60 * 1000)); // Muda a cada 20 minutos
-    const shuffledFriends = [...friends].sort((a, b) => {
-      const hashA = (a.name.charCodeAt(0) + timeBasedSeed) % 1000;
-      const hashB = (b.name.charCodeAt(0) + timeBasedSeed) % 1000;
-      return hashA - hashB;
+    // Primeiro, coletar metadados de fotos recentes de todos os amigos
+    const friendsWithRecentActivity: Array<{
+      friend: any,
+      latestPhotoTime: number,
+      photoCount: number
+    }> = [];
+
+    // Processar em lotes menores para performance
+    const batchSize = 50;
+    for (let i = 0; i < Math.min(totalFriends, batchSize); i++) {
+      const friend = friends[i];
+      try {
+        const friendPhotosUrl = `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/extradata/public/users/${friend.uniqueId}/photos`;
+        const photosResponse = await fetch(friendPhotosUrl);
+        
+        if (photosResponse.ok) {
+          const photosData = await photosResponse.json();
+          if (photosData && photosData.length > 0) {
+            // Encontrar a foto mais recente
+            let latestTime = 0;
+            for (const photo of photosData) {
+              let timestamp = 0;
+              if (photo.time) {
+                let parsedTime = parseInt(photo.time);
+                if (!isNaN(parsedTime)) {
+                  if (parsedTime < 946684800000) {
+                    parsedTime = parsedTime * 1000;
+                  }
+                  timestamp = parsedTime;
+                }
+              }
+              if (timestamp > latestTime) {
+                latestTime = timestamp;
+              }
+            }
+            
+            if (latestTime > 0) {
+              friendsWithRecentActivity.push({
+                friend,
+                latestPhotoTime: latestTime,
+                photoCount: photosData.length
+              });
+            }
+          }
+        }
+      } catch (error) {
+        // Silently continue if friend photos fail
+      }
+    }
+    
+    // Ordenar por atividade recente (fotos mais recentes primeiro)
+    friendsWithRecentActivity.sort((a, b) => {
+      // Priorizar fotos mais recentes, mas também considerar quantidade
+      const timeWeight = (b.latestPhotoTime - a.latestPhotoTime) * 0.8;
+      const countWeight = (b.photoCount - a.photoCount) * 0.2;
+      return timeWeight + countWeight;
     });
     
-    const friendsToProcess = shuffledFriends.slice(0, maxFriendsToProcess);
-    console.log(`[habbo-friends-photos] Processando ${friendsToProcess.length} de ${totalFriends} amigos (rotação temporal)`);
+    const maxFriendsToProcess = Math.min(25, friendsWithRecentActivity.length);
+    const friendsToProcess = friendsWithRecentActivity.slice(0, maxFriendsToProcess).map(f => f.friend);
+    
+    console.log(`[habbo-friends-photos] Processando ${friendsToProcess.length} amigos com atividade fotográfica recente`);
     const allPhotos: any[] = [];
 
     for (const friend of friendsToProcess) {
