@@ -45,10 +45,20 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[habbo-friends-photos] Found ${friends.length} friends for ${username}`);
 
-    // 3. Buscar fotos de amigos variados, não sempre os mesmos
-    // Randomizar a ordem para ter variedade nas fotos mostradas
-    const shuffledFriends = [...friends].sort(() => Math.random() - 0.5);
-    const friendsToProcess = shuffledFriends.slice(0, Math.min(25, friends.length));
+    // 3. NOVO: Sistema inteligente de seleção de amigos para variedade real
+    const totalFriends = friends.length;
+    const maxFriendsToProcess = Math.min(30, Math.max(10, Math.floor(totalFriends * 0.6)));
+    
+    // Usar timestamp para criar rotação determinística mas variada
+    const timeBasedSeed = Math.floor(Date.now() / (20 * 60 * 1000)); // Muda a cada 20 minutos
+    const shuffledFriends = [...friends].sort((a, b) => {
+      const hashA = (a.charCodeAt(0) + timeBasedSeed) % 1000;
+      const hashB = (b.charCodeAt(0) + timeBasedSeed) % 1000;
+      return hashA - hashB;
+    });
+    
+    const friendsToProcess = shuffledFriends.slice(0, maxFriendsToProcess);
+    console.log(`[habbo-friends-photos] Processando ${friendsToProcess.length} de ${totalFriends} amigos (rotação temporal)`);
     const allPhotos: any[] = [];
 
     for (const friend of friendsToProcess) {

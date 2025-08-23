@@ -282,22 +282,26 @@ serve(async (req) => {
 
     // If we need more activities, process some friends to detect new changes
     if (allActivities.length < limit && friends.length > 0) {
-      // Use offset to get different friends on each page - circular rotation through all friends
+      // NOVO: Paginação circular real - diferentes amigos para cada página
       const totalFriends = friends.length;
-      const startIndex = offset % totalFriends;
-      const friendsPerBatch = Math.min(15, Math.max(5, Math.floor(totalFriends / 4))); // Dynamic batch size
+      const friendsPerPage = Math.min(20, Math.max(8, Math.floor(totalFriends / 3))); // 8-20 amigos por página
       
-      // Get circular slice of friends based on offset
+      // Calcular índice inicial baseado no offset
+      const pageNumber = Math.floor(offset / limit);
+      const startIndex = (pageNumber * friendsPerPage) % totalFriends;
+      
+      // Selecionar amigos de forma circular
       let friendsToProcess = [];
-      for (let i = 0; i < friendsPerBatch; i++) {
+      for (let i = 0; i < friendsPerPage; i++) {
         const index = (startIndex + i) % totalFriends;
         friendsToProcess.push(friends[index]);
       }
       
-      // Ensure we get variety by shuffling if we have many friends
-      if (totalFriends > 20) {
-        friendsToProcess = friendsToProcess.sort(() => Math.random() - 0.5);
-      }
+      // Adicionar randomização para evitar sempre os mesmos usuários
+      const shuffleSeed = Math.floor(Date.now() / (30 * 60 * 1000)); // Muda a cada 30 min
+      friendsToProcess = friendsToProcess.sort(() => (shuffleSeed % 2 === 0 ? 1 : -1) * (Math.random() - 0.5));
+      
+      console.log(`🔄 [PAGINATION] Página ${pageNumber}, processando amigos ${startIndex}-${(startIndex + friendsPerPage - 1) % totalFriends}`);
       
       console.log(`🔍 [CHANGE DETECTION] Processing ${friendsToProcess.length} friends for new changes`);
       
@@ -353,16 +357,19 @@ serve(async (req) => {
     if (allActivities.length === 0) {
       console.log(`⚠️ [FALLBACK] No real changes found, generating fallback activities`);
       
-      // Select different friends based on offset for variety in fallback
+      // NOVO: Fallback com rotação melhorada para evitar repetição
       const totalFriends = friends.length;
-      const startIndex = (offset * 3) % totalFriends; // Different rotation for fallback
-      const sampleSize = Math.min(8, Math.max(3, totalFriends));
+      const pageNumber = Math.floor(offset / limit);
+      const startIndex = (pageNumber * 5 + Math.floor(Date.now() / (60 * 60 * 1000))) % totalFriends; // Rotação horária
+      const sampleSize = Math.min(12, Math.max(6, Math.floor(totalFriends / 2)));
       
       let sampleFriends = [];
       for (let i = 0; i < sampleSize; i++) {
-        const index = (startIndex + i) % totalFriends;
+        const index = (startIndex + i * 2) % totalFriends; // Pular de 2 em 2 para mais variedade
         sampleFriends.push(friends[index]);
       }
+      
+      console.log(`🎭 [FALLBACK] Página ${pageNumber}, usando amigos ${startIndex} + ${sampleSize} com rotação`);
       
       for (const friendName of sampleFriends) {
         try {

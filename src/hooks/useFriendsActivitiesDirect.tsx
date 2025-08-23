@@ -163,8 +163,16 @@ export const useFriendsActivitiesDirect = () => {
         console.log(`✅ [EDGE SUCCESS] Recebidas ${typedResponse.activities.length} atividades`);
         console.log(`📊 [EDGE METADATA]`, typedResponse.metadata);
 
-        const nextOffset = typedResponse.activities.length === 50 ? pageParam + 50 : null;
-        const hasMore = nextOffset !== null && nextOffset < friends.length;
+        // NOVO: Lógica de paginação melhorada
+        const activitiesReceived = typedResponse.activities.length;
+        const nextOffset = activitiesReceived === 50 ? pageParam + 50 : null;
+        
+        // Sempre permitir mais páginas se temos amigos suficientes
+        const totalPossiblePages = Math.ceil(friends.length / 20); // ~20 amigos por página
+        const currentPage = Math.floor(pageParam / 50);
+        const hasMore = nextOffset !== null && currentPage < totalPossiblePages - 1;
+        
+        console.log(`📄 [PAGINATION] Página ${currentPage}, próximo offset: ${nextOffset}, tem mais: ${hasMore}`);
 
         return {
           activities: typedResponse.activities,
