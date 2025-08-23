@@ -19,6 +19,12 @@ import { CountryFlag } from '@/components/shared/CountryFlag';
 export const MyAccountColumn: React.FC = () => {
   const [activeModal, setActiveModal] = useState<'badges' | 'friends' | 'groups' | 'rooms' | null>(null);
   const { isLoggedIn, habboAccount, myProfile, isLoading } = useMyConsoleProfile();
+  
+  // Standardize hotel domain mapping
+  const getApiHotel = (hotel: string) => {
+    if (hotel === 'br') return 'com.br';
+    return hotel || 'com.br';
+  };
   const { 
     photos, 
     photoCount, 
@@ -30,12 +36,12 @@ export const MyAccountColumn: React.FC = () => {
     retryLoadPhotos
   } = useOptimizedPhotos(
     habboAccount?.habbo_name,
-    (habboAccount as any)?.hotel || 'br'
+    habboAccount?.hotel || 'br'
   );
 
   const { data: completeProfile } = useCompleteProfile(
     habboAccount?.habbo_name || '',
-    (habboAccount as any)?.hotel === 'br' ? 'com.br' : (habboAccount as any)?.hotel || 'com.br'
+    getApiHotel(habboAccount?.hotel || 'br')
   );
 
   if (!isLoggedIn || !habboAccount) {
@@ -107,17 +113,17 @@ export const MyAccountColumn: React.FC = () => {
             {/* Full Body Avatar with Flag */}
             <div className="relative flex-shrink-0">
               <img 
-                src={`https://www.habbo.${(habboAccount as any)?.hotel === 'br' ? 'com.br' : ((habboAccount as any)?.hotel || 'com.br')}/habbo-imaging/avatarimage?figure=${myProfile?.figureString || completeProfile?.figureString}&size=l&direction=2&head_direction=3&action=std`}
+                src={`https://www.habbo.${getApiHotel(habboAccount?.hotel || 'br')}/habbo-imaging/avatarimage?figure=${myProfile?.figureString || completeProfile?.figureString}&size=l&direction=2&head_direction=3&action=std`}
                 alt={`Avatar de ${habboAccount.habbo_name}`}
                 className="w-24 h-32 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&action=std`;
+                  (e.target as HTMLImageElement).src = `https://www.habbo.${getApiHotel(habboAccount?.hotel || 'br')}/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&action=std`;
                 }}
               />
               {/* Online Status */}
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-black rounded-full"></div>
               {/* Country Flag - Bottom Right Corner of Avatar */}
-              <CountryFlag hotel={(habboAccount as any)?.hotel || 'br'} className="absolute bottom-1 right-1" />
+              <CountryFlag hotel={habboAccount?.hotel || 'br'} className="absolute bottom-1 right-1" />
             </div>
             
             {/* Profile Info - Right Side */}
