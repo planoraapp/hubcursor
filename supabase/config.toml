@@ -78,3 +78,12 @@ verify_jwt = false
 
 [functions.habbo-hotel-general-feed]
 verify_jwt = false
+
+[functions.habbo-user-search]
+verify_jwt = false
+
+[functions.habbo-friends-photos]
+verify_jwt = false
+
+[functions.habbo-official-ticker]
+verify_jwt = false

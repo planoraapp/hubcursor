@@ -26,7 +26,7 @@ export const useUserSearch = () => {
     try {
       console.log(`🔍 [useUserSearch] Searching for: "${query}"`);
       
-      // Usar nova edge function de busca real
+      // Usar edge function de busca de usuários
       const { data, error } = await supabase.functions.invoke('habbo-user-search', {
         body: { 
           query: query.trim(),
