@@ -157,6 +157,63 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_friend_activities: {
+        Row: {
+          activities_summary: Json | null
+          activity_date: string
+          badges_gained: string[] | null
+          created_at: string | null
+          figure_changes: Json | null
+          groups_joined: Json | null
+          hotel: string
+          id: string
+          last_updated: string | null
+          motto_changed: string | null
+          photos_posted: Json | null
+          rooms_created: Json | null
+          session_start: string | null
+          total_changes: number | null
+          user_habbo_id: string
+          user_habbo_name: string
+        }
+        Insert: {
+          activities_summary?: Json | null
+          activity_date?: string
+          badges_gained?: string[] | null
+          created_at?: string | null
+          figure_changes?: Json | null
+          groups_joined?: Json | null
+          hotel?: string
+          id?: string
+          last_updated?: string | null
+          motto_changed?: string | null
+          photos_posted?: Json | null
+          rooms_created?: Json | null
+          session_start?: string | null
+          total_changes?: number | null
+          user_habbo_id: string
+          user_habbo_name: string
+        }
+        Update: {
+          activities_summary?: Json | null
+          activity_date?: string
+          badges_gained?: string[] | null
+          created_at?: string | null
+          figure_changes?: Json | null
+          groups_joined?: Json | null
+          hotel?: string
+          id?: string
+          last_updated?: string | null
+          motto_changed?: string | null
+          photos_posted?: Json | null
+          rooms_created?: Json | null
+          session_start?: string | null
+          total_changes?: number | null
+          user_habbo_id?: string
+          user_habbo_name?: string
+        }
+        Relationships: []
+      }
       detected_changes: {
         Row: {
           change_description: string
@@ -1351,6 +1408,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_daily_activities: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       cleanup_old_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined

@@ -24,25 +24,12 @@ const Console: React.FC = () => {
           <SidebarInset className="flex-1">
             <div className="p-4 flex flex-col items-center">
               <div className="mb-6 text-center">
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <h1 className="text-3xl font-bold text-white volter-font" 
-                      style={{
-                        textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                      }}>
-                    Console do Habbo
-                  </h1>
-                  
-                  <Button
-                    onClick={openPopupConsole}
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white volter-font"
-                  >
-                    <Monitor className="w-4 h-4 mr-1" />
-                    Popup
-                    <ExternalLink className="w-3 h-3 ml-1" />
-                  </Button>
-                </div>
+                <h1 className="text-3xl font-bold text-white mb-4 volter-font" 
+                    style={{
+                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                    }}>
+                  Console do Habbo
+                </h1>
                 <p className="text-white/80 volter-font" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                   Gerencie sua experiência no HabboHub
                 </p>
@@ -50,6 +37,20 @@ const Console: React.FC = () => {
 
               {/* Centralized single column console */}
               <TabbedConsole />
+              
+              {/* Popup button positioned below console */}
+              <div className="mt-4 flex justify-center">
+                <Button
+                  onClick={openPopupConsole}
+                  variant="outline" 
+                  size="lg"
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white volter-font px-6 py-3"
+                >
+                  <Monitor className="w-5 h-5 mr-2" />
+                  Abrir Console em Pop-up
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
             </div>
           </SidebarInset>
         </div>
