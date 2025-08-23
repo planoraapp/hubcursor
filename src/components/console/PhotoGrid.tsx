@@ -21,7 +21,7 @@ const PhotoGridItem: React.FC<{ photo: Photo; onSelect: (photo: Photo) => void }
 
   return (
     <div
-      className="relative aspect-square overflow-hidden cursor-pointer group bg-muted rounded-sm"
+      className="relative aspect-square overflow-hidden cursor-pointer group bg-transparent"
       onClick={() => onSelect(photo)}
     >
       <img

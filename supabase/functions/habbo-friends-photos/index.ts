@@ -52,8 +52,8 @@ Deno.serve(async (req: Request) => {
     // Usar timestamp para criar rotação determinística mas variada
     const timeBasedSeed = Math.floor(Date.now() / (20 * 60 * 1000)); // Muda a cada 20 minutos
     const shuffledFriends = [...friends].sort((a, b) => {
-      const hashA = (a.charCodeAt(0) + timeBasedSeed) % 1000;
-      const hashB = (b.charCodeAt(0) + timeBasedSeed) % 1000;
+      const hashA = (a.name.charCodeAt(0) + timeBasedSeed) % 1000;
+      const hashB = (b.name.charCodeAt(0) + timeBasedSeed) % 1000;
       return hashA - hashB;
     });
     

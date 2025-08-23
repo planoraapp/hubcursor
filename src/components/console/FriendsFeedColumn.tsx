@@ -52,7 +52,7 @@ export const FriendsFeedColumn: React.FC<FriendsFeedColumnProps> = ({ friendsAct
   return (
     <div className="space-y-4 p-4">
       {friendsActivities.map((friendActivity) => (
-        <div key={friendActivity.friend.uniqueId} className="rounded-lg bg-habbo-blue/10 border border-habbo-blue/20">
+        <div key={friendActivity.friend.uniqueId} className="bg-habbo-blue/10 border-t border-dashed border-white/20 first:border-t-0">
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
               <Avatar>

@@ -191,7 +191,15 @@ export const useFriendsActivitiesDirect = () => {
         };
       }
     },
-    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    getNextPageParam: (lastPage) => {
+      // Continue paginação circular se temos amigos suficientes
+      const totalFriends = friends?.length || 0;
+      if (totalFriends === 0) return undefined;
+      
+      const nextOffset = (lastPage?.nextOffset || 0);
+      // Continua paginação indefinidamente para criar scroll infinito
+      return nextOffset;
+    },
     initialPageParam: 0,
     // ETAPA 1: Forçar execução sempre (para teste)
     enabled: !!habboAccount?.habbo_name && friends.length > 0, // Only execute when user is logged in and has friends
