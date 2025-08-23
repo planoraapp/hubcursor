@@ -330,3 +330,75 @@
   border: none !important;
   background: transparent !important;
 }
+
+/* Chat Message Bubbles (Pixel Art Style) */
+.habbo-speech-bubble {
+  position: relative;
+  padding: 10px 12px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.4);
+  font-family: 'Volter Goldfish', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  max-width: 250px;
+  word-wrap: break-word;
+  border-radius: 8px;
+}
+
+.habbo-speech-bubble.left {
+  background: #FFFFFF;
+  color: #000000;
+}
+
+.habbo-speech-bubble.right {
+  background: #3B82F6;
+  color: #FFFFFF;
+}
+
+.habbo-speech-bubble.left::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 12px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 10px 8px 0;
+  border-color: transparent #000 transparent transparent;
+}
+
+.habbo-speech-bubble.left::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 14px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6px 8px 6px 0;
+  border-color: transparent #FFFFFF transparent transparent;
+}
+
+.habbo-speech-bubble.right::before {
+  content: '';
+  position: absolute;
+  right: -10px;
+  top: 12px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 8px 10px;
+  border-color: transparent transparent transparent #000;
+}
+
+.habbo-speech-bubble.right::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 14px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 6px 0 6px 8px;
+  border-color: transparent transparent transparent #3B82F6;
+}

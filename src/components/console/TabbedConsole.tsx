@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { User, Activity, Search } from 'lucide-react';
+import { User, Activity, Search, MessageSquare } from 'lucide-react';
 import { MyAccountColumn } from './MyAccountColumn';
 import { FeedActivityTabbedColumn } from '../console2/FeedActivityTabbedColumn';
+import { ChatColumn } from './ChatColumn';
 import { SearchColumn } from './SearchColumn';
 import { PixelFrame } from './PixelFrame';
 import { cn } from '@/lib/utils';
 
-type TabType = 'account' | 'feed' | 'search';
+type TabType = 'account' | 'feed' | 'chat' | 'search';
 
 interface TabButton {
   id: TabType;
@@ -36,6 +37,14 @@ const tabs: TabButton[] = [
     activeColor: '#1A202C'
   },
   {
+    id: 'chat',
+    label: 'Chat',
+    icon: <MessageSquare className="w-4 h-4" />,
+    color: '#9333EA',
+    hoverColor: '#A855F7',
+    activeColor: '#7C3AED'
+  },
+  {
     id: 'search',
     label: 'Buscar',
     icon: <Search className="w-4 h-4" />,
@@ -54,6 +63,8 @@ export const TabbedConsole: React.FC = () => {
         return <MyAccountColumn />;
       case 'feed':
         return <FeedActivityTabbedColumn />;
+      case 'chat':
+        return <ChatColumn />;
       case 'search':
         return <SearchColumn />;
       default:
@@ -71,7 +82,7 @@ export const TabbedConsole: React.FC = () => {
 
         {/* Tab navigation at bottom */}
         <div className="flex-shrink-0">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
