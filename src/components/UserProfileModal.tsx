@@ -4,20 +4,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { CalendarDays, Home, Star } from 'lucide-react';
+import { CalendarDays, Home, MessageSquare } from 'lucide-react';
 import { getUserByName } from '../services/habboApi';
 import { useNavigate } from 'react-router-dom';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 interface UserProfileModalProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   habboName: string;
+  onStartConversation?: (targetHabboName: string) => void;
 }
 
-export const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, setOpen, habboName }) => {
+export const UserProfileModal: React.FC<UserProfileModalProps> = ({ 
+  open, 
+  setOpen, 
+  habboName, 
+  onStartConversation 
+}) => {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { habboAccount } = useUnifiedAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -39,7 +47,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, setOpe
   }, [open, habboName]);
 
   const handleGoToHome = () => {
-    navigate(`/home/${habboName}`);
+    navigate(`/homes/${habboName}`);
+    setOpen(false);
+  };
+
+  const handleSendMessage = () => {
+    if (onStartConversation) {
+      onStartConversation(habboName);
+    }
     setOpen(false);
   };
 
@@ -114,6 +129,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, setOpe
                 <Home className="w-4 h-4 mr-2" />
                 Visitar Home
               </Button>
+              
+              {habboAccount && habboAccount.habbo_name !== habboName && (
+                <Button 
+                  onClick={handleSendMessage}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white volter-font"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Enviar Mensagem
+                </Button>
+              )}
             </div>
           </div>
         ) : (

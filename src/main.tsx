@@ -9,6 +9,7 @@ import './index.css'
 
 // Import pages
 import Console from './pages/Console'
+import ConsolePopup from './pages/ConsolePopup'
 import HabboHomeV2 from './pages/HabboHomeV2'
 import Home from './pages/Home'
 import Homes from './pages/Homes'
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
   {
     path: "/console",
     element: <Console />,
+  },
+  {
+    path: "/console-popup",
+    element: <ConsolePopup />,
   },
   {
     path: "/login",

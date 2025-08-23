@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Activity, Search, MessageSquare } from 'lucide-react';
 import { MyAccountColumn } from './MyAccountColumn';
@@ -54,8 +54,21 @@ const tabs: TabButton[] = [
   }
 ];
 
-export const TabbedConsole: React.FC = () => {
+interface TabbedConsoleProps {
+  startChatWith?: string;
+}
+
+export const TabbedConsole: React.FC<TabbedConsoleProps> = ({ startChatWith }) => {
   const [activeTab, setActiveTab] = useState<TabType>('account');
+  const [chatTarget, setChatTarget] = useState<string | undefined>(startChatWith);
+
+  // Auto-switch to chat tab when starting a conversation
+  React.useEffect(() => {
+    if (startChatWith) {
+      setActiveTab('chat');
+      setChatTarget(startChatWith);
+    }
+  }, [startChatWith]);
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -64,9 +77,17 @@ export const TabbedConsole: React.FC = () => {
       case 'feed':
         return <FeedActivityTabbedColumn />;
       case 'chat':
-        return <ChatColumn />;
+        return (
+          <ChatColumn 
+            startConversationWith={chatTarget}
+            onConversationStarted={() => setChatTarget(undefined)}
+          />
+        );
       case 'search':
-        return <SearchColumn />;
+        return <SearchColumn onStartConversation={(targetName) => {
+          setActiveTab('chat');
+          setChatTarget(targetName);
+        }} />;
       default:
         return <MyAccountColumn />;
     }

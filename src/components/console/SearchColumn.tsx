@@ -9,7 +9,11 @@ import { useUserSearch } from '@/hooks/useUserSearch';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 
-export const SearchColumn: React.FC = () => {
+interface SearchColumnProps {
+  onStartConversation?: (targetHabboName: string) => void;
+}
+
+export const SearchColumn: React.FC<SearchColumnProps> = ({ onStartConversation }) => {
   const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [showProfile, setShowProfile] = useState(false);
@@ -47,7 +51,8 @@ export const SearchColumn: React.FC = () => {
           onBack={() => {
             setShowProfile(false);
             setSelectedUser('');
-          }} 
+          }}
+          onStartConversation={onStartConversation}
         />
       </Card>
     );

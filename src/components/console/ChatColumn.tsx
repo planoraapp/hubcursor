@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConversationsList } from './chat/ConversationsList';
 import { ChatWindow } from './chat/ChatWindow';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
+import { chatService, type Conversation as RealConversation } from '@/services/chatService';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Conversation {
   id: string;
@@ -18,13 +21,87 @@ export interface Conversation {
   };
 }
 
-export const ChatColumn: React.FC = () => {
+// Add interface for starting conversation from external source
+interface ChatColumnProps {
+  startConversationWith?: string; // habbo name to start conversation with
+  onConversationStarted?: () => void;
+}
+
+export const ChatColumn: React.FC<ChatColumnProps> = ({ 
+  startConversationWith, 
+  onConversationStarted 
+}) => {
   const { habboAccount } = useMyConsoleProfile();
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [showChatWindow, setShowChatWindow] = useState(false);
 
-  // Mock conversations data
-  const conversations: Conversation[] = [
+  // Get real conversations from Supabase
+  const { data: realConversations = [], refetch } = useQuery({
+    queryKey: ['conversations', habboAccount?.habbo_name],
+    queryFn: () => chatService.getConversations(habboAccount!.habbo_name),
+    enabled: !!habboAccount?.habbo_name,
+    staleTime: 30000, // 30 seconds
+  });
+
+  // Convert real conversations to UI format
+  const conversations: Conversation[] = realConversations.map(realConv => ({
+    id: realConv.id,
+    participants: [realConv.participant_1, realConv.participant_2],
+    otherUser: realConv.otherUser,
+    lastMessage: realConv.lastMessage
+  }));
+
+  // Handle starting conversation from external source
+  useEffect(() => {
+    const handleStartConversation = async () => {
+      if (startConversationWith && habboAccount?.habbo_name && startConversationWith !== habboAccount.habbo_name) {
+        try {
+          const conversationId = await chatService.createOrGetConversation(
+            habboAccount.habbo_name, 
+            startConversationWith
+          );
+          
+          // Create conversation object for UI
+          const newConversation: Conversation = {
+            id: conversationId,
+            participants: [habboAccount.habbo_name, startConversationWith],
+            otherUser: {
+              habbo_name: startConversationWith,
+              figureString: 'hr-100-61.hd-180-1.ch-210-66.lg-270-82.sh-305-62',
+              online: true
+            }
+          };
+          
+          setActiveConversation(newConversation);
+          setShowChatWindow(true);
+          onConversationStarted?.();
+        } catch (error) {
+          console.error('Error starting conversation:', error);
+        }
+      }
+    };
+
+    handleStartConversation();
+  }, [startConversationWith, habboAccount?.habbo_name, onConversationStarted]);
+
+  // Subscribe to conversation updates
+  useEffect(() => {
+    if (!habboAccount?.habbo_name) return;
+
+    const subscription = chatService.subscribeToConversations(
+      habboAccount.habbo_name,
+      () => {
+        refetch();
+      }
+    );
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [habboAccount?.habbo_name, refetch]);
+
+  // Mock conversations data (fallback)
+  const mockConversations: Conversation[] = [
     {
       id: '1',
       participants: ['Beebop', 'EZ-C'],
@@ -102,7 +179,7 @@ export const ChatColumn: React.FC = () => {
 
   return (
     <ConversationsList 
-      conversations={conversations}
+      conversations={conversations.length > 0 ? conversations : mockConversations}
       onConversationSelect={handleConversationSelect}
     />
   );

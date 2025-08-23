@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Conversation } from '../ChatColumn';
 import { ArrowLeft, Send } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
+import { RealChatWindow } from './RealChatWindow';
 // Remove direct HabboAccount import and use interface
 
 interface ChatWindowProps {
@@ -26,6 +27,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   currentUser,
   onBack
 }) => {
+  // Use real chat window for actual conversations
+  if (conversation.id && conversation.id !== '1' && conversation.id !== '2' && conversation.id !== '3') {
+    return (
+      <RealChatWindow
+        conversationId={conversation.id}
+        otherUserName={conversation.otherUser.habbo_name}
+        onBack={onBack}
+      />
+    );
+  }
+
+  // Fallback to mock chat for demo conversations
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {

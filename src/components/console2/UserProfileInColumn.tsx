@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Camera, RefreshCw, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Camera, RefreshCw, ExternalLink, MessageSquare } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useFollowProfile } from '@/hooks/useFollowProfile';
@@ -19,9 +19,10 @@ import { CountryFlag } from '@/components/shared/CountryFlag';
 interface UserProfileInColumnProps {
   username: string;
   onBack: () => void;
+  onStartConversation?: (targetHabboName: string) => void;
 }
 
-export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ username, onBack }) => {
+export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ username, onBack, onStartConversation }) => {
   const [activeModal, setActiveModal] = useState<'badges' | 'friends' | 'groups' | 'rooms' | null>(null);
   
   const { habboUser, avatarUrl, isLoading } = useUserProfile(username);
@@ -168,27 +169,41 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
           </div>
         </div>
 
-        {/* Follow Button */}
-        <Button
-          onClick={handleToggleFollow}
-          disabled={isToggling}
-          className={`w-full ${
-            isFollowing 
-              ? 'bg-white/20 hover:bg-white/30 text-white' 
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
-          {isToggling ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : isFollowing ? (
-            <UserCheck className="w-4 h-4 mr-2" />
-          ) : (
-            <UserPlus className="w-4 h-4 mr-2" />
-          )}
-          {isToggling ? 'Carregando...' : isFollowing ? 'Seguindo' : 'Seguir'}
-        </Button>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          {/* Follow Button */}
+          <Button
+            onClick={handleToggleFollow}
+            disabled={isToggling}
+            className={`${
+              isFollowing 
+                ? 'bg-white/20 hover:bg-white/30 text-white' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            {isToggling ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : isFollowing ? (
+              <UserCheck className="w-4 h-4 mr-2" />
+            ) : (
+              <UserPlus className="w-4 h-4 mr-2" />
+            )}
+            {isToggling ? 'Carregando...' : isFollowing ? 'Seguindo' : 'Seguir'}
+          </Button>
 
-        {/* Action Buttons - Centralized Layout */}
+          {/* Send Message Button */}
+          {onStartConversation && (
+            <Button
+              onClick={() => onStartConversation(username)}
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Mensagem
+            </Button>
+          )}
+        </div>
+
+        {/* Stats Buttons - Centralized Layout */}
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setActiveModal('badges')}

@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Home as HomeIcon, Users, MessageSquare, Star } from 'lucide-react';
+import { OpenConsolePopupButton } from '@/components/OpenConsolePopupButton';
 
 export const Home: React.FC = () => {
   return (
@@ -98,10 +99,11 @@ export const Home: React.FC = () => {
                     <p className="text-gray-600 mb-6 volter-font">
                       Explore todas as funcionalidades do HabboHub e conecte-se com a maior comunidade Habbo do Brasil.
                     </p>
-                    <div className="flex gap-4 justify-center">
+                    <div className="flex gap-4 justify-center flex-wrap">
                       <Link to="/console">
                         <Button size="lg" className="habbo-button-blue volter-font">Explorar Console</Button>
                       </Link>
+                      <OpenConsolePopupButton />
                       <Link to="/homes">
                         <Button size="lg" className="habbo-button-green volter-font">Ver Homes</Button>
                       </Link>
