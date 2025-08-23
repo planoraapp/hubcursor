@@ -27,6 +27,7 @@ interface GuestbookWidgetProps {
   habboData: HabboData;
   guestbook?: GuestbookEntry[];
   onAddEntry?: (message: string) => Promise<void>;
+  onRemoveEntry?: (entryId: string) => Promise<void>;
   isOwner?: boolean;
 }
 
@@ -34,6 +35,7 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
   habboData, 
   guestbook = [], 
   onAddEntry,
+  onRemoveEntry,
   isOwner = false 
 }) => {
   const [newMessage, setNewMessage] = useState('');
@@ -123,15 +125,45 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
           {guestbook && guestbook.length > 0 ? (
             guestbook.map((entry) => (
               <div key={entry.id} className="bg-gray-50 p-2 rounded-lg border">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-semibold text-xs text-blue-600 volter-font">
-                    {entry.author_habbo_name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatDate(entry.created_at)}
-                  </span>
+                <div className="flex items-start gap-2 mb-1">
+                  {/* Avatar do autor */}
+                  <img
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
+                    alt={`Avatar de ${entry.author_habbo_name}`}
+                    className="w-8 h-8 object-contain bg-transparent rounded-none border-none"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${entry.author_habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                    }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-1">
+                      <button
+                        onClick={() => window.location.href = `/homes/${entry.author_habbo_name}`}
+                        className="font-semibold text-xs text-blue-600 volter-font hover:text-blue-800 hover:underline transition-colors"
+                      >
+                        {entry.author_habbo_name}
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500">
+                          {formatDate(entry.created_at)}
+                        </span>
+                        {/* Botão de remover - só aparece para o autor ou dono */}
+                        {(habboAccount?.habbo_name === entry.author_habbo_name || isOwner) && (
+                          <button
+                            onClick={() => onRemoveEntry?.(entry.id)}
+                            className="text-xs text-red-500 hover:text-red-700 ml-1 p-1"
+                            title="Remover comentário"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700">{entry.message}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-700">{entry.message}</p>
               </div>
             ))
           ) : (

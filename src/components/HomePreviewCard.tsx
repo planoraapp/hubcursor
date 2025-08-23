@@ -67,13 +67,13 @@ export const HomePreviewCard: React.FC<HomePreviewCardProps> = ({ home }) => {
           {/* Hover shadow effect */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
           
-          {/* User Avatar - Bottom Right, trunk up */}
+          {/* User Avatar - Larger and better positioned */}
           {avatarUrl && (
-            <div className="absolute bottom-0 right-2 w-16 h-20 overflow-hidden">
+            <div className="absolute bottom-2 right-2 w-12 h-12 overflow-hidden">
               <img
                 src={avatarUrl}
                 alt={`Avatar de ${home.habbo_name}`}
-                className="absolute bottom-0 right-0 w-full object-cover object-top transform translate-y-2"
+                className="w-full h-full object-contain bg-transparent"
                 style={{ 
                   imageRendering: 'pixelated',
                   filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.8))'
@@ -86,9 +86,12 @@ export const HomePreviewCard: React.FC<HomePreviewCardProps> = ({ home }) => {
             </div>
           )}
           
-          {/* Username - Top Left */}
+          {/* Username - Top Left with better contrast */}
           <div className="absolute top-2 left-2">
-            <h3 className="font-bold text-sm text-white volter-font drop-shadow-lg truncate max-w-32">
+            <h3 className="font-bold text-sm text-white volter-font drop-shadow-lg truncate max-w-32"
+                style={{ 
+                  textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black, 2px 2px 4px rgba(0,0,0,0.8)'
+                }}>
               {home.habbo_name || 'Usuário'}
             </h3>
           </div>

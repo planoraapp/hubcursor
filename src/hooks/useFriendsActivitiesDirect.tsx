@@ -186,15 +186,15 @@ export const useFriendsActivitiesDirect = () => {
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
     // ETAPA 1: Forçar execução sempre (para teste)
-    enabled: true, // Removido condição complexa, sempre executar
-    staleTime: 10 * 1000, // 10 segundos
-    gcTime: 1 * 60 * 1000, // 1 minuto
+    enabled: !!habboAccount?.habbo_name && friends.length > 0, // Only execute when user is logged in and has friends
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       console.log(`🔄 [RETRY] Tentativa ${failureCount + 1}, erro:`, error);
       return failureCount < 2; // Máximo 3 tentativas
     },
     retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 2000), // Retry mais rápido
-    refetchInterval: 10 * 1000, // Auto-refresh a cada 10 segundos para tempo real aprimorado
+    refetchInterval: 30 * 1000, // Auto-refresh every 30 seconds for better performance
   });
 
   // Flatten all pages into single array

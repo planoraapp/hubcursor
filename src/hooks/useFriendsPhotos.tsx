@@ -57,18 +57,16 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
           date: photo.timestamp ? new Date(photo.timestamp).toLocaleDateString('pt-BR') : 'Data inválida'
         }))
         .sort((a, b) => {
-          // Sort by timestamp (most recent first) - Add debugging
-          const timestampA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp).getTime();
-          const timestampB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp).getTime();
+          // Sort by timestamp (most recent first) with better logic
+          const timestampA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp || a.date).getTime();
+          const timestampB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp || b.date).getTime();
+          
+          // Primary sort: by timestamp (most recent first)
           const result = timestampB - timestampA;
           
-          // Log ordenação para debug
-          if (Math.abs(result) < 1000 * 60) { // Se diferença for menos de 1 minuto
-            console.log('🔍 [useFriendsPhotos] Photos with similar timestamp:', { 
-              a: { id: a.id, date: new Date(timestampA).toISOString(), timestamp: timestampA }, 
-              b: { id: b.id, date: new Date(timestampB).toISOString(), timestamp: timestampB },
-              result 
-            });
+          // Secondary sort: if timestamps are equal, sort by photo ID (more recent IDs usually come later)
+          if (result === 0) {
+            return (b.id || '').localeCompare(a.id || '');
           }
           
           return result;
