@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera, Activity, Clock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
+import { useOptimizedFriendsPhotos } from '@/hooks/useOptimizedFriendsPhotos';
 import { useFriendsActivitiesDirect } from '@/hooks/useFriendsActivitiesDirect';
 import { useAuth } from '@/hooks/useAuth';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
@@ -50,8 +51,9 @@ export const FeedActivityTabbedColumn: React.FC = () => {
   const { 
     data: friendsPhotos = [], 
     isLoading: photosLoading, 
-    refetch: refetchPhotos 
-  } = useFriendsPhotos(
+    refetch: refetchPhotos,
+    forceRefresh: forceRefreshPhotos
+  } = useOptimizedFriendsPhotos(
     habboAccount?.habbo_name || '',
     (habboAccount as any)?.hotel || 'br'
   );
@@ -80,11 +82,13 @@ export const FeedActivityTabbedColumn: React.FC = () => {
     setShowCommentsModal(true);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     if (activeTab === 'photos') {
-      refetchPhotos();
+      console.log('[📸 PHOTOS] Forcing refresh with cache invalidation');
+      await forceRefreshPhotos();
     } else if (activeTab === 'activities') {
-      refetchActivities();
+      console.log('[⚡ ACTIVITIES] Forcing refresh');
+      await refetchActivities();
     }
   };
 

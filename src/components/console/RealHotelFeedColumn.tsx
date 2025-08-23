@@ -17,17 +17,17 @@ export const RealHotelFeedColumn: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refetch();
-      toast.success('Feed atualizado!');
+      console.log('✅ [RealHotelFeedColumn] Feed refreshed successfully');
     } catch (error) {
-      toast.error('Erro ao atualizar feed');
+      console.error('❌ [RealHotelFeedColumn] Refresh error:', error);
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch]);
+  };
 
   const handleModeChange = (newMode: 'official' | 'database' | 'hybrid') => {
     if (newMode === 'official') {

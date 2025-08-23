@@ -1,4 +1,3 @@
-
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { usePageVisibility } from './usePageVisibility';
 import { useRateLimit } from './useRateLimit';
@@ -22,7 +21,7 @@ export const useOptimizedQuery = <T,>(
   const { isVisible, isRecentlyActive } = usePageVisibility();
   const {
     baseRefetchInterval = false, // Desabilita polling por padrão 
-    aggressiveCacheTime = 24 * 60 * 60 * 1000, // 24 horas de cache
+    aggressiveCacheTime = 15 * 60 * 1000, // Reduzido para 15 minutos 
     enableRateLimit = true,
     rateLimitConfig = { maxRequests: 120, windowMs: 60 * 1000 }, // 120 requests por minuto
     enableVisibilityControl = false, // Desabilita controle de visibilidade
@@ -42,12 +41,12 @@ export const useOptimizedQuery = <T,>(
 
   const shouldEnable = enabled && (!enableRateLimit || rateLimit.canMakeRequest());
 
-  return useQuery({
+  const query = useQuery({
     ...queryOptions,
     enabled: shouldEnable,
     refetchInterval: dynamicRefetchInterval,
-    staleTime: onDemandOnly ? aggressiveCacheTime : aggressiveCacheTime / 2,
-    gcTime: aggressiveCacheTime, 
+    staleTime: onDemandOnly ? 15 * 60 * 1000 : aggressiveCacheTime / 2, // Reduzido para 15 minutos
+    gcTime: 30 * 60 * 1000, // 30 minutos cache
     refetchOnWindowFocus: false, // Desabilita refresh automático no foco
     refetchOnReconnect: false, // Desabilita refresh automático na reconexão
     retry: (failureCount, error) => {
@@ -58,4 +57,15 @@ export const useOptimizedQuery = <T,>(
       return failureCount < 2;
     },
   });
+
+  // Função de refresh forçado que ignora cache
+  const forceRefresh = () => {
+    console.log('[useOptimizedQuery] Forcing refresh, invalidating cache');
+    return query.refetch({ cancelRefetch: true });
+  };
+
+  return {
+    ...query,
+    forceRefresh
+  };
 };

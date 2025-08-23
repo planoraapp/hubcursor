@@ -25,12 +25,13 @@ export const useOptimizedHotelFeed = (options?: {
     data: feedData, 
     isLoading, 
     error,
-    refetch 
+    refetch,
+    forceRefresh 
   } = useOptimizedQuery({
     queryKey: ['optimized-hotel-feed', hotel, limit],
     queryFn: () => optimizedFeedService.getHotelFeed(hotel, limit),
     baseRefetchInterval: false, // Desabilita polling automático
-    aggressiveCacheTime: 24 * 60 * 60 * 1000, // 24 horas de cache
+    aggressiveCacheTime: 15 * 60 * 1000, // Reduzido para 15 minutos
     enableRateLimit: true,
     rateLimitConfig: { maxRequests: 120, windowMs: 60 * 1000 }, // 120 requests por minuto
     onDemandOnly: true, // Apenas on-demand via botão
@@ -47,6 +48,7 @@ export const useOptimizedHotelFeed = (options?: {
     isLoading,
     error,
     refetch,
+    forceRefresh,
     isEmpty: !isLoading && activities.length === 0,
     lastUpdate: meta?.timestamp
   };

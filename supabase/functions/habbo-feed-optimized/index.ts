@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
@@ -13,9 +12,9 @@ interface CacheEntry {
   expiresAt: number;
 }
 
-// Cache em memória com TTL
+// Cache em memória com TTL reduzido
 const cache = new Map<string, CacheEntry>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL = 2 * 60 * 1000; // Reduzido para 2 minutos
 
 function getCacheKey(hotel: string, type: string, params?: any): string {
   return `${hotel}:${type}:${JSON.stringify(params || {})}`;
@@ -64,13 +63,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`🔍 [feed-optimized] Processing ${type} for hotel ${hotel}`);
+    console.log(`🔍 [feed-optimized] Processing ${type} for hotel ${hotel} (fresh data)`);
     
     let result;
     
     switch (type) {
       case 'activities':
-        result = await getActivities(supabase, hotel, limit);
+        result = await getRecentActivities(supabase, hotel, limit);
         break;
       case 'online-users':
         result = await getOnlineUsers(supabase, hotel, limit);
@@ -102,54 +101,103 @@ Deno.serve(async (req) => {
   }
 });
 
-async function getActivities(supabase: any, hotel: string, limit: number) {
+// Buscar atividades recentes com dados mais frescos
+async function getRecentActivities(supabase: any, hotel: string, limit: number) {
   const hotelFilter = hotel === 'com.br' ? 'br' : hotel;
-  const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString();
+  
+  // Buscar dados das últimas 6 horas em vez de 24h
+  const cutoffTime = new Date(Date.now() - (6 * 60 * 60 * 1000)).toISOString();
 
-  // Buscar snapshots recentes com mudanças significativas
-  const { data: snapshots, error } = await supabase
+  // Primeiro tentar buscar de habbo_activities (dados recentes)
+  const { data: recentActivities, error: activitiesError } = await supabase
+    .from('habbo_activities')
+    .select('*')
+    .eq('hotel', hotelFilter)
+    .gte('created_at', cutoffTime)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (activitiesError) {
+    console.warn(`⚠️ [feed-optimized] Activities query error:`, activitiesError);
+  }
+
+  // Fallback para snapshots se não houver atividades recentes
+  const { data: snapshots, error: snapshotsError } = await supabase
     .from('habbo_user_snapshots')
     .select('*')
     .eq('hotel', hotelFilter)
     .gte('created_at', cutoffTime)
     .order('created_at', { ascending: false })
-    .limit(limit * 2); // Buscar mais para filtrar depois
+    .limit(limit * 2);
 
-  if (error) throw error;
-
-  const activities = [];
-  const seenUsers = new Set();
-
-  for (const snapshot of snapshots || []) {
-    if (seenUsers.has(snapshot.habbo_id)) continue;
-    seenUsers.add(snapshot.habbo_id);
-
-    const activity = {
-      id: snapshot.id,
-      username: snapshot.habbo_name,
-      description: generateActivityDescription(snapshot),
-      timestamp: snapshot.created_at,
-      profile: {
-        figureString: snapshot.figure_string,
-        motto: snapshot.motto,
-        online: snapshot.is_online
-      },
-      changes: snapshot.profile_changes || {}
-    };
-
-    activities.push(activity);
-    
-    if (activities.length >= limit) break;
+  if (snapshotsError) {
+    console.warn(`⚠️ [feed-optimized] Snapshots query error:`, snapshotsError);
   }
 
+  // Processar atividades reais primeiro
+  const activities = [];
+  
+  if (recentActivities && recentActivities.length > 0) {
+    console.log(`✅ [feed-optimized] Found ${recentActivities.length} recent activities`);
+    
+    for (const activity of recentActivities.slice(0, Math.floor(limit * 0.7))) {
+      activities.push({
+        id: activity.id,
+        username: activity.habbo_name,
+        description: activity.description || generateActivityDescription(activity),
+        timestamp: activity.created_at,
+        profile: {
+          figureString: activity.figure_string || '',
+          motto: activity.motto || '',
+          online: true
+        },
+        activityType: activity.activity_type
+      });
+    }
+  }
+
+  // Completar com dados dos snapshots para diversidade
+  if (snapshots && snapshots.length > 0 && activities.length < limit) {
+    console.log(`📸 [feed-optimized] Adding ${Math.min(snapshots.length, limit - activities.length)} snapshot activities`);
+    
+    const seenUsers = new Set(activities.map(a => a.username));
+    const remaining = limit - activities.length;
+    
+    for (const snapshot of snapshots) {
+      if (activities.length >= limit) break;
+      if (seenUsers.has(snapshot.habbo_name)) continue;
+      
+      seenUsers.add(snapshot.habbo_name);
+      
+      activities.push({
+        id: snapshot.id,
+        username: snapshot.habbo_name,
+        description: generateActivityDescription(snapshot),
+        timestamp: snapshot.created_at,
+        profile: {
+          figureString: snapshot.figure_string,
+          motto: snapshot.motto,
+          online: snapshot.is_online
+        },
+        changes: snapshot.profile_changes || {}
+      });
+    }
+  }
+
+  // Ordenar por timestamp (mais recente primeiro)
+  activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  console.log(`📊 [feed-optimized] Returning ${activities.length} activities for ${hotelFilter}`);
+
   return {
-    activities,
+    activities: activities.slice(0, limit),
     meta: {
-      source: 'database',
+      source: 'optimized-database',
       type: 'activities',
       timestamp: new Date().toISOString(),
       count: activities.length,
-      hotel: hotelFilter
+      hotel: hotelFilter,
+      freshness: 'recent-6h'
     }
   };
 }
@@ -196,7 +244,7 @@ async function getOnlineUsers(supabase: any, hotel: string, limit: number) {
 
 async function getRecentChanges(supabase: any, hotel: string, limit: number) {
   const hotelFilter = hotel === 'com.br' ? 'br' : hotel;
-  const cutoffTime = new Date(Date.now() - (24 * 60 * 60 * 1000)).toISOString();
+  const cutoffTime = new Date(Date.now() - (12 * 60 * 60 * 1000)).toISOString(); // Últimas 12h
 
   const { data: changes, error } = await supabase
     .from('user_profile_changes')

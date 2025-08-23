@@ -126,8 +126,8 @@ export class OptimizedFeedService {
         }
       };
 
-      // Cache for 2 minutes
-      cache.set(cacheKey, result, 2);
+      // Cache for 1 minute only for better data freshness
+      cache.set(cacheKey, result, 1);
       
       console.log(`✅ [OptimizedFeedService] Hotel feed loaded: ${result.activities.length} activities`);
       return result;
@@ -200,8 +200,8 @@ export class OptimizedFeedService {
         }
       };
 
-      // Cache for 3 minutes
-      cache.set(cacheKey, result, 3);
+      // Cache for 2 minutes instead of 3
+      cache.set(cacheKey, result, 2);
       
       console.log(`✅ [OptimizedFeedService] Online users loaded: ${users.length} users`);
       return result;
@@ -254,8 +254,8 @@ export class OptimizedFeedService {
         }
       };
 
-      // Cache for 5 minutes
-      cache.set(cacheKey, result, 5);
+      // Cache for 3 minutes instead of 5
+      cache.set(cacheKey, result, 3);
       
       console.log(`✅ [OptimizedFeedService] Users discovered: ${result.users.length} users`);
       return result;
@@ -313,8 +313,8 @@ export class OptimizedFeedService {
         }
       };
 
-      // Cache for 2 minutes (searches change frequently)
-      cache.set(cacheKey, result, 2);
+      // Cache for 1 minute (searches change frequently)
+      cache.set(cacheKey, result, 1);
       
       console.log(`✅ [OptimizedFeedService] Users found: ${result.users.length} users`);
       return result;

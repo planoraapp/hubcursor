@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,22 @@ import { habboProxyService } from '@/services/habboProxyService';
 
 export const HotelFeedColumn: React.FC = () => {
   const { aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useHotelActivities();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const usernames = aggregatedActivities.map(group => group.username);
   const { figureMap } = useUserFigures(usernames);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      console.log('✅ [HotelFeedColumn] Feed refreshed successfully');
+    } catch (error) {
+      console.error('❌ [HotelFeedColumn] Refresh error:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (aggregatedActivities.length > 0) {
@@ -120,11 +133,11 @@ export const HotelFeedColumn: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => refetch()}
-                disabled={isLoading}
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading}
                 className="text-white hover:bg-white/10 p-1 h-auto"
               >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </CardTitle>
