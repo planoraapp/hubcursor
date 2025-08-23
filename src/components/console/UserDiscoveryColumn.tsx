@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Loader2, AlertCircle } from 'lucide-react';
 import { UserSearchInput } from './UserSearchInput';
 import { UserCard } from './UserCard';
 import { UserProfileDetailView } from './UserProfileDetailView';
 import { useUserSearch } from '@/hooks/useUserSearch';
-import { useOptimizedUserDiscovery } from '@/hooks/useOptimizedUserDiscovery';
+import { useInfiniteUserSearch } from '@/hooks/useInfiniteUserSearch';
 
 export const UserDiscoveryColumn: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,10 +21,11 @@ export const UserDiscoveryColumn: React.FC = () => {
   
   const { 
     users: discoveredUsers, 
-    isLoading: isDiscovering 
-  } = useOptimizedUserDiscovery({
-    method: 'random',
-    limit: 12,
+    isLoading: isDiscovering,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage
+  } = useInfiniteUserSearch({
     enabled: !searchQuery.trim()
   });
 
@@ -89,11 +90,22 @@ export const UserDiscoveryColumn: React.FC = () => {
           </div>
         )}
 
-        <div className="grid gap-3 max-h-[calc(100vh-20rem)] overflow-y-auto custom-scrollbar">
+        <div 
+          className="grid gap-3 max-h-[calc(100vh-20rem)] overflow-y-auto custom-scrollbar"
+          onScroll={useCallback((e) => {
+            const target = e.target as HTMLDivElement;
+            const { scrollTop, scrollHeight, clientHeight } = target;
+            
+            // Carregar mais quando próximo do final (apenas para descoberta, não busca)
+            if (!searchQuery.trim() && scrollHeight - scrollTop <= clientHeight * 1.5 && hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }, [hasNextPage, isFetchingNextPage, fetchNextPage, searchQuery])}
+        >
           {displayUsers.length > 0 ? (
-            displayUsers.map((user) => (
+            displayUsers.map((user, index) => (
               <UserCard
-                key={user.habbo_id || user.id}
+                key={`${user.habbo_id || user.id || user.name}-${index}`}
                 user={user}
                 onSelect={handleUserSelect}
               />
@@ -112,6 +124,14 @@ export const UserDiscoveryColumn: React.FC = () => {
                   'Nenhum usuário disponível'
                 )}
               </p>
+            </div>
+          )}
+          
+          {/* Loading para scroll infinito */}
+          {isFetchingNextPage && !searchQuery.trim() && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-white/60" />
+              <span className="ml-2 text-xs text-white/60">Carregando mais usuários...</span>
             </div>
           )}
         </div>

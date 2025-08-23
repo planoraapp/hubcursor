@@ -4,7 +4,7 @@ import { usePageVisibility } from './usePageVisibility';
 import { useRateLimit } from './useRateLimit';
 
 interface OptimizedQueryOptions<T> extends Omit<UseQueryOptions<T>, 'refetchInterval' | 'enabled'> {
-  baseRefetchInterval?: number;
+  baseRefetchInterval?: number | false; // false = desabilita polling
   aggressiveCacheTime?: number;
   enableRateLimit?: boolean;
   rateLimitConfig?: {
@@ -13,6 +13,7 @@ interface OptimizedQueryOptions<T> extends Omit<UseQueryOptions<T>, 'refetchInte
   };
   enableVisibilityControl?: boolean;
   enabled?: boolean;
+  onDemandOnly?: boolean; // Nova opção para modo on-demand apenas
 }
 
 export const useOptimizedQuery = <T,>(
@@ -20,36 +21,36 @@ export const useOptimizedQuery = <T,>(
 ) => {
   const { isVisible, isRecentlyActive } = usePageVisibility();
   const {
-    baseRefetchInterval = 60000, // 1 minuto padrão
-    aggressiveCacheTime = 10 * 60 * 1000, // 10 minutos
+    baseRefetchInterval = false, // Desabilita polling por padrão 
+    aggressiveCacheTime = 24 * 60 * 60 * 1000, // 24 horas de cache
     enableRateLimit = true,
-    rateLimitConfig = { maxRequests: 30, windowMs: 60 * 1000 }, // 30 requests por minuto
-    enableVisibilityControl = true,
+    rateLimitConfig = { maxRequests: 120, windowMs: 60 * 1000 }, // 120 requests por minuto
+    enableVisibilityControl = false, // Desabilita controle de visibilidade
     enabled = true,
+    onDemandOnly = true, // Modo on-demand por padrão
     ...queryOptions
   } = options;
 
   const rateLimit = useRateLimit(rateLimitConfig);
 
-  // Configurações dinâmicas baseadas na visibilidade
-  const dynamicRefetchInterval = enableVisibilityControl 
-    ? (isVisible ? baseRefetchInterval : baseRefetchInterval * 5) // 5x mais lento quando não visível
-    : baseRefetchInterval;
+  // Configurações para modo on-demand
+  const dynamicRefetchInterval = onDemandOnly 
+    ? false // Desabilita polling em modo on-demand
+    : (enableVisibilityControl 
+      ? (isVisible ? baseRefetchInterval : (baseRefetchInterval as number) * 5)
+      : baseRefetchInterval);
 
-  const shouldEnable = enabled && (enableVisibilityControl 
-    ? isRecentlyActive && (!enableRateLimit || rateLimit.canMakeRequest())
-    : (!enableRateLimit || rateLimit.canMakeRequest()));
+  const shouldEnable = enabled && (!enableRateLimit || rateLimit.canMakeRequest());
 
   return useQuery({
     ...queryOptions,
     enabled: shouldEnable,
     refetchInterval: dynamicRefetchInterval,
-    staleTime: aggressiveCacheTime / 2, // Cache considera stale na metade do tempo
-    gcTime: aggressiveCacheTime, // Garbage collection mais agressiva
-    refetchOnWindowFocus: enableVisibilityControl ? isVisible : false,
-    refetchOnReconnect: true,
+    staleTime: onDemandOnly ? aggressiveCacheTime : aggressiveCacheTime / 2,
+    gcTime: aggressiveCacheTime, 
+    refetchOnWindowFocus: false, // Desabilita refresh automático no foco
+    refetchOnReconnect: false, // Desabilita refresh automático na reconexão
     retry: (failureCount, error) => {
-      // Rate limit mais conservador em caso de erro
       if (enableRateLimit && !rateLimit.canMakeRequest()) {
         console.warn(`[useOptimizedQuery] Rate limit reached, skipping retry`);
         return false;

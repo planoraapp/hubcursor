@@ -29,11 +29,12 @@ export const useOptimizedHotelFeed = (options?: {
   } = useOptimizedQuery({
     queryKey: ['optimized-hotel-feed', hotel, limit],
     queryFn: () => optimizedFeedService.getHotelFeed(hotel, limit),
-    baseRefetchInterval: refreshInterval,
-    aggressiveCacheTime: 10 * 60 * 1000, // 10 minutos de cache
+    baseRefetchInterval: false, // Desabilita polling automático
+    aggressiveCacheTime: 24 * 60 * 60 * 1000, // 24 horas de cache
     enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 10, windowMs: 60 * 1000 }, // 10 requests por minuto
-    retry: 1, // Reduzido para 1 retry apenas
+    rateLimitConfig: { maxRequests: 120, windowMs: 60 * 1000 }, // 120 requests por minuto
+    onDemandOnly: true, // Apenas on-demand via botão
+    retry: 1,
   });
 
   const activities = feedData?.activities || [];

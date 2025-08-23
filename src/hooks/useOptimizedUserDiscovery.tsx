@@ -44,8 +44,10 @@ export const useOptimizedUserDiscovery = (options: DiscoveryOptions = {}) => {
       }
     },
     enabled,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 24 * 60 * 60 * 1000, // 24 horas de cache
+    gcTime: 24 * 60 * 60 * 1000, // 24 horas
+    refetchOnWindowFocus: false, // Desabilita refresh automático
+    refetchOnReconnect: false, // Desabilita refresh automático
     retry: 2,
   });
 

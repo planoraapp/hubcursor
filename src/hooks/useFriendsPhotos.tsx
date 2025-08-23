@@ -77,9 +77,10 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       return validPhotos;
     },
     enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
-    staleTime: 10 * 1000, // 10 seconds - Much fresher data
-    gcTime: 2 * 60 * 1000, // 2 minutes
-    retry: 1,
-    refetchInterval: 30 * 1000, // 30 seconds auto refresh - Very frequent updates
+    staleTime: 24 * 60 * 60 * 1000, // 24 horas de cache
+    gcTime: 24 * 60 * 60 * 1000, // 24 horas
+    refetchOnWindowFocus: false, // Desabilita refresh automático
+    refetchOnReconnect: false, // Desabilita refresh automático
+    retry: 1
   });
 };
