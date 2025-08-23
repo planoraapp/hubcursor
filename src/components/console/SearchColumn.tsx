@@ -4,14 +4,26 @@ import { UserSearch } from './UserSearch';
 import { OptimizedUserDiscoveryColumn } from '../console2/OptimizedUserDiscoveryColumn';
 import { useOfficialHotelTicker } from '@/hooks/useOfficialHotelTicker';
 import { UserProfileInColumn } from '../console2/UserProfileInColumn';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Zap } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useUserSearch';
+import { useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 
 export const SearchColumn: React.FC = () => {
+  const queryClient = useQueryClient();
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [showProfile, setShowProfile] = useState(false);
   const { searchUser, isSearching, searchResults } = useUserSearch();
   const { activities: officialActivities, isLoading: tickerLoading, refetch: refetchTicker } = useOfficialHotelTicker({ limit: 15 });
+
+  const handleForceRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['official-hotel-ticker'] });
+    queryClient.invalidateQueries({ queryKey: ['hotel-ticker'] });
+    queryClient.invalidateQueries({ queryKey: ['friends-photos'] });
+    queryClient.invalidateQueries({ queryKey: ['friends-activities'] });
+    console.log('🔄 [SEARCH DEBUG] Force refreshed all feeds');
+    refetchTicker();
+  };
 
   const handleUserSearch = async (username: string) => {
     await searchUser(username);
@@ -94,17 +106,27 @@ export const SearchColumn: React.FC = () => {
           <span className="text-sm font-bold text-white habbo-text-shadow">
             Ticker Oficial do Hotel
           </span>
-          <button
-            onClick={() => refetchTicker()}
-            disabled={tickerLoading}
-            className="text-white/80 hover:text-white p-1 transition-colors ml-auto"
-          >
-            {tickerLoading ? (
-              <Search className="w-3 h-3 animate-spin" />
-            ) : (
-              <Search className="w-3 h-3" />
-            )}
-          </button>
+          <div className="flex gap-1 ml-auto">
+            <button
+              onClick={() => refetchTicker()}
+              disabled={tickerLoading}
+              className="text-white/80 hover:text-white p-1 transition-colors"
+            >
+              {tickerLoading ? (
+                <Search className="w-3 h-3 animate-spin" />
+              ) : (
+                <Search className="w-3 h-3" />
+              )}
+            </button>
+            <button
+              onClick={handleForceRefresh}
+              disabled={tickerLoading}
+              className="text-amber-400 hover:text-amber-300 p-1 transition-colors"
+              title="Force Update (Debug)"
+            >
+              <Zap className="w-3 h-3" />
+            </button>
+          </div>
         </div>
         
         <div className="max-h-96 overflow-y-auto space-y-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>

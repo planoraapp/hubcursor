@@ -34,11 +34,11 @@ export const useHotelTicker = () => {
       console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (user: ${habboAccount?.habbo_name || 'guest'})`);
       return habboProxyService.getHotelTicker(hotel);
     },
-    baseRefetchInterval: 3 * 60 * 1000, // 3 minutos para dados mais frescos
-    aggressiveCacheTime: 4 * 60 * 1000, // 4 minutos de cache
+    baseRefetchInterval: 30 * 1000, // 30 segundos para atualizações mais frequentes
+    aggressiveCacheTime: 1 * 60 * 1000, // 1 minuto de cache
     enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 12, windowMs: 60 * 1000 }, // 12 requests por minuto
-    retry: 2
+    rateLimitConfig: { maxRequests: 30, windowMs: 60 * 1000 }, // 30 requests por minuto
+    retry: 1
   });
 
   // Extract activities and metadata

@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, RefreshCw, Loader2, Search } from 'lucide-react';
+import { Activity, RefreshCw, Loader2, Search, Zap } from 'lucide-react';
 import { useOfficialHotelTicker } from '@/hooks/useOfficialHotelTicker';
 import { RichActivityRenderer } from './RichActivityRenderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const OptimizedUserDiscoveryColumn: React.FC = () => {
+  const queryClient = useQueryClient();
   const { activities, isLoading, error, refetch, hotel, metadata } = useOfficialHotelTicker({
     limit: 15
   });
@@ -16,6 +18,16 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
   const lastUpdate = metadata?.timestamp;
 
   const handleRefresh = () => {
+    refetch();
+  };
+
+  const handleForceUpdate = () => {
+    // Force invalidate all related caches for debugging
+    queryClient.invalidateQueries({ queryKey: ['official-hotel-ticker'] });
+    queryClient.invalidateQueries({ queryKey: ['hotel-ticker'] });
+    queryClient.invalidateQueries({ queryKey: ['friends-photos'] });
+    queryClient.invalidateQueries({ queryKey: ['friends-activities'] });
+    console.log('🔄 [DEBUG] Force refreshed all caches');
     refetch();
   };
 
