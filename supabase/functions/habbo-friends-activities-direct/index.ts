@@ -282,27 +282,48 @@ serve(async (req) => {
 
     // If we need more activities, process some friends to detect new changes
     if (allActivities.length < limit && friends.length > 0) {
-      // NOVO: Paginação circular real - diferentes amigos para cada página
+      // CORRIGIDO: Sistema de seleção sem bias alfabético
       const totalFriends = friends.length;
-      const friendsPerPage = Math.min(20, Math.max(8, Math.floor(totalFriends / 3))); // 8-20 amigos por página
+      const friendsPerPage = Math.min(20, Math.max(8, Math.floor(totalFriends / 3)));
       
-      // Calcular índice inicial baseado no offset
+      // Criar hash baseado em timestamp + offset para determinismo sem bias
+      const timeWindow = Math.floor(Date.now() / (15 * 60 * 1000)); // Janela de 15 min
+      const hashSeed = (timeWindow + offset) * 1337; // Multiplicador primo para distribuição
+      
+      // Implementar Fisher-Yates shuffle com seed fixo para sessão
+      const shuffleFriends = (array: string[], seed: number) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor((seed * (i + 1)) % 2147483647 / 2147483647 * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          seed = (seed * 1103515245 + 12345) % 2147483647;
+        }
+        return shuffled;
+      };
+      
+      // Embaralhar lista completa com seed determinístico
+      const shuffledFriends = shuffleFriends(friends, hashSeed);
+      
+      // Calcular offset real sem bias circular
       const pageNumber = Math.floor(offset / limit);
-      const startIndex = (pageNumber * friendsPerPage) % totalFriends;
+      const globalOffset = (pageNumber * friendsPerPage) % totalFriends;
       
-      // Selecionar amigos de forma circular
+      // Selecionar amigos da lista embaralhada
       let friendsToProcess = [];
       for (let i = 0; i < friendsPerPage; i++) {
-        const index = (startIndex + i) % totalFriends;
-        friendsToProcess.push(friends[index]);
+        const index = (globalOffset + i) % totalFriends;
+        friendsToProcess.push(shuffledFriends[index]);
       }
       
-      // Adicionar randomização para evitar sempre os mesmos usuários
-      const shuffleSeed = Math.floor(Date.now() / (30 * 60 * 1000)); // Muda a cada 30 min
-      friendsToProcess = friendsToProcess.sort(() => (shuffleSeed % 2 === 0 ? 1 : -1) * (Math.random() - 0.5));
+      // Log detalhado da diversidade alfabética
+      const letterDistribution = friendsToProcess.reduce((acc, name) => {
+        const firstLetter = name.charAt(0).toUpperCase();
+        acc[firstLetter] = (acc[firstLetter] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
       
-      console.log(`🔄 [PAGINATION] Página ${pageNumber}, processando amigos ${startIndex}-${(startIndex + friendsPerPage - 1) % totalFriends}`);
-      
+      console.log(`🔄 [PAGINATION] Página ${pageNumber}, processando ${friendsToProcess.length} amigos`);
+      console.log(`🔍 [DIVERSITY CHECK] Distribuição alfabética:`, Object.keys(letterDistribution).sort().map(letter => `${letter}:${letterDistribution[letter]}`).join(' '));
       console.log(`🔍 [CHANGE DETECTION] Processing ${friendsToProcess.length} friends for new changes`);
       
       const changeDetectionPromises = friendsToProcess.map(async (friendName: string) => {

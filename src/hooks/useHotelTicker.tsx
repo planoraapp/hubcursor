@@ -34,11 +34,11 @@ export const useHotelTicker = () => {
       console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (user: ${habboAccount?.habbo_name || 'guest'})`);
       return habboProxyService.getHotelTicker(hotel);
     },
-    baseRefetchInterval: 2 * 60 * 1000, // 2 minutos (era 30s)
-    aggressiveCacheTime: 5 * 60 * 1000, // 5 minutos de cache
+    baseRefetchInterval: 3 * 60 * 1000, // 3 minutos para dados mais frescos
+    aggressiveCacheTime: 4 * 60 * 1000, // 4 minutos de cache
     enableRateLimit: true,
-    rateLimitConfig: { maxRequests: 15, windowMs: 60 * 1000 }, // 15 requests por minuto
-    retry: 2, // Reduzido de 3 para 2
+    rateLimitConfig: { maxRequests: 12, windowMs: 60 * 1000 }, // 12 requests por minuto
+    retry: 2
   });
 
   // Extract activities and metadata
@@ -89,9 +89,28 @@ export const useHotelTicker = () => {
 
     let result = groupByUser(recent);
     
-    if (result.length < 5 && rawActivities.length > 0) {
-      console.warn('⚠️ [useHotelTicker] Few recent activities, using complete snapshot');
-      result = groupByUser(rawActivities).slice(0, 15); // Reduzido de 20 para 15
+    if (result.length < 8 && rawActivities.length > 0) {
+      console.warn('⚠️ [useHotelTicker] Few recent activities, using complete snapshot with diversity filter');
+      const allGrouped = groupByUser(rawActivities);
+      
+      // Implementar filtro de diversidade para evitar usuários repetitivos
+      const diverseResult = [];
+      const usedPatterns = new Set<string>();
+      
+      for (const group of allGrouped) {
+        // Criar padrão baseado nas primeiras 3 letras para detectar similaridade
+        const pattern = group.username.slice(0, 3).toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Evitar muitos usuários com padrões similares (como !!! ou 123)
+        if (!usedPatterns.has(pattern) || usedPatterns.size < 10) {
+          diverseResult.push(group);
+          usedPatterns.add(pattern);
+        }
+        
+        if (diverseResult.length >= 20) break;
+      }
+      
+      result = diverseResult;
     }
 
     console.log(`✅ [useHotelTicker] Aggregated into ${result.length} user groups (hotel: ${hotel}, source: ${metadata.source})`);
