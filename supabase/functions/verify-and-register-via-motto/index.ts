@@ -63,21 +63,26 @@ const findHabboUser = async (habboName: string): Promise<{user: any, hotel: stri
 };
 
 Deno.serve(async (req) => {
+  console.log(`🔥 [VERIFY-MOTTO] Edge function called - Method: ${req.method}, URL: ${req.url}`);
+  
   if (req.method === 'OPTIONS') {
+    console.log('🔥 [VERIFY-MOTTO] Handling CORS preflight');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('🔥 [VERIFY-MOTTO] Creating Supabase client...');
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { db: { schema: 'public' } }
     );
 
+    console.log('🔥 [VERIFY-MOTTO] Parsing request body...');
     const body: MottoVerificationRequest = await req.json();
     const { habbo_name, verification_code, password, action } = body;
 
-    console.log(`🚀 Processing ${action} for ${habbo_name}`);
+    console.log(`🚀 [VERIFY-MOTTO] Processing ${action} for ${habbo_name}`, { habbo_name, action, hasCode: !!verification_code, hasPassword: !!password });
 
     if (action === 'generate') {
       // Verify that the Habbo user exists
@@ -257,7 +262,8 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Error in verify-and-register-via-motto:', error);
+    console.error('❌ [VERIFY-MOTTO] Error in verify-and-register-via-motto:', error);
+    console.error('❌ [VERIFY-MOTTO] Error stack:', error.stack);
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

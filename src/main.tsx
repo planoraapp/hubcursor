@@ -18,10 +18,12 @@ import Noticias from './pages/Noticias'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
+import HanditemCatalog from './pages/HanditemCatalog'
 import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
+import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer'
 
 const queryClient = new QueryClient()
 
@@ -75,6 +77,10 @@ const router = createBrowserRouter([
     element: <Tools />,
   },
   {
+    path: "/ferramentas/handitems",
+    element: <HanditemCatalog />,
+  },
+  {
     path: "/tools",
     element: <Tools />,
   },
@@ -100,12 +106,21 @@ const router = createBrowserRouter([
   },
 ])
 
+const AppWithInitializers = () => {
+  useDailyActivitiesInitializer();
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster />
+    </>
+  );
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <UnifiedAuthProvider>
-        <RouterProvider router={router} />
-        <Toaster />
+        <AppWithInitializers />
       </UnifiedAuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

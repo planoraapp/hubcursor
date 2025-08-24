@@ -28,7 +28,23 @@
         padding: 0;
         border: none;
       }
+      
+      /* SVG Filter for Habbo Volter Crisp Rendering */
+      .habbo-volter-crisp {
+        filter: url(#crispify);
+      }
     </style>
+    
+    <!-- SVG Filter for Habbo Volter Font -->
+    <svg width="0" height="0" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="crispify">
+          <feComponentTransfer>
+            <feFuncA type="discrete" tableValues="0 1"/>
+          </feComponentTransfer>
+        </filter>
+      </defs>
+    </svg>
   </head>
   <body>
     <div id="root"></div>

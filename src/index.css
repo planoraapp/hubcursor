@@ -74,10 +74,59 @@
   }
 }
 
-/* Volter Font Utility */
+/* Habbo Official Fonts */
+@font-face {
+  font-family: 'Habbo Ubuntu'; 
+  src: url('https://alynva.surge.sh/fonts/2_class_30_Ubuntu.otf');
+}
+
+@font-face {
+  font-family: 'Habbo Ubuntu Condensed'; 
+  src: url('https://alynva.surge.sh/fonts/11_class_49_Ubuntu.otf');
+}
+
+@font-face {
+  font-family: 'Habbo Volter'; 
+  src: url('https://alynva.surge.sh/fonts/1052_class_1740_Volter.otf');
+}
+
+@font-face {
+  font-family: 'Habbo Volter'; 
+  src: url('https://alynva.surge.sh/fonts/728_class_1739_Volter Bold.otf');
+  font-weight: bold;
+}
+
+/* SVG Filter for Habbo Volter Crisp Rendering */
+.habbo-volter-crisp {
+  filter: url(#crispify);
+}
+
+/* Font Utility Classes */
 .volter-font {
   font-family: 'Volter Goldfish', Arial, sans-serif;
   font-weight: normal;
+}
+
+.habbo-ubuntu-font {
+  font-family: 'Habbo Ubuntu', Arial, sans-serif;
+}
+
+.habbo-ubuntu-condensed-font {
+  font-family: 'Habbo Ubuntu Condensed', Arial, sans-serif;
+}
+
+.habbo-volter-font {
+  font-family: 'Habbo Volter', Arial, sans-serif;
+}
+
+.habbo-volter-font-9px {
+  font-family: 'Habbo Volter', Arial, sans-serif;
+  font-size: 9px;
+}
+
+.habbo-volter-font-18px {
+  font-family: 'Habbo Volter', Arial, sans-serif;
+  font-size: 18px;
 }
 
 /* Habbo Text Effect */
