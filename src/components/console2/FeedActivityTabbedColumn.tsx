@@ -1,160 +1,346 @@
-
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Loader2, Activity } from 'lucide-react';
+import { Loader2, RefreshCw, Heart, MessageCircle, Camera, Activity, Clock, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useOptimizedFriendsPhotos } from '@/hooks/useOptimizedFriendsPhotos';
+import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
+import { useOptimizedHotelFeed } from '@/hooks/useOptimizedHotelFeed';
+import { useChronologicalFeedPhotos } from '@/hooks/useChronologicalFeedPhotos';
 import { useChronologicalFeedActivities } from '@/hooks/useChronologicalFeedActivities';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useFriendsActivitiesDirect } from '@/hooks/useFriendsActivitiesDirect';
+import { useAuth } from '@/hooks/useAuth';
+import { usePhotoLikes } from '@/hooks/usePhotoLikes';
+import { usePhotoComments } from '@/hooks/usePhotoComments';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { PhotoLikesModal } from '@/components/shared/PhotoLikesModal';
+import { PhotoCommentsModal } from '@/components/shared/PhotoCommentsModal';
+import { PhotoCard } from './PhotoCard';
+import { UserProfileInColumn } from './UserProfileInColumn';
+import { EnhancedActivityRenderer } from './EnhancedActivityRenderer';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-interface FeedActivityTabbedColumnProps {
-  onUserClick: (username: string) => void;
-}
+export const FeedActivityTabbedColumn: React.FC = () => {
+  const { habboAccount } = useAuth();
+  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [showProfile, setShowProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState('photos');
+  const [selectedPhotoForLikes, setSelectedPhotoForLikes] = useState<string>('');
+  const [selectedPhotoForComments, setSelectedPhotoForComments] = useState<string>('');
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  
+  // Ref for scroll container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollDirection = useScrollDirection(scrollContainerRef.current);
 
-export const FeedActivityTabbedColumn: React.FC<FeedActivityTabbedColumnProps> = ({ onUserClick }) => {
-  const { habboAccount } = useUnifiedAuth();
+  // Always call hooks at the top level to prevent violations
+  const { 
+    likes: photoLikes, 
+    likesLoading, 
+    toggleLike 
+  } = usePhotoLikes(selectedPhotoForLikes || '');
   
   const { 
-    activities, 
-    isLoading, 
-    refetch, 
-    isEmpty,
-    lastUpdate,
-    systemStatus,
-    friendsCount 
-  } = useChronologicalFeedActivities(
+    comments: photoComments, 
+    commentsLoading, 
+    addComment,
+    isAddingComment 
+  } = usePhotoComments(selectedPhotoForComments || '');
+  
+  // Hooks para fotos dos amigos - usando feeds cronológicos
+  const { 
+    photos: chronoPhotos, 
+    isLoading: chronoPhotosLoading, 
+    refetch: refetchChronoPhotos 
+  } = useChronologicalFeedPhotos(
     habboAccount?.habbo_name || '',
-    habboAccount?.hotel || 'br'
+    (habboAccount as any)?.hotel || 'br'
   );
 
-  const handleRefresh = () => {
-    refetch();
+  // Backup - fotos otimizadas dos amigos
+  const { 
+    data: friendsPhotos = [], 
+    isLoading: photosLoading, 
+    refetch: refetchPhotos,
+    forceRefresh: forceRefreshPhotos
+  } = useOptimizedFriendsPhotos(
+    habboAccount?.habbo_name || '',
+    (habboAccount as any)?.hotel || 'br'
+  );
+
+  // Hooks para atividades dos amigos - usando feeds cronológicos
+  const { 
+    activities: chronoActivities, 
+    isLoading: chronoActivitiesLoading, 
+    refetch: refetchChronoActivities 
+  } = useChronologicalFeedActivities(
+    habboAccount?.habbo_name || '',
+    (habboAccount as any)?.hotel || 'br'
+  );
+
+  // Backup - atividades diretas dos amigos
+  const { 
+    activities, 
+    isLoading: activitiesLoading, 
+    fetchNextPage,
+    hasNextPage,
+    refetch: refetchActivities
+  } = useFriendsActivitiesDirect();
+
+  const handleUserClick = (userName: string) => {
+    setSelectedUser(userName);
+    setShowProfile(true);
   };
 
-  const getAvatarUrl = (habboName: string, hotel: string = 'br') => {
-    const domain = hotel === 'br' ? 'com.br' : hotel;
-    return `https://www.habbo.${domain}/habbo-imaging/avatarimage?user=${habboName}&size=s&direction=2&head_direction=3&action=std`;
+  const handleLikesClick = (photoId: string) => {
+    setSelectedPhotoForLikes(photoId);
+    setShowLikesModal(true);
   };
+
+  const handleCommentsClick = (photoId: string) => {
+    setSelectedPhotoForComments(photoId);
+    setShowCommentsModal(true);
+  };
+
+  const handleRefresh = async () => {
+    if (activeTab === 'photos') {
+      console.log('[📸 PHOTOS] Forcing refresh with chronological feed');
+      await refetchChronoPhotos();
+      await forceRefreshPhotos(); // Backup
+    } else if (activeTab === 'activities') {
+      console.log('[⚡ ACTIVITIES] Forcing refresh with chronological feed');
+      await refetchChronoActivities();
+      await refetchActivities(); // Backup
+    }
+  };
+
+  const formatActivityTime = (timestamp: string) => {
+    try {
+      return formatDistanceToNow(new Date(timestamp), { 
+        addSuffix: true, 
+        locale: ptBR 
+      });
+    } catch (error) {
+      return 'há alguns momentos';
+    }
+  };
+
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType) {
+      case 'badge':
+        return '🏆';
+      case 'motto_change':
+        return '💬';
+      case 'look_change':
+        return '👕';
+      case 'friend_added':
+        return '👥';
+      case 'status_change':
+        return '🟢';
+      case 'photo_uploaded':
+        return '📸';
+      case 'room_visited':
+        return '🏠';
+      default:
+        return '✨';
+    }
+  };
+
+  // Show profile if selected
+  if (showProfile && selectedUser) {
+    return (
+      <Card className="bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+        <UserProfileInColumn 
+          username={selectedUser} 
+          onBack={() => {
+            setShowProfile(false);
+            setSelectedUser('');
+          }} 
+        />
+      </Card>
+    );
+  }
 
   return (
-    <Card className="bg-black/40 text-white border-white/20 shadow-none h-full flex flex-col backdrop-blur-sm">
-      <CardHeader className="pb-3 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg text-white volter-font">Feed de Atividades</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="text-white/80 hover:text-white hover:bg-white/10"
-          >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-          </Button>
-        </div>
-        {lastUpdate && (
-          <p className="text-xs text-white/60">
-            Última atualização: {new Date(lastUpdate).toLocaleTimeString('pt-BR')}
-          </p>
-        )}
-      </CardHeader>
-
-      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-3" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
-        {isLoading && activities.length === 0 ? (
-          <div className="text-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-2" />
-            <p className="text-white/60 text-sm">Carregando atividades...</p>
-          </div>
-        ) : isEmpty ? (
-          <div className="text-center py-8">
-            <Activity className="w-8 h-8 text-white/40 mx-auto mb-2" />
-            <p className="text-white/60 text-sm">Nenhuma atividade recente</p>
-            <p className="text-white/40 text-xs mt-1">
-              {systemStatus === 'no_friends' ? 
-                'Adicione amigos no Habbo para ver atividades' :
-                systemStatus === 'tracking_disabled' ?
-                'Sistema de rastreamento ativo. Atividades aparecerão em breve' :
-                `${friendsCount} amigos monitorados - sem atividades nas últimas 12h`
-              }
-            </p>
-            {systemStatus === 'tracking_disabled' && (
-              <div className="mt-3">
-                <div className="inline-flex items-center space-x-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span>Sistema ativo</span>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          activities.map((activity) => (
-            <div
-              key={activity.id}
-              className="bg-white/5 rounded-lg border border-white/10 p-3 hover:bg-white/10 transition-colors cursor-pointer"
-              onClick={() => onUserClick(activity.user_habbo_name)}
+    <>
+      <div className="h-full flex flex-col bg-transparent">
+        <div className="flex-shrink-0 mb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-white habbo-text-shadow" />
+              <span className="text-sm font-bold text-white habbo-text-shadow">
+                Feed dos Amigos
+              </span>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={chronoPhotosLoading || photosLoading || chronoActivitiesLoading || activitiesLoading}
+              className="text-white/80 hover:text-white p-1 transition-colors"
             >
-              <div className="flex items-start space-x-3">
-                {/* Avatar */}
-                <img
-                  src={getAvatarUrl(activity.user_habbo_name, activity.hotel)}
-                  alt={`Avatar de ${activity.user_habbo_name}`}
-                  className="w-10 h-10 rounded bg-white/10"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/habbo-avatar-placeholder.png';
-                  }}
-                />
-                
-                {/* Activity Content */}
-                <div className="flex-1 min-w-0">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-semibold text-white text-sm truncate">
-                      {activity.user_habbo_name}
-                    </h4>
-                    <span className="text-xs text-white/60 flex-shrink-0 ml-2">
-                      {activity.timeAgo}
-                    </span>
-                  </div>
-                  
-                  {/* Summary */}
-                  <p className="text-xs text-white/80 mb-2">
-                    Atualizou: {activity.summary}
+              {(chronoPhotosLoading || photosLoading || chronoActivitiesLoading || activitiesLoading) ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex-1 min-h-0 flex flex-col">
+          {/* Tabs */}
+          <div className="flex-shrink-0 mb-3">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                onClick={() => setActiveTab('photos')}
+                className={cn(
+                  "pixel-nav-button text-[10px] p-2 h-8",
+                  activeTab === 'photos' ? "active" : ""
+                )}
+                style={{
+                  backgroundColor: activeTab === 'photos' ? '#FDCC00' : '#666666',
+                  color: activeTab === 'photos' ? '#2B2300' : '#FFFFFF'
+                }}
+              >
+                <Camera className="w-3 h-3 mr-1" />
+                Fotos
+              </button>
+              <button
+                onClick={() => setActiveTab('activities')}
+                className={cn(
+                  "pixel-nav-button text-[10px] p-2 h-8",
+                  activeTab === 'activities' ? "active" : ""
+                )}
+                style={{
+                  backgroundColor: activeTab === 'activities' ? '#FDCC00' : '#666666',
+                  color: activeTab === 'activities' ? '#2B2300' : '#FFFFFF'
+                }}
+              >
+                <Activity className="w-3 h-3 mr-1" />
+                Atividades
+              </button>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-2" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+            {activeTab === 'photos' ? (
+              chronoPhotosLoading || photosLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <Loader2 className="w-6 h-6 animate-spin text-white/60" />
+                </div>
+              ) : (chronoPhotos.length > 0 ? chronoPhotos : friendsPhotos).length > 0 ? (
+                (chronoPhotos.length > 0 ? chronoPhotos : friendsPhotos).map((photo, index) => (
+                  <PhotoCard
+                    key={photo.id || index}
+                    photo={photo}
+                    onUserClick={handleUserClick}
+                    onLikesClick={handleLikesClick}
+                    onCommentsClick={handleCommentsClick}
+                    showDivider={index < (chronoPhotos.length > 0 ? chronoPhotos : friendsPhotos).length - 1}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <Camera className="w-8 h-8 mx-auto mb-3 text-white/40" />
+                  <p className="text-white/60 text-xs">
+                    {chronoPhotos.length > 0 ? 'Feed cronológico ativo' : 'Nenhuma foto dos amigos encontrada'}
                   </p>
-                  
-                  {/* Detailed Activities */}
-                  {activity.activityDetails && activity.activityDetails.length > 0 && (
-                    <div className="space-y-1">
-                      {activity.activityDetails.slice(0, 3).map((detail, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <div className="w-1 h-1 bg-white/40 rounded-full flex-shrink-0"></div>
-                          <span className="text-xs text-white/70">{detail}</span>
+                  <p className="text-white/40 text-[10px] mt-1">
+                    {chronoPhotos.length > 0 ? 'Fotos organizadas por data' : 'As fotos dos seus amigos aparecerão aqui'}
+                  </p>
+                </div>
+              )
+            ) : (
+              chronoActivitiesLoading || activitiesLoading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
+                </div>
+              ) : (chronoActivities.length > 0 ? chronoActivities : activities).length > 0 ? (
+                <>
+                  <div className="text-[10px] text-white/60 text-center py-1">
+                    {chronoActivities.length > 0 ? 'Feed cronológico ativo • ' : 'Atividades recentes • '}
+                    {(chronoActivities.length > 0 ? chronoActivities : activities).length} encontradas
+                  </div>
+                  {(chronoActivities.length > 0 ? chronoActivities : activities).map((activity, index) => (
+                    <div key={`${activity.user_habbo_name || activity.username}-${activity.last_updated || activity.timestamp}-${index}`}>
+                      <div className="bg-transparent border border-black hover:bg-white/10 transition-colors p-2">
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center">
+                            <Activity className="w-3 h-3 text-blue-300" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <button
+                              onClick={() => handleUserClick(activity.user_habbo_name || activity.username || '')}
+                              className="text-white/90 text-xs font-medium hover:text-white transition-colors volter-font"
+                            >
+                              {activity.user_habbo_name || activity.username || 'Usuário'}
+                            </button>
+                            <p className="text-white/70 text-[10px] leading-relaxed mt-1">
+                              {chronoActivities.length > 0 && activity.summary 
+                                ? activity.summary 
+                                : (activity.activity_description || activity.description || 'Atividade realizada')
+                              }
+                            </p>
+                            <p className="text-white/50 text-[9px] mt-1">
+                              {chronoActivities.length > 0 && activity.timeAgo 
+                                ? `Última atualização ${activity.timeAgo}`
+                                : (activity.timestamp ? formatActivityTime(activity.timestamp) : 'há alguns momentos')
+                              }
+                            </p>
+                          </div>
                         </div>
-                      ))}
-                      {activity.activityDetails.length > 3 && (
-                        <div className="text-xs text-white/50 mt-1">
-                          +{activity.activityDetails.length - 3} outras atividades
-                        </div>
+                      </div>
+                      {index < (chronoActivities.length > 0 ? chronoActivities : activities).length - 1 && (
+                        <div className="w-full h-px bg-white/20 my-1" />
                       )}
                     </div>
-                  )}
-                  
-                  {/* Activity Count */}
-                  {activity.total_changes > 1 && (
-                    <div className="mt-2 inline-flex items-center space-x-1 bg-white/10 rounded px-2 py-1">
-                      <Activity className="w-3 h-3 text-white/60" />
-                      <span className="text-xs text-white/70">
-                        {activity.total_changes} alterações
-                      </span>
+                  ))}
+                  {!chronoActivities.length && hasNextPage && (
+                    <div className="flex justify-center py-2">
+                      <button
+                        onClick={() => fetchNextPage()}
+                        className="text-white/70 hover:text-white text-xs border border-black px-2 py-1 hover:bg-white/10 transition-colors"
+                      >
+                        Carregar mais atividades
+                      </button>
                     </div>
                   )}
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <Activity className="w-8 h-8 mx-auto mb-3 text-white/40" />
+                  <p className="text-white/60 text-xs">
+                    {chronoActivities.length > 0 ? 'Feed cronológico ativo' : 'Nenhuma atividade de amigos encontrada'}
+                  </p>
+                  <p className="text-white/40 text-[10px] mt-1">
+                    {chronoActivities.length > 0 ? 'Atividades organizadas por data' : 'Atividades dos seus amigos aparecerão aqui'}
+                  </p>
                 </div>
-              </div>
-            </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Photo Modals */}
+      <PhotoLikesModal
+        open={showLikesModal}
+        onOpenChange={setShowLikesModal}
+        likes={selectedPhotoForLikes ? photoLikes : []}
+        isLoading={selectedPhotoForLikes ? likesLoading : false}
+      />
+
+      <PhotoCommentsModal
+        open={showCommentsModal}
+        onOpenChange={setShowCommentsModal}
+        comments={selectedPhotoForComments ? photoComments : []}
+        isLoading={selectedPhotoForComments ? commentsLoading : false}
+        onAddComment={addComment}
+        isAddingComment={isAddingComment}
+      />
+    </>
   );
 };
