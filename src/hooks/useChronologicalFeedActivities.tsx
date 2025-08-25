@@ -28,6 +28,8 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
   const { data: profileData, isLoading: profileLoading } = useCompleteProfile(currentUserName, hotel);
   const { trackUserActivities } = useDailyActivitiesTracker();
   const friends = profileData?.data?.friends || [];
+  
+  console.log(`[🎯 CHRONOLOGICAL] Init for ${currentUserName}, profile loading: ${profileLoading}, friends: ${friends.length}`);
 
   const queryResult = useQuery({
     queryKey: ['chronological-feed-activities', currentUserName, hotel, friends.length],
@@ -35,7 +37,11 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
       console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Fetching activities for ${currentUserName} with ${friends.length} friends`);
 
       if (friends.length === 0) {
-        console.log('[🎯 CHRONOLOGICAL ACTIVITIES] No friends found, returning empty array');
+        console.log('[🎯 CHRONOLOGICAL ACTIVITIES] No friends found, will trigger tracking anyway');
+        // Still trigger tracking for the user themselves
+        if (currentUserName && profileData?.uniqueId) {
+          trackUserActivities(currentUserName, profileData.uniqueId, hotel).catch(console.error);
+        }
         return [];
       }
 
@@ -257,12 +263,21 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
     refetchInterval: 2 * 60 * 1000, // Refresh a cada 2 minutos
   });
 
+  // Determine system status
+  const systemStatus = !currentUserName ? 'no_user' :
+                      profileLoading ? 'loading' :
+                      friends.length === 0 ? 'no_friends' :
+                      !queryResult.isLoading && (queryResult.data?.length || 0) === 0 ? 'tracking_disabled' :
+                      'active';
+
   return {
     activities: queryResult.data || [],
     isLoading: queryResult.isLoading,
     error: queryResult.error,
     refetch: queryResult.refetch,
     isEmpty: !queryResult.isLoading && (queryResult.data?.length || 0) === 0,
-    lastUpdate: queryResult.dataUpdatedAt
+    lastUpdate: queryResult.dataUpdatedAt,
+    systemStatus,
+    friendsCount: friends.length
   };
 };

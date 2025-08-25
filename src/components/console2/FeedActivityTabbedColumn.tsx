@@ -18,7 +18,9 @@ export const FeedActivityTabbedColumn: React.FC<FeedActivityTabbedColumnProps> =
     isLoading, 
     refetch, 
     isEmpty,
-    lastUpdate 
+    lastUpdate,
+    systemStatus,
+    friendsCount 
   } = useChronologicalFeedActivities(
     habboAccount?.habbo_name || '',
     habboAccount?.hotel || 'br'
@@ -70,8 +72,21 @@ export const FeedActivityTabbedColumn: React.FC<FeedActivityTabbedColumnProps> =
             <Activity className="w-8 h-8 text-white/40 mx-auto mb-2" />
             <p className="text-white/60 text-sm">Nenhuma atividade recente</p>
             <p className="text-white/40 text-xs mt-1">
-              Seus amigos não tiveram atividades nas últimas horas
+              {systemStatus === 'no_friends' ? 
+                'Adicione amigos no Habbo para ver atividades' :
+                systemStatus === 'tracking_disabled' ?
+                'Sistema de rastreamento ativo. Atividades aparecerão em breve' :
+                `${friendsCount} amigos monitorados - sem atividades nas últimas 12h`
+              }
             </p>
+            {systemStatus === 'tracking_disabled' && (
+              <div className="mt-3">
+                <div className="inline-flex items-center space-x-2 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span>Sistema ativo</span>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           activities.map((activity) => (

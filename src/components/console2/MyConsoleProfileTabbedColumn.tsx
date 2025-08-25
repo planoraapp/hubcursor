@@ -1,32 +1,31 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Loader2, User, Settings, Trophy, Users, Home, Crown } from 'lucide-react';
+import { Settings, User, Star, Users, Trophy, Home } from 'lucide-react';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-import { CountryFlag } from '@/components/shared/CountryFlag';
 
 export const MyConsoleProfileTabbedColumn: React.FC = () => {
   const { habboAccount } = useUnifiedAuth();
-  const [isLoading] = React.useState(false);
-
-  const handleRefresh = () => {
-    console.log('[👤 PROFILE] Atualizando meu perfil...');
-  };
 
   const getAvatarUrl = (habboName: string, hotel: string = 'br') => {
     const domain = hotel === 'br' ? 'com.br' : hotel;
     return `https://www.habbo.${domain}/habbo-imaging/avatarimage?user=${habboName}&size=l&direction=2&head_direction=3&action=std`;
   };
 
+  const mockStats = [
+    { label: 'Emblemas', value: '24', icon: Trophy },
+    { label: 'Amigos', value: '156', icon: Users },
+    { label: 'Fotos', value: '8', icon: Star },
+    { label: 'Quartos', value: '3', icon: Home }
+  ];
+
   if (!habboAccount) {
     return (
       <Card className="bg-black/40 text-white border-white/20 shadow-none h-full flex flex-col backdrop-blur-sm">
         <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <User className="w-8 h-8 text-white/40 mx-auto mb-2" />
-            <p className="text-white/60 text-sm">Faça login para ver seu perfil</p>
+            <User className="w-12 h-12 text-white/40 mx-auto mb-4" />
+            <p className="text-white/60">Faça login para ver seu perfil</p>
           </div>
         </CardContent>
       </Card>
@@ -41,86 +40,111 @@ export const MyConsoleProfileTabbedColumn: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
             className="text-white/80 hover:text-white hover:bg-white/10"
           >
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
+            <Settings className="w-4 h-4" />
           </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
-        {/* Avatar and Basic Info */}
-        <div className="flex items-start space-x-4">
-          <div className="relative flex-shrink-0">
+      <CardContent className="flex-1 min-h-0 overflow-y-auto" style={{scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent'}}>
+        <div className="text-center mb-6">
+          <div className="relative inline-block">
             <img
               src={getAvatarUrl(habboAccount.habbo_name, habboAccount.hotel)}
               alt={`Avatar de ${habboAccount.habbo_name}`}
-              className="w-24 h-32 object-contain"
+              className="w-20 h-20 mx-auto mb-3 bg-white/10 rounded"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/assets/habbo-avatar-placeholder.png';
+              }}
             />
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-black/40 rounded-full"></div>
-            <div className="absolute bottom-1 right-1">
-              <CountryFlag hotel={habboAccount.hotel} />
-            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-black/40"></div>
           </div>
           
-          <div className="flex-1 min-w-0 pt-2">
-            <h3 className="text-xl font-bold text-white truncate volter-font">{habboAccount.habbo_name}</h3>
-            <Badge className="bg-green-500/20 text-green-300 border-green-500/30 mt-2">
-              Online
-            </Badge>
+          <h3 className="text-xl font-bold text-white mb-1 volter-font">
+            {habboAccount.habbo_name}
+          </h3>
+          
+          {habboAccount.motto && (
+            <p className="text-sm text-white/70 italic mb-3">
+              "{habboAccount.motto}"
+            </p>
+          )}
+          
+          <div className="inline-flex items-center space-x-1 bg-white/10 rounded-full px-3 py-1">
+            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            <span className="text-xs text-white/80">Online</span>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-black/40 border border-white/20">
-            <Trophy className="h-5 w-5 text-yellow-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">--</div>
-              <div className="text-xs text-white/60">Emblemas</div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-black/40 border border-white/20">
-            <Home className="h-5 w-5 text-green-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">--</div>
-              <div className="text-xs text-white/60">Quartos</div>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-black/40 border border-white/20">
-            <Users className="h-5 w-5 text-pink-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">--</div>
-              <div className="text-xs text-white/60">Amigos</div>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-black/40 border border-white/20">
-            <Crown className="h-5 w-5 text-purple-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">--</div>
-              <div className="text-xs text-white/60">Grupos</div>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {mockStats.map((stat, index) => {
+            const IconComponent = stat.icon;
+            return (
+              <div
+                key={index}
+                className="bg-white/5 rounded-lg p-3 border border-white/10 text-center hover:bg-white/10 transition-colors"
+              >
+                <IconComponent className="w-5 h-5 text-white/60 mx-auto mb-2" />
+                <div className="text-lg font-bold text-white">{stat.value}</div>
+                <div className="text-xs text-white/60">{stat.label}</div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Action Buttons */}
         <div className="space-y-2">
-          <Button 
-            className="w-full bg-black/40 border border-white/20 text-white hover:bg-white/10 hover:text-white"
-            variant="outline"
+          <h4 className="text-sm font-semibold text-white/80 mb-3">Ações Rápidas</h4>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10"
           >
-            <Settings className="w-4 h-4 mr-2" />
+            <Settings className="w-4 h-4 mr-3" />
             Configurações do Perfil
           </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10"
+          >
+            <Star className="w-4 h-4 mr-3" />
+            Minhas Fotos
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10"
+          >
+            <Users className="w-4 h-4 mr-3" />
+            Gerenciar Amigos
+          </Button>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-white/80 hover:text-white hover:bg-white/10"
+          >
+            <Home className="w-4 h-4 mr-3" />
+            Minha Habbo Home
+          </Button>
+        </div>
+
+        <div className="mt-6 p-3 bg-white/5 rounded-lg border border-white/10">
+          <h4 className="text-sm font-semibold text-white/80 mb-2">Status do Console</h4>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-white/60">Hotel:</span>
+              <span className="text-white/80">{habboAccount.hotel.toUpperCase()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/60">ID:</span>
+              <span className="text-white/80 font-mono">{habboAccount.habbo_id}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/60">Sistema:</span>
+              <span className="text-green-400">Ativo</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
