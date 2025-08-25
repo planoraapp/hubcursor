@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompleteProfile } from './useCompleteProfile';
@@ -20,6 +21,7 @@ interface ChronologicalActivity {
   total_changes: number;
   timeAgo: string;
   summary: string;
+  activityDetails: string[];
 }
 
 export const useChronologicalFeedActivities = (currentUserName: string, hotel: string = 'br') => {
@@ -38,19 +40,19 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
       }
 
       try {
-        // Trigger daily activities tracking for the user first (async, don't wait)
+        // Trigger daily activities tracking para popular dados
         if (currentUserName && profileData?.uniqueId) {
           trackUserActivities(currentUserName, profileData.uniqueId, hotel).catch(console.error);
         }
 
-        // Get friend IDs for the query
-        const friendIds = friends.map(f => f.habbo_id || f.id).filter(Boolean).slice(0, 100);
+        // Get friend IDs para a query - expandir para todos os amigos
+        const friendIds = friends.map(f => f.habbo_id || f.id).filter(Boolean);
         
         console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Querying activities for ${friendIds.length} friends`);
         
-        // Query activities from the last 48 hours
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        // Query activities das últimas 12 horas para dados mais recentes
+        const twelveHoursAgo = new Date();
+        twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
         
         const { data: activities, error } = await supabase
           .from('daily_friend_activities')
@@ -72,10 +74,10 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
           `)
           .in('user_habbo_id', friendIds)
           .eq('hotel', hotel)
-          .gte('last_updated', twoDaysAgo.toISOString())
+          .gte('last_updated', twelveHoursAgo.toISOString())
           .gt('total_changes', 0) // Only activities with changes
           .order('last_updated', { ascending: false })
-          .limit(100);
+          .limit(200);
 
         if (error) {
           console.error('[🎯 CHRONOLOGICAL ACTIVITIES] Query error:', error);
@@ -89,67 +91,103 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
 
         console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Found ${activities.length} activities, processing...`);
         
-        // Process activities and generate summaries
+        // Process activities com descrições detalhadas
         const processedActivities = activities
           .map(activity => {
-            // Generate human-readable summary like the example
-            const summaryParts: string[] = [];
-            
             const groupsJoined = Array.isArray(activity.groups_joined) ? activity.groups_joined : [];
             const roomsCreated = Array.isArray(activity.rooms_created) ? activity.rooms_created : [];
             const badgesGained = Array.isArray(activity.badges_gained) ? activity.badges_gained : [];
             const photosPosted = Array.isArray(activity.photos_posted) ? activity.photos_posted : [];
             
+            // Criar detalhes específicos das atividades
+            const activityDetails: string[] = [];
+            
             if (groupsJoined.length > 0) {
-              summaryParts.push(`${groupsJoined.length} novo(s) grupo(s)`);
+              groupsJoined.forEach((group: any) => {
+                activityDetails.push(`Entrou no grupo: ${group.name || 'Grupo'}`);
+              });
             }
             
             if (roomsCreated.length > 0) {
-              summaryParts.push(`${roomsCreated.length} novo(s) quarto(s)`);
+              roomsCreated.forEach((room: any) => {
+                activityDetails.push(`Criou o quarto: ${room.name || 'Novo Quarto'}`);
+              });
             }
             
             if (badgesGained.length > 0) {
-              const badgeCount = badgesGained.length;
-              if (badgeCount >= 5) {
-                summaryParts.push(`mais de ${badgeCount} novo(s) emblema(s)`);
+              if (badgesGained.length === 1) {
+                activityDetails.push(`Conquistou o emblema: ${badgesGained[0]}`);
               } else {
-                summaryParts.push(`${badgeCount} novo(s) emblema(s)`);
+                activityDetails.push(`Conquistou ${badgesGained.length} novos emblemas`);
               }
             }
             
             if (activity.figure_changes) {
-              summaryParts.push('mudou seu visual');
+              activityDetails.push('Mudou o visual do avatar');
             }
             
             if (activity.motto_changed) {
-              summaryParts.push('mudou sua missão');
+              activityDetails.push(`Nova missão: "${activity.motto_changed}"`);
             }
             
             if (photosPosted.length > 0) {
-              summaryParts.push(`${photosPosted.length} nova(s) foto(s)`);
+              photosPosted.forEach((photo: any) => {
+                const roomName = photo.roomName || photo.room_name || 'um quarto';
+                activityDetails.push(`Postou foto em ${roomName}`);
+              });
+            }
+            
+            // Generate summary baseado nas atividades reais
+            const summaryParts: string[] = [];
+            
+            if (groupsJoined.length > 0) {
+              summaryParts.push(`${groupsJoined.length} grupo(s)`);
+            }
+            
+            if (roomsCreated.length > 0) {
+              summaryParts.push(`${roomsCreated.length} quarto(s)`);
+            }
+            
+            if (badgesGained.length > 0) {
+              summaryParts.push(`${badgesGained.length} emblema(s)`);
+            }
+            
+            if (activity.figure_changes) {
+              summaryParts.push('visual');
+            }
+            
+            if (activity.motto_changed) {
+              summaryParts.push('missão');
+            }
+            
+            if (photosPosted.length > 0) {
+              summaryParts.push(`${photosPosted.length} foto(s)`);
             }
             
             const summary = summaryParts.length > 0 
-              ? `adicionou ${summaryParts.join(', ')}`
-              : 'teve atividade no perfil';
+              ? `${summaryParts.join(', ')}`
+              : 'atividade no perfil';
             
-            // Calculate time ago
+            // Calculate time ago com precisão de segundos/minutos
             const lastUpdate = new Date(activity.last_updated);
             const now = new Date();
             const diffMs = now.getTime() - lastUpdate.getTime();
-            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            const diffSeconds = Math.floor(diffMs / 1000);
+            const diffMinutes = Math.floor(diffSeconds / 60);
             const diffHours = Math.floor(diffMinutes / 60);
             
             let timeAgo: string;
-            if (diffMinutes < 1) {
+            if (diffSeconds < 30) {
               timeAgo = 'agora mesmo';
+            } else if (diffSeconds < 60) {
+              timeAgo = `há ${diffSeconds}s`;
             } else if (diffMinutes < 60) {
-              timeAgo = `há ${diffMinutes} minuto${diffMinutes > 1 ? 's' : ''}`;
+              timeAgo = `há ${diffMinutes}min`;
             } else if (diffHours < 24) {
-              timeAgo = `há ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+              timeAgo = `há ${diffHours}h`;
             } else {
               const diffDays = Math.floor(diffHours / 24);
-              timeAgo = `há ${diffDays} dia${diffDays > 1 ? 's' : ''}`;
+              timeAgo = `há ${diffDays}d`;
             }
 
             return {
@@ -159,78 +197,41 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
               badges_gained: badgesGained,
               photos_posted: photosPosted,
               summary,
-              timeAgo
+              timeAgo,
+              activityDetails
             } as ChronologicalActivity;
           })
-          // Group activities from same user within 1 hour
+          // Agrupar até 5 atividades por usuário dentro de 2 horas
           .reduce((acc: ChronologicalActivity[], activity) => {
-            const lastActivity = acc[acc.length - 1];
+            const recentUserActivities = acc.filter(a => 
+              a.user_habbo_id === activity.user_habbo_id
+            );
             
-            if (lastActivity && 
-                lastActivity.user_habbo_id === activity.user_habbo_id) {
+            if (recentUserActivities.length < 5) {
+              const lastActivity = recentUserActivities[0];
               
-              const lastTime = new Date(lastActivity.last_updated).getTime();
-              const currentTime = new Date(activity.last_updated).getTime();
-              const timeDiff = Math.abs(lastTime - currentTime) / (1000 * 60); // minutes
-              
-              // If activities are within 60 minutes, group them
-              if (timeDiff <= 60) {
-                // Merge the activities
-                const mergedBadges = [...(Array.isArray(lastActivity.badges_gained) ? lastActivity.badges_gained : []), ...(Array.isArray(activity.badges_gained) ? activity.badges_gained : [])];
-                const mergedGroups = [...(Array.isArray(lastActivity.groups_joined) ? lastActivity.groups_joined : []), ...(Array.isArray(activity.groups_joined) ? activity.groups_joined : [])];
-                const mergedRooms = [...(Array.isArray(lastActivity.rooms_created) ? lastActivity.rooms_created : []), ...(Array.isArray(activity.rooms_created) ? activity.rooms_created : [])];
-                const mergedPhotos = [...(Array.isArray(lastActivity.photos_posted) ? lastActivity.photos_posted : []), ...(Array.isArray(activity.photos_posted) ? activity.photos_posted : [])];
+              if (lastActivity) {
+                const lastTime = new Date(lastActivity.last_updated).getTime();
+                const currentTime = new Date(activity.last_updated).getTime();
+                const timeDiff = Math.abs(lastTime - currentTime) / (1000 * 60); // minutes
                 
-                // Update the last activity with merged data
-                lastActivity.badges_gained = mergedBadges;
-                lastActivity.groups_joined = mergedGroups;
-                lastActivity.rooms_created = mergedRooms;
-                lastActivity.photos_posted = mergedPhotos;
-                lastActivity.total_changes += activity.total_changes;
-                
-                // Use the more recent timestamp
-                if (currentTime > lastTime) {
-                  lastActivity.last_updated = activity.last_updated;
-                  lastActivity.timeAgo = activity.timeAgo;
-                }
-                
-                // Regenerate summary for merged activity
-                const summaryParts: string[] = [];
-                
-                if (mergedGroups.length > 0) {
-                  summaryParts.push(`${mergedGroups.length} novo(s) grupo(s)`);
-                }
-                
-                if (mergedRooms.length > 0) {
-                  summaryParts.push(`${mergedRooms.length} novo(s) quarto(s)`);
-                }
-                
-                if (mergedBadges.length > 0) {
-                  const badgeCount = mergedBadges.length;
-                  if (badgeCount >= 5) {
-                    summaryParts.push(`mais de ${badgeCount} novo(s) emblema(s)`);
-                  } else {
-                    summaryParts.push(`${badgeCount} novo(s) emblema(s)`);
+                // Se as atividades são dentro de 2 horas, mesclar detalhes
+                if (timeDiff <= 120) {
+                  lastActivity.activityDetails = [
+                    ...lastActivity.activityDetails,
+                    ...activity.activityDetails
+                  ].slice(0, 5); // Máximo 5 detalhes
+                  
+                  lastActivity.total_changes += activity.total_changes;
+                  
+                  // Usar o timestamp mais recente
+                  if (currentTime > lastTime) {
+                    lastActivity.last_updated = activity.last_updated;
+                    lastActivity.timeAgo = activity.timeAgo;
                   }
+                  
+                  return acc;
                 }
-                
-                if (lastActivity.figure_changes || activity.figure_changes) {
-                  summaryParts.push('mudou seu visual');
-                }
-                
-                if (lastActivity.motto_changed || activity.motto_changed) {
-                  summaryParts.push('mudou sua missão');
-                }
-                
-                if (mergedPhotos.length > 0) {
-                  summaryParts.push(`${mergedPhotos.length} nova(s) foto(s)`);
-                }
-                
-                lastActivity.summary = summaryParts.length > 0 
-                  ? `adicionou ${summaryParts.join(', ')}`
-                  : 'teve atividade no perfil';
-                
-                return acc; // Don't add the current activity as it was merged
               }
             }
             
@@ -248,11 +249,12 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
       }
     },
     enabled: !!currentUserName && !profileLoading && friends.length > 0,
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 10 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000,
     retry: 2,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 2 * 60 * 1000, // Refresh a cada 2 minutos
   });
 
   return {

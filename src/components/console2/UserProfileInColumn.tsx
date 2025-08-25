@@ -1,15 +1,14 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Camera, RefreshCw, ExternalLink, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Camera, RefreshCw, MessageSquare } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useFollowProfile } from '@/hooks/useFollowProfile';
 import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
 import { PhotoGrid } from '@/components/console/PhotoGrid';
-import { PhotoLikesModal } from '@/components/shared/PhotoLikesModal';
-import { PhotoCommentsModal } from '@/components/shared/PhotoCommentsModal';
 import { BadgesModal } from '@/components/profile/modals/BadgesModal';
 import { FriendsModal } from '@/components/profile/modals/FriendsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
@@ -55,7 +54,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
 
   if (isLoading || profileLoading) {
     return (
-      <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col">
+      <Card className="bg-black/40 text-white border-white/20 shadow-none h-full flex flex-col backdrop-blur-sm">
         <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-2" />
@@ -68,14 +67,14 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
 
   if (!habboUser) {
     return (
-      <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col">
+      <Card className="bg-black/40 text-white border-white/20 shadow-none h-full flex flex-col backdrop-blur-sm">
         <CardContent className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-white/80 mb-4">Usuário não encontrado</p>
             <Button 
               onClick={onBack}
               variant="outline"
-              className="text-white border-white/20 hover:bg-white/10"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
@@ -95,7 +94,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
   }));
 
   return (
-    <Card className="bg-[#4A5568] text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+    <Card className="bg-black/40 text-white border-white/20 shadow-none h-full flex flex-col overflow-hidden backdrop-blur-sm">
       {/* Header with back button */}
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center gap-3 mb-2">
@@ -103,11 +102,11 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
             onClick={onBack}
             size="sm"
             variant="ghost" 
-            className="text-white/80 hover:text-white hover:bg-white/10 p-2"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white p-2"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <CardTitle className="text-lg">{habboUser?.habbo_name || username}</CardTitle>
+          <CardTitle className="text-lg text-white volter-font">{habboUser?.habbo_name || username}</CardTitle>
           <Badge 
             variant={completeProfile?.online ? "default" : "secondary"}
             className={`ml-auto text-xs ${completeProfile?.online 
@@ -136,7 +135,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
             />
             {/* Online Status */}
             {completeProfile?.online && (
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#4A5568] rounded-full"></div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-black/40 rounded-full"></div>
             )}
             {/* Country Flag - Bottom Right Corner of Avatar */}
             <div className="absolute bottom-1 right-1">
@@ -146,7 +145,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
           
           {/* Profile Info - Right Side */}
           <div className="flex-1 min-w-0 pt-2">
-            <h3 className="text-xl font-bold text-white truncate">{habboUser?.habbo_name || username}</h3>
+            <h3 className="text-xl font-bold text-white truncate volter-font">{habboUser?.habbo_name || username}</h3>
             <p className="text-sm text-white/60 mt-1 break-words">
               {completeProfile?.motto || habboUser?.motto || 'Sem motto definido'}
             </p>
@@ -177,8 +176,8 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
             disabled={isToggling}
             className={`${
               isFollowing 
-                ? 'bg-white/20 hover:bg-white/30 text-white' 
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                ? 'bg-white/20 hover:bg-white/30 text-white border border-white/20' 
+                : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30'
             }`}
           >
             {isToggling ? (
@@ -195,7 +194,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
           {onStartConversation && (
             <Button
               onClick={() => onStartConversation(username)}
-              className="bg-green-500 hover:bg-green-600 text-white"
+              className="bg-green-500/20 hover:bg-green-500/30 text-green-300 border border-green-500/30"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
               Mensagem
@@ -257,7 +256,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
             variant="ghost"
             onClick={refreshPhotos}
             disabled={photosLoading}
-            className="text-white/80 hover:text-white hover:bg-white/10"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white"
           >
             {photosLoading ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -271,7 +270,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
         {/* Photos Grid */}
         {photos.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">
+            <h4 className="text-sm font-medium text-white/80 mb-3 volter-font">
               Fotos ({photos.length})
             </h4>
             <PhotoGrid photos={photoGridData} />

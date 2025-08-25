@@ -1,136 +1,103 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { User, Activity, Search, MessageSquare } from 'lucide-react';
-import { MyAccountColumn } from './MyAccountColumn';
-import { FeedActivityTabbedColumn } from '../console2/FeedActivityTabbedColumn';
-import { ChatColumn } from './ChatColumn';
-import { SearchColumn } from './SearchColumn';
-import { PixelFrame } from './PixelFrame';
-import { cn } from '@/lib/utils';
+import React, { useState, useCallback } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Search, User, Image, ListChecks, MessageSquare } from 'lucide-react';
+import { UserProfileInColumn } from '@/components/console2/UserProfileInColumn';
+import { FeedPhotosTabbedColumn } from '@/components/console2/FeedPhotosTabbedColumn';
+import { FeedActivityTabbedColumn } from '@/components/console2/FeedActivityTabbedColumn';
+import { MyConsoleProfileTabbedColumn } from '@/components/console2/MyConsoleProfileTabbedColumn';
+import { useChronologicalSystemInitializer } from '@/hooks/useChronologicalSystemInitializer';
+import { useMessagingSystem } from '@/hooks/useMessagingSystem';
 
-type TabType = 'account' | 'feed' | 'chat' | 'search';
+export const TabbedConsole = () => {
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('activity');
+  const { startConversation } = useMessagingSystem();
+  
+  // Inicializar sistema cronológico automaticamente
+  useChronologicalSystemInitializer();
 
-interface TabButton {
-  id: TabType;
-  label: string;
-  icon: React.ReactNode;
-  color: string;
-  hoverColor: string;
-  activeColor: string;
-}
-
-const tabs: TabButton[] = [
-  {
-    id: 'account',
-    label: 'Minha Conta',
-    icon: <User className="w-4 h-4" />,
-    color: '#FDCC00',
-    hoverColor: '#FEE100',
-    activeColor: '#FBCC00'
-  },
-  {
-    id: 'feed',
-    label: 'Feed',
-    icon: <Activity className="w-4 h-4" />,
-    color: '#2D3748',
-    hoverColor: '#4A5568',
-    activeColor: '#1A202C'
-  },
-  {
-    id: 'chat',
-    label: 'Chat',
-    icon: <MessageSquare className="w-4 h-4" />,
-    color: '#9333EA',
-    hoverColor: '#A855F7',
-    activeColor: '#7C3AED'
-  },
-  {
-    id: 'search',
-    label: 'Buscar',
-    icon: <Search className="w-4 h-4" />,
-    color: '#8B4513',
-    hoverColor: '#A0522D',
-    activeColor: '#654321'
-  }
-];
-
-interface TabbedConsoleProps {
-  startChatWith?: string;
-}
-
-export const TabbedConsole: React.FC<TabbedConsoleProps> = ({ startChatWith }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('account');
-  const [chatTarget, setChatTarget] = useState<string | undefined>(startChatWith);
-
-  // Auto-switch to chat tab when starting a conversation
-  React.useEffect(() => {
-    if (startChatWith) {
-      setActiveTab('chat');
-      setChatTarget(startChatWith);
+  const handleSearch = useCallback(() => {
+    if (searchQuery.trim() !== '') {
+      setSelectedUser(searchQuery.trim());
     }
-  }, [startChatWith]);
+  }, [searchQuery]);
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'account':
-        return <MyAccountColumn />;
-      case 'feed':
-        return <FeedActivityTabbedColumn />;
-      case 'chat':
-        return (
-          <ChatColumn 
-            startConversationWith={chatTarget}
-            onConversationStarted={() => setChatTarget(undefined)}
-          />
-        );
-      case 'search':
-        return <SearchColumn onStartConversation={(targetName) => {
-          setActiveTab('chat');
-          setChatTarget(targetName);
-        }} />;
-      default:
-        return <MyAccountColumn />;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleStartConversation = async (targetHabboName: string) => {
+    console.log(`[💬 CONSOLE] Iniciando conversa com ${targetHabboName}`);
+    const conversationId = await startConversation(targetHabboName);
+    
+    if (conversationId) {
+      // Aqui você pode adicionar lógica para navegar para a conversa
+      // ou abrir um modal de chat, dependendo do design desejado
+      console.log(`[💬 CONSOLE] Conversa criada: ${conversationId}`);
     }
   };
 
   return (
-    <PixelFrame title="Console do Habbo" className="mx-auto h-[calc(100vh-12rem)]">
-      <div className="flex flex-col h-full">
-        {/* Main content area */}
-        <div className="flex-1 min-h-0 mb-4">
-          {renderTabContent()}
+    <Tabs defaultValue="activity" className="w-full h-full flex flex-col">
+      <div className="flex items-center space-x-4 p-4">
+        <div className="flex-1">
+          <Input
+            type="text"
+            placeholder="Buscar usuário..."
+            value={searchQuery}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            className="bg-black/30 border-white/20 text-white shadow-none focus-visible:ring-white/50"
+          />
         </div>
-
-        {/* Tab navigation at bottom */}
-        <div className="flex-shrink-0">
-          <div className="grid grid-cols-4 gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "pixel-nav-button habbo-text-shadow",
-                  activeTab === tab.id ? "active" : ""
-                )}
-                style={{
-                  backgroundColor: activeTab === tab.id ? tab.activeColor : tab.color,
-                  color: activeTab === tab.id ? '#2B2300' : '#FFFFFF'
-                }}
-              >
-                <div className={cn(
-                  "transition-transform duration-200",
-                  activeTab === tab.id ? "scale-110" : "scale-100"
-                )}>
-                  {tab.icon}
-                </div>
-                <span className="leading-none text-[10px]">
-                  {tab.label}
-                </span>
-              </button>
-            ))}
-          </div>
+        <Button onClick={handleSearch} variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
+          <Search className="w-4 h-4 mr-2" />
+          Buscar
+        </Button>
+      </div>
+      <TabsList className="bg-black/30 border-b border-white/20 p-4">
+        <TabsTrigger value="activity" className="data-[state=active]:bg-white/10 data-[state=active]:text-white hover:bg-white/5 hover:text-white text-white/60">
+          <ListChecks className="w-4 h-4 mr-2" />
+          Atividades
+        </TabsTrigger>
+        <TabsTrigger value="photos" className="data-[state=active]:bg-white/10 data-[state=active]:text-white hover:bg-white/5 hover:text-white text-white/60">
+          <Image className="w-4 h-4 mr-2" />
+          Fotos
+        </TabsTrigger>
+        <TabsTrigger value="profile" className="data-[state=active]:bg-white/10 data-[state=active]:text-white hover:bg-white/5 hover:text-white text-white/60">
+          <User className="w-4 h-4 mr-2" />
+          Meu Perfil
+        </TabsTrigger>
+      </TabsList>
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute inset-0 flex">
+          <TabsContent value="activity" className="flex-1 p-4 h-full">
+            <FeedActivityTabbedColumn onUserClick={setSelectedUser} />
+          </TabsContent>
+          <TabsContent value="photos" className="flex-1 p-4 h-full">
+            <FeedPhotosTabbedColumn onUserClick={setSelectedUser} />
+          </TabsContent>
+          <TabsContent value="profile" className="flex-1 p-4 h-full">
+            <MyConsoleProfileTabbedColumn />
+          </TabsContent>
+          {selectedUser && (
+            <UserProfileInColumn
+              username={selectedUser}
+              onBack={() => setSelectedUser(null)}
+              onStartConversation={handleStartConversation}
+            />
+          )}
         </div>
       </div>
-    </PixelFrame>
+    </Tabs>
   );
 };
