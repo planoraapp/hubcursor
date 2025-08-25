@@ -157,6 +157,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_activities: {
+        Row: {
+          date: string
+          id: number
+          last_tracked_timestamp: string | null
+          metadata: Json | null
+          total_tracked_items: number | null
+        }
+        Insert: {
+          date?: string
+          id?: never
+          last_tracked_timestamp?: string | null
+          metadata?: Json | null
+          total_tracked_items?: number | null
+        }
+        Update: {
+          date?: string
+          id?: never
+          last_tracked_timestamp?: string | null
+          metadata?: Json | null
+          total_tracked_items?: number | null
+        }
+        Relationships: []
+      }
       daily_friend_activities: {
         Row: {
           activities_summary: Json | null
@@ -211,6 +235,30 @@ export type Database = {
           total_changes?: number | null
           user_habbo_id?: string
           user_habbo_name?: string
+        }
+        Relationships: []
+      }
+      daily_tracking: {
+        Row: {
+          date: string
+          id: number
+          last_tracked_timestamp: string | null
+          metadata: Json | null
+          total_activities: number | null
+        }
+        Insert: {
+          date?: string
+          id?: never
+          last_tracked_timestamp?: string | null
+          metadata?: Json | null
+          total_activities?: number | null
+        }
+        Update: {
+          date?: string
+          id?: never
+          last_tracked_timestamp?: string | null
+          metadata?: Json | null
+          total_activities?: number | null
         }
         Relationships: []
       }
@@ -974,6 +1022,57 @@ export type Database = {
         }
         Relationships: []
       }
+      market_listings: {
+        Row: {
+          asking_item_name: string | null
+          asking_item_type: string | null
+          asking_price: number | null
+          created_at: string
+          description: string | null
+          id: string
+          item_id: string
+          item_image_url: string | null
+          item_name: string
+          item_type: string
+          seller_habbo_name: string
+          seller_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          asking_item_name?: string | null
+          asking_item_type?: string | null
+          asking_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id: string
+          item_image_url?: string | null
+          item_name: string
+          item_type: string
+          seller_habbo_name: string
+          seller_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          asking_item_name?: string | null
+          asking_item_type?: string | null
+          asking_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id?: string
+          item_image_url?: string | null
+          item_name?: string
+          item_type?: string
+          seller_habbo_name?: string
+          seller_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photo_comments: {
         Row: {
           comment_text: string
@@ -1099,6 +1198,51 @@ export type Database = {
           hotel?: string
           id?: string
           is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trade_offers: {
+        Row: {
+          buyer_habbo_name: string
+          buyer_user_id: string
+          created_at: string
+          id: string
+          listing_id: string
+          message: string | null
+          offered_credits: number | null
+          offered_item_id: string | null
+          offered_item_name: string | null
+          offered_item_type: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          buyer_habbo_name: string
+          buyer_user_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          message?: string | null
+          offered_credits?: number | null
+          offered_item_id?: string | null
+          offered_item_name?: string | null
+          offered_item_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          buyer_habbo_name?: string
+          buyer_user_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          message?: string | null
+          offered_credits?: number | null
+          offered_item_id?: string | null
+          offered_item_name?: string | null
+          offered_item_type?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -1462,6 +1606,20 @@ export type Database = {
           supabase_user_id: string
         }[]
       }
+      get_habbo_activity_feed: {
+        Args: {
+          p_days_back?: number
+          p_limit?: number
+          p_user_habbo_name?: string
+        }
+        Returns: {
+          activity_description: string
+          activity_type: string
+          details: Json
+          detected_at: string
+          habbo_name: string
+        }[]
+      }
       get_next_queue_batch: {
         Args: { p_batch_size?: number }
         Returns: {
@@ -1473,6 +1631,18 @@ export type Database = {
           retry_count: number
           user_habbo_id: string
           user_habbo_name: string
+        }[]
+      }
+      initialize_daily_activities_tracker: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          status: string
+        }[]
+      }
+      initialize_daily_tracker: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          status: string
         }[]
       }
       initialize_user_home: {
@@ -1503,6 +1673,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      summarize_habbo_activities: {
+        Args: { p_days_back?: number; p_habbo_name?: string }
+        Returns: {
+          activity_category: string
+          first_occurrence: string
+          last_occurrence: string
+          total_activities: number
+        }[]
+      }
       trigger_emergency_processing: {
         Args: {
           p_hotel?: string
@@ -1510,6 +1689,18 @@ export type Database = {
           p_user_habbo_name: string
         }
         Returns: string
+      }
+      update_daily_activities: {
+        Args: {
+          activity_name: string
+          extra_metadata?: Json
+          increment_value?: number
+        }
+        Returns: {
+          activity: string
+          current_total: number
+          tracked_at: string
+        }[]
       }
     }
     Enums: {
