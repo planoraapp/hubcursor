@@ -1,7 +1,9 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://46846548-2217-4eb3-8642-0e834c98ce0c.sandbox.lovable.dev',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -11,6 +13,15 @@ interface FriendActivity {
   timestamp: string;
   figureString?: string;
   hotel: string;
+  type?: 'look_change' | 'motto_change' | 'badge' | 'friends' | 'photos' | 'groups' | 'online';
+  details?: {
+    newFriends?: Array<{ name: string; avatar?: string }>;
+    newBadges?: Array<{ code: string; name?: string }>;
+    newGroups?: Array<{ name: string; badge?: string }>;
+    newPhotos?: Array<{ url: string; roomName?: string }>;
+    newMotto?: string;
+    previousMotto?: string;
+  };
 }
 
 interface ActivityResponse {
@@ -23,9 +34,9 @@ interface ActivityResponse {
   };
 }
 
-// Cache system 
+// Cache system for performance
 const cache = new Map<string, { data: any; expires: number }>();
-const CACHE_TTL = 2 * 60 * 1000; // 2 minutes cache for rich feed
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
 function getCached(key: string): any | null {
   const cached = cache.get(key);
@@ -43,9 +54,9 @@ function setCached(key: string, data: any): void {
   });
 }
 
-// Fetch with retry
+// Fetch with retry and timeout
 async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
-  console.log(`🌐 [FETCH] Tentando buscar: ${url}`);
+  console.log(`🌐 [FETCH] Attempting to fetch: ${url}`);
   
   for (let i = 0; i < retries; i++) {
     try {
@@ -53,26 +64,24 @@ async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(10000) // 10 second timeout
       });
-      
-      console.log(`🌐 [FETCH] Status: ${response.status} para ${url}`);
       
       if (!response.ok) {
         if (response.status === 404 || response.status === 403) {
-          console.log(`🌐 [FETCH] Usuário não encontrado (${response.status}): ${url}`);
+          console.log(`🌐 [FETCH] User not found (${response.status}): ${url}`);
           return null;
         }
         throw new Error(`HTTP ${response.status}`);
       }
       
       const data = await response.json();
-      console.log(`✅ [FETCH] Dados recebidos para: ${url}`);
+      console.log(`✅ [FETCH] Data received for: ${url}`);
       return data;
     } catch (error) {
-      console.warn(`⚠️ [FETCH] Tentativa ${i + 1} falhou para ${url}:`, error);
+      console.warn(`⚠️ [FETCH] Attempt ${i + 1} failed for ${url}:`, error);
       if (i === retries - 1) {
-        console.error(`❌ [FETCH] Todas as tentativas falharam para: ${url}`);
+        console.error(`❌ [FETCH] All attempts failed for: ${url}`);
         return null;
       }
       await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
@@ -80,145 +89,150 @@ async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
   }
 }
 
-// Helper function to fetch complete user profile with all data
-async function fetchCompleteUserProfile(username: string, hotel: string) {
-  const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
-  const baseUrl = `https://www.habbo.${hotelDomain}/api/public/users`;
-  
+// Get friends list with figureString from Supabase
+async function getFriendsList(supabase: any, userId: string): Promise<Array<{name: string, figureString: string}>> {
   try {
-    // First get basic user data
-    const userData = await fetchHabboAPI(`${baseUrl}?name=${encodeURIComponent(username)}`);
-    if (!userData || !userData.uniqueId) return null;
+    console.log(`📋 [FRIENDS] Getting friends list for user: ${userId}`);
     
-    const userId = userData.uniqueId;
+    // First try to get from habbo_accounts to find the user's habbo_name
+    const { data: userAccount, error: userError } = await supabase
+      .from('habbo_accounts')
+      .select('habbo_name, hotel')
+      .eq('supabase_user_id', userId)
+      .single();
+
+    if (userError || !userAccount) {
+      console.error('❌ [FRIENDS] User account not found:', userError);
+      return [];
+    }
+
+    console.log(`👤 [FRIENDS] Found user account: ${userAccount.habbo_name} on ${userAccount.hotel}`);
+
+    // Get friends from the API
+    const hotelDomain = userAccount.hotel === 'br' ? 'com.br' : userAccount.hotel;
+    const friendsUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(userAccount.habbo_name)}`;
     
-    // Fetch all user data in parallel for better performance
-    const [badges, groups, rooms, friends] = await Promise.all([
-      fetchHabboAPI(`${baseUrl}/${userId}/badges`).catch(() => []),
-      fetchHabboAPI(`${baseUrl}/${userId}/groups`).catch(() => []),
-      fetchHabboAPI(`${baseUrl}/${userId}/rooms`).catch(() => []),
-      fetchHabboAPI(`${baseUrl}/${userId}/friends`).catch(() => [])
-    ]);
+    const userData = await fetchHabboAPI(friendsUrl);
+    if (!userData || !userData.uniqueId) {
+      console.error('❌ [FRIENDS] Failed to get user data');
+      return [];
+    }
+
+    const friendsListUrl = `https://www.habbo.${hotelDomain}/api/public/users/${userData.uniqueId}/friends`;
+    const friendsData = await fetchHabboAPI(friendsListUrl);
     
-    return {
-      ...userData,
-      badges: badges || [],
-      groups: groups || [],
-      rooms: rooms || [],
-      friends: friends || []
-    };
+    if (!friendsData || !Array.isArray(friendsData)) {
+      console.error('❌ [FRIENDS] Failed to get friends data');
+      return [];
+    }
+
+    console.log(`👥 [FRIENDS] Found ${friendsData.length} friends`);
+
+    // Get figureString for each friend (limited to first 50 for performance)
+    const friendsWithFigures = await Promise.all(
+      friendsData.slice(0, 50).map(async (friend: any) => {
+        try {
+          const friendProfileUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(friend.name)}`;
+          const friendProfile = await fetchHabboAPI(friendProfileUrl);
+          
+          return {
+            name: friend.name,
+            figureString: friendProfile?.figureString || ''
+          };
+        } catch (error) {
+          console.warn(`⚠️ [FRIENDS] Failed to get figure for ${friend.name}:`, error);
+          return {
+            name: friend.name,
+            figureString: ''
+          };
+        }
+      })
+    );
+
+    return friendsWithFigures.filter(friend => friend.figureString);
   } catch (error) {
-    console.error(`❌ [PROFILE] Error fetching profile for ${username}:`, error);
-    return null;
+    console.error('❌ [FRIENDS] Error getting friends list:', error);
+    return [];
   }
 }
 
-// Generate realistic recent activities based on user's actual data
-function generateRichActivities(userData: any, username: string): Array<{activity: string, timestamp: string, priority: number}> {
-  const activities: Array<{activity: string, timestamp: string, priority: number}> = [];
-  const now = Date.now();
-  
-  // 1. Recent badges (filter only truly recent ones)
-  if (userData.badges && userData.badges.length > 0) {
-    const recentBadges = userData.badges.filter((badge: any) => {
-      const badgeCode = badge.code || '';
-      const badgeName = badge.name || '';
-      
-      // Only include clearly recent badges (2020+) or common achievement types
-      const isRecent = badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|HPP|2020|2021|2022|2023|2024|2025|BR[2-9][0-9][0-9])/);
-      const isCommonAchievement = badgeCode.match(/^(ACH_[A-Z]+[1-9][0-9]|FR[0-9]+)/);
-      
-      // Exclude old system badges
-      const isOldSystem = badgeCode.match(/^(ADM_|VIP_|DEV_|MOD_|STAFF_|HC[0-9]|Club[0-9])/);
-      const isOldYear = badgeCode.match(/(2008|2009|2010|2011|2012|2013|2014|2015|2016|2017|2018|2019)/);
-      const isOldTask = badgeName.match(/(Tarefa|Vida de|Circo|Palhaço|Clássico|Antigo)/i);
-      
-      return (isRecent || isCommonAchievement) && !isOldSystem && !isOldYear && !isOldTask;
-    });
+// Fetch recent photos for a friend
+async function fetchPhotos(friendName: string, figureString: string, hotel: string): Promise<FriendActivity[]> {
+  try {
+    const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+    const userUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(friendName)}`;
+    const userData = await fetchHabboAPI(userUrl);
     
-    if (recentBadges.length > 0) {
-      const badge = recentBadges[Math.floor(Math.random() * recentBadges.length)];
-      const badgeName = badge.name || badge.code;
-      activities.push({
-        activity: `conquistou o emblema "${badgeName}"`,
-        timestamp: new Date(now - Math.random() * 2 * 60 * 60 * 1000).toISOString(), // Last 2 hours
-        priority: 15
-      });
-    }
+    if (!userData || !userData.uniqueId) return [];
+
+    const photosUrl = `https://www.habbo.${hotelDomain}/api/public/users/${userData.uniqueId}/photos`;
+    const photosData = await fetchHabboAPI(photosUrl);
+    
+    if (!photosData || !Array.isArray(photosData)) return [];
+
+    return photosData.slice(0, 5).map((photo: any) => ({
+      username: friendName,
+      activity: `tirou uma nova foto${photo.roomName ? ` no quarto "${photo.roomName}"` : ''}`,
+      timestamp: new Date(photo.takenOn || Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+      figureString,
+      hotel,
+      type: 'photos' as const,
+      details: {
+        newPhotos: [{
+          url: photo.url,
+          roomName: photo.roomName
+        }]
+      }
+    }));
+  } catch (error) {
+    console.warn(`⚠️ [PHOTOS] Error fetching photos for ${friendName}:`, error);
+    return [];
   }
-  
-  // 2. Groups activities
-  if (userData.groups && userData.groups.length > 0) {
-    const randomGroup = userData.groups[Math.floor(Math.random() * userData.groups.length)];
-    activities.push({
-      activity: `entrou no grupo "${randomGroup.name}"`,
-      timestamp: new Date(now - Math.random() * 4 * 60 * 60 * 1000).toISOString(), // Last 4 hours
-      priority: 12
-    });
+}
+
+// Fetch recent badges for a friend
+async function fetchBadges(friendName: string, figureString: string, hotel: string): Promise<FriendActivity[]> {
+  try {
+    const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+    const userUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(friendName)}`;
+    const userData = await fetchHabboAPI(userUrl);
+    
+    if (!userData || !userData.uniqueId) return [];
+
+    const badgesUrl = `https://www.habbo.${hotelDomain}/api/public/users/${userData.uniqueId}/badges`;
+    const badgesData = await fetchHabboAPI(badgesUrl);
+    
+    if (!badgesData || !Array.isArray(badgesData)) return [];
+
+    // Filter recent badges (this is a simulation since API doesn't provide timestamps)
+    const recentBadges = badgesData.filter((badge: any) => {
+      const badgeCode = badge.code || '';
+      // Only include badges that seem recent based on code patterns
+      return badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|HPP|2024|2025|BR[2-9][0-9][0-9])/);
+    }).slice(0, 3);
+
+    return recentBadges.map((badge: any) => ({
+      username: friendName,
+      activity: `conquistou o emblema "${badge.name || badge.code}"`,
+      timestamp: new Date(Date.now() - Math.random() * 6 * 60 * 60 * 1000).toISOString(), // Last 6 hours simulation
+      figureString,
+      hotel,
+      type: 'badge' as const,
+      details: {
+        newBadges: [{
+          code: badge.code,
+          name: badge.name
+        }]
+      }
+    }));
+  } catch (error) {
+    console.warn(`⚠️ [BADGES] Error fetching badges for ${friendName}:`, error);
+    return [];
   }
-  
-  // 3. Visual changes (detect figure changes through random generation)
-  if (userData.figureString && Math.random() < 0.3) {
-    activities.push({
-      activity: `mudou o visual`,
-      timestamp: new Date(now - Math.random() * 3 * 60 * 60 * 1000).toISOString(), // Last 3 hours
-      priority: 10
-    });
-  }
-  
-  // 4. Motto changes
-  if (userData.motto && Math.random() < 0.2) {
-    activities.push({
-      activity: `mudou a missão para "${userData.motto}"`,
-      timestamp: new Date(now - Math.random() * 6 * 60 * 60 * 1000).toISOString(), // Last 6 hours
-      priority: 8
-    });
-  }
-  
-  // 5. New rooms
-  if (userData.rooms && userData.rooms.length > 0 && Math.random() < 0.25) {
-    const randomRoom = userData.rooms[Math.floor(Math.random() * userData.rooms.length)];
-    activities.push({
-      activity: `criou o quarto público "${randomRoom.name}"`,
-      timestamp: new Date(now - Math.random() * 12 * 60 * 60 * 1000).toISOString(), // Last 12 hours
-      priority: 9
-    });
-  }
-  
-  // 6. Level up activities (based on currentLevel)
-  if (userData.currentLevel && userData.currentLevel > 1 && Math.random() < 0.15) {
-    activities.push({
-      activity: `subiu para o nível ${userData.currentLevel}`,
-      timestamp: new Date(now - Math.random() * 8 * 60 * 60 * 1000).toISOString(), // Last 8 hours
-      priority: 11
-    });
-  }
-  
-  // 7. Experience gain (based on totalExperience)
-  if (userData.totalExperience && userData.totalExperience > 10 && Math.random() < 0.2) {
-    const expGain = Math.floor(Math.random() * 50) + 10;
-    activities.push({
-      activity: `ganhou ${expGain} pontos de experiência`,
-      timestamp: new Date(now - Math.random() * 5 * 60 * 60 * 1000).toISOString(), // Last 5 hours
-      priority: 7
-    });
-  }
-  
-  // 8. New friends (based on friends list)
-  if (userData.friends && userData.friends.length > 0 && Math.random() < 0.3) {
-    const randomFriend = userData.friends[Math.floor(Math.random() * userData.friends.length)];
-    activities.push({
-      activity: `fez amizade com ${randomFriend.name}`,
-      timestamp: new Date(now - Math.random() * 6 * 60 * 60 * 1000).toISOString(), // Last 6 hours
-      priority: 9
-    });
-  }
-  
-  return activities;
 }
 
 serve(async (req) => {
-  console.log(`🚀 [REAL CHANGES FEED] ===== INICIADO =====`);
+  console.log(`🚀 [ENHANCED DIRECT FEED] ===== STARTED =====`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -226,242 +240,110 @@ serve(async (req) => {
   }
 
   try {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.45.0');
-    
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const requestBody = await req.json();
-    const { friends, hotel = 'com.br', limit = 50, offset = 0 } = requestBody;
+    // Get authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error('Invalid authentication token');
+    }
+
+    console.log(`🔐 [AUTH] Authenticated user: ${user.id}`);
+
+    // Get request parameters
+    const requestBody = await req.json().catch(() => ({}));
+    const { hotel = 'br', limit = 50, offset = 0 } = requestBody;
+
+    // Check cache first
+    const cacheKey = `activities-${user.id}-${hotel}-${limit}-${offset}`;
+    const cachedData = getCached(cacheKey);
+    if (cachedData) {
+      console.log(`🎯 [CACHE] Returning cached data for ${user.id}`);
+      return new Response(JSON.stringify(cachedData), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    // Get friends list with figureStrings
+    const friends = await getFriendsList(supabase, user.id);
     
-    if (!friends || !Array.isArray(friends) || friends.length === 0) {
-      console.log(`❌ [INPUT] Lista de amigos inválida ou vazia`);
-      return new Response(JSON.stringify({
+    if (friends.length === 0) {
+      console.log(`❌ [FRIENDS] No friends found for user ${user.id}`);
+      const emptyResponse = {
         activities: [],
         metadata: {
-          source: 'real-changes-feed',
+          source: 'enhanced-direct-api',
           timestamp: new Date().toISOString(),
           count: 0,
           friends_processed: 0
         }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      });
-    }
-
-    console.log(`🎯 [REAL CHANGES] Buscando mudanças reais para ${friends.length} amigos`);
-    
-    // Step 1: Check for existing detected changes for these friends
-    const { data: existingChanges } = await supabase
-      .from('detected_changes')
-      .select('*')
-      .eq('hotel', hotel)
-      .in('habbo_name', friends)
-      .gte('detected_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
-      .order('detected_at', { ascending: false })
-      .limit(limit);
-
-    console.log(`📊 [EXISTING CHANGES] Found ${existingChanges?.length || 0} existing changes`);
-
-    // Step 2: If we don't have enough changes, trigger change detection for some friends
-    let allActivities: FriendActivity[] = [];
-    
-    if (existingChanges && existingChanges.length > 0) {
-      // Transform existing changes to activity format
-      allActivities = existingChanges.map(change => ({
-        username: change.habbo_name,
-        activity: change.change_description,
-        timestamp: change.detected_at,
-        figureString: '',
-        hotel: change.hotel
-      }));
-    }
-
-    // If we need more activities, process some friends to detect new changes
-    if (allActivities.length < limit && friends.length > 0) {
-      // CORRIGIDO: Sistema de seleção sem bias alfabético
-      const totalFriends = friends.length;
-      const friendsPerPage = Math.min(20, Math.max(8, Math.floor(totalFriends / 3)));
-      
-      // Criar hash baseado em timestamp + offset para determinismo sem bias
-      const timeWindow = Math.floor(Date.now() / (15 * 60 * 1000)); // Janela de 15 min
-      const hashSeed = (timeWindow + offset) * 1337; // Multiplicador primo para distribuição
-      
-      // Implementar Fisher-Yates shuffle com seed fixo para sessão
-      const shuffleFriends = (array: string[], seed: number) => {
-        const shuffled = [...array];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor((seed * (i + 1)) % 2147483647 / 2147483647 * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-          seed = (seed * 1103515245 + 12345) % 2147483647;
-        }
-        return shuffled;
       };
-      
-      // Embaralhar lista completa com seed determinístico
-      const shuffledFriends = shuffleFriends(friends, hashSeed);
-      
-      // Calcular offset real sem bias circular
-      const pageNumber = Math.floor(offset / limit);
-      const globalOffset = (pageNumber * friendsPerPage) % totalFriends;
-      
-      // Selecionar amigos da lista embaralhada
-      let friendsToProcess = [];
-      for (let i = 0; i < friendsPerPage; i++) {
-        const index = (globalOffset + i) % totalFriends;
-        friendsToProcess.push(shuffledFriends[index]);
-      }
-      
-      // Log detalhado da diversidade alfabética
-      const letterDistribution = friendsToProcess.reduce((acc, name) => {
-        const firstLetter = name.charAt(0).toUpperCase();
-        acc[firstLetter] = (acc[firstLetter] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      console.log(`🔄 [PAGINATION] Página ${pageNumber}, processando ${friendsToProcess.length} amigos`);
-      console.log(`🔍 [DIVERSITY CHECK] Distribuição alfabética:`, Object.keys(letterDistribution).sort().map(letter => `${letter}:${letterDistribution[letter]}`).join(' '));
-      console.log(`🔍 [CHANGE DETECTION] Processing ${friendsToProcess.length} friends for new changes`);
-      
-      const changeDetectionPromises = friendsToProcess.map(async (friendName: string) => {
-        try {
-          // Get user data first to get habbo_id
-          const userData = await fetchCompleteUserProfile(friendName, hotel);
-          if (!userData || !userData.uniqueId) {
-            console.log(`❌ [CHANGE DETECTION] No user data for: ${friendName}`);
-            return [];
-          }
-
-          // Call change detector
-          const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-change-detector', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-            },
-            body: JSON.stringify({
-              habbo_id: userData.uniqueId,
-              habbo_name: friendName,
-              hotel: hotel
-            })
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.changes_detected > 0) {
-              console.log(`✅ [CHANGE DETECTION] Found ${result.changes_detected} changes for ${friendName}`);
-              return result.changes.map((change: any) => ({
-                username: friendName,
-                activity: change.description,
-                timestamp: new Date().toISOString(),
-                figureString: userData.figureString || '',
-                hotel: hotel
-              }));
-            }
-          }
-        } catch (error) {
-          console.error(`❌ [CHANGE DETECTION] Error processing ${friendName}:`, error);
-        }
-        return [];
+      return new Response(JSON.stringify(emptyResponse), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       });
-
-      const newChanges = (await Promise.all(changeDetectionPromises)).flat();
-      allActivities.push(...newChanges);
-      
-      console.log(`🔍 [NEW CHANGES] Detected ${newChanges.length} new changes`);
     }
 
-    // If still no activities, fall back to generating some activities
-    // Enhanced alphabetical diversity system - rotate through alphabet over time
-    const currentHour = new Date().getHours();
-    const alphabetGroups = [
-      ['A', 'B', 'C', 'D', 'E'], // Group 0
-      ['F', 'G', 'H', 'I', 'J'], // Group 1
-      ['K', 'L', 'M', 'N', 'O'], // Group 2
-      ['P', 'Q', 'R', 'S', 'T'], // Group 3
-      ['U', 'V', 'W', 'X', 'Y', 'Z'] // Group 4
-    ];
-    
-    const currentGroup = currentHour % alphabetGroups.length;
-    const targetLetters = alphabetGroups[currentGroup];
-    
-    console.log(`🔤 [DIVERSITY] Hora ${currentHour}, grupo ${currentGroup}, letras: ${targetLetters.join(',')}`);
-    
-    // If no real activities, use enhanced alphabetical fallback
-    if (allActivities.length === 0) {
-      console.log(`⚠️ [FALLBACK] No real changes found, generating fallback with alphabetical diversity`);
-      
-      // Filter friends by current target letters first
-      const priorityFriends = friends.filter(friend => 
-        targetLetters.some(letter => friend.toUpperCase().startsWith(letter))
-      );
-      
-      // Fill remaining slots with other friends
-      const otherFriends = friends.filter(friend => 
-        !targetLetters.some(letter => friend.toUpperCase().startsWith(letter))
-      );
-      
-      // Combine priority friends first, then others
-      const orderedFriends = [...priorityFriends, ...otherFriends];
-      
-      const pageNumber = Math.floor(offset / limit);
-      const startIndex = (pageNumber * 3) % orderedFriends.length; // Smaller rotation for better distribution
-      const sampleSize = Math.min(12, orderedFriends.length);
-      
-      let sampleFriends = [];
-      for (let i = 0; i < sampleSize; i++) {
-        const index = (startIndex + i) % orderedFriends.length;
-        sampleFriends.push(orderedFriends[index]);
-      }
-      
-      console.log(`🎭 [FALLBACK] Página ${pageNumber}, usando ${sampleFriends.length} amigos (${priorityFriends.length} prioridade)`);
-      console.log(`🎭 [FALLBACK] Amigos selecionados: ${sampleFriends.slice(0, 5).join(', ')}...`);
-      
-      for (const friendName of sampleFriends) {
-        try {
-          const userData = await fetchCompleteUserProfile(friendName, hotel);
-          if (userData) {
-            const richActivities = generateRichActivities(userData, friendName);
-            allActivities.push(...richActivities.map(act => ({
-              username: friendName,
-              activity: act.activity,
-              timestamp: act.timestamp,
-              figureString: userData.figureString,
-              hotel: hotel
-            })));
-          }
-        } catch (error) {
-          console.error(`❌ [FALLBACK] Error processing ${friendName}:`, error);
-        }
-      }
-    }
+    console.log(`👥 [PROCESSING] Processing activities for ${friends.length} friends`);
 
-    // Sort by timestamp (newer first)
+    // Fetch activities for friends (limited batch for performance)
+    const friendsBatch = friends.slice(offset, offset + Math.min(20, limit));
+    const activitiesPromises = friendsBatch.map(async (friend) => {
+      try {
+        console.log(`🔍 [PROCESSING] Processing friend: ${friend.name}`);
+        
+        const [photos, badges] = await Promise.all([
+          fetchPhotos(friend.name, friend.figureString, hotel),
+          fetchBadges(friend.name, friend.figureString, hotel)
+        ]);
+
+        return [...photos, ...badges];
+      } catch (error) {
+        console.error(`❌ [PROCESSING] Error processing ${friend.name}:`, error);
+        return [];
+      }
+    });
+
+    const allActivitiesArrays = await Promise.all(activitiesPromises);
+    const allActivities = allActivitiesArrays.flat();
+
+    // Sort activities by timestamp (newest first)
     allActivities.sort((a, b) => {
       const timestampA = new Date(a.timestamp).getTime();
       const timestampB = new Date(b.timestamp).getTime();
       return timestampB - timestampA;
     });
 
-    // Apply limit and offset
-    const paginatedActivities = allActivities.slice(offset, offset + limit);
-    
-    const result = {
+    // Apply pagination
+    const paginatedActivities = allActivities.slice(0, limit);
+
+    const result: ActivityResponse = {
       activities: paginatedActivities,
       metadata: {
-        source: 'real-changes-feed',
+        source: 'enhanced-direct-api',
         timestamp: new Date().toISOString(),
         count: paginatedActivities.length,
-        friends_processed: friends.length,
-        total_activities: allActivities.length,
-        real_changes_count: existingChanges?.length || 0
+        friends_processed: friendsBatch.length
       }
     };
-    
-    console.log(`✅ [REAL CHANGES END] Returning ${paginatedActivities.length} activities (${existingChanges?.length || 0} real changes)`);
+
+    // Cache the result
+    setCached(cacheKey, result);
+
+    console.log(`✅ [SUCCESS] Returning ${paginatedActivities.length} activities from ${friendsBatch.length} friends`);
     
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -469,20 +351,21 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('❌ [REAL CHANGES ERROR] Erro:', error);
+    console.error('❌ [ERROR] Function error:', error);
     
-    const fallbackResponse = {
+    const errorResponse = {
       activities: [],
       metadata: {
-        source: 'real-changes-error',
+        source: 'enhanced-direct-error',
         timestamp: new Date().toISOString(),
         count: 0,
-        friends_processed: 0
+        friends_processed: 0,
+        error: error.message
       }
     };
     
-    return new Response(JSON.stringify(fallbackResponse), {
-      status: 200,
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
