@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { User, Activity, Search, MessageSquare } from 'lucide-react';
+import { User, Activity, Search, MessageSquare, Camera } from 'lucide-react';
 import { MyAccountColumn } from './MyAccountColumn';
 import { FeedActivityTabbedColumn } from '../console2/FeedActivityTabbedColumn';
+import { FriendsPhotoFeedColumn } from '../console2/FriendsPhotoFeedColumn';
 import { ChatColumn } from './ChatColumn';
 import { SearchColumn } from './SearchColumn';
 import { PixelFrame } from './PixelFrame';
 import { cn } from '@/lib/utils';
 
-type TabType = 'account' | 'feed' | 'chat' | 'search';
+type TabType = 'account' | 'feed' | 'photos' | 'chat' | 'search';
 
 interface TabButton {
   id: TabType;
@@ -35,6 +36,14 @@ const tabs: TabButton[] = [
     color: '#2D3748',
     hoverColor: '#4A5568',
     activeColor: '#1A202C'
+  },
+  {
+    id: 'photos',
+    label: 'Fotos',
+    icon: <Camera className="w-4 h-4" />,
+    color: '#DC2626',
+    hoverColor: '#EF4444',
+    activeColor: '#B91C1C'
   },
   {
     id: 'chat',
@@ -76,6 +85,8 @@ export const TabbedConsole: React.FC<TabbedConsoleProps> = ({ startChatWith }) =
         return <MyAccountColumn />;
       case 'feed':
         return <FeedActivityTabbedColumn />;
+      case 'photos':
+        return <FriendsPhotoFeedColumn />;
       case 'chat':
         return (
           <ChatColumn 
@@ -103,7 +114,7 @@ export const TabbedConsole: React.FC<TabbedConsoleProps> = ({ startChatWith }) =
 
         {/* Tab navigation at bottom */}
         <div className="flex-shrink-0">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
