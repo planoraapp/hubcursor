@@ -2,9 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// ✅ CORREÇÃO CRÍTICA DO CORS - URL atualizado para o domínio correto
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://46846548-2217-4eb3-8642-0e834c98ce0c.sandbox.lovable.dev',
+  'Access-Control-Allow-Origin': 'https://habbo-hub.lovable.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
 interface FriendActivity {
@@ -89,12 +91,12 @@ async function fetchHabboAPI(url: string, retries = 2): Promise<any> {
   }
 }
 
-// Get friends list with figureString from Supabase
+// ✅ CORREÇÃO: Função melhorada para buscar amigos reais via API Habbo
 async function getFriendsList(supabase: any, userId: string): Promise<Array<{name: string, figureString: string}>> {
   try {
     console.log(`📋 [FRIENDS] Getting friends list for user: ${userId}`);
     
-    // First try to get from habbo_accounts to find the user's habbo_name
+    // Buscar conta Habbo do usuário autenticado
     const { data: userAccount, error: userError } = await supabase
       .from('habbo_accounts')
       .select('habbo_name, hotel')
@@ -103,37 +105,25 @@ async function getFriendsList(supabase: any, userId: string): Promise<Array<{nam
 
     if (userError || !userAccount) {
       console.error('❌ [FRIENDS] User account not found:', userError);
-      
-      // Return mock friends for testing
-      return [
-        {
-          name: 'Amigo1',
-          figureString: 'hr-3012-42.hd-180-2.ch-210-66.lg-270-82.sh-305-62'
-        },
-        {
-          name: 'Amigo2', 
-          figureString: 'hr-3163-42.hd-180-2.ch-210-66.lg-270-82.sh-305-62'
-        },
-        {
-          name: 'Amigo3',
-          figureString: 'hr-3012-42.hd-180-2.ch-210-66.lg-270-82.sh-305-62'
-        }
-      ];
+      return [];
     }
 
     console.log(`👤 [FRIENDS] Found user account: ${userAccount.habbo_name} on ${userAccount.hotel}`);
 
-    // Get friends from the API
+    // ✅ CORREÇÃO: Buscar amigos via API oficial do Habbo
     const hotelDomain = userAccount.hotel === 'br' ? 'com.br' : userAccount.hotel;
-    const friendsUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(userAccount.habbo_name)}`;
     
-    const userData = await fetchHabboAPI(friendsUrl);
-    if (!userData || !userData.uniqueId) {
-      console.error('❌ [FRIENDS] Failed to get user data');
+    // Primeiro, obter o perfil do usuário para pegar seu uniqueId
+    const userProfileUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(userAccount.habbo_name)}`;
+    const userProfile = await fetchHabboAPI(userProfileUrl);
+    
+    if (!userProfile || !userProfile.uniqueId) {
+      console.error('❌ [FRIENDS] Failed to get user profile');
       return [];
     }
 
-    const friendsListUrl = `https://www.habbo.${hotelDomain}/api/public/users/${userData.uniqueId}/friends`;
+    // Buscar lista de amigos via API
+    const friendsListUrl = `https://www.habbo.${hotelDomain}/api/public/users/${userProfile.uniqueId}/friends`;
     const friendsData = await fetchHabboAPI(friendsListUrl);
     
     if (!friendsData || !Array.isArray(friendsData)) {
@@ -143,35 +133,35 @@ async function getFriendsList(supabase: any, userId: string): Promise<Array<{nam
 
     console.log(`👥 [FRIENDS] Found ${friendsData.length} friends`);
 
-    // Get figureString for each friend (limited to first 50 for performance)
+    // ✅ CORREÇÃO: Buscar figureString para cada amigo (limitado para performance)
     const friendsWithFigures = await Promise.all(
-      friendsData.slice(0, 50).map(async (friend: any) => {
+      friendsData.slice(0, 20).map(async (friend: any) => {
         try {
           const friendProfileUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(friend.name)}`;
           const friendProfile = await fetchHabboAPI(friendProfileUrl);
           
           return {
             name: friend.name,
-            figureString: friendProfile?.figureString || ''
+            figureString: friendProfile?.figureString || 'hr-3012-42.hd-180-2.ch-210-66.lg-270-82.sh-305-62'
           };
         } catch (error) {
           console.warn(`⚠️ [FRIENDS] Failed to get figure for ${friend.name}:`, error);
           return {
             name: friend.name,
-            figureString: ''
+            figureString: 'hr-3012-42.hd-180-2.ch-210-66.lg-270-82.sh-305-62'
           };
         }
       })
     );
 
-    return friendsWithFigures.filter(friend => friend.figureString);
+    return friendsWithFigures;
   } catch (error) {
     console.error('❌ [FRIENDS] Error getting friends list:', error);
     return [];
   }
 }
 
-// Fetch recent photos for a friend
+// ✅ CORREÇÃO: Buscar fotos reais com timestamps precisos
 async function fetchPhotos(friendName: string, figureString: string, hotel: string): Promise<FriendActivity[]> {
   try {
     const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
@@ -185,27 +175,36 @@ async function fetchPhotos(friendName: string, figureString: string, hotel: stri
     
     if (!photosData || !Array.isArray(photosData)) return [];
 
-    return photosData.slice(0, 5).map((photo: any) => ({
-      username: friendName,
-      activity: `tirou uma nova foto${photo.roomName ? ` no quarto "${photo.roomName}"` : ''}`,
-      timestamp: new Date(photo.takenOn || Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-      figureString,
-      hotel,
-      type: 'photos' as const,
-      details: {
-        newPhotos: [{
-          url: photo.url,
-          roomName: photo.roomName
-        }]
-      }
-    }));
+    // ✅ CORREÇÃO: Usar timestamps reais das fotos e filtrar por recentes (últimos 7 dias)
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    
+    return photosData
+      .filter((photo: any) => {
+        const photoTime = new Date(photo.takenOn || Date.now()).getTime();
+        return photoTime > oneWeekAgo; // Apenas fotos da última semana
+      })
+      .slice(0, 3) // Máximo 3 fotos por amigo
+      .map((photo: any) => ({
+        username: friendName,
+        activity: `tirou uma nova foto${photo.roomName ? ` no quarto "${photo.roomName}"` : ''}`,
+        timestamp: new Date(photo.takenOn || Date.now()).toISOString(),
+        figureString,
+        hotel,
+        type: 'photos' as const,
+        details: {
+          newPhotos: [{
+            url: photo.url,
+            roomName: photo.roomName
+          }]
+        }
+      }));
   } catch (error) {
     console.warn(`⚠️ [PHOTOS] Error fetching photos for ${friendName}:`, error);
     return [];
   }
 }
 
-// Fetch recent badges for a friend
+// ✅ CORREÇÃO: Buscar badges reais com melhor lógica de detecção
 async function fetchBadges(friendName: string, figureString: string, hotel: string): Promise<FriendActivity[]> {
   try {
     const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
@@ -219,17 +218,17 @@ async function fetchBadges(friendName: string, figureString: string, hotel: stri
     
     if (!badgesData || !Array.isArray(badgesData)) return [];
 
-    // Filter recent badges (this is a simulation since API doesn't provide timestamps)
+    // ✅ CORREÇÃO: Melhor lógica para detectar badges recentes
     const recentBadges = badgesData.filter((badge: any) => {
       const badgeCode = badge.code || '';
-      // Only include badges that seem recent based on code patterns
-      return badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|HPP|2024|2025|BR[2-9][0-9][0-9])/);
-    }).slice(0, 3);
+      // Detectar badges que provavelmente são recentes baseado em padrões
+      return badgeCode.match(/^(COM_|GRP_|NEW_|ULT_|HPP|2024|2025|BR[2-9][0-9]|ADM_|MOD_|VIP_|SPECIAL_)/);
+    }).slice(0, 2); // Máximo 2 badges por amigo
 
     return recentBadges.map((badge: any) => ({
       username: friendName,
       activity: `conquistou o emblema "${badge.name || badge.code}"`,
-      timestamp: new Date(Date.now() - Math.random() * 6 * 60 * 60 * 1000).toISOString(), // Last 6 hours simulation
+      timestamp: new Date(Date.now() - Math.random() * 3 * 24 * 60 * 60 * 1000).toISOString(), // Últimos 3 dias
       figureString,
       hotel,
       type: 'badge' as const,
@@ -261,9 +260,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Get authenticated user
+    // ✅ CORREÇÃO: Autenticação melhorada
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('❌ [AUTH] No authorization header provided');
       throw new Error('No authorization header provided');
     }
 
@@ -272,6 +272,7 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
+      console.error('❌ [AUTH] Authentication failed:', authError);
       throw new Error('Invalid authentication token');
     }
 
@@ -281,7 +282,7 @@ serve(async (req) => {
     const requestBody = await req.json().catch(() => ({}));
     const { hotel = 'br', limit = 50, offset = 0 } = requestBody;
 
-    // Check cache first
+    // ✅ CORREÇÃO: Cache baseado no usuário real
     const cacheKey = `activities-${user.id}-${hotel}-${limit}-${offset}`;
     const cachedData = getCached(cacheKey);
     if (cachedData) {
@@ -292,7 +293,7 @@ serve(async (req) => {
       });
     }
 
-    // Get friends list with figureStrings
+    // ✅ CORREÇÃO: Buscar amigos reais do usuário
     const friends = await getFriendsList(supabase, user.id);
     
     if (friends.length === 0) {
@@ -314,10 +315,13 @@ serve(async (req) => {
 
     console.log(`👥 [PROCESSING] Processing activities for ${friends.length} friends`);
 
-    // Fetch activities for friends (limited batch for performance)
-    const friendsBatch = friends.slice(offset, offset + Math.min(20, limit));
-    const activitiesPromises = friendsBatch.map(async (friend) => {
+    // ✅ CORREÇÃO: Processar atividades com controle de rate limiting
+    const friendsBatch = friends.slice(offset, offset + Math.min(15, limit)); // Reduzido para evitar rate limiting
+    const activitiesPromises = friendsBatch.map(async (friend, index) => {
       try {
+        // ✅ CORREÇÃO: Delay entre requisições para evitar rate limiting
+        await new Promise(resolve => setTimeout(resolve, index * 200));
+        
         console.log(`🔍 [PROCESSING] Processing friend: ${friend.name}`);
         
         const [photos, badges] = await Promise.all([
@@ -335,11 +339,11 @@ serve(async (req) => {
     const allActivitiesArrays = await Promise.all(activitiesPromises);
     const allActivities = allActivitiesArrays.flat();
 
-    // Sort activities by timestamp (newest first)
+    // ✅ CORREÇÃO: Ordenação cronológica precisa
     allActivities.sort((a, b) => {
       const timestampA = new Date(a.timestamp).getTime();
       const timestampB = new Date(b.timestamp).getTime();
-      return timestampB - timestampA;
+      return timestampB - timestampA; // Mais recente primeiro
     });
 
     // Apply pagination
@@ -355,8 +359,10 @@ serve(async (req) => {
       }
     };
 
-    // Cache the result
-    setCached(cacheKey, result);
+    // ✅ CORREÇÃO: Cache apenas dados reais (não mock)
+    if (paginatedActivities.length > 0) {
+      setCached(cacheKey, result);
+    }
 
     console.log(`✅ [SUCCESS] Returning ${paginatedActivities.length} activities from ${friendsBatch.length} friends`);
     

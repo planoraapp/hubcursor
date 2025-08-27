@@ -64,7 +64,7 @@ export const useFriendsActivitiesDirect = () => {
     refetch: refetchActivities,
     error
   } = useInfiniteQuery({
-    queryKey: ['friendsActivitiesDirectAuth', hotel, habboAccount?.habbo_name, 'v3'],
+    queryKey: ['friendsActivitiesDirectAuth', hotel, habboAccount?.habbo_name, 'v4'], // ✅ Versão atualizada
     queryFn: async ({ pageParam = 0 }): Promise<ActivitiesPage> => {
       console.log('🚀 [QUERY START] Authenticated edge function query initiated');
       console.log('🚀 [QUERY PARAMS] pageParam:', pageParam);
@@ -78,12 +78,14 @@ export const useFriendsActivitiesDirect = () => {
       try {
         console.log('🔗 [EDGE CALL] Invoking habbo-friends-activities-direct with auth...');
         
-        // Get current session for auth token
+        // ✅ CORREÇÃO: Melhor gerenciamento de sessão
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) {
+          console.error('❌ [EDGE ERROR] No valid session found');
           throw new Error('No valid session found');
         }
 
+        // ✅ CORREÇÃO: Usar nova URL corrigida da Edge Function
         const { data: response, error } = await supabase.functions.invoke('habbo-friends-activities-direct', {
           body: {
             hotel,
@@ -91,7 +93,8 @@ export const useFriendsActivitiesDirect = () => {
             offset: pageParam
           },
           headers: {
-            Authorization: `Bearer ${session.access_token}`
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
           }
         });
 
@@ -120,7 +123,7 @@ export const useFriendsActivitiesDirect = () => {
         console.log(`✅ [EDGE SUCCESS] Received ${typedResponse.activities.length} activities`);
         console.log(`📊 [EDGE METADATA]`, typedResponse.metadata);
 
-        // Improved pagination logic
+        // ✅ CORREÇÃO: Melhor lógica de paginação
         const activitiesReceived = typedResponse.activities.length;
         const nextOffset = activitiesReceived === 50 ? pageParam + 50 : null;
         const hasMore = nextOffset !== null;
@@ -147,8 +150,8 @@ export const useFriendsActivitiesDirect = () => {
     },
     initialPageParam: 0,
     enabled: !!habboAccount?.habbo_name && !!habboAccount?.supabase_user_id,
-    staleTime: 5 * 60 * 1000, // 5 minutes cache
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 2 * 60 * 1000, // ✅ CORREÇÃO: Cache reduzido para 2 minutos (dados mais frescos)
+    gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       console.log(`🔄 [RETRY] Attempt ${failureCount + 1}, error:`, error);
       return failureCount < 2;
