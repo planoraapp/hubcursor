@@ -482,44 +482,174 @@ export type Database = {
           },
         ]
       }
-      friends_activities: {
+      friend_activities: {
         Row: {
-          activity_description: string
+          activity_data: Json | null
+          activity_timestamp: string | null
           activity_type: string
-          created_at: string
-          detected_at: string
-          habbo_id: string
-          habbo_name: string
-          hotel: string
+          habbo_username: string
           id: string
-          new_data: Json
-          old_data: Json | null
+          processed_at: string | null
+          user_id: string | null
         }
         Insert: {
-          activity_description: string
+          activity_data?: Json | null
+          activity_timestamp?: string | null
           activity_type: string
-          created_at?: string
-          detected_at?: string
-          habbo_id: string
-          habbo_name: string
-          hotel?: string
+          habbo_username: string
           id?: string
-          new_data: Json
-          old_data?: Json | null
+          processed_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          activity_description?: string
+          activity_data?: Json | null
+          activity_timestamp?: string | null
           activity_type?: string
-          created_at?: string
-          detected_at?: string
-          habbo_id?: string
-          habbo_name?: string
-          hotel?: string
+          habbo_username?: string
           id?: string
-          new_data?: Json
-          old_data?: Json | null
+          processed_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
+      }
+      friend_photos: {
+        Row: {
+          created_at: string
+          description: string | null
+          fetched_at: string
+          friend_username: string
+          full_url: string
+          id: number
+          likes: number | null
+          photo_id: string
+          preview_url: string
+          tags: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at: string
+          description?: string | null
+          fetched_at?: string
+          friend_username: string
+          full_url: string
+          id?: never
+          likes?: number | null
+          photo_id: string
+          preview_url: string
+          tags?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fetched_at?: string
+          friend_username?: string
+          full_url?: string
+          id?: never
+          likes?: number | null
+          photo_id?: string
+          preview_url?: string
+          tags?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      friends: {
+        Row: {
+          avatar_url: string | null
+          last_active: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          last_active?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          last_active?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      friends_activities: {
+        Row: {
+          activity_details: Json
+          activity_type: Database["public"]["Enums"]["friend_activity_type"]
+          created_at: string
+          friend_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_details?: Json
+          activity_type: Database["public"]["Enums"]["friend_activity_type"]
+          created_at?: string
+          friend_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_details?: Json
+          activity_type?: Database["public"]["Enums"]["friend_activity_type"]
+          created_at?: string
+          friend_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_activities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "habbo_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      friends_data: {
+        Row: {
+          figure_string: string | null
+          friend_name: string
+          friend_unique_id: string
+          id: string
+          is_online: boolean | null
+          last_seen_at: string | null
+          motto: string | null
+          user_id: string
+        }
+        Insert: {
+          figure_string?: string | null
+          friend_name: string
+          friend_unique_id: string
+          id?: string
+          is_online?: boolean | null
+          last_seen_at?: string | null
+          motto?: string | null
+          user_id: string
+        }
+        Update: {
+          figure_string?: string | null
+          friend_name?: string
+          friend_unique_id?: string
+          id?: string
+          is_online?: boolean | null
+          last_seen_at?: string | null
+          motto?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_data_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "habbo_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       friends_processing_queue: {
         Row: {
@@ -604,40 +734,43 @@ export type Database = {
       }
       habbo_accounts: {
         Row: {
-          created_at: string
+          created_at: string | null
           figure_string: string | null
           habbo_id: string
           habbo_name: string
           hotel: string
           id: string
-          is_admin: boolean
+          is_admin: boolean | null
           is_online: boolean | null
           motto: string | null
           supabase_user_id: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           figure_string?: string | null
           habbo_id: string
           habbo_name: string
-          hotel: string
+          hotel?: string
           id?: string
-          is_admin?: boolean
+          is_admin?: boolean | null
           is_online?: boolean | null
           motto?: string | null
           supabase_user_id: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           figure_string?: string | null
           habbo_id?: string
           habbo_name?: string
           hotel?: string
           id?: string
-          is_admin?: boolean
+          is_admin?: boolean | null
           is_online?: boolean | null
           motto?: string | null
           supabase_user_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -929,6 +1062,72 @@ export type Database = {
         }
         Relationships: []
       }
+      habbo_friendships: {
+        Row: {
+          connected_at: string | null
+          friendship_metadata: Json | null
+          habbo_friend_id: string
+          habbo_friend_username: string
+          id: number
+          last_interaction: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          connected_at?: string | null
+          friendship_metadata?: Json | null
+          habbo_friend_id: string
+          habbo_friend_username: string
+          id?: never
+          last_interaction?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          connected_at?: string | null
+          friendship_metadata?: Json | null
+          habbo_friend_id?: string
+          habbo_friend_username?: string
+          id?: never
+          last_interaction?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      habbo_groups: {
+        Row: {
+          badge_code: string | null
+          description: string | null
+          group_id: string
+          name: string | null
+          primary_color: string | null
+          room_id: string | null
+          secondary_color: string | null
+          type: string | null
+        }
+        Insert: {
+          badge_code?: string | null
+          description?: string | null
+          group_id: string
+          name?: string | null
+          primary_color?: string | null
+          room_id?: string | null
+          secondary_color?: string | null
+          type?: string | null
+        }
+        Update: {
+          badge_code?: string | null
+          description?: string | null
+          group_id?: string
+          name?: string | null
+          primary_color?: string | null
+          room_id?: string | null
+          secondary_color?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       habbo_photos: {
         Row: {
           caption: string | null
@@ -986,6 +1185,150 @@ export type Database = {
           taken_date?: string | null
           timestamp_taken?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      habbo_profiles_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          habbo_username: string
+          id: number
+          last_updated: string
+          profile_data: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          habbo_username: string
+          id?: never
+          last_updated?: string
+          profile_data: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          habbo_username?: string
+          id?: never
+          last_updated?: string
+          profile_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      habbo_rooms: {
+        Row: {
+          categories: string[] | null
+          creation_time: string | null
+          description: string | null
+          habbo_group_id: string | null
+          maximum_visitors: number | null
+          name: string | null
+          owner_name: string | null
+          owner_unique_id: string | null
+          rating: number | null
+          unique_id: string
+        }
+        Insert: {
+          categories?: string[] | null
+          creation_time?: string | null
+          description?: string | null
+          habbo_group_id?: string | null
+          maximum_visitors?: number | null
+          name?: string | null
+          owner_name?: string | null
+          owner_unique_id?: string | null
+          rating?: number | null
+          unique_id: string
+        }
+        Update: {
+          categories?: string[] | null
+          creation_time?: string | null
+          description?: string | null
+          habbo_group_id?: string | null
+          maximum_visitors?: number | null
+          name?: string | null
+          owner_name?: string | null
+          owner_unique_id?: string | null
+          rating?: number | null
+          unique_id?: string
+        }
+        Relationships: []
+      }
+      habbo_user_activities_cache: {
+        Row: {
+          activities: Json
+          expires_at: string | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          activities: Json
+          expires_at?: string | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          activities?: Json
+          expires_at?: string | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      habbo_user_connections: {
+        Row: {
+          access_token: string | null
+          habbo_user_id: string
+          habbo_username: string
+          is_active: boolean | null
+          last_sync: string | null
+          metadata: Json | null
+          refresh_token: string | null
+          supabase_user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          habbo_user_id: string
+          habbo_username: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          metadata?: Json | null
+          refresh_token?: string | null
+          supabase_user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          habbo_user_id?: string
+          habbo_username?: string
+          is_active?: boolean | null
+          last_sync?: string | null
+          metadata?: Json | null
+          refresh_token?: string | null
+          supabase_user_id?: string
+        }
+        Relationships: []
+      }
+      habbo_users: {
+        Row: {
+          habbo_hotel: string
+          habbo_name: string
+          id: string
+          last_synced_at: string | null
+        }
+        Insert: {
+          habbo_hotel?: string
+          habbo_name: string
+          id: string
+          last_synced_at?: string | null
+        }
+        Update: {
+          habbo_hotel?: string
+          habbo_name?: string
+          id?: string
+          last_synced_at?: string | null
         }
         Relationships: []
       }
@@ -1172,6 +1515,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          details: Json | null
+          error_message: string | null
+          id: string
+          started_at: string | null
+          status: string
+          sync_type: string
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          started_at?: string | null
+          status: string
+          sync_type: string
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          details?: Json | null
+          error_message?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          sync_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tracked_habbo_users: {
         Row: {
           created_at: string
@@ -1271,6 +1647,27 @@ export type Database = {
           follower_habbo_name?: string
           follower_user_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      user_friends: {
+        Row: {
+          created_at: string | null
+          friend_id: string | null
+          id: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          friend_id?: string | null
+          id?: never
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          friend_id?: string | null
+          id?: never
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1552,6 +1949,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clean_expired_habbo_activities_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      clean_expired_habbo_profiles_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_old_daily_activities: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1620,6 +2025,10 @@ export type Database = {
           habbo_name: string
         }[]
       }
+      get_habbo_profile_cached: {
+        Args: { p_force_refresh?: boolean; p_username: string }
+        Returns: Json
+      }
       get_next_queue_batch: {
         Args: { p_batch_size?: number }
         Returns: {
@@ -1632,6 +2041,28 @@ export type Database = {
           user_habbo_id: string
           user_habbo_name: string
         }[]
+      }
+      get_recent_friend_photos: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          created_at: string
+          description: string
+          friend_username: string
+          full_url: string
+          id: number
+          likes: number
+          photo_id: string
+          preview_url: string
+          tags: Json
+        }[]
+      }
+      habbo_sync_all: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      habbo_sync_user: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       initialize_daily_activities_tracker: {
         Args: Record<PropertyKey, never>
@@ -1653,6 +2084,16 @@ export type Database = {
         Args: { user_habbo_name: string; user_uuid: string }
         Returns: undefined
       }
+      log_sync_activity: {
+        Args: {
+          p_details?: Json
+          p_error_message?: string
+          p_status: string
+          p_sync_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       mark_queue_item_completed: {
         Args: { p_id: string }
         Returns: undefined
@@ -1672,6 +2113,18 @@ export type Database = {
       restart_stalled_queue_processing: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      store_friend_photos: {
+        Args: { p_photos: Json }
+        Returns: Json
+      }
+      store_habbo_profile_cache: {
+        Args: {
+          p_cache_duration_hours?: number
+          p_profile_data: Json
+          p_username: string
+        }
+        Returns: Json
       }
       summarize_habbo_activities: {
         Args: { p_days_back?: number; p_habbo_name?: string }
@@ -1702,9 +2155,27 @@ export type Database = {
           tracked_at: string
         }[]
       }
+      validate_habbo_connection: {
+        Args: { p_habbo_token: string; p_habbo_user_id: string }
+        Returns: {
+          habbo_username: string
+          is_valid: boolean
+          user_id: string
+        }[]
+      }
+      validate_habbo_token: {
+        Args: { p_habbo_token: string; p_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      friend_activity_type:
+        | "badge"
+        | "photo"
+        | "motto"
+        | "online"
+        | "offline"
+        | "friend_added"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1831,6 +2302,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      friend_activity_type: [
+        "badge",
+        "photo",
+        "motto",
+        "online",
+        "offline",
+        "friend_added",
+      ],
+    },
   },
 } as const
