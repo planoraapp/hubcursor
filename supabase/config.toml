@@ -1,92 +1,20 @@
-
 project_id = "wueccgeizznjmjgmuscy"
 
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "graphql_public"]
+schemas = ["public", "storage", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
-
-[db]
-port = 54322
-
-[studio]
-enabled = true
-port = 54323
-
-[inbucket]
-enabled = true
-port = 54324
-smtp_port = 54325
-pop3_port = 54326
-
-[storage]
-enabled = true
-port = 54327
-
-[auth]
-enabled = true
-port = 54328
-
-[auth.email]
-enable_signup = true
-double_confirm_changes = true
-enable_confirmations = false
-
-[edge_functions]
-enabled = true
-
-[functions.get-habbo-official-data]
-verify_jwt = false
-
-[functions.register-or-reset-via-motto]
-verify_jwt = false
-
-[functions.habbo-ensure-tracked]
-verify_jwt = false
-
-[functions.get-real-habbo-data]
-verify_jwt = false
-
-[functions.habbo-real-assets]
-verify_jwt = false
-
-[functions.habbo-hotel-feed]
-verify_jwt = false
-
-[functions.get-unified-clothing-data]
-verify_jwt = false
-
-[functions.habbo-emotion-clothing]
-verify_jwt = false
-
-[functions.habbo-furni-api]
-verify_jwt = false
-
-[functions.real-badges-system]
-verify_jwt = false
-
-[functions.templarios-figuredata]
-verify_jwt = false
-
-[functions.habbo-friends-activities-direct]
-verify_jwt = false
 
 [functions.verify-and-register-via-motto]
 verify_jwt = false
 
-[functions.habbo-hotel-general-feed]
+[functions.setup-beebop-admin] 
 verify_jwt = false
 
-[functions.habbo-user-search]
-verify_jwt = false
-
-[functions.habbo-friends-photos]
-verify_jwt = false
-
-[functions.habbo-official-ticker]
-verify_jwt = false
+[functions.habbo-friends-activities-direct]
+verify_jwt = true
 
 [functions.habbo-daily-activities-tracker]
 verify_jwt = false

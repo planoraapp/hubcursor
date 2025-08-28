@@ -89,15 +89,15 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
 
       console.log(`[📊 REAL ACTIVITIES] Raw query returned ${data?.length || 0} activities`);
       
-      // Debug: Show unique user names in activities
+      // Debug: Show unique user names in activities (CORRIGIDO)
       if (data && data.length > 0) {
-        const uniqueUsers = [...new Set(data.map(act => act.habbo_name))];
+        const uniqueUsers = [...new Set(data.map(act => act.friend_name))];
         console.log(`[🔍 REAL ACTIVITIES] Unique users in this page (${uniqueUsers.length}):`, uniqueUsers.slice(0, 10));
       }
 
-      // Client-side filtering for accurate matching with normalization
+      // Client-side filtering for accurate matching with normalization (CORRIGIDO)
       const filteredActivities = (data || []).filter(activity => {
-        let activityName = activity.habbo_name.toLowerCase().trim();
+        let activityName = activity.friend_name.toLowerCase().trim();
         
         if (activityName.startsWith(',')) {
           activityName = activityName.substring(1).trim();
@@ -109,10 +109,23 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
       console.log(`[✅ REAL ACTIVITIES] After filtering: ${filteredActivities.length} activities from friends`);
 
   // ETAPA 2: Deduplicação e Melhoria da Apresentação
+  // Convert friends_activities to RealFriendActivity format
+  const convertedActivities: RealFriendActivity[] = filteredActivities.map(activity => ({
+    id: activity.id,
+    habbo_name: activity.friend_name,
+    habbo_id: activity.friend_name, // Temporary - will be enhanced later
+    hotel: 'br', // Default hotel
+    activity_type: activity.activity_type,
+    activity_description: `${activity.friend_name} - ${activity.activity_type}`,
+    created_at: activity.created_at,
+    detected_at: activity.created_at,
+    new_data: activity.activity_details
+  }));
+
   // Group and deduplicate activities by user and type within a time window
   const activityGroups = new Map<string, RealFriendActivity[]>();
   
-  filteredActivities.forEach((activity) => {
+  convertedActivities.forEach((activity) => {
     // Create a key for grouping similar activities
     const timeWindow = Math.floor(new Date(activity.created_at).getTime() / (60 * 1000)); // 1 minute window
     const groupKey = `${activity.habbo_name}-${activity.activity_type}-${timeWindow}`;

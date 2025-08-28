@@ -293,45 +293,103 @@ serve(async (req) => {
       });
     }
 
-    // ✅ CORREÇÃO: Buscar amigos reais do usuário com fallback
-    const friends = await getFriendsList(supabase, user.id);
+    // ✅ BUSCAR CONTA HABBO DO USUÁRIO
+    console.log(`📋 [ACCOUNT] Getting habbo account for user: ${user.id}`);
+    const { data: habboAccount, error: accountError } = await supabase
+      .from('habbo_accounts')
+      .select('*')
+      .eq('supabase_user_id', user.id)
+      .single();
     
-    if (friends.length === 0) {
-      console.log(`❌ [FRIENDS] No friends found, using demo data for user ${user.id}`);
+    if (accountError || !habboAccount) {
+      console.log(`❌ [ACCOUNT] Habbo account not found for user ${user.id}:`, accountError);
       
-      // ✅ FALLBACK: Dados de demonstração quando não há amigos reais
+      // Fallback com dados demo se não tiver conta Habbo
       const demoActivities = [
         {
-          username: 'DemoFriend1',
-          activity: 'tirou uma nova foto no quarto "Quarto Legal"',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          figureString: 'hr-3012-42.hd-180-2.ch-210-66.lg-270-82.sh-305-62',
-          hotel: 'br',
-          type: 'photos' as const,
-          details: { newPhotos: [{ url: '#', roomName: 'Quarto Legal' }] }
-        },
-        {
-          username: 'DemoFriend2', 
-          activity: 'conquistou o emblema "Visitante"',
-          timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          username: 'Sistema',
+          activity: 'Configure sua conta Habbo para ver atividades reais',
+          timestamp: new Date().toISOString(),
           figureString: 'hr-155-45.hd-208-10.ch-215-66.lg-275-82.sh-305-62',
           hotel: 'br',
-          type: 'badge' as const,
-          details: { newBadges: [{ code: 'VIS001', name: 'Visitante' }] }
+          type: 'info' as const,
+          details: { message: 'Use a aba Missão para conectar sua conta Habbo' }
         }
       ];
       
-      const demoResponse = {
+      return new Response(JSON.stringify({
         activities: demoActivities,
         metadata: {
-          source: 'enhanced-direct-demo',
+          source: 'no-habbo-account',
           timestamp: new Date().toISOString(),
           count: demoActivities.length,
           friends_processed: 0
         }
-      };
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    console.log(`✅ [ACCOUNT] Found Habbo account: ${habboAccount.habbo_name} (${habboAccount.hotel})`);
+
+    // ✅ BUSCAR ATIVIDADES DA TABELA friends_activities
+    console.log(`📋 [ACTIVITIES] Fetching activities from database...`);
+    const { data: activities, error: activitiesError } = await supabase
+      .from('friends_activities')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (activitiesError) {
+      console.error(`❌ [ACTIVITIES] Error fetching activities:`, activitiesError);
+      throw new Error(`Database error: ${activitiesError.message}`);
+    }
+    
+    console.log(`📊 [ACTIVITIES] Found ${activities?.length || 0} activities`);
+    
+    if (!activities || activities.length === 0) {
+      // Se não há atividades, vamos chamar o tracker para popular dados
+      console.log(`🔄 [TRACKER] No activities found, triggering tracker...`);
       
-      return new Response(JSON.stringify(demoResponse), {
+      try {
+        const { data: trackerData } = await supabase.functions.invoke('habbo-daily-activities-tracker', {
+          body: {
+            user_habbo_name: habboAccount.habbo_name,
+            user_habbo_id: habboAccount.habbo_id,
+            hotel: habboAccount.hotel
+          }
+        });
+        
+        console.log(`🔄 [TRACKER] Tracker result:`, trackerData);
+      } catch (trackerError) {
+        console.warn(`⚠️ [TRACKER] Could not trigger tracker:`, trackerError);
+      }
+      
+      // Dados demo enquanto o tracker processa
+      const demoActivities = [
+        {
+          username: habboAccount.habbo_name,
+          activity: 'está online no Hotel',
+          timestamp: new Date().toISOString(),
+          figureString: habboAccount.figure_string || 'hr-155-45.hd-208-10.ch-215-66.lg-275-82.sh-305-62',
+          hotel: habboAccount.hotel,
+          type: 'online' as const,
+          details: { status: 'online' }
+        }
+      ];
+      
+      return new Response(JSON.stringify({
+        activities: demoActivities,
+        metadata: {
+          source: 'initial-setup',
+          timestamp: new Date().toISOString(),
+          count: demoActivities.length,
+          friends_processed: 0,
+          message: 'Tracker iniciado - aguarde alguns minutos para ver atividades reais'
+        }
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
