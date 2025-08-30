@@ -13,13 +13,13 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useDirectAuth } from '@/hooks/useDirectAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
-  const { habboAccount, isLoggedIn, logout } = useSimpleAuth();
+  const { currentUser, isLoggedIn, logout } = useDirectAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
@@ -106,7 +106,7 @@ export function CollapsibleAppSidebar() {
               <img 
                 src="/assets/habbohub.gif" 
                 alt="Habbo Hub" 
-                className="w-full h-auto max-w-[200px]"
+                className="h-12 w-auto"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/assets/habbohub.png";
@@ -132,21 +132,21 @@ export function CollapsibleAppSidebar() {
 
         <SidebarFooter className="p-4 border-t-2 border-black">
           <div className="space-y-2">
-            {isLoggedIn && habboAccount ? (
+            {isLoggedIn && currentUser ? (
               <div className={`text-center ${isCollapsed ? 'px-1' : ''}`}>
                 <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} mb-2`}>
                   <img
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
-                    alt={`Avatar de ${habboAccount.habbo_name}`}
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`}
+                    alt={`Avatar de ${currentUser.habbo_username}`}
                     className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`;
                     }}
                   />
                   {!isCollapsed && (
                     <span className="habbo-text text-sm font-bold text-[#8B4513] truncate">
-                      {habboAccount.habbo_name}
+                      {currentUser.habbo_username}
                     </span>
                   )}
                 </div>
@@ -202,7 +202,7 @@ export function CollapsibleAppSidebar() {
 
       <button
         onClick={toggleSidebar}
-        className="absolute top-20 -right-3 z-50 w-6 h-8 bg-[#f5f5dc] border-2 border-black border-l-0 rounded-r-md hover:bg-yellow-200/70 transition-colors flex items-center justify-center"
+        className="absolute top-20 -right-3 z-50 w-6 h-8 bg-[#f5f5dc] border-r-2 border-black border-l-0 rounded-r-md hover:bg-yellow-200/70 transition-colors flex items-center justify-center"
         style={{ boxShadow: '2px 0 4px rgba(0,0,0,0.1)' }}
       >
         {isCollapsed ? (

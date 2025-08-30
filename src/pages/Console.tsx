@@ -2,7 +2,8 @@
 import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { TabbedConsole } from '@/components/console/TabbedConsole';
+import { FunctionalConsole } from '@/components/console/FunctionalConsole';
+import { TestConsole } from '@/components/console/TestConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -35,8 +36,8 @@ const Console: React.FC = () => {
                 </p>
               </div>
 
-              {/* Centralized single column console */}
-              <TabbedConsole />
+              {/* Console funcional com dados reais do Habbo */}
+              <FunctionalConsole />
               
               {/* Popup button positioned below console */}
               <div className="mt-4 flex justify-center">

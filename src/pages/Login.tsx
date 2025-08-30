@@ -1,69 +1,56 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { User, Key, MessageSquare } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { LoginByMotto } from '@/components/auth/LoginByMotto';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useDirectAuth } from '@/hooks/useDirectAuth';
 
-const Login = () => {
-  const [habboName, setHabboName] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('password');
-  const { loginWithPassword } = useAuth();
-  const { toast } = useToast();
+export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { 
+    isLoading, 
+    currentUser, 
+    verifyUser, 
+    registerUser, 
+    loginWithPassword, 
+    checkAuthStatus 
+  } = useDirectAuth();
+  
+  const [username, setUsername] = useState('');
+  const [motto, setMotto] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!habboName.trim()) {
-      toast({
-        title: "Erro",
-        description: "Digite seu nome de usuário Habbo",
-        variant: "destructive"
-      });
-      return;
+  // Verificar se já está logado ao carregar a página
+  useEffect(() => {
+    const user = checkAuthStatus();
+    if (user) {
+      navigate('/console');
     }
+  }, [checkAuthStatus, navigate]);
 
-    if (!password.trim()) {
-      toast({
-        title: "Erro", 
-        description: "Digite sua senha",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await loginWithPassword(habboName.trim(), password.trim());
-      toast({
-        title: "Sucesso!",
-        description: "Login realizado com sucesso!"
-      });
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message || "Erro ao fazer login",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+  const handleVerifyUser = async () => {
+    const user = await verifyUser(username, motto);
+    if (user) {
+      setShowPasswordSection(true);
     }
   };
 
-  const handleMottoLoginSuccess = () => {
-    navigate('/');
+  const handleRegisterUser = async () => {
+    const success = await registerUser(username, motto, password);
+    if (success) {
+      navigate('/console');
+    }
+  };
+
+  const handleLoginWithPassword = async () => {
+    const success = await loginWithPassword(username, password);
+    if (success) {
+      navigate('/console');
+    }
   };
 
   return (
@@ -73,96 +60,111 @@ const Login = () => {
         <SidebarInset className="flex-1">
           <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             <div className="max-w-md mx-auto mt-20">
-              <div className="text-center mb-8">
-                <div className="flex items-center justify-center mb-4">
-                  <img 
-                    src="/assets/habbohub.gif" 
-                    alt="Habbo Hub" 
-                    className="h-16 w-auto"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/assets/habbohub.png";
-                    }}
-                  />
-                </div>
-                <p className="text-lg text-white/90 volter-font drop-shadow">
-                  Entre com sua conta Habbo
-                </p>
-              </div>
-              
-              <Card className="bg-white/90 backdrop-blur-sm border-2 border-black">
-                <CardHeader>
-                  <CardTitle className="volter-font text-2xl text-gray-900 text-center">
-                    Entrar na Conta
+              <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold text-gray-900 volter-font">
+                    Conectar Conta Habbo
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="password" className="volter-font flex items-center gap-2">
-                        <Key className="w-4 h-4" />
-                        Por Senha
-                      </TabsTrigger>
-                      <TabsTrigger value="motto" className="volter-font flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" />
-                        Por Motto
-                      </TabsTrigger>
-                    </TabsList>
+                <CardContent className="space-y-4">
+                  {/* Verificação por Motto */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Username Habbo
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Digite seu username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="border-2 border-gray-300 focus:border-blue-500"
+                      />
+                    </div>
                     
-                    <TabsContent value="password" className="mt-4">
-                      <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                          <Label htmlFor="habboName" className="volter-font text-gray-700">
-                            Nome de usuário Habbo
-                          </Label>
-                          <Input
-                            id="habboName"
-                            type="text"
-                            value={habboName}
-                            onChange={(e) => setHabboName(e.target.value)}
-                            placeholder="Digite seu nome Habbo"
-                            className="mt-1"
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="password" className="volter-font text-gray-700">
-                            Senha
-                          </Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Digite sua senha"
-                            className="mt-1"
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <Button 
-                          type="submit" 
-                          className="w-full habbo-button-blue volter-font"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? 'Entrando...' : 'Entrar com Senha'}
-                        </Button>
-                      </form>
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600 volter-font">
-                          Use suas credenciais Habbo para fazer login.
-                        </p>
-                      </div>
-                    </TabsContent>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Motto Habbo
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Digite sua motto atual"
+                        value={motto}
+                        onChange={(e) => setMotto(e.target.value)}
+                        className="border-2 border-gray-300 focus:border-blue-500"
+                      />
+                    </div>
                     
-                    <TabsContent value="motto" className="mt-4">
-                      <LoginByMotto onLoginSuccess={handleMottoLoginSuccess} />
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-muted-foreground volter-font">
-                          Login seguro via verificação de motto no Hotel. Para novos usuários.
-                        </p>
+                    <Button
+                      onClick={handleVerifyUser}
+                      disabled={isLoading}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                      {isLoading ? 'Verificando...' : '🔍 Verificar Usuário'}
+                    </Button>
+                  </div>
+
+                  {/* Seção de Senha (aparece após verificação) */}
+                  {showPasswordSection && (
+                    <div className="space-y-3 pt-4 border-t border-gray-200">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nova Senha
+                        </label>
+                        <Input
+                          type="password"
+                          placeholder="Digite uma senha para sua conta"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="border-2 border-gray-300 focus:border-blue-500"
+                        />
                       </div>
-                    </TabsContent>
-                  </Tabs>
+                      
+                      <Button
+                        onClick={handleRegisterUser}
+                        disabled={isLoading}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                      >
+                        {isLoading ? 'Criando conta...' : '💾 Criar Conta'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Login com Senha (sempre visível) */}
+                  <div className="space-y-3 pt-4 border-t border-gray-200">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Senha da Conta
+                      </label>
+                      <Input
+                        type="password"
+                        placeholder="Digite sua senha"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border-2 border-gray-300 focus:border-blue-500"
+                      />
+                    </div>
+                    
+                    <Button
+                      onClick={handleLoginWithPassword}
+                      disabled={isLoading}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                      🔐 Fazer Login
+                    </Button>
+                  </div>
+
+                  {/* Informações do usuário verificado */}
+                  {currentUser && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                      <p className="text-sm text-blue-800">
+                        <strong>Usuário verificado:</strong> {currentUser.habbo_username}
+                      </p>
+                      <p className="text-sm text-blue-600">
+                        Motto: {currentUser.habbo_motto}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

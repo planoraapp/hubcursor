@@ -1,20 +1,20 @@
-// ========================================
-// EDGE FUNCTION: VERIFY AND REGISTER VIA MOTTO
-// Função completa para cadastro de usuários Habbo via motto
-// ========================================
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { 
+      status: 200,
+      headers: corsHeaders 
+    })
   }
 
   try {
@@ -44,7 +44,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Usuário não encontrado ou motto incorreta' }),
         { 
           status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
@@ -63,7 +63,7 @@ serve(async (req) => {
           JSON.stringify({ error: 'Usuário não cadastrado. Faça o cadastro primeiro.' }),
           { 
             status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         )
       }
@@ -75,8 +75,8 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ error: 'Senha incorreta' }),
             { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           )
         }
@@ -85,7 +85,7 @@ serve(async (req) => {
       // Return user data for login
       return new Response(
         JSON.stringify({
-        success: true,
+          success: true,
           action: 'login',
           user: {
             id: existingUser.id,
@@ -97,7 +97,7 @@ serve(async (req) => {
         }),
         { 
           status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
 
@@ -105,10 +105,10 @@ serve(async (req) => {
       // User wants to register
       if (existingUser) {
         return new Response(
-          JSON.stringify({ error: 'Usuário já cadastrado' }),
+          JSON.stringify({ error: 'Usuário já cadastrado. Use a opção de login.' }),
           { 
             status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         )
       }
@@ -117,14 +117,14 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'Senha é obrigatória para cadastro' }),
           { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         )
       }
 
       // Hash password
-      const passwordHash = await hashPassword(password)
+      const hashedPassword = await hashPassword(password)
 
       // Insert new user
       const { data: newUser, error: insertError } = await supabase
@@ -132,9 +132,9 @@ serve(async (req) => {
         .insert({
           habbo_username: username,
           habbo_motto: motto,
-          habbo_avatar: habboUser.data.figureString,
-          password_hash: passwordHash,
-          created_at: new Date().toISOString()
+          habbo_avatar: habboUser.data.figureString || 'Sem avatar',
+          password_hash: hashedPassword,
+          is_verified: true
         })
         .select()
         .single()
@@ -142,7 +142,7 @@ serve(async (req) => {
       if (insertError) {
         console.error('Error inserting user:', insertError)
         return new Response(
-          JSON.stringify({ error: 'Erro ao cadastrar usuário' }),
+          JSON.stringify({ error: 'Erro ao criar usuário' }),
           { 
             status: 500, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -160,6 +160,26 @@ serve(async (req) => {
             habbo_motto: newUser.habbo_motto,
             habbo_avatar: newUser.habbo_avatar,
             created_at: newUser.created_at
+          }
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+
+    } else if (action === 'verify') {
+      // User just wants to verify their Habbo account
+      return new Response(
+        JSON.stringify({
+          success: true,
+          action: 'verify',
+          user: {
+            id: existingUser?.id || 'new',
+            habbo_username: username,
+            habbo_motto: motto,
+            habbo_avatar: habboUser.data.figureString || 'Sem avatar',
+            created_at: existingUser?.created_at || new Date().toISOString()
           }
         }),
         { 
@@ -191,15 +211,12 @@ serve(async (req) => {
       }
 
       // Hash new password
-      const newPasswordHash = await hashPassword(password)
+      const hashedPassword = await hashPassword(password)
 
       // Update password
       const { error: updateError } = await supabase
         .from('users')
-        .update({ 
-          password_hash: newPasswordHash,
-          updated_at: new Date().toISOString()
-        })
+        .update({ password_hash: hashedPassword })
         .eq('habbo_username', username)
 
       if (updateError) {
@@ -215,13 +232,13 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({
-        success: true,
+          success: true,
           action: 'change_password',
           message: 'Senha alterada com sucesso'
         }),
         { 
           status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
     }
@@ -229,8 +246,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Ação inválida' }),
       { 
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
 
@@ -239,8 +256,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Erro interno do servidor' }),
       { 
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
   }
@@ -254,13 +271,13 @@ async function verifyHabboUser(username: string, motto: string) {
     
     const response = await fetch(apiUrl, {
       method: 'GET',
-        headers: {
+      headers: {
         'User-Agent': 'HabboHub/1.0',
         'Accept': 'application/json'
       }
     })
 
-      if (response.ok) {
+    if (response.ok) {
       const data = await response.json()
       
       if (data && data.name && data.motto === motto) {
@@ -275,8 +292,8 @@ async function verifyHabboUser(username: string, motto: string) {
           }
         }
       }
-      }
-    } catch (error) {
+    }
+  } catch (error) {
     console.log('API oficial falhou, tentando método alternativo')
   }
 
