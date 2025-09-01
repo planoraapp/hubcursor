@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Visuais Habbo - Flash Assets</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-title">
+            <h1><i class="fas fa-angle-double-right"></i> Editor de Visuais Habbo <span></span></h1>
+        </header>
+        
+        <div class="editor-container">
+            <!-- Coluna da Esquerda - Visualização do Avatar -->
+            <div class="avatar-preview">
+                <div class="avatar-container">
+                    <div class="head-direction">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/head_position.png" alt="Head Position">
+                        <div class="direction-controls">
+                            <a href="#" class="direction-btn" data-direction="left" data-type="head"><i class="fas fa-arrow-left"></i></a>
+                            <span class="direction-indicator" id="headDirectionIndicator">2</span>
+                            <a href="#" class="direction-btn" data-direction="right" data-type="head"><i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="avatar-display">
+                        <img id="avatarImage" src="https://www.habbo.com/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&gender=M&direction=2&head_direction=2&action=&gesture=nrm&size=l" alt="Avatar Habbo">
+                    </div>
+                    
+                    <div class="body-direction">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/body_position.png" alt="Body Position">
+                        <div class="direction-controls">
+                            <a href="#" class="direction-btn" data-direction="left" data-type="body"><i class="fas fa-arrow-left"></i></a>
+                            <span class="direction-indicator" id="bodyDirectionIndicator">2</span>
+                            <a href="#" class="direction-btn" data-direction="right" data-type="body"><i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="avatar-controls">
+                    <div class="form-group">
+                        <label>Tamanho</label>
+                        <select id="avatarSize" class="form-control">
+                            <option value="headonly=1">Cabeça</option>
+                            <option value="size=s">Mini</option>
+                            <option value="size=m">Normal</option>
+                            <option value="size=l" selected>Grande</option>
+                        </select>
+                        <small class="form-text text-muted">Preview sempre em Grande para melhor visualização</small>
+                    </div>
+                    
+                    <a id="downloadBtn" class="btn btn-download" href="#" download="avatar.png" target="_blank">
+                        <i class="fas fa-download"></i> Baixar
+                    </a>
+                    
+                    <div class="name-section">
+                        <div class="form-group">
+                            <label>Nome do Habbo</label>
+                            <input type="text" id="habboName" class="form-control" placeholder="Seu Nome ou Buscar Usuário">
+                            <button type="button" id="searchUserBtn" class="btn btn-search" style="margin-top: 5px; background: #28a745; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-search"></i> Buscar Usuário
+                            </button>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Hotel</label>
+                            <select id="hotelSelect" class="form-control">
+                                <option value="com.br">🇧🇷 BR</option>
+                                <option value="es">🇪🇸 ES</option>
+                                <option value="fi">🇫🇮 FI</option>
+                                <option value="it">🇮🇹 IT</option>
+                                <option value="nl">🇳🇱 NL</option>
+                                <option value="de">🇩🇪 DE</option>
+                                <option value="fr">🇫🇷 FR</option>
+                                <option value="com">🌍 COM</option>
+                                <option value="com.tr">🇹🇷 TR</option>
+                            </select>
+                        </div>
+                        
+                        <button type="button" id="updateBtn" class="btn btn-update">
+                            <i class="fas fa-redo"></i> Atualizar
+                        </button>
+                        
+                        <div id="userSearchResult" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;">
+                            <h5 style="margin: 0 0 10px 0; color: #28a745;">✅ Usuário Encontrado!</h5>
+                            <div id="userInfo"></div>
+                            <button type="button" id="loadUserAvatarBtn" class="btn btn-success" style="margin-top: 10px; background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-user"></i> Carregar Avatar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Coluna Central - Navegação e Roupas -->
+            <div class="clothing-section">
+                <div class="clothing-nav">
+                    <div class="nav-item" data-category="head">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/body.png" alt="Cabeça">
+                        <span>Rostos</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="hair">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/hair.png" alt="Cabelo">
+                        <span>Cabelos</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="shirts">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/tops.png" alt="Camisas">
+                        <span>Camisetas</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="pants">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/bottoms.png" alt="Calças">
+                        <span>Calças</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="shoes">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/shoes.png" alt="Sapatos">
+                        <span>Sapatos</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="hats">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/hats.png" alt="Chapéus">
+                        <span>Chapéus</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="faceAccessories">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/moustaches.png" alt="Acessórios do Rosto">
+                        <span>Rosto</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="headAccessories">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/hair-accessories.png" alt="Acessórios da Cabeça">
+                        <span>Cabeça</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="chestAccessories">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/accessories.png" alt="Acessórios do Peito">
+                        <span>Peito</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="waistAccessories">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/belts.png" alt="Acessórios da Cintura">
+                        <span>Cintura</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="dresses">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/dresses.png" alt="Vestidos">
+                        <span>Vestidos</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="skirts">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/skirts.png" alt="Saias">
+                        <span>Saias</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="suits">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/suits.png" alt="Trajes">
+                        <span>Trajes</span>
+                    </div>
+                    
+                    <div class="nav-item" data-category="jackets">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/jackets.png" alt="Jaquetas">
+                        <span>Jaquetas</span>
+                    </div>
+                </div>
+                
+                <div class="gender-selector">
+                    <div class="gender-btn male active" data-gender="M">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/male.png" alt="Masculino">
+                        <span>♂ Masculino</span>
+                    </div>
+                    <div class="gender-btn female" data-gender="F">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/female.png" alt="Feminino">
+                        <span>♀ Feminino</span>
+                    </div>
+                    <div class="gender-btn unisex" data-gender="U">
+                        <img src="https://images.habbotemplarios.com/web/avatargen/unisex.png" alt="Unissex">
+                        <span>⚤ Unissex</span>
+                    </div>
+                </div>
+                
+                <div class="clothing-grid" id="clothingGrid">
+                    <!-- As roupas serão carregadas dinamicamente aqui -->
+                </div>
+            </div>
+            
+            <!-- Coluna da Direita - Cores e Opções -->
+            <div class="options-section">
+                <div class="color-palette">
+                    <h3>Cores</h3>
+                    <div class="color-grid" id="colorGrid">
+                        <!-- Cores serão carregadas dinamicamente -->
+                    </div>
+                </div>
+                
+                <div class="expression-section">
+                    <h3><i class="fas fa-caret-right"></i> Expressão</h3>
+                    <div class="expression-grid">
+                        <div class="expression-item" data-expression="nrm">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_normal.png" alt="Normal">
+                            <span>Normal</span>
+                        </div>
+                        <div class="expression-item" data-expression="sml">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_happy.png" alt="Feliz">
+                            <span>Feliz</span>
+                        </div>
+                        <div class="expression-item" data-expression="sad">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_sad.png" alt="Triste">
+                            <span>Triste</span>
+                        </div>
+                        <div class="expression-item" data-expression="agr">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_angry.png" alt="Enojado">
+                            <span>Enojado</span>
+                        </div>
+                        <div class="expression-item" data-expression="srp">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_surprised.png" alt="Surpreso">
+                            <span>Surpreso</span>
+                        </div>
+                        <div class="expression-item" data-expression="eyb">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_sleep.png" alt="Dormindo">
+                            <span>Dormindo</span>
+                        </div>
+                        <div class="expression-item" data-expression="spk">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/face_talking.png" alt="Falando">
+                            <span>Falando</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-section">
+                    <h3><i class="fas fa-caret-right"></i> Ações</h3>
+                    <div class="action-grid">
+                        <div class="action-item" data-action="">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_normal.png" alt="Normal">
+                            <span>Nada</span>
+                        </div>
+                        <div class="action-item" data-action="wlk">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_walking.png" alt="Andando">
+                            <span>Andando</span>
+                        </div>
+                        <div class="action-item" data-action="lay">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_sleeping.png" alt="Deitado">
+                            <span>Deitado</span>
+                        </div>
+                        <div class="action-item" data-action="sit">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_sit.png" alt="Sentado">
+                            <span>Sentado</span>
+                        </div>
+                        <div class="action-item" data-action="wav">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_wave.png" alt="Acenando">
+                            <span>Acenando</span>
+                        </div>
+                        <div class="action-item" data-action="crr">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_holding.png" alt="Carregando">
+                            <span>Carregando</span>
+                        </div>
+                        <div class="action-item" data-action="drk">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/action_drinking.png" alt="Bebendo">
+                            <span>Bebendo</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="item-section">
+                    <h3><i class="fas fa-caret-right"></i> Item na Mão</h3>
+                    <div class="item-grid">
+                        <div class="item-item" data-item="=0">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/none.png" alt="Nada">
+                            <span>Nada</span>
+                        </div>
+                        <div class="item-item" data-item="=1">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_water.png" alt="Água">
+                            <span>Água</span>
+                        </div>
+                        <div class="item-item" data-item="=2">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_carrot.png" alt="Cenoura">
+                            <span>Cenoura</span>
+                        </div>
+                        <div class="item-item" data-item="=3">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" alt="Sorvete">
+                            <span>Sorvete</span>
+                        </div>
+                        <div class="item-item" data-item="=5">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" alt="Habbo Cola">
+                            <span>Habbo Cola</span>
+                        </div>
+                        <div class="item-item" data-item="=6">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" alt="Café">
+                            <span>Café</span>
+                        </div>
+                        <div class="item-item" data-item="=9">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" alt="Poção do Amor">
+                            <span>Poção do Amor</span>
+                        </div>
+                        <div class="item-item" data-item="=33">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" alt="Calippo">
+                            <span>Calippo</span>
+                        </div>
+                        <div class="item-item" data-item="=42">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_japanesetea.png" alt="Chá Japonês">
+                            <span>Chá Japonês</span>
+                        </div>
+                        <div class="item-item" data-item="=43">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_tomato.png" alt="Tomate">
+                            <span>Tomate</span>
+                        </div>
+                        <div class="item-item" data-item="=44">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_radioactive.png" alt="Radioativo">
+                            <span>Radioativo</span>
+                        </div>
+                        <div class="item-item" data-item="=667">
+                            <img src="https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" alt="Coquetel">
+                            <span>Coquetel</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

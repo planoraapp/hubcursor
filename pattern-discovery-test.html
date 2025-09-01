@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Descoberta de Padrões - Habbo Imaging</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .discovery-panel {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #4299e1;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(66, 153, 225, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .status.info {
+            background: #bee3f8;
+            color: #2b6cb0;
+            border-left: 4px solid #3182ce;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #2f855a;
+            border-left: 4px solid #38a169;
+        }
+        
+        .status.warning {
+            background: #fef5e7;
+            color: #c05621;
+            border-left: 4px solid #ed8936;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #3182ce);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .results-section {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .category-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-top: 4px solid #4299e1;
+        }
+        
+        .category-card h4 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 1.2em;
+        }
+        
+        .pattern-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .pattern-list li {
+            padding: 8px 12px;
+            background: #edf2f7;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .info-box {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-box h3 {
+            margin: 0 0 15px 0;
+            color: #234e52;
+        }
+        
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .info-box li {
+            margin: 8px 0;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Descoberta de Padrões - Habbo Imaging</h1>
+        
+        <div class="info-box">
+            <h3>ℹ️ Sobre esta ferramenta</h3>
+            <ul>
+                <li>Esta ferramenta testa diferentes IDs e tipos para encontrar padrões válidos no Habbo Imaging</li>
+                <li>Ela verifica quais combinações de tipo-ID-cor retornam imagens válidas</li>
+                <li>Os resultados são salvos no localStorage para uso posterior no editor</li>
+                <li>O processo pode levar alguns minutos dependendo da conexão</li>
+            </ul>
+        </div>
+        
+        <div class="discovery-panel">
+            <h3>🚀 Iniciar Descoberta de Padrões</h3>
+            <p>Clique no botão abaixo para começar a descobrir os padrões válidos do Habbo Imaging:</p>
+            
+            <div class="controls">
+                <button id="startDiscovery" class="btn">
+                    🔍 Iniciar Descoberta
+                </button>
+                <button id="stopDiscovery" class="btn" disabled>
+                    ⏹️ Parar Descoberta
+                </button>
+                <button id="clearResults" class="btn">
+                    🗑️ Limpar Resultados
+                </button>
+            </div>
+            
+            <div id="status" class="status info" style="display: none;">
+                <span id="statusText">Aguardando início...</span>
+            </div>
+            
+            <div id="progressContainer" style="display: none;">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <div id="progressText" style="text-align: center; font-weight: 500;">0%</div>
+            </div>
+        </div>
+        
+        <div id="discovery-results" class="results-section" style="display: none;">
+            <!-- Resultados serão inseridos aqui -->
+        </div>
+        
+        <div id="saved-results" class="results-section">
+            <h3>💾 Resultados Salvos Anteriormente</h3>
+            <div id="saved-patterns">
+                <!-- Resultados salvos serão carregados aqui -->
+            </div>
+        </div>
+    </div>
+
+    <script src="habbo-pattern-discovery.js"></script>
+    <script>
+        let discoveryRunning = false;
+        let discoveryInstance = null;
+        
+        // Elementos da interface
+        const startBtn = document.getElementById('startDiscovery');
+        const stopBtn = document.getElementById('stopDiscovery');
+        const clearBtn = document.getElementById('clearResults');
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const resultsDiv = document.getElementById('discovery-results');
+        const savedPatternsDiv = document.getElementById('saved-patterns');
+        
+        // Carregar resultados salvos
+        function loadSavedResults() {
+            const saved = localStorage.getItem('habboValidPatterns');
+            if (saved) {
+                try {
+                    const patterns = JSON.parse(saved);
+                    displaySavedResults(patterns);
+                } catch (error) {
+                    console.error('Erro ao carregar resultados salvos:', error);
+                }
+            } else {
+                savedPatternsDiv.innerHTML = '<p>Nenhum resultado salvo encontrado.</p>';
+            }
+        }
+        
+        // Exibir resultados salvos
+        function displaySavedResults(patterns) {
+            let html = '<div class="category-grid">';
+            
+            Object.entries(patterns).forEach(([category, categoryPatterns]) => {
+                html += `
+                    <div class="category-card">
+                        <h4>${category.toUpperCase()}</h4>
+                        <p><strong>Padrões encontrados:</strong> ${categoryPatterns.length}</p>
+                        <ul class="pattern-list">
+                `;
+                
+                categoryPatterns.slice(0, 5).forEach(pattern => {
+                    html += `<li>${pattern.figure}</li>`;
+                });
+                
+                if (categoryPatterns.length > 5) {
+                    html += `<li>... e mais ${categoryPatterns.length - 5} padrões</li>`;
+                }
+                
+                html += '</ul></div>';
+            });
+            
+            html += '</div>';
+            savedPatternsDiv.innerHTML = html;
+        }
+        
+        // Iniciar descoberta
+        startBtn.addEventListener('click', async () => {
+            if (discoveryRunning) return;
+            
+            discoveryRunning = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status info';
+            statusText.innerHTML = '<span class="loading"></span>Iniciando descoberta de padrões...';
+            
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            
+            try {
+                // Simular progresso
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    if (!discoveryRunning) {
+                        clearInterval(progressInterval);
+                        return;
+                    }
+                    
+                    progress += Math.random() * 15;
+                    if (progress > 90) progress = 90;
+                    
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = Math.round(progress) + '%';
+                }, 1000);
+                
+                // Executar descoberta
+                const patterns = await startPatternDiscovery();
+                
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressText.textContent = '100%';
+                
+                statusDiv.className = 'status success';
+                statusText.textContent = '✅ Descoberta concluída com sucesso!';
+                
+                resultsDiv.style.display = 'block';
+                
+                // Recarregar resultados salvos
+                loadSavedResults();
+                
+            } catch (error) {
+                console.error('Erro na descoberta:', error);
+                statusDiv.className = 'status warning';
+                statusText.textContent = '❌ Erro durante a descoberta: ' + error.message;
+            } finally {
+                discoveryRunning = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        });
+        
+        // Parar descoberta
+        stopBtn.addEventListener('click', () => {
+            discoveryRunning = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            statusDiv.className = 'status warning';
+            statusText.textContent = '⏹️ Descoberta interrompida pelo usuário.';
+        });
+        
+        // Limpar resultados
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja limpar todos os resultados salvos?')) {
+                localStorage.removeItem('habboValidPatterns');
+                resultsDiv.style.display = 'none';
+                savedPatternsDiv.innerHTML = '<p>Resultados limpos com sucesso.</p>';
+                
+                statusDiv.style.display = 'block';
+                statusDiv.className = 'status info';
+                statusText.textContent = '🗑️ Resultados limpos com sucesso.';
+            }
+        });
+        
+        // Carregar resultados salvos ao carregar a página
+        document.addEventListener('DOMContentLoaded', loadSavedResults);
+    </script>
+</body>
+</html>

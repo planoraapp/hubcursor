@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Extrator Automático - Habbo Templários</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .input-group { margin: 20px 0; }
+        textarea { width: 100%; height: 200px; }
+        button { padding: 10px 20px; margin: 10px; }
+        .results { margin: 20px 0; padding: 20px; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Extrator Automático - Habbo Templários</h1>
+    
+    <div class="input-group">
+        <h3>📋 Cole o HTML da categoria:</h3>
+        <textarea id="htmlInput" placeholder="Cole aqui o HTML da categoria..."></textarea>
+        <button onclick="extractData()">🔍 Extrair Dados</button>
+        <button onclick="clearAll()">🗑️ Limpar</button>
+    </div>
+    
+    <div class="results">
+        <h3>📊 Resultados Extraídos:</h3>
+        <div id="extractedData"></div>
+    </div>
+    
+    <div class="results">
+        <h3>💾 Dados para Copiar:</h3>
+        <textarea id="copyData" readonly placeholder="Dados extraídos aparecerão aqui..."></textarea>
+        <button onclick="copyToClipboard()">📋 Copiar</button>
+    </div>
+
+    <script>
+        function extractData() {
+            const html = document.getElementById('htmlInput').value;
+            if (!html) return;
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const categories = {};
+            
+            // Extrair dados de cada div (nonhc, hc, sell)
+            ['nonhc', 'hc', 'sell'].forEach(category => {
+                const div = doc.querySelector(`#${category}`);
+                if (div) {
+                    const items = [];
+                    div.querySelectorAll('a[data-clothing]').forEach(link => {
+                        const clothing = link.getAttribute('data-clothing');
+                        const figure = link.style.backgroundImage.match(/figure=([^&]+)/)?.[1];
+                        if (clothing && figure) {
+                            items.push({ id: clothing, figure: figure });
+                        }
+                    });
+                    categories[category] = items;
+                }
+            });
+            
+            displayResults(categories);
+            generateCopyData(categories);
+        }
+        
+        function displayResults(categories) {
+            const container = document.getElementById('extractedData');
+            let html = '';
+            
+            Object.entries(categories).forEach(([category, items]) => {
+                html += `<h4>${category.toUpperCase()}: ${items.length} itens</h4>`;
+                html += '<ul>';
+                items.forEach(item => {
+                    html += `<li>ID: ${item.id} | Figura: ${item.figure}</li>`;
+                });
+                html += '</ul>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function generateCopyData(categories) {
+            const container = document.getElementById('copyData');
+            let data = '// Dados extraídos automaticamente\n';
+            data += 'const extractedData = {\n';
+            
+            Object.entries(categories).forEach(([category, items]) => {
+                data += `    ${category}: [\n`;
+                items.forEach(item => {
+                    data += `        { id: '${item.id}', figure: '${item.figure}' },\n`;
+                });
+                data += '    ],\n';
+            });
+            
+            data += '};\n';
+            container.value = data;
+        }
+        
+        function clearAll() {
+            document.getElementById('htmlInput').value = '';
+            document.getElementById('extractedData').innerHTML = '';
+            document.getElementById('copyData').value = '';
+        }
+        
+        function copyToClipboard() {
+            const textarea = document.getElementById('copyData');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Dados copiados para a área de transferência!');
+        }
+    </script>
+</body>
+</html>
