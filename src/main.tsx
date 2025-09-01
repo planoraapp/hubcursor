@@ -24,6 +24,7 @@ import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer'
+import { useBeebopAccountInitializer } from './hooks/useBeebopAccountInitializer'
 
 const queryClient = new QueryClient()
 
@@ -108,6 +109,7 @@ const router = createBrowserRouter([
 
 const AppWithInitializers = () => {
   useDailyActivitiesInitializer();
+  useBeebopAccountInitializer();
   return (
     <>
       <RouterProvider router={router} />
