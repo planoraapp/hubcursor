@@ -1,21 +1,26 @@
-# Script Simples para Iniciar o Servidor
-Write-Host "🚀 Iniciando servidor HabboHub..." -ForegroundColor Green
+# Script simples para iniciar o servidor
+Write-Host "🚀 INICIANDO SERVIDOR HABBO HUB" -ForegroundColor Green
+Write-Host "================================" -ForegroundColor Green
 
-# Verificar se estamos na pasta correta
+# Verificar se estamos no diretório correto
 if (-not (Test-Path "package.json")) {
-    Write-Host "❌ Execute este script na pasta 'hubcursor'" -ForegroundColor Red
-    pause
-    exit
+    Write-Host "❌ ERRO: Execute este script no diretório hubcursor/" -ForegroundColor Red
+    Write-Host "Execute: cd hubcursor" -ForegroundColor Yellow
+    exit 1
 }
 
-# Verificar Node.js
-try {
-    node --version | Out-Null
-    Write-Host "✅ Node.js OK" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Instale Node.js: https://nodejs.org/" -ForegroundColor Red
-    pause
-    exit
+# Parar processos existentes na porta 8080
+Write-Host "🛑 Parando processos existentes na porta 8080..." -ForegroundColor Yellow
+$processos = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess
+if ($processos) {
+    foreach ($pid in $processos) {
+        try {
+            Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+            Write-Host "✅ Processo $pid parado" -ForegroundColor Green
+        } catch {
+            Write-Host "⚠️ Não foi possível parar processo $pid" -ForegroundColor Yellow
+        }
+    }
 }
 
 # Instalar dependências se necessário
@@ -24,8 +29,10 @@ if (-not (Test-Path "node_modules")) {
     npm install
 }
 
-# Iniciar servidor
-Write-Host "🌐 Iniciando servidor em http://localhost:8080" -ForegroundColor Cyan
-Write-Host "Pressione Ctrl+C para parar" -ForegroundColor Yellow
-Write-Host ""
+Write-Host "`n🚀 Iniciando servidor na porta 8080..." -ForegroundColor Blue
+Write-Host "Acesse: http://localhost:8080" -ForegroundColor Cyan
+Write-Host "Editor: http://localhost:8080/ferramentas/avatar-editor" -ForegroundColor Cyan
+Write-Host "Pressione Ctrl+C para parar o servidor" -ForegroundColor Gray
+
+# Iniciar o servidor
 npm run dev

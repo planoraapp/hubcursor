@@ -98,31 +98,3 @@ Test-EnvFile
 Clear-PortUse -Port $Port
 # Test-Build   # (opcional) descomente se quiser forçar build antes
 Start-Dev
-
-interface ClothingItem {
-  id: string;
-  name: string;
-  gender: 'M' | 'F' | 'U';
-  category: string;
-  subcategory?: string;
-  rarity: 'FREE' | 'HC' | 'SPECIAL';
-  colorable: boolean;
-  colors?: string[];
-  previewUrl: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  genderFilter: boolean;
-  colorable: boolean;
-  subcategories: Subcategory[];
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
-  icon: string;
-  items: ClothingItem[];
-}
