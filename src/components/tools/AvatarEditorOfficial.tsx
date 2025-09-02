@@ -527,6 +527,33 @@ const AvatarEditorOfficial = () => {
               </div>
               
               <div className="space-y-2">
+                {/* Controles de Rotação */}
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={rotateLeft}
+                    className="p-1 hover:opacity-80 transition-opacity"
+                    title="Rotacionar para esquerda"
+                  >
+                    <img 
+                      src="/assets/rotation_arrow.png" 
+                      alt="Rotacionar esquerda" 
+                      className="w-6 h-6 scale-x-[-1]"
+                    />
+                  </button>
+                  
+                  <button
+                    onClick={rotateRight}
+                    className="p-1 hover:opacity-80 transition-opacity"
+                    title="Rotacionar para direita"
+                  >
+                    <img 
+                      src="/assets/rotation_arrow.png" 
+                      alt="Rotacionar direita" 
+                      className="w-6 h-6"
+                    />
+                  </button>
+                </div>
+
                 {/* Controles de Tamanho */}
                 <div className="space-y-2">
                   <button
@@ -590,39 +617,7 @@ const AvatarEditorOfficial = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Rotação do Avatar</Label>
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={rotateLeft}
-                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                    title="Rotacionar para esquerda"
-                  >
-                    <img 
-                      src="/assets/rotation_arrow.png" 
-                      alt="Rotacionar esquerda" 
-                      className="w-6 h-6 rotate-180"
-                    />
-                  </button>
-                  
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-blue-600">{currentFigure.direction}</div>
-                    <div className="text-xs text-gray-500">Direção</div>
-                  </div>
-                  
-                  <button
-                    onClick={rotateRight}
-                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                    title="Rotacionar para direita"
-                  >
-                    <img 
-                      src="/assets/rotation_arrow.png" 
-                      alt="Rotacionar direita" 
-                      className="w-6 h-6"
-                    />
-                  </button>
-                </div>
-              </div>
+
 
               
 
