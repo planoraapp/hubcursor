@@ -126,17 +126,33 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
   // Função para buscar dados básicos do usuário
   const fetchUserData = async (username: string) => {
     try {
+      // Usar a documentação oficial da API: GET /api/public/users
       const url = `${API_BASE}/api/public/users?name=${encodeURIComponent(username)}`;
       console.log('Buscando usuário na URL:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
       console.log('Resposta da API:', response.status, response.statusText);
       
       if (response.ok) {
         const data = await response.json();
         console.log('Dados do usuário recebidos:', data);
-        setUserData(data);
-        return data;
+        
+        // Verificar se os dados estão no formato esperado
+        if (data && data.name && data.figureString) {
+          setUserData(data);
+          setError(null); // Limpar erro anterior
+          return data;
+        } else {
+          console.error('Dados do usuário incompletos:', data);
+          throw new Error('Dados do usuário incompletos');
+        }
       } else {
         const errorText = await response.text();
         console.error('Erro na API:', response.status, errorText);
@@ -145,6 +161,7 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
       setError(`Erro ao buscar dados do usuário: ${error.message}`);
+      setUserData(null); // Limpar dados anteriores
       return null;
     }
   };
@@ -248,23 +265,31 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
 
   // Função para buscar todos os dados
   const fetchAllData = async (username: string) => {
+    console.log('fetchAllData iniciado para:', username);
     setIsLoading(true);
     setError(null);
+    setUserData(null); // Limpar dados anteriores
 
     try {
       // 1. Buscar dados básicos do usuário
+      console.log('Buscando dados básicos do usuário...');
       const userData = await fetchUserData(username);
+      
       if (userData && userData.uniqueId) {
+        console.log('Usuário encontrado, buscando perfil completo...');
         // 2. Buscar perfil completo
         await fetchUserProfile(userData.uniqueId);
+        console.log('Busca completa finalizada com sucesso');
       } else {
+        console.log('Usuário não encontrado ou dados incompletos');
         setError('Usuário não encontrado');
       }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
-      setError('Erro ao carregar dados');
+      setError(`Erro ao carregar dados: ${error.message}`);
     } finally {
       setIsLoading(false);
+      console.log('fetchAllData finalizado');
     }
   };
 
