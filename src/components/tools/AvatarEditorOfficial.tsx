@@ -218,6 +218,15 @@ const AvatarEditorOfficial = () => {
 
   // Hook da API do Habbo
   const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser, selectedCountry);
+  
+  // Debug logs
+  console.log('Estado do componente:', {
+    searchedUser,
+    selectedCountry,
+    userData,
+    isLoadingUser,
+    userError
+  });
 
   // Mapeamento de países para URLs da API
   const countryAPIs = {

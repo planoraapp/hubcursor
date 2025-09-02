@@ -95,6 +95,8 @@ interface HabboProfile {
 }
 
 export const useHabboPublicAPI = (username: string = 'Beebop', country: string = 'br') => {
+  console.log('Hook useHabboPublicAPI chamado com:', { username, country });
+  
   const [userData, setUserData] = useState<HabboUser | null>(null);
   const [profileData, setProfileData] = useState<HabboProfile | null>(null);
   const [badges, setBadges] = useState<HabboBadge[]>([]);
@@ -102,7 +104,7 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
   const [groups, setGroups] = useState<HabboGroup[]>([]);
   const [friends, setFriends] = useState<HabboFriend[]>([]);
   const [photos, setPhotos] = useState<HabboPhoto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Mapeamento de países para URLs da API
@@ -315,8 +317,12 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
 
   // Carregar dados quando o hook for inicializado ou país mudar
   useEffect(() => {
+    console.log('useEffect disparado:', { username, country });
     if (username) {
+      console.log('Iniciando busca de dados para:', username);
       fetchAllData(username);
+    } else {
+      console.log('Username vazio, não buscando dados');
     }
   }, [username, country]);
 
