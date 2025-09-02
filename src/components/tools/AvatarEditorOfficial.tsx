@@ -242,26 +242,34 @@ const AvatarEditorOfficial = () => {
   // Função para aplicar avatar do usuário buscado
   const applyUserAvatar = () => {
     if (userData?.figureString) {
+      console.log('Figure string original:', userData.figureString);
+      
       // Parsear a figure string do usuário e aplicar ao editor
       const figureParts = userData.figureString.split('.');
       const newFigure = { ...currentFigure };
       
       figureParts.forEach(part => {
-        if (part.startsWith('hr-')) newFigure.hr = part;
-        else if (part.startsWith('hd-')) newFigure.hd = part;
-        else if (part.startsWith('ch-')) newFigure.ch = part;
-        else if (part.startsWith('lg-')) newFigure.lg = part;
-        else if (part.startsWith('sh-')) newFigure.sh = part;
-        else if (part.startsWith('ha-')) newFigure.ha = part;
-        else if (part.startsWith('he-')) newFigure.he = part;
-        else if (part.startsWith('ea-')) newFigure.ea = part;
-        else if (part.startsWith('fa-')) newFigure.fa = part;
-        else if (part.startsWith('cp-')) newFigure.cp = part;
-        else if (part.startsWith('cc-')) newFigure.cc = part;
-        else if (part.startsWith('ca-')) newFigure.ca = part;
-        else if (part.startsWith('wa-')) newFigure.wa = part;
+        if (part.trim()) {
+          // Remover duplicações (ex: hr-hr-100 -> hr-100)
+          const cleanPart = part.replace(/^([a-z]+)-\1-/, '$1-');
+          
+          if (cleanPart.startsWith('hr-')) newFigure.hr = cleanPart;
+          else if (cleanPart.startsWith('hd-')) newFigure.hd = cleanPart;
+          else if (cleanPart.startsWith('ch-')) newFigure.ch = cleanPart;
+          else if (cleanPart.startsWith('lg-')) newFigure.lg = cleanPart;
+          else if (cleanPart.startsWith('sh-')) newFigure.sh = cleanPart;
+          else if (cleanPart.startsWith('ha-')) newFigure.ha = cleanPart;
+          else if (cleanPart.startsWith('he-')) newFigure.he = cleanPart;
+          else if (cleanPart.startsWith('ea-')) newFigure.ea = cleanPart;
+          else if (cleanPart.startsWith('fa-')) newFigure.fa = cleanPart;
+          else if (cleanPart.startsWith('cp-')) newFigure.cp = cleanPart;
+          else if (cleanPart.startsWith('cc-')) newFigure.cc = cleanPart;
+          else if (cleanPart.startsWith('ca-')) newFigure.ca = cleanPart;
+          else if (cleanPart.startsWith('wa-')) newFigure.wa = cleanPart;
+        }
       });
       
+      console.log('Nova figure aplicada:', newFigure);
       setCurrentFigure(newFigure);
     }
   };
@@ -304,7 +312,9 @@ const AvatarEditorOfficial = () => {
       const isOverlay = !['hr','hd','ch','lg','sh'].includes(key);
       if (isOverlay && value.startsWith('100-')) continue;
 
-      const segment = `${key}-${value}`;
+      // Limpar duplicações na value (ex: hr-hr-100 -> hr-100)
+      const cleanValue = value.replace(/^([a-z]+)-\1-/, '$1-');
+      const segment = `${key}-${cleanValue}`;
       const idx = figureParts.findIndex(p => p.startsWith(`${key}-`));
 
       if (idx !== -1) figureParts[idx] = segment;
