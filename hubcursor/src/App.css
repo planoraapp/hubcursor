@@ -1,0 +1,78 @@
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Volter Font Styling - Updated */
+.volter-font {
+  font-family: 'Orbitron', 'Press Start 2P', 'Courier New', monospace;
+}
+
+/* Ensure all widget text has proper Habbo styling */
+.widget-container .volter-font,
+.widget-container h1,
+.widget-container h2,
+.widget-container h3,
+.widget-container h4,
+.widget-container p,
+.widget-container span {
+  color: white;
+  text-shadow: 
+    1px 1px 0px black,
+    -1px -1px 0px black,
+    1px -1px 0px black,
+    -1px 1px 0px black;
+}
+
+/* Sidebar text weight enhancement */
+.sidebar-text {
+  font-weight: 600;
+  color: white;
+  text-shadow: 
+    1px 1px 0px black,
+    -1px -1px 0px black,
+    1px -1px 0px black,
+    -1px 1px 0px black;
+}
+
+/* Menu items styling */
+.menu-item {
+  color: white;
+  text-shadow: 
+    1px 1px 0px black,
+    -1px -1px 0px black,
+    1px -1px 0px black,
+    -1px 1px 0px black;
+}

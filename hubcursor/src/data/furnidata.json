@@ -1,0 +1,151 @@
+
+{
+  "roomitemtypes": {
+    "furnitype": [
+      {
+        "id": "1",
+        "classname": "throne",
+        "name": "Trono Real",
+        "description": "O trono mais cobiçado do Habbo",
+        "category": "chair",
+        "furniline": "rare",
+        "environment": "room",
+        "cansiton": "1",
+        "canstandon": "0",
+        "canlayon": "0"
+      },
+      {
+        "id": "2",
+        "classname": "frank",
+        "name": "Frank Frisante",
+        "description": "A bebida mais refrescante do Habbo",
+        "category": "drinks",
+        "furniline": "rare",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "0",
+        "canlayon": "0"
+      },
+      {
+        "id": "3",
+        "classname": "dragon_lamp",
+        "name": "Lâmpada Dragão",
+        "description": "Uma lâmpada mística com poder de dragão",
+        "category": "lamp",
+        "furniline": "rare",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "4",
+        "classname": "rare_elephant_statue",
+        "name": "Estátua Elefante Rara",
+        "description": "Uma majestosa estátua de elefante",
+        "category": "statue",
+        "furniline": "rare",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "5",
+        "classname": "hc_lmp",
+        "name": "Lâmpada HC",
+        "description": "Lâmpada exclusiva do Habbo Club",
+        "category": "lamp",
+        "furniline": "hc",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "6",
+        "classname": "hc_tbl",
+        "name": "Mesa HC",
+        "description": "Mesa elegante do Habbo Club",
+        "category": "table",
+        "furniline": "hc",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "7",
+        "classname": "carpet_standard",
+        "name": "Tapete Padrão",
+        "description": "Um tapete básico para decorar o quarto",
+        "category": "floor",
+        "furniline": "basic",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "8",
+        "classname": "plant_big_cactus",
+        "name": "Cacto Grande",
+        "description": "Um cacto imponente para decoração",
+        "category": "plant",
+        "furniline": "basic",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "9",
+        "classname": "bed_armas_two",
+        "name": "Cama Armas",
+        "description": "Uma cama confortável com design especial",
+        "category": "bed",
+        "furniline": "basic",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "0",
+        "canlayon": "1"
+      },
+      {
+        "id": "10",
+        "classname": "chair_norja",
+        "name": "Cadeira Norja",
+        "description": "Cadeira simples e funcional",
+        "category": "chair",
+        "furniline": "basic",
+        "environment": "room",
+        "cansiton": "1",
+        "canstandon": "0",
+        "canlayon": "0"
+      },
+      {
+        "id": "11",
+        "classname": "table_norja_med",
+        "name": "Mesa Norja",
+        "description": "Mesa média do conjunto Norja",
+        "category": "table",
+        "furniline": "basic",
+        "environment": "room",
+        "cansiton": "0",
+        "canstandon": "1",
+        "canlayon": "0"
+      },
+      {
+        "id": "12",
+        "classname": "hc_chair",
+        "name": "Cadeira HC",
+        "description": "Cadeira exclusiva do Habbo Club",
+        "category": "chair",
+        "furniline": "hc",
+        "environment": "room",
+        "cansiton": "1",
+        "canstandon": "0",
+        "canlayon": "0"
+      }
+    ]
+  }
+}

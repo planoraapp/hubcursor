@@ -1,0 +1,20 @@
+project_id = "wueccgeizznjmjgmuscy"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[functions.verify-and-register-via-motto]
+verify_jwt = false
+
+[functions.setup-beebop-admin] 
+verify_jwt = false
+
+[functions.habbo-friends-activities-direct]
+verify_jwt = true
+
+[functions.habbo-daily-activities-tracker]
+verify_jwt = false

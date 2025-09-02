@@ -1,0 +1,53 @@
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HabboHub - Sua central de ferramentas para Habbo</title>
+    <style>
+      /* Remove bordas brancas dos elementos de notificação */
+      .toast, .notification, .alert, .sonner-toast {
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      }
+      
+      /* Remove bordas de elementos do editor */
+      .habbo-panel, .editor-panel, .visual-editor {
+        border: none !important;
+      }
+      
+      /* Garantir que não haja bordas brancas indesejadas */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+      
+      /* SVG Filter for Habbo Volter Crisp Rendering */
+      .habbo-volter-crisp {
+        filter: url(#crispify);
+      }
+    </style>
+    
+    <!-- SVG Filter for Habbo Volter Font -->
+    <svg width="0" height="0" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="crispify">
+          <feComponentTransfer>
+            <feFuncA type="discrete" tableValues="0 1"/>
+          </feComponentTransfer>
+        </filter>
+      </defs>
+    </svg>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

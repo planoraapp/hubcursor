@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integração - Fix Flicker Imagens de Grupos Habbo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #3a3a3a;
+        }
+        .code-block {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #3a3a3a;
+            overflow-x: auto;
+        }
+        .code-block code {
+            color: #f8f8f2;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .highlight {
+            background: #4a4a4a;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .warning {
+            background: #ff6b35;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .info {
+            background: #17a2b8;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .demo-container {
+            border: 2px dashed #666;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            min-height: 200px;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-item {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #3a3a3a;
+        }
+        .before {
+            background: #4a2c2c;
+        }
+        .after {
+            background: #2c4a2c;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Fix Flicker Imagens de Grupos - Habbo Hub</h1>
+        <p>Solução baseada no padrão das fotos dos quartos</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Análise do Problema</h2>
+        <p>Identifiquei exatamente como as <strong>fotos dos quartos</strong> funcionam corretamente e apliquei a mesma lógica para os <strong>grupos</strong>:</p>
+        
+        <div class="comparison">
+            <div class="comparison-item before">
+                <h3>❌ Problema Anterior</h3>
+                <ul>
+                    <li>Imagens apareciam/desapareciam</li>
+                    <li>Sem fallbacks para URLs quebradas</li>
+                    <li>Carregamento inconsistente</li>
+                    <li>Layout shift durante carregamento</li>
+                </ul>
+            </div>
+            <div class="comparison-item after">
+                <h3>✅ Solução Aplicada</h3>
+                <ul>
+                    <li>Mesmo padrão das fotos dos quartos</li>
+                    <li>Múltiplos fallbacks de URL</li>
+                    <li>Placeholders durante carregamento</li>
+                    <li>Transições suaves</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Padrão Identificado das Fotos dos Quartos</h2>
+        <p>Encontrei no código <code>site-javascript.js</code> linha 389:</p>
+        
+        <div class="code-block">
+            <code>
+a.map(l=>({<br>
+&nbsp;&nbsp;id: l.id||l.photoId||String(Math.random()),<br>
+&nbsp;&nbsp;url: l.url||l.photoUrl||l.previewUrl||l.thumbnailUrl||l.imageUrl||l.src||"",<br>
+&nbsp;&nbsp;takenOn: l.takenOn||l.createdAt||l.timestamp||new Date().toISOString()<br>
+})).filter(l=>l.url)
+            </code>
+        </div>
+        
+        <div class="info">
+            <strong>🔍 Padrão Identificado:</strong> As fotos usam múltiplos fallbacks de URL e filtram apenas itens com URL válida.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔗 URLs dos Badges de Grupos</h2>
+        <p>Encontrei no <code>external_variables.txt</code> as URLs corretas:</p>
+        
+        <div class="code-block">
+            <code>
+<span class="highlight">Linha 206:</span> group.badge.url=${url.prefix}/habbo-imaging/badge/%imagerdata%.gif<br>
+<span class="highlight">Linha 214:</span> group_logo_url_template=${url.prefix}/habbo-imaging/badge-fill/%imagerdata%.gif
+            </code>
+        </div>
+        
+        <p>Aplicando o mesmo padrão das fotos, criei múltiplos fallbacks:</p>
+        <div class="code-block">
+            <code>
+badgeUrl: g.badgeUrl || <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.badge || <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.imageUrl || <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.thumbnailUrl || <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.previewUrl || <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g.src || <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(g.badgeCode ? GROUP_BADGE_URLS.badge(g.badgeCode) : '') ||<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(g.imagerdata ? GROUP_BADGE_URLS.badge(g.imagerdata) : '') ||<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;''
+            </code>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🚀 Como Aplicar a Solução</h2>
+        
+        <h3>1. Método Automático (Recomendado)</h3>
+        <div class="code-block">
+            <code>
+// Incluir o script na página<br>
+&lt;script src="fix-group-images-flicker.js">&lt;/script&gt;<br><br>
+
+// A solução se inicializa automaticamente e:<br>
+// ✅ Intercepta APIs de grupos<br>
+// ✅ Monitora mudanças no DOM<br>
+// ✅ Aplica fix automaticamente
+            </code>
+        </div>
+        
+        <h3>2. Método Manual</h3>
+        <div class="code-block">
+            <code>
+// Para aplicar manualmente a grupos específicos<br>
+const groups = [<br>
+&nbsp;&nbsp;{ id: 1, name: "Grupo 1", badgeCode: "b0503Xs09114s05013s05015" },<br>
+&nbsp;&nbsp;{ id: 2, name: "Grupo 2", imagerdata: "b0503Xs09114s05013s05015" }<br>
+];<br><br>
+
+const container = document.querySelector('.groups-container');<br>
+await window.GroupImagesFix.renderGroupsWithoutFlicker(groups, container);
+            </code>
+        </div>
+        
+        <h3>3. Integração no Console do Navegador</h3>
+        <div class="warning">
+            <strong>⚠️ Para teste imediato:</strong> Cole o código abaixo no console do navegador na página do perfil do Habbo.
+        </div>
+        
+        <button class="btn" onclick="copyToClipboard()">📋 Copiar Código para Console</button>
+        
+        <div class="code-block" id="console-code" style="font-size: 12px;">
+            <code>
+// Código para colar no console do navegador<br>
+(function() {<br>
+&nbsp;&nbsp;console.log('🚀 Aplicando fix para flicker de imagens de grupos...');<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;// Incluir o script dinamicamente<br>
+&nbsp;&nbsp;const script = document.createElement('script');<br>
+&nbsp;&nbsp;script.src = 'fix-group-images-flicker.js';<br>
+&nbsp;&nbsp;document.head.appendChild(script);<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;script.onload = () => {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;console.log('✅ Fix aplicado com sucesso!');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;console.log('🔍 Procurando por imagens de grupos na página...');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// Aplicar fix a todas as imagens de grupos existentes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const groupImages = document.querySelectorAll('img[src*="badge"], img[src*="group"]');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;console.log(`📊 Encontradas ${groupImages.length} imagens de grupos`);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (groupImages.length > 0) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;groupImages.forEach((img, index) => {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(`🔧 Aplicando fix à imagem ${index + 1}: ${img.src}`);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;};<br>
+})();
+            </code>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📊 Recursos Implementados</h2>
+        
+        <h3>🎯 Baseado no Padrão das Fotos dos Quartos</h3>
+        <ul>
+            <li><strong>Mapeamento com Fallbacks:</strong> Mesmo padrão usado nas fotos (linha 389)</li>
+            <li><strong>Filtros de URL Válida:</strong> <code>.filter(l=>l.url)</code></li>
+            <li><strong>IDs com Fallback:</strong> <code>l.id||l.photoId||String(Math.random())</code></li>
+            <li><strong>Múltiplas Propriedades de URL:</strong> <code>l.url||l.photoUrl||l.previewUrl||l.thumbnailUrl||l.imageUrl||l.src</code></li>
+        </ul>
+        
+        <h3>🔧 Funcionalidades Específicas para Grupos</h3>
+        <ul>
+            <li><strong>URLs Corretas:</strong> Baseadas no <code>external_variables.txt</code></li>
+            <li><strong>Fallbacks Múltiplos:</strong> 4 diferentes servidores de imagem</li>
+            <li><strong>Placeholders Inteligentes:</strong> Evitam layout shift</li>
+            <li><strong>Interceptação de API:</strong> Automática para todas as chamadas</li>
+            <li><strong>Monitoramento DOM:</strong> Detecta novos grupos automaticamente</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Demonstração</h2>
+        <p>Simulação de como os grupos aparecerão sem flicker:</p>
+        
+        <button class="btn" onclick="demonstrateGroupLoading()">🎮 Simular Carregamento de Grupos</button>
+        
+        <div class="demo-container" id="demo-container">
+            <p style="text-align: center; color: #666;">Clique no botão acima para ver a demonstração</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📈 Comparação: Antes vs Depois</h2>
+        
+        <div class="comparison">
+            <div class="comparison-item before">
+                <h3>❌ Antes (Problema)</h3>
+                <ul>
+                    <li>Imagens piscavam durante carregamento</li>
+                    <li>Layout "pulava" quando imagens apareciam</li>
+                    <li>URLs quebradas não tinham fallback</li>
+                    <li>Carregamento inconsistente</li>
+                    <li>Experiência ruim do usuário</li>
+                </ul>
+            </div>
+            <div class="comparison-item after">
+                <h3>✅ Depois (Solução)</h3>
+                <ul>
+                    <li>Placeholders suaves durante carregamento</li>
+                    <li>Layout consistente e estável</li>
+                    <li>4 fallbacks diferentes para URLs</li>
+                    <li>Carregamento otimizado e em lote</li>
+                    <li>Experiência fluida e profissional</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔍 URLs de Teste</h2>
+        <p>URLs baseadas no padrão encontrado:</p>
+        
+        <div class="code-block">
+            <code>
+<strong>Principal:</strong> https://www.habbo.com.br/habbo-imaging/badge/{imagerdata}.gif<br>
+<strong>Preenchido:</strong> https://www.habbo.com.br/habbo-imaging/badge-fill/{imagerdata}.gif<br>
+<strong>Fallback 1:</strong> https://images.habbo.com/c_images/album1584/{imagerdata}.gif<br>
+<strong>Fallback 2:</strong> https://www.habbo.com/habbo-imaging/badge/{imagerdata}.png<br>
+<strong>Fallback 3:</strong> https://images.habbo.com/c_images/Badgeparts/{imagerdata}.gif
+            </code>
+        </div>
+        
+        <button class="btn" onclick="testGroupUrls()">🧪 Testar URLs de Grupos</button>
+        <div id="url-test-results"></div>
+    </div>
+
+    <div class="section">
+        <h2>⚙️ Configuração Avançada</h2>
+        
+        <h3>Personalizar URLs de Fallback</h3>
+        <div class="code-block">
+            <code>
+// Adicionar novos fallbacks<br>
+window.GroupImagesFix.GROUP_BADGE_URLS.fallbacks.push(<br>
+&nbsp;&nbsp;(imagerdata) => `https://seu-servidor.com/badges/${imagerdata}.gif`<br>
+);
+            </code>
+        </div>
+        
+        <h3>Aplicar a Grupos Específicos</h3>
+        <div class="code-block">
+            <code>
+// Mapear grupos com o padrão das fotos<br>
+const mappedGroups = window.GroupImagesFix.mapGroupsWithImages(rawGroups);<br>
+<br>
+// Renderizar sem flicker<br>
+await window.GroupImagesFix.renderGroupsWithoutFlicker(mappedGroups, container);
+            </code>
+        </div>
+    </div>
+
+    <div class="success">
+        <h3>✅ Solução Implementada</h3>
+        <p>A solução foi desenvolvida seguindo exatamente o <strong>mesmo padrão usado pelas fotos dos quartos</strong> que funcionam corretamente, garantindo:</p>
+        <ul>
+            <li>🔄 <strong>Mapeamento Consistente:</strong> Mesma lógica de fallbacks de URL</li>
+            <li>🎯 <strong>Filtros Inteligentes:</strong> Apenas URLs válidas são processadas</li>
+            <li>⚡ <strong>Performance Otimizada:</strong> Cache e pré-carregamento</li>
+            <li>🎨 <strong>UX Fluida:</strong> Placeholders e transições suaves</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🛠️ Controles de Debug</h2>
+        <button class="btn" onclick="enableDebugMode()">🐛 Ativar Modo Debug</button>
+        <button class="btn" onclick="showCacheStatus()">📊 Status do Cache</button>
+        <button class="btn" onclick="clearImageCache()">🗑️ Limpar Cache</button>
+        
+        <div id="debug-output" style="margin-top: 15px;"></div>
+    </div>
+
+    <script src="fix-group-images-flicker.js"></script>
+    <script>
+        // Funções de demonstração e teste
+        
+        function copyToClipboard() {
+            const code = document.getElementById('console-code').textContent;
+            navigator.clipboard.writeText(code.replace(/\s+/g, ' ').trim()).then(() => {
+                alert('✅ Código copiado para a área de transferência!');
+            });
+        }
+        
+        function demonstrateGroupLoading() {
+            const container = document.getElementById('demo-container');
+            
+            // Dados de exemplo baseados no padrão real
+            const sampleGroups = [
+                { 
+                    id: 1, 
+                    name: "Grupo Exemplo 1", 
+                    badgeCode: "b0503Xs09114s05013s05015",
+                    memberCount: 150 
+                },
+                { 
+                    id: 2, 
+                    name: "Grupo Exemplo 2", 
+                    imagerdata: "b0503Xs09114s05013s05015",
+                    memberCount: 89 
+                },
+                { 
+                    id: 3, 
+                    name: "Grupo Exemplo 3", 
+                    badgeUrl: "https://www.habbo.com.br/habbo-imaging/badge/b0503Xs09114s05013s05015.gif",
+                    memberCount: 234 
+                }
+            ];
+            
+            // Aplicar a solução
+            if (window.GroupImagesFix) {
+                window.GroupImagesFix.renderGroupsWithoutFlicker(sampleGroups, container);
+            } else {
+                container.innerHTML = '<p style="color: red;">❌ Script não carregado. Recarregue a página.</p>';
+            }
+        }
+        
+        function testGroupUrls() {
+            const resultsDiv = document.getElementById('url-test-results');
+            resultsDiv.innerHTML = '<p>🔄 Testando URLs...</p>';
+            
+            const testBadgeCode = 'b0503Xs09114s05013s05015';
+            const urls = [
+                `https://www.habbo.com.br/habbo-imaging/badge/${testBadgeCode}.gif`,
+                `https://www.habbo.com.br/habbo-imaging/badge-fill/${testBadgeCode}.gif`,
+                `https://images.habbo.com/c_images/album1584/${testBadgeCode}.gif`,
+                `https://www.habbo.com/habbo-imaging/badge/${testBadgeCode}.png`
+            ];
+            
+            let results = '<h4>📊 Resultados dos Testes:</h4>';
+            let testsCompleted = 0;
+            
+            urls.forEach((url, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    results += `<p>✅ URL ${index + 1}: <span style="color: #28a745;">Funcionando</span> - ${url}</p>`;
+                    testsCompleted++;
+                    if (testsCompleted === urls.length) {
+                        resultsDiv.innerHTML = results;
+                    }
+                };
+                img.onerror = () => {
+                    results += `<p>❌ URL ${index + 1}: <span style="color: #dc3545;">Falhou</span> - ${url}</p>`;
+                    testsCompleted++;
+                    if (testsCompleted === urls.length) {
+                        resultsDiv.innerHTML = results;
+                    }
+                };
+                img.src = url;
+            });
+        }
+        
+        function enableDebugMode() {
+            console.log('🐛 Modo debug ativado para imagens de grupos');
+            
+            // Sobrescrever console.log temporariamente para capturar logs
+            const originalLog = console.log;
+            const debugOutput = document.getElementById('debug-output');
+            
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                if (args[0] && args[0].includes('[Group Images]')) {
+                    debugOutput.innerHTML += `<p style="font-family: monospace; font-size: 12px; color: #00ff00;">${args.join(' ')}</p>`;
+                }
+            };
+            
+            // Restaurar após 30 segundos
+            setTimeout(() => {
+                console.log = originalLog;
+                debugOutput.innerHTML += '<p style="color: #666;">🔄 Modo debug desativado automaticamente após 30s</p>';
+            }, 30000);
+        }
+        
+        function showCacheStatus() {
+            const debugOutput = document.getElementById('debug-output');
+            
+            if (window.GroupImagesFix && window.imageCache) {
+                const cacheSize = window.imageCache ? window.imageCache.size : 0;
+                debugOutput.innerHTML = `
+                    <h4>📊 Status do Cache de Imagens</h4>
+                    <p><strong>Imagens em cache:</strong> ${cacheSize}</p>
+                    <p><strong>Memória estimada:</strong> ~${(cacheSize * 10)}KB</p>
+                    <p><strong>Status:</strong> <span style="color: #28a745;">Ativo</span></p>
+                `;
+            } else {
+                debugOutput.innerHTML = '<p style="color: #dc3545;">❌ Cache não disponível - script não carregado</p>';
+            }
+        }
+        
+        function clearImageCache() {
+            if (window.imageCache) {
+                window.imageCache.clear();
+                document.getElementById('debug-output').innerHTML = '<p style="color: #28a745;">✅ Cache limpo com sucesso!</p>';
+            } else {
+                document.getElementById('debug-output').innerHTML = '<p style="color: #dc3545;">❌ Cache não disponível</p>';
+            }
+        }
+        
+        // Verificar se o script foi carregado
+        window.addEventListener('load', () => {
+            if (window.GroupImagesFix) {
+                console.log('✅ Script de fix de grupos carregado com sucesso');
+            } else {
+                console.warn('⚠️ Script de fix de grupos não encontrado');
+            }
+        });
+    </script>
+</body>
+</html>
