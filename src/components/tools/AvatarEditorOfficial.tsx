@@ -217,7 +217,7 @@ const AvatarEditorOfficial = () => {
   };
 
   // Hook da API do Habbo
-  const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser);
+  const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser, selectedCountry);
 
   // Mapeamento de países para URLs da API
   const countryAPIs = {
@@ -236,6 +236,8 @@ const AvatarEditorOfficial = () => {
   const handleSearchUser = async () => {
     if (!searchUsername.trim()) return;
     
+    console.log('Buscando usuário:', searchUsername.trim());
+    console.log('País selecionado:', selectedCountry);
     setSearchedUser(searchUsername.trim());
   };
 

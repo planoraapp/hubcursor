@@ -94,7 +94,7 @@ interface HabboProfile {
   rooms: HabboRoom[];
 }
 
-export const useHabboPublicAPI = (username: string = 'Beebop') => {
+export const useHabboPublicAPI = (username: string = 'Beebop', country: string = 'br') => {
   const [userData, setUserData] = useState<HabboUser | null>(null);
   const [profileData, setProfileData] = useState<HabboProfile | null>(null);
   const [badges, setBadges] = useState<HabboBadge[]>([]);
@@ -105,23 +105,44 @@ export const useHabboPublicAPI = (username: string = 'Beebop') => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // API base do Habbo Brasil
-  const API_BASE = 'https://www.habbo.com.br';
+  // Mapeamento de países para URLs da API
+  const countryAPIs = {
+    br: 'https://www.habbo.com.br',
+    us: 'https://www.habbo.com',
+    de: 'https://www.habbo.de',
+    es: 'https://www.habbo.es',
+    fi: 'https://www.habbo.fi',
+    fr: 'https://www.habbo.fr',
+    it: 'https://www.habbo.it',
+    nl: 'https://www.habbo.nl',
+    tr: 'https://www.habbo.com.tr'
+  };
+
+  // API base baseada no país selecionado
+  const API_BASE = countryAPIs[country as keyof typeof countryAPIs] || countryAPIs.br;
 
   // Função para buscar dados básicos do usuário
   const fetchUserData = async (username: string) => {
     try {
-      const response = await fetch(`${API_BASE}/api/public/users?name=${encodeURIComponent(username)}`);
+      const url = `${API_BASE}/api/public/users?name=${encodeURIComponent(username)}`;
+      console.log('Buscando usuário na URL:', url);
+      
+      const response = await fetch(url);
+      console.log('Resposta da API:', response.status, response.statusText);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Dados do usuário recebidos:', data);
         setUserData(data);
         return data;
       } else {
-        throw new Error('Usuário não encontrado');
+        const errorText = await response.text();
+        console.error('Erro na API:', response.status, errorText);
+        throw new Error(`Usuário não encontrado: ${response.status}`);
       }
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
-      setError('Erro ao buscar dados do usuário');
+      setError(`Erro ao buscar dados do usuário: ${error.message}`);
       return null;
     }
   };
@@ -292,12 +313,12 @@ export const useHabboPublicAPI = (username: string = 'Beebop') => {
     }
   };
 
-  // Carregar dados quando o hook for inicializado
+  // Carregar dados quando o hook for inicializado ou país mudar
   useEffect(() => {
     if (username) {
       fetchAllData(username);
     }
-  }, [username]);
+  }, [username, country]);
 
   return {
     userData,
