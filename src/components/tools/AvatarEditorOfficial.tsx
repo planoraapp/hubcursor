@@ -21,7 +21,7 @@ import {
   Watch,
   Circle,
   Zap,
-  Star
+  Star,n  // NOVOS ÍCONES:n  Maximize2,n  Minimize2,n  Eye,n  Activity,n  Coffee,n  Hand,n  ChevronDown,n  ChevronUp,n  Monitor,n  Smartphone,n  Tablet,n  Headphones,n  Frown,n  Meh,n  Angry,n  Surprise,n  Moon,n  MessageCircle,n  Carrot,n  Wine,n  Droplets,n  IceCream,n  Heart,n  Radio,n  Cherry,n  Apple
 } from 'lucide-react';
 import { useTemplariosData } from '@/hooks/useTemplariosData';
 
@@ -166,7 +166,7 @@ const AvatarEditorOfficial = () => {
   const [showColorableOnly, setShowColorableOnly] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState<string>('7');
-  const [secondaryColor, setSecondaryColor] = useState<string>('7');
+  const [secondaryColor, setSecondaryColor] = useState<string>('7');nn  // Estado para seções expandidasn  const [expandedSections, setExpandedSections] = useState({n    size: false,n    expressions: false,n    actions: false,n    drinks: falsen  });nn  const toggleSection = (section: keyof typeof expandedSections) => {n    setExpandedSections(prev => ({n      ...prev,n      [section]: !prev[section]n    }));n  };
 
   // Gerar URL do avatar - Formato exato do HabboTemplarios
   const generateAvatarUrl = (colorHex?: string) => {
@@ -450,19 +450,19 @@ const AvatarEditorOfficial = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-center">
+              {/* Preview do Avatar - Tamanho Grande */}n              <div className="flex justify-center bg-gray-50 rounded-lg p-4">
                 <img
                   key={`avatar-${JSON.stringify(currentFigure)}`}
                   src={generateAvatarUrl()}
                   alt="Avatar Preview"
-                  className="w-32 h-32 object-contain"
+                  className={`object-contain transition-all duration-300 ${n                    currentFigure.size === 'headonly' ? 'w-24 h-24' :n                    currentFigure.size === 's' ? 'w-32 h-32' :n                    currentFigure.size === 'm' ? 'w-40 h-40' :n                    'w-48 h-48'n                  }`}
                   onLoad={() => console.log('Avatar image loaded')}
                   onError={(e) => console.error('Avatar image error:', e)}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label>Tamanho</Label>
+                {/* Controles de Tamanho */}
                 <select 
                   className="w-full p-2 border rounded"
                   value={currentFigure.size}
