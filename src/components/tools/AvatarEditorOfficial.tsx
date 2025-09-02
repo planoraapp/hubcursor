@@ -511,16 +511,66 @@ const AvatarEditorOfficial = () => {
               
               <div className="space-y-2">
                 {/* Controles de Tamanho */}
-                <select 
-                  className="w-full p-2 border rounded"
-                  value={currentFigure.size}
-                  onChange={(e) => setCurrentFigure(prev => ({ ...prev, size: e.target.value }))}
-                >
-                  <option value="headonly">Cabeza</option>
-                  <option value="s">Mini</option>
-                  <option value="m">Normal</option>
-                  <option value="l">Grande</option>
-                </select>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => toggleSection('size')}
+                    className="w-full flex items-center justify-between p-3 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Monitor className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-blue-800">Tamanho do Avatar</span>
+                    </div>
+                    {expandedSections.size ? (
+                      <ChevronUp className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-blue-600" />
+                    )}
+                  </button>
+                  
+                  {expandedSections.size && (
+                    <div className="grid grid-cols-4 gap-2 p-3 bg-gray-50 rounded-lg">
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 'headonly' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 'headonly' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-2xl">👤</span>
+                        <span className="text-xs mt-1 font-medium">Cabeza</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 's' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 's' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-lg">🧑</span>
+                        <span className="text-xs mt-1 font-medium">Mini</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 'm' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 'm' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-xl">🧑‍💼</span>
+                        <span className="text-xs mt-1 font-medium">Normal</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 'l' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 'l' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-2xl">🧑‍💻</span>
+                        <span className="text-xs mt-1 font-medium">Grande</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
