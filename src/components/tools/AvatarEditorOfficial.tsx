@@ -51,6 +51,7 @@ import {
   Apple
 } from 'lucide-react';
 import { useTemplariosData } from '@/hooks/useTemplariosData';
+import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 
 // Interfaces para o editor HabboTemplarios
 interface AvatarFigure {
@@ -194,6 +195,11 @@ const AvatarEditorOfficial = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState<string>('7');
   const [secondaryColor, setSecondaryColor] = useState<string>('7');
+  
+  // Estados para busca de usuários
+  const [searchUsername, setSearchUsername] = useState<string>('');
+  const [selectedCountry, setSelectedCountry] = useState<string>('br');
+  const [searchedUser, setSearchedUser] = useState<string>('');
 
   // Estado para seções expandidas
   const [expandedSections, setExpandedSections] = useState({
@@ -208,6 +214,56 @@ const AvatarEditorOfficial = () => {
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  // Hook da API do Habbo
+  const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser);
+
+  // Mapeamento de países para URLs da API
+  const countryAPIs = {
+    br: 'https://www.habbo.com.br',
+    us: 'https://www.habbo.com',
+    de: 'https://www.habbo.de',
+    es: 'https://www.habbo.es',
+    fi: 'https://www.habbo.fi',
+    fr: 'https://www.habbo.fr',
+    it: 'https://www.habbo.it',
+    nl: 'https://www.habbo.nl',
+    tr: 'https://www.habbo.com.tr'
+  };
+
+  // Função para buscar usuário
+  const handleSearchUser = async () => {
+    if (!searchUsername.trim()) return;
+    
+    setSearchedUser(searchUsername.trim());
+  };
+
+  // Função para aplicar avatar do usuário buscado
+  const applyUserAvatar = () => {
+    if (userData?.figureString) {
+      // Parsear a figure string do usuário e aplicar ao editor
+      const figureParts = userData.figureString.split('.');
+      const newFigure = { ...currentFigure };
+      
+      figureParts.forEach(part => {
+        if (part.startsWith('hr-')) newFigure.hr = part;
+        else if (part.startsWith('hd-')) newFigure.hd = part;
+        else if (part.startsWith('ch-')) newFigure.ch = part;
+        else if (part.startsWith('lg-')) newFigure.lg = part;
+        else if (part.startsWith('sh-')) newFigure.sh = part;
+        else if (part.startsWith('ha-')) newFigure.ha = part;
+        else if (part.startsWith('he-')) newFigure.he = part;
+        else if (part.startsWith('ea-')) newFigure.ea = part;
+        else if (part.startsWith('fa-')) newFigure.fa = part;
+        else if (part.startsWith('cp-')) newFigure.cp = part;
+        else if (part.startsWith('cc-')) newFigure.cc = part;
+        else if (part.startsWith('ca-')) newFigure.ca = part;
+        else if (part.startsWith('wa-')) newFigure.wa = part;
+      });
+      
+      setCurrentFigure(newFigure);
+    }
   };
 
   // Funções de rotação
@@ -509,6 +565,84 @@ const AvatarEditorOfficial = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Busca de Usuários */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Buscar Usuário</Label>
+                
+                {/* Campo de busca */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="Digite o nome do usuário..."
+                    value={searchUsername}
+                    onChange={(e) => setSearchUsername(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearchUser()}
+                    className="pl-10 pr-4"
+                  />
+                </div>
+                
+                {/* Bandeiras de países */}
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(countryAPIs).map(([country, url]) => (
+                    <button
+                      key={country}
+                      onClick={() => setSelectedCountry(country)}
+                      className={`p-1 rounded transition-colors ${
+                        selectedCountry === country 
+                          ? 'bg-blue-100 border-2 border-blue-400' 
+                          : 'bg-gray-100 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                      title={`Habbo ${country.toUpperCase()}`}
+                    >
+                      <img 
+                        src={`/flags/${country}.png`} 
+                        alt={country.toUpperCase()} 
+                        className="w-6 h-4 object-cover rounded"
+                      />
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Botão de busca */}
+                <Button 
+                  onClick={handleSearchUser}
+                  disabled={!searchUsername.trim() || isLoadingUser}
+                  className="w-full"
+                  size="sm"
+                >
+                  {isLoadingUser ? 'Buscando...' : 'Buscar Usuário'}
+                </Button>
+                
+                {/* Resultado da busca */}
+                {userData && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-800">{userData.name}</p>
+                        <p className="text-sm text-green-600">{userData.motto}</p>
+                      </div>
+                      <Button 
+                        onClick={applyUserAvatar}
+                        size="sm"
+                        variant="outline"
+                        className="text-green-700 border-green-300 hover:bg-green-100"
+                      >
+                        Aplicar Avatar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Erro na busca */}
+                {userError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-800 text-sm">{userError}</p>
+                  </div>
+                )}
+              </div>
+              
+              <Separator />
               {/* Preview do Avatar - Tamanho Grande */}
               <div className="flex justify-center bg-gray-50 rounded-lg p-4">
                 <img
