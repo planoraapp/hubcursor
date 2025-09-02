@@ -530,7 +530,7 @@ const AvatarEditorOfficial = () => {
                 {/* Controles de Rotação */}
                 <div className="flex items-center justify-center gap-2">
                   <button
-                    onClick={rotateLeft}
+                    onClick={rotateRight}
                     className="p-1 hover:opacity-80 transition-opacity"
                     title="Rotacionar para esquerda"
                   >
@@ -542,7 +542,7 @@ const AvatarEditorOfficial = () => {
                   </button>
                   
                   <button
-                    onClick={rotateRight}
+                    onClick={rotateLeft}
                     className="p-1 hover:opacity-80 transition-opacity"
                     title="Rotacionar para direita"
                   >
