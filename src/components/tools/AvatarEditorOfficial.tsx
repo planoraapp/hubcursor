@@ -210,6 +210,23 @@ const AvatarEditorOfficial = () => {
     }));
   };
 
+  // Funções de rotação
+  const rotateLeft = () => {
+    setCurrentFigure(prev => ({
+      ...prev,
+      direction: prev.direction === 0 ? 7 : prev.direction - 1,
+      headDirection: prev.headDirection === 0 ? 7 : prev.headDirection - 1
+    }));
+  };
+
+  const rotateRight = () => {
+    setCurrentFigure(prev => ({
+      ...prev,
+      direction: prev.direction === 7 ? 0 : prev.direction + 1,
+      headDirection: prev.headDirection === 7 ? 0 : prev.headDirection + 1
+    }));
+  };
+
   // Gerar URL do avatar - Formato exato do HabboTemplarios
   const generateAvatarUrl = (colorHex?: string) => {
     // Corpo base por gênero
@@ -574,46 +591,40 @@ const AvatarEditorOfficial = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Direção da Cabeça</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCurrentFigure(prev => ({ ...prev, headDirection: prev.headDirection === 2 ? 4 : 2 }))}
+                <Label>Rotação do Avatar</Label>
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={rotateLeft}
+                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    title="Rotacionar para esquerda"
                   >
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm">{currentFigure.headDirection}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCurrentFigure(prev => ({ ...prev, headDirection: prev.headDirection === 2 ? 4 : 2 }))}
+                    <img 
+                      src="/assets/rotation_arrow.png" 
+                      alt="Rotacionar esquerda" 
+                      className="w-6 h-6 rotate-180"
+                    />
+                  </button>
+                  
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-blue-600">{currentFigure.direction}</div>
+                    <div className="text-xs text-gray-500">Direção</div>
+                  </div>
+                  
+                  <button
+                    onClick={rotateRight}
+                    className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    title="Rotacionar para direita"
                   >
-                    <RotateCw className="w-4 h-4" />
-                  </Button>
+                    <img 
+                      src="/assets/rotation_arrow.png" 
+                      alt="Rotacionar direita" 
+                      className="w-6 h-6"
+                    />
+                  </button>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Direção do Corpo</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentFigure(prev => ({ ...prev, direction: prev.direction === 2 ? 4 : 2 }))}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
-                <span className="text-sm">{currentFigure.direction}</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentFigure(prev => ({ ...prev, direction: prev.direction === 2 ? 4 : 2 }))}
-                >
-                  <RotateCw className="w-4 h-4" />
-                </Button>
-                </div>
-              </div>
+              
 
               <Button 
                 className="w-full"
