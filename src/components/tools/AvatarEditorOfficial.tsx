@@ -302,6 +302,38 @@ const AvatarEditorOfficial = () => {
     }));
   };
 
+  // Estado para seções expandidas
+  const [expandedSections, setExpandedSections] = useState({
+    size: false,
+    expressions: false,
+    actions: false,
+    drinks: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Funções de rotação
+  const rotateLeft = () => {
+    setCurrentFigure(prev => ({
+      ...prev,
+      direction: prev.direction === 0 ? 7 : prev.direction - 1,
+      headDirection: prev.headDirection === 0 ? 7 : prev.headDirection - 1
+    }));
+  };
+
+  const rotateRight = () => {
+    setCurrentFigure(prev => ({
+      ...prev,
+      direction: prev.direction === 7 ? 0 : prev.direction + 1,
+      headDirection: prev.headDirection === 7 ? 0 : prev.headDirection + 1
+    }));
+  };
+
   // Gerar URL do avatar - Formato exato do HabboTemplarios
   const generateAvatarUrl = (colorHex?: string) => {
     // Corpo base por gênero
@@ -323,13 +355,9 @@ const AvatarEditorOfficial = () => {
       const isOverlay = !['hr','hd','ch','lg','sh'].includes(key);
       if (isOverlay && value.startsWith('100-')) continue;
 
-<<<<<<< HEAD:hubcursor/src/components/tools/AvatarEditorOfficial.tsx
       // Limpar duplicações na value (ex: hr-hr-100 -> hr-100)
       const cleanValue = value.replace(/^([a-z]+)-\1-/, '$1-');
       const segment = `${key}-${cleanValue}`;
-=======
-      const segment = `${key}-${value}`;
->>>>>>> 818d5fbeedf8e820a036e0a88d2835e22b145c94:src/components/tools/AvatarEditorOfficial.tsx
       const idx = figureParts.findIndex(p => p.startsWith(`${key}-`));
 
       if (idx !== -1) figureParts[idx] = segment;
@@ -776,32 +804,9 @@ const AvatarEditorOfficial = () => {
                 </div>
               </div>
 
-<<<<<<< HEAD:hubcursor/src/components/tools/AvatarEditorOfficial.tsx
 
 
               
-=======
-              <div className="space-y-2">
-                <Label>Direção do Corpo</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentFigure(prev => ({ ...prev, direction: prev.direction === 2 ? 4 : 2 }))}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
-                <span className="text-sm">{currentFigure.direction}</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setCurrentFigure(prev => ({ ...prev, direction: prev.direction === 2 ? 4 : 2 }))}
-                >
-                  <RotateCw className="w-4 h-4" />
-                </Button>
-                </div>
-              </div>
->>>>>>> 818d5fbeedf8e820a036e0a88d2835e22b145c94:src/components/tools/AvatarEditorOfficial.tsx
 
               <Button 
                 className="w-full"
