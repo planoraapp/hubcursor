@@ -9,10 +9,58 @@
 /* Volter Goldfish Font */
 @font-face {
   font-family: 'Volter Goldfish';
-  src: url('/fonts/volter-goldfish.ttf') format('truetype');
+  src: url('/fonts/volter.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
+}
+
+/* Fontes Oficiais do Habbo */
+@font-face {
+  font-family: 'Ubuntu Habbo';
+  src: url('/fonts/UbuntuHabbo.woff2') format('woff2'),
+       url('/fonts/UbuntuHabbo.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Estilos para Alt Codes com Fonte Oficial do Habbo */
+.volter-font {
+  font-family: 'Ubuntu Habbo', 'Volter Goldfish', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+.alt-codes-table {
+  font-family: 'Ubuntu Habbo', 'Volter Goldfish', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  image-rendering: pixelated;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+.alt-codes-table td {
+  padding: 2px 6px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.alt-codes-table .character-image {
+  width: 12px;
+  height: 12px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 @layer base {
@@ -67,9 +115,46 @@
   
   body {
     @apply bg-background text-foreground;
-    font-family: 'Volter Goldfish', Arial, sans-serif;
-    font-weight: normal;
   }
+}
+
+/* Font Utility Classes */
+.volter-font {
+  font-family: 'Volter Goldfish', 'Ubuntu Habbo', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+/* Alt Codes Table Styles */
+.alt-codes-table {
+  font-family: 'Volter Goldfish', 'Ubuntu Habbo', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  image-rendering: pixelated;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+.alt-codes-table td {
+  padding: 2px 6px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.alt-codes-table .character-image {
+  width: 12px;
+  height: 12px;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
 }
 
 /* Habbo Official Fonts */

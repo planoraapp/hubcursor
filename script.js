@@ -1356,12 +1356,12 @@ class HabboAvatarEditor {
         // Atualizar todas as roupas selecionadas com a nova cor
         Object.keys(this.currentFigure).forEach(type => {
             if (this.currentFigure[type] && this.currentFigure[type] !== '') {
-                // Extrair o ID da roupa atual
+                // Valor atual no formato `${id}-${color}-` (sem prefixo de tipo)
                 const parts = this.currentFigure[type].split('-');
                 if (parts.length >= 2) {
-                    const itemId = parts[1];
-                    // Atualizar com nova cor, garantindo que o tipo seja mantido
-                    this.currentFigure[type] = `${type}-${itemId}-${index}-`;
+                    const itemId = parts[0];
+                    // Regravar mantendo somente id e nova cor
+                    this.currentFigure[type] = `${itemId}-${index}-`;
                     console.log(`🔄 ${type} atualizado para cor ${index}: ${this.currentFigure[type]}`);
                 }
             }
@@ -1432,9 +1432,10 @@ class HabboAvatarEditor {
             const actionParam = this.buildActionParam();
             
             // Construir URL diretamente (fallback) - usando formato correto do Habbo Imaging
+            const normalizedGender = (this.currentFigure.gender === 'U') ? 'M' : this.currentFigure.gender;
             const params = new URLSearchParams({
                 figure: figureString,
-                gender: this.currentFigure.gender,
+                gender: normalizedGender,
                 direction: this.currentFigure.direction,
                 head_direction: this.currentFigure.headDirection,
                 action: actionParam,
@@ -1452,7 +1453,7 @@ class HabboAvatarEditor {
         // Atualizar imagem e botão de download
         avatarImg.src = avatarUrl;
         downloadBtn.href = avatarUrl;
-        downloadBtn.download = `habbo_${this.currentFigure.gender}_${Date.now()}.png`;
+        downloadBtn.download = `habbo_${(this.currentFigure.gender === 'U') ? 'M' : this.currentFigure.gender}_${Date.now()}.png`;
         
         // Log para debug
         console.log('🎯 Avatar atualizado:', {

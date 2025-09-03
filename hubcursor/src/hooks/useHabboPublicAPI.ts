@@ -94,7 +94,9 @@ interface HabboProfile {
   rooms: HabboRoom[];
 }
 
-export const useHabboPublicAPI = (username: string = 'Beebop') => {
+export const useHabboPublicAPI = (username: string = 'Beebop', country: string = 'br') => {
+  console.log('Hook useHabboPublicAPI chamado com:', { username, country });
+  
   const [userData, setUserData] = useState<HabboUser | null>(null);
   const [profileData, setProfileData] = useState<HabboProfile | null>(null);
   const [badges, setBadges] = useState<HabboBadge[]>([]);
@@ -102,26 +104,64 @@ export const useHabboPublicAPI = (username: string = 'Beebop') => {
   const [groups, setGroups] = useState<HabboGroup[]>([]);
   const [friends, setFriends] = useState<HabboFriend[]>([]);
   const [photos, setPhotos] = useState<HabboPhoto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // API base do Habbo Brasil
-  const API_BASE = 'https://www.habbo.com.br';
+  // Mapeamento de países para URLs da API
+  const countryAPIs = {
+    br: 'https://www.habbo.com.br',
+    us: 'https://www.habbo.com',
+    de: 'https://www.habbo.de',
+    es: 'https://www.habbo.es',
+    fi: 'https://www.habbo.fi',
+    fr: 'https://www.habbo.fr',
+    it: 'https://www.habbo.it',
+    nl: 'https://www.habbo.nl',
+    tr: 'https://www.habbo.com.tr'
+  };
+
+  // API base baseada no país selecionado
+  const API_BASE = countryAPIs[country as keyof typeof countryAPIs] || countryAPIs.br;
 
   // Função para buscar dados básicos do usuário
   const fetchUserData = async (username: string) => {
     try {
-      const response = await fetch(`${API_BASE}/api/public/users?name=${encodeURIComponent(username)}`);
+      // Usar a documentação oficial da API: GET /api/public/users
+      const url = `${API_BASE}/api/public/users?name=${encodeURIComponent(username)}`;
+      console.log('Buscando usuário na URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('Resposta da API:', response.status, response.statusText);
+      
       if (response.ok) {
         const data = await response.json();
-        setUserData(data);
-        return data;
+        console.log('Dados do usuário recebidos:', data);
+        
+        // Verificar se os dados estão no formato esperado
+        if (data && data.name && data.figureString) {
+          setUserData(data);
+          setError(null); // Limpar erro anterior
+          return data;
+        } else {
+          console.error('Dados do usuário incompletos:', data);
+          throw new Error('Dados do usuário incompletos');
+        }
       } else {
-        throw new Error('Usuário não encontrado');
+        const errorText = await response.text();
+        console.error('Erro na API:', response.status, errorText);
+        throw new Error(`Usuário não encontrado: ${response.status}`);
       }
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
-      setError('Erro ao buscar dados do usuário');
+      setError(`Erro ao buscar dados do usuário: ${error.message}`);
+      setUserData(null); // Limpar dados anteriores
       return null;
     }
   };
@@ -225,23 +265,31 @@ export const useHabboPublicAPI = (username: string = 'Beebop') => {
 
   // Função para buscar todos os dados
   const fetchAllData = async (username: string) => {
+    console.log('fetchAllData iniciado para:', username);
     setIsLoading(true);
     setError(null);
+    setUserData(null); // Limpar dados anteriores
 
     try {
       // 1. Buscar dados básicos do usuário
+      console.log('Buscando dados básicos do usuário...');
       const userData = await fetchUserData(username);
+      
       if (userData && userData.uniqueId) {
+        console.log('Usuário encontrado, buscando perfil completo...');
         // 2. Buscar perfil completo
         await fetchUserProfile(userData.uniqueId);
+        console.log('Busca completa finalizada com sucesso');
       } else {
+        console.log('Usuário não encontrado ou dados incompletos');
         setError('Usuário não encontrado');
       }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
-      setError('Erro ao carregar dados');
+      setError(`Erro ao carregar dados: ${error.message}`);
     } finally {
       setIsLoading(false);
+      console.log('fetchAllData finalizado');
     }
   };
 
@@ -292,12 +340,16 @@ export const useHabboPublicAPI = (username: string = 'Beebop') => {
     }
   };
 
-  // Carregar dados quando o hook for inicializado
+  // Carregar dados quando o hook for inicializado ou país mudar
   useEffect(() => {
+    console.log('useEffect disparado:', { username, country });
     if (username) {
+      console.log('Iniciando busca de dados para:', username);
       fetchAllData(username);
+    } else {
+      console.log('Username vazio, não buscando dados');
     }
-  }, [username]);
+  }, [username, country]);
 
   return {
     userData,

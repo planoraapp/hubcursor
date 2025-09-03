@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Home as HomeIcon, Users, MessageSquare, Star } from 'lucide-react';
 import { OpenConsolePopupButton } from '@/components/OpenConsolePopupButton';
+import PageBanner from '@/components/ui/PageBanner';
 
 export const Home: React.FC = () => {
   return (
@@ -16,21 +17,11 @@ export const Home: React.FC = () => {
         <SidebarInset className="flex-1">
           <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
             <div className="max-w-7xl mx-auto">
-              {/* Header */}
-              <div className="text-center mb-12">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <HomeIcon className="w-8 h-8 text-white" />
-                  <h1 className="text-4xl font-bold text-white volter-font"
-                      style={{
-                        textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                      }}>
-                    HabboHub
-                  </h1>
-                </div>
-                <p className="text-xl text-white/90 max-w-2xl mx-auto volter-font drop-shadow">
-                  A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel.
-                </p>
-              </div>
+              <PageBanner 
+                title="🏠 HabboHub"
+                subtitle="A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel."
+                backgroundImage="/assets/gcreate_1_1.png"
+              />
 
               {/* Features Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">

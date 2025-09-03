@@ -21,9 +21,37 @@ import {
   Watch,
   Circle,
   Zap,
-  Star
+  Star,
+  // NOVOS ÍCONES:
+  Maximize2,
+  Minimize2,
+  Eye,
+  Activity,
+  Coffee,
+  Hand,
+  ChevronDown,
+  ChevronUp,
+  Monitor,
+  Smartphone,
+  Tablet,
+  Headphones,
+  Frown,
+  Meh,
+  Angry,
+  Sunrise,
+  Moon,
+  MessageCircle,
+  Carrot,
+  Wine,
+  Droplets,
+  IceCream,
+  Heart,
+  Radio,
+  Cherry,
+  Apple
 } from 'lucide-react';
 import { useTemplariosData } from '@/hooks/useTemplariosData';
+import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 
 // Interfaces para o editor HabboTemplarios
 interface AvatarFigure {
@@ -167,56 +195,148 @@ const AvatarEditorOfficial = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [primaryColor, setPrimaryColor] = useState<string>('7');
   const [secondaryColor, setSecondaryColor] = useState<string>('7');
+  
+  // Estados para busca de usuários
+  const [searchUsername, setSearchUsername] = useState<string>('');
+  const [selectedCountry, setSelectedCountry] = useState<string>('br');
+  const [searchedUser, setSearchedUser] = useState<string>('');
+
+  // Estado para seções expandidas
+  const [expandedSections, setExpandedSections] = useState({
+    size: false,
+    expressions: false,
+    actions: false,
+    drinks: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  // Hook da API do Habbo
+  const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser, selectedCountry);
+  
+  // Debug logs
+  console.log('Estado do componente:', {
+    searchedUser,
+    selectedCountry,
+    userData,
+    isLoadingUser,
+    userError
+  });
+
+  // Mapeamento de países para URLs da API
+  const countryAPIs = {
+    br: 'https://www.habbo.com.br',
+    us: 'https://www.habbo.com',
+    de: 'https://www.habbo.de',
+    es: 'https://www.habbo.es',
+    fi: 'https://www.habbo.fi',
+    fr: 'https://www.habbo.fr',
+    it: 'https://www.habbo.it',
+    nl: 'https://www.habbo.nl',
+    tr: 'https://www.habbo.com.tr'
+  };
+
+  // Função para buscar usuário
+  const handleSearchUser = async () => {
+    if (!searchUsername.trim()) return;
+    
+    console.log('Buscando usuário:', searchUsername.trim());
+    console.log('País selecionado:', selectedCountry);
+    setSearchedUser(searchUsername.trim());
+  };
+
+  // Função para aplicar avatar do usuário buscado
+  const applyUserAvatar = () => {
+    if (userData?.figureString) {
+      console.log('Figure string original:', userData.figureString);
+      
+      // Parsear a figure string do usuário e aplicar ao editor
+      const figureParts = userData.figureString.split('.');
+      const newFigure = { ...currentFigure };
+      
+      figureParts.forEach(part => {
+        if (part.trim()) {
+          // Remover duplicações (ex: hr-hr-100 -> hr-100)
+          const cleanPart = part.replace(/^([a-z]+)-\1-/, '$1-');
+          
+          if (cleanPart.startsWith('hr-')) newFigure.hr = cleanPart;
+          else if (cleanPart.startsWith('hd-')) newFigure.hd = cleanPart;
+          else if (cleanPart.startsWith('ch-')) newFigure.ch = cleanPart;
+          else if (cleanPart.startsWith('lg-')) newFigure.lg = cleanPart;
+          else if (cleanPart.startsWith('sh-')) newFigure.sh = cleanPart;
+          else if (cleanPart.startsWith('ha-')) newFigure.ha = cleanPart;
+          else if (cleanPart.startsWith('he-')) newFigure.he = cleanPart;
+          else if (cleanPart.startsWith('ea-')) newFigure.ea = cleanPart;
+          else if (cleanPart.startsWith('fa-')) newFigure.fa = cleanPart;
+          else if (cleanPart.startsWith('cp-')) newFigure.cp = cleanPart;
+          else if (cleanPart.startsWith('cc-')) newFigure.cc = cleanPart;
+          else if (cleanPart.startsWith('ca-')) newFigure.ca = cleanPart;
+          else if (cleanPart.startsWith('wa-')) newFigure.wa = cleanPart;
+        }
+      });
+      
+      console.log('Nova figure aplicada:', newFigure);
+      setCurrentFigure(newFigure);
+    }
+  };
+
+  // Funções de rotação
+  const rotateLeft = () => {
+    setCurrentFigure(prev => ({
+      ...prev,
+      direction: prev.direction === 0 ? 7 : prev.direction - 1,
+      headDirection: prev.headDirection === 0 ? 7 : prev.headDirection - 1
+    }));
+  };
+
+  const rotateRight = () => {
+    setCurrentFigure(prev => ({
+      ...prev,
+      direction: prev.direction === 7 ? 0 : prev.direction + 1,
+      headDirection: prev.headDirection === 7 ? 0 : prev.headDirection + 1
+    }));
+  };
 
   // Gerar URL do avatar - Formato exato do HabboTemplarios
-  const generateAvatarUrl = () => {
-    // Usar o mesmo formato que funciona no grid - baseado no URL do HabboTemplarios
-    const baseFigure = selectedGender === 'M' 
-      ? 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
-      : 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-';
-    
-    // Substituir apenas a categoria selecionada com o valor atual
-    const figureParts = baseFigure.split('.');
-    const categoryIndex = figureParts.findIndex(part => part.startsWith(selectedCategory));
-    
-    if (categoryIndex !== -1) {
-      const currentValue = currentFigure[selectedCategory as keyof AvatarFigure];
-      if (currentValue && typeof currentValue === 'string') {
-        figureParts[categoryIndex] = `${selectedCategory}-${currentValue}`;
-      }
+  const generateAvatarUrl = (colorHex?: string) => {
+    // Corpo base por gênero
+    const baseFigure = selectedGender === 'M'
+      ? 'hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
+      : 'hr-500-7-.hd-190-7-.ch-710-66-.lg-870-82-.sh-290-80-';
+
+    // Começa com as partes base e remove vazios
+    const figureParts = baseFigure.split('.').filter(Boolean);
+
+    // Todas as categorias conhecidas do Habbo
+    const ALL_KEYS: Array<keyof AvatarFigure> = ['hr','hd','ch','lg','sh','ha','he','ea','fa','cp','cc','ca','wa'];
+
+    for (const key of ALL_KEYS) {
+      const value = currentFigure[key];
+      if (!value || typeof value !== 'string') continue;
+
+      // Para overlays, evite inserir o "100-*" (placeholder)
+      const isOverlay = !['hr','hd','ch','lg','sh'].includes(key);
+      if (isOverlay && value.startsWith('100-')) continue;
+
+      // Limpar duplicações na value (ex: hr-hr-100 -> hr-100)
+      const cleanValue = value.replace(/^([a-z]+)-\1-/, '$1-');
+      const segment = `${key}-${cleanValue}`;
+      const idx = figureParts.findIndex(p => p.startsWith(`${key}-`));
+
+      if (idx !== -1) figureParts[idx] = segment;
+      else figureParts.push(segment);
     }
-    
+
     const figureString = figureParts.join('.');
-    
-    // Debug: Log da figura atual
-    console.log('Current Figure:', currentFigure);
-    console.log('Figure String:', figureString);
-    
-    // Formato exato do HabboTemplarios baseado no URL fornecido
-    // URL: figure=hr-100-undefined-.hd-3704-7-61.ch-210-66-.lg-270-82-.sh-290-80-&gender=M&direction=2&head_direction=2&action=gesture=nrm&&size=l
-    let url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${currentFigure.gender}&direction=${currentFigure.direction}&head_direction=${currentFigure.headDirection}`;
-    
-    // Adicionar gesture no formato correto: &action=gesture=nrm
-    url += `&action=gesture=${currentFigure.gesture}`;
-    
-    // Adicionar ações se houver
-    if (currentFigure.actions.length > 0) {
-      url += `&action=${currentFigure.actions.join(',')}`;
-    }
-    
-    // Adicionar item se houver e não for '0'
-    if (currentFigure.item && currentFigure.item !== '0') {
-      url += `&action=usei=${currentFigure.item}`;
-    }
-    
-    // Adicionar tamanho no formato correto: &&size=l (dois &)
-    if (currentFigure.size === 'headonly') {
-      url += `&&headonly=1`;
-    } else {
-      url += `&&size=${currentFigure.size}`;
-    }
-    
-    console.log('Generated URL:', url);
+
+    // Monta URL do preview (reutilize sua lógica de gesture/actions/item se já existir)
+    const url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&direction=${currentFigure.direction}&head_direction=${currentFigure.headDirection}&action=gesture=${currentFigure.gesture}&&size=l`;
+
     return url;
   };
 
@@ -255,8 +375,8 @@ const AvatarEditorOfficial = () => {
       setSecondaryColor(colorId);
       // Remover o prefixo 's' do ID da cor secundária para usar o ID real
       const realColorId = colorId.startsWith('s') ? colorId.substring(1) : colorId;
-      setCurrentFigure(prev => ({
-        ...prev,
+    setCurrentFigure(prev => ({
+      ...prev,
         [selectedCategory]: `${selectedItemId}-${primaryColor}-${realColorId}-`
       }));
     }
@@ -273,7 +393,14 @@ const AvatarEditorOfficial = () => {
   // Obter itens filtrados
   const getFilteredItems = () => {
     const items = getItemsByCategory(selectedCategory, selectedGender);
-    console.log('Items for category:', selectedCategory, items);
+    console.log('Items for category:', selectedCategory, 'Gender:', selectedGender, 'Total items:', Object.keys(items).length);
+    
+    // Debug: contar itens por gênero
+    const itemsByGender = Object.values(items).reduce((acc, item) => {
+      acc[item.gender] = (acc[item.gender] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log('Items by gender:', itemsByGender);
     
     const filtered = Object.entries(items).filter(([itemId, itemData]) => {
       if (searchTerm && !itemId.toLowerCase().includes(searchTerm.toLowerCase())) {
@@ -288,7 +415,7 @@ const AvatarEditorOfficial = () => {
       return true;
     });
     
-    console.log('Filtered items:', filtered);
+    console.log('Filtered items:', filtered.length);
     return filtered;
   };
 
@@ -296,23 +423,60 @@ const AvatarEditorOfficial = () => {
   const getItemPreviewUrl = (itemId: string, colorHex?: string) => {
     const primaryColor = colorHex || '7';
     
-    // Usar o mesmo formato base que funciona no preview principal
-    const baseFigure = selectedGender === 'M' 
-      ? 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
-      : 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-';
+    // Para cabelos (hr), usar figura completa com corpo feminino para garantir preview correto
+    if (selectedCategory === 'hr') {
+      // Usar figura completa com corpo feminino para cabelos
+      // Baseado no exemplo do HabboTemplarios: hr-3870-33-61.hd-600-1-.ch-635-70-.lg-716-66-62-.sh-735-68-
+      let baseFigure = selectedGender === 'M' 
+        ? 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
+        : 'hr-500-undefined-.hd-190-7-.ch-710-66-.lg-870-82-.sh-290-80-'; // Corpo feminino com tom de pele masculino
+      
+      // Substituir apenas o cabelo
+      const figureParts = baseFigure.split('.');
+      const categoryIndex = figureParts.findIndex(part => part.startsWith('hr-'));
+      
+      if (categoryIndex !== -1) {
+        figureParts[categoryIndex] = `hr-${itemId}-${primaryColor}-`;
+      }
+      baseFigure = figureParts.join('.');
+      
+      // Debug: Log para verificar se a substituição está funcionando
+      console.log('Hair Preview URL Debug:', {
+        itemId,
+        selectedGender,
+        primaryColor,
+        finalFigureString: baseFigure
+      });
+      
+      return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&&size=m`;
+    }
     
-    // Substitui apenas a categoria selecionada
+    // Para outras categorias, usar figura completa
+    let baseFigure = selectedGender === 'M' 
+      ? 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
+      : 'hr-500-undefined-.hd-190-7-.ch-710-66-.lg-870-82-.sh-290-80-'; // Usando hd-190-7- (tom masculino)
+    
+    // Para todas as outras categorias, usar a lógica padrão de substituição
     const figureParts = baseFigure.split('.');
-    const categoryIndex = figureParts.findIndex(part => part.startsWith(selectedCategory));
+    const categoryIndex = figureParts.findIndex(part => part.startsWith(selectedCategory + '-'));
     
     if (categoryIndex !== -1) {
       figureParts[categoryIndex] = `${selectedCategory}-${itemId}-${primaryColor}-`;
     } else {
       figureParts.push(`${selectedCategory}-${itemId}-${primaryColor}-`);
     }
+    baseFigure = figureParts.join('.');
     
-    const figureString = figureParts.join('.');
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&&size=m`;
+    // Debug: Log para verificar se a substituição está funcionando
+    console.log('Item Preview URL Debug:', {
+      itemId,
+      selectedCategory,
+      selectedGender,
+      primaryColor,
+      finalFigureString: baseFigure
+    });
+    
+    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&&size=m`;
   };
 
   // Sistema de cores do Habbo baseado no HTML do HabboTemplarios
@@ -422,72 +586,195 @@ const AvatarEditorOfficial = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-center">
+              {/* Busca de Usuários */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Buscar Usuário</Label>
+                
+                {/* Campo de busca */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="Digite o nome do usuário..."
+                    value={searchUsername}
+                    onChange={(e) => setSearchUsername(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearchUser()}
+                    className="pl-10 pr-4"
+                  />
+                </div>
+                
+                {/* Bandeiras de países */}
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(countryAPIs).map(([country, url]) => (
+                    <button
+                      key={country}
+                      onClick={() => setSelectedCountry(country)}
+                      className={`p-1 rounded transition-colors ${
+                        selectedCountry === country 
+                          ? 'bg-blue-100 border-2 border-blue-400' 
+                          : 'bg-gray-100 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                      title={`Habbo ${country.toUpperCase()}`}
+                    >
+                      <img 
+                        src={`/flags/${country}.png`} 
+                        alt={country.toUpperCase()} 
+                        className="w-6 h-4 object-cover rounded"
+                      />
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Botão de busca */}
+                <Button 
+                  onClick={handleSearchUser}
+                  disabled={!searchUsername.trim() || isLoadingUser}
+                  className="w-full"
+                  size="sm"
+                >
+                  {isLoadingUser ? 'Buscando...' : 'Buscar Usuário'}
+                </Button>
+                
+                {/* Resultado da busca */}
+                {userData && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-800">{userData.name}</p>
+                        <p className="text-sm text-green-600">{userData.motto}</p>
+                      </div>
+                      <Button 
+                        onClick={applyUserAvatar}
+                        size="sm"
+                        variant="outline"
+                        className="text-green-700 border-green-300 hover:bg-green-100"
+                      >
+                        Aplicar Avatar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Erro na busca */}
+                {userError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-800 text-sm">{userError}</p>
+                  </div>
+                )}
+              </div>
+              
+              <Separator />
+              {/* Preview do Avatar - Tamanho Grande */}
+              <div className="flex justify-center bg-gray-50 rounded-lg p-4">
                 <img
                   key={`avatar-${JSON.stringify(currentFigure)}`}
                   src={generateAvatarUrl()}
                   alt="Avatar Preview"
-                  className="w-32 h-32 object-contain"
+                  className={`object-contain transition-all duration-300 ${
+                    currentFigure.size === 'headonly' ? 'w-24 h-24' :
+                    currentFigure.size === 's' ? 'w-32 h-32' :
+                    currentFigure.size === 'm' ? 'w-40 h-40' :
+                    'w-48 h-48'
+                  }`}
                   onLoad={() => console.log('Avatar image loaded')}
                   onError={(e) => console.error('Avatar image error:', e)}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label>Tamanho</Label>
-                <select 
-                  className="w-full p-2 border rounded"
-                  value={currentFigure.size}
-                  onChange={(e) => setCurrentFigure(prev => ({ ...prev, size: e.target.value }))}
-                >
-                  <option value="headonly">Cabeza</option>
-                  <option value="s">Mini</option>
-                  <option value="m">Normal</option>
-                  <option value="l">Grande</option>
-                </select>
-              </div>
+                {/* Controles de Rotação */}
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={rotateLeft}
+                    className="p-1 hover:opacity-80 transition-opacity"
+                    title="Rotacionar para esquerda"
+                  >
+                    <img 
+                      src="/assets/rotation_arrow.png" 
+                      alt="Rotacionar esquerda" 
+                      className="w-6 h-6"
+                    />
+                  </button>
+                  
+                  <button
+                    onClick={rotateRight}
+                    className="p-1 hover:opacity-80 transition-opacity"
+                    title="Rotacionar para direita"
+                  >
+                    <img 
+                      src="/assets/rotation_arrow.png" 
+                      alt="Rotacionar direita" 
+                      className="w-6 h-6 scale-x-[-1]"
+                    />
+                  </button>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Direção da Cabeça</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCurrentFigure(prev => ({ ...prev, headDirection: prev.headDirection === 2 ? 4 : 2 }))}
+                {/* Controles de Tamanho */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => toggleSection('size')}
+                    className="w-full flex items-center justify-between p-3 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors"
                   >
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm">{currentFigure.headDirection}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCurrentFigure(prev => ({ ...prev, headDirection: prev.headDirection === 2 ? 4 : 2 }))}
-                  >
-                    <RotateCw className="w-4 h-4" />
-                  </Button>
+                    <div className="flex items-center gap-2">
+                      <Monitor className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-blue-800">Tamanho do Avatar</span>
+                    </div>
+                    {expandedSections.size ? (
+                      <ChevronUp className="w-5 h-5 text-blue-600" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-blue-600" />
+                    )}
+                  </button>
+                  
+                  {expandedSections.size && (
+                    <div className="grid grid-cols-4 gap-2 p-3 bg-gray-50 rounded-lg">
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 'headonly' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 'headonly' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-2xl">👤</span>
+                        <span className="text-xs mt-1 font-medium">Cabeza</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 's' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 's' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-lg">🧑</span>
+                        <span className="text-xs mt-1 font-medium">Mini</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 'm' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 'm' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-xl">🧑‍💼</span>
+                        <span className="text-xs mt-1 font-medium">Normal</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setCurrentFigure(prev => ({ ...prev, size: 'l' }))}
+                        className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                          currentFigure.size === 'l' ? 'bg-blue-200 border-2 border-blue-400' : 'bg-white hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <span className="text-2xl">🧑‍💻</span>
+                        <span className="text-xs mt-1 font-medium">Grande</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Direção do Corpo</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCurrentFigure(prev => ({ ...prev, direction: prev.direction === 2 ? 4 : 2 }))}
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm">{currentFigure.direction}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCurrentFigure(prev => ({ ...prev, direction: prev.direction === 2 ? 4 : 2 }))}
-                  >
-                    <RotateCw className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+
+
+              
 
               <Button 
                 className="w-full"
@@ -687,33 +974,64 @@ const AvatarEditorOfficial = () => {
 
                   <Separator />
 
-                  {/* Grid de itens - Preview focado verticalmente na peça de interesse */}
+                  {/* Grid de itens - Preview centralizado e otimizado para cada categoria */}
                   <div className="grid grid-cols-6 gap-2 max-h-96 overflow-y-auto">
                     {getFilteredItems().map(([itemId, itemData]) => {
-                      // Determinar o foco vertical baseado na categoria
-                      const getObjectPosition = () => {
+                      // Sistema de centralização otimizado para cada categoria
+                      const getOptimizedPosition = () => {
                         switch (selectedCategory) {
-                          case 'hd': // Rostos - Foco no rosto
-                          case 'hr': // Cabelos - Foco no rosto
-                          case 'ha': // Chapéus - Foco no rosto
-                          case 'he': // Acessórios de Cabeça - Foco no rosto
-                          case 'ea': // Brincos - Foco no rosto
-                          case 'fa': // Acessórios de Rosto - Foco no rosto
-                          case 'cc': // Colares - Foco do joelho para cima (inclui mochilas)
-                            return 'center 60%';
-                          case 'ch': // Camisas - Foco no torso
-                            return 'center 25%';
-                          case 'cp': // Capas - Foco no torso
-                          case 'ca': // Cintos - Foco no torso
+                          case 'hd': // Rostos - Foco centralizado no rosto
+                            return 'center 55%';
+                          case 'hr': // Cabelos - Foco no rosto e cabelo
+                            return 'center 50%';
+                          case 'ha': // Chapéus - Foco no topo da cabeça
                             return 'center 45%';
-                          case 'lg': // Calças - Foco centralizado nas calças até os pés
-                            return 'center 110%';
+                          case 'he': // Acessórios de Cabeça - Foco no rosto
+                            return 'center 55%';
+                          case 'ea': // Brincos - Foco no rosto
+                            return 'center 60%';
+                          case 'fa': // Acessórios de Rosto - Foco no rosto
+                            return 'center 60%';
+                          case 'cc': // Colares - Foco no pescoço/torso superior
+                            return 'center 40%';
+                          case 'ch': // Camisas - Foco centralizado no torso
+                            return 'center 30%';
+                          case 'cp': // Capas - Foco no torso e ombros
+                            return 'center 25%';
+                          case 'ca': // Cintos - Foco na cintura
+                            return 'center 50%';
+                          case 'lg': // Calças - Foco centralizado nas pernas
+                            return 'center 70%';
                           case 'sh': // Sapatos - Foco nos pés
-                            return 'center bottom';
+                            return 'center 85%';
                           case 'wa': // Pulseiras - Foco nos braços
-                            return 'center 35%';
+                            return 'center 40%';
                           default:
-                            return 'center';
+                            return 'center center';
+                        }
+                      };
+
+                      // Determinar o tamanho e ajuste da imagem baseado na categoria
+                      const getImageStyle = () => {
+                        const baseStyle = {
+                          objectPosition: getOptimizedPosition(),
+                          objectFit: 'cover' as const
+                        };
+
+                        // Ajustes específicos por categoria para melhor visualização
+                        switch (selectedCategory) {
+                          case 'hd': // Rostos - Zoom no rosto
+                            return { ...baseStyle, transform: 'scale(1.2)' };
+                          case 'hr': // Cabelos - Zoom moderado
+                            return { ...baseStyle, transform: 'scale(1.1)' };
+                          case 'ha': // Chapéus - Zoom no topo
+                            return { ...baseStyle, transform: 'scale(1.1)' };
+                          case 'sh': // Sapatos - Zoom nos pés
+                            return { ...baseStyle, transform: 'scale(1.3)' };
+                          case 'lg': // Calças - Zoom nas pernas
+                            return { ...baseStyle, transform: 'scale(1.1)' };
+                          default:
+                            return baseStyle;
                         }
                       };
 
@@ -723,43 +1041,34 @@ const AvatarEditorOfficial = () => {
                             <img
                               src={getItemPreviewUrl(itemId)}
                               alt={`${selectedCategory} ${itemId}`}
-                              className="w-full h-full object-cover"
-                              style={{
-                                objectPosition: getObjectPosition(),
-                                objectFit: 'cover'
-                              }}
-                              onClick={() => applyItem(itemId)}
+                              className="w-full h-full"
+                              style={getImageStyle()}
+                          onClick={() => applyItem(itemId)}
                               title={`${itemId} - ${itemData.club === 1 ? 'Habbo Club' : 'Normal'}${itemData.colorable === 1 ? ' - Colorável' : ''}`}
                             />
                           </div>
-                          
-                          {/* Badges de raridade - Todos no canto inferior direito */}
-                          <div className="absolute bottom-1 right-1 flex gap-1 z-10">
-                            {itemData.club === 1 && (
-                              <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-white font-bold">HC</span>
-                              </div>
-                            )}
-                            
-                            {itemData.colorable === 1 && (
-                              <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-white">🎨</span>
-                              </div>
-                            )}
-                            
-                            {itemData.duotone === 1 && (
-                              <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-white font-bold">2</span>
-                              </div>
-                            )}
-                            
-                            {itemData.sellable && itemData.sellable === 1 && (
-                              <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                <span className="text-xs text-white">$</span>
-                              </div>
-                            )}
-                          </div>
+                        
+                        {/* Badge de raridade único - Prioridade: HC > Duotone > Colorável > Vendável */}
+                        <div className="absolute bottom-1 right-1 z-10">
+                          {itemData.club === 1 ? (
+                            <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs text-white font-bold">HC</span>
+                            </div>
+                          ) : itemData.duotone === 1 ? (
+                            <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs text-white font-bold">2</span>
+                            </div>
+                          ) : itemData.colorable === 1 ? (
+                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs text-white">🎨</span>
+                            </div>
+                          ) : itemData.sellable && itemData.sellable === 1 ? (
+                            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                              <span className="text-xs text-white">$</span>
+                            </div>
+                          ) : null}
                         </div>
+                      </div>
                       );
                     })}
                   </div>
@@ -835,13 +1144,13 @@ const AvatarEditorOfficial = () => {
                             return (
                               <div key={`primary-hc-${index}`} className="relative">
                                 <button
-                                  onClick={() => {
+                        onClick={() => {
                                     if (isDuotoneItem()) {
                                       applyPrimaryColor(colorData.id);
                                     } else {
-                                      const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
-                                      const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
-                                      if (currentItem) {
+                          const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
+                          const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
+                          if (currentItem) {
                                         applyItem(currentItem, colorData.id);
                                       }
                                     }
@@ -877,12 +1186,22 @@ const AvatarEditorOfficial = () => {
                               return (
                                 <button
                                   key={`secondary-normal-${index}`}
-                                  onClick={() => applySecondaryColor(colorData.id)}
+                                  onClick={() => {
+                                    if (isDuotoneItem()) {
+                                      applySecondaryColor(colorData.id);
+                                    } else {
+                                      const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
+                                      const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
+                                      if (currentItem) {
+                                        applyItem(currentItem, colorData.id);
+                                      }
+                                    }
+                                  }}
                                   className={`w-4 h-4 border border-gray-300 hover:scale-110 transition-transform ${
-                                    isSelected ? 'ring-2 ring-green-500' : ''
+                                    isSelected ? 'ring-2 ring-blue-500' : ''
                                   }`}
                                   style={{ backgroundColor: colorData.color }}
-                                  title={`Secundária Normal - ${colorData.color}`}
+                                  title={`Normal - ${colorData.color}`}
                                 />
                               );
                             })}
@@ -895,12 +1214,22 @@ const AvatarEditorOfficial = () => {
                               return (
                                 <div key={`secondary-hc-${index}`} className="relative">
                                   <button
-                                    onClick={() => applySecondaryColor(colorData.id)}
+                        onClick={() => {
+                                      if (isDuotoneItem()) {
+                                        applySecondaryColor(colorData.id);
+                                      } else {
+                          const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
+                          const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
+                          if (currentItem) {
+                                          applyItem(currentItem, colorData.id);
+                                        }
+                                      }
+                                    }}
                                     className={`w-4 h-4 border border-gray-300 hover:scale-110 transition-transform ${
-                                      isSelected ? 'ring-2 ring-green-500' : ''
+                                      isSelected ? 'ring-2 ring-blue-500' : ''
                                     }`}
                                     style={{ backgroundColor: colorData.color }}
-                                    title={`Secundária HC - ${colorData.color}`}
+                                    title={`HC - ${colorData.color}`}
                                   />
                                   {/* Badge HC pequeno */}
                                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
@@ -912,18 +1241,8 @@ const AvatarEditorOfficial = () => {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Informações sobre cores disponíveis */}
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <div>• Cores normais: {PRIMARY_COLORS.filter(c => !c.isHC).length}</div>
-                    <div>• Cores do clube: {PRIMARY_COLORS.filter(c => c.isHC).length}</div>
-                    <div>• Total: {PRIMARY_COLORS.length} cores</div>
-                    {isDuotoneItem() && (
-                      <div className="text-green-600 font-medium">• Item suporta duas cores</div>
-                    )}
                   </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
