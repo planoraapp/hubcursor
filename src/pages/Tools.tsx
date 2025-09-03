@@ -6,8 +6,9 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
 import AltCodesCompact from '@/components/tools/AltCodesCompact';
-import AltCodesInstructions from '@/components/tools/AltCodesInstructions';
-import { MobiImageFixer } from '@/components/tools/MobiImageFixer';
+
+
+import TamagotchiCompact from '../components/tools/TamagotchiCompact';
 import PageBanner from '@/components/ui/PageBanner';
 
 const Tools = () => {
@@ -83,8 +84,10 @@ const Tools = () => {
                 {/* Alt Codes Tool - Componente Compacto */}
                 <AltCodesCompact />
 
-                {/* Instruções Alt Codes */}
-                <AltCodesInstructions />
+                {/* Tamagotchi Tool - NOVO COMPONENTE */}
+                <TamagotchiCompact />
+
+
 
                 <Card className="p-6 bg-white/60 backdrop-blur-sm border-2 border-dashed border-gray-300">
                   <CardHeader className="text-center pb-4">
@@ -101,10 +104,7 @@ const Tools = () => {
                 </Card>
               </div>
 
-              {/* Corretor de Imagens de Mobis */}
-              <div className="mt-8">
-                <MobiImageFixer />
-              </div>
+
             </div>
           </main>
         </SidebarInset>
