@@ -20,6 +20,7 @@ import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
 import HanditemCatalog from './pages/HanditemCatalog'
 import AvatarEditor from './pages/AvatarEditor'
+import AltCodesPage from './pages/AltCodes'
 import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
   {
     path: "/ferramentas/avatar-editor",
     element: <AvatarEditor />,
+  },
+  {
+    path: "/ferramentas/alt-codes",
+    element: <AltCodesPage />,
   },
   {
     path: "/tools",
