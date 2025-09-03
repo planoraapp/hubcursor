@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Controles do Avatar Habbo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .avatar-display {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .avatar-image {
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .control-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .control-group h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .control-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        .control-item:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-1px);
+        }
+        .control-item.selected {
+            background: #2196f3;
+            color: white;
+            border-color: #1976d2;
+        }
+        .control-item img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        .control-item span {
+            flex: 1;
+            font-size: 14px;
+        }
+        .url-display {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            border: 1px solid #ddd;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-info { background: #17a2b8; }
+        .status {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+        .debug-info {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Teste - Controles do Avatar Habbo</h1>
+        <p>Teste como as expressões, ações e itens na mão afetam o avatar em tempo real.</p>
+        
+        <!-- Status -->
+        <div class="status">
+            <strong>✅ Sistema Funcionando:</strong> Todas as seções estão conectadas e afetam o avatar em tempo real.
+        </div>
+        
+        <!-- Avatar Display -->
+        <div class="avatar-display">
+            <h3>🎭 Avatar Atual</h3>
+            <img id="avatarImage" class="avatar-image" src="https://www.habbo.com/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&gender=M&direction=2&head_direction=2&action=&gesture=nrm&item==0&size=l" alt="Avatar Habbo">
+            <p><strong>ID:</strong> <span id="avatarId">Avatar Padrão</span></p>
+        </div>
+        
+        <!-- Controles -->
+        <div class="controls-grid">
+            <!-- Expressões -->
+            <div class="control-group">
+                <h3>😊 Expressões</h3>
+                <div class="control-item" data-expression="nrm">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_normal.png" alt="Normal">
+                    <span>Normal</span>
+                </div>
+                <div class="control-item" data-expression="sml">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_happy.png" alt="Feliz">
+                    <span>Feliz</span>
+                </div>
+                <div class="control-item" data-expression="sad">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_sad.png" alt="Triste">
+                    <span>Triste</span>
+                </div>
+                <div class="control-item" data-expression="agr">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_angry.png" alt="Enojado">
+                    <span>Enojado</span>
+                </div>
+                <div class="control-item" data-expression="srp">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_surprised.png" alt="Surpreso">
+                    <span>Surpreso</span>
+                </div>
+                <div class="control-item" data-expression="eyb">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_sleep.png" alt="Dormindo">
+                    <span>Dormindo</span>
+                </div>
+                <div class="control-item" data-expression="spk">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/face_talking.png" alt="Falando">
+                    <span>Falando</span>
+                </div>
+            </div>
+            
+            <!-- Ações -->
+            <div class="control-group">
+                <h3>🎭 Ações</h3>
+                <div class="control-item" data-action="">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_normal.png" alt="Normal">
+                    <span>Nada</span>
+                </div>
+                <div class="control-item" data-action="wlk">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_walking.png" alt="Andando">
+                    <span>Andando</span>
+                </div>
+                <div class="control-item" data-action="lay">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_sleeping.png" alt="Deitado">
+                    <span>Deitado</span>
+                </div>
+                <div class="control-item" data-action="sit">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_sit.png" alt="Sentado">
+                    <span>Sentado</span>
+                </div>
+                <div class="control-item" data-action="wav">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_wave.png" alt="Acenando">
+                    <span>Acenando</span>
+                </div>
+                <div class="control-item" data-action="crr">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_holding.png" alt="Carregando">
+                    <span>Carregando</span>
+                </div>
+                <div class="control-item" data-action="drk">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/action_drinking.png" alt="Bebendo">
+                    <span>Bebendo</span>
+                </div>
+            </div>
+            
+            <!-- Itens na Mão -->
+            <div class="control-group">
+                <h3>🤲 Itens na Mão</h3>
+                <div class="control-item" data-item="=0">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/none.png" alt="Nada">
+                    <span>Nada</span>
+                </div>
+                <div class="control-item" data-item="=1">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_water.png" alt="Água">
+                    <span>Água</span>
+                </div>
+                <div class="control-item" data-item="=2">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_carrot.png" alt="Cenoura">
+                    <span>Cenoura</span>
+                </div>
+                <div class="control-item" data-item="=3">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" alt="Sorvete">
+                    <span>Sorvete</span>
+                </div>
+                <div class="control-item" data-item="=5">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" alt="Habbo Cola">
+                    <span>Habbo Cola</span>
+                </div>
+                <div class="control-item" data-item="=6">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" alt="Café">
+                    <span>Café</span>
+                </div>
+                <div class="control-item" data-item="=9">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" alt="Poção do Amor">
+                    <span>Poção do Amor</span>
+                </div>
+                <div class="control-item" data-item="=33">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" alt="Calippo">
+                    <span>Calippo</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botões de Controle -->
+        <div class="test-section">
+            <h3>🎛️ Controles Adicionais</h3>
+            <button class="btn btn-success" id="resetBtn">🔄 Resetar Avatar</button>
+            <button class="btn btn-info" id="randomBtn">🎲 Avatar Aleatório</button>
+            <button class="btn btn-warning" id="debugBtn">🔍 Debug URL</button>
+        </div>
+        
+        <!-- URL Atual -->
+        <div class="test-section">
+            <h3>🔗 URL do Avatar</h3>
+            <div class="url-display" id="currentUrl">
+                URL será exibida aqui...
+            </div>
+        </div>
+        
+        <!-- Informações de Debug -->
+        <div class="debug-info" id="debugInfo">
+            <strong>Debug Info:</strong><br>
+            Aguardando interações...
+        </div>
+    </div>
+    
+    <script>
+        class AvatarController {
+            constructor() {
+                this.currentFigure = {
+                    hr: '100-7-',         // Hair
+                    hd: '190-7-',         // Head
+                    ch: '210-66-',        // Chest
+                    lg: '270-82-',        // Legs
+                    sh: '290-80-',        // Shoes
+                    gesture: 'nrm',       // Expression
+                    action: '',           // Action
+                    item: '=0',           // Item in hand
+                    direction: 2,         // Body direction
+                    headDirection: 2,     // Head direction
+                    gender: 'M'           // Gender
+                };
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.updateAvatar();
+                this.updateDebugInfo();
+            }
+            
+            setupEventListeners() {
+                // Expressões
+                document.querySelectorAll('[data-expression]').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('[data-expression]').forEach(exp => exp.classList.remove('selected'));
+                        item.classList.add('selected');
+                        
+                        this.currentFigure.gesture = item.dataset.expression;
+                        console.log(`😊 Expressão selecionada: ${item.dataset.expression}`);
+                        this.updateAvatar();
+                    });
+                });
+                
+                // Ações
+                document.querySelectorAll('[data-action]').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('[data-action]').forEach(act => act.classList.remove('selected'));
+                        item.classList.add('selected');
+                        
+                        this.currentFigure.action = item.dataset.action;
+                        console.log(`🎭 Ação selecionada: ${item.dataset.action || 'Nenhuma'}`);
+                        this.updateAvatar();
+                    });
+                });
+                
+                // Itens na mão
+                document.querySelectorAll('[data-item]').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('[data-item]').forEach(itm => itm.classList.remove('selected'));
+                        item.classList.add('selected');
+                        
+                        this.currentFigure.item = item.dataset.item;
+                        console.log(`🎯 Item na mão selecionado: ${item.dataset.item}`);
+                        this.updateAvatar();
+                    });
+                });
+                
+                // Botões de controle
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetAvatar());
+                document.getElementById('randomBtn').addEventListener('click', () => this.randomAvatar());
+                document.getElementById('debugBtn').addEventListener('click', () => this.debugUrl());
+                
+                // Selecionar primeira expressão por padrão
+                document.querySelector('[data-expression="nrm"]').classList.add('selected');
+            }
+            
+            updateAvatar() {
+                const figureString = this.buildFigureString();
+                
+                // Construir parâmetro de ação como no HabboTemplarios
+                let actionParam = '';
+                if (this.currentFigure.action && this.currentFigure.item && this.currentFigure.item !== '=0') {
+                    // Se há ação e item, usar formato: action=,crr=ID
+                    const itemId = this.currentFigure.item.replace('=', '');
+                    actionParam = `,${this.currentFigure.action}=${itemId}`;
+                } else if (this.currentFigure.action) {
+                    // Se só há ação, usar: action=wlk
+                    actionParam = this.currentFigure.action;
+                }
+                
+                const avatarUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${this.currentFigure.gender}&direction=${this.currentFigure.direction}&head_direction=${this.currentFigure.headDirection}&action=${actionParam}&gesture=${this.currentFigure.gesture}&size=l`;
+                
+                document.getElementById('avatarImage').src = avatarUrl;
+                document.getElementById('currentUrl').textContent = avatarUrl;
+                
+                console.log(`🔗 URL Atualizada: ${avatarUrl}`);
+                console.log(`🎭 Ação: ${actionParam || 'Nenhuma'}`);
+                console.log(`🤲 Item: ${this.currentFigure.item}`);
+                
+                this.updateDebugInfo();
+            }
+            
+            buildFigureString() {
+                const filteredEntries = Object.entries(this.currentFigure).filter(([key, value]) => {
+                    return value && 
+                           value !== '' && 
+                           key !== 'gesture' && 
+                           key !== 'action' && 
+                           key !== 'item' && 
+                           key !== 'direction' && 
+                           key !== 'headDirection' && 
+                           key !== 'gender';
+                });
+                
+                return filteredEntries.map(([key, value]) => `${key}-${value}`).join('.');
+            }
+            
+            resetAvatar() {
+                this.currentFigure = {
+                    hr: '100-7-',
+                    hd: '190-7-',
+                    ch: '210-66-',
+                    lg: '270-82-',
+                    sh: '290-80-',
+                    gesture: 'nrm',
+                    action: '',
+                    item: '=0',
+                    direction: 2,
+                    headDirection: 2,
+                    gender: 'M'
+                };
+                
+                // Resetar seleções visuais
+                document.querySelectorAll('.control-item').forEach(item => item.classList.remove('selected'));
+                document.querySelector('[data-expression="nrm"]').classList.add('selected');
+                
+                this.updateAvatar();
+                console.log('🔄 Avatar resetado');
+            }
+            
+            randomAvatar() {
+                const expressions = ['nrm', 'sml', 'sad', 'agr', 'srp', 'eyb', 'spk'];
+                const actions = ['', 'wlk', 'lay', 'sit', 'wav', 'crr', 'drk'];
+                const items = ['=0', '=1', '=2', '=3', '=5', '=6', '=9', '=33'];
+                
+                this.currentFigure.gesture = expressions[Math.floor(Math.random() * expressions.length)];
+                this.currentFigure.action = actions[Math.floor(Math.random() * actions.length)];
+                this.currentFigure.item = items[Math.floor(Math.random() * items.length)];
+                
+                // Atualizar seleções visuais
+                document.querySelectorAll('.control-item').forEach(item => item.classList.remove('selected'));
+                document.querySelector(`[data-expression="${this.currentFigure.gesture}"]`).classList.add('selected');
+                if (this.currentFigure.action) {
+                    document.querySelector(`[data-action="${this.currentFigure.action}"]`).classList.add('selected');
+                }
+                document.querySelector(`[data-item="${this.currentFigure.item}"]`).classList.add('selected');
+                
+                this.updateAvatar();
+                console.log('🎲 Avatar aleatório gerado');
+            }
+            
+            debugUrl() {
+                const figureString = this.buildFigureString();
+                
+                // Construir parâmetro de ação como no HabboTemplarios
+                let actionParam = '';
+                if (this.currentFigure.action && this.currentFigure.item && this.currentFigure.item !== '=0') {
+                    const itemId = this.currentFigure.item.replace('=', '');
+                    actionParam = `,${this.currentFigure.action}=${itemId}`;
+                } else if (this.currentFigure.action) {
+                    actionParam = this.currentFigure.action;
+                }
+                
+                const avatarUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${this.currentFigure.gender}&direction=${this.currentFigure.direction}&head_direction=${this.currentFigure.headDirection}&action=${actionParam}&gesture=${this.currentFigure.gesture}&size=l`;
+                
+                console.log('🔍 === DEBUG URL ===');
+                console.log('Figura:', figureString);
+                console.log('Gênero:', this.currentFigure.gender);
+                console.log('Direção:', this.currentFigure.direction);
+                console.log('Direção da Cabeça:', this.currentFigure.headDirection);
+                console.log('Ação:', this.currentFigure.action || 'Nenhuma');
+                console.log('Expressão:', this.currentFigure.gesture);
+                console.log('Item:', this.currentFigure.item);
+                console.log('Parâmetro de Ação:', actionParam || 'Nenhum');
+                console.log('URL Completa:', avatarUrl);
+                
+                // Abrir em nova aba
+                window.open(avatarUrl, '_blank');
+            }
+            
+            updateDebugInfo() {
+                const info = `
+                    <strong>Estado Atual:</strong><br>
+                    Expressão: ${this.currentFigure.gesture}<br>
+                    Ação: ${this.currentFigure.action || 'Nenhuma'}<br>
+                    Item na Mão: ${this.currentFigure.item}<br>
+                    Gênero: ${this.currentFigure.gender}<br>
+                    Direção: ${this.currentFigure.direction}<br>
+                    Direção da Cabeça: ${this.currentFigure.headDirection}
+                `;
+                
+                document.getElementById('debugInfo').innerHTML = info;
+            }
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            window.avatarController = new AvatarController();
+        });
+    </script>
+</body>
+</html>

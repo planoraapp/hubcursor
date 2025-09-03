@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Grid Debug - HabboHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .clothing-data {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .grid-preview {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste Debug do Grid de Roupas</h1>
+        
+        <div class="debug-info">
+            <h3>📋 Status do Sistema</h3>
+            <p>Este teste verifica se as roupas estão sendo carregadas corretamente no sistema.</p>
+        </div>
+        
+        <div>
+            <button onclick="testLoadCompleteClothing()">🚀 Testar Carregamento Completo</button>
+            <button onclick="testShowAllCategories()">🎨 Testar Exibição de Categorias</button>
+            <button onclick="inspectClothingData()">🔍 Inspecionar Dados</button>
+            <button onclick="clearGrid()">🗑️ Limpar Grid</button>
+        </div>
+        
+        <div class="debug-info">
+            <h3>📊 Informações de Debug</h3>
+            <div id="debugOutput">Clique em um botão para começar...</div>
+        </div>
+        
+        <div class="grid-preview">
+            <h3>🎯 Preview do Grid</h3>
+            <div id="clothingGrid" style="min-height: 200px; border: 2px dashed #ccc; padding: 20px; text-align: center; color: #666;">
+                Grid de roupas aparecerá aqui...
+            </div>
+        </div>
+        
+        <div class="clothing-data">
+            <h3>📦 Dados das Roupas (JSON)</h3>
+            <pre id="clothingDataOutput">Nenhum dado carregado ainda...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Simular o sistema de roupas
+        let clothingData = {};
+        let currentCategory = 'head';
+        
+        // Função para carregar roupas completas (simulada)
+        function testLoadCompleteClothing() {
+            console.log('🚀 === TESTANDO CARREGAMENTO COMPLETO ===');
+            
+            // Simular dados de roupas
+            clothingData = {
+                'head': {
+                    nonhc: [
+                        {id: 'hd-1-7-', name: 'Rosto Básico 1', type: 'hd'},
+                        {id: 'hd-2-7-', name: 'Rosto Básico 2', type: 'hd'}
+                    ],
+                    hc: [
+                        {id: 'hd-100-7-', name: 'Rosto HC 100', type: 'hd'}
+                    ]
+                },
+                'shirts': {
+                    nonhc: [
+                        {id: 'ch-1-7-', name: 'Camisa Básica 1', type: 'ch'},
+                        {id: 'ch-2-7-', name: 'Camisa Básica 2', type: 'ch'}
+                    ],
+                    hc: [
+                        {id: 'ch-100-7-', name: 'Camisa HC 100', type: 'ch'}
+                    ]
+                },
+                'pants': {
+                    nonhc: [
+                        {id: 'lg-1-7-', name: 'Calça Básica 1', type: 'lg'},
+                        {id: 'lg-2-7-', name: 'Calça Básica 2', type: 'lg'}
+                    ]
+                }
+            };
+            
+            updateDebugOutput(`✅ Roupas carregadas! Total de categorias: ${Object.keys(clothingData).length}`);
+            updateClothingDataOutput();
+            
+            console.log('📦 Dados carregados:', clothingData);
+        }
+        
+        // Função para mostrar todas as categorias
+        function testShowAllCategories() {
+            console.log('🎨 === TESTANDO EXIBIÇÃO DE CATEGORIAS ===');
+            
+            if (Object.keys(clothingData).length === 0) {
+                updateDebugOutput('❌ Nenhuma roupa carregada! Carregue primeiro.');
+                return;
+            }
+            
+            const grid = document.getElementById('clothingGrid');
+            grid.innerHTML = '';
+            
+            // Criar container principal
+            const mainContainer = document.createElement('div');
+            mainContainer.className = 'all-categories-container';
+            mainContainer.style.cssText = 'padding: 20px;';
+            
+            // Lista de todas as categorias disponíveis
+            const categories = Object.keys(clothingData);
+            console.log('📋 Categorias disponíveis:', categories);
+            
+            categories.forEach(category => {
+                const categoryData = clothingData[category];
+                if (!categoryData) return;
+                
+                // Criar seção da categoria
+                const categorySection = document.createElement('div');
+                categorySection.className = 'category-section';
+                categorySection.style.cssText = `
+                    margin-bottom: 30px;
+                    border: 1px solid #ddd;
+                    border-radius: 10px;
+                    overflow: hidden;
+                `;
+                
+                // Cabeçalho da categoria
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'category-header';
+                categoryHeader.style.cssText = `
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 15px 20px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                `;
+                
+                const categoryTitle = document.createElement('span');
+                categoryTitle.textContent = getCategoryDisplayName(category);
+                
+                const itemCount = document.createElement('span');
+                const totalItems = countCategoryItems(categoryData);
+                itemCount.textContent = `${totalItems} itens`;
+                itemCount.style.cssText = 'font-size: 14px; opacity: 0.8;';
+                
+                categoryHeader.appendChild(categoryTitle);
+                categoryHeader.appendChild(itemCount);
+                
+                // Grid de itens da categoria
+                const categoryGrid = document.createElement('div');
+                categoryGrid.className = 'category-grid';
+                categoryGrid.style.cssText = `
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                    gap: 10px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                `;
+                
+                // Renderizar itens da categoria
+                renderCategoryItems(categoryGrid, categoryData, category);
+                
+                // Adicionar à seção
+                categorySection.appendChild(categoryHeader);
+                categorySection.appendChild(categoryGrid);
+                
+                // Adicionar ao container principal
+                mainContainer.appendChild(categorySection);
+            });
+            
+            // Adicionar ao grid principal
+            grid.appendChild(mainContainer);
+            
+            updateDebugOutput(`✅ Grid renderizado com ${categories.length} categorias!`);
+            console.log('✅ Todas as categorias foram renderizadas!');
+        }
+        
+        // Funções auxiliares
+        function countCategoryItems(categoryData) {
+            let total = 0;
+            ['nonhc', 'hc', 'sell', 'nft'].forEach(rarity => {
+                if (categoryData[rarity] && Array.isArray(categoryData[rarity])) {
+                    total += categoryData[rarity].length;
+                }
+            });
+            return total;
+        }
+        
+        function renderCategoryItems(grid, categoryData, categoryName) {
+            const sections = [
+                { id: 'nonhc', title: 'Roupas Normais', items: categoryData.nonhc || [] },
+                { id: 'hc', title: 'Habbo Club', items: categoryData.hc || [] },
+                { id: 'sell', title: 'Vendáveis', items: categoryData.sell || [] },
+                { id: 'nft', title: 'NFT', items: categoryData.nft || [] }
+            ];
+            
+            sections.forEach(section => {
+                if (section.items && section.items.length > 0) {
+                    section.items.forEach(item => {
+                        const clothingItem = createClothingItem(item, categoryName);
+                        grid.appendChild(clothingItem);
+                    });
+                }
+            });
+        }
+        
+        function createClothingItem(item, categoryName) {
+            const clothingItem = document.createElement('div');
+            clothingItem.className = 'clothing-item';
+            clothingItem.dataset.id = item.id;
+            clothingItem.dataset.category = categoryName;
+            clothingItem.dataset.name = item.name;
+            
+            // Criar preview do item (simulado)
+            const img = document.createElement('div');
+            img.style.cssText = `
+                width: 100%;
+                height: 60px;
+                background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                color: #666;
+                text-align: center;
+                padding: 5px;
+                box-sizing: border-box;
+            `;
+            img.textContent = item.name;
+            
+            clothingItem.appendChild(img);
+            clothingItem.addEventListener('click', () => {
+                console.log(`🎯 Item selecionado: ${item.name} (${categoryName})`);
+                updateDebugOutput(`🎯 Item selecionado: ${item.name} (${categoryName})`);
+            });
+            
+            return clothingItem;
+        }
+        
+        function getCategoryDisplayName(category) {
+            const names = {
+                'head': 'Rostos',
+                'hair': 'Cabelos', 
+                'hats': 'Chapéus',
+                'shirts': 'Camisetas',
+                'pants': 'Calças',
+                'shoes': 'Sapatos',
+                'skirts': 'Saias',
+                'dresses': 'Vestidos',
+                'suits': 'Trajes',
+                'jackets': 'Jaquetas',
+                'faceAccessories': 'Acessórios do Rosto',
+                'headAccessories': 'Acessórios da Cabeça',
+                'waistAccessories': 'Acessórios da Cintura'
+            };
+            return names[category] || category;
+        }
+        
+        function inspectClothingData() {
+            console.log('🔍 === INSPECIONANDO DADOS ===');
+            console.log('clothingData:', clothingData);
+            console.log('Categorias:', Object.keys(clothingData));
+            
+            if (Object.keys(clothingData).length > 0) {
+                Object.entries(clothingData).forEach(([category, data]) => {
+                    console.log(`${category}:`, data);
+                });
+            }
+            
+            updateDebugOutput(`🔍 Dados inspecionados no console. Categorias: ${Object.keys(clothingData).length}`);
+        }
+        
+        function clearGrid() {
+            document.getElementById('clothingGrid').innerHTML = 'Grid limpo...';
+            updateDebugOutput('🗑️ Grid limpo!');
+        }
+        
+        function updateDebugOutput(message) {
+            const output = document.getElementById('debugOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<br>[${timestamp}] ${message}`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function updateClothingDataOutput() {
+            const output = document.getElementById('clothingDataOutput');
+            output.textContent = JSON.stringify(clothingData, null, 2);
+        }
+        
+        // Inicialização
+        console.log('🔍 Teste Debug do Grid inicializado!');
+        updateDebugOutput('🚀 Sistema de teste inicializado!');
+    </script>
+</body>
+</html>

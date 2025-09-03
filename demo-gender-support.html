@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstração - Suporte a Gêneros Habbo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .gender-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .gender-btn {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+        .gender-btn.active {
+            border-color: #007bff;
+            background: #007bff;
+            color: white;
+        }
+        .gender-btn:hover {
+            border-color: #0056b3;
+        }
+        .clothing-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .clothing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .clothing-item {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .clothing-item:hover {
+            transform: scale(1.1);
+        }
+        .rarity-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        .club { background: #ff6b6b; }
+        .sellable { background: #4ecdc4; }
+        .ltd { background: #45b7d1; }
+        .raro { background: #96ceb4; }
+        .nft { background: #feca57; }
+        .nonhc { background: #ff9ff3; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .api-section {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Demonstração - Suporte a Gêneros Habbo</h1>
+        <p>Este arquivo demonstra as funcionalidades de suporte a gêneros (Masculino/Feminino) implementadas no editor.</p>
+        
+        <!-- Seletor de Gênero -->
+        <div class="gender-selector">
+            <div class="gender-btn active" data-gender="M">
+                <strong>👨 Masculino</strong>
+            </div>
+            <div class="gender-btn" data-gender="F">
+                <strong>👩 Feminino</strong>
+            </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalItems">0</div>
+                <div>Total de Itens</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCategories">0</div>
+                <div>Categorias</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="apiStatus">❌</div>
+                <div>Status da API</div>
+            </div>
+        </div>
+        
+        <!-- Controles da API -->
+        <div class="api-section">
+            <h3>🔌 Integração com Habbo Widgets API</h3>
+            <p>Carregue roupas diretamente da API do habbowidgets.com</p>
+            <button class="btn btn-success" id="loadAPI">📥 Carregar da API</button>
+            <button class="btn btn-warning" id="clearCache">🗑️ Limpar Cache</button>
+            <button class="btn btn-danger" id="exportData">📤 Exportar Dados</button>
+        </div>
+        
+        <!-- Seção de Cabelos -->
+        <div class="clothing-section">
+            <h3>💇‍♀️ Cabelos Femininos (Dados Específicos)</h3>
+            <div class="clothing-grid" id="femaleHairGrid">
+                <!-- Cabelos femininos serão carregados aqui -->
+            </div>
+        </div>
+        
+        <!-- Seção de Rostos -->
+        <div class="clothing-section">
+            <h3>😊 Rostos Femininos (Dados Específicos)</h3>
+            <div class="clothing-grid" id="femaleHeadGrid">
+                <!-- Rostos femininos serão carregados aqui -->
+            </div>
+        </div>
+        
+        <!-- Seção de Roupas da API -->
+        <div class="clothing-section">
+            <h3>👕 Roupas da API (Gênero Atual)</h3>
+            <div class="clothing-grid" id="apiClothingGrid">
+                <!-- Roupas da API serão carregadas aqui -->
+            </div>
+        </div>
+        
+        <!-- Log de Atividades -->
+        <div class="clothing-section">
+            <h3>📝 Log de Atividades</h3>
+            <div id="activityLog" style="background: #f8f9fa; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                Sistema inicializado...
+            </div>
+        </div>
+    </div>
+    
+    <script src="gender-specific-config.js"></script>
+    <script src="habbo-widgets-integration.js"></script>
+    <script>
+        // ===== SISTEMA DE DEMONSTRAÇÃO =====
+        class GenderDemoSystem {
+            constructor() {
+                this.currentGender = 'M';
+                this.initializeEventListeners();
+                this.loadGenderSpecificData();
+                this.updateStats();
+            }
+            
+            initializeEventListeners() {
+                // Eventos dos botões de gênero
+                document.querySelectorAll('.gender-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.changeGender(e.target.dataset.gender);
+                    });
+                });
+                
+                // Eventos dos botões da API
+                document.getElementById('loadAPI').addEventListener('click', () => {
+                    this.loadFromAPI();
+                });
+                
+                document.getElementById('clearCache').addEventListener('click', () => {
+                    this.clearCache();
+                });
+                
+                document.getElementById('exportData').addEventListener('click', () => {
+                    this.exportData();
+                });
+            }
+            
+            changeGender(gender) {
+                this.currentGender = gender;
+                
+                // Atualizar UI
+                document.querySelectorAll('.gender-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.gender === gender) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Atualizar título
+                const title = gender === 'M' ? '👨 Masculino' : '👩 Feminino';
+                document.querySelector('.gender-btn[data-gender="' + gender + '"] strong').textContent = title;
+                
+                // Carregar roupas específicas do gênero
+                this.loadGenderSpecificData();
+                
+                this.log(`Gênero alterado para: ${gender}`);
+            }
+            
+            loadGenderSpecificData() {
+                if (this.currentGender === 'F') {
+                    this.displayFemaleHair();
+                    this.displayFemaleHead();
+                } else {
+                    this.clearGrids();
+                }
+            }
+            
+            displayFemaleHair() {
+                const grid = document.getElementById('femaleHairGrid');
+                grid.innerHTML = '';
+                
+                // Carregar cabelos femininos por raridade
+                const rarities = ['club', 'sellable', 'ltd', 'raro', 'nft', 'nonhc'];
+                
+                rarities.forEach(rarity => {
+                    const items = getGenderSpecificClothing('F', 'hair', rarity);
+                    items.forEach(itemId => {
+                        const itemElement = this.createClothingItem(itemId, 'hr', rarity);
+                        grid.appendChild(itemElement);
+                    });
+                });
+                
+                this.log(`Cabelos femininos carregados: ${grid.children.length} itens`);
+            }
+            
+            displayFemaleHead() {
+                const grid = document.getElementById('femaleHeadGrid');
+                grid.innerHTML = '';
+                
+                // Carregar rostos femininos por raridade
+                const rarities = ['club', 'sellable', 'raro', 'nft', 'nonhc'];
+                
+                rarities.forEach(rarity => {
+                    const items = getGenderSpecificClothing('F', 'head', rarity);
+                    items.forEach(itemId => {
+                        const itemElement = this.createClothingItem(itemId, 'hd', rarity);
+                        grid.appendChild(itemElement);
+                    });
+                });
+                
+                this.log(`Rostos femininos carregados: ${grid.children.length} itens`);
+            }
+            
+            createClothingItem(itemId, type, rarity) {
+                const item = document.createElement('div');
+                item.className = 'clothing-item';
+                item.style.position = 'relative';
+                
+                // Gerar URL da imagem
+                const imageUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${type}-${itemId}-1-&gender=F&size=m`;
+                item.style.backgroundImage = `url('${imageUrl}')`;
+                
+                // Adicionar badge de raridade
+                const rarityBadge = document.createElement('div');
+                rarityBadge.className = `rarity-badge ${rarity}`;
+                rarityBadge.textContent = rarity.toUpperCase();
+                item.appendChild(rarityBadge);
+                
+                // Adicionar tooltip
+                item.title = `${type.toUpperCase()} ${itemId} (${rarity})`;
+                
+                return item;
+            }
+            
+            clearGrids() {
+                document.getElementById('femaleHairGrid').innerHTML = '';
+                document.getElementById('femaleHeadGrid').innerHTML = '';
+                document.getElementById('apiClothingGrid').innerHTML = '';
+            }
+            
+            async loadFromAPI() {
+                this.log('🔄 Carregando da API...');
+                
+                if (window.habboWidgets) {
+                    try {
+                        const clothings = await window.habboWidgets.loadClothingsFromAPI(50);
+                        if (clothings) {
+                            this.displayAPIClothings(clothings);
+                            this.updateStats();
+                            this.log('✅ Dados carregados da API com sucesso');
+                        } else {
+                            this.log('❌ Falha ao carregar da API');
+                        }
+                    } catch (error) {
+                        this.log(`❌ Erro: ${error.message}`);
+                    }
+                } else {
+                    this.log('❌ Sistema de integração não disponível');
+                }
+            }
+            
+            displayAPIClothings(clothings) {
+                const grid = document.getElementById('apiClothingGrid');
+                grid.innerHTML = '';
+                
+                let totalItems = 0;
+                
+                Object.entries(clothings).forEach(([category, genderData]) => {
+                    if (genderData[this.currentGender]) {
+                        genderData[this.currentGender].forEach(item => {
+                            const itemElement = this.createAPIClothingItem(item);
+                            grid.appendChild(itemElement);
+                            totalItems++;
+                        });
+                    }
+                });
+                
+                this.log(`Roupas da API carregadas: ${totalItems} itens para ${this.currentGender}`);
+            }
+            
+            createAPIClothingItem(item) {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'clothing-item';
+                itemElement.style.position = 'relative';
+                
+                itemElement.style.backgroundImage = `url('${item.imageUrl}')`;
+                
+                // Badge de raridade
+                const rarityBadge = document.createElement('div');
+                rarityBadge.className = `rarity-badge ${item.rarity}`;
+                rarityBadge.textContent = item.rarity.toUpperCase();
+                itemElement.appendChild(rarityBadge);
+                
+                itemElement.title = `${item.name} (${item.type})`;
+                
+                return itemElement;
+            }
+            
+            clearCache() {
+                if (window.habboWidgets) {
+                    window.habboWidgets.clearCache();
+                    this.log('🗑️ Cache limpo');
+                    this.clearGrids();
+                    this.updateStats();
+                }
+            }
+            
+            exportData() {
+                if (window.habboWidgets) {
+                    const data = window.habboWidgets.exportForEditor(this.currentGender);
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `habbo-clothings-${this.currentGender}-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    
+                    URL.revokeObjectURL(url);
+                    this.log(`📤 Dados exportados para ${this.currentGender}`);
+                }
+            }
+            
+            updateStats() {
+                if (window.habboWidgets) {
+                    const stats = window.habboWidgets.getClothingStats();
+                    const currentStats = stats[this.currentGender];
+                    
+                    document.getElementById('totalItems').textContent = currentStats.total || 0;
+                    document.getElementById('totalCategories').textContent = Object.keys(currentStats.categories).length;
+                    document.getElementById('apiStatus').textContent = '✅';
+                }
+            }
+            
+            log(message) {
+                const logElement = document.getElementById('activityLog');
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.innerHTML += `[${timestamp}] ${message}\n`;
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+        }
+        
+        // Inicializar sistema quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            window.genderDemo = new GenderDemoSystem();
+        });
+    </script>
+</body>
+</html>

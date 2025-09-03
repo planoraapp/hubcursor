@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste HubEditor - Itens na Mão</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin: 15px 0; }
+        .item-item { 
+            display: flex; flex-direction: column; align-items: center; padding: 10px; 
+            border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.3s; 
+            background: white; text-align: center; 
+        }
+        .item-item:hover { border-color: #2196f3; transform: translateY(-2px); }
+        .item-item.selected { border-color: #2196f3; background: #2196f3; color: white; }
+        .item-item img { width: 40px; height: 40px; margin-bottom: 5px; border-radius: 4px; }
+        .item-item span { font-size: 12px; font-weight: 500; }
+        .avatar-preview { max-width: 300px; border: 2px solid #333; border-radius: 10px; margin: 20px 0; }
+        .debug-info { background: #f0f0f0; padding: 15px; font-family: monospace; font-size: 12px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste HubEditor - Itens na Mão</h1>
+        
+        <div class="test-section">
+            <h3>🤲 Itens na Mão (Mesmo HTML do HubEditor)</h3>
+            <div class="item-grid">
+                <div class="item-item" data-item="=0">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/none.png" alt="Nada">
+                    <span>Nada</span>
+                </div>
+                <div class="item-item" data-item="=1">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_water.png" alt="Água">
+                    <span>Água</span>
+                </div>
+                <div class="item-item" data-item="=2">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_carrot.png" alt="Cenoura">
+                    <span>Cenoura</span>
+                </div>
+                <div class="item-item" data-item="=3">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" alt="Sorvete">
+                    <span>Sorvete</span>
+                </div>
+                <div class="item-item" data-item="=5">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" alt="Habbo Cola">
+                    <span>Habbo Cola</span>
+                </div>
+                <div class="item-item" data-item="=6">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" alt="Café">
+                    <span>Café</span>
+                </div>
+                <div class="item-item" data-item="=9">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" alt="Poção do Amor">
+                    <span>Poção do Amor</span>
+                </div>
+                <div class="item-item" data-item="=33">
+                    <img src="https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" alt="Calippo">
+                    <span>Calippo</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎭 Avatar Preview</h3>
+            <img id="avatarPreview" class="avatar-preview" src="https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-190-7-.hr-100-7-.ch-210-66-.lg-270-82-.sh-290-80-&gender=M&direction=2&head_direction=2&action=&gesture=nrm&size=l" alt="Avatar">
+        </div>
+        
+        <div class="test-section">
+            <h3>🔗 URL Atual</h3>
+            <div id="currentUrl" class="debug-info">URL será exibida aqui...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Estado Atual</h3>
+            <div id="debugInfo" class="debug-info">Aguardando...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Teste Rápido</h3>
+            <button onclick="testItem('=3')">Testar Sorvete</button>
+            <button onclick="testItem('=5')">Testar Habbo Cola</button>
+            <button onclick="testItem('=0')">Testar Nada</button>
+            <button onclick="resetTest()">Resetar</button>
+        </div>
+    </div>
+    
+    <script>
+        // Simular a estrutura do HubEditor
+        class HubEditorTest {
+            constructor() {
+                this.currentFigure = {
+                    hr: '100-7-',
+                    hd: '190-7-',
+                    ch: '210-66-',
+                    lg: '270-82-',
+                    sh: '290-80-',
+                    gesture: 'nrm',
+                    action: '',
+                    item: '=0',
+                    direction: 2,
+                    headDirection: 2,
+                    gender: 'M'
+                };
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.updateAvatar();
+                this.updateDebugInfo();
+                
+                // Selecionar "Nada" por padrão
+                document.querySelector('[data-item="=0"]').classList.add('selected');
+            }
+            
+            setupEventListeners() {
+                // Itens na mão - EXATAMENTE como no HubEditor
+                document.querySelectorAll('.item-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.item-item').forEach(itm => itm.classList.remove('selected'));
+                        item.classList.add('selected');
+                        
+                        this.currentFigure.item = item.dataset.item;
+                        console.log(`🎯 Item na mão selecionado: ${item.dataset.item}`);
+                        
+                        // Se selecionou um item (não "Nada"), automaticamente ativar ação "Segurando"
+                        if (item.dataset.item !== '=0') {
+                            // Ativar ação "Segurando" (crr)
+                            this.currentFigure.action = 'crr';
+                            console.log(`🎭 Ação automaticamente definida como "Segurando" (crr)`);
+                        } else {
+                            // Se selecionou "Nada", remover ação
+                            this.currentFigure.action = '';
+                            console.log(`🎭 Ação removida (item = "Nada")`);
+                        }
+                        
+                        this.updateAvatar();
+                    });
+                });
+            }
+            
+            updateAvatar() {
+                // Construir string da figura
+                const figureString = this.buildFigureString();
+                
+                // Construir parâmetro de ação como no HabboTemplarios
+                let actionParam = '';
+                if (this.currentFigure.action && this.currentFigure.item && this.currentFigure.item !== '=0') {
+                    const itemId = this.currentFigure.item.replace('=', '');
+                    actionParam = `,${this.currentFigure.action}=${itemId}`;
+                    console.log(`🔗 Construindo: action=,${this.currentFigure.action}=${itemId}`);
+                } else if (this.currentFigure.action) {
+                    actionParam = this.currentFigure.action;
+                    console.log(`🔗 Construindo: action=${this.currentFigure.action}`);
+                } else {
+                    console.log(`🔗 Construindo: action= (vazio)`);
+                }
+                
+                const avatarUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${this.currentFigure.gender}&direction=${this.currentFigure.direction}&head_direction=${this.currentFigure.headDirection}&action=${actionParam}&gesture=${this.currentFigure.gesture}&size=l`;
+                
+                document.getElementById('avatarPreview').src = avatarUrl;
+                document.getElementById('currentUrl').textContent = avatarUrl;
+                
+                console.log(`🔗 URL Final: ${avatarUrl}`);
+                console.log(`🎭 Ação: ${actionParam || 'Nenhuma'}`);
+                console.log(`🤲 Item: ${this.currentFigure.item}`);
+                
+                this.updateDebugInfo();
+            }
+            
+            buildFigureString() {
+                const filteredEntries = Object.entries(this.currentFigure).filter(([key, value]) => {
+                    return value && 
+                           value !== '' && 
+                           key !== 'gesture' && 
+                           key !== 'action' && 
+                           key !== 'item' && 
+                           key !== 'direction' && 
+                           key !== 'headDirection' && 
+                           key !== 'gender';
+                });
+                
+                return filteredEntries.map(([key, value]) => `${key}-${value}`).join('.');
+            }
+            
+            updateDebugInfo() {
+                const info = `
+Estado Atual:
+- Ação: ${this.currentFigure.action || 'Nenhuma'}
+- Item: ${this.currentFigure.item}
+- Parâmetro de Ação: ${this.currentFigure.action && this.currentFigure.item !== '=0' ? `,${this.currentFigure.action}=${this.currentFigure.item.replace('=', '')}` : this.currentFigure.action || 'Nenhum'}
+                `;
+                
+                document.getElementById('debugInfo').textContent = info;
+            }
+            
+            testItem(item) {
+                this.currentFigure.item = item;
+                
+                // Atualizar seleções visuais
+                document.querySelectorAll('[data-item]').forEach(itm => itm.classList.remove('selected'));
+                document.querySelector(`[data-item="${item}"]`).classList.add('selected');
+                
+                if (item !== '=0') {
+                    this.currentFigure.action = 'crr';
+                } else {
+                    this.currentFigure.action = '';
+                }
+                
+                this.updateAvatar();
+                console.log(`🧪 Testando item: ${item}`);
+            }
+            
+            reset() {
+                this.currentFigure.action = '';
+                this.currentFigure.item = '=0';
+                
+                document.querySelectorAll('[data-item]').forEach(itm => itm.classList.remove('selected'));
+                document.querySelector('[data-item="=0"]').classList.add('selected');
+                
+                this.updateAvatar();
+                console.log('🔄 Teste resetado');
+            }
+        }
+        
+        // Funções globais para os botões de teste
+        function testItem(item) {
+            window.hubEditorTest.testItem(item);
+        }
+        
+        function resetTest() {
+            window.hubEditorTest.reset();
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            window.hubEditorTest = new HubEditorTest();
+        });
+    </script>
+</body>
+</html>
