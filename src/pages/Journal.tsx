@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Newspaper, ChevronLeft, ChevronRight, Send, Users, Calendar, ExternalLink, FileText } from 'lucide-react';
+import { Newspaper, Send, Users, Calendar, ExternalLink, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface NewsArticle {
   id: string;
@@ -35,7 +35,6 @@ const Journal = () => {
   const [selectedAd, setSelectedAd] = useState<ClassifiedAd | null>(null);
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Mock data for the journal
   const newsArticles: NewsArticle[] = [
@@ -87,32 +86,24 @@ const Journal = () => {
 
   const totalPages = 5;
 
-  const scrollToPage = (page: number) => {
-    if (scrollContainerRef.current) {
-      const pageHeight = scrollContainerRef.current.scrollHeight / totalPages;
-      scrollContainerRef.current.scrollTo({
-        top: (page - 1) * pageHeight,
-        behavior: 'smooth'
-      });
-    }
-    setCurrentPage(page);
-  };
-
   const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    // Mapear seções para páginas
+    const sectionToPage: { [key: string]: number } = {
+      'destaques': 1,
+      'eventos': 2,
+      'entrevistas': 3,
+      'opiniao': 4,
+      'fansites': 5,
+      'classificados': 1,
+      'enviar-coluna': 1
+    };
+    
+    const targetPage = sectionToPage[sectionId];
+    if (targetPage) {
+      setCurrentPage(targetPage);
     }
   };
 
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const scrollTop = scrollContainerRef.current.scrollTop;
-      const pageHeight = scrollContainerRef.current.scrollHeight / totalPages;
-      const newPage = Math.floor(scrollTop / pageHeight) + 1;
-      setCurrentPage(newPage);
-    }
-  };
 
   const handleSubmission = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,13 +111,6 @@ const Journal = () => {
     setShowSubmissionModal(true);
   };
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
-    }
-  }, []);
 
   return (
     <SidebarProvider>
@@ -142,29 +126,32 @@ const Journal = () => {
               backgroundSize: 'cover'
             }}
           >
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto relative" style={{ overflow: 'visible', padding: '20px' }}>
               {/* Newspaper Background Effect */}
-              <div className="relative bg-gray-200 border-4 border-black p-6 sm:p-10 shadow-lg" style={{ 
-                boxShadow: '6px 6px 0px 0px #1f2937',
+              <div className="relative bg-gray-200 border-2 border-black p-6 sm:p-10 shadow-lg" style={{ 
+                boxShadow: '4px 4px 0px 0px #1f2937',
                 position: 'relative',
                 zIndex: 1
               }}>
-                {/* Pseudo-elements for page effect */}
-                <div className="absolute -left-2 -top-2 w-full h-full bg-gray-300 border-4 border-black -z-10" style={{ 
-                  top: '4px',
-                  left: '-4px',
-                  right: '4px',
-                  bottom: '-4px'
+                {/* Second page - slightly offset to the right and down */}
+                <div className="absolute bg-gray-300 border-2 border-gray-600" style={{ 
+                  top: '6px',
+                  left: '8px',
+                  right: '-8px',
+                  bottom: '-6px',
+                  zIndex: 2
                 }}></div>
-                <div className="absolute -left-4 -top-4 w-full h-full bg-gray-400 border-4 border-black -z-20" style={{ 
-                  top: '8px',
-                  left: '-8px',
-                  right: '8px',
-                  bottom: '-8px'
+                {/* Third page - more offset to the right and down */}
+                <div className="absolute bg-gray-400 border-2 border-gray-700" style={{ 
+                  top: '12px',
+                  left: '16px',
+                  right: '-16px',
+                  bottom: '-12px',
+                  zIndex: 1
                 }}></div>
                 
                 {/* Header */}
-                <header className="text-center mb-8 pb-4 border-b-4 border-black relative">
+                <header className="text-center mb-8 pb-4 border-b-2 border-black relative" style={{ zIndex: 5 }}>
                   <div className="flex items-center justify-center">
                     {/* Logo no canto esquerdo */}
                     <img 
@@ -195,7 +182,7 @@ const Journal = () => {
                 </header>
 
                 {/* Navigation Menu */}
-                <nav className="mb-8 flex flex-wrap justify-center gap-6 text-sm sm:text-base border-b-2 border-gray-500 pb-4">
+                <nav className="mb-8 flex flex-wrap justify-center gap-6 text-sm sm:text-base border-b border-gray-500 pb-4 relative" style={{ zIndex: 5 }}>
                   <button 
                     onClick={() => scrollToSection('destaques')}
                     className="text-black hover:text-blue-700 hover:underline transition-all duration-75"
@@ -240,20 +227,21 @@ const Journal = () => {
                   </button>
                 </nav>
 
+
                 {/* Journal Content */}
                 <div 
-                  ref={scrollContainerRef}
-                  className="h-screen overflow-y-auto"
-                  style={{ scrollSnapType: 'y mandatory' }}
+                  className="relative"
+                  style={{ zIndex: 5 }}
                 >
                   {/* Page 1 - Cover */}
-                  <div className="min-h-screen bg-gray-200 p-8" style={{ scrollSnapAlign: 'start' }}>
+                  {currentPage === 1 && (
+                    <div className="p-8" style={{ minHeight: '80vh' }}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {/* Main Content (2/3 width) */}
                       <div className="md:col-span-2 space-y-6">
                         {/* Main Article */}
-                        <section id="destaques" className="p-4 mb-8">
-                          <h2 className="text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2 font-bold" style={{ 
+                        <section id="destaques" className="mb-8">
+                          <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
                             fontFamily: 'Press Start 2P, cursive',
                             textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                           }}>
@@ -321,8 +309,8 @@ const Journal = () => {
                         <div className="border-t border-dashed border-gray-500 my-8"></div>
 
                         {/* Analysis Section */}
-                        <section id="analise-campanhas" className="p-4 mb-8">
-                          <h2 className="text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2 font-bold" style={{ 
+                        <section id="analise-campanhas" className="mb-8">
+                          <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
                             fontFamily: 'Press Start 2P, cursive',
                             textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                           }}>
@@ -450,169 +438,139 @@ const Journal = () => {
                           </div>
                         </div>
 
-                        {/* Submit Column */}
-                        <div id="enviar-coluna" className="border-2 border-black p-4">
-                          <h3 className="text-xl sm:text-2xl mb-3 font-bold" style={{ 
+                        {/* Submit Column - Compact Version */}
+                        <div id="enviar-coluna" className="border-2 border-black p-3">
+                          <h3 className="text-lg mb-2 font-bold" style={{ 
                             fontFamily: 'Press Start 2P, cursive',
                             textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                           }}>
                             Envie Sua Coluna
                           </h3>
-                          <p className="text-sm text-gray-700 mb-3" style={{ fontFamily: 'VT323, monospace' }}>
-                            Quer ver sua coluna publicada no jornal? Envie-nos seu conteúdo!
+                          <p className="text-xs text-gray-700 mb-2" style={{ fontFamily: 'VT323, monospace' }}>
+                            Quer ver sua coluna publicada?
                           </p>
                           <Button 
                             onClick={() => scrollToSection('submit-column')}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-none border-2 border-black"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-none border-2 border-black text-sm py-1"
                             style={{ 
                               boxShadow: '2px 2px 0px 0px #1f2937',
                               fontFamily: 'VT323, monospace'
                             }}
                           >
-                            <Send className="w-4 h-4 mr-2" />
-                            Enviar Coluna
+                            <Send className="w-3 h-3 mr-1" />
+                            Enviar
                           </Button>
                         </div>
                       </aside>
                     </div>
-                  </div>
-
-                  {/* Additional Pages would go here */}
-                  {/* Page 2-5 would be similar structure with different content */}
-                </div>
-
-                {/* Pagination Buttons */}
-                <div className="flex justify-between mt-10">
-                  <Button
-                    onClick={() => scrollToPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-none border-2 border-black"
-                    style={{ 
-                      boxShadow: '2px 2px 0px 0px #1f2937',
-                      fontFamily: 'VT323, monospace'
-                    }}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-2" />
-                    Página Anterior
-                  </Button>
-                  <span className="text-sm font-bold px-2 self-center" style={{ fontFamily: 'VT323, monospace' }}>
-                    Página {currentPage} de {totalPages}
-                  </span>
-                  <Button
-                    onClick={() => scrollToPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-none border-2 border-black"
-                    style={{ 
-                      boxShadow: '2px 2px 0px 0px #1f2937',
-                      fontFamily: 'VT323, monospace'
-                    }}
-                  >
-                    Próxima Página
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-
-                {/* Submit Column Form */}
-                <section id="submit-column" className="border-2 border-black p-6 bg-gray-200 rounded-sm mt-10">
-                  <h2 className="text-2xl sm:text-3xl mb-4 border-b-2 border-gray-500 pb-2 font-bold" style={{ 
-                    fontFamily: 'Press Start 2P, cursive',
-                    textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
-                  }}>
-                    Envie Sua Coluna para a Próxima Edição!
-                  </h2>
-                  <p className="text-base sm:text-lg mb-4 leading-relaxed" style={{ fontFamily: 'VT323, monospace' }}>
-                    Habbos, este é o seu espaço! Compartilhe suas opiniões, análises ou histórias sobre o Hotel. As melhores colunas serão selecionadas para a próxima edição do Journal Hub!
-                  </p>
-
-                  <form onSubmit={handleSubmission} className="space-y-4">
-                    <div>
-                      <label htmlFor="columnTitle" className="block text-sm font-bold mb-1" style={{ fontFamily: 'VT323, monospace' }}>
-                        Título da Coluna:
-                      </label>
-                      <input 
-                        type="text" 
-                        id="columnTitle" 
-                        className="w-full p-2 bg-gray-100 text-black border border-black" 
-                        placeholder="Ex: Minha Opinião sobre os Novos Mobis" 
-                        required
-                        style={{ 
-                          boxShadow: '1px 1px 0px 0px #1f2937',
-                          fontFamily: 'VT323, monospace'
-                        }}
-                      />
                     </div>
+                  )}
 
-                    <div>
-                      <label htmlFor="columnSection" className="block text-sm font-bold mb-1" style={{ fontFamily: 'VT323, monospace' }}>
-                        Seção Desejada:
-                      </label>
-                      <select 
-                        id="columnSection" 
-                        className="w-full p-2 bg-gray-100 text-black border border-black" 
-                        required
+                  {/* Page 2 - Eventos */}
+                  {currentPage === 2 && (
+                    <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
+                        fontFamily: 'Press Start 2P, cursive',
+                        textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                      }}>
+                        Eventos do Hotel
+                      </h2>
+                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
+                        Página em construção - Eventos especiais do Habbo Hotel serão exibidos aqui.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Page 3 - Entrevistas */}
+                  {currentPage === 3 && (
+                    <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
+                        fontFamily: 'Press Start 2P, cursive',
+                        textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                      }}>
+                        Entrevistas Exclusivas
+                      </h2>
+                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
+                        Página em construção - Entrevistas com personalidades do Habbo Hotel serão exibidas aqui.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Page 4 - Opinião */}
+                  {currentPage === 4 && (
+                    <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
+                        fontFamily: 'Press Start 2P, cursive',
+                        textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                      }}>
+                        Opinião da Comunidade
+                      </h2>
+                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
+                        Página em construção - Opiniões e artigos da comunidade serão exibidos aqui.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Page 5 - Fã Sites */}
+                  {currentPage === 5 && (
+                    <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
+                        fontFamily: 'Press Start 2P, cursive',
+                        textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                      }}>
+                        Destaque dos Fã Sites
+                      </h2>
+                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
+                        Página em construção - Destaques dos melhores fã sites da comunidade serão exibidos aqui.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+
+
+                {/* Page Navigation - Footer */}
+                <div className="mt-8 flex justify-center items-center border-t-2 border-black pt-4 relative" style={{ zIndex: 5 }}>
+                  <div className="flex items-center gap-4">
+                    {currentPage > 1 && (
+                      <Button
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-none border-2 border-black"
                         style={{ 
-                          boxShadow: '1px 1px 0px 0px #1f2937',
+                          boxShadow: '2px 2px 0px 0px #1f2937',
                           fontFamily: 'VT323, monospace'
                         }}
                       >
-                        <option value="">Selecione uma seção</option>
-                        <option value="opiniao">Opinião</option>
-                        <option value="destaques">Destaques do Hotel</option>
-                        <option value="eventos">Eventos</option>
-                        <option value="entrevistas">Entrevistas</option>
-                        <option value="fansites">Fã Sites</option>
-                        <option value="jogos-esportes">Jogos & Esportes do Hotel</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="columnContent" className="block text-sm font-bold mb-1" style={{ fontFamily: 'VT323, monospace' }}>
-                        Sua Coluna/Opinião:
-                      </label>
-                      <textarea 
-                        id="columnContent" 
-                        rows={8} 
-                        className="w-full p-2 bg-gray-100 text-black border border-black" 
-                        placeholder="Escreva sua coluna aqui..." 
-                        required
+                        <ChevronLeft className="w-4 h-4 mr-2" />
+                        Página Anterior
+                      </Button>
+                    )}
+                    
+                    <span className="text-sm font-bold px-4 py-2 bg-gray-100 border-2 border-black" style={{ 
+                      fontFamily: 'VT323, monospace',
+                      boxShadow: '2px 2px 0px 0px #1f2937'
+                    }}>
+                      Página {currentPage} de {totalPages}
+                    </span>
+                    
+                    {currentPage < totalPages && (
+                      <Button
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-none border-2 border-black"
                         style={{ 
-                          boxShadow: '1px 1px 0px 0px #1f2937',
+                          boxShadow: '2px 2px 0px 0px #1f2937',
                           fontFamily: 'VT323, monospace'
                         }}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="coverImage" className="block text-sm font-bold mb-1" style={{ fontFamily: 'VT323, monospace' }}>
-                        URL da Imagem de Capa (opcional):
-                      </label>
-                      <input 
-                        type="url" 
-                        id="coverImage" 
-                        className="w-full p-2 bg-gray-100 text-black border border-black" 
-                        placeholder="Ex: https://seusite.com/imagem-capa.png"
-                        style={{ 
-                          boxShadow: '1px 1px 0px 0px #1f2937',
-                          fontFamily: 'VT323, monospace'
-                        }}
-                      />
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      className="px-6 py-3 bg-blue-700 text-white text-lg rounded-sm hover:bg-blue-800 border-2 border-black transition-all duration-75"
-                      style={{ 
-                        boxShadow: '2px 2px 0px 0px #1f2937',
-                        fontFamily: 'VT323, monospace'
-                      }}
-                    >
-                      Enviar Coluna
-                    </button>
-                  </form>
-                </section>
+                      >
+                        Próxima Página
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
                 {/* Footer */}
-                <footer className="text-center mt-10 pt-6 border-t-4 border-black text-gray-700 text-sm" style={{ fontFamily: 'VT323, monospace' }}>
+                <footer className="text-center mt-6 pt-6 border-t-2 border-black text-gray-700 text-sm relative" style={{ fontFamily: 'VT323, monospace', zIndex: 5 }}>
                   <p>&copy; 2025 Journal Hub. Todos os direitos reservados. Feito com pixel art.</p>
                   <p className="mt-2">Contato: jornal@habbohub.com | Siga-nos nas redes sociais do Habbo!</p>
                   <div className="mt-4">

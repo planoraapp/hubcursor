@@ -95,7 +95,7 @@ export function CollapsibleAppSidebar() {
           <div className="w-full flex justify-center items-center">
             {isCollapsed ? (
               <img 
-                src="/assets/hub.gif" 
+                src="/assets/hubbeta.gif" 
                 alt="Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ imageRendering: 'pixelated' }}
@@ -106,7 +106,7 @@ export function CollapsibleAppSidebar() {
               />
             ) : (
               <img 
-                src="https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif" 
+                src="/assets/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ imageRendering: 'pixelated' }}
