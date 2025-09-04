@@ -21,7 +21,8 @@ export const Login: React.FC = () => {
     registerUser,
     loginWithPassword,
     checkExistingUser,
-    checkAuthStatus
+    checkAuthStatus,
+    createTestAccount
   } = useHubLogin();
   
   // Estados do formulário
@@ -220,13 +221,22 @@ export const Login: React.FC = () => {
                       </Button>
 
                       {/* Login com senha existente */}
-                      <div className="pt-4 border-t border-gray-200">
+                      <div className="pt-4 border-t border-gray-200 space-y-2">
                         <Button
                           onClick={() => setIsPasswordMode(true)}
                           variant="outline"
                           className="w-full"
                         >
                           🔐 Já tenho uma conta
+                        </Button>
+                        
+                        {/* Botão para criar conta de teste */}
+                        <Button
+                          onClick={createTestAccount}
+                          variant="outline"
+                          className="w-full bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                        >
+                          🧪 Criar Conta de Teste (Beebop)
                         </Button>
                       </div>
                     </div>

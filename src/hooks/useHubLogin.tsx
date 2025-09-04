@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { generateVerificationCode } from '@/config/hotels';
 import { getHotelConfig } from '@/config/hotels';
-import { AuthService } from '@/services/authService';
 
 interface HabboUser {
   id: string;
@@ -79,7 +78,7 @@ export const useHubLogin = () => {
     }
   };
 
-  // Registrar usuário no sistema (usando Supabase existente)
+  // Registrar usuário no sistema (simulado para demonstração)
   const registerUser = async (
     user: HabboUser,
     password: string
@@ -105,27 +104,25 @@ export const useHubLogin = () => {
     setIsLoading(true);
     
     try {
-      const result = await AuthService.registerUser(user, password);
+      // Simular registro bem-sucedido
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (result.success && result.user) {
-        toast({
-          title: "Conta criada com sucesso!",
-          description: "Agora você pode fazer login com sua senha",
-        });
-        
-        // Salvar dados do usuário no localStorage
-        localStorage.setItem('hubUser', JSON.stringify(result.user));
-        setCurrentUser(result.user);
-        
-        return true;
-      } else {
-        toast({
-          title: "Erro no cadastro",
-          description: result.error || "Erro ao criar conta",
-          variant: "destructive"
-        });
-        return false;
-      }
+      // Criar usuário com senha
+      const userWithPassword = {
+        ...user,
+        password: password // Em produção, isso seria hasheado
+      };
+      
+      // Salvar no localStorage (em produção, salvar no Supabase)
+      localStorage.setItem('hubUser', JSON.stringify(userWithPassword));
+      setCurrentUser(userWithPassword);
+      
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Agora você pode fazer login com sua senha",
+      });
+      
+      return true;
     } catch (error) {
       console.error('Erro:', error);
       toast({
@@ -139,7 +136,7 @@ export const useHubLogin = () => {
     }
   };
 
-  // Login com senha (usando Supabase existente)
+  // Login com senha (simulado para demonstração)
   const loginWithPassword = async (
     username: string,
     password: string,
@@ -157,27 +154,29 @@ export const useHubLogin = () => {
     setIsLoading(true);
     
     try {
-      const result = await AuthService.loginWithPassword(username, password, hotelId);
+      // Simular verificação de login
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (result.success && result.user) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${result.user.habbo_username}!`,
-        });
-        
-        // Salvar dados do usuário no localStorage
-        localStorage.setItem('hubUser', JSON.stringify(result.user));
-        setCurrentUser(result.user);
-        
-        return true;
-      } else {
-        toast({
-          title: "Erro no login",
-          description: result.error || "Usuário ou senha incorretos",
-          variant: "destructive"
-        });
-        return false;
+      // Verificar se usuário existe no localStorage (em produção, verificar no Supabase)
+      const savedUser = localStorage.getItem('hubUser');
+      if (savedUser) {
+        const user = JSON.parse(savedUser);
+        if (user.habbo_username === username && user.password === password) {
+          setCurrentUser(user);
+          toast({
+            title: "Login realizado com sucesso!",
+            description: `Bem-vindo, ${user.habbo_username}!`,
+          });
+          return true;
+        }
       }
+      
+      toast({
+        title: "Erro no login",
+        description: "Usuário ou senha incorretos",
+        variant: "destructive"
+      });
+      return false;
     } catch (error) {
       console.error('Erro:', error);
       toast({
@@ -191,13 +190,25 @@ export const useHubLogin = () => {
     }
   };
 
-  // Verificar se usuário já tem conta
+  // Verificar se usuário já tem conta (simulado para demonstração)
   const checkExistingUser = async (
     username: string,
     hotelId: string
   ): Promise<{ exists: boolean; needsPassword: boolean }> => {
     try {
-      return await AuthService.checkExistingUser(username, hotelId);
+      // Simular verificação
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verificar se usuário existe no localStorage (em produção, verificar no Supabase)
+      const savedUser = localStorage.getItem('hubUser');
+      if (savedUser) {
+        const user = JSON.parse(savedUser);
+        if (user.habbo_username === username) {
+          return { exists: true, needsPassword: true };
+        }
+      }
+      
+      return { exists: false, needsPassword: false };
     } catch (error) {
       console.error('Erro ao verificar usuário:', error);
       return { exists: false, needsPassword: false };
@@ -230,6 +241,31 @@ export const useHubLogin = () => {
     return null;
   };
 
+  // Criar conta de teste para Beebop
+  const createTestAccount = () => {
+    const testUser: HabboUser = {
+      id: 'hhbr-beebop',
+      habbo_username: 'Beebop',
+      habbo_motto: 'Código verificado: HUB-TEST',
+      habbo_avatar: 'https://www.habbo.com.br/habbo-imaging/avatarimage?user=Beebop&headonly=1',
+      hotel: 'br',
+      created_at: new Date().toISOString()
+    };
+    
+    const userWithPassword = {
+      ...testUser,
+      password: '151092'
+    };
+    
+    localStorage.setItem('hubUser', JSON.stringify(userWithPassword));
+    setCurrentUser(userWithPassword);
+    
+    toast({
+      title: "Conta de teste criada!",
+      description: "Usuário: Beebop, Senha: 151092",
+    });
+  };
+
   return {
     isLoading,
     currentUser,
@@ -240,6 +276,7 @@ export const useHubLogin = () => {
     checkExistingUser,
     logout,
     checkAuthStatus,
+    createTestAccount,
     isLoggedIn: !!currentUser
   };
 };
