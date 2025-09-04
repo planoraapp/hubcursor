@@ -136,7 +136,7 @@ export function CollapsibleAppSidebar() {
               <div className={`text-center ${isCollapsed ? 'px-1' : ''}`}>
                 <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} mb-2`}>
                   <img
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`}
+                    src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`}
                     alt={`Avatar de ${currentUser.habbo_username}`}
                     className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`}
                     onError={(e) => {
