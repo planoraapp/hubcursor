@@ -13,13 +13,13 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useDirectAuth } from '@/hooks/useDirectAuth';
+import { useHubLogin } from '@/hooks/useHubLogin';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
-  const { currentUser, isLoggedIn, logout } = useDirectAuth();
+  const { currentUser, isLoggedIn, logout } = useHubLogin();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
