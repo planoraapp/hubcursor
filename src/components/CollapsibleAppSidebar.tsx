@@ -132,24 +132,24 @@ export function CollapsibleAppSidebar() {
 
         <SidebarFooter className="p-4 border-t-2 border-black">
           <div className="space-y-2">
-            {isLoggedIn && currentUser ? (
-              <div className={`text-center ${isCollapsed ? 'px-1' : ''}`}>
-                <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} mb-2`}>
-                  <img
-                    src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`}
-                    alt={`Avatar de ${currentUser.habbo_username}`}
-                    className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`;
-                    }}
-                  />
-                  {!isCollapsed && (
-                    <span className="habbo-text text-sm font-bold text-[#8B4513] truncate">
-                      {currentUser.habbo_username}
-                    </span>
-                  )}
-                </div>
+                         {isLoggedIn && currentUser ? (
+               <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
+                 <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-2`}>
+                   <img
+                     src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`}
+                     alt={`Avatar de ${currentUser.habbo_username}`}
+                     className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-10 h-10'}`}
+                     onError={(e) => {
+                       const target = e.target as HTMLImageElement;
+                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=s&direction=2&head_direction=3&headonly=1`;
+                     }}
+                   />
+                   {!isCollapsed && (
+                     <span className="habbo-text text-sm font-bold text-[#8B4513] truncate">
+                       {currentUser.habbo_username}
+                     </span>
+                   )}
+                 </div>
                 {!isCollapsed && (
                   <TooltipProvider>
                     <Tooltip>
