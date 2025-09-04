@@ -47,24 +47,7 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
   const [showVisitorModal, setShowVisitorModal] = useState(false);
 
   if (!isOwner) {
-    return (
-      <div className="w-full bg-muted/50 border-b border-border p-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground font-medium font-volter">
-            👁️ Modo Visitante
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowVisitorModal(true)}
-            className="bg-white/20 text-white hover:bg-white/30 volter-font border-white/30"
-          >
-            <Package className="w-4 h-4 mr-1" />
-            Ver Opções da Home
-          </Button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const handleWallpaperSelect = (type: 'color' | 'image' | 'repeat' | 'cover', value: string) => {
