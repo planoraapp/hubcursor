@@ -127,6 +127,9 @@ export const useHubLogin = () => {
         description: "Agora você pode fazer login com sua senha",
       });
       
+      // Redirecionar para a página inicial após registro
+      navigate('/');
+      
       return true;
     } catch (error) {
       console.error('Erro:', error);
@@ -172,6 +175,8 @@ export const useHubLogin = () => {
             title: "Login realizado com sucesso!",
             description: `Bem-vindo, ${user.habbo_username}!`,
           });
+          // Redirecionar para a página inicial após login
+          navigate('/');
           return true;
         }
       }
@@ -269,6 +274,9 @@ export const useHubLogin = () => {
       title: "Conta de teste criada!",
       description: "Usuário: Beebop, Senha: 151092",
     });
+    
+    // Redirecionar para a página inicial após criar conta
+    navigate('/');
   };
 
   return {

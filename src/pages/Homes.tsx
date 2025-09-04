@@ -10,7 +10,7 @@ import { Search, User, Home, Calendar, MapPin, Star, ExternalLink, UserCheck } f
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useHubLogin } from '@/hooks/useHubLogin';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { HomePreviewCard } from '@/components/HomePreviewCard';
 
@@ -28,7 +28,7 @@ interface HabboUser {
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { habboAccount, isLoggedIn } = useSimpleAuth();
+  const { currentUser, isLoggedIn } = useHubLogin();
   const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
@@ -120,9 +120,9 @@ const Homes: React.FC = () => {
                 
                 {/* Botão Minha Home */}
                 <div className="mt-4">
-                  {isLoggedIn && habboAccount ? (
+                  {isLoggedIn && currentUser ? (
                     <Button 
-                      onClick={() => navigate(`/homes/${habboAccount.habbo_name}`)}
+                      onClick={() => navigate(`/homes/${currentUser.habbo_username}`)}
                       className="habbo-button-green volter-font px-6 py-2"
                     >
                       <UserCheck className="w-4 h-4 mr-2" />
