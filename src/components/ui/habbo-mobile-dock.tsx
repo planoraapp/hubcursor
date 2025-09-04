@@ -69,8 +69,8 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     };
     
     const newsItem: DockItem = { 
-      id: 'noticias', 
-      label: 'Notícias', 
+      id: 'journal', 
+      label: 'Jornal', 
       icon: '/assets/news.png',
       order: 4 
     };
@@ -87,7 +87,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
 
   // Items para o dropdown "Mais" (todas as outras páginas)
   const dropdownItems: DockItem[] = useMemo(() => {
-    const mainIds = new Set(['home', 'homes', 'console', 'noticias', 'tools']);
+    const mainIds = new Set(['home', 'homes', 'console', 'journal', 'tools']);
     const filtered = menuItems.filter(item => !mainIds.has(item.id));
     
     // Adicionar itens padrão se não existirem
