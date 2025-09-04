@@ -6,6 +6,7 @@ const TamagotchiCompact = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPet, setCurrentPet] = useState('monkey');
   const [currentDirection, setCurrentDirection] = useState(0);
+  const [imageError, setImageError] = useState(false);
   
   // Estados básicos do Tamagotchi
   const [hunger, setHunger] = useState(100);
@@ -13,19 +14,139 @@ const TamagotchiCompact = () => {
   const [happiness, setHappiness] = useState(100);
   const [age, setAge] = useState(0);
 
-  // Pets disponíveis
+  // Pets disponíveis - usando imagens reais dos SWFs do Habbo
   const pets = [
-    { id: 'monkey', name: '🐒 Macaco', emoji: '🐒' },
-    { id: 'frog', name: '🐸 Sapo', emoji: '🐸' },
-    { id: 'gnome', name: '🧙‍♂️ Gnomo', emoji: '🧙‍♂️' },
-    { id: 'bear', name: '🐻 Urso', emoji: '🐻' }
+    {
+      id: 'monkey',
+      name: '🐒 Macaco',
+      emoji: '🐒',
+      // Usando sprites reais extraídos dos SWFs
+      useEmoji: false,
+      // URLs dos sprites reais organizados (melhor animação)
+      spriteUrls: {
+        0: '/assets/pets-organized-complete/monkey/monkey_idle_0.png',
+        1: '/assets/pets-organized-complete/monkey/monkey_idle_1.png',
+        2: '/assets/pets-organized-complete/monkey/monkey_idle_2.png',
+        3: '/assets/pets-organized-complete/monkey/monkey_idle_3.png',
+        7: '/assets/pets-organized-complete/monkey/monkey_idle_7.png'
+      }
+    },
+    {
+      id: 'dog',
+      name: '🐕 Cachorro',
+      emoji: '🐕',
+      useEmoji: false,
+      spriteUrls: {
+        0: '/assets/pets-organized-complete/dog/dog_idle_0.png',
+        1: '/assets/pets-organized-complete/dog/dog_idle_1.png',
+        2: '/assets/pets-organized-complete/dog/dog_idle_2.png',
+        3: '/assets/pets-organized-complete/dog/dog_idle_3.png',
+        7: '/assets/pets-organized-complete/dog/dog_idle_7.png'
+      }
+    },
+    {
+      id: 'cat',
+      name: '🐱 Gato',
+      emoji: '🐱',
+      useEmoji: false,
+      spriteUrls: {
+        0: '/assets/pets-organized-complete/cat/cat_idle_0.png',
+        1: '/assets/pets-organized-complete/cat/cat_idle_1.png',
+        2: '/assets/pets-organized-complete/cat/cat_idle_2.png',
+        3: '/assets/pets-organized-complete/cat/cat_idle_3.png',
+        7: '/assets/pets-organized-complete/cat/cat_idle_7.png'
+      }
+    },
+    {
+      id: 'bear',
+      name: '🐻 Urso',
+      emoji: '🐻',
+      useEmoji: false,
+      spriteUrls: {
+        0: '/assets/pets-organized-complete/bear/bear_idle_0.png',
+        1: '/assets/pets-organized-complete/bear/bear_idle_1.png',
+        2: '/assets/pets-organized-complete/bear/bear_idle_2.png',
+        3: '/assets/pets-organized-complete/bear/bear_idle_3.png',
+        7: '/assets/pets-organized-complete/bear/bear_idle_7.png'
+      }
+    },
+    {
+      id: 'dragon',
+      name: '🐉 Dragão',
+      emoji: '🐉',
+      useEmoji: false,
+      spriteUrls: {
+        0: '/assets/pets-organized-complete/dragon/dragon_idle_0.png',
+        2: '/assets/pets-organized-complete/dragon/dragon_idle_2.png',
+        3: '/assets/pets-organized-complete/dragon/dragon_idle_3.png',
+        5: '/assets/pets-organized-complete/dragon/dragon_idle_5.png',
+        7: '/assets/pets-organized-complete/dragon/dragon_idle_7.png'
+      }
+    }
   ];
 
   const currentPetData = pets.find(p => p.id === currentPet) || pets[0];
 
-  // Função para rotacionar o pet
+  // Função para obter a imagem do pet
+  const getPetImage = () => {
+    // Se está configurado para usar emoji ou se há erro na imagem
+    if (currentPetData.useEmoji || imageError) {
+      console.log('🔄 [Tamagotchi] Usando emoji com rotação CSS');
+      return currentPetData.emoji;
+    }
+    
+    // Tentar usar sprite baseado na direção atual
+    const spriteUrl = currentPetData.spriteUrls?.[currentDirection];
+    if (spriteUrl) {
+      console.log('️ [Tamagotchi] Tentando carregar sprite:', spriteUrl);
+      return spriteUrl;
+    }
+    
+    // Fallback para emoji
+    console.log('🔄 [Tamagotchi] Fallback para emoji');
+    return currentPetData.emoji;
+  };
+
+  // Função para verificar se deve usar sprite ou emoji
+  const shouldUseSprite = () => {
+    // Se há erro na imagem, usar emoji
+    if (imageError) return false;
+    
+    // Se está configurado para usar emoji, usar emoji
+    if (currentPetData.useEmoji) return false;
+    
+    // Se não há sprite para a direção atual, usar emoji
+    const spriteUrl = currentPetData.spriteUrls?.[currentDirection];
+    if (!spriteUrl) return false;
+    
+    return true;
+  };
+
+  // Função para obter o estilo de rotação do pet
+  const getPetRotationStyle = () => {
+    // Para emojis, usar rotação CSS suave
+    return {
+      transform: `rotate(${currentDirection * 45}deg)`,
+      transition: 'transform 0.3s ease-in-out',
+      filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))' // Adicionar sombra para melhor visual
+    };
+  };
+
+  // Função para rotacionar o pet (usando apenas direções disponíveis)
   const rotatePet = () => {
-    setCurrentDirection((prev) => (prev + 1) % 8);
+    const availableDirections = Object.keys(currentPetData.spriteUrls || {}).map(Number).sort((a, b) => a - b);
+    
+    if (availableDirections.length === 0) {
+      // Se não há sprites, usar rotação CSS com emoji
+      setCurrentDirection((prev) => (prev + 1) % 8);
+    } else {
+      // Usar apenas as direções disponíveis
+      const currentIndex = availableDirections.indexOf(currentDirection);
+      const nextIndex = (currentIndex + 1) % availableDirections.length;
+      setCurrentDirection(availableDirections[nextIndex]);
+    }
+    
+    setImageError(false); // Reset error state when rotating
   };
 
   // Função para alimentar
@@ -66,7 +187,7 @@ const TamagotchiCompact = () => {
   return (
     <div className="tamagotchi-frame-outer">
       <div className="tamagotchi-header-bar">
-        <div className="tamagotchi-title">?? Tamagotchi Habbo</div>
+        <div className="tamagotchi-title"> Tamagotchi Habbo</div>
         <div className="tamagotchi-pattern"></div>
       </div>
       
@@ -76,11 +197,31 @@ const TamagotchiCompact = () => {
           <div 
             className="w-16 h-16 mx-auto mb-2 cursor-pointer hover:scale-110 transition-transform"
             onClick={rotatePet}
-            title="Clique para rotacionar"
+            title={`Clique para rotacionar (direção atual: ${currentDirection}) - Direções: ${Object.keys(currentPetData.spriteUrls || {}).join(', ')}`}
           >
-            <div className="text-4xl">
-              {currentPetData.emoji}
-            </div>
+            {/* Pet Image ou Emoji com Rotação */}
+            {!shouldUseSprite() ? (
+              <div 
+                className="text-4xl flex items-center justify-center w-full h-full"
+                style={getPetRotationStyle()}
+              >
+                {currentPetData.emoji}
+              </div>
+            ) : (
+              <img
+                src={getPetImage()}
+                alt={currentPetData.name}
+                className="w-full h-full object-contain"
+                onError={() => {
+                  console.log('❌ [Tamagotchi] Erro ao carregar sprite:', getPetImage());
+                  setImageError(true);
+                }}
+                onLoad={() => {
+                  console.log('✅ [Tamagotchi] Sprite carregado com sucesso!');
+                }}
+                style={{ imageRendering: 'pixelated' }} // Para manter qualidade pixel art
+              />
+            )}
           </div>
           
           {/* Pet Name */}
@@ -145,7 +286,7 @@ const TamagotchiCompact = () => {
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="volter-font text-xl text-center">
-              🐾 Tamagotchi Habbo - {currentPetData.name}
+              Tamagotchi Habbo - {currentPetData.name}
             </DialogTitle>
           </DialogHeader>
           
@@ -158,7 +299,10 @@ const TamagotchiCompact = () => {
                   <label className="block text-white text-sm volter-font mb-2">Escolha seu pet:</label>
                   <select 
                     value={currentPet}
-                    onChange={(e) => setCurrentPet(e.target.value)}
+                    onChange={(e) => {
+                      setCurrentPet(e.target.value);
+                      setImageError(false); // Reset error when changing pet
+                    }}
                     className="bg-slate-700 text-white border border-slate-500 rounded px-2 py-1 text-sm volter-font w-full"
                   >
                     {pets.map(pet => (
@@ -173,13 +317,31 @@ const TamagotchiCompact = () => {
                 <div 
                   className="w-24 h-24 mx-auto mb-4 cursor-pointer hover:scale-110 transition-transform bg-slate-500 rounded-lg flex items-center justify-center"
                   onClick={rotatePet}
-                  title={`Clique para rotacionar (direção atual: ${currentDirection})`}
+                  title={`Clique para rotacionar (direção atual: ${currentDirection}) - Direções: ${Object.keys(currentPetData.spriteUrls || {}).join(', ')}`}
                 >
-                  <div className="text-6xl transform" style={{
-                    transform: `rotate(${currentDirection * 45}deg)`
-                  }}>
-                    {currentPetData.emoji}
-                  </div>
+                  {/* Pet Image ou Emoji com Rotação */}
+                  {!shouldUseSprite() ? (
+                    <div 
+                      className="text-6xl flex items-center justify-center w-full h-full"
+                      style={getPetRotationStyle()}
+                    >
+                      {currentPetData.emoji}
+                    </div>
+                  ) : (
+                    <img
+                      src={getPetImage()}
+                      alt={currentPetData.name}
+                      className="w-full h-full object-contain"
+                      onError={() => {
+                        console.log('❌ [Tamagotchi] Erro ao carregar sprite no modal:', getPetImage());
+                        setImageError(true);
+                      }}
+                      onLoad={() => {
+                        console.log('✅ [Tamagotchi] Sprite carregado no modal!');
+                      }}
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
                 </div>
                 
                 {/* Stats */}
@@ -279,7 +441,7 @@ const TamagotchiCompact = () => {
                 {hunger < 30 && "🍽️ Seu pet está com fome!"}
                 {energy < 30 && "😴 Seu pet está cansado!"}
                 {happiness < 30 && "😢 Seu pet está triste!"}
-                {hunger >= 70 && energy >= 70 && happiness >= 70 && "😊 Seu pet está feliz e saudável!"}
+                {hunger >= 70 && energy >= 70 && happiness >= 70 && " Seu pet está feliz e saudável!"}
               </div>
             </div>
             
@@ -291,6 +453,7 @@ const TamagotchiCompact = () => {
                 <p>• Use os botões para cuidar do seu pet</p>
                 <p>• Mantenha as barras sempre altas!</p>
                 <p>• Os stats diminuem automaticamente com o tempo</p>
+                <p><strong>🐒 Pets:</strong> Imagens reais baixadas do Habbo!</p>
               </div>
             </div>
           </div>

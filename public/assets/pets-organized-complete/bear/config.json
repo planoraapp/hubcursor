@@ -1,0 +1,23 @@
+{
+  "name": "bear",
+  "id": "bear",
+  "sprites": {
+    "idle": {
+      "0": "bear_idle_0.png",
+      "1": "bear_idle_1.png",
+      "2": "bear_idle_2.png",
+      "3": "bear_idle_3.png",
+      "7": "bear_idle_7.png"
+    }
+  },
+  "totalSprites": 5,
+  "directions": [
+    0,
+    1,
+    2,
+    3,
+    7
+  ],
+  "status": "organized_complete",
+  "timestamp": "2025-09-03T22:45:02.386Z"
+}

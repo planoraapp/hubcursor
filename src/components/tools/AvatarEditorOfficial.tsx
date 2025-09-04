@@ -302,38 +302,6 @@ const AvatarEditorOfficial = () => {
     }));
   };
 
-  // Estado para seções expandidas
-  const [expandedSections, setExpandedSections] = useState({
-    size: false,
-    expressions: false,
-    actions: false,
-    drinks: false
-  });
-
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  // Funções de rotação
-  const rotateLeft = () => {
-    setCurrentFigure(prev => ({
-      ...prev,
-      direction: prev.direction === 0 ? 7 : prev.direction - 1,
-      headDirection: prev.headDirection === 0 ? 7 : prev.headDirection - 1
-    }));
-  };
-
-  const rotateRight = () => {
-    setCurrentFigure(prev => ({
-      ...prev,
-      direction: prev.direction === 7 ? 0 : prev.direction + 1,
-      headDirection: prev.headDirection === 7 ? 0 : prev.headDirection + 1
-    }));
-  };
-
   // Gerar URL do avatar - Formato exato do HabboTemplarios
   const generateAvatarUrl = (colorHex?: string) => {
     // Corpo base por gênero
