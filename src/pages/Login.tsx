@@ -215,7 +215,7 @@ export const Login: React.FC = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 mt-1">
                           Hotel: {HOTELS_CONFIG[selectedHotel].name}
                         </p>
                       </div>
@@ -257,13 +257,13 @@ export const Login: React.FC = () => {
                         <p className="text-sm text-blue-800 font-bold">
                           Código gerado: {generatedCode}
                         </p>
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-sm text-blue-600 mt-1">
                           1. Copie o código acima
                         </p>
-                        <p className="text-xs text-blue-600">
+                        <p className="text-sm text-blue-600">
                           2. Cole em sua motto no Habbo {HOTELS_CONFIG[selectedHotel].name}
                         </p>
-                        <p className="text-xs text-blue-600">
+                        <p className="text-sm text-blue-600">
                           3. Clique em "Verificar Código" abaixo
                         </p>
                       </div>
@@ -314,7 +314,7 @@ export const Login: React.FC = () => {
                             <p className="text-sm text-green-800 font-bold">
                               {verifiedUser.habbo_username}
                             </p>
-                            <p className="text-xs text-green-600">
+                            <p className="text-sm text-green-600">
                               Hotel: {HOTELS_CONFIG[selectedHotel].name}
                             </p>
                           </div>
@@ -473,7 +473,7 @@ export const Login: React.FC = () => {
                           <p className="text-sm text-blue-800 font-bold">
                             {currentUser.habbo_username}
                           </p>
-                          <p className="text-xs text-blue-600">
+                          <p className="text-sm text-blue-600">
                             Hotel: {HOTELS_CONFIG[selectedHotel]?.name || 'Desconhecido'}
                           </p>
                         </div>

@@ -232,7 +232,7 @@ const AdminPanel = () => {
                                   <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                                     {article.content}
                                   </p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>
@@ -372,7 +372,7 @@ const AdminPanel = () => {
                                   <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                                     {article.content}
                                   </p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>
@@ -447,7 +447,7 @@ const AdminPanel = () => {
                                   <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                                     {article.content}
                                   </p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>
@@ -523,11 +523,11 @@ const AdminPanel = () => {
                                     {article.content}
                                   </p>
                                   <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded">
-                                    <p className="text-xs text-red-800">
+                                    <p className="text-sm text-red-800">
                                       <strong>Motivo da rejeição:</strong> {article.reason}
                                     </p>
                                   </div>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>

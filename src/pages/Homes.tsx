@@ -225,10 +225,10 @@ const Homes: React.FC = () => {
                               {user.habbo_name}
                             </CardTitle>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge className={`text-xs volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
+                              <Badge className={`text-sm volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
                                 {user.is_online ? 'Online' : 'Offline'}
                               </Badge>
-                              <Badge className="bg-white/20 text-white text-xs volter-font">
+                              <Badge className="bg-white/20 text-white text-sm volter-font">
                                 {user.hotel?.toUpperCase() || 'BR'}
                               </Badge>
                             </div>
@@ -249,7 +249,7 @@ const Homes: React.FC = () => {
                         {user.created_at && (
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-blue-500" />
-                            <span className="text-xs text-gray-600 volter-font">
+                            <span className="text-sm text-gray-600 volter-font">
                               Descoberto em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>

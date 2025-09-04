@@ -58,9 +58,9 @@ const Tools = () => {
                       Explore todos os itens de mão que os mobis entregam no hotel! Busque, filtre e copie IDs facilmente.
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center mb-4">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Busca Avançada</span>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Preview Avatar</span>
-                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Copy ID</span>
+                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Busca Avançada</span>
+                      <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Preview Avatar</span>
+                      <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Copy ID</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -81,10 +81,10 @@ const Tools = () => {
                       Crie e personalize seu avatar Habbo com milhares de opções de roupas, acessórios e cores!
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center mb-4">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Preview 3D</span>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Download PNG</span>
-                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Expressões</span>
-                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded volter-font">Ações</span>
+                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Preview 3D</span>
+                      <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Download PNG</span>
+                      <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Expressões</span>
+                      <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded volter-font">Ações</span>
                     </div>
                   </CardContent>
                 </Card>

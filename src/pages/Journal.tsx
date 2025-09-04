@@ -301,7 +301,7 @@ const Journal = () => {
                           <a href="#" className="text-blue-700 hover:underline text-sm sm:text-base">
                             Leia o artigo completo...
                           </a>
-                          <p className="text-xs text-gray-500 mt-2" style={{ fontFamily: 'VT323, monospace' }}>
+                          <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'VT323, monospace' }}>
                             Por: {newsArticles[0].author} - {new Date(newsArticles[0].date).toLocaleDateString('pt-BR')}
                           </p>
                         </section>
@@ -370,7 +370,7 @@ const Journal = () => {
                           <a href="#" className="text-blue-700 hover:underline text-sm sm:text-base">
                             Leia a análise completa...
                           </a>
-                          <p className="text-xs text-gray-500 mt-2" style={{ fontFamily: 'VT323, monospace' }}>
+                          <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'VT323, monospace' }}>
                             Por: {newsArticles[1].author} - {new Date(newsArticles[1].date).toLocaleDateString('pt-BR')}
                           </p>
                         </section>
@@ -404,7 +404,7 @@ const Journal = () => {
                                     <h4 className="font-bold text-base" style={{ fontFamily: 'VT323, monospace' }}>
                                       {ad.title}
                                     </h4>
-                                    <p className="text-xs text-gray-600" style={{ fontFamily: 'VT323, monospace' }}>
+                                    <p className="text-sm text-gray-600" style={{ fontFamily: 'VT323, monospace' }}>
                                       {ad.price && `Preço: ${ad.price}`}
                                     </p>
                                   </div>
@@ -446,7 +446,7 @@ const Journal = () => {
                           }}>
                             Envie Sua Coluna
                           </h3>
-                          <p className="text-xs text-gray-700 mb-2" style={{ fontFamily: 'VT323, monospace' }}>
+                          <p className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'VT323, monospace' }}>
                             Quer ver sua coluna publicada?
                           </p>
                           <Button 
