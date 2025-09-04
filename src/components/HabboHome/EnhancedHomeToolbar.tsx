@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { AssetSelector } from './AssetSelector';
-import { WallpaperSelector } from './WallpaperSelector';
-import { WidgetSelector } from './WidgetSelector';
+import { Package } from 'lucide-react';
+import { HubHomeAssets } from './HubHomeAssets';
 
 interface EnhancedHomeToolbarProps {
   isEditMode: boolean;
@@ -40,54 +39,38 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
   onStickerSelect,
   onWidgetAdd
 }) => {
-  const [showWallpaperSelector, setShowWallpaperSelector] = useState(false);
-  const [showStickerSelector, setShowStickerSelector] = useState(false);
-  const [showWidgetSelector, setShowWidgetSelector] = useState(false);
+  const [showAssetsModal, setShowAssetsModal] = useState(false);
+  const [currentAssetType, setCurrentAssetType] = useState<'stickers' | 'widgets' | 'backgrounds'>('stickers');
 
   if (!isOwner) {
-    return (
-      <div className="w-full bg-muted/50 border-b border-border p-3 text-center">
-        <span className="text-sm text-muted-foreground font-medium font-volter">
-          👁️ Modo Visitante
-        </span>
-      </div>
-    );
+    return null;
   }
 
-  const handleWallpaperSelect = (type: 'color' | 'image' | 'repeat' | 'cover', value: string) => {
-    if (type === 'color') {
-      onBackgroundChange('color', value);
-    } else if (type === 'repeat') {
-      onBackgroundChange('repeat', value);
-    } else {
-      onBackgroundChange('cover', value);
+  // Se não está em modo de edição, não mostra nada (o botão está no centro da página)
+  if (!isEditMode) {
+    return null;
+  }
+
+  const handleAssetSelect = (asset: any) => {
+    console.log('🎯 Asset selecionado:', asset);
+    
+    if (asset.type === 'background') {
+      // Para backgrounds, usar o callback existente
+      onBackgroundChange('cover', asset.src);
+    } else if (asset.type === 'sticker') {
+      // Para stickers, usar o callback existente
+      onStickerSelect(asset.id, asset.src, asset.category);
+    } else if (asset.type === 'widget') {
+      // Para widgets, usar o callback existente
+      onWidgetAdd(asset.id);
     }
-    setShowWallpaperSelector(false);
+    
+    setShowAssetsModal(false);
   };
 
-  const handleStickerSelectInternal = (asset: any) => {
-    console.log('🎯 Sticker selecionado no toolbar:', asset);
-    
-    // Generate random position for the sticker
-    const x = Math.random() * (1080 - 100) + 50;
-    const y = Math.random() * (1800 - 100) + 50;
-    
-    // Call the parent callback with proper parameters
-    onStickerSelect(asset.id, asset.url || asset.src, asset.category || 'outros');
-    setShowStickerSelector(false);
-  };
-
-  const handleWidgetAdd = async (widgetType: string): Promise<boolean> => {
-    try {
-      const success = await onWidgetAdd(widgetType);
-      if (success) {
-        setShowWidgetSelector(false);
-      }
-      return success;
-    } catch (error) {
-      console.error('❌ Erro ao adicionar widget:', error);
-      return false;
-    }
+  const handleOpenAssetsModal = (type: 'stickers' | 'widgets' | 'backgrounds') => {
+    setCurrentAssetType(type);
+    setShowAssetsModal(true);
   };
 
   const handleCancel = () => {
@@ -101,109 +84,71 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
 
   return (
     <>
-      {/* Single Horizontal Bar */}
-      <div className={`
-        w-full max-w-3xl mx-auto ml-64 bg-card border border-border rounded-lg shadow-xl overflow-hidden
-        transform transition-all duration-700 ease-out z-50 relative pointer-events-auto
-        ${isEditMode 
-          ? 'translate-y-0 opacity-100 scale-100 visible' 
-          : '-translate-y-full opacity-0 scale-95 pointer-events-none invisible'
-        }
-      `}>
-        <div className="bg-gradient-to-r from-primary/10 to-accent/10 px-6 py-3">
-          <div className="flex items-center justify-between">
-            
-            {/* Left: Only Edit Button */}
-            <div className="flex items-center">
-              <button
-                onClick={onToggleEditMode}
-                className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-105 pointer-events-auto"
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
-                  backgroundSize: 'contain',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'center',
-                  imageRendering: 'pixelated',
-                  transform: 'scaleX(-1)'
-                }}
-                title="Sair do Modo de Edição"
-              />
-            </div>
+      {/* Barra de Edição ao lado da Home */}
+      <div className="fixed top-4 right-4 z-50 space-y-3">
+        {/* Botão Sair da Edição */}
+        <Button
+          onClick={onToggleEditMode}
+          className="bg-red-500 hover:bg-red-600 text-white font-bold volter-font border-2 border-black shadow-lg"
+          size="lg"
+        >
+          ❌ Sair da Edição
+        </Button>
 
-            {/* Center: Action Buttons */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowWallpaperSelector(true)}
-                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
-              >
-                🖼️ Papel de Parede
-              </Button>
+        {/* Botões de Edição */}
+        <div className="space-y-2">
+          <Button
+            onClick={() => handleOpenAssetsModal('backgrounds')}
+            className="bg-blue-500 hover:bg-blue-600 text-white font-bold volter-font border-2 border-black shadow-lg w-full"
+            size="lg"
+          >
+            🖼️ Backgrounds
+          </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowStickerSelector(true)}
-                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
-              >
-                ✨ Adesivos
-              </Button>
+          <Button
+            onClick={() => handleOpenAssetsModal('stickers')}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold volter-font border-2 border-black shadow-lg w-full"
+            size="lg"
+          >
+            ✨ Stickers
+          </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowWidgetSelector(true)}
-                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
-              >
-                📦 Widgets
-              </Button>
-            </div>
+          <Button
+            onClick={() => handleOpenAssetsModal('widgets')}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-bold volter-font border-2 border-black shadow-lg w-full"
+            size="lg"
+          >
+            📦 Widgets
+          </Button>
+        </div>
 
-            {/* Right: Save/Cancel */}
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleCancel}
-                className="flex items-center gap-2 text-xs font-volter pointer-events-auto"
-              >
-                ❌ Cancelar
-              </Button>
-              <Button 
-                size="sm"
-                onClick={handleSave}
-                className="flex items-center gap-2 text-xs font-volter bg-primary hover:bg-primary/90 pointer-events-auto"
-              >
-                ✅ Salvar
-              </Button>
-            </div>
-          </div>
+        {/* Botões de Ação */}
+        <div className="space-y-2">
+          <Button 
+            onClick={handleCancel}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-bold volter-font border-2 border-black shadow-lg w-full"
+            size="lg"
+          >
+            ❌ Cancelar
+          </Button>
+          <Button 
+            onClick={handleSave}
+            className="bg-green-500 hover:bg-green-600 text-white font-bold volter-font border-2 border-black shadow-lg w-full"
+            size="lg"
+          >
+            ✅ Salvar
+          </Button>
         </div>
       </div>
 
-      {/* Modal Selectors */}
-      <WallpaperSelector
-        open={showWallpaperSelector}
-        onOpenChange={setShowWallpaperSelector}
-        onWallpaperSelect={handleWallpaperSelect}
-      />
-
-      <AssetSelector
-        open={showStickerSelector}
-        onOpenChange={setShowStickerSelector}
-        onAssetSelect={handleStickerSelectInternal}
-        type="stickers"
-        title="Escolher Adesivo"
-      />
-
-      <WidgetSelector
-        isOpen={showWidgetSelector}
-        onClose={() => setShowWidgetSelector(false)}
-        onWidgetAdd={handleWidgetAdd}
-      />
+      {/* Modal de Assets das Hub Homes */}
+      {showAssetsModal && (
+        <HubHomeAssets
+          type={currentAssetType}
+          onSelect={handleAssetSelect}
+          onClose={() => setShowAssetsModal(false)}
+        />
+      )}
     </>
   );
 };

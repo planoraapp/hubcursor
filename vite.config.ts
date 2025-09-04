@@ -7,16 +7,38 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 5173,
+    // Configuração para servir assets estáticos corretamente
+    fs: {
+      allow: ['..']
+    },
+    // Configuração para servir arquivos estáticos
+    middlewareMode: false,
+    // Headers para CORS
+    cors: true
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    // Reabilitar componentTagger em desenvolvimento
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Configuração para assets públicos
+  publicDir: 'public',
+  build: {
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: 'assets/[name].[hash][extname]'
+      }
+    }
+  },
+  // Configuração para servir arquivos estáticos em desenvolvimento
+  optimizeDeps: {
+    include: ['react', 'react-dom']
+  }
 }));

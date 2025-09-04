@@ -14,11 +14,14 @@ import HabboHomeV2 from './pages/HabboHomeV2'
 import Home from './pages/Home'
 import Homes from './pages/Homes'
 import Login from './pages/Login'
-import Noticias from './pages/Noticias'
+import Journal from './pages/Journal'
+import AdminPanel from './pages/AdminPanel'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
 import HanditemCatalog from './pages/HanditemCatalog'
+import AvatarEditor from './pages/AvatarEditor'
+import AltCodesPage from './pages/AltCodes'
 import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
@@ -62,7 +65,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/noticias",
-    element: <Noticias />,
+    element: <Journal />,
+  },
+  {
+    path: "/journal",
+    element: <Journal />,
+  },
+  {
+    path: "/admin-panel",
+    element: <AdminPanel />,
   },
   {
     path: "/emblemas",
@@ -79,6 +90,14 @@ const router = createBrowserRouter([
   {
     path: "/ferramentas/handitems",
     element: <HanditemCatalog />,
+  },
+  {
+    path: "/ferramentas/avatar-editor",
+    element: <AvatarEditor />,
+  },
+  {
+    path: "/ferramentas/alt-codes",
+    element: <AltCodesPage />,
   },
   {
     path: "/tools",

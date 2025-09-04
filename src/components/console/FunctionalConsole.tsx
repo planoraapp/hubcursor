@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, Camera, RefreshCw, Loader2, AlertCircle, Trophy, Users, Home, Crown, Star, Activity, Heart, UserPlus, MessageSquare, Search } from 'lucide-react';
+import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Trophy, Home, Crown } from 'lucide-react';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 import { PixelFrame } from './PixelFrame';
 import { BeebopProfile } from './BeebopProfile';
 import { cn } from '@/lib/utils';
 
-type TabType = 'account' | 'feed' | 'photos' | 'chat' | 'search';
+type TabType = 'account' | 'feed' | 'photos' | 'chat';
 
 interface TabButton {
   id: TabType;
@@ -22,7 +22,7 @@ interface TabButton {
 const tabs: TabButton[] = [
   {
     id: 'account',
-    label: 'Minha Conta',
+    label: 'My Info',
     icon: <User className="w-4 h-4" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
@@ -30,35 +30,27 @@ const tabs: TabButton[] = [
   },
   {
     id: 'feed',
-    label: 'Feed',
-    icon: <Activity className="w-4 h-4" />,
-    color: '#2D3748',
-    hoverColor: '#4A5568',
-    activeColor: '#1A202C'
+    label: 'Friends',
+    icon: <Users className="w-4 h-4" />,
+    color: '#FDCC00',
+    hoverColor: '#FEE100',
+    activeColor: '#FBCC00'
   },
   {
     id: 'photos',
-    label: 'Fotos',
-    icon: <Camera className="w-4 h-4" />,
-    color: '#DC2626',
-    hoverColor: '#EF4444',
-    activeColor: '#B91C1C'
+    label: 'Find',
+    icon: <Search className="w-4 h-4" />,
+    color: '#FDCC00',
+    hoverColor: '#FEE100',
+    activeColor: '#FBCC00'
   },
   {
     id: 'chat',
-    label: 'Chat',
+    label: 'Help',
     icon: <MessageSquare className="w-4 h-4" />,
-    color: '#9333EA',
-    hoverColor: '#A855F7',
-    activeColor: '#7C3AED'
-  },
-  {
-    id: 'search',
-    label: 'Buscar',
-    icon: <Search className="w-4 h-4" />,
-    color: '#8B4513',
-    hoverColor: '#A0522D',
-    activeColor: '#654321'
+    color: '#FDCC00',
+    hoverColor: '#FEE100',
+    activeColor: '#FBCC00'
   }
 ];
 
@@ -88,8 +80,6 @@ export const FunctionalConsole: React.FC = () => {
         return <PhotosTab badges={badges} rooms={rooms} photos={photos} isLoading={isLoading} />;
       case 'chat':
         return <ChatTab friends={friends} isLoading={isLoading} />;
-      case 'search':
-        return <SearchTab onStartConversation={(targetName) => setActiveTab('chat')} />;
       default:
         return <BeebopProfile />;
     }
@@ -114,16 +104,25 @@ export const FunctionalConsole: React.FC = () => {
   }
 
   return (
-    <PixelFrame title="Console do Habbo" className="mx-auto h-[calc(100vh-12rem)]">
-      <div className="flex flex-col h-full">
+    <div className="mx-auto ml-12 h-[calc(100vh-12rem)] w-full max-w-[375px]">
+      <div className="pixel-frame-outer h-full">
+        <div className="pixel-header-bar">
+          <div className="pixel-title">Console do Habbo</div>
+          <div className="pixel-pattern"></div>
+        </div>
+        
         {/* Main content area */}
-        <div className="flex-1 min-h-0 mb-4 overflow-hidden">
-          {renderTabContent()}
+        <div className="pixel-inner-content">
+          <div className="flex flex-col h-full">
+            <div className="flex-1 min-h-0 overflow-hidden">
+              {renderTabContent()}
+            </div>
+          </div>
         </div>
 
-        {/* Tab navigation at bottom */}
-        <div className="flex-shrink-0">
-          <div className="grid grid-cols-5 gap-2">
+        {/* Tab navigation at bottom - now part of external frame */}
+        <div className="bg-yellow-400 border-t-2 border-black">
+          <div className="grid grid-cols-4 gap-0 p-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -134,7 +133,7 @@ export const FunctionalConsole: React.FC = () => {
                 )}
                 style={{
                   backgroundColor: activeTab === tab.id ? tab.activeColor : tab.color,
-                  color: activeTab === tab.id ? '#2B2300' : '#FFFFFF'
+                  color: activeTab === tab.id ? '#2B2300' : '#000000'
                 }}
               >
                 <div className={cn(
@@ -143,7 +142,7 @@ export const FunctionalConsole: React.FC = () => {
                 )}>
                   {tab.icon}
                 </div>
-                <span className="leading-none text-[10px]">
+                <span className="leading-none text-[10px] font-bold">
                   {tab.label}
                 </span>
               </button>
@@ -151,168 +150,11 @@ export const FunctionalConsole: React.FC = () => {
           </div>
         </div>
       </div>
-    </PixelFrame>
+    </div>
   );
 };
 
-// Componente da aba Minha Conta
-const AccountTab: React.FC<any> = ({ userData, badges, rooms, groups, photos, isLoading }) => {
-  if (isLoading) {
-    return (
-      <Card className="bg-transparent text-white border-0 shadow-none h-full">
-        <CardContent className="p-6 text-center space-y-4">
-          <Loader2 className="w-16 h-16 text-white/50 mx-auto mb-4 animate-spin" />
-          <p className="text-white/80">Carregando dados do Beebop...</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
-  if (!userData) {
-    return (
-      <Card className="bg-transparent text-white border-0 shadow-none h-full">
-        <CardContent className="p-6 text-center space-y-4">
-          <User className="w-16 h-16 text-white/50 mx-auto mb-4" />
-          <div className="space-y-3">
-            <h3 className="text-lg font-bold text-white volter-font">🔐 Área Restrita</h3>
-            <p className="text-white/80 text-sm">Faça login para acessar sua conta Habbo e ver seu perfil completo</p>
-          </div>
-          <div className="space-y-3 pt-4">
-            <a href="/login" className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 border border-black transition-colors volter-font">
-              🚪 Entrar na Conta
-            </a>
-            <div className="text-xs text-white/60 space-y-1">
-              <p>✓ Login por senha ou motto</p>
-              <p>✓ Acesso seguro via Hotel Habbo</p>
-              <p>✓ Perfil completo com fotos e emblemas</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-3 flex-shrink-0">
-        <CardTitle className="flex items-center justify-between text-lg">
-          <span>Minha Conta - {userData.name}</span>
-          <Badge className={cn(
-            "border border-black",
-            userData.online ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
-          )}>
-            {userData.online ? 'Online' : 'Offline'}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="flex-1 min-h-0 overflow-y-auto space-y-4">
-        {/* Profile Header with Full Avatar */}
-        <div className="relative">
-          <div className="flex items-start space-x-4">
-            <div className="relative flex-shrink-0">
-              <img 
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${userData.figureString}&size=l&direction=2&head_direction=3&action=std`}
-                alt={`Avatar de ${userData.name}`}
-                className="w-24 h-32 object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userData.name}&size=l&direction=2&head_direction=3&action=std`;
-                }}
-              />
-              <div className={cn(
-                "absolute -bottom-1 -right-1 w-4 h-4 border-2 border-black rounded-full",
-                userData.online ? "bg-green-500" : "bg-red-500"
-              )}></div>
-            </div>
-            
-            <div className="flex-1 min-w-0 pt-2">
-              <h3 className="text-xl font-bold text-white truncate">{userData.name}</h3>
-              <p className="text-sm text-white/60 mt-1 break-words">{userData.motto}</p>
-              <p className="text-xs text-white/40 mt-1">Membro desde: {new Date(userData.memberSince).toLocaleDateString('pt-BR')}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Social Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-transparent border border-black p-3 text-center">
-            <div className="text-xl font-bold text-white">{photos.length}</div>
-            <div className="text-xs text-white/60">Fotos</div>
-          </div>
-          <div className="bg-transparent border border-black p-3 text-center">
-            <div className="text-xl font-bold text-white">{friends.filter(f => f.online).length}</div>
-            <div className="text-xs text-white/60">Online</div>
-          </div>
-          <div className="bg-transparent border border-black p-3 text-center">
-            <div className="text-xl font-bold text-white">{badges.length}</div>
-            <div className="text-xs text-white/60">Emblemas</div>
-          </div>
-        </div>
-
-        {/* Detailed Stats */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black">
-            <Trophy className="h-5 w-5 text-yellow-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">{badges.length}</div>
-              <div className="text-xs text-white/60">Emblemas</div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black">
-            <Home className="h-5 w-5 text-green-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">{rooms.length}</div>
-              <div className="text-xs text-white/60">Quartos</div>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black">
-            <Users className="h-5 w-5 text-pink-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">{friends.length}</div>
-              <div className="text-xs text-white/60">Amigos</div>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black">
-            <Crown className="h-5 w-5 text-purple-400" />
-            <div className="text-center">
-              <div className="text-sm font-medium text-white">{groups.length}</div>
-              <div className="text-xs text-white/60">Grupos</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Photos Grid */}
-        {photos.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">Suas Fotos ({photos.length})</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.slice(0, 6).map((photo) => (
-                <div key={photo.id} className="relative group cursor-pointer">
-                  <img 
-                    src={photo.url} 
-                    alt={photo.caption || 'Foto'} 
-                    className="w-full h-20 object-cover rounded border border-black"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="text-center text-white text-xs">
-                      <div className="flex items-center justify-center gap-1">
-                        <Heart className="w-3 h-3" />
-                        {photo.likes}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
 
 // Componente da aba Feed
 const FeedTab: React.FC<any> = ({ badges, rooms, groups, friends, isLoading }) => {

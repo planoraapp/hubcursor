@@ -8,10 +8,40 @@ import { RoomsModal } from './modals/RoomsModal';
 import { FriendsModal } from './modals/FriendsModal';
 import { GroupsModal } from './modals/GroupsModal';
 
+
 export const BeebopProfile: React.FC = () => {
   const [modalStates, setModalStates] = useState({ badges: false, rooms: false, friends: false, groups: false });
   const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI('Beebop');
   const { currentUser, isLoggedIn } = useDirectAuth();
+
+  // Função para formatar data no formato DD/MM/YYYY
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return 'Data não disponível';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return 'Data inválida';
+    }
+  };
+
+  // Função para determinar se o usuário está online (simulação baseada no último acesso)
+  const isUserOnline = (): boolean => {
+    if (!userData?.lastAccessTime) return false;
+    try {
+      const lastOnline = new Date(userData.lastAccessTime);
+      const now = new Date();
+      const diffInHours = (now.getTime() - lastOnline.getTime()) / (1000 * 60 * 60);
+      // Considera online se o último acesso foi há menos de 1 hora
+      return diffInHours < 1;
+    } catch {
+      return false;
+    }
+  };
 
   const openModal = (modalType: keyof typeof modalStates) => {
     setModalStates(prev => ({ ...prev, [modalType]: true }));
@@ -60,57 +90,61 @@ export const BeebopProfile: React.FC = () => {
     <>
       <Card className="bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
         {/* Header do Perfil */}
-        <div className="text-center p-6 border-b border-white/20">
-          <div className="relative inline-block mb-4">
-            <img
-              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userData.name}&size=l&direction=2&head_direction=3`}
-              alt={`Avatar de ${userData.name}`}
-              className="w-24 h-24 rounded-lg border-4 border-white/20"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${userData.name}&size=l&direction=2&head_direction=3`;
-              }}
-            />
-            {isLoggedIn && currentUser?.habbo_username === userData.name && (
-              <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                Você
+        <div className="p-4 border-b border-white/20">
+          <div className="flex items-start gap-4">
+            {/* Avatar à esquerda */}
+            <div className="relative flex-shrink-0">
+              <img
+                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userData.name}&size=m&direction=2&head_direction=3`}
+                alt={`Avatar de ${userData.name}`}
+                className="h-32 w-auto object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${userData.name}&size=m&direction=2&head_direction=3`;
+                }}
+              />
+              
+              {/* Indicador de status online/offline - bolinha pixel art */}
+              <div className="absolute bottom-2 right-2">
+                <div 
+                  className={`w-4 h-4 rounded-full border-2 border-white shadow-lg ${
+                    isUserOnline() ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                  style={{
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.8)'
+                  }}
+                />
               </div>
-            )}
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">{userData.name}</h2>
-          <p className="text-white/70 italic">"{userData.motto}"</p>
-          <div className="flex items-center justify-center gap-4 mt-3 text-sm text-white/60">
-            <span>Membro desde: {userData.memberSince}</span>
-            <span>•</span>
-            <span>Último online: {userData.lastOnlineTime}</span>
+              
+              {isLoggedIn && currentUser?.habbo_username === userData.name && (
+                <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                  Você
+                </div>
+              )}
+            </div>
+            
+            {/* Nome e lema à direita do avatar */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-2xl font-bold text-white mb-2 truncate">{userData.name}</h2>
+              <p className="text-white/70 italic mb-4 truncate">"{userData.motto}"</p>
+              <div className="space-y-1 text-sm text-white/60">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-medium text-nowrap">Membro desde:</span>
+                  <span className="truncate">{formatDate(userData.memberSince)}</span>
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-medium text-nowrap">Último online:</span>
+                  <span className="truncate">{formatDate(userData.lastAccessTime)}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Estatísticas */}
-        <div className="p-6 border-b border-white/20">
-          <h3 className="text-lg font-semibold text-white mb-4">Estatísticas</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-white/10 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-400">{badges.length}</div>
-              <div className="text-sm text-white/60">Emblemas</div>
-            </div>
-            <div className="text-center p-3 bg-white/10 rounded-lg">
-              <div className="text-2xl font-bold text-blue-400">{rooms.length}</div>
-              <div className="text-sm text-white/60">Quartos</div>
-            </div>
-            <div className="text-center p-3 bg-white/10 rounded-lg">
-              <div className="text-2xl font-bold text-green-400">{friends.length}</div>
-              <div className="text-sm text-white/60">Amigos</div>
-            </div>
-            <div className="text-center p-3 bg-white/10 rounded-lg">
-              <div className="text-2xl font-bold text-purple-400">{groups.length}</div>
-              <div className="text-sm text-white/60">Grupos</div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Botões de Ação */}
-        <div className="p-6">
+        <div className="p-4">
           <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
           <div className="grid grid-cols-2 gap-2">
             <button 
@@ -161,15 +195,15 @@ export const BeebopProfile: React.FC = () => {
 
         {/* Seção de Emblemas Selecionados */}
         {badges.length > 0 && (
-          <div className="p-6 border-t border-white/20">
+          <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Emblemas em Destaque</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {badges.slice(0, 6).map((badge, index) => (
                 <div key={index} className="text-center">
                   <img
                     src={`https://images.habbo.com/c_images/album1584/${String(badge.code)}.gif`}
                     alt={badge.name}
-                    className="w-12 h-12 mx-auto mb-2"
+                    className="w-10 h-10 mx-auto mb-2"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = '/assets/badge-placeholder.png';
@@ -184,17 +218,31 @@ export const BeebopProfile: React.FC = () => {
 
         {/* Seção de Quartos Recentes */}
         {rooms.length > 0 && (
-          <div className="p-6 border-t border-white/20">
+          <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Quartos Recentes</h3>
             <div className="space-y-2">
               {rooms.slice(0, 3).map((room, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                  <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
-                    {index + 1}
+                <div key={room.id} className="flex items-center gap-3 p-2 bg-white/5 rounded">
+                  <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
+                    {room.thumbnailUrl || room.imageUrl ? (
+                      <img
+                        src={room.thumbnailUrl || room.imageUrl}
+                        alt={`Miniatura de ${room.name}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = `https://images.habbo.com/c_images/room_thumbnails/${room.id}.png`;
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
+                        {index + 1}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">{room.name}</p>
-                    <p className="text-xs text-white/60">{room.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{room.name}</p>
+                    <p className="text-xs text-white/60 truncate">{room.description}</p>
                   </div>
                 </div>
               ))}
@@ -204,13 +252,13 @@ export const BeebopProfile: React.FC = () => {
 
         {/* Seção de Grupos */}
         {groups.length > 0 && (
-          <div className="p-6 border-t border-white/20">
+          <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Grupos</h3>
             <div className="space-y-2">
               {groups.slice(0, 3).map((group, index) => (
                 <div key={index} className="flex items-center gap-3 p-2 bg-white/5 rounded">
                   <img
-                    src={group.badgeUrl}
+                    src={`https://images.habbo.com/c_images/album1584/${group.badgeCode}.gif`}
                     alt={group.name}
                     className="w-8 h-8"
                     onError={(e) => {
@@ -230,15 +278,15 @@ export const BeebopProfile: React.FC = () => {
 
         {/* Seção de Amigos */}
         {friends.length > 0 && (
-          <div className="p-6 border-t border-white/20">
+          <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Amigos Online</h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {friends.slice(0, 8).map((friend, index) => (
                 <div key={index} className="text-center">
                   <img
                     src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${friend.name}&size=s&direction=2&head_direction=3&headonly=1`}
                     alt={friend.name}
-                    className="w-10 h-10 mx-auto mb-1 rounded"
+                    className="w-8 h-8 mx-auto mb-1 rounded"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${friend.name}&size=s&direction=2&head_direction=3&headonly=1`;
@@ -253,15 +301,15 @@ export const BeebopProfile: React.FC = () => {
 
         {/* Seção de Fotos - Agora posicionada após Amigos Online */}
         {photos.length > 0 && (
-          <div className="p-6 border-t border-white/20">
+          <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Fotos ({photos.length})</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {photos.slice(0, 9).map((photo, index) => (
                 <div key={photo.id} className="relative group cursor-pointer">
                   <img
                     src={photo.url}
                     alt={photo.caption || `Foto ${index + 1}`}
-                    className={`w-full h-24 object-cover rounded border border-white/20 transition-transform group-hover:scale-105 ${
+                    className={`w-full h-20 object-cover rounded border border-white/20 transition-transform group-hover:scale-105 ${
                       photo.contentWidth > photo.contentHeight ? 'col-span-2' : ''
                     }`}
                     onError={(e) => {

@@ -1,0 +1,19 @@
+{
+  "name": "Gato",
+  "emoji": "🐱",
+  "id": "cat",
+  "sprites": {
+    "idle": {
+      "0": "cat_idle_0.png",
+      "1": "cat_idle_1.png",
+      "2": "cat_idle_2.png",
+      "3": "cat_idle_3.png",
+      "4": "cat_idle_4.png",
+      "5": "cat_idle_5.png",
+      "6": "cat_idle_6.png",
+      "7": "cat_idle_7.png"
+    }
+  },
+  "status": "temporary_emoji_based",
+  "instructions": "Use o gerador HTML para criar sprites reais"
+}

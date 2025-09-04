@@ -1,0 +1,87 @@
+{
+  "pets": {
+    "monkey": {
+      "name": "monkey",
+      "id": "monkey",
+      "sprites": {
+        "idle": {
+          "0": "monkey_idle_0.png",
+          "1": "monkey_idle_1.png",
+          "2": "monkey_idle_2.png",
+          "3": "monkey_idle_3.png",
+          "7": "monkey_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "size": "32px",
+      "status": "organized_32px",
+      "timestamp": "2025-09-03T22:38:58.289Z"
+    },
+    "dog": {
+      "name": "dog",
+      "id": "dog",
+      "sprites": {
+        "idle": {
+          "0": "dog_idle_0.png",
+          "1": "dog_idle_1.png",
+          "2": "dog_idle_2.png",
+          "3": "dog_idle_3.png",
+          "7": "dog_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "size": "32px",
+      "status": "organized_32px",
+      "timestamp": "2025-09-03T22:38:58.306Z"
+    },
+    "cat": {
+      "name": "cat",
+      "id": "cat",
+      "sprites": {
+        "idle": {
+          "0": "cat_idle_0.png",
+          "1": "cat_idle_1.png",
+          "2": "cat_idle_2.png",
+          "3": "cat_idle_3.png",
+          "7": "cat_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "size": "32px",
+      "status": "organized_32px",
+      "timestamp": "2025-09-03T22:38:58.324Z"
+    },
+    "bear": {
+      "name": "bear",
+      "id": "bear",
+      "sprites": {
+        "idle": {
+          "0": "bear_idle_0.png",
+          "1": "bear_idle_1.png",
+          "2": "bear_idle_2.png",
+          "3": "bear_idle_3.png",
+          "7": "bear_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "size": "32px",
+      "status": "organized_32px",
+      "timestamp": "2025-09-03T22:38:58.349Z"
+    },
+    "dragon": {
+      "name": "dragon",
+      "id": "dragon",
+      "sprites": {
+        "idle": {}
+      },
+      "totalSprites": 0,
+      "size": "32px",
+      "status": "organized_32px",
+      "timestamp": "2025-09-03T22:38:58.353Z"
+    }
+  },
+  "totalPets": 5,
+  "size": "32px",
+  "status": "all_organized_32px",
+  "timestamp": "2025-09-03T22:38:58.354Z"
+}

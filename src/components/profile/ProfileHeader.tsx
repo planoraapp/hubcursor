@@ -20,10 +20,26 @@ interface ProfileHeaderProps {
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ habboUser, avatarUrl }) => {
+  // Função para formatar data no formato DD/MM/YYYY
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return 'Data não disponível';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return 'Data inválida';
+    }
+  };
+
   return (
     <Card className="bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+        <div className="flex items-start gap-6">
+          {/* Avatar à esquerda */}
           <div className="flex-shrink-0">
             <div className="relative">
               <img
@@ -31,43 +47,51 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ habboUser, avatarU
                 alt={habboUser.habbo_name}
                 className="h-32 w-auto object-contain"
                 onError={(e) => {
-                  e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboUser.habbo_name}&size=l&direction=2&head_direction=3&action=std`;
+                  e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboUser.habbo_name}&size=m&direction=2&head_direction=3&action=std`;
                 }}
               />
-              <Badge 
-                className={`absolute -bottom-2 -right-2 ${habboUser.is_online ? 'bg-green-500' : 'bg-red-500'} text-white`}
-              >
-                {habboUser.is_online ? 'Online' : 'Offline'}
-              </Badge>
+              
+              {/* Indicador de status online/offline - bolinha pixel art */}
+              <div className="absolute bottom-2 right-2">
+                <div 
+                  className={`w-4 h-4 rounded-full border-2 border-white shadow-lg ${
+                    habboUser.is_online ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                  style={{
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.8)'
+                  }}
+                />
+              </div>
             </div>
           </div>
           
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold volter-font mb-2">{habboUser.habbo_name}</h1>
+          {/* Nome e lema à direita do avatar */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-3xl font-bold volter-font mb-2 truncate">{habboUser.habbo_name}</h1>
             
             {habboUser.motto && (
-              <p className="text-lg text-gray-600 italic mb-4">"{habboUser.motto}"</p>
+              <p className="text-lg text-gray-600 italic mb-4 truncate">"{habboUser.motto}"</p>
             )}
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-blue-500" />
-                <span>Hotel: {habboUser.hotel?.toUpperCase()}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm mb-4">
+              <div className="flex items-center gap-2 min-w-0">
+                <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                <span className="truncate">Hotel: {habboUser.hotel?.toUpperCase()}</span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-green-500" />
-                <span>Desde: {habboUser.created_at ? new Date(habboUser.created_at).getFullYear() : 'N/A'}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Calendar className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <span className="truncate">Desde: {habboUser.created_at ? formatDate(habboUser.created_at) : 'N/A'}</span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-purple-500" />
-                <span>Atualizado: {habboUser.last_updated ? new Date(habboUser.last_updated).toLocaleDateString('pt-BR') : 'N/A'}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Clock className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                <span className="truncate">Atualizado: {habboUser.last_updated ? formatDate(habboUser.last_updated) : 'N/A'}</span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-yellow-500" />
-                <span>ID: {habboUser.habbo_id}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Star className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                <span className="truncate">ID: {habboUser.habbo_id}</span>
               </div>
             </div>
 

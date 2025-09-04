@@ -7,14 +7,37 @@ import { TestConsole } from '@/components/console/TestConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Monitor } from 'lucide-react';
 
 const Console: React.FC = () => {
   const { isLoggedIn } = useAuth();
 
   const openPopupConsole = () => {
-    const popupFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no';
-    window.open('/console-popup', 'ConsolePopup', popupFeatures);
+    // Calcular posição centralizada na tela
+    const width = 1000;
+    const height = 700;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no,directories=no`;
+    
+    const popup = window.open('/console-popup', 'ConsolePopup', popupFeatures);
+    
+    if (!popup) {
+      alert('Popup bloqueado! Por favor, permita popups para este site.');
+      return;
+    }
+    
+    // Focar na janela popup
+    popup.focus();
+    
+    // Listener para comunicação com o popup
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'CONSOLE_POPUP_CLOSED') {
+        window.removeEventListener('message', handleMessage);
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
   };
 
   return (
@@ -22,10 +45,10 @@ const Console: React.FC = () => {
       <SidebarProvider>
         <div className="min-h-screen flex">
           <CollapsibleAppSidebar />
-          <SidebarInset className="flex-1">
-            <div className="p-4 flex flex-col items-center">
-              <div className="mb-6 text-center">
-                <h1 className="text-3xl font-bold text-white mb-4 volter-font" 
+          <SidebarInset className="flex-1 bg-transparent">
+            <div className="p-2 flex flex-col items-center w-full max-w-[375px] ml-12">
+              <div className="mb-4 text-center w-full">
+                <h1 className="text-2xl font-bold text-white mb-4 volter-font" 
                     style={{
                       textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
                     }}>
@@ -37,20 +60,23 @@ const Console: React.FC = () => {
               </div>
 
               {/* Console funcional com dados reais do Habbo */}
-              <FunctionalConsole />
-              
-              {/* Popup button positioned below console */}
-              <div className="mt-4 flex justify-center">
-                <Button
-                  onClick={openPopupConsole}
-                  variant="outline" 
-                  size="lg"
-                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white volter-font px-6 py-3"
-                >
-                  <Monitor className="w-5 h-5 mr-2" />
-                  Abrir Console em Pop-up
-                  <ExternalLink className="w-4 h-4 ml-2" />
-                </Button>
+              <div className="w-full max-w-[375px]">
+                <FunctionalConsole />
+                
+                {/* Popup button positioned below console */}
+                <div className="mt-6 flex justify-center">
+                  <button
+                    onClick={openPopupConsole}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    style={{
+                      textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                      fontSize: '16px'
+                    }}
+                  >
+                    Abrir Console em Pop-up
+                  </button>
+                </div>
               </div>
             </div>
           </SidebarInset>

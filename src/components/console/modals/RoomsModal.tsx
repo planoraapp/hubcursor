@@ -2,18 +2,20 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Home, X } from 'lucide-react';
 
-interface Room {
-  id: string;
+interface HabboRoom {
+  id: number;
   name: string;
   description: string;
   creationTime: string;
   maximumVisitors: number;
   rating: number;
   tags: string[];
+  thumbnailUrl: string | null;
+  imageUrl: string | null;
 }
 
 interface RoomsModalProps {
-  rooms: Room[];
+  rooms: HabboRoom[];
   isOpen: boolean;
   onClose: () => void;
 }

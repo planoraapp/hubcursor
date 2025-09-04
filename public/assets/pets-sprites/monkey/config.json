@@ -1,0 +1,19 @@
+{
+  "name": "Macaco",
+  "emoji": "🐒",
+  "id": "monkey",
+  "sprites": {
+    "idle": {
+      "0": "monkey_idle_0.png",
+      "1": "monkey_idle_1.png",
+      "2": "monkey_idle_2.png",
+      "3": "monkey_idle_3.png",
+      "4": "monkey_idle_4.png",
+      "5": "monkey_idle_5.png",
+      "6": "monkey_idle_6.png",
+      "7": "monkey_idle_7.png"
+    }
+  },
+  "status": "temporary_emoji_based",
+  "instructions": "Use o gerador HTML para criar sprites reais"
+}

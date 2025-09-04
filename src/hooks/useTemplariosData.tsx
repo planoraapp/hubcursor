@@ -9,6 +9,8 @@ export interface TemplariosItem {
   club: number;
   colorable: number;
   selectable: number;
+  sellable?: number;
+  duotone?: number;
 }
 
 export const useTemplariosData = () => {
@@ -27,7 +29,9 @@ export const useTemplariosData = () => {
           gender: setData.gender,
           club: setData.club,
           colorable: setData.colorable,
-          selectable: setData.selectable
+          selectable: setData.selectable,
+          sellable: setData.sellable,
+          duotone: setData.duotone
         });
       });
     });
@@ -36,12 +40,20 @@ export const useTemplariosData = () => {
   }, []);
 
   // Get items by category and gender
-  const getItemsByCategory = (category: string, gender: 'M' | 'F') => {
-    return processedItems.filter(item => 
+  const getItemsByCategory = (category: string, gender: 'M' | 'F' | 'U') => {
+    const filteredItems = processedItems.filter(item => 
       item.category === category && 
       item.selectable === 1 &&
       (item.gender === gender || item.gender === 'U')
     );
+    
+    // Convert to object format for easier access
+    const itemsObject: { [itemId: string]: TemplariosItem } = {};
+    filteredItems.forEach(item => {
+      itemsObject[item.id] = item;
+    });
+    
+    return itemsObject;
   };
 
   // Get palette for category

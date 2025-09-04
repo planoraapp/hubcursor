@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { TabbedConsole } from '@/components/console/TabbedConsole';
+import { FunctionalConsole } from '@/components/console/FunctionalConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "sonner";
+import { useAuth } from '@/hooks/useAuth';
 
 const ConsolePopup: React.FC = () => {
-  const { isLoggedIn, loginWithPassword } = useUnifiedAuth();
+  const { isLoggedIn: isUnifiedLoggedIn, loginWithPassword } = useUnifiedAuth();
+  const { isLoggedIn: isAuthLoggedIn } = useAuth();
   const [loginForm, setLoginForm] = useState({ habboName: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Usar o estado de login que funciona
+  const isLoggedIn = isAuthLoggedIn || isUnifiedLoggedIn;
 
   // Communicate with parent window
   useEffect(() => {
@@ -62,70 +67,39 @@ const ConsolePopup: React.FC = () => {
     }
   };
 
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl volter-font">Console HabboHub</CardTitle>
-            <CardDescription>
-              Faça login para acessar seu console
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Nome Habbo</label>
-                <Input
-                  value={loginForm.habboName}
-                  onChange={(e) => setLoginForm(prev => ({ ...prev, habboName: e.target.value }))}
-                  placeholder="Seu nome no Habbo"
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Senha</label>
-                <Input
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Sua senha"
-                  disabled={isLoading}
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? 'Entrando...' : 'Entrar'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Sempre mostrar o console, mesmo sem login
+  // O console pode funcionar sem autenticação
 
   return (
-    <div className="h-screen overflow-hidden">
-      <PageBackground>
-        <div className="h-full flex flex-col">
-          <div className="flex-1 flex items-center justify-center p-4">
-            <div 
-              className="bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 shadow-lg"
-              style={{
-                width: '400px',
-                height: '600px',
-                minWidth: '400px',
-                minHeight: '600px'
-              }}
-            >
-              <TabbedConsole />
-            </div>
+    <div className="w-full h-auto min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 p-4">
+      <div className="w-full max-w-md mx-auto">
+        {/* Header do popup */}
+        <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 p-3 flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            <img 
+              src="/assets/bghabbohub.png" 
+              alt="HabboHub" 
+              className="h-8 w-auto"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <h1 className="text-white font-bold volter-font text-lg" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+              Console HabboHub
+            </h1>
           </div>
+          <button
+            onClick={() => window.close()}
+            className="text-white/70 hover:text-white text-2xl font-bold"
+            title="Fechar"
+          >
+            ×
+          </button>
         </div>
-      </PageBackground>
+        
+        {/* Console com dimensões exatas */}
+        <div className="w-full">
+          <FunctionalConsole />
+        </div>
+      </div>
     </div>
   );
 };

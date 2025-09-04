@@ -33,7 +33,7 @@ export const HabboLoginForm = () => {
       <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src="/assets/habbohub.gif" alt="Habbo Hub" className="h-16" />
+            <img src="/assets/bghabbohub.png" alt="Habbo Hub" className="h-16" />
           </div>
           <CardTitle className="text-2xl volter-font text-gray-800">
             Habbo Hub

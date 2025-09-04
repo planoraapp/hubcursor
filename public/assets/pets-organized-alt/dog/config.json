@@ -1,0 +1,17 @@
+{
+  "name": "dog",
+  "id": "dog",
+  "sprites": {
+    "idle": {
+      "0": "dog_idle_0.png",
+      "1": "dog_idle_1.png",
+      "2": "dog_idle_2.png",
+      "3": "dog_idle_3.png",
+      "7": "dog_idle_7.png"
+    }
+  },
+  "totalSprites": 5,
+  "animation": 100,
+  "status": "organized_alt",
+  "timestamp": "2025-09-03T22:44:02.171Z"
+}

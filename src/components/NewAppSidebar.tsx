@@ -27,7 +27,7 @@ export function NewAppSidebar() {
     { name: 'Início', path: '/', icon: '/assets/home.png' },
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
     { name: 'Homes', path: '/homes', icon: '/assets/home.png' },
-    { name: 'Notícias', path: '/noticias', icon: '/assets/news.png' },
+    { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
     { name: 'Emblemas', path: '/emblemas', icon: '/assets/emblemas.png' },
     { name: 'Catálogo', path: '/catalogo', icon: '/assets/Carrinho.png' },
     { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/ferramentas.png' },
@@ -104,7 +104,7 @@ export function NewAppSidebar() {
               />
             ) : (
               <img 
-                src="/assets/habbohub.gif" 
+                src="/assets/bghabbohub.png" 
                 alt="Habbo Hub" 
                 className="w-full h-auto max-w-[200px]"
                 onError={(e) => {
@@ -158,7 +158,12 @@ export function NewAppSidebar() {
                           onClick={logout}
                           className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
                         >
-                          <LogOut className="w-3 h-3" />
+                          <img 
+                            src="/assets/logout.png" 
+                            alt="Logout" 
+                            className="w-3 h-3"
+                            style={{ imageRendering: 'pixelated' }}
+                          />
                           Sair
                         </button>
                       </TooltipTrigger>

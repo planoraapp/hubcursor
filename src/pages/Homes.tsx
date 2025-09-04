@@ -10,7 +10,7 @@ import { Search, User, Home, Calendar, MapPin, Star, ExternalLink, UserCheck } f
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useHubLogin } from '@/hooks/useHubLogin';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { HomePreviewCard } from '@/components/HomePreviewCard';
 
@@ -28,7 +28,7 @@ interface HabboUser {
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { habboAccount, isLoggedIn } = useSimpleAuth();
+  const { currentUser, isLoggedIn } = useHubLogin();
   const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
@@ -120,9 +120,9 @@ const Homes: React.FC = () => {
                 
                 {/* Botão Minha Home */}
                 <div className="mt-4">
-                  {isLoggedIn && habboAccount ? (
+                  {isLoggedIn && currentUser ? (
                     <Button 
-                      onClick={() => navigate(`/homes/${habboAccount.habbo_name}`)}
+                      onClick={() => navigate(`/homes/${currentUser.habbo_username}`)}
                       className="habbo-button-green volter-font px-6 py-2"
                     >
                       <UserCheck className="w-4 h-4 mr-2" />
@@ -225,10 +225,10 @@ const Homes: React.FC = () => {
                               {user.habbo_name}
                             </CardTitle>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge className={`text-xs volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
+                              <Badge className={`text-sm volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
                                 {user.is_online ? 'Online' : 'Offline'}
                               </Badge>
-                              <Badge className="bg-white/20 text-white text-xs volter-font">
+                              <Badge className="bg-white/20 text-white text-sm volter-font">
                                 {user.hotel?.toUpperCase() || 'BR'}
                               </Badge>
                             </div>
@@ -249,7 +249,7 @@ const Homes: React.FC = () => {
                         {user.created_at && (
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-blue-500" />
-                            <span className="text-xs text-gray-600 volter-font">
+                            <span className="text-sm text-gray-600 volter-font">
                               Descoberto em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
