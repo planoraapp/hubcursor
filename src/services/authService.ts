@@ -84,20 +84,18 @@ export class AuthService {
     password: string
   ): Promise<AuthResponse> {
     try {
-      // Aqui você integraria com o Supabase para salvar o usuário
-      // Por enquanto, vamos simular o registro
-      
-      const response = await fetch('/api/auth/register', {
+      // Usar o sistema Supabase existente
+      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          habbo_username: user.habbo_username,
-          habbo_motto: user.habbo_motto,
-          habbo_avatar: user.habbo_avatar,
-          hotel: user.hotel,
-          password: password
+          username: user.habbo_username,
+          motto: user.habbo_motto,
+          password: password,
+          action: 'register',
+          hotel: user.hotel
         })
       });
 
@@ -105,16 +103,23 @@ export class AuthService {
         const errorData = await response.json();
         return {
           success: false,
-          error: errorData.message || 'Erro ao criar conta'
+          error: errorData.error || 'Erro ao criar conta'
         };
       }
 
-      const registeredUser = await response.json();
+      const data = await response.json();
 
-      return {
-        success: true,
-        user: registeredUser
-      };
+      if (data.success) {
+        return {
+          success: true,
+          user: data.user
+        };
+      } else {
+        return {
+          success: false,
+          error: data.error || 'Erro ao criar conta'
+        };
+      }
 
     } catch (error) {
       console.error('Erro no registro:', error);
@@ -132,14 +137,16 @@ export class AuthService {
     hotelId: string
   ): Promise<AuthResponse> {
     try {
-      const response = await fetch('/api/auth/login', {
+      // Usar o sistema Supabase existente
+      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username,
-          password,
+          username: username,
+          password: password,
+          action: 'login',
           hotel: hotelId
         })
       });
@@ -148,16 +155,23 @@ export class AuthService {
         const errorData = await response.json();
         return {
           success: false,
-          error: errorData.message || 'Usuário ou senha incorretos'
+          error: errorData.error || 'Usuário ou senha incorretos'
         };
       }
 
-      const userData = await response.json();
+      const data = await response.json();
 
-      return {
-        success: true,
-        user: userData
-      };
+      if (data.success) {
+        return {
+          success: true,
+          user: data.user
+        };
+      } else {
+        return {
+          success: false,
+          error: data.error || 'Usuário ou senha incorretos'
+        };
+      }
 
     } catch (error) {
       console.error('Erro no login:', error);
@@ -174,13 +188,24 @@ export class AuthService {
     hotelId: string
   ): Promise<{ exists: boolean; needsPassword: boolean }> {
     try {
-      const response = await fetch(`/api/auth/check-user?username=${encodeURIComponent(username)}&hotel=${hotelId}`);
+      // Usar o sistema Supabase existente
+      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: username,
+          action: 'check-user',
+          hotel: hotelId
+        })
+      });
       
       if (response.ok) {
         const data = await response.json();
         return {
-          exists: data.exists,
-          needsPassword: data.needsPassword
+          exists: data.exists || false,
+          needsPassword: data.needsPassword || false
         };
       }
 

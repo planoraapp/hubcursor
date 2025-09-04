@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { generateVerificationCode } from '@/config/hotels';
 import { getHotelConfig } from '@/config/hotels';
+import { AuthService } from '@/services/authService';
 
 interface HabboUser {
   id: string;
@@ -104,38 +105,23 @@ export const useHubLogin = () => {
     setIsLoading(true);
     
     try {
-      // Usar o sistema Supabase existente
-      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: user.habbo_username,
-          motto: user.habbo_motto,
-          password: password,
-          action: 'register',
-          hotel: user.hotel
-        })
-      });
+      const result = await AuthService.registerUser(user, password);
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (result.success && result.user) {
         toast({
           title: "Conta criada com sucesso!",
           description: "Agora você pode fazer login com sua senha",
         });
         
         // Salvar dados do usuário no localStorage
-        localStorage.setItem('hubUser', JSON.stringify(data.user));
-        setCurrentUser(data.user);
+        localStorage.setItem('hubUser', JSON.stringify(result.user));
+        setCurrentUser(result.user);
         
         return true;
       } else {
         toast({
           title: "Erro no cadastro",
-          description: data.error || "Erro ao criar conta",
+          description: result.error || "Erro ao criar conta",
           variant: "destructive"
         });
         return false;
@@ -171,37 +157,23 @@ export const useHubLogin = () => {
     setIsLoading(true);
     
     try {
-      // Usar o sistema Supabase existente
-      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-          action: 'login',
-          hotel: hotelId
-        })
-      });
+      const result = await AuthService.loginWithPassword(username, password, hotelId);
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (result.success && result.user) {
         toast({
           title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${data.user.habbo_username}!`,
+          description: `Bem-vindo, ${result.user.habbo_username}!`,
         });
         
         // Salvar dados do usuário no localStorage
-        localStorage.setItem('hubUser', JSON.stringify(data.user));
-        setCurrentUser(data.user);
+        localStorage.setItem('hubUser', JSON.stringify(result.user));
+        setCurrentUser(result.user);
         
         return true;
       } else {
         toast({
           title: "Erro no login",
-          description: data.error || "Usuário ou senha incorretos",
+          description: result.error || "Usuário ou senha incorretos",
           variant: "destructive"
         });
         return false;
