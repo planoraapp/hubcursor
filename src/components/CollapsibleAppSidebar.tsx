@@ -138,7 +138,7 @@ export function CollapsibleAppSidebar() {
                    <img
                      src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`}
                      alt={`Avatar de ${currentUser.habbo_username}`}
-                     className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-12 h-12'}`}
+                     className={`object-contain ${isCollapsed ? 'w-14 h-14' : 'w-14 h-14'}`}
                      onError={(e) => {
                        const target = e.target as HTMLImageElement;
                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`;
