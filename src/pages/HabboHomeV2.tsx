@@ -76,7 +76,7 @@ const HabboHomeV2: React.FC = () => {
     { id: 'home', label: 'Início', icon: '/assets/home.png', order: 1 },
     { id: 'homes', label: 'Home', icon: '/assets/homepadrao.png', order: 2 },
     { id: 'console', label: 'Console', icon: '/assets/consoleon3.gif', order: 3 },
-    { id: 'noticias', label: 'Notícias', icon: '/assets/news.png', order: 4 },
+    { id: 'journal', label: 'Jornal', icon: '/assets/news.png', order: 4 },
     { id: 'tools', label: 'Ferramentas', icon: '/assets/ferramentas.png', order: 5 }
   ];
 
@@ -91,8 +91,8 @@ const HabboHomeV2: React.FC = () => {
       case 'console':
         navigate('/console');
         break;
-      case 'noticias':
-        navigate('/noticias');
+      case 'journal':
+        navigate('/journal');
         break;
       default:
         console.log('Mobile item clicked:', itemId);
