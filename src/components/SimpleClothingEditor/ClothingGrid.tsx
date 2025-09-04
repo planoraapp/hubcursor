@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Search, Filter, Crown, Star } from 'lucide-react';
 import { ClothingItem, useOfficialClothingData } from '@/hooks/useOfficialClothingData';
+import { HABBO_COLORS } from '@/data/habboColors';
 
 interface ClothingGridProps {
   category: string;
@@ -28,6 +29,12 @@ const ClothingGrid: React.FC<ClothingGridProps> = ({
   const [selectedSource, setSelectedSource] = useState<string>('all');
   
   const { items, loading, error } = useOfficialClothingData(category, gender, hotel);
+
+  // Função para detectar se uma cor é HC
+  const isHCColor = (colorId: string): boolean => {
+    const color = HABBO_COLORS.find(c => c.id === colorId);
+    return color?.isHC || false;
+  };
 
   // Filtrar itens
   const filteredItems = items.filter(item => {
@@ -199,8 +206,11 @@ const ClothingItemCard: React.FC<{
 
       {/* Special rarity indicators */}
       <div className="absolute top-1 right-1 flex gap-1">
-        {/* HC Icon */}
-        {item.club === 'HC' && (
+        {/* HC Icon - baseado no nome do asset, propriedade club ou cor HC selecionada */}
+        {(item.name.toLowerCase().includes('hc') || 
+          item.name.toLowerCase().includes('club') ||
+          item.club === 'HC' || item.club === 'hc' ||
+          isHCColor(selectedColor)) && (
           <img 
             src="/assets/icon_HC_wardrobe.png" 
             alt="HC" 
@@ -209,8 +219,10 @@ const ClothingItemCard: React.FC<{
           />
         )}
         
-        {/* LTD Icon - baseado no nome do item */}
-        {(item.name.toLowerCase().includes('ltd') || item.name.toLowerCase().includes('limited')) && (
+        {/* LTD Icon - baseado no nome do asset */}
+        {(item.name.toLowerCase().includes('ltd') || 
+          item.name.toLowerCase().includes('limited') ||
+          item.rarity === 'ltd') && (
           <img 
             src="/assets/icon_LTD_habbo.png" 
             alt="LTD" 
@@ -219,8 +231,9 @@ const ClothingItemCard: React.FC<{
           />
         )}
         
-        {/* NFT Icon - baseado no nome do item */}
-        {item.name.toLowerCase().includes('nft') && (
+        {/* NFT Icon - baseado no nome do asset */}
+        {(item.name.toLowerCase().includes('nft') || 
+          item.rarity === 'nft') && (
           <img 
             src="/assets/icon_wardrobe_nft_on.png" 
             alt="NFT" 
@@ -229,8 +242,10 @@ const ClothingItemCard: React.FC<{
           />
         )}
         
-        {/* Sellable Icon - baseado no nome do item */}
-        {(item.name.toLowerCase().includes('sell') || item.name.toLowerCase().includes('vend')) && (
+        {/* Sellable Icon - baseado no nome do asset */}
+        {(item.name.toLowerCase().includes('sell') || 
+          item.name.toLowerCase().includes('vend') ||
+          item.sellable) && (
           <img 
             src="/assets/icon_sellable_wardrobe.png" 
             alt="Vendável" 

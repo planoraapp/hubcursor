@@ -32,6 +32,12 @@ const LocalClothingGrid = ({
   
   const { items, isLoading, error } = useEditorHabboCategory(selectedCategory, selectedGender);
 
+  // Função para detectar se uma cor é HC
+  const isHCColor = (colorId: string): boolean => {
+    const color = HABBO_COLORS.find(c => c.id === colorId);
+    return color?.isHC || false;
+  };
+
   console.log(`🎯 [LocalClothingGrid] Categoria: ${selectedCategory}, Items: ${items.length}, Modo: ${viewMode}`);
 
   // Cores disponíveis baseadas no sistema ViaJovem (cores mais usadas)
@@ -165,8 +171,11 @@ const LocalClothingGrid = ({
                   
                   {/* Special rarity indicators */}
                   <div className="absolute top-1 right-1 flex gap-1">
-                    {/* HC Icon - baseado no nome do item */}
-                    {(item.name.toLowerCase().includes('hc') || item.name.toLowerCase().includes('club')) && (
+                    {/* HC Icon - baseado no nome do asset, propriedade club ou cor HC selecionada */}
+                    {(item.name.toLowerCase().includes('hc') || 
+                      item.name.toLowerCase().includes('club') ||
+                      item.club === 'hc' ||
+                      isHCColor(selectedColor)) && (
                       <img 
                         src="/assets/icon_HC_wardrobe.png" 
                         alt="HC" 
@@ -175,8 +184,10 @@ const LocalClothingGrid = ({
                       />
                     )}
                     
-                    {/* LTD Icon - baseado no nome do item */}
-                    {(item.name.toLowerCase().includes('ltd') || item.name.toLowerCase().includes('limited')) && (
+                    {/* LTD Icon - baseado no nome do asset */}
+                    {(item.name.toLowerCase().includes('ltd') || 
+                      item.name.toLowerCase().includes('limited') ||
+                      item.rarity === 'ltd') && (
                       <img 
                         src="/assets/icon_LTD_habbo.png" 
                         alt="LTD" 
@@ -185,8 +196,9 @@ const LocalClothingGrid = ({
                       />
                     )}
                     
-                    {/* NFT Icon - baseado no nome do item */}
-                    {item.name.toLowerCase().includes('nft') && (
+                    {/* NFT Icon - baseado no nome do asset */}
+                    {(item.name.toLowerCase().includes('nft') || 
+                      item.rarity === 'nft') && (
                       <img 
                         src="/assets/icon_wardrobe_nft_on.png" 
                         alt="NFT" 
@@ -195,8 +207,10 @@ const LocalClothingGrid = ({
                       />
                     )}
                     
-                    {/* Sellable Icon - baseado no nome do item */}
-                    {(item.name.toLowerCase().includes('sell') || item.name.toLowerCase().includes('vend')) && (
+                    {/* Sellable Icon - baseado no nome do asset */}
+                    {(item.name.toLowerCase().includes('sell') || 
+                      item.name.toLowerCase().includes('vend') ||
+                      item.sellable) && (
                       <img 
                         src="/assets/icon_sellable_wardrobe.png" 
                         alt="Vendável" 
