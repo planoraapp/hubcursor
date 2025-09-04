@@ -269,33 +269,52 @@ const RealClothingGrid = ({
                   }}
                 />
                 
-                {/* Rarity indicator */}
+                {/* Special rarity indicators */}
                 <div className="absolute top-0 right-0 flex gap-1">
+                  {/* HC Icon */}
                   {item.club === 'hc' && (
-                    <Badge className="text-xs bg-yellow-500 text-white p-1">
-                      <Crown className="h-2 w-2" />
-                    </Badge>
+                    <img 
+                      src="/assets/icon_HC_wardrobe.png" 
+                      alt="HC" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   )}
-                  {item.rarity !== 'normal' && (
-                    <Badge 
-                      className={`text-xs text-white p-1 ${RARITY_CONFIG[item.rarity]?.color || 'bg-gray-500'}`}
-                    >
-                      <span className="text-xs">
-                        {RARITY_CONFIG[item.rarity]?.icon || '⚫'}
-                      </span>
-                    </Badge>
+                  
+                  {/* LTD Icon */}
+                  {item.rarity === 'ltd' && (
+                    <img 
+                      src="/assets/icon_LTD_habbo.png" 
+                      alt="LTD" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+                  
+                  {/* NFT Icon */}
+                  {item.rarity === 'nft' && (
+                    <img 
+                      src="/assets/icon_wardrobe_nft_on.png" 
+                      alt="NFT" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+                  
+                  {/* Sellable Icon */}
+                  {item.sellable && (
+                    <img 
+                      src="/assets/icon_sellable_wardrobe.png" 
+                      alt="Vendável" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   )}
                 </div>
               </div>
               
               <div className="text-center">
                 <p className="text-xs font-mono">{item.id}</p>
-                {item.sellable && (
-                  <Badge variant="outline" className="text-xs mt-1">
-                    <Sparkles className="h-2 w-2 mr-1" />
-                    Vendável
-                  </Badge>
-                )}
               </div>
             </CardContent>
           </Card>

@@ -197,14 +197,48 @@ const ClothingItemCard: React.FC<{
         </div>
       </div>
 
-      {/* Badge HC */}
-      {item.club === 'HC' && (
-        <div className="absolute top-1 right-1">
-          <Badge className="bg-yellow-500 text-black text-xs px-1 py-0">
-            HC
-          </Badge>
-        </div>
-      )}
+      {/* Special rarity indicators */}
+      <div className="absolute top-1 right-1 flex gap-1">
+        {/* HC Icon */}
+        {item.club === 'HC' && (
+          <img 
+            src="/assets/icon_HC_wardrobe.png" 
+            alt="HC" 
+            className="w-4 h-4"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
+        
+        {/* LTD Icon - baseado no nome do item */}
+        {(item.name.toLowerCase().includes('ltd') || item.name.toLowerCase().includes('limited')) && (
+          <img 
+            src="/assets/icon_LTD_habbo.png" 
+            alt="LTD" 
+            className="w-4 h-4"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
+        
+        {/* NFT Icon - baseado no nome do item */}
+        {item.name.toLowerCase().includes('nft') && (
+          <img 
+            src="/assets/icon_wardrobe_nft_on.png" 
+            alt="NFT" 
+            className="w-4 h-4"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
+        
+        {/* Sellable Icon - baseado no nome do item */}
+        {(item.name.toLowerCase().includes('sell') || item.name.toLowerCase().includes('vend')) && (
+          <img 
+            src="/assets/icon_sellable_wardrobe.png" 
+            alt="Vendável" 
+            className="w-4 h-4"
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
+      </div>
 
       {/* Indicador de seleção */}
       {isSelected && (
