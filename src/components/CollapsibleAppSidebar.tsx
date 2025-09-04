@@ -41,7 +41,8 @@ export function CollapsibleAppSidebar() {
         <img 
           src={item.icon} 
           alt={item.name}
-          className={`flex-shrink-0 ${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`}
+          className={`flex-shrink-0 w-9 h-9`}
+          style={{ imageRendering: 'pixelated' }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
@@ -63,7 +64,7 @@ export function CollapsibleAppSidebar() {
               <SidebarMenuButton 
                 asChild
                 isActive={location.pathname === item.path}
-                className="w-full justify-center px-3 py-3 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors"
+                className="w-full justify-center px-2 py-2 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors"
               >
                 {content}
               </SidebarMenuButton>
@@ -90,13 +91,14 @@ export function CollapsibleAppSidebar() {
   return (
     <div className="relative">
       <Sidebar className="bg-[#f5f5dc] border-r-2 border-black" collapsible="icon">
-        <SidebarHeader className="p-4">
-          <div className="w-full flex justify-center">
+        <SidebarHeader className="pt-6 pb-2 px-2">
+          <div className="w-full flex justify-center items-center">
             {isCollapsed ? (
               <img 
                 src="/assets/hub.gif" 
                 alt="Hub" 
-                className="w-12 h-12"
+                className="w-auto h-auto max-w-full max-h-16"
+                style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/assets/hub.png";
@@ -106,7 +108,8 @@ export function CollapsibleAppSidebar() {
               <img 
                 src="/assets/habbohub.gif" 
                 alt="Habbo Hub" 
-                className="h-12 w-auto"
+                className="w-auto h-auto max-w-full max-h-16"
+                style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/assets/habbohub.png";
@@ -116,7 +119,7 @@ export function CollapsibleAppSidebar() {
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="px-2">
+        <SidebarContent className="px-2 pt-2">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
@@ -138,7 +141,8 @@ export function CollapsibleAppSidebar() {
                    <img
                      src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`}
                      alt={`Avatar de ${currentUser.habbo_username}`}
-                     className={`object-contain ${isCollapsed ? 'w-14 h-14' : 'w-14 h-14'}`}
+                     className={`w-14 h-14`}
+                     style={{ imageRendering: 'pixelated' }}
                      onError={(e) => {
                        const target = e.target as HTMLImageElement;
                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`;
@@ -202,7 +206,7 @@ export function CollapsibleAppSidebar() {
 
       <button
         onClick={toggleSidebar}
-        className="absolute top-20 -right-3 z-50 w-6 h-8 bg-[#f5f5dc] border-r-2 border-black border-l-0 rounded-r-md hover:bg-yellow-200/70 transition-colors flex items-center justify-center"
+        className="absolute top-24 -right-3 z-50 w-6 h-8 bg-[#f5f5dc] border-r-2 border-black border-l-0 rounded-r-md hover:bg-yellow-200/70 transition-colors flex items-center justify-center"
         style={{ boxShadow: '2px 0 4px rgba(0,0,0,0.1)' }}
       >
         {isCollapsed ? (
