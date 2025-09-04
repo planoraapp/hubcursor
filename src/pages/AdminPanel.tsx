@@ -156,8 +156,10 @@ const AdminPanel = () => {
           <main 
             className="flex-1 p-8 min-h-screen" 
             style={{ 
-              backgroundImage: 'url(/assets/hubbeta.gif)',
-              backgroundRepeat: 'repeat'
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              backgroundSize: 'cover'
             }}
           >
             <div className="max-w-7xl mx-auto">

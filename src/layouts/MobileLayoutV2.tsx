@@ -63,9 +63,11 @@ const MobileLayoutV2 = ({ children }: { children: React.ReactNode }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ 
-      backgroundImage: 'url(https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif)',
-      backgroundRepeat: 'repeat'
+    <div className="min-h-screen" style={{ 
+      backgroundImage: 'url(/assets/bghabbohub.png)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundSize: 'cover'
     }}>
       {/* Header Mobile */}
       <header 
