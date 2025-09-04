@@ -141,7 +141,7 @@ export const Login: React.FC = () => {
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
           <main 
-            className="flex-1 p-8 min-h-screen" 
+            className="flex-1 p-8 bg-repeat min-h-screen" 
             style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
               backgroundRepeat: 'no-repeat',
@@ -153,7 +153,7 @@ export const Login: React.FC = () => {
               {/* Logo do HabboHub */}
               <div className="text-center mb-8">
                 <img 
-                  src="https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif" 
+                  src="/assets/bghabbohub.png" 
                   alt="HabboHub Logo" 
                   className="mx-auto w-32 h-auto"
                 />

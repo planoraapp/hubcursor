@@ -14,9 +14,7 @@ export const HabboHubBackground: React.FC<HabboHubBackgroundProps> = ({
       className={`min-h-screen ${className}`}
       style={{ 
         backgroundImage: 'url(/assets/bghabbohub.png)',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundSize: 'cover'
+        backgroundRepeat: 'repeat'
       }}
     >
       {children}

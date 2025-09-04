@@ -63,11 +63,9 @@ const MobileLayoutV2 = ({ children }: { children: React.ReactNode }) => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ 
+    <div className="min-h-screen bg-repeat" style={{ 
       backgroundImage: 'url(/assets/bghabbohub.png)',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundSize: 'cover'
+      backgroundRepeat: 'repeat'
     }}>
       {/* Header Mobile */}
       <header 
@@ -79,7 +77,7 @@ const MobileLayoutV2 = ({ children }: { children: React.ReactNode }) => {
         {/* Logo */}
         <div className="flex items-center">
           <img 
-            src="https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif" 
+            src="/assets/bghabbohub.png" 
             alt="HABBO HUB" 
             className="h-8 w-auto"
             style={{ imageRendering: 'pixelated' }}

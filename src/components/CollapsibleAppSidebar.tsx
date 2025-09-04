@@ -101,7 +101,7 @@ export function CollapsibleAppSidebar() {
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/assets/hub.png";
+                  target.src = "/assets/hub.gif";
                 }}
               />
             ) : (
@@ -112,7 +112,7 @@ export function CollapsibleAppSidebar() {
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/assets/habbohub.png";
+                  target.src = "/assets/hub.gif";
                 }}
               />
             )}

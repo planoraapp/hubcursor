@@ -16,7 +16,7 @@ export const Home: React.FC = () => {
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
           <main 
-            className="flex-1 p-8 min-h-screen" 
+            className="flex-1 p-8 bg-repeat min-h-screen"
             style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
               backgroundRepeat: 'no-repeat',

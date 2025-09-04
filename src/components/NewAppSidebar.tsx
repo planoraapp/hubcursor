@@ -104,7 +104,7 @@ export function NewAppSidebar() {
               />
             ) : (
               <img 
-                src="/assets/hubbeta.gif" 
+                src="/assets/bghabbohub.png" 
                 alt="Habbo Hub" 
                 className="w-full h-auto max-w-[200px]"
                 onError={(e) => {
