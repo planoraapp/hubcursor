@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { generateVerificationCode } from '@/config/hotels';
@@ -18,6 +18,11 @@ export const useHubLogin = () => {
   const [currentUser, setCurrentUser] = useState<HabboUser | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Verificar status de autenticação ao carregar o hook
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
   // Gerar código de verificação
   const generateCode = () => {
