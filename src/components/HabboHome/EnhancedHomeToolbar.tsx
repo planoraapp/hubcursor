@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Package } from 'lucide-react';
 import { AssetSelector } from './AssetSelector';
 import { WallpaperSelector } from './WallpaperSelector';
 import { WidgetSelector } from './WidgetSelector';
@@ -43,13 +44,25 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
   const [showWallpaperSelector, setShowWallpaperSelector] = useState(false);
   const [showStickerSelector, setShowStickerSelector] = useState(false);
   const [showWidgetSelector, setShowWidgetSelector] = useState(false);
+  const [showVisitorModal, setShowVisitorModal] = useState(false);
 
   if (!isOwner) {
     return (
-      <div className="w-full bg-muted/50 border-b border-border p-3 text-center">
-        <span className="text-sm text-muted-foreground font-medium font-volter">
-          👁️ Modo Visitante
-        </span>
+      <div className="w-full bg-muted/50 border-b border-border p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground font-medium font-volter">
+            👁️ Modo Visitante
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowVisitorModal(true)}
+            className="bg-white/20 text-white hover:bg-white/30 volter-font border-white/30"
+          >
+            <Package className="w-4 h-4 mr-1" />
+            Ver Opções da Home
+          </Button>
+        </div>
       </div>
     );
   }
@@ -204,6 +217,69 @@ export const EnhancedHomeToolbar: React.FC<EnhancedHomeToolbarProps> = ({
         onClose={() => setShowWidgetSelector(false)}
         onWidgetAdd={handleWidgetAdd}
       />
+
+      {/* Modal de Visitante */}
+      {showVisitorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl border-2 border-black">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-2 volter-font">
+                🏠 Opções da Home
+              </h3>
+              <p className="text-gray-600 volter-font">
+                Explore os elementos desta Habbo Home
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-bold text-blue-800 mb-2 volter-font flex items-center gap-2">
+                  👤 Card de Perfil
+                </h4>
+                <p className="text-sm text-blue-700 volter-font">
+                  Informações do usuário, avatar e estatísticas
+                </p>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h4 className="font-bold text-green-800 mb-2 volter-font flex items-center gap-2">
+                  📖 Livro de Visitas
+                </h4>
+                <p className="text-sm text-green-700 volter-font">
+                  Deixe uma mensagem para o dono da home
+                </p>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <h4 className="font-bold text-purple-800 mb-2 volter-font flex items-center gap-2">
+                  ⭐ Sistema de Avaliação
+                </h4>
+                <p className="text-sm text-purple-700 volter-font">
+                  Avalie esta home com like/dislike
+                </p>
+              </div>
+
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <h4 className="font-bold text-orange-800 mb-2 volter-font flex items-center gap-2">
+                  ✨ Stickers e Decorações
+                </h4>
+                <p className="text-sm text-orange-700 volter-font">
+                  Elementos decorativos personalizados
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <Button
+                onClick={() => setShowVisitorModal(false)}
+                className="bg-blue-600 hover:bg-blue-700 text-white volter-font"
+              >
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
