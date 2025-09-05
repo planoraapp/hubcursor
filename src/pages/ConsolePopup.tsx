@@ -77,7 +77,7 @@ const ConsolePopup: React.FC = () => {
         <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 p-3 flex items-center justify-between mb-2">
           <div className="flex items-center space-x-3">
             <img 
-              src="https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif" 
+              src="/assets/bghabbohub.png" 
               alt="HabboHub" 
               className="h-8 w-auto"
               style={{ imageRendering: 'pixelated' }}

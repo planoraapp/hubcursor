@@ -396,29 +396,51 @@ function processAllClothingData({
       
       if (!figureDataItem) continue;
       
-      // Determine rarity from furnidata
+      // Determine rarity from furnidata and lib name patterns
       const libName = mapItem.lib.toLowerCase();
       let rarity = 'normal';
       
-      for (const [classname, rarityType] of Object.entries(furnidataRarity)) {
-        if (classname.includes(libName) || libName.includes(classname.replace('clothing_', ''))) {
-          rarity = rarityType;
-          break;
+      // Primeiro, tentar detectar por padrões no nome do asset (como ViaJovem)
+      if (libName.includes('_hc_') || libName.includes('_club_') || libName.includes('hc_')) {
+        rarity = 'rare'; // HC items
+      } else if (libName.includes('_ltd_') || libName.includes('_limited_') || libName.includes('ltd_')) {
+        rarity = 'ltd';
+      } else if (libName.includes('_nft_') || libName.includes('nft_')) {
+        rarity = 'nft';
+      } else if (libName.includes('_sellable_') || libName.includes('_vend_') || libName.includes('sellable_')) {
+        rarity = 'rare'; // Sellable items
+      } else {
+        // Fallback: buscar no furnidata
+        for (const [classname, rarityType] of Object.entries(furnidataRarity)) {
+          if (classname.includes(libName) || libName.includes(classname.replace('clothing_', ''))) {
+            rarity = rarityType;
+            break;
+          }
         }
       }
       
       // Determine available colors based on category
       const availableColors = getColorsForCategory(category, colorPalettes);
       
+      // Determinar se é HC baseado no nome do asset e propriedades
+      const isHCFromName = libName.includes('_hc_') || libName.includes('_club_') || libName.includes('hc_');
+      const isHCFromClub = figureDataItem.club === '2';
+      const isHC = isHCFromName || isHCFromClub;
+      
+      // Determinar se é vendável baseado no nome do asset e propriedades
+      const isSellableFromName = libName.includes('_sellable_') || libName.includes('_vend_') || libName.includes('sellable_');
+      const isSellableFromProp = figureDataItem.sellable === '1';
+      const isSellable = isSellableFromName || isSellableFromProp;
+
       const processedItem: ProcessedClothingItem = {
         id: mapItem.id,
         category,
-        name: `${category.toUpperCase()}-${mapItem.id}`,
+        name: mapItem.lib, // Usar o nome real do asset (libId) em vez de gerar genérico
         gender: figureDataItem.gender,
-        club: figureDataItem.club === '2' ? 'hc' : 'normal',
+        club: isHC ? 'hc' : 'normal',
         rarity: rarity as 'normal' | 'rare' | 'ltd' | 'nft',
         colorable: figureDataItem.colorable === '1',
-        sellable: figureDataItem.sellable === '1',
+        sellable: isSellable,
         colors: availableColors,
         swfUrl: `${buildUrl}${mapItem.lib}.swf`,
         iconUrl: generateIconUrl(buildUrl, mapItem.lib, mapItem.revision),

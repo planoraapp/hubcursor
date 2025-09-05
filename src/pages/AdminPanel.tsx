@@ -59,7 +59,7 @@ const AdminPanel = () => {
       author: 'Beebop',
       authorAvatar: 'https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png',
       fansite: 'HabboHub',
-      fansiteLogo: 'https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif',
+      fansiteLogo: '/assets/bghabbohub.png',
       image: 'https://www.habbo.com.br/habbo-imaging/badge/b05114s36135s99999.gif',
       category: 'Atualização',
       date: '2024-01-15',
@@ -154,9 +154,9 @@ const AdminPanel = () => {
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
           <main 
-            className="flex-1 p-8 min-h-screen" 
+            className="flex-1 p-8 bg-repeat min-h-screen" 
             style={{ 
-              backgroundImage: 'url(/assets/hubbeta.gif)',
+              backgroundImage: 'url(/assets/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}
           >
@@ -232,7 +232,7 @@ const AdminPanel = () => {
                                   <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                                     {article.content}
                                   </p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>
@@ -372,7 +372,7 @@ const AdminPanel = () => {
                                   <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                                     {article.content}
                                   </p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>
@@ -447,7 +447,7 @@ const AdminPanel = () => {
                                   <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                                     {article.content}
                                   </p>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>
@@ -523,11 +523,11 @@ const AdminPanel = () => {
                                     {article.content}
                                   </p>
                                   <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded">
-                                    <p className="text-xs text-red-800">
+                                    <p className="text-sm text-red-800">
                                       <strong>Motivo da rejeição:</strong> {article.reason}
                                     </p>
                                   </div>
-                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                                     <div className="flex items-center gap-2">
                                       <User className="w-4 h-4" />
                                       <span>{article.author}</span>

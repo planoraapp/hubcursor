@@ -95,24 +95,24 @@ export function CollapsibleAppSidebar() {
           <div className="w-full flex justify-center items-center">
             {isCollapsed ? (
               <img 
-                src="/assets/hub.gif" 
+                src="/assets/hubbeta.gif" 
                 alt="Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/assets/hub.png";
+                  target.src = "/assets/hub.gif";
                 }}
               />
             ) : (
               <img 
-                src="https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif" 
+                src="/assets/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/assets/habbohub.png";
+                  target.src = "/assets/hub.gif";
                 }}
               />
             )}
@@ -160,7 +160,7 @@ export function CollapsibleAppSidebar() {
                       <TooltipTrigger asChild>
                         <button 
                           onClick={logout}
-                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
+                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-sm font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
                         >
                           <img 
                             src="/assets/logout.png" 

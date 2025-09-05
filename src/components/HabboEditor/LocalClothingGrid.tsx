@@ -32,6 +32,12 @@ const LocalClothingGrid = ({
   
   const { items, isLoading, error } = useEditorHabboCategory(selectedCategory, selectedGender);
 
+  // Função para detectar se uma cor é HC
+  const isHCColor = (colorId: string): boolean => {
+    const color = HABBO_COLORS.find(c => c.id === colorId);
+    return color?.isHC || false;
+  };
+
   console.log(`🎯 [LocalClothingGrid] Categoria: ${selectedCategory}, Items: ${items.length}, Modo: ${viewMode}`);
 
   // Cores disponíveis baseadas no sistema ViaJovem (cores mais usadas)
@@ -154,7 +160,7 @@ const LocalClothingGrid = ({
                 onClick={() => handleItemClick(item)}
                 title={item.name}
               >
-                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg overflow-hidden border border-gray-200">
+                <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg overflow-hidden border border-gray-200 relative">
                   <img
                     src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${selectedColor}&gender=${selectedGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`}
                     alt={item.name}
@@ -162,6 +168,57 @@ const LocalClothingGrid = ({
                     style={{ imageRendering: 'pixelated' }}
                     loading="lazy"
                   />
+                  
+                  {/* Special rarity indicators */}
+                  <div className="absolute top-1 right-1 flex gap-1">
+                    {/* HC Icon - baseado no nome do asset, propriedade club ou cor HC selecionada */}
+                    {(item.name.toLowerCase().includes('hc') || 
+                      item.name.toLowerCase().includes('club') ||
+                      item.club === 'hc' ||
+                      isHCColor(selectedColor)) && (
+                      <img 
+                        src="/assets/icon_HC_wardrobe.png" 
+                        alt="HC" 
+                        className="w-3 h-3"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
+                    
+                    {/* LTD Icon - baseado no nome do asset */}
+                    {(item.name.toLowerCase().includes('ltd') || 
+                      item.name.toLowerCase().includes('limited') ||
+                      item.rarity === 'ltd') && (
+                      <img 
+                        src="/assets/icon_LTD_habbo.png" 
+                        alt="LTD" 
+                        className="w-3 h-3"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
+                    
+                    {/* NFT Icon - baseado no nome do asset */}
+                    {(item.name.toLowerCase().includes('nft') || 
+                      item.rarity === 'nft') && (
+                      <img 
+                        src="/assets/icon_wardrobe_nft_on.png" 
+                        alt="NFT" 
+                        className="w-3 h-3"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
+                    
+                    {/* Sellable Icon - baseado no nome do asset */}
+                    {(item.name.toLowerCase().includes('sell') || 
+                      item.name.toLowerCase().includes('vend') ||
+                      item.sellable) && (
+                      <img 
+                        src="/assets/icon_sellable_wardrobe.png" 
+                        alt="Vendável" 
+                        className="w-3 h-3"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             )}
