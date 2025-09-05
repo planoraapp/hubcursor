@@ -20,7 +20,10 @@ export const HabboLoginForm = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-repeat flex items-center justify-center p-4" style={{ backgroundImage: 'url("/assets/bghabbohub.png")' }}>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ 
+        backgroundImage: 'url("/assets/bghabbohub.png")',
+        backgroundRepeat: 'repeat'
+      }}>
         <div className="text-center space-y-4">
           <div className="text-lg font-bold text-white">Carregando...</div>
         </div>
@@ -29,35 +32,55 @@ export const HabboLoginForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-repeat flex items-center justify-center p-4" style={{ backgroundImage: 'url("/assets/bghabbohub.png")' }}>
-      <Card className="w-full max-w-2xl bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-black">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img src="https://raw.githubusercontent.com/planoraapp/hubcursor/main/public/assets/hubbeta.gif" alt="Habbo Hub" className="h-16" />
-          </div>
-          <CardTitle className="text-2xl volter-font text-gray-800">
-            Habbo Hub
-          </CardTitle>
-          <CardDescription>
-            Conecte sua conta Habbo para acessar o hub
-          </CardDescription>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ 
+      backgroundImage: 'url("/assets/bghabbohub.png")',
+      backgroundRepeat: 'repeat'
+    }}>
+      <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
+          <CardTitle className="text-center volter-font">Login Habbo</CardTitle>
         </CardHeader>
-
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="senha">Senha</TabsTrigger>
-              <TabsTrigger value="missao">Missão</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="senha">
-              <LoginBySenha />
-            </TabsContent>
-
-            <TabsContent value="missao">
-              <LoginByMissao />
-            </TabsContent>
-          </Tabs>
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="username" className="volter-font">Usuário</Label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Digite seu usuário"
+                className="border-2 border-gray-300 focus:border-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="password" className="volter-font">Senha</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                className="border-2 border-gray-300 focus:border-blue-500"
+                required
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold volter-font"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                'Entrar'
+              )}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

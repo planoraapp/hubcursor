@@ -11,7 +11,10 @@ const Eventos = () => {
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}>
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center gap-3 mb-4">

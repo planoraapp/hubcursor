@@ -143,7 +143,10 @@ const EnhancedHabboHome: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex w-full bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="min-h-screen flex w-full" style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}>
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
@@ -158,7 +161,10 @@ const EnhancedHabboHome: React.FC = () => {
 
   if (!habboData) {
     return (
-      <div className="min-h-screen flex w-full bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="min-h-screen flex w-full" style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}>
         <main className="flex-1 flex items-center justify-center">
           <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
             <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
@@ -294,7 +300,10 @@ const EnhancedHabboHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    <div className="min-h-screen" style={{ 
+      backgroundImage: 'url(/assets/bghabbohub.png)',
+      backgroundRepeat: 'repeat'
+    }}>
       {/* Enhanced Toolbar */}
       <EnhancedHomeToolbar
         isEditMode={isEditMode}
