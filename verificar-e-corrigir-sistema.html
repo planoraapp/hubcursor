@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar e Corrigir Sistema - HabboHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.success {
+            background: #28a745;
+        }
+        .test-button.success:hover {
+            background: #218838;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Verificar e Corrigir Sistema - HabboHub</h1>
+            <p>Vamos verificar o que realmente existe e corrigir de uma vez por todas</p>
+        </div>
+
+        <div class="status warning">
+            <strong>⚠️ Problema:</strong> Constraint "unique_habbo_name_hotel" já existe - vamos verificar o que realmente está funcionando
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ Verificar Estado Real do Sistema</h3>
+            <button class="test-button" onclick="checkRealState()">Verificar Estado Real</button>
+            <div id="realStateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ Testar Acesso à Tabela unified_users</h3>
+            <button class="test-button" onclick="testUnifiedUsersAccess()">Testar Acesso</button>
+            <div id="accessResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ Criar Usuários se Necessário</h3>
+            <button class="test-button success" onclick="createUsersIfNeeded()">Criar Usuários</button>
+            <div id="createUsersResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Testar Homes Diretamente</h3>
+            <button class="test-button" onclick="testHomesDirectly()">Testar Homes</button>
+            <div id="homesResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5️⃣ Solução Definitiva</h3>
+            <button class="test-button danger" onclick="applyDefinitiveSolution()">Aplicar Solução Definitiva</button>
+            <div id="solutionResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkRealState() {
+            const resultDiv = document.getElementById('realStateResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando estado real do sistema...';
+
+            try {
+                let result = '📊 Estado Real do Sistema:\n\n';
+                
+                // Verificar se unified_users existe e é acessível
+                result += '1. Testando acesso à unified_users...\n';
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        result += `   ✅ unified_users: ACESSÍVEL (${data.length} registros)\n`;
+                        
+                        // Se acessível, verificar usuários
+                        result += '2. Verificando usuários...\n';
+                        const usersResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=*`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (usersResponse.ok) {
+                            const users = await usersResponse.json();
+                            result += `   ✅ ${users.length} usuários encontrados\n`;
+                            
+                            if (users.length > 0) {
+                                result += '   📋 Usuários:\n';
+                                users.forEach((user, index) => {
+                                    result += `      ${index + 1}. ${user.habbo_name} (${user.hotel})\n`;
+                                    result += `         - ID: ${user.id}\n`;
+                                    result += `         - Admin: ${user.is_admin ? 'Sim' : 'Não'}\n`;
+                                    result += `         - Ativo: ${user.is_active ? 'Sim' : 'Não'}\n\n`;
+                                });
+                            } else {
+                                result += '   ⚠️ Nenhum usuário encontrado\n';
+                            }
+                        } else {
+                            result += `   ❌ Erro ao buscar usuários: ${usersResponse.status}\n`;
+                        }
+                    } else if (response.status === 404) {
+                        result += `   ❌ unified_users: NÃO EXISTE (404)\n`;
+                        result += `   💡 A tabela não foi criada corretamente\n`;
+                    } else {
+                        result += `   ❌ unified_users: Erro ${response.status}\n`;
+                    }
+                } catch (error) {
+                    result += `   ❌ unified_users: ${error.message}\n`;
+                }
+
+                // Verificar outras tabelas importantes
+                result += '3. Verificando outras tabelas...\n';
+                const otherTables = ['habbo_accounts', 'user_home_backgrounds', 'user_home_widgets'];
+                
+                for (const table of otherTables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `   ✅ ${table}: ${data.length} registros\n`;
+                        } else {
+                            result += `   ❌ ${table}: Erro ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `   ❌ ${table}: ${error.message}\n`;
+                    }
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testUnifiedUsersAccess() {
+            const resultDiv = document.getElementById('accessResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando acesso à unified_users...';
+
+            try {
+                let result = '🔍 Teste de Acesso à unified_users:\n\n';
+                
+                // Testar diferentes tipos de consulta
+                const queries = [
+                    {
+                        name: 'Contagem simples',
+                        url: `${SUPABASE_URL}/rest/v1/unified_users?select=count`
+                    },
+                    {
+                        name: 'Busca por habbohub (exata)',
+                        url: `${SUPABASE_URL}/rest/v1/unified_users?habbo_name=eq.habbohub&select=*`
+                    },
+                    {
+                        name: 'Busca por habbohub (ilike)',
+                        url: `${SUPABASE_URL}/rest/v1/unified_users?habbo_name=ilike.habbohub&select=*`
+                    },
+                    {
+                        name: 'Busca case-insensitive',
+                        url: `${SUPABASE_URL}/rest/v1/unified_users?habbo_name=ilike.Habbohub&select=*`
+                    }
+                ];
+
+                for (const query of queries) {
+                    result += `${query.name}:\n`;
+                    
+                    try {
+                        const response = await fetch(query.url, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `   ✅ OK: ${Array.isArray(data) ? data.length : 'count'} registros\n`;
+                            
+                            if (Array.isArray(data) && data.length > 0) {
+                                result += `   📋 Dados: ${JSON.stringify(data[0], null, 2)}\n`;
+                            }
+                        } else {
+                            result += `   ❌ Erro: ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `   ❌ Erro: ${error.message}\n`;
+                    }
+                    
+                    result += '\n';
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createUsersIfNeeded() {
+            const resultDiv = document.getElementById('createUsersResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Criando usuários se necessário...';
+
+            try {
+                let result = '👥 Criação de Usuários:\n\n';
+                
+                // Verificar se habbohub existe
+                result += '1. Verificando habbohub...\n';
+                const habbohubResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?habbo_name=ilike.habbohub&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (habbohubResponse.ok) {
+                    const habbohubData = await habbohubResponse.json();
+                    if (habbohubData.length > 0) {
+                        result += `   ✅ habbohub já existe: ${habbohubData[0].habbo_name}\n`;
+                    } else {
+                        result += `   ❌ habbohub não existe, criando...\n`;
+                        
+                        const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users`, {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                habbo_name: 'habbohub',
+                                hotel: 'br',
+                                is_admin: true,
+                                is_active: true,
+                                motto: 'HUB-HA2VEA',
+                                email: 'habbohub@habbohub.com'
+                            })
+                        });
+
+                        if (createResponse.ok) {
+                            result += `   ✅ habbohub criado com sucesso\n`;
+                        } else {
+                            const error = await createResponse.json();
+                            result += `   ❌ Erro ao criar habbohub: ${error.message || createResponse.status}\n`;
+                        }
+                    }
+                } else {
+                    result += `   ❌ Erro ao verificar habbohub: ${habbohubResponse.status}\n`;
+                }
+
+                // Verificar se beebop existe
+                result += '2. Verificando beebop...\n';
+                const beebopResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?habbo_name=ilike.beebop&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (beebopResponse.ok) {
+                    const beebopData = await beebopResponse.json();
+                    if (beebopData.length > 0) {
+                        result += `   ✅ beebop já existe: ${beebopData[0].habbo_name}\n`;
+                    } else {
+                        result += `   ❌ beebop não existe, criando...\n`;
+                        
+                        const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users`, {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                habbo_name: 'beebop',
+                                hotel: 'br',
+                                is_admin: false,
+                                is_active: true,
+                                motto: 'Teste',
+                                email: 'beebop@habbohub.com'
+                            })
+                        });
+
+                        if (createResponse.ok) {
+                            result += `   ✅ beebop criado com sucesso\n`;
+                        } else {
+                            const error = await createResponse.json();
+                            result += `   ❌ Erro ao criar beebop: ${error.message || createResponse.status}\n`;
+                        }
+                    }
+                } else {
+                    result += `   ❌ Erro ao verificar beebop: ${beebopResponse.status}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testHomesDirectly() {
+            const resultDiv = document.getElementById('homesResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando homes diretamente...';
+
+            try {
+                let result = '🏠 Teste Direto das Homes:\n\n';
+                
+                // Testar URLs das homes
+                const urls = [
+                    'http://localhost:5173/homes',
+                    'http://localhost:5173/homes/habbohub',
+                    'http://localhost:5173/homes/beebop'
+                ];
+
+                for (const url of urls) {
+                    result += `Testando: ${url}\n`;
+                    
+                    try {
+                        const response = await fetch(url, { method: 'HEAD' });
+                        if (response.ok) {
+                            result += `   ✅ OK\n`;
+                        } else {
+                            result += `   ❌ Erro: ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `   ❌ Erro: ${error.message}\n`;
+                    }
+                }
+
+                result += '\n💡 Dica: Abra as URLs no navegador para testar visualmente\n';
+                result += '🔍 Verifique o console do navegador para erros detalhados\n';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function applyDefinitiveSolution() {
+            const resultDiv = document.getElementById('solutionResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Aplicando solução definitiva...';
+
+            try {
+                let result = '🎯 Solução Definitiva:\n\n';
+                
+                result += '📋 DIAGNÓSTICO COMPLETO:\n\n';
+                
+                // 1. Verificar se a tabela existe
+                result += '1. Verificando tabela unified_users...\n';
+                const tableResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (tableResponse.ok) {
+                    const data = await tableResponse.json();
+                    result += `   ✅ Tabela existe: ${data.length} registros\n`;
+                    
+                    // 2. Verificar usuários
+                    result += '2. Verificando usuários...\n';
+                    const usersResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=*`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (usersResponse.ok) {
+                        const users = await usersResponse.json();
+                        result += `   ✅ ${users.length} usuários encontrados\n`;
+                        
+                        if (users.length > 0) {
+                            result += '   📋 Usuários disponíveis:\n';
+                            users.forEach((user, index) => {
+                                result += `      ${index + 1}. ${user.habbo_name} (${user.hotel})\n`;
+                            });
+                        }
+                    }
+                    
+                    result += '\n🎉 SISTEMA FUNCIONANDO!\n\n';
+                    result += '📋 PRÓXIMOS PASSOS:\n';
+                    result += '1. Teste: http://localhost:5173/homes\n';
+                    result += '2. Teste: http://localhost:5173/homes/habbohub\n';
+                    result += '3. Teste: http://localhost:5173/homes/beebop\n\n';
+                    result += '💡 Se ainda não funcionar:\n';
+                    result += '   - Verifique o console do navegador\n';
+                    result += '   - Verifique se o servidor está rodando\n';
+                    result += '   - Verifique se há erros de CORS\n';
+                    
+                } else if (tableResponse.status === 404) {
+                    result += `   ❌ Tabela NÃO EXISTE (404)\n`;
+                    result += `   💡 Execute este SQL no Supabase Dashboard:\n\n`;
+                    result += `   CREATE TABLE IF NOT EXISTS public.unified_users (\n`;
+                    result += `     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n`;
+                    result += `     habbo_name TEXT NOT NULL,\n`;
+                    result += `     hotel TEXT NOT NULL DEFAULT 'br',\n`;
+                    result += `     is_admin BOOLEAN DEFAULT false,\n`;
+                    result += `     is_active BOOLEAN DEFAULT true,\n`;
+                    result += `     motto TEXT,\n`;
+                    result += `     email TEXT,\n`;
+                    result += `     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n`;
+                    result += `   );\n\n`;
+                    result += `   ALTER TABLE public.unified_users ENABLE ROW LEVEL SECURITY;\n\n`;
+                    result += `   CREATE POLICY "Service role can do everything" ON public.unified_users\n`;
+                    result += `     FOR ALL USING (current_setting('role', true) = 'service_role');\n\n`;
+                    result += `   INSERT INTO public.unified_users (habbo_name, hotel, is_admin, is_active, motto, email)\n`;
+                    result += `   VALUES ('habbohub', 'br', true, true, 'HUB-HA2VEA', 'habbohub@habbohub.com'),\n`;
+                    result += `          ('beebop', 'br', false, true, 'Teste', 'beebop@habbohub.com');\n`;
+                } else {
+                    result += `   ❌ Erro: ${tableResponse.status}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar automaticamente a verificação inicial
+        window.onload = function() {
+            checkRealState();
+        };
+    </script>
+</body>
+</html>

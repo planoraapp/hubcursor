@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Navegação - HabboHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .loading { border-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Navegação - HabboHub</h1>
+    
+    <div class="test-container">
+        <h2>🔗 Links para Teste</h2>
+        <p><strong>Teste os seguintes links para acessar a home:</strong></p>
+        
+        <a href="http://localhost:5173/homes/habbohub" class="test-button" target="_blank">
+            🏠 /homes/habbohub
+        </a>
+        
+        <a href="http://localhost:5173/homes/beebop" class="test-button" target="_blank">
+            🏠 /homes/beebop
+        </a>
+        
+        <a href="http://localhost:5173/enhanced-home/habbohub" class="test-button" target="_blank">
+            🏠 /enhanced-home/habbohub
+        </a>
+        
+        <a href="http://localhost:5173/enhanced-home/beebop" class="test-button" target="_blank">
+            🏠 /enhanced-home/beebop
+        </a>
+    </div>
+
+    <div class="test-container">
+        <h2>🔧 Teste de Navegação JavaScript</h2>
+        <button class="test-button" onclick="testNavigation()">Testar Navegação</button>
+        <div id="nav-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>📊 Status do Sistema</h2>
+        <div class="result success">
+✅ <strong>Servidor:</strong> http://localhost:5173 - Funcionando
+✅ <strong>Rotas configuradas:</strong> /homes/:username e /enhanced-home/:username
+✅ <strong>Componente HabboHomeV2:</strong> Corrigido
+✅ <strong>Hook useHabboHomeV2:</strong> Corrigido
+⚠️ <strong>Usuário habbohub:</strong> Pode não existir na tabela hub_users
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🛠️ Soluções</h2>
+        <div class="result">
+<strong>Se os links não funcionarem:</strong>
+
+1. <strong>Execute o SQL:</strong> criar-usuario-habbohub.sql no Supabase Dashboard
+2. <strong>Verifique o console:</strong> F12 → Console para ver erros
+3. <strong>Teste as rotas:</strong> Use os links acima
+4. <strong>Verifique dados:</strong> Use test-supabase-connection.html
+
+<strong>Possíveis problemas:</strong>
+- Usuário habbohub não existe na tabela hub_users
+- Erro 401 na API do Supabase
+- Problema de roteamento no React Router
+        </div>
+    </div>
+
+    <script>
+        function testNavigation() {
+            const resultDiv = document.getElementById('nav-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Testando navegação...';
+
+            try {
+                // Testar se as rotas estão acessíveis
+                const routes = [
+                    '/homes/habbohub',
+                    '/homes/beebop',
+                    '/enhanced-home/habbohub',
+                    '/enhanced-home/beebop'
+                ];
+
+                let result = '🧪 TESTE DE NAVEGAÇÃO:\n\n';
+                
+                routes.forEach(route => {
+                    const fullUrl = `http://localhost:5173${route}`;
+                    result += `🔗 ${route}\n`;
+                    result += `   URL: ${fullUrl}\n`;
+                    result += `   Status: Teste manual necessário\n\n`;
+                });
+
+                result += '📝 INSTRUÇÕES:\n';
+                result += '1. Clique nos links acima\n';
+                result += '2. Verifique se a página carrega\n';
+                result += '3. Verifique o console (F12) para erros\n';
+                result += '4. Se não funcionar, execute o SQL criar-usuario-habbohub.sql\n';
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro no teste: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

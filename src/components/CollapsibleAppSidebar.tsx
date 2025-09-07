@@ -41,8 +41,16 @@ export function CollapsibleAppSidebar() {
         <img 
           src={item.icon} 
           alt={item.name}
-          className={`flex-shrink-0 w-9 h-9`}
-          style={{ imageRendering: 'pixelated' }}
+          className="flex-shrink-0"
+          style={{ 
+            imageRendering: 'pixelated',
+            width: 'auto',
+            height: 'auto',
+            maxWidth: '36px',
+            maxHeight: '36px',
+            objectFit: 'contain',
+            display: 'block'
+          }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';

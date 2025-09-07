@@ -79,37 +79,39 @@ const EnhancedHome = () => {
                   </CardContent>
                 </Card>
 
-                {/* Guestbook Widget */}
-                <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">
-                  <CardHeader>
-                    <CardTitle className="volter-font flex items-center gap-2">
-                      <MessageCircle className="w-5 h-5" />
-                      Livro de Visitas
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 max-h-64 overflow-y-auto">
-                      <div className="bg-gray-50 p-3 rounded">
+                {/* ACMA_notepad Widget */}
+                <div 
+                  className="rounded-lg shadow-lg"
+                  style={{
+                    backgroundImage: 'url(https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/acma_notepad.png)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }}
+                >
+                  <div className="p-4 flex flex-col h-full">
+                    <div className="space-y-4 max-h-64 overflow-y-auto flex-1">
+                      <div className="p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-sm volter-font">HabboHub</span>
-                          <Badge variant="outline" className="text-xs">Sistema</Badge>
+                          <span className="font-bold text-sm text-black volter-font">HabboHub</span>
+                          <Badge variant="outline" className="text-xs border-black bg-transparent">Sistema</Badge>
                         </div>
-                        <p className="text-sm text-gray-600 volter-font">
+                        <p className="text-sm text-black volter-font font-medium">
                           Bem-vindo à sua nova Habbo Home! 🏠✨
                         </p>
                       </div>
                     </div>
                     
                     {!isOwnHome && isLoggedIn && (
-                      <div className="mt-4 pt-4 border-t">
-                        <Button variant="outline" className="w-full volter-font">
+                      <div className="mt-4 pt-4">
+                        <Button variant="outline" className="w-full volter-font font-bold border-2 border-black bg-transparent hover:bg-black/10 text-black">
                           <MessageCircle className="w-4 h-4 mr-2" />
-                          Deixar Recado
+                          Deixar Anotação
                         </Button>
                       </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Rating Widget */}
                 <Card className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border-2 border-black">

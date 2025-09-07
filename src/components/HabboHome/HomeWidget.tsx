@@ -6,6 +6,8 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RatingWidget } from './widgets/RatingWidget';
+import { GuestbookWidget } from './widgets/GuestbookWidget';
+import { ACMAnotepadWidget } from '@/components/widgets/ACMAnotepadWidget';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Widget {
@@ -84,6 +86,8 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     e.preventDefault();
     e.stopPropagation();
 
+    console.log('📊 Iniciando drag do widget:', { widgetId: widget.id, widgetType: widget.widget_type });
+
     setIsDragging(true);
     setDragStart({
       x: e.clientX,
@@ -98,31 +102,53 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       if (isDragging) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        const canvasWidth = isMobile ? 768 : 1080;
-        const canvasHeight = isMobile ? 1280 : 1800;
-        const newX = Math.max(0, Math.min(canvasWidth - widget.width, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(canvasHeight - widget.height, dragStart.elementY + deltaY));
+        const canvasWidth = 1000;
+        const canvasHeight = 1400;
         
-        onPositionChange(widget.id, newX, newY);
+        // Calcular nova posição
+        let newX = dragStart.elementX + deltaX;
+        let newY = dragStart.elementY + deltaY;
+        
+        // Aplicar limites do canvas
+        newX = Math.max(0, Math.min(canvasWidth - widget.width, newX));
+        newY = Math.max(0, Math.min(canvasHeight - widget.height, newY));
+        
+        // Arredondar para pixels inteiros para melhor precisão
+        newX = Math.round(newX);
+        newY = Math.round(newY);
+        
+        // Threshold mínimo para evitar movimentos muito pequenos
+        const threshold = 2;
+        const deltaXAbs = Math.abs(deltaX);
+        const deltaYAbs = Math.abs(deltaY);
+        
+        // Só atualizar se o movimento for significativo
+        if (deltaXAbs >= threshold || deltaYAbs >= threshold) {
+          console.log('📊 Movendo widget:', { widgetId: widget.id, newX, newY, deltaX, deltaY });
+          onPositionChange(widget.id, newX, newY);
+        }
       }
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
+        console.log('✅ Drag completo do widget:', { widgetId: widget.id, widgetType: widget.widget_type });
         setIsDragging(false);
       }
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mousemove', handleMouseMove, { passive: true });
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'grabbing';
     }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'auto';
+      document.body.style.cursor = 'auto';
     };
   }, [isDragging, dragStart, onPositionChange, widget]);
 
@@ -205,79 +231,11 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
 
       case 'guestbook':
         return (
-          <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-            <h4 className="font-volter font-bold text-black border-b pb-2">
-              📝 Livro de Visitas
-            </h4>
-            
-            {guestbook.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <p className="font-volter">Seja o primeiro a deixar uma mensagem!</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {guestbook.slice(0, 5).map((entry) => (
-                  <div key={entry.id} className="bg-gray-50 rounded p-2 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <img
-                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s&headonly=1`}
-                        alt={entry.author_habbo_name}
-                        className="w-6 h-6 rounded object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`;
-                        }}
-                      />
-                      <a
-                        href={`/homes/${entry.author_habbo_name}`}
-                        className="font-volter text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {entry.author_habbo_name}
-                      </a>
-                      <span className="text-xs text-gray-500">
-                        {new Date(entry.created_at).toLocaleDateString('pt-BR')}
-                      </span>
-                      {(isOwner || entry.author_habbo_name === habboData?.habbo_name) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // TODO: Implement delete comment
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs px-1"
-                          title="Excluir comentário"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-700 ml-10">{entry.message}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Área para nova mensagem - apenas se não for o dono */}
-            {!isOwner && (
-              <div className="border-t pt-3">
-                <Textarea
-                  placeholder="Deixe sua mensagem..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  className="text-sm resize-none"
-                  rows={2}
-                />
-                <Button 
-                  size="sm" 
-                  className="mt-2 w-full font-volter"
-                  disabled={!newMessage.trim()}
-                >
-                  Enviar Mensagem
-                </Button>
-              </div>
-            )}
-          </div>
+          <ACMAnotepadWidget
+            entries={guestbook}
+            isOwner={isOwner}
+            className="w-full h-full"
+          />
         );
 
       case 'rating':
@@ -300,19 +258,17 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   };
 
   const containerStyle = {
-    left: widget.x,
-    top: widget.y,
-    width: widget.width,
-    height: widget.height,
+    width: '100%',
+    height: '100%',
     zIndex: isDragging ? 9999 : widget.z_index,
     opacity: isDragging ? 0.8 : 1,
-    transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+    transform: 'scale(1)',
     transition: isDragging ? 'none' : 'all 0.2s ease-out'
   };
 
   return (
     <div
-      className={`absolute ${isEditMode && isOwner ? 'cursor-move' : 'cursor-default'}`}
+      className={`relative w-full h-full ${isEditMode && isOwner ? 'cursor-move' : 'cursor-default'}`}
       style={containerStyle}
       onMouseDown={handleMouseDown}
     >
@@ -323,7 +279,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
               e.stopPropagation();
               onRemove(widget.id);
             }}
-            className="absolute top-2 right-2 z-10 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md"
+            className="absolute top-2 right-2 z-10 bg-red-500 text-white rounded-full p-1 shadow-md"
             title="Remover Widget"
           >
             <X className="w-4 h-4" />

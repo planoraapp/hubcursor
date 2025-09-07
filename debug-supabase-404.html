@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Supabase 404 - HabboHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.success {
+            background: #28a745;
+        }
+        .test-button.success:hover {
+            background: #218838;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .sql-code {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Debug Supabase 404 - HabboHub</h1>
+            <p>Investigando erro 404 na tabela unified_users</p>
+        </div>
+
+        <div class="status error">
+            <strong>❌ Problema:</strong> Erro 404 persistente na tabela unified_users
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ Verificar Todas as Tabelas</h3>
+            <button class="test-button" onclick="checkAllTables()">Verificar Tabelas</button>
+            <div id="tablesResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ Testar Conexão com Supabase</h3>
+            <button class="test-button" onclick="testSupabaseConnection()">Testar Conexão</button>
+            <div id="connectionResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ Criar Tabela Manualmente</h3>
+            <div class="sql-code" id="createTableSQL">
+                -- SQL para criar a tabela unified_users
+                -- Execute este SQL no Supabase Dashboard
+            </div>
+            <button class="test-button" onclick="loadCreateTableSQL()">Carregar SQL</button>
+            <button class="test-button success" onclick="createTableManually()">Criar Tabela</button>
+            <div id="createResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Verificar Permissões RLS</h3>
+            <button class="test-button" onclick="checkRLSPermissions()">Verificar RLS</button>
+            <div id="rlsResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5️⃣ Teste Final</h3>
+            <button class="test-button success" onclick="runFinalTest()">Teste Final</button>
+            <div id="finalResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkAllTables() {
+            const resultDiv = document.getElementById('tablesResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando todas as tabelas...';
+
+            try {
+                let result = '📊 Verificação de Tabelas:\n\n';
+                
+                const tables = [
+                    'unified_users',
+                    'habbo_accounts', 
+                    'hub_users',
+                    'user_home_backgrounds',
+                    'user_home_widgets',
+                    'user_stickers',
+                    'discovered_users'
+                ];
+
+                for (const table of tables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `✅ ${table}: Existe (${data.length} registros)\n`;
+                        } else if (response.status === 404) {
+                            result += `❌ ${table}: NÃO EXISTE (404)\n`;
+                        } else {
+                            result += `⚠️ ${table}: Erro ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `❌ ${table}: ${error.message}\n`;
+                    }
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testSupabaseConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando conexão com Supabase...';
+
+            try {
+                let result = '🔌 Teste de Conexão Supabase:\n\n';
+                
+                // Testar endpoint básico
+                result += '1. Testando endpoint básico...\n';
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        result += `   ✅ Endpoint básico: OK\n`;
+                    } else {
+                        result += `   ❌ Endpoint básico: Erro ${response.status}\n`;
+                    }
+                } catch (error) {
+                    result += `   ❌ Endpoint básico: ${error.message}\n`;
+                }
+
+                // Testar com tabela que sabemos que existe
+                result += '2. Testando com tabela existente...\n';
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        result += `   ✅ habbo_accounts: OK (${data.length} registros)\n`;
+                    } else {
+                        result += `   ❌ habbo_accounts: Erro ${response.status}\n`;
+                    }
+                } catch (error) {
+                    result += `   ❌ habbo_accounts: ${error.message}\n`;
+                }
+
+                // Testar unified_users especificamente
+                result += '3. Testando unified_users...\n';
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        result += `   ✅ unified_users: OK (${data.length} registros)\n`;
+                    } else if (response.status === 404) {
+                        result += `   ❌ unified_users: NÃO EXISTE (404)\n`;
+                        result += `   💡 A tabela não foi criada corretamente\n`;
+                    } else {
+                        result += `   ❌ unified_users: Erro ${response.status}\n`;
+                    }
+                } catch (error) {
+                    result += `   ❌ unified_users: ${error.message}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function loadCreateTableSQL() {
+            const sqlDiv = document.getElementById('createTableSQL');
+            sqlDiv.textContent = `-- ========================================
+-- CRIAR TABELA UNIFIED_USERS - VERSÃO SIMPLIFICADA
+-- ========================================
+-- Execute este SQL no Supabase Dashboard > SQL Editor
+
+-- 1. CRIAR TABELA (VERSÃO SIMPLES)
+CREATE TABLE IF NOT EXISTS public.unified_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  habbo_name TEXT NOT NULL,
+  habbo_id TEXT,
+  hotel TEXT NOT NULL DEFAULT 'br',
+  figure_string TEXT,
+  motto TEXT,
+  is_online BOOLEAN DEFAULT false,
+  password_hash TEXT,
+  email TEXT,
+  avatar_url TEXT,
+  member_since TIMESTAMP WITH TIME ZONE,
+  is_admin BOOLEAN DEFAULT false,
+  is_verified BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  last_login TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT unique_habbo_name_hotel UNIQUE (habbo_name, hotel)
+);
+
+-- 2. HABILITAR RLS
+ALTER TABLE public.unified_users ENABLE ROW LEVEL SECURITY;
+
+-- 3. CRIAR POLÍTICA BÁSICA
+CREATE POLICY "Service role can do everything" ON public.unified_users
+  FOR ALL USING (current_setting('role', true) = 'service_role')
+  WITH CHECK (current_setting('role', true) = 'service_role');
+
+-- 4. CRIAR USUÁRIOS PADRÃO
+INSERT INTO public.unified_users (habbo_name, hotel, is_admin, is_active, motto, email)
+VALUES 
+  ('habbohub', 'br', true, true, 'HUB-HA2VEA', 'habbohub@habbohub.com'),
+  ('beebop', 'br', false, true, 'Teste', 'beebop@habbohub.com')
+ON CONFLICT (habbo_name, hotel) DO NOTHING;`;
+        }
+
+        async function createTableManually() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Criando tabela manualmente...';
+
+            try {
+                let result = '🏗️ Criação Manual da Tabela:\n\n';
+                
+                result += '⚠️ ATENÇÃO: Execute o SQL no Supabase Dashboard\n\n';
+                result += '📋 Passos:\n';
+                result += '1. Acesse: https://supabase.com/dashboard\n';
+                result += '2. Vá para: SQL Editor\n';
+                result += '3. Cole o SQL mostrado acima\n';
+                result += '4. Execute o SQL\n';
+                result += '5. Volte aqui e clique em "Teste Final"\n\n';
+                result += '💡 Esta versão é mais simples e deve funcionar\n';
+                result += '🔧 Se der erro, me avise qual erro apareceu\n';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result warning';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function checkRLSPermissions() {
+            const resultDiv = document.getElementById('rlsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando permissões RLS...';
+
+            try {
+                let result = '🔒 Verificação de Permissões RLS:\n\n';
+                
+                // Testar com diferentes headers
+                const headers = [
+                    {
+                        name: 'Service Role Key',
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    },
+                    {
+                        name: 'Apenas API Key',
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY
+                        }
+                    }
+                ];
+
+                for (const headerSet of headers) {
+                    result += `Testando: ${headerSet.name}\n`;
+                    
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                            headers: headerSet.headers
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `   ✅ OK: ${data.length} registros\n`;
+                        } else {
+                            result += `   ❌ Erro: ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `   ❌ Erro: ${error.message}\n`;
+                    }
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function runFinalTest() {
+            const resultDiv = document.getElementById('finalResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Executando teste final...';
+
+            try {
+                let result = '🎯 Teste Final:\n\n';
+                
+                // Verificar se unified_users existe
+                result += '1. Verificando unified_users...\n';
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result += `   ✅ Tabela existe: ${data.length} registros\n`;
+                    
+                    // Verificar usuários
+                    const usersResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=*`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (usersResponse.ok) {
+                        const users = await usersResponse.json();
+                        result += `   ✅ ${users.length} usuários encontrados\n`;
+                        
+                        if (users.length > 0) {
+                            result += '   📋 Usuários:\n';
+                            users.forEach((user, index) => {
+                                result += `      ${index + 1}. ${user.habbo_name} (${user.hotel})\n`;
+                            });
+                        }
+                    }
+                    
+                    result += '\n🎉 SISTEMA FUNCIONANDO!\n';
+                    result += '🔗 Teste agora: http://localhost:5173/homes/habbohub\n';
+                } else if (response.status === 404) {
+                    result += `   ❌ Tabela NÃO EXISTE (404)\n`;
+                    result += `   💡 Execute o SQL no Supabase Dashboard primeiro\n`;
+                } else {
+                    result += `   ❌ Erro: ${response.status}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar automaticamente a verificação inicial
+        window.onload = function() {
+            checkAllTables();
+            loadCreateTableSQL();
+        };
+    </script>
+</body>
+</html>

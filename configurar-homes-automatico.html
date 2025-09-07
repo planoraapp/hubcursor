@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Homes Automático</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .result { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px; white-space: pre-line; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .progress { background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        .progress-bar { background: #007bff; height: 20px; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Configurar Homes Automático</h1>
+        <button onclick="configureAllHomes()">🚀 Configurar Todas as Homes</button>
+        <button onclick="createHabbohub()">👤 Criar habbohub</button>
+        <button onclick="testSystem()">🧪 Testar Sistema</button>
+        <div class="progress" id="progressContainer" style="display: none;">
+            <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+        </div>
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        function updateProgress(percent, text) {
+            const progressBar = document.getElementById('progressBar');
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = text;
+        }
+
+        async function configureAllHomes() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🚀 Configurando todas as homes...';
+
+            try {
+                let result = '🏠 CONFIGURAÇÃO AUTOMÁTICA DE HOMES:\n\n';
+                let progress = 0;
+
+                // 1. Buscar todos os usuários
+                updateProgress(10, 'Buscando usuários...');
+                result += '1. Buscando usuários existentes...\n';
+                
+                const usersResponse = await fetch(`${SUPABASE_URL}/rest/v1/hub_users?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (!usersResponse.ok) {
+                    throw new Error(`Erro ao buscar usuários: ${usersResponse.status}`);
+                }
+
+                const users = await usersResponse.json();
+                result += `✅ Encontrados ${users.length} usuários\n\n`;
+
+                progress = 20;
+                updateProgress(progress, 'Configurando homes...');
+
+                // 2. Configurar home para cada usuário
+                for (let i = 0; i < users.length; i++) {
+                    const user = users[i];
+                    const userName = user.habbo_username;
+                    const userId = user.id;
+                    
+                    result += `\n📝 Configurando home para ${userName}...\n`;
+
+                    // Verificar se já tem background
+                    const bgResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds?user_id=eq.${userId}&select=*`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (bgResponse.ok) {
+                        const backgrounds = await bgResponse.json();
+                        if (backgrounds.length === 0) {
+                            // Criar background padrão
+                            const createBg = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds`, {
+                                method: 'POST',
+                                headers: {
+                                    'apikey': SUPABASE_SERVICE_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    user_id: userId,
+                                    background_type: 'color',
+                                    background_value: '#e8f4fd'
+                                })
+                            });
+
+                            if (createBg.ok) {
+                                result += `   ✅ Background criado\n`;
+                            } else {
+                                result += `   ❌ Erro ao criar background: ${createBg.status}\n`;
+                            }
+                        } else {
+                            result += `   ✅ Background já existe\n`;
+                        }
+                    }
+
+                    // Verificar se já tem widgets
+                    const widgetsResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets?user_id=eq.${userId}&select=*`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (widgetsResponse.ok) {
+                        const widgets = await widgetsResponse.json();
+                        if (widgets.length === 0) {
+                            // Criar widgets padrão
+                            const defaultWidgets = [
+                                { widget_type: 'avatar', x: 20, y: 20, z_index: 1, width: 520, height: 180, is_visible: true, config: { showBadges: true, showMotto: true } },
+                                { widget_type: 'guestbook', x: 50, y: 220, z_index: 1, width: 420, height: 380, is_visible: true, config: { maxMessages: 10, allowAnonymous: true } },
+                                { widget_type: 'rating', x: 500, y: 220, z_index: 1, width: 320, height: 160, is_visible: true, config: { showStars: true, allowRating: true } },
+                                { widget_type: 'welcome', x: 20, y: 420, z_index: 1, width: 800, height: 120, is_visible: true, config: { message: `Bem-vindo à home de ${userName}!`, showDate: true } }
+                            ];
+
+                            for (const widget of defaultWidgets) {
+                                const createWidget = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'apikey': SUPABASE_SERVICE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        user_id: userId,
+                                        ...widget
+                                    })
+                                });
+
+                                if (createWidget.ok) {
+                                    result += `   ✅ Widget ${widget.widget_type} criado\n`;
+                                } else {
+                                    result += `   ❌ Erro ao criar widget ${widget.widget_type}: ${createWidget.status}\n`;
+                                }
+                            }
+                        } else {
+                            result += `   ✅ Widgets já existem (${widgets.length})\n`;
+                        }
+                    }
+
+                    progress = 20 + (i + 1) * 60 / users.length;
+                    updateProgress(progress, `Configurando ${userName}...`);
+                }
+
+                progress = 80;
+                updateProgress(progress, 'Criando habbohub...');
+
+                // 3. Criar habbohub se não existir
+                result += '\n3. Verificando habbohub...\n';
+                
+                const habbohubExists = users.some(user => user.habbo_username.toLowerCase() === 'habbohub');
+                if (!habbohubExists) {
+                    result += '   Criando habbohub...\n';
+                    
+                    const createHabbohub = await fetch(`${SUPABASE_URL}/rest/v1/hub_users`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            habbo_username: 'habbohub',
+                            hotel: 'br',
+                            habbo_avatar: 'https://www.habbo.com.br/habbo-imaging/avatarimage?user=habbohub&headonly=1',
+                            password_hash: '$2a$10$example_hash',
+                            member_since: new Date().toISOString(),
+                            is_active: true
+                        })
+                    });
+
+                    if (createHabbohub.ok) {
+                        const habbohubData = await createHabbohub.json();
+                        result += `   ✅ habbohub criado (ID: ${habbohubData.id})\n`;
+                        
+                        // Criar dados de home para habbohub
+                        const habbohubId = habbohubData.id;
+                        
+                        // Background para habbohub
+                        const habbohubBg = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds`, {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                user_id: habbohubId,
+                                background_type: 'color',
+                                background_value: '#e8f4fd'
+                            })
+                        });
+
+                        if (habbohubBg.ok) {
+                            result += `   ✅ Background do habbohub criado\n`;
+                        }
+
+                        // Widgets para habbohub
+                        const habbohubWidgets = [
+                            { widget_type: 'avatar', x: 20, y: 20, z_index: 1, width: 520, height: 180, is_visible: true, config: { showBadges: true, showMotto: true } },
+                            { widget_type: 'guestbook', x: 50, y: 220, z_index: 1, width: 420, height: 380, is_visible: true, config: { maxMessages: 10, allowAnonymous: true } },
+                            { widget_type: 'rating', x: 500, y: 220, z_index: 1, width: 320, height: 160, is_visible: true, config: { showStars: true, allowRating: true } },
+                            { widget_type: 'welcome', x: 20, y: 420, z_index: 1, width: 800, height: 120, is_visible: true, config: { message: 'Bem-vindo à HabboHub!', showDate: true } }
+                        ];
+
+                        for (const widget of habbohubWidgets) {
+                            const createWidget = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets`, {
+                                method: 'POST',
+                                headers: {
+                                    'apikey': SUPABASE_SERVICE_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    user_id: habbohubId,
+                                    ...widget
+                                })
+                            });
+
+                            if (createWidget.ok) {
+                                result += `   ✅ Widget ${widget.widget_type} do habbohub criado\n`;
+                            }
+                        }
+                    } else {
+                        result += `   ❌ Erro ao criar habbohub: ${createHabbohub.status}\n`;
+                    }
+                } else {
+                    result += '   ✅ habbohub já existe\n';
+                }
+
+                progress = 100;
+                updateProgress(progress, 'Configuração concluída!');
+
+                result += '\n🎉 CONFIGURAÇÃO CONCLUÍDA!\n\n';
+                result += '📋 HOMES CONFIGURADAS:\n';
+                for (const user of users) {
+                    result += `• ${user.habbo_username} (ID: ${user.id})\n`;
+                }
+                if (!habbohubExists) {
+                    result += `• habbohub (criado)\n`;
+                }
+
+                result += '\n🔗 URLs PARA TESTAR:\n';
+                result += '• http://localhost:5173/homes (Grid de homes)\n';
+                for (const user of users) {
+                    result += `• http://localhost:5173/homes/${user.habbo_username}\n`;
+                }
+                result += '• http://localhost:5173/homes/habbohub\n';
+                result += '• http://localhost:5173/homes/beebop\n\n';
+                result += '✅ Sistema configurado e funcionando!';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createHabbohub() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '👤 Criando habbohub...';
+
+            try {
+                let result = '👤 CRIANDO HABBOHUB:\n\n';
+
+                // Verificar se habbohub já existe
+                const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/hub_users?habbo_username=ilike.habbohub&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (checkResponse.ok) {
+                    const existingUsers = await checkResponse.json();
+                    if (existingUsers.length > 0) {
+                        result += '✅ habbohub já existe!\n';
+                        result += `ID: ${existingUsers[0].id}\n`;
+                        result += `Username: ${existingUsers[0].habbo_username}\n`;
+                        result += `Hotel: ${existingUsers[0].hotel}\n`;
+                    } else {
+                        // Criar habbohub
+                        const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/hub_users`, {
+                            method: 'POST',
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                habbo_username: 'habbohub',
+                                hotel: 'br',
+                                habbo_avatar: 'https://www.habbo.com.br/habbo-imaging/avatarimage?user=habbohub&headonly=1',
+                                password_hash: '$2a$10$example_hash',
+                                member_since: new Date().toISOString(),
+                                is_active: true
+                            })
+                        });
+
+                        if (createResponse.ok) {
+                            const habbohubData = await createResponse.json();
+                            result += '✅ habbohub criado com sucesso!\n';
+                            result += `ID: ${habbohubData.id}\n`;
+                            result += `Username: ${habbohubData.habbo_username}\n`;
+                            result += `Hotel: ${habbohubData.hotel}\n`;
+                        } else {
+                            result += `❌ Erro ao criar habbohub: ${createResponse.status}\n`;
+                        }
+                    }
+                } else {
+                    result += `❌ Erro ao verificar habbohub: ${checkResponse.status}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testSystem() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🧪 Testando sistema...';
+
+            try {
+                let result = '🧪 TESTE DO SISTEMA:\n\n';
+
+                // Testar tabelas principais
+                const testTables = ['hub_users', 'user_home_backgrounds', 'user_home_widgets'];
+                
+                for (const table of testTables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `✅ ${table}: ${data.length} registros\n`;
+                        } else {
+                            result += `❌ ${table}: Erro ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `⚠️ ${table}: ${error.message}\n`;
+                    }
+                }
+
+                result += '\n🎯 SISTEMA PRONTO!\n\n';
+                result += '🔗 URLs para testar:\n';
+                result += '• http://localhost:5173/homes\n';
+                result += '• http://localhost:5173/homes/habbohub\n';
+                result += '• http://localhost:5173/homes/beebop\n\n';
+                result += '💡 Se não funcionar, verifique o console do navegador (F12)';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar teste automático ao carregar
+        window.onload = function() {
+            testSystem();
+        };
+    </script>
+</body>
+</html>

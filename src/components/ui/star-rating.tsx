@@ -21,7 +21,9 @@ export const StarRating: React.FC<StarRatingProps> = ({
   
   const getStarOpacity = (starIndex: number): number => {
     const currentValue = hoverRating || rating;
-    return currentValue >= starIndex ? 1 : 0.2;
+    if (currentValue >= starIndex) return 1;
+    if (currentValue >= starIndex - 0.5) return 0.5; // Meia estrela
+    return 0.2; // Estrela vazia
   };
   
   const getStarSize = () => {
@@ -56,23 +58,49 @@ export const StarRating: React.FC<StarRatingProps> = ({
         className="flex items-center gap-1 relative justify-center"
         onMouseLeave={handleMouseLeave}
       >
-        {[1, 2, 3, 4, 5].map((starIndex) => (
-          <div
-            key={starIndex}
-            className={`relative ${!readonly ? 'cursor-pointer hover:scale-110' : ''} transition-transform`}
-            onClick={() => !readonly && handleStarClick(starIndex)}
-            onMouseEnter={() => !readonly && handleStarHover(starIndex)}
-          >
-            <Star
-              size={getStarSize()}
-              className={`select-none transition-opacity duration-200 ${
-                getStarOpacity(starIndex) === 1 
-                  ? 'fill-yellow-400 text-yellow-400' 
-                  : 'fill-transparent text-gray-300'
-              }`}
-            />
-          </div>
-        ))}
+        {[1, 2, 3, 4, 5].map((starIndex) => {
+          const opacity = getStarOpacity(starIndex);
+          const isHalfStar = opacity === 0.5;
+          
+          return (
+            <div
+              key={starIndex}
+              className={`relative ${!readonly ? 'cursor-pointer hover:scale-110' : ''} transition-transform`}
+              onClick={() => !readonly && handleStarClick(starIndex)}
+              onMouseEnter={() => !readonly && handleStarHover(starIndex)}
+            >
+              {/* Estrela de fundo (sempre cinza) */}
+              <Star
+                size={getStarSize()}
+                className="select-none fill-transparent text-gray-300 absolute"
+              />
+              
+              {/* Estrela preenchida (amarela) */}
+              <Star
+                size={getStarSize()}
+                className={`select-none transition-opacity duration-200 ${
+                  opacity >= 0.5 
+                    ? 'fill-yellow-400 text-yellow-400' 
+                    : 'fill-transparent text-transparent'
+                }`}
+                style={{
+                  clipPath: isHalfStar ? 'polygon(0 0, 50% 0, 50% 100%, 0 100%)' : 'none'
+                }}
+              />
+              
+              {/* Meia estrela (se necessário) */}
+              {isHalfStar && (
+                <Star
+                  size={getStarSize()}
+                  className="select-none fill-yellow-400 text-yellow-400 absolute"
+                  style={{
+                    clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)'
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
       
       {!readonly && (

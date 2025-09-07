@@ -33,60 +33,127 @@ const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(und
 export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [habboAccount, setHabboAccount] = useState<HabboAccount | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Começar como false
   const { toast } = useToast();
 
-  const isLoggedIn = !!user && !!habboAccount;
+  // Para simplificar, vamos verificar se há usuário no localStorage
+  const isLoggedIn = !!habboAccount;
+  
+  // Debug log
+  console.log('🔍 [useUnifiedAuth] Current state:', { habboAccount, isLoggedIn, user });
+  
+  // Forçar re-render quando localStorage muda
+  const [forceUpdate, setForceUpdate] = useState(0);
+  
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setForceUpdate(prev => prev + 1);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
-    console.log('🚀 [useUnifiedAuth] Getting initial session...');
+    console.log('🚀 [useUnifiedAuth] Checking for logged user...');
     
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadHabboAccount(session.user.id);
-      } else {
-        setLoading(false);
+    // Verificar se há usuário logado no localStorage
+    const storedUser = localStorage.getItem('habbo_user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        console.log('✅ [useUnifiedAuth] User found in localStorage:', userData.habbo_username);
+        
+        // Converter formato hub_users para formato esperado
+        const habboAccount = {
+          id: userData.id,
+          supabase_user_id: userData.id, // Usar o ID do hub_users como supabase_user_id
+          habbo_name: userData.habbo_username,
+          habbo_id: userData.habbo_id || '',
+          hotel: userData.hotel || 'br',
+          is_admin: userData.is_admin || false,
+          motto: userData.motto || '',
+          figure_string: userData.figure_string || '',
+          is_online: userData.is_online || false,
+          created_at: userData.created_at
+        };
+        
+        setUser({ id: userData.id } as User); // Mock user object
+        setHabboAccount(habboAccount);
+        console.log('✅ [useUnifiedAuth] State updated:', { habboAccount, isLoggedIn: true });
+      } catch (e) {
+        console.error('❌ [useUnifiedAuth] Error parsing stored user:', e);
+        setUser(null);
+        setHabboAccount(null);
       }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log(`🔄 [useUnifiedAuth] Auth state changed: ${event}`, session?.user?.id);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          // Usar setTimeout para evitar conflitos
-          setTimeout(() => {
-            loadHabboAccount(session.user.id);
-          }, 0);
-        } else {
-          setHabboAccount(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
+    } else {
+      console.log('❌ [useUnifiedAuth] No user found in localStorage');
+      setUser(null);
+      setHabboAccount(null);
+    }
+  }, [forceUpdate]); // Adicionar forceUpdate como dependência
 
   const loadHabboAccount = async (userId: string) => {
     try {
       console.log(`🔍 [useUnifiedAuth] Loading Habbo account for user: ${userId}`);
       
-      const { data, error } = await supabase
-        .from('habbo_accounts')
-        .select('*')
-        .eq('supabase_user_id', userId)
-        .single();
+      // Para simplificar, vamos usar hub_users diretamente
+      // Verificar se há usuário logado no localStorage
+      const storedUser = localStorage.getItem('habbo_user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          console.log('✅ [useUnifiedAuth] User loaded from localStorage:', userData.habbo_username);
+          
+          // Converter formato hub_users para formato esperado
+          const habboAccount = {
+            id: userData.id,
+            supabase_user_id: userId,
+            habbo_name: userData.habbo_username,
+            habbo_id: userData.habbo_id || '',
+            hotel: userData.hotel || 'br',
+            is_admin: userData.is_admin || false,
+            motto: userData.motto || '',
+            figure_string: userData.figure_string || '',
+            is_online: userData.is_online || false,
+            created_at: userData.created_at
+          };
+          
+          setHabboAccount(habboAccount);
+          return;
+        } catch (e) {
+          console.error('❌ [useUnifiedAuth] Error parsing stored user:', e);
+        }
+      }
 
-      if (error) {
-        console.error('❌ [useUnifiedAuth] Error loading Habbo account:', error);
-        setHabboAccount(null);
-      } else {
-        console.log('✅ [useUnifiedAuth] Habbo account loaded:', data.habbo_name);
+      // Se não há usuário no localStorage, tentar buscar no Supabase
+      const hubUsersResult = await supabase
+        .from('hub_users')
+        .select('*')
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+      
+      if (hubUsersResult.data) {
+        // Converter formato hub_users para formato esperado
+        const data = {
+          id: hubUsersResult.data.id,
+          supabase_user_id: userId,
+          habbo_name: hubUsersResult.data.habbo_username,
+          habbo_id: hubUsersResult.data.habbo_id || '',
+          hotel: hubUsersResult.data.hotel || 'br',
+          is_admin: hubUsersResult.data.is_admin || false,
+          motto: hubUsersResult.data.motto || '',
+          figure_string: hubUsersResult.data.figure_string || '',
+          is_online: hubUsersResult.data.is_online || false,
+          created_at: hubUsersResult.data.created_at
+        };
+        
+        console.log('✅ [useUnifiedAuth] Habbo account loaded from Supabase:', data.habbo_name);
         setHabboAccount(data);
+      } else {
+        console.log('❌ [useUnifiedAuth] No user found');
+        setHabboAccount(null);
       }
     } catch (error) {
       console.error('❌ [useUnifiedAuth] Error loading Habbo account:', error);
@@ -101,20 +168,48 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       console.log('🔐 [useUnifiedAuth] Attempting login for:', habboName);
       
-      // Get auth email for this Habbo account
-      const { data: emailResult, error: emailError } = await supabase.rpc(
-        'get_auth_email_for_habbo_with_hotel', 
-        { 
-          habbo_name_param: habboName,
-          hotel_param: 'br'
-        }
-      );
+      // Primeiro tentar unified_users, depois hub_users
+      let userData = null;
+      let userError = null;
 
-      if (emailError || !emailResult) {
+      // Tentar unified_users primeiro
+      const unifiedResult = await supabase
+        .from('unified_users')
+        .select('email, password_hash')
+        .ilike('habbo_name', habboName)
+        .eq('hotel', 'br')
+        .eq('is_active', true)
+        .single();
+
+      if (unifiedResult.data) {
+        userData = unifiedResult.data;
+      } else {
+        // Se não encontrar em unified_users, tentar hub_users
+        console.log('🔄 [useUnifiedAuth] Trying hub_users table for login...');
+        const hubResult = await supabase
+          .from('hub_users')
+          .select('email, password_hash')
+          .ilike('habbo_username', habboName)
+          .eq('hotel', 'br')
+          .eq('is_active', true)
+          .single();
+        
+        if (hubResult.data) {
+          userData = hubResult.data;
+        } else {
+          userError = hubResult.error;
+        }
+      }
+
+      if (userError || !userData) {
         throw new Error('Conta não encontrada. Use a aba "Missão" para se cadastrar.');
       }
 
-      const authEmail = emailResult;
+      if (!userData.email) {
+        throw new Error('Conta não configurada corretamente. Contate o administrador.');
+      }
+
+      const authEmail = userData.email;
       console.log('🔐 [useUnifiedAuth] Attempting login with email:', authEmail);
 
       // Sign in with email and password

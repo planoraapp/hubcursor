@@ -15,6 +15,8 @@ interface OptimizedDroppedStickerProps {
   onPositionChange?: (id: string, x: number, y: number) => void;
   onZIndexChange?: (id: string, zIndex: number) => void;
   onRemove?: (id: string) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
 export const OptimizedDroppedSticker: React.FC<OptimizedDroppedStickerProps> = memo(({
@@ -30,7 +32,9 @@ export const OptimizedDroppedSticker: React.FC<OptimizedDroppedStickerProps> = m
   isEditMode,
   onPositionChange,
   onZIndexChange,
-  onRemove
+  onRemove,
+  onDragStart,
+  onDragEnd
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: x, elementY: y });
@@ -57,6 +61,7 @@ export const OptimizedDroppedSticker: React.FC<OptimizedDroppedStickerProps> = m
     e.stopPropagation();
 
     setIsDragging(true);
+    onDragStart?.(); // Notificar que o drag começou
     setDragStart({
       x: e.clientX,
       y: e.clientY,
@@ -113,6 +118,7 @@ export const OptimizedDroppedSticker: React.FC<OptimizedDroppedStickerProps> = m
       if (isDragging) {
         console.log(`✅ Drag completed for sticker ${stickerId}`);
         setIsDragging(false);
+        onDragEnd?.(); // Notificar que o drag terminou
       }
     };
 
@@ -142,7 +148,7 @@ export const OptimizedDroppedSticker: React.FC<OptimizedDroppedStickerProps> = m
     transform: `scale(${isDragging ? scale * 1.1 : scale}) rotate(${rotation}deg)`,
     transformOrigin: 'center',
     transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-    opacity: isDragging ? 0.8 : 1
+    opacity: 1 // Sempre opaco - transparência apenas na barra de edição
   };
 
   return (

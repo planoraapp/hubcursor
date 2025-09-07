@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import badgeCodes from '@/data/badge-codes.json';
 import fullBadgeInfo from '@/data/full-badge-info.json';
 import realBadgeDescriptions from '@/data/real-badge-descriptions.json';
+import { badgeCache } from './badge-cache';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -134,6 +135,15 @@ let totalBadgesCount = 0;
 
 // Carregar dados em lotes para melhor performance
 const loadBadgesInBatches = async (batchSize: number = 500, initialLimit?: number): Promise<Badge[]> => {
+  // Verificar cache primeiro
+  const cacheKey = `badges_${initialLimit || 'all'}`;
+  const cachedData = badgeCache.getCache(cacheKey);
+  
+  if (cachedData && cachedData.length > 0) {
+    cachedBadges = cachedData;
+    return cachedData;
+  }
+
   if (cachedBadges.length > 0) {
     return cachedBadges;
   }
@@ -158,6 +168,10 @@ const loadBadgesInBatches = async (batchSize: number = 500, initialLimit?: numbe
   
   cachedBadges = allBadges;
   isGenerating = false;
+  
+  // Salvar no cache
+  badgeCache.setCache(cacheKey, allBadges);
+  
   return allBadges;
 };
 
@@ -539,10 +553,23 @@ export async function getAvailableHotels(): Promise<string[]> {
  */
 export async function getRecentBadges(limit: number = 10): Promise<Badge[]> {
   if (!supabase) {
+    // Verificar cache primeiro
+    const cacheKey = `recent_${limit}`;
+    const cachedData = badgeCache.getCache(cacheKey);
+    
+    if (cachedData && cachedData.length > 0) {
+      return cachedData;
+    }
+    
     await loadBadgesInBatches();
     
     // Já estão ordenados por data de criação (mais recentes primeiro)
-    return cachedBadges.slice(0, limit);
+    const recentBadges = cachedBadges.slice(0, limit);
+    
+    // Salvar no cache
+    badgeCache.setCache(cacheKey, recentBadges);
+    
+    return recentBadges;
   }
 
   try {
@@ -578,11 +605,23 @@ export async function getRecentBadges(limit: number = 10): Promise<Badge[]> {
  */
 export async function getClassicBadges(limit: number = 10): Promise<Badge[]> {
   if (!supabase) {
+    // Verificar cache primeiro
+    const cacheKey = `classic_${limit}`;
+    const cachedData = badgeCache.getCache(cacheKey);
+    
+    if (cachedData && cachedData.length > 0) {
+      return cachedData;
+    }
+    
     await loadBadgesInBatches();
     
     // Pegar os mais antigos (últimos da lista ordenada)
-    const classicBadges = cachedBadges.slice(-limit);
-    return classicBadges.reverse(); // Mais antigos primeiro
+    const classicBadges = cachedBadges.slice(-limit).reverse(); // Mais antigos primeiro
+    
+    // Salvar no cache
+    badgeCache.setCache(cacheKey, classicBadges);
+    
+    return classicBadges;
   }
 
   try {

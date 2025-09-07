@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { useHabboHome } from '@/hooks/useHabboHome';
+import { useEnhancedHabboHome } from '@/hooks/useEnhancedHabboHome';
 import { useToast } from '@/hooks/use-toast';
 import { OptimizedDraggableWidget } from '@/components/HabboHome/OptimizedDraggableWidget';
 import { OptimizedDroppedSticker } from '@/components/HabboHome/OptimizedDroppedSticker';
@@ -14,6 +14,7 @@ const EnhancedHabboHome: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
 
   const {
     widgets,
@@ -27,13 +28,15 @@ const EnhancedHabboHome: React.FC = () => {
     setIsEditMode,
     updateWidgetPosition,
     updateWidgetSize,
-    addSticker,
     updateStickerPosition,
     removeStickerFromDb,
     updateBackground,
     addGuestbookEntry,
-    getWidgetSizeRestrictions
-  } = useHabboHome(username || '');
+    getWidgetSizeRestrictions,
+    handleSaveLayout,
+    handleStickerDrop,
+    addWidget
+  } = useEnhancedHabboHome(username || '');
 
   console.log('🏠 EnhancedHabboHome renderizada:', {
     username,
@@ -45,32 +48,26 @@ const EnhancedHabboHome: React.FC = () => {
   });
 
   // Handle sticker operations
-  const handleStickerAdd = useCallback((stickerId: string, stickerSrc: string, category: string) => {
+  const handleStickerAdd = useCallback(async (stickerId: string, stickerSrc: string, category: string) => {
     console.log('🎯 Tentando adicionar sticker:', { stickerId, stickerSrc, category });
     
-    if (!addSticker) {
-      console.error('❌ Função addSticker não disponível');
+    if (!handleStickerDrop) {
+      console.error('❌ Função handleStickerDrop não disponível');
       return;
     }
 
-    const x = Math.random() * (1200 - 200) + 100;
-    const y = Math.random() * (800 - 200) + 100;
-    
-    const result = addSticker(stickerId, x, y, stickerSrc, category);
-    
-    if (result) {
-      toast({
-        title: "Sticker adicionado!",
-        description: "O sticker foi adicionado à sua home."
-      });
-    } else {
+    try {
+      await handleStickerDrop(stickerId, stickerSrc, category);
+      // Removido toast de sucesso - apenas minimizar abas
+    } catch (error) {
+      console.error('❌ Erro ao adicionar sticker:', error);
       toast({
         title: "Erro ao adicionar sticker",
         description: "Não foi possível adicionar o sticker.",
         variant: "destructive"
       });
     }
-  }, [addSticker, toast]);
+  }, [handleStickerDrop, toast]);
 
   const handleStickerPositionChange = useCallback((id: string, x: number, y: number) => {
     console.log('🎯 Mudando posição do sticker:', { id, x, y });
@@ -111,13 +108,14 @@ const EnhancedHabboHome: React.FC = () => {
   const handleWidgetAdd = useCallback(async (widgetType: string): Promise<boolean> => {
     console.log('📦 Adicionando widget:', widgetType);
     
+    if (!addWidget) {
+      console.error('❌ Função addWidget não disponível');
+      return false;
+    }
+    
     try {
-      // TODO: Implement actual widget addition logic here
-      // For now, just show success message
-      toast({
-        title: "Widget adicionado!",
-        description: `O widget ${widgetType} foi adicionado à sua home.`
-      });
+      await addWidget(widgetType);
+      // Removido toast de sucesso - apenas minimizar abas
       
       return true; // Return success
     } catch (error) {
@@ -130,16 +128,22 @@ const EnhancedHabboHome: React.FC = () => {
       
       return false; // Return failure
     }
-  }, [toast]);
+  }, [addWidget, toast]);
 
-  // Handle save
-  const handleSave = useCallback(() => {
+  // Handle save - agora conectado ao handleSaveLayout do hook
+  const handleSave = useCallback(async () => {
     console.log('💾 Salvando home...');
-    toast({
-      title: "Home salva!",
-      description: "Suas alterações foram salvas automaticamente."
-    });
-  }, [toast]);
+    await handleSaveLayout();
+  }, [handleSaveLayout]);
+
+  // Handle drag state changes
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   if (loading) {
     return (
@@ -174,7 +178,7 @@ const EnhancedHabboHome: React.FC = () => {
               <p className="text-gray-700 mb-4 volter-font">
                 O usuário "{username}" não foi encontrado ou não possui uma Habbo Home.
               </p>
-              <Button onClick={() => navigate('/console')} className="volter-font">
+              <Button onClick={() => navigate('/')} className="volter-font">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Voltar ao Console
               </Button>
@@ -214,6 +218,8 @@ const EnhancedHabboHome: React.FC = () => {
         onPositionChange={(x, y) => updateWidgetPosition(widgetType, x, y)}
         onSizeChange={(width, height) => updateWidgetSize(widgetType, width, height)}
         onZIndexChange={(zIndex) => console.log('Z-index change:', zIndex)}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
         className={isEditMode ? 'edit-mode-widget' : ''}
       >
         {widgetType === 'avatar' || widgetType === 'usercard' ? (
@@ -235,37 +241,53 @@ const EnhancedHabboHome: React.FC = () => {
             </CardContent>
           </Card>
         ) : widgetType === 'guestbook' ? (
-          <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
-            <CardHeader className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-3">
-              <CardTitle className="volter-font text-center text-lg habbo-text">
-                📝 Livro de Visitas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3">
-              <div className="space-y-2 mb-3 max-h-48 overflow-y-auto">
-                {guestbook.map((entry) => (
-                  <div key={entry.id} className="bg-gray-50 p-2 rounded-lg border">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="text-xs text-blue-600 volter-font">
-                        {entry.author_habbo_name}
-                      </span>
-                      <span className="text-xs text-gray-500 volter-font">
-                        {new Date(entry.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700 volter-font">{entry.message}</p>
+          <div 
+            className="w-full h-full"
+            style={{
+              backgroundImage: 'url(https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/acma_notepad.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          >
+            <div className="w-full h-full p-3 flex flex-col">
+              <div className="space-y-2 mb-3 max-h-48 overflow-y-auto flex-1">
+                {guestbook.length === 0 ? (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-black volter-font font-bold">
+                      Nenhuma anotação ainda...
+                    </p>
+                    <p className="text-xs text-black volter-font">
+                      Seja o primeiro a deixar uma anotação!
+                    </p>
                   </div>
-                ))}
+                ) : (
+                  guestbook.map((entry) => (
+                    <div key={entry.id} className="p-2">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="text-xs font-bold text-black volter-font">
+                          {entry.author_habbo_name}
+                        </span>
+                        <span className="text-xs text-black volter-font">
+                          {new Date(entry.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-black volter-font font-medium leading-relaxed">
+                        {entry.message}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
               {!isOwner && (
-                <div className="text-center py-3 border-t">
-                  <p className="text-sm text-gray-500 volter-font">
-                    Faça login para deixar uma mensagem
+                <div className="text-center py-2 mt-3">
+                  <p className="text-xs text-black volter-font font-medium">
+                    Faça login para deixar uma anotação
                   </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ) : widgetType === 'rating' ? (
           <Card className="w-full h-full bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
             <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-3">
@@ -313,6 +335,7 @@ const EnhancedHabboHome: React.FC = () => {
         onBackgroundChange={(type, value) => handleBackgroundChange({ type: type === 'cover' || type === 'repeat' ? 'image' : 'color', value })}
         onStickerSelect={handleStickerAdd}
         onWidgetAdd={handleWidgetAdd}
+        isDragging={isDragging}
       />
 
       {/* Header */}
@@ -343,7 +366,7 @@ const EnhancedHabboHome: React.FC = () => {
               </div>
               <Button
                 variant="outline"
-                onClick={() => navigate('/console')}
+                onClick={() => navigate('/')}
                 className="text-white border-white/30 hover:bg-white/10 volter-font"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -379,6 +402,8 @@ const EnhancedHabboHome: React.FC = () => {
                 onPositionChange={handleStickerPositionChange}
                 onZIndexChange={handleStickerZIndexChange}
                 onRemove={handleStickerRemove}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
               />
             ))}
 

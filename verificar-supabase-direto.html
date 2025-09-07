@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Supabase Direto</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .result { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 5px; white-space: pre-line; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificar Supabase Direto</h1>
+        <button onclick="checkTables()">Verificar Tabelas</button>
+        <button onclick="configureHomes()">Configurar Homes</button>
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkTables() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Verificando tabelas...';
+
+            try {
+                let result = 'TABELAS ENCONTRADAS:\n\n';
+                
+                const tables = ['hub_users', 'habbo_accounts', 'unified_users', 'user_home_backgrounds', 'user_home_widgets', 'user_stickers'];
+                
+                for (const table of tables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&limit=5`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `✅ ${table}: ${data.length} registros\n`;
+                            if (data.length > 0) {
+                                result += `   Campos: ${Object.keys(data[0]).join(', ')}\n`;
+                                result += `   Exemplo: ${JSON.stringify(data[0], null, 2).substring(0, 200)}...\n`;
+                            }
+                        } else {
+                            result += `❌ ${table}: Erro ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `⚠️ ${table}: ${error.message}\n`;
+                    }
+                    result += '\n';
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function configureHomes() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Configurando homes...';
+
+            try {
+                let result = 'CONFIGURANDO HOMES:\n\n';
+
+                // Verificar qual tabela de usuários usar
+                let userTable = null;
+                let userTableName = null;
+
+                // Tentar hub_users primeiro
+                try {
+                    const hubUsersResponse = await fetch(`${SUPABASE_URL}/rest/v1/hub_users?select=*`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (hubUsersResponse.ok) {
+                        const users = await hubUsersResponse.json();
+                        if (users.length > 0) {
+                            userTable = users;
+                            userTableName = 'hub_users';
+                            result += `✅ Usando tabela: hub_users (${users.length} usuários)\n`;
+                        }
+                    }
+                } catch (e) {
+                    result += `⚠️ hub_users não acessível: ${e.message}\n`;
+                }
+
+                // Se não encontrou hub_users, tentar habbo_accounts
+                if (!userTable) {
+                    try {
+                        const habboAccountsResponse = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts?select=*`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (habboAccountsResponse.ok) {
+                            const users = await habboAccountsResponse.json();
+                            if (users.length > 0) {
+                                userTable = users;
+                                userTableName = 'habbo_accounts';
+                                result += `✅ Usando tabela: habbo_accounts (${users.length} usuários)\n`;
+                            }
+                        }
+                    } catch (e) {
+                        result += `⚠️ habbo_accounts não acessível: ${e.message}\n`;
+                    }
+                }
+
+                if (!userTable) {
+                    result += `❌ Nenhuma tabela de usuários encontrada!\n`;
+                    result += `💡 Vou criar a tabela unified_users...\n\n`;
+                    
+                    // Criar tabela unified_users via SQL
+                    result += `Execute este SQL no Supabase Dashboard:\n\n`;
+                    result += `CREATE TABLE IF NOT EXISTS public.unified_users (\n`;
+                    result += `  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n`;
+                    result += `  habbo_name TEXT NOT NULL,\n`;
+                    result += `  hotel TEXT NOT NULL DEFAULT 'br',\n`;
+                    result += `  is_admin BOOLEAN DEFAULT false,\n`;
+                    result += `  is_active BOOLEAN DEFAULT true,\n`;
+                    result += `  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n`;
+                    result += `);\n\n`;
+                    result += `ALTER TABLE public.unified_users ENABLE ROW LEVEL SECURITY;\n\n`;
+                    result += `CREATE POLICY "Service role can do everything" ON public.unified_users\n`;
+                    result += `  FOR ALL USING (current_setting('role', true) = 'service_role')\n`;
+                    result += `  WITH CHECK (current_setting('role', true) = 'service_role');\n\n`;
+                    
+                    result += `INSERT INTO public.unified_users (habbo_name, hotel, is_admin, is_active) VALUES\n`;
+                    result += `  ('habbohub', 'br', true, true),\n`;
+                    result += `  ('beebop', 'br', false, true);\n\n`;
+                    
+                    resultDiv.textContent = result;
+                    resultDiv.className = 'result warning';
+                    return;
+                }
+
+                // Configurar homes para cada usuário
+                result += `\n🏠 CONFIGURANDO HOMES:\n`;
+                
+                for (const user of userTable) {
+                    const userId = user.id;
+                    const userName = user.habbo_name || user.habbo_username || user.username || 'usuario';
+                    
+                    result += `\n📝 Processando ${userName}...\n`;
+
+                    // Criar background se não existir
+                    try {
+                        const bgResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds?user_id=eq.${userId}&select=*`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (bgResponse.ok) {
+                            const backgrounds = await bgResponse.json();
+                            if (backgrounds.length === 0) {
+                                const createBg = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'apikey': SUPABASE_SERVICE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        user_id: userId,
+                                        background_type: 'color',
+                                        background_value: '#e8f4fd'
+                                    })
+                                });
+
+                                if (createBg.ok) {
+                                    result += `   ✅ Background criado\n`;
+                                } else {
+                                    result += `   ❌ Erro ao criar background: ${createBg.status}\n`;
+                                }
+                            } else {
+                                result += `   ✅ Background já existe\n`;
+                            }
+                        } else {
+                            result += `   ⚠️ Tabela user_home_backgrounds não acessível: ${bgResponse.status}\n`;
+                        }
+                    } catch (e) {
+                        result += `   ⚠️ Erro ao verificar background: ${e.message}\n`;
+                    }
+
+                    // Criar widgets se não existirem
+                    try {
+                        const widgetsResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets?user_id=eq.${userId}&select=*`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (widgetsResponse.ok) {
+                            const widgets = await widgetsResponse.json();
+                            if (widgets.length === 0) {
+                                const defaultWidgets = [
+                                    { widget_type: 'avatar', x: 20, y: 20, z_index: 1, width: 520, height: 180, is_visible: true },
+                                    { widget_type: 'guestbook', x: 50, y: 220, z_index: 1, width: 420, height: 380, is_visible: true },
+                                    { widget_type: 'rating', x: 500, y: 220, z_index: 1, width: 320, height: 160, is_visible: true }
+                                ];
+
+                                for (const widget of defaultWidgets) {
+                                    const createWidget = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'apikey': SUPABASE_SERVICE_KEY,
+                                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            user_id: userId,
+                                            ...widget
+                                        })
+                                    });
+
+                                    if (createWidget.ok) {
+                                        result += `   ✅ Widget ${widget.widget_type} criado\n`;
+                                    } else {
+                                        result += `   ❌ Erro ao criar widget ${widget.widget_type}: ${createWidget.status}\n`;
+                                    }
+                                }
+                            } else {
+                                result += `   ✅ Widgets já existem (${widgets.length})\n`;
+                            }
+                        } else {
+                            result += `   ⚠️ Tabela user_home_widgets não acessível: ${widgetsResponse.status}\n`;
+                        }
+                    } catch (e) {
+                        result += `   ⚠️ Erro ao verificar widgets: ${e.message}\n`;
+                    }
+                }
+
+                result += `\n🎉 CONFIGURAÇÃO CONCLUÍDA!\n\n`;
+                result += `🔗 URLs para testar:\n`;
+                result += `• http://localhost:5173/homes\n`;
+                result += `• http://localhost:5173/homes/habbohub\n`;
+                result += `• http://localhost:5173/homes/beebop\n\n`;
+                result += `✅ Sistema configurado!`;
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar verificação automática
+        window.onload = function() {
+            checkTables();
+        };
+    </script>
+</body>
+</html>

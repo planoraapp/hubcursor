@@ -1,0 +1,501 @@
+/* Estilos autênticos do Habbo - Pixel Art Theme */
+
+/* Configurações gerais para pixel art */
+.habbo-widget {
+  font-family: 'Volter', 'Courier New', monospace;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+/* Cabeçalho estilo Habbo */
+.habbo-header {
+  background: linear-gradient(45deg, #4A90E2, #357ABD);
+  border: 2px solid #2C5AA0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.habbo-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Conteúdo principal */
+.habbo-content {
+  background: linear-gradient(to bottom, #FFF8DC, #F5E6A3);
+  border: 2px solid #D4AF37;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* Mensagens do guestbook */
+.habbo-message {
+  background: white;
+  border: 2px solid #C0C0C0;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.habbo-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Botões estilo Habbo */
+.habbo-button {
+  background: linear-gradient(45deg, #4CAF50, #45A049);
+  border: 2px solid #2E7D32;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+  transition: all 0.1s ease;
+  position: relative;
+  font-weight: bold;
+}
+
+.habbo-button:hover {
+  background: linear-gradient(45deg, #45A049, #3E8E41);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.habbo-button:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+
+.habbo-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Botões pequenos */
+.habbo-button-small {
+  background: linear-gradient(45deg, #FF9800, #F57C00);
+  border: 1px solid #E65100;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: all 0.1s ease;
+  font-weight: bold;
+}
+
+.habbo-button-small:hover {
+  background: linear-gradient(45deg, #F57C00, #EF6C00);
+  transform: translateY(-1px);
+}
+
+/* Inputs estilo Habbo */
+.habbo-input {
+  background: white;
+  border: 2px solid #9E9E9E;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.1);
+  font-family: 'Volter', 'Courier New', monospace;
+  transition: border-color 0.1s ease;
+}
+
+.habbo-input:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.1), 0 0 0 2px rgba(33,150,243,0.2);
+}
+
+/* Efeitos de texto */
+.text-shadow-lg {
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+}
+
+/* Gradientes específicos do Habbo */
+.habbo-gradient-blue {
+  background: linear-gradient(45deg, #2196F3, #1976D2);
+}
+
+.habbo-gradient-green {
+  background: linear-gradient(45deg, #4CAF50, #388E3C);
+}
+
+.habbo-gradient-yellow {
+  background: linear-gradient(45deg, #FFC107, #FF8F00);
+}
+
+.habbo-gradient-orange {
+  background: linear-gradient(45deg, #FF9800, #F57C00);
+}
+
+.habbo-gradient-red {
+  background: linear-gradient(45deg, #F44336, #D32F2F);
+}
+
+/* Bordas pixeladas */
+.habbo-border {
+  border: 2px solid;
+  image-rendering: pixelated;
+}
+
+.habbo-border-thick {
+  border: 4px solid;
+  image-rendering: pixelated;
+}
+
+/* Sombras estilo pixel art */
+.habbo-shadow {
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+}
+
+.habbo-shadow-sm {
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+/* Animações suaves para elementos Habbo */
+.habbo-transition {
+  transition: all 0.1s ease;
+}
+
+/* Efeitos de hover específicos */
+.habbo-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 rgba(0,0,0,0.2);
+}
+
+/* Estilos para badges e avatares */
+.habbo-avatar {
+  border: 2px solid #9E9E9E;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.habbo-badge {
+  border: 1px solid #757575;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* Responsividade para temas Habbo */
+@media (max-width: 768px) {
+  .habbo-widget {
+    font-size: 0.875rem;
+  }
+  
+  .habbo-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .habbo-input {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+  }
+}
+
+/* Estados de loading */
+.habbo-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.habbo-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: habbo-shimmer 1.5s infinite;
+}
+
+@keyframes habbo-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Efeitos de foco acessível */
+.habbo-focus:focus {
+  outline: 3px solid #FFD700;
+  outline-offset: 2px;
+}
+
+/* Estilos para elementos específicos do guestbook */
+.guestbook-entry {
+  background: linear-gradient(to bottom, #FAFAFA, #F5F5F5);
+  border: 2px solid #BDBDBD;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.guestbook-entry:hover {
+  background: linear-gradient(to bottom, #F0F0F0, #E8E8E8);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Estilos para o cabeçalho do guestbook */
+.guestbook-header {
+  background: linear-gradient(45deg, #1976D2, #1565C0);
+  border: 2px solid #0D47A1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Estilos para botões de ação */
+.action-button-report {
+  background: linear-gradient(45deg, #FF9800, #F57C00);
+  border: 1px solid #E65100;
+  color: #FFF3E0;
+}
+
+.action-button-delete {
+  background: linear-gradient(45deg, #F44336, #D32F2F);
+  border: 1px solid #B71C1C;
+  color: #FFEBEE;
+}
+
+.action-button-report:hover {
+  background: linear-gradient(45deg, #F57C00, #EF6C00);
+}
+
+.action-button-delete:hover {
+  background: linear-gradient(45deg, #D32F2F, #C62828);
+}
+
+/* ========================================
+   SISTEMA DE TEMAS HABBO HUB - 5 TEMAS
+   ======================================== */
+
+/* CSS Variables para Temas */
+:root {
+  /* Tema Branco Padrão (Default) */
+  --theme-primary: #3B82F6;
+  --theme-primary-dark: #1E40AF;
+  --theme-primary-light: #60A5FA;
+  --theme-secondary: #F8FAFC;
+  --theme-secondary-dark: #E2E8F0;
+  --theme-accent: #10B981;
+  --theme-accent-dark: #059669;
+  --theme-background: #FFFFFF;
+  --theme-surface: #F8FAFC;
+  --theme-text: #1F2937;
+  --theme-text-secondary: #6B7280;
+  --theme-border: #E5E7EB;
+  --theme-border-dark: #D1D5DB;
+  --theme-shadow: rgba(0, 0, 0, 0.1);
+  --theme-shadow-dark: rgba(0, 0, 0, 0.2);
+}
+
+/* Tema Classic Habbo (Dourado) */
+[data-theme="classic-habbo"] {
+  --theme-primary: #FDCC00;
+  --theme-primary-dark: #FBCC00;
+  --theme-primary-light: #FEE100;
+  --theme-secondary: #FFF8DC;
+  --theme-secondary-dark: #F5E6A3;
+  --theme-accent: #D4AF37;
+  --theme-accent-dark: #B8860B;
+  --theme-background: #FFF8DC;
+  --theme-surface: #F5E6A3;
+  --theme-text: #2B2300;
+  --theme-text-secondary: #8B7355;
+  --theme-border: #D4AF37;
+  --theme-border-dark: #B8860B;
+  --theme-shadow: rgba(212, 175, 55, 0.3);
+  --theme-shadow-dark: rgba(184, 134, 11, 0.4);
+}
+
+/* Tema Modern Habbo (Azul) */
+[data-theme="modern-habbo"] {
+  --theme-primary: #3B82F6;
+  --theme-primary-dark: #1E40AF;
+  --theme-primary-light: #60A5FA;
+  --theme-secondary: #EFF6FF;
+  --theme-secondary-dark: #DBEAFE;
+  --theme-accent: #06B6D4;
+  --theme-accent-dark: #0891B2;
+  --theme-background: #FFFFFF;
+  --theme-surface: #F8FAFC;
+  --theme-text: #1E293B;
+  --theme-text-secondary: #64748B;
+  --theme-border: #CBD5E1;
+  --theme-border-dark: #94A3B8;
+  --theme-shadow: rgba(59, 130, 246, 0.2);
+  --theme-shadow-dark: rgba(30, 64, 175, 0.3);
+}
+
+/* Tema Vintage Habbo (Verde) */
+[data-theme="vintage-habbo"] {
+  --theme-primary: #10B981;
+  --theme-primary-dark: #059669;
+  --theme-primary-light: #34D399;
+  --theme-secondary: #ECFDF5;
+  --theme-secondary-dark: #D1FAE5;
+  --theme-accent: #059669;
+  --theme-accent-dark: #047857;
+  --theme-background: #F0FDF4;
+  --theme-surface: #ECFDF5;
+  --theme-text: #064E3B;
+  --theme-text-secondary: #047857;
+  --theme-border: #A7F3D0;
+  --theme-border-dark: #6EE7B7;
+  --theme-shadow: rgba(16, 185, 129, 0.2);
+  --theme-shadow-dark: rgba(5, 150, 105, 0.3);
+}
+
+/* Tema Dark Habbo (Escuro) */
+[data-theme="dark-habbo"] {
+  --theme-primary: #6366F1;
+  --theme-primary-dark: #4F46E5;
+  --theme-primary-light: #818CF8;
+  --theme-secondary: #1F2937;
+  --theme-secondary-dark: #111827;
+  --theme-accent: #F59E0B;
+  --theme-accent-dark: #D97706;
+  --theme-background: #111827;
+  --theme-surface: #1F2937;
+  --theme-text: #F9FAFB;
+  --theme-text-secondary: #D1D5DB;
+  --theme-border: #374151;
+  --theme-border-dark: #4B5563;
+  --theme-shadow: rgba(0, 0, 0, 0.4);
+  --theme-shadow-dark: rgba(0, 0, 0, 0.6);
+}
+
+/* Classes de Tema para Aplicação Global */
+.theme-widget {
+  background: var(--theme-surface);
+  border: 2px solid var(--theme-border);
+  box-shadow: 2px 2px 0 var(--theme-shadow);
+  color: var(--theme-text);
+  transition: all 0.2s ease;
+}
+
+.theme-widget:hover {
+  box-shadow: 4px 4px 0 var(--theme-shadow-dark);
+  transform: translateY(-1px);
+}
+
+.theme-header {
+  background: linear-gradient(45deg, var(--theme-primary), var(--theme-primary-dark));
+  border: 2px solid var(--theme-primary-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+  color: var(--theme-background);
+  font-weight: bold;
+}
+
+.theme-button {
+  background: linear-gradient(45deg, var(--theme-primary), var(--theme-primary-dark));
+  border: 2px solid var(--theme-primary-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+  color: var(--theme-background);
+  font-weight: bold;
+  transition: all 0.1s ease;
+}
+
+.theme-button:hover {
+  background: linear-gradient(45deg, var(--theme-primary-dark), var(--theme-accent-dark));
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.3), 0 2px 4px var(--theme-shadow);
+}
+
+.theme-button:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.3);
+}
+
+.theme-input {
+  background: var(--theme-background);
+  border: 2px solid var(--theme-border);
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.1);
+  color: var(--theme-text);
+  transition: border-color 0.1s ease;
+}
+
+.theme-input:focus {
+  outline: none;
+  border-color: var(--theme-primary);
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.1), 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.theme-card {
+  background: var(--theme-surface);
+  border: 2px solid var(--theme-border);
+  box-shadow: 2px 2px 0 var(--theme-shadow);
+  color: var(--theme-text);
+}
+
+.theme-card-header {
+  background: linear-gradient(45deg, var(--theme-primary), var(--theme-primary-dark));
+  border-bottom: 2px solid var(--theme-primary-dark);
+  color: var(--theme-background);
+  font-weight: bold;
+}
+
+.theme-badge {
+  background: var(--theme-accent);
+  border: 1px solid var(--theme-accent-dark);
+  color: var(--theme-background);
+  font-weight: bold;
+}
+
+.theme-text-primary {
+  color: var(--theme-text);
+}
+
+.theme-text-secondary {
+  color: var(--theme-text-secondary);
+}
+
+.theme-border {
+  border-color: var(--theme-border);
+}
+
+.theme-shadow {
+  box-shadow: 2px 2px 0 var(--theme-shadow);
+}
+
+.theme-shadow-lg {
+  box-shadow: 4px 4px 0 var(--theme-shadow-dark);
+}
+
+/* Efeitos específicos para pixel art */
+.theme-pixel-border {
+  border: 2px solid var(--theme-border);
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.theme-pixel-shadow {
+  box-shadow: 4px 4px 0 var(--theme-shadow);
+}
+
+.theme-pixel-shadow-sm {
+  box-shadow: 2px 2px 0 var(--theme-shadow);
+}
+
+/* Transições suaves para mudança de tema */
+.theme-transition {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Aplicação global dos temas */
+[data-theme] {
+  transition: all 0.3s ease;
+}
+
+[data-theme] .theme-widget,
+[data-theme] .theme-card,
+[data-theme] .theme-button,
+[data-theme] .theme-input,
+[data-theme] .theme-header {
+  transition: all 0.3s ease;
+}

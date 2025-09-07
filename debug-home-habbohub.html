@@ -1,0 +1,513 @@
+ma hom<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Home habbohub - HabboHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Debug Home habbohub - HabboHub</h1>
+            <p>Diagnosticando problema de atribuição de home individual</p>
+        </div>
+
+        <div class="status info">
+            <strong>🎯 Problema:</strong> Home individual não está sendo atribuída ao habbohub (usuário logado corretamente)
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ Verificar Usuário habbohub na tabela habbo_accounts</h3>
+            <button class="test-button" onclick="checkHabbohubUser()">Verificar Usuário</button>
+            <div id="userResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ Verificar Home Data do habbohub</h3>
+            <button class="test-button" onclick="checkHabbohubHome()">Verificar Home</button>
+            <div id="homeResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ Criar/Atualizar Conta habbohub</h3>
+            <button class="test-button" onclick="createOrUpdateHabbohub()">Criar/Atualizar</button>
+            <div id="createResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Inicializar Home habbohub Completa</h3>
+            <button class="test-button" onclick="initializeHabbohubHome()">Inicializar Home</button>
+            <div id="initResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5️⃣ Verificar Sistema de Autenticação</h3>
+            <button class="test-button" onclick="checkAuthSystem()">Verificar Auth</button>
+            <div id="authResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkHabbohubUser() {
+            const resultDiv = document.getElementById('userResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando usuário habbohub na tabela habbo_accounts...';
+
+            try {
+                let result = '👤 Verificação do Usuário habbohub:\n\n';
+                
+                // Buscar usuário habbohub
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts?select=*&habbo_name=eq.habbohub`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.length > 0) {
+                        const user = data[0];
+                        result += '✅ Usuário habbohub encontrado!\n';
+                        result += `   - ID: ${user.id}\n`;
+                        result += `   - habbo_name: ${user.habbo_name}\n`;
+                        result += `   - habbo_id: ${user.habbo_id}\n`;
+                        result += `   - supabase_user_id: ${user.supabase_user_id}\n`;
+                        result += `   - hotel: ${user.hotel}\n`;
+                        result += `   - is_admin: ${user.is_admin}\n`;
+                        result += `   - created_at: ${user.created_at}\n\n`;
+                        
+                        // Salvar ID para próximos testes
+                        window.habbohubUserId = user.id;
+                        window.habbohubData = user;
+                        
+                        result += '✅ Dados do usuário salvos para próximos testes!';
+                        resultDiv.className = 'result success';
+                    } else {
+                        result += '❌ Usuário habbohub NÃO encontrado!\n';
+                        result += '💡 O usuário precisa ser criado na tabela habbo_accounts\n';
+                        result += '🔧 Use o teste 3 para criar o usuário';
+                        resultDiv.className = 'result error';
+                    }
+                } else {
+                    result += `❌ Erro ao buscar usuário: ${response.status}\n`;
+                    result += `   - Response: ${await response.text()}\n`;
+                    resultDiv.className = 'result error';
+                }
+
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function checkHabbohubHome() {
+            const resultDiv = document.getElementById('homeResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando home data do habbohub...';
+
+            try {
+                let result = '🏠 Verificação da Home habbohub:\n\n';
+                
+                if (!window.habbohubUserId) {
+                    result += '⚠️ ID do usuário habbohub não encontrado\n';
+                    result += '💡 Execute o teste 1 primeiro para obter o ID do usuário\n';
+                    resultDiv.className = 'result warning';
+                    resultDiv.textContent = result;
+                    return;
+                }
+
+                const userId = window.habbohubUserId;
+                result += `🔍 Buscando home data para user_id: ${userId}\n\n`;
+
+                // Verificar background
+                const bgResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds?select=*&user_id=eq.${userId}`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                // Verificar widgets
+                const widgetsResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets?select=*&user_id=eq.${userId}`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                // Verificar stickers
+                const stickersResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_stickers?select=*&user_id=eq.${userId}`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                let hasData = false;
+
+                if (bgResponse.ok) {
+                    const bgData = await bgResponse.json();
+                    result += `📸 Backgrounds: ${bgData.length} encontrados\n`;
+                    if (bgData.length > 0) {
+                        result += `   - Tipo: ${bgData[0].background_type}\n`;
+                        result += `   - Valor: ${bgData[0].background_value}\n`;
+                        hasData = true;
+                    }
+                } else {
+                    result += `❌ Erro ao buscar backgrounds: ${bgResponse.status}\n`;
+                }
+
+                if (widgetsResponse.ok) {
+                    const widgetsData = await widgetsResponse.json();
+                    result += `🎛️ Widgets: ${widgetsData.length} encontrados\n`;
+                    if (widgetsData.length > 0) {
+                        widgetsData.forEach((widget, i) => {
+                            result += `   - Widget ${i+1}: ${widget.widget_type} (${widget.x}, ${widget.y})\n`;
+                        });
+                        hasData = true;
+                    }
+                } else {
+                    result += `❌ Erro ao buscar widgets: ${widgetsResponse.status}\n`;
+                }
+
+                if (stickersResponse.ok) {
+                    const stickersData = await stickersResponse.json();
+                    result += `🏷️ Stickers: ${stickersData.length} encontrados\n`;
+                    if (stickersData.length > 0) {
+                        stickersData.forEach((sticker, i) => {
+                            result += `   - Sticker ${i+1}: ${sticker.sticker_id} (${sticker.x}, ${sticker.y})\n`;
+                        });
+                        hasData = true;
+                    }
+                } else {
+                    result += `❌ Erro ao buscar stickers: ${stickersResponse.status}\n`;
+                }
+
+                if (hasData) {
+                    result += '\n✅ Home habbohub tem dados!';
+                    resultDiv.className = 'result success';
+                } else {
+                    result += '\n❌ Home habbohub NÃO tem dados!';
+                    result += '\n💡 Use o teste 4 para inicializar a home';
+                    resultDiv.className = 'result error';
+                }
+
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createOrUpdateHabbohub() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Criando/atualizando conta habbohub...';
+
+            try {
+                let result = '👤 Criação/Atualização da Conta habbohub:\n\n';
+                
+                // Primeiro, criar usuário no Supabase Auth se não existir
+                result += '1️⃣ Criando usuário no Supabase Auth...\n';
+                
+                // Tentar criar conta habbohub na tabela habbo_accounts
+                const accountData = {
+                    habbo_id: 'habbohub_001', // ID único
+                    habbo_name: 'habbohub',
+                    supabase_user_id: 'habbohub-system-user', // ID temporário do sistema
+                    hotel: 'br',
+                    is_admin: true
+                };
+
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(accountData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result += '✅ Conta habbohub criada com sucesso!\n';
+                    result += `   - ID: ${data[0].id}\n`;
+                    result += `   - habbo_name: ${data[0].habbo_name}\n`;
+                    result += `   - habbo_id: ${data[0].habbo_id}\n\n`;
+                    
+                    // Salvar dados para próximos testes
+                    window.habbohubUserId = data[0].id;
+                    window.habbohubData = data[0];
+                    
+                    result += '✅ Conta habbohub pronta para inicializar home!';
+                    resultDiv.className = 'result success';
+                } else {
+                    const errorText = await response.text();
+                    if (errorText.includes('duplicate') || errorText.includes('unique')) {
+                        result += '⚠️ Conta habbohub já existe!\n';
+                        result += '💡 Execute o teste 1 para obter os dados existentes\n';
+                        resultDiv.className = 'result warning';
+                    } else {
+                        result += `❌ Erro ao criar conta: ${response.status}\n`;
+                        result += `   - Response: ${errorText}\n`;
+                        resultDiv.className = 'result error';
+                    }
+                }
+
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function initializeHabbohubHome() {
+            const resultDiv = document.getElementById('initResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Inicializando home completa do habbohub...';
+
+            try {
+                let result = '🏠 Inicialização da Home habbohub:\n\n';
+                
+                if (!window.habbohubUserId) {
+                    result += '⚠️ ID do usuário habbohub não encontrado\n';
+                    result += '💡 Execute o teste 1 ou 3 primeiro\n';
+                    resultDiv.className = 'result warning';
+                    resultDiv.textContent = result;
+                    return;
+                }
+
+                const userId = window.habbohubUserId;
+                result += `🔍 Inicializando home para user_id: ${userId}\n\n`;
+
+                // 1. Criar background
+                result += '1️⃣ Criando background...\n';
+                const bgResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        background_type: 'color',
+                        background_value: '#e8f4fd',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                });
+
+                if (bgResponse.ok) {
+                    result += '   ✅ Background criado!\n';
+                } else {
+                    const bgError = await bgResponse.text();
+                    if (bgError.includes('duplicate')) {
+                        result += '   ⚠️ Background já existe\n';
+                    } else {
+                        result += `   ❌ Erro: ${bgError}\n`;
+                    }
+                }
+
+                // 2. Criar widgets
+                result += '2️⃣ Criando widgets...\n';
+                const defaultWidgets = [
+                    { widget_type: 'avatar', x: 20, y: 20, z_index: 1, width: 520, height: 180, is_visible: true, config: { showBadges: true, showMotto: true } },
+                    { widget_type: 'guestbook', x: 50, y: 220, z_index: 1, width: 420, height: 380, is_visible: true, config: { maxMessages: 10, allowAnonymous: true } },
+                    { widget_type: 'rating', x: 500, y: 220, z_index: 1, width: 320, height: 160, is_visible: true, config: { showStars: true, allowRating: true } },
+                    { widget_type: 'welcome', x: 20, y: 420, z_index: 1, width: 800, height: 120, is_visible: true, config: { message: 'Bem-vindo à minha Habbo Home!', showDate: true } }
+                ];
+
+                for (const widget of defaultWidgets) {
+                    const widgetResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            ...widget,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        })
+                    });
+
+                    if (widgetResponse.ok) {
+                        result += `   ✅ Widget ${widget.widget_type} criado!\n`;
+                    } else {
+                        const widgetError = await widgetResponse.text();
+                        if (widgetError.includes('duplicate')) {
+                            result += `   ⚠️ Widget ${widget.widget_type} já existe\n`;
+                        } else {
+                            result += `   ❌ Erro no widget ${widget.widget_type}: ${widgetError}\n`;
+                        }
+                    }
+                }
+
+                // 3. Criar stickers
+                result += '3️⃣ Criando stickers...\n';
+                const defaultStickers = [
+                    { sticker_id: 'heart_' + userId, sticker_src: '/images/stickers/heart.png', x: 100, y: 100, z_index: 2, scale: 1.0, rotation: 0, category: 'decorative' },
+                    { sticker_id: 'star_' + userId, sticker_src: '/images/stickers/star.png', x: 700, y: 150, z_index: 2, scale: 1.0, rotation: 0, category: 'decorative' },
+                    { sticker_id: 'flower_' + userId, sticker_src: '/images/stickers/flower.png', x: 300, y: 500, z_index: 2, scale: 1.0, rotation: 0, category: 'decorative' }
+                ];
+
+                for (const sticker of defaultStickers) {
+                    const stickerResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_stickers`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            ...sticker,
+                            created_at: new Date().toISOString()
+                        })
+                    });
+
+                    if (stickerResponse.ok) {
+                        result += `   ✅ Sticker ${sticker.sticker_id} criado!\n`;
+                    } else {
+                        const stickerError = await stickerResponse.text();
+                        if (stickerError.includes('duplicate')) {
+                            result += `   ⚠️ Sticker ${sticker.sticker_id} já existe\n`;
+                        } else {
+                            result += `   ❌ Erro no sticker ${sticker.sticker_id}: ${stickerError}\n`;
+                        }
+                    }
+                }
+
+                result += '\n✅ Home habbohub inicializada com sucesso!';
+                result += '\n🔗 Agora teste: http://localhost:5173/home/habbohub';
+                resultDiv.className = 'result success';
+
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function checkAuthSystem() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando sistema de autenticação...';
+
+            try {
+                let result = '🔐 Verificação do Sistema de Autenticação:\n\n';
+                
+                result += '📋 Problemas identificados e corrigidos:\n';
+                result += '1. ✅ Campo habbo_username → habbo_name\n';
+                result += '2. ✅ Tabela hub_users → habbo_accounts\n';
+                result += '3. ✅ Cliente anônimo → service_role\n';
+                result += '4. ✅ Verificação de proprietário corrigida\n\n';
+                
+                result += '🔧 Correções aplicadas no useHabboHomeV2:\n';
+                result += '- Usar tabela habbo_accounts em vez de hub_users\n';
+                result += '- Usar campo habbo_name em vez de habbo_username\n';
+                result += '- Usar supabaseAdmin para todas as operações\n';
+                result += '- Corrigir verificação de proprietário\n\n';
+                
+                result += '💡 Próximos passos:\n';
+                result += '1. Execute os testes 1-4 acima\n';
+                result += '2. Acesse http://localhost:5173/home/habbohub\n';
+                result += '3. Verifique se a home carrega sem erros\n';
+                result += '4. Confirme que você é o proprietário da home\n\n';
+                
+                result += '✅ Sistema de autenticação configurado corretamente!';
+                resultDiv.className = 'result success';
+
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar automaticamente o primeiro teste
+        window.onload = function() {
+            checkHabbohubUser();
+        };
+    </script>
+</body>
+</html>

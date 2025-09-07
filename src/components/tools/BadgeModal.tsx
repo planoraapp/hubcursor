@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, X, RefreshCw } from 'lucide-react';
 import SimpleBadgeImage from './SimpleBadgeImage';
 import BadgeTooltip from './BadgeTooltip';
+import OptimizedBadgeGrid from './OptimizedBadgeGrid';
 import { getBadges, getBadgeStats, getAvailableCategories, getAvailableCountries, getRecentBadges, getClassicBadges, getLoadingProgress, type Badge, type BadgeFilters } from '@/lib/supabase-badges';
 
 // Usar o tipo Badge do Supabase
@@ -60,6 +61,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
   const [recentBadges, setRecentBadges] = useState<BadgeItem[]>([]);
   const [classicBadges, setClassicBadges] = useState<BadgeItem[]>([]);
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, isGenerating: false });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const ITEMS_PER_PAGE = 50;
 
@@ -410,36 +412,13 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
                   <span className="text-sm text-gray-500">({recentBadges.length})</span>
                 </h3>
                 <div className="flex-1 overflow-y-auto" style={{ maxHeight: '60vh' }}>
-                  <div className="grid grid-cols-8 gap-2 p-2">
-                    {recentBadges.map((badge, index) => (
-                      <BadgeTooltip
-                        key={`recent-${badge.code}-${index}`}
-                        code={badge.code}
-                        name={badge.name}
-                        description={badge.description}
-                        categories={badge.categories}
-                        countries={badge.countries}
-                        showOnHover={true}
-                        showOnClick={true}
-                      >
-                        <div
-                          className="group cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          onClick={() => handleBadgeClick(badge)}
-                        >
-                          <div className="flex flex-col items-center space-y-1">
-                            <SimpleBadgeImage 
-                              code={badge.code} 
-                              name={badge.name}
-                              size="md"
-                            />
-                            <span className="text-xs text-center text-gray-600 volter-font truncate w-full">
-                              {badge.name}
-                            </span>
-                          </div>
-                        </div>
-                      </BadgeTooltip>
-                    ))}
-                  </div>
+                  <OptimizedBadgeGrid
+                    badges={recentBadges}
+                    onBadgeClick={handleBadgeClick}
+                    columns={8}
+                    showNames={true}
+                    className="p-2"
+                  />
                 </div>
               </div>
 
@@ -450,36 +429,13 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
                   <span className="text-sm text-gray-500">({classicBadges.length})</span>
                 </h3>
                 <div className="flex-1 overflow-y-auto" style={{ maxHeight: '60vh' }}>
-                  <div className="grid grid-cols-8 gap-2 p-2">
-                    {classicBadges.map((badge, index) => (
-                      <BadgeTooltip
-                        key={`classic-${badge.code}-${index}`}
-                        code={badge.code}
-                        name={badge.name}
-                        description={badge.description}
-                        categories={badge.categories}
-                        countries={badge.countries}
-                        showOnHover={true}
-                        showOnClick={true}
-                      >
-                        <div
-                          className="group cursor-pointer p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          onClick={() => handleBadgeClick(badge)}
-                        >
-                          <div className="flex flex-col items-center space-y-1">
-                            <SimpleBadgeImage 
-                              code={badge.code} 
-                              name={badge.name}
-                              size="md"
-                            />
-                            <span className="text-xs text-center text-gray-600 volter-font truncate w-full">
-                              {badge.name}
-                            </span>
-                          </div>
-                        </div>
-                      </BadgeTooltip>
-                    ))}
-                  </div>
+                  <OptimizedBadgeGrid
+                    badges={classicBadges}
+                    onBadgeClick={handleBadgeClick}
+                    columns={8}
+                    showNames={true}
+                    className="p-2"
+                  />
                 </div>
               </div>
             </div>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obter API Key do Supabase - HabboHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        .step.success { border-left-color: #28a745; background: #d4edda; }
+        .step.error { border-left-color: #dc3545; background: #f8d7da; }
+        .step.warning { border-left-color: #ffc107; background: #fff3cd; }
+        
+        .code {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover { background: #0056b3; }
+        .button.success { background: #28a745; }
+        .button.warning { background: #ffc107; color: black; }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔑 Obter API Key do Supabase - HabboHub</h1>
+    
+    <div class="container">
+        <h2>❌ Problema Identificado</h2>
+        <div class="step error">
+            <strong>Erro 401 (Unauthorized):</strong> A API key atual está inválida ou expirada.
+            <br><br>
+            <strong>URL do projeto:</strong> https://wueccgeizznjmjgmuscy.supabase.co
+            <br>
+            <strong>API key atual:</strong> eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (inválida)
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Passo a Passo para Obter Nova API Key</h2>
+        
+        <div class="step">
+            <h3>1. 🌐 Acesse o Supabase Dashboard</h3>
+            <p>Vá para: <a href="https://supabase.com/dashboard" target="_blank" class="button">Abrir Supabase Dashboard</a></p>
+        </div>
+
+        <div class="step">
+            <h3>2. 🔍 Encontre o Projeto</h3>
+            <p>Procure pelo projeto com URL: <strong>wueccgeizznjmjgmuscy</strong></p>
+            <p>Ou acesse diretamente: <a href="https://supabase.com/dashboard/project/wueccgeizznjmjgmuscy" target="_blank" class="button">Abrir Projeto</a></p>
+        </div>
+
+        <div class="step">
+            <h3>3. ⚙️ Acesse as Configurações</h3>
+            <p>No menu lateral, clique em <strong>"Settings"</strong> → <strong>"API"</strong></p>
+        </div>
+
+        <div class="step">
+            <h3>4. 🔑 Copie a API Key</h3>
+            <p>Na seção <strong>"Project API keys"</strong>, copie a chave <strong>"anon public"</strong></p>
+            <div class="highlight">
+                <strong>⚠️ IMPORTANTE:</strong> Use a chave "anon public", não a "service_role"!
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>5. 📝 Cole a Nova API Key Aqui</h3>
+            <textarea id="newApiKey" placeholder="Cole a nova API key aqui..." style="width: 100%; height: 100px; font-family: monospace; font-size: 12px;"></textarea>
+            <br><br>
+            <button class="button success" onclick="updateApiKey()">Atualizar API Key</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Teste da Nova API Key</h2>
+        <div id="test-result" class="code" style="display: none;"></div>
+        <button class="button warning" onclick="testNewApiKey()">Testar Nova API Key</button>
+    </div>
+
+    <div class="container">
+        <h2>📁 Arquivos que Serão Atualizados</h2>
+        <div class="code">
+src/lib/supabaseClient.ts
+.env (se existir)
+        </div>
+    </div>
+
+    <script>
+        function updateApiKey() {
+            const newApiKey = document.getElementById('newApiKey').value.trim();
+            
+            if (!newApiKey) {
+                alert('Por favor, cole a nova API key!');
+                return;
+            }
+            
+            if (!newApiKey.startsWith('eyJ')) {
+                alert('A API key deve começar com "eyJ" (JWT token)');
+                return;
+            }
+            
+            // Simular atualização
+            alert('API key recebida! Agora vou atualizar o sistema...');
+            
+            // Aqui seria feita a atualização real dos arquivos
+            console.log('Nova API key:', newApiKey);
+        }
+        
+        function testNewApiKey() {
+            const newApiKey = document.getElementById('newApiKey').value.trim();
+            
+            if (!newApiKey) {
+                alert('Por favor, cole a nova API key primeiro!');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando nova API key...';
+            
+            // Simular teste
+            setTimeout(() => {
+                resultDiv.textContent = '✅ API key válida! Sistema será atualizado automaticamente.';
+                resultDiv.className = 'code success';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

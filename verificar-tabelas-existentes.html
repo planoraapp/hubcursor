@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Tabelas Existentes - HabboHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.success {
+            background: #28a745;
+        }
+        .test-button.success:hover {
+            background: #218838;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .table-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .table-info h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .table-info .field {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .table-info .field:last-child {
+            border-bottom: none;
+        }
+        .field-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        .field-type {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Verificar Tabelas Existentes - HabboHub</h1>
+            <p>Analisando todas as tabelas disponíveis no Supabase para homes</p>
+        </div>
+
+        <div class="status info">
+            <strong>🎯 Objetivo:</strong> Usar tabelas existentes para configurar o sistema de homes
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Verificar Todas as Tabelas</h3>
+            <button class="test-button success" onclick="checkAllTables()">Verificar Tabelas</button>
+            <div id="tablesResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🏠 Configurar Homes com Tabelas Existentes</h3>
+            <button class="test-button success" onclick="configureHomesWithExisting()">Configurar Homes</button>
+            <div id="configureResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Testar Sistema Configurado</h3>
+            <button class="test-button success" onclick="testConfiguredSystem()">Testar Sistema</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkAllTables() {
+            const resultDiv = document.getElementById('tablesResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando todas as tabelas...';
+
+            try {
+                let result = '📊 ANÁLISE COMPLETA DAS TABELAS:\n\n';
+                
+                // Lista de tabelas possíveis para verificar
+                const possibleTables = [
+                    'unified_users', 'habbo_accounts', 'hub_users', 'users',
+                    'user_home_backgrounds', 'user_home_widgets', 'user_stickers',
+                    'home_backgrounds', 'home_widgets', 'home_stickers',
+                    'user_homes', 'homes', 'user_profiles', 'profiles',
+                    'auth.users', 'public.users', 'public.habbo_accounts'
+                ];
+
+                const existingTables = {};
+                const tableData = {};
+
+                for (const table of possibleTables) {
+                    try {
+                        // Tentar diferentes endpoints
+                        const endpoints = [
+                            `${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`,
+                            `${SUPABASE_URL}/rest/v1/${table}?select=count`,
+                            `${SUPABASE_URL}/rest/v1/${table}`
+                        ];
+
+                        let tableExists = false;
+                        let tableInfo = null;
+
+                        for (const endpoint of endpoints) {
+                            try {
+                                const response = await fetch(endpoint, {
+                                    headers: {
+                                        'apikey': SUPABASE_SERVICE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                                    }
+                                });
+
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    tableExists = true;
+                                    tableInfo = {
+                                        exists: true,
+                                        count: Array.isArray(data) ? data.length : 'N/A',
+                                        sample: Array.isArray(data) && data.length > 0 ? data[0] : null,
+                                        status: response.status
+                                    };
+                                    break;
+                                }
+                            } catch (e) {
+                                // Continuar tentando outros endpoints
+                            }
+                        }
+
+                        if (tableExists) {
+                            existingTables[table] = tableInfo;
+                            result += `✅ ${table}: Existe (${tableInfo.count} registros)\n`;
+                            
+                            if (tableInfo.sample) {
+                                result += `   📋 Campos: ${Object.keys(tableInfo.sample).join(', ')}\n`;
+                            }
+                        } else {
+                            result += `❌ ${table}: Não existe\n`;
+                        }
+
+                    } catch (error) {
+                        result += `⚠️ ${table}: Erro - ${error.message}\n`;
+                    }
+                }
+
+                result += '\n📋 RESUMO DAS TABELAS EXISTENTES:\n';
+                result += '=====================================\n\n';
+
+                for (const [tableName, info] of Object.entries(existingTables)) {
+                    if (info.exists) {
+                        result += `🏷️ ${tableName.toUpperCase()}:\n`;
+                        result += `   Status: ✅ Ativa\n`;
+                        result += `   Registros: ${info.count}\n`;
+                        
+                        if (info.sample) {
+                            result += `   Campos disponíveis:\n`;
+                            for (const [field, value] of Object.entries(info.sample)) {
+                                const fieldType = typeof value;
+                                result += `     • ${field}: ${fieldType}${value !== null ? ` (${JSON.stringify(value).substring(0, 50)}${JSON.stringify(value).length > 50 ? '...' : ''})` : ' (null)'}\n`;
+                            }
+                        }
+                        result += '\n';
+                    }
+                }
+
+                // Salvar dados para uso posterior
+                window.existingTables = existingTables;
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function configureHomesWithExisting() {
+            const resultDiv = document.getElementById('configureResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Configurando homes com tabelas existentes...';
+
+            try {
+                let result = '🏠 CONFIGURAÇÃO DE HOMES:\n\n';
+
+                if (!window.existingTables) {
+                    result += '❌ Execute primeiro a verificação de tabelas\n';
+                    resultDiv.textContent = result;
+                    resultDiv.className = 'result error';
+                    return;
+                }
+
+                // Identificar tabela de usuários principal
+                let userTable = null;
+                let userTableName = null;
+
+                if (window.existingTables.hub_users) {
+                    userTable = window.existingTables.hub_users;
+                    userTableName = 'hub_users';
+                } else if (window.existingTables.habbo_accounts) {
+                    userTable = window.existingTables.habbo_accounts;
+                    userTableName = 'habbo_accounts';
+                } else if (window.existingTables.unified_users) {
+                    userTable = window.existingTables.unified_users;
+                    userTableName = 'unified_users';
+                }
+
+                if (!userTable) {
+                    result += '❌ Nenhuma tabela de usuários encontrada\n';
+                    result += '💡 Tabelas verificadas: ' + Object.keys(window.existingTables).join(', ') + '\n';
+                    resultDiv.textContent = result;
+                    resultDiv.className = 'result error';
+                    return;
+                }
+
+                result += `✅ Usando tabela: ${userTableName}\n`;
+                result += `📊 Registros: ${userTable.count}\n\n`;
+
+                // Verificar se há usuários
+                const usersResponse = await fetch(`${SUPABASE_URL}/rest/v1/${userTableName}?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    result += `👥 USUÁRIOS ENCONTRADOS (${users.length}):\n`;
+                    
+                    users.forEach((user, index) => {
+                        const name = user.habbo_name || user.habbo_username || user.username || user.name || 'Sem nome';
+                        const id = user.id;
+                        result += `   ${index + 1}. ${name} (ID: ${id})\n`;
+                    });
+
+                    // Criar dados de home para cada usuário
+                    result += '\n🏠 CRIANDO DADOS DE HOME:\n';
+                    
+                    for (const user of users) {
+                        const userId = user.id;
+                        const userName = user.habbo_name || user.habbo_username || user.username || user.name || 'usuario';
+                        
+                        result += `\n📝 Processando ${userName}...\n`;
+
+                        // Verificar se já tem background
+                        const bgResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds?user_id=eq.${userId}&select=*`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (bgResponse.ok) {
+                            const backgrounds = await bgResponse.json();
+                            if (backgrounds.length === 0) {
+                                // Criar background padrão
+                                const createBg = await fetch(`${SUPABASE_URL}/rest/v1/user_home_backgrounds`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'apikey': SUPABASE_SERVICE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        user_id: userId,
+                                        background_type: 'color',
+                                        background_value: '#e8f4fd'
+                                    })
+                                });
+
+                                if (createBg.ok) {
+                                    result += `   ✅ Background criado\n`;
+                                } else {
+                                    result += `   ❌ Erro ao criar background: ${createBg.status}\n`;
+                                }
+                            } else {
+                                result += `   ✅ Background já existe\n`;
+                            }
+                        } else {
+                            result += `   ⚠️ Tabela user_home_backgrounds não acessível: ${bgResponse.status}\n`;
+                        }
+
+                        // Verificar se já tem widgets
+                        const widgetsResponse = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets?user_id=eq.${userId}&select=*`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (widgetsResponse.ok) {
+                            const widgets = await widgetsResponse.json();
+                            if (widgets.length === 0) {
+                                // Criar widgets padrão
+                                const defaultWidgets = [
+                                    { widget_type: 'avatar', x: 20, y: 20, z_index: 1, width: 520, height: 180, is_visible: true, config: { showBadges: true, showMotto: true } },
+                                    { widget_type: 'guestbook', x: 50, y: 220, z_index: 1, width: 420, height: 380, is_visible: true, config: { maxMessages: 10, allowAnonymous: true } },
+                                    { widget_type: 'rating', x: 500, y: 220, z_index: 1, width: 320, height: 160, is_visible: true, config: { showStars: true, allowRating: true } },
+                                    { widget_type: 'welcome', x: 20, y: 420, z_index: 1, width: 800, height: 120, is_visible: true, config: { message: `Bem-vindo à home de ${userName}!`, showDate: true } }
+                                ];
+
+                                for (const widget of defaultWidgets) {
+                                    const createWidget = await fetch(`${SUPABASE_URL}/rest/v1/user_home_widgets`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'apikey': SUPABASE_SERVICE_KEY,
+                                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            user_id: userId,
+                                            ...widget
+                                        })
+                                    });
+
+                                    if (createWidget.ok) {
+                                        result += `   ✅ Widget ${widget.widget_type} criado\n`;
+                                    } else {
+                                        result += `   ❌ Erro ao criar widget ${widget.widget_type}: ${createWidget.status}\n`;
+                                    }
+                                }
+                            } else {
+                                result += `   ✅ Widgets já existem (${widgets.length})\n`;
+                            }
+                        } else {
+                            result += `   ⚠️ Tabela user_home_widgets não acessível: ${widgetsResponse.status}\n`;
+                        }
+                    }
+
+                    result += '\n🎉 CONFIGURAÇÃO CONCLUÍDA!\n\n';
+                    result += '📋 PRÓXIMOS PASSOS:\n';
+                    result += '1. Teste: http://localhost:5173/homes\n';
+                    result += '2. Teste: http://localhost:5173/homes/[nome-do-usuario]\n';
+                    result += '3. Verifique o console do navegador para erros\n\n';
+                    result += '✅ Sistema configurado com tabelas existentes!';
+
+                } else {
+                    result += `❌ Erro ao buscar usuários: ${usersResponse.status}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testConfiguredSystem() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando sistema configurado...';
+
+            try {
+                let result = '🧪 TESTE DO SISTEMA CONFIGURADO:\n\n';
+
+                // Testar acesso às tabelas principais
+                const testTables = ['hub_users', 'habbo_accounts', 'unified_users', 'user_home_backgrounds', 'user_home_widgets'];
+                
+                for (const table of testTables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `✅ ${table}: ${data.length} registros\n`;
+                        } else {
+                            result += `❌ ${table}: Erro ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `⚠️ ${table}: ${error.message}\n`;
+                    }
+                }
+
+                result += '\n🎯 SISTEMA PRONTO PARA TESTE!\n\n';
+                result += '🔗 URLs para testar:\n';
+                result += '• http://localhost:5173/homes (Grid de homes)\n';
+                result += '• http://localhost:5173/homes/habbohub (Home habbohub)\n';
+                result += '• http://localhost:5173/homes/beebop (Home beebop)\n\n';
+                result += '💡 Se não funcionar, verifique:\n';
+                result += '1. Console do navegador (F12)\n';
+                result += '2. Se o servidor está rodando (npm run dev)\n';
+                result += '3. Se as tabelas foram criadas corretamente\n';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar verificação automática ao carregar
+        window.onload = function() {
+            checkAllTables();
+        };
+    </script>
+</body>
+</html>

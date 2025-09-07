@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Home Loading - HabboHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .debug-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .loading { border-color: #ffc107; background: #fff3cd; }
+        .info { border-color: #17a2b8; background: #d1ecf1; }
+        
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+        
+        .step.success { border-left-color: #28a745; background: #d4edda; }
+        .step.error { border-left-color: #dc3545; background: #f8d7da; }
+        .step.warning { border-left-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug Home Loading - HabboHub</h1>
+    
+    <div class="debug-container">
+        <h2>🔍 Diagnóstico Passo a Passo</h2>
+        
+        <div class="step">
+            <h3>1. ✅ Verificar Servidor</h3>
+            <p>Servidor rodando em: <strong>http://localhost:5173</strong></p>
+            <button class="test-button" onclick="testServer()">Testar Servidor</button>
+            <div id="server-result" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>2. 🔗 Testar Rotas</h3>
+            <p>Testando as rotas de navegação para a home:</p>
+            <button class="test-button" onclick="testRoutes()">Testar Rotas</button>
+            <div id="routes-result" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>3. 🗄️ Verificar Dados do Usuário</h3>
+            <p>Verificando se o usuário habbohub existe no banco:</p>
+            <button class="test-button" onclick="testUserData()">Verificar Dados</button>
+            <div id="user-result" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>4. 🏠 Testar Carregamento da Home</h3>
+            <p>Testando o carregamento completo da página:</p>
+            <button class="test-button" onclick="testHomeLoading()">Testar Home</button>
+            <div id="home-result" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>5. 🎯 Teste Manual</h3>
+            <p>Teste manual das rotas:</p>
+            <a href="http://localhost:5173/homes/habbohub" class="test-button" target="_blank">
+                🏠 /homes/habbohub
+            </a>
+            <a href="http://localhost:5173/enhanced-home/habbohub" class="test-button" target="_blank">
+                🏠 /enhanced-home/habbohub
+            </a>
+        </div>
+    </div>
+
+    <div class="debug-container">
+        <h2>📊 Status Atual</h2>
+        <div class="result info">
+<strong>PROBLEMA IDENTIFICADO:</strong>
+O card aparece mas não é clicável e a home não carrega.
+
+<strong>POSSÍVEIS CAUSAS:</strong>
+1. Usuário habbohub não existe na tabela hub_users
+2. Erro 401 na API do Supabase
+3. Problema de roteamento no React Router
+4. Hook useHabboHomeV2 não está carregando dados
+5. Componente HabboHomeV2 com erro de renderização
+
+<strong>SOLUÇÕES:</strong>
+1. Execute criar-usuario-habbohub.sql no Supabase
+2. Verifique console do navegador (F12)
+3. Teste as rotas manualmente
+4. Verifique se o servidor está rodando
+        </div>
+    </div>
+
+    <script>
+        async function testServer() {
+            const resultDiv = document.getElementById('server-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Testando servidor...';
+
+            try {
+                const response = await fetch('http://localhost:5173/');
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Servidor funcionando! Status: ' + response.status;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ Servidor com problema! Status: ' + response.status;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Erro ao conectar: ' + error.message;
+            }
+        }
+
+        async function testRoutes() {
+            const resultDiv = document.getElementById('routes-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Testando rotas...';
+
+            const routes = [
+                '/homes/habbohub',
+                '/enhanced-home/habbohub',
+                '/homes/beebop',
+                '/enhanced-home/beebop'
+            ];
+
+            let result = '🧪 TESTE DE ROTAS:\n\n';
+            
+            for (const route of routes) {
+                try {
+                    const response = await fetch(`http://localhost:5173${route}`);
+                    result += `🔗 ${route}\n`;
+                    result += `   Status: ${response.status}\n`;
+                    result += `   OK: ${response.ok ? '✅' : '❌'}\n\n`;
+                } catch (error) {
+                    result += `🔗 ${route}\n`;
+                    result += `   Erro: ${error.message}\n\n`;
+                }
+            }
+
+            resultDiv.className = 'result info';
+            resultDiv.textContent = result;
+        }
+
+        async function testUserData() {
+            const resultDiv = document.getElementById('user-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Verificando dados do usuário...';
+
+            try {
+                // Simular verificação de dados
+                resultDiv.className = 'result warning';
+                resultDiv.textContent = '⚠️ Verificação manual necessária:\n\n' +
+                    '1. Abra o Supabase Dashboard\n' +
+                    '2. Vá para Table Editor\n' +
+                    '3. Selecione a tabela hub_users\n' +
+                    '4. Procure por habbohub\n' +
+                    '5. Se não existir, execute criar-usuario-habbohub.sql';
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Erro: ' + error.message;
+            }
+        }
+
+        async function testHomeLoading() {
+            const resultDiv = document.getElementById('home-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Testando carregamento da home...';
+
+            try {
+                // Abrir a página em uma nova aba para teste
+                const newWindow = window.open('http://localhost:5173/homes/habbohub', '_blank');
+                
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '🔍 Página aberta em nova aba.\n\n' +
+                    'Verifique:\n' +
+                    '1. Se a página carrega\n' +
+                    '2. Se há erros no console (F12)\n' +
+                    '3. Se aparece "Carregando Habbo Home..."\n' +
+                    '4. Se há erros 401 ou 404\n\n' +
+                    'Se não carregar, execute o SQL criar-usuario-habbohub.sql';
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Erro: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

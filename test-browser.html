@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Teste de Conexão Supabase</h1>
+    <div id="result"></div>
+
+    <script>
+        const supabaseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzI0NTQ4MCwiZXhwIjoyMDUyODIxNDgwfQ.8QZqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJq';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Testando conexão...</p>';
+            
+            try {
+                // Teste 1: Listar usuários
+                const { data: users, error: usersError } = await supabase
+                    .from('hub_users')
+                    .select('habbo_username, hotel')
+                    .limit(5);
+                
+                if (usersError) {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ Erro ao buscar usuários: ${usersError.message}</p>`;
+                } else {
+                    resultDiv.innerHTML += `<p style="color: green;">✅ Usuários encontrados: ${JSON.stringify(users)}</p>`;
+                }
+
+                // Teste 2: Buscar habbohub
+                const { data: habbohub, error: habbohubError } = await supabase
+                    .from('hub_users')
+                    .select('*')
+                    .eq('habbo_username', 'habbohub');
+
+                if (habbohubError) {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ Erro ao buscar habbohub: ${habbohubError.message}</p>`;
+                } else {
+                    resultDiv.innerHTML += `<p style="color: green;">✅ habbohub encontrado: ${JSON.stringify(habbohub)}</p>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML += `<p style="color: red;">❌ Erro geral: ${error.message}</p>`;
+            }
+        }
+        
+        testConnection();
+    </script>
+</body>
+</html>

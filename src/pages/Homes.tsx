@@ -29,6 +29,9 @@ const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { currentUser, isLoggedIn } = useHubLogin();
+  
+  // Debug logs
+  console.log('🏠 [Homes] Auth state:', { currentUser, isLoggedIn });
   const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
@@ -122,22 +125,22 @@ const Homes: React.FC = () => {
                 </p>
                 
                 {/* Botão Minha Home */}
-                <div className="mt-4">
+                <div className="mt-6 flex justify-center">
                   {isLoggedIn && currentUser ? (
                     <Button 
                       onClick={() => navigate(`/homes/${currentUser.habbo_username}`)}
-                      className="habbo-button-green volter-font px-6 py-2"
+                      className="habbo-button-green volter-font px-8 py-3 text-lg"
                     >
-                      <UserCheck className="w-4 h-4 mr-2" />
+                      <UserCheck className="w-5 h-5 mr-2" />
                       Ver Minha Home
-                      <Home className="w-4 h-4 ml-2" />
+                      <Home className="w-5 h-5 ml-2" />
                     </Button>
                   ) : (
                     <Button 
                       onClick={() => navigate('/login')}
-                      className="habbo-button-orange volter-font px-6 py-2"
+                      className="habbo-button-orange volter-font px-8 py-3 text-lg"
                     >
-                      <User className="w-4 h-4 mr-2" />
+                      <User className="w-5 h-5 mr-2" />
                       Fazer Login para Ver Minha Home
                     </Button>
                   )}

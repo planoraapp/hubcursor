@@ -45,3 +45,4 @@ filesToFix.forEach(fixFile);
 console.log('\n✨ Correção concluída!');
 console.log('💡 Execute "npm run build" para verificar se tudo está funcionando.');
 
+

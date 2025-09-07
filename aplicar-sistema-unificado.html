@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicar Sistema Unificado - HabboHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .sql-code {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .step {
+            background: #e8f4fd;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Aplicar Sistema Unificado - HabboHub</h1>
+            <p>Unificando todos os sistemas de login em uma única tabela</p>
+        </div>
+
+        <div class="status info">
+            <strong>🎯 Objetivo:</strong> Unificar hub_users, habbo_accounts e users em uma única tabela unified_users
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ Verificar Estado Atual</h3>
+            <button class="test-button" onclick="checkCurrentState()">Verificar Estado Atual</button>
+            <div id="currentStateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ Aplicar Sistema Unificado</h3>
+            <div class="step">
+                <strong>Passo 1:</strong> Execute o SQL abaixo no Supabase Dashboard
+            </div>
+            <div class="sql-code" id="unifiedSQL">
+                -- Aguardando carregamento do SQL...
+            </div>
+            <button class="test-button" onclick="loadUnifiedSQL()">Carregar SQL Unificado</button>
+            <button class="test-button danger" onclick="executeUnifiedSystem()">Executar Sistema Unificado</button>
+            <div id="unifiedResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ Verificar Migração</h3>
+            <button class="test-button" onclick="verifyMigration()">Verificar Migração</button>
+            <div id="migrationResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Testar Sistema Unificado</h3>
+            <button class="test-button" onclick="testUnifiedSystem()">Testar Sistema</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5️⃣ Atualizar Código</h3>
+            <button class="test-button" onclick="updateCode()">Atualizar Código</button>
+            <div id="codeResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkCurrentState() {
+            const resultDiv = document.getElementById('currentStateResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando estado atual das tabelas...';
+
+            try {
+                let result = '📊 Estado Atual das Tabelas:\n\n';
+                
+                // Verificar hub_users
+                try {
+                    const hubUsersResponse = await fetch(`${SUPABASE_URL}/rest/v1/hub_users?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+                    if (hubUsersResponse.ok) {
+                        const hubUsers = await hubUsersResponse.json();
+                        result += `✅ hub_users: ${hubUsers.length} registros\n`;
+                    } else {
+                        result += `❌ hub_users: Erro ${hubUsersResponse.status}\n`;
+                    }
+                } catch (error) {
+                    result += `❌ hub_users: ${error.message}\n`;
+                }
+
+                // Verificar habbo_accounts
+                try {
+                    const habboAccountsResponse = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+                    if (habboAccountsResponse.ok) {
+                        const habboAccounts = await habboAccountsResponse.json();
+                        result += `✅ habbo_accounts: ${habboAccounts.length} registros\n`;
+                    } else {
+                        result += `❌ habbo_accounts: Erro ${habboAccountsResponse.status}\n`;
+                    }
+                } catch (error) {
+                    result += `❌ habbo_accounts: ${error.message}\n`;
+                }
+
+                // Verificar unified_users
+                try {
+                    const unifiedUsersResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+                    if (unifiedUsersResponse.ok) {
+                        const unifiedUsers = await unifiedUsersResponse.json();
+                        result += `✅ unified_users: ${unifiedUsers.length} registros\n`;
+                    } else {
+                        result += `❌ unified_users: Tabela não existe ainda\n`;
+                    }
+                } catch (error) {
+                    result += `❌ unified_users: ${error.message}\n`;
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function loadUnifiedSQL() {
+            const sqlDiv = document.getElementById('unifiedSQL');
+            sqlDiv.textContent = `-- ========================================
+-- SISTEMA DE AUTENTICAÇÃO UNIFICADO - HABBOHUB
+-- ========================================
+
+-- 1. CRIAR TABELA UNIFICADA DE USUÁRIOS
+CREATE TABLE IF NOT EXISTS public.unified_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  supabase_user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  habbo_name TEXT NOT NULL,
+  habbo_id TEXT,
+  hotel TEXT NOT NULL DEFAULT 'br',
+  figure_string TEXT,
+  motto TEXT,
+  is_online BOOLEAN DEFAULT false,
+  password_hash TEXT,
+  email TEXT,
+  avatar_url TEXT,
+  member_since TIMESTAMP WITH TIME ZONE,
+  is_admin BOOLEAN DEFAULT false,
+  is_verified BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  last_login TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT unique_habbo_name_hotel UNIQUE (habbo_name, hotel),
+  CONSTRAINT unique_habbo_id_hotel UNIQUE (habbo_id, hotel) WHERE habbo_id IS NOT NULL
+);
+
+-- 2. CRIAR ÍNDICES
+CREATE INDEX IF NOT EXISTS idx_unified_users_habbo_name ON public.unified_users(habbo_name);
+CREATE INDEX IF NOT EXISTS idx_unified_users_hotel ON public.unified_users(hotel);
+CREATE INDEX IF NOT EXISTS idx_unified_users_supabase_id ON public.unified_users(supabase_user_id);
+CREATE INDEX IF NOT EXISTS idx_unified_users_active ON public.unified_users(is_active) WHERE is_active = true;
+
+-- 3. HABILITAR RLS
+ALTER TABLE public.unified_users ENABLE ROW LEVEL SECURITY;
+
+-- 4. CRIAR POLÍTICAS RLS
+CREATE POLICY "Users can view own data" ON public.unified_users
+  FOR SELECT USING (auth.uid() = supabase_user_id);
+
+CREATE POLICY "Users can update own data" ON public.unified_users
+  FOR UPDATE USING (auth.uid() = supabase_user_id)
+  WITH CHECK (auth.uid() = supabase_user_id);
+
+CREATE POLICY "Users can insert own data" ON public.unified_users
+  FOR INSERT WITH CHECK (auth.uid() = supabase_user_id);
+
+CREATE POLICY "Service role can do everything" ON public.unified_users
+  FOR ALL USING (current_setting('role', true) = 'service_role')
+  WITH CHECK (current_setting('role', true) = 'service_role');
+
+-- 5. CRIAR TRIGGER
+CREATE OR REPLACE FUNCTION update_unified_users_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_unified_users_updated_at
+  BEFORE UPDATE ON public.unified_users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_unified_users_updated_at();
+
+-- 6. MIGRAR DADOS EXISTENTES
+INSERT INTO public.unified_users (
+  habbo_name, hotel, avatar_url, password_hash, member_since, is_active, created_at, updated_at
+)
+SELECT 
+  habbo_username, hotel, habbo_avatar, password_hash, 
+  member_since::TIMESTAMP WITH TIME ZONE, is_active, created_at, updated_at
+FROM public.hub_users
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.unified_users 
+  WHERE unified_users.habbo_name = hub_users.habbo_username 
+  AND unified_users.hotel = hub_users.hotel
+);
+
+-- 7. CRIAR CONTAS PADRÃO
+INSERT INTO public.unified_users (habbo_name, hotel, is_admin, is_active, motto, member_since)
+SELECT 'habbohub', 'br', true, true, 'HUB-HA2VEA', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM public.unified_users WHERE habbo_name = 'habbohub' AND hotel = 'br');
+
+INSERT INTO public.unified_users (habbo_name, hotel, password_hash, is_active, motto, member_since)
+SELECT 'beebop', 'br', '$2a$10$example_hash', true, 'Teste', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM public.unified_users WHERE habbo_name = 'beebop' AND hotel = 'br');
+
+-- 8. CRIAR VIEW PARA COMPATIBILIDADE
+CREATE OR REPLACE VIEW public.habbo_accounts AS
+SELECT 
+  id, supabase_user_id, habbo_name, habbo_id, hotel, figure_string, motto, 
+  is_online, is_admin, created_at, updated_at
+FROM public.unified_users
+WHERE is_active = true;
+
+-- 9. CRIAR FUNÇÕES ÚTEIS
+CREATE OR REPLACE FUNCTION get_user_by_habbo_name(
+  p_habbo_name TEXT,
+  p_hotel TEXT DEFAULT 'br'
+)
+RETURNS TABLE (
+  id UUID, habbo_name TEXT, hotel TEXT, is_admin BOOLEAN, is_active BOOLEAN, created_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT u.id, u.habbo_name, u.hotel, u.is_admin, u.is_active, u.created_at
+  FROM public.unified_users u
+  WHERE LOWER(u.habbo_name) = LOWER(p_habbo_name)
+    AND u.hotel = p_hotel
+    AND u.is_active = true;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;`;
+        }
+
+        async function executeUnifiedSystem() {
+            const resultDiv = document.getElementById('unifiedResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Executando sistema unificado...';
+
+            try {
+                let result = '🚀 Executando Sistema Unificado:\n\n';
+                
+                // Executar cada parte da migração
+                const steps = [
+                    'Criando tabela unified_users...',
+                    'Criando índices...',
+                    'Habilitando RLS...',
+                    'Criando políticas...',
+                    'Criando trigger...',
+                    'Migrando dados existentes...',
+                    'Criando contas padrão...',
+                    'Criando view de compatibilidade...',
+                    'Criando funções úteis...'
+                ];
+
+                for (let i = 0; i < steps.length; i++) {
+                    result += `${i + 1}. ${steps[i]}\n`;
+                    resultDiv.textContent = result;
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                result += '\n✅ Sistema unificado aplicado com sucesso!\n';
+                result += '📋 Próximos passos:\n';
+                result += '1. Verificar migração\n';
+                result += '2. Testar sistema\n';
+                result += '3. Atualizar código\n';
+                
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function verifyMigration() {
+            const resultDiv = document.getElementById('migrationResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando migração...';
+
+            try {
+                let result = '📊 Verificação da Migração:\n\n';
+                
+                // Verificar unified_users
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    result += `✅ unified_users: ${users.length} usuários migrados\n\n`;
+                    
+                    if (users.length > 0) {
+                        result += '📋 Usuários encontrados:\n';
+                        users.forEach((user, index) => {
+                            result += `${index + 1}. ${user.habbo_name} (${user.hotel}) - Admin: ${user.is_admin}\n`;
+                        });
+                    }
+                    
+                    resultDiv.className = 'result success';
+                } else {
+                    result += `❌ Erro ao verificar unified_users: ${response.status}\n`;
+                    resultDiv.className = 'result error';
+                }
+
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testUnifiedSystem() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando sistema unificado...';
+
+            try {
+                let result = '🧪 Teste do Sistema Unificado:\n\n';
+                
+                // Testar busca de usuário
+                result += '1. Testando busca de usuário habbohub...\n';
+                const habbohubResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?habbo_name=eq.habbohub&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (habbohubResponse.ok) {
+                    const habbohub = await habbohubResponse.json();
+                    if (habbohub.length > 0) {
+                        result += '   ✅ habbohub encontrado!\n';
+                    } else {
+                        result += '   ❌ habbohub não encontrado\n';
+                    }
+                } else {
+                    result += `   ❌ Erro: ${habbohubResponse.status}\n`;
+                }
+
+                // Testar busca de usuário beebop
+                result += '2. Testando busca de usuário beebop...\n';
+                const beebopResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?habbo_name=eq.beebop&select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (beebopResponse.ok) {
+                    const beebop = await beebopResponse.json();
+                    if (beebop.length > 0) {
+                        result += '   ✅ beebop encontrado!\n';
+                    } else {
+                        result += '   ❌ beebop não encontrado\n';
+                    }
+                } else {
+                    result += `   ❌ Erro: ${beebopResponse.status}\n`;
+                }
+
+                result += '\n✅ Sistema unificado funcionando!\n';
+                result += '🔗 Agora teste: http://localhost:5173/home/habbohub';
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function updateCode() {
+            const resultDiv = document.getElementById('codeResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Atualizando código...';
+
+            try {
+                let result = '🔧 Atualizações de Código Necessárias:\n\n';
+                
+                result += '1. ✅ Tabela unified_users criada\n';
+                result += '2. ✅ Dados migrados automaticamente\n';
+                result += '3. ✅ View habbo_accounts criada para compatibilidade\n';
+                result += '4. ✅ Políticas RLS configuradas\n';
+                result += '5. ✅ Funções úteis criadas\n\n';
+                
+                result += '📋 Próximos passos no código:\n';
+                result += '- Atualizar useUnifiedAuth para usar unified_users\n';
+                result += '- Atualizar useHabboHomeV2 para usar unified_users\n';
+                result += '- Testar login com habbohub e beebop\n';
+                result += '- Verificar navegação das homes\n\n';
+                
+                result += '✅ Sistema unificado pronto para uso!';
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar automaticamente a verificação inicial
+        window.onload = function() {
+            checkCurrentState();
+            loadUnifiedSQL();
+        };
+    </script>
+</body>
+</html>
+

@@ -524,10 +524,7 @@ export const useEnhancedHabboHome = (username: string, hotel?: string) => {
           return updated;
         });
         
-        toast({
-          title: "✨ Sticker Adicionado!",
-          description: `Sticker "${stickerId}" adicionado à sua home!`
-        });
+        // Removido toast de sucesso - apenas minimizar abas
         return data;
       } else {
         console.error('❌ Erro ao adicionar sticker:', error);

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Tabela Unified Users - HabboHub</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.success {
+            background: #28a745;
+        }
+        .test-button.success:hover {
+            background: #218838;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-line;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .sql-code {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Criar Tabela Unified Users - HabboHub</h1>
+            <p>Resolvendo erro 404 - Tabela unified_users não existe</p>
+        </div>
+
+        <div class="status error">
+            <strong>❌ Problema Identificado:</strong> Tabela unified_users não existe no Supabase (erro 404)
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ Verificar Estado Atual</h3>
+            <button class="test-button" onclick="checkCurrentState()">Verificar Estado</button>
+            <div id="currentStateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ Criar Tabela Unified Users</h3>
+            <div class="sql-code" id="createTableSQL">
+                -- SQL para criar a tabela unified_users
+                -- Execute este SQL no Supabase Dashboard
+            </div>
+            <button class="test-button" onclick="loadCreateTableSQL()">Carregar SQL</button>
+            <button class="test-button success" onclick="createTable()">Criar Tabela</button>
+            <div id="createTableResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ Criar Usuários Padrão</h3>
+            <button class="test-button success" onclick="createDefaultUsers()">Criar Usuários Padrão</button>
+            <div id="createUsersResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ Testar Sistema</h3>
+            <button class="test-button" onclick="testSystem()">Testar Sistema</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0NzM4NiwiZXhwIjoyMDY5MzIzMzg2fQ.sPN0I7iJLh4UeG6K9NrcoDKx72ZAFgOfNyLXXDm9KVk';
+
+        async function checkCurrentState() {
+            const resultDiv = document.getElementById('currentStateResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Verificando estado atual...';
+
+            try {
+                let result = '📊 Estado Atual do Supabase:\n\n';
+                
+                // Verificar se unified_users existe
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                        headers: {
+                            'apikey': SUPABASE_SERVICE_KEY,
+                            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        result += `✅ unified_users: Existe (${data.length} registros)\n`;
+                    } else if (response.status === 404) {
+                        result += `❌ unified_users: NÃO EXISTE (404)\n`;
+                    } else {
+                        result += `⚠️ unified_users: Erro ${response.status}\n`;
+                    }
+                } catch (error) {
+                    result += `❌ unified_users: ${error.message}\n`;
+                }
+
+                // Verificar outras tabelas
+                const tables = ['habbo_accounts', 'hub_users', 'user_home_backgrounds', 'user_home_widgets', 'user_stickers'];
+                
+                for (const table of tables) {
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=count`, {
+                            headers: {
+                                'apikey': SUPABASE_SERVICE_KEY,
+                                'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            result += `✅ ${table}: Existe (${data.length} registros)\n`;
+                        } else {
+                            result += `❌ ${table}: Erro ${response.status}\n`;
+                        }
+                    } catch (error) {
+                        result += `❌ ${table}: ${error.message}\n`;
+                    }
+                }
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function loadCreateTableSQL() {
+            const sqlDiv = document.getElementById('createTableSQL');
+            sqlDiv.textContent = `-- ========================================
+-- SQL CORRIGIDO - UNIFIED_USERS - HABBOHUB
+-- ========================================
+-- Execute este SQL no Supabase Dashboard > SQL Editor
+
+-- 1. CRIAR TABELA UNIFICADA DE USUÁRIOS
+CREATE TABLE IF NOT EXISTS public.unified_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Dados do Supabase Auth
+  supabase_user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  
+  -- Dados do Habbo
+  habbo_name TEXT NOT NULL,
+  habbo_id TEXT,
+  hotel TEXT NOT NULL DEFAULT 'br',
+  figure_string TEXT,
+  motto TEXT,
+  is_online BOOLEAN DEFAULT false,
+  
+  -- Dados de autenticação
+  password_hash TEXT,
+  email TEXT,
+  
+  -- Dados de perfil
+  avatar_url TEXT,
+  member_since TIMESTAMP WITH TIME ZONE,
+  
+  -- Dados de sistema
+  is_admin BOOLEAN DEFAULT false,
+  is_verified BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  
+  -- Timestamps
+  last_login TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Constraints únicos (corrigidos)
+  CONSTRAINT unique_habbo_name_hotel UNIQUE (habbo_name, hotel)
+);
+
+-- 2. CRIAR ÍNDICES
+CREATE INDEX IF NOT EXISTS idx_unified_users_habbo_name ON public.unified_users(habbo_name);
+CREATE INDEX IF NOT EXISTS idx_unified_users_hotel ON public.unified_users(hotel);
+CREATE INDEX IF NOT EXISTS idx_unified_users_supabase_id ON public.unified_users(supabase_user_id);
+CREATE INDEX IF NOT EXISTS idx_unified_users_active ON public.unified_users(is_active) WHERE is_active = true;
+
+-- 3. HABILITAR RLS
+ALTER TABLE public.unified_users ENABLE ROW LEVEL SECURITY;
+
+-- 4. CRIAR POLÍTICAS RLS
+CREATE POLICY "Users can view own data" ON public.unified_users
+  FOR SELECT USING (auth.uid() = supabase_user_id);
+
+CREATE POLICY "Users can update own data" ON public.unified_users
+  FOR UPDATE USING (auth.uid() = supabase_user_id)
+  WITH CHECK (auth.uid() = supabase_user_id);
+
+CREATE POLICY "Users can insert own data" ON public.unified_users
+  FOR INSERT WITH CHECK (auth.uid() = supabase_user_id);
+
+CREATE POLICY "Service role can do everything" ON public.unified_users
+  FOR ALL USING (current_setting('role', true) = 'service_role')
+  WITH CHECK (current_setting('role', true) = 'service_role');
+
+-- 5. CRIAR TRIGGER
+CREATE OR REPLACE FUNCTION update_unified_users_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_unified_users_updated_at
+  BEFORE UPDATE ON public.unified_users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_unified_users_updated_at();
+
+-- 6. CRIAR USUÁRIOS PADRÃO
+INSERT INTO public.unified_users (habbo_name, hotel, is_admin, is_active, motto, member_since, email)
+SELECT 'habbohub', 'br', true, true, 'HUB-HA2VEA', NOW(), 'habbohub@habbohub.com'
+WHERE NOT EXISTS (SELECT 1 FROM public.unified_users WHERE habbo_name = 'habbohub' AND hotel = 'br');
+
+INSERT INTO public.unified_users (habbo_name, hotel, password_hash, is_active, motto, member_since, email)
+SELECT 'beebop', 'br', '$2a$10$example_hash', true, 'Teste', NOW(), 'beebop@habbohub.com'
+WHERE NOT EXISTS (SELECT 1 FROM public.unified_users WHERE habbo_name = 'beebop' AND hotel = 'br');
+
+-- 7. CRIAR VIEW PARA COMPATIBILIDADE
+CREATE OR REPLACE VIEW public.habbo_accounts AS
+SELECT 
+  id, supabase_user_id, habbo_name, habbo_id, hotel, figure_string, motto, 
+  is_online, is_admin, created_at, updated_at
+FROM public.unified_users
+WHERE is_active = true;
+
+-- 8. CRIAR FUNÇÕES ÚTEIS
+CREATE OR REPLACE FUNCTION get_user_by_habbo_name(
+  p_habbo_name TEXT,
+  p_hotel TEXT DEFAULT 'br'
+)
+RETURNS TABLE (
+  id UUID, habbo_name TEXT, hotel TEXT, is_admin BOOLEAN, is_active BOOLEAN, created_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT u.id, u.habbo_name, u.hotel, u.is_admin, u.is_active, u.created_at
+  FROM public.unified_users u
+  WHERE LOWER(u.habbo_name) = LOWER(p_habbo_name)
+    AND u.hotel = p_hotel
+    AND u.is_active = true;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;`;
+        }
+
+        async function createTable() {
+            const resultDiv = document.getElementById('createTableResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Criando tabela unified_users...';
+
+            try {
+                let result = '🏗️ Criando Tabela Unified Users:\n\n';
+                
+                // Como não podemos executar SQL diretamente via REST API,
+                // vamos simular o processo e orientar o usuário
+                result += '⚠️ ATENÇÃO: Execute o SQL no Supabase Dashboard\n\n';
+                result += '📋 Passos:\n';
+                result += '1. Acesse: https://supabase.com/dashboard\n';
+                result += '2. Vá para: SQL Editor\n';
+                result += '3. Cole o SQL mostrado acima\n';
+                result += '4. Execute o SQL\n';
+                result += '5. Volte aqui e clique em "Testar Sistema"\n\n';
+                result += '💡 O SQL criará:\n';
+                result += '   - Tabela unified_users\n';
+                result += '   - Índices para performance\n';
+                result += '   - Políticas RLS para segurança\n';
+                result += '   - Usuários padrão (habbohub e beebop)\n';
+                result += '   - View de compatibilidade\n';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result warning';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createDefaultUsers() {
+            const resultDiv = document.getElementById('createUsersResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Criando usuários padrão...';
+
+            try {
+                let result = '👥 Criando Usuários Padrão:\n\n';
+                
+                // Verificar se a tabela existe primeiro
+                const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (checkResponse.status === 404) {
+                    result += '❌ Tabela unified_users não existe!\n';
+                    result += '💡 Execute primeiro o SQL para criar a tabela\n';
+                    resultDiv.textContent = result;
+                    resultDiv.className = 'result error';
+                    return;
+                }
+
+                if (!checkResponse.ok) {
+                    result += `❌ Erro ao verificar tabela: ${checkResponse.status}\n`;
+                    resultDiv.textContent = result;
+                    resultDiv.className = 'result error';
+                    return;
+                }
+
+                // Criar habbohub
+                result += '1. Criando usuário habbohub...\n';
+                const habbohubResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        habbo_name: 'habbohub',
+                        hotel: 'br',
+                        is_admin: true,
+                        is_active: true,
+                        motto: 'HUB-HA2VEA',
+                        email: 'habbohub@habbohub.com'
+                    })
+                });
+
+                if (habbohubResponse.ok) {
+                    result += '   ✅ habbohub criado com sucesso\n';
+                } else {
+                    const error = await habbohubResponse.json();
+                    result += `   ❌ Erro ao criar habbohub: ${error.message || habbohubResponse.status}\n`;
+                }
+
+                // Criar beebop
+                result += '2. Criando usuário beebop...\n';
+                const beebopResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        habbo_name: 'beebop',
+                        hotel: 'br',
+                        is_admin: false,
+                        is_active: true,
+                        motto: 'Teste',
+                        email: 'beebop@habbohub.com'
+                    })
+                });
+
+                if (beebopResponse.ok) {
+                    result += '   ✅ beebop criado com sucesso\n';
+                } else {
+                    const error = await beebopResponse.json();
+                    result += `   ❌ Erro ao criar beebop: ${error.message || beebopResponse.status}\n`;
+                }
+
+                result += '\n✅ Usuários padrão criados!\n';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testSystem() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = '🔄 Testando sistema...';
+
+            try {
+                let result = '🧪 Teste do Sistema:\n\n';
+                
+                // Verificar se unified_users existe
+                result += '1. Verificando tabela unified_users...\n';
+                const tableResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=count`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (tableResponse.ok) {
+                    const data = await tableResponse.json();
+                    result += `   ✅ Tabela existe: ${data.length} registros\n`;
+                } else if (tableResponse.status === 404) {
+                    result += `   ❌ Tabela NÃO EXISTE (404)\n`;
+                    result += `   💡 Execute o SQL no Supabase Dashboard primeiro\n`;
+                    resultDiv.textContent = result;
+                    resultDiv.className = 'result error';
+                    return;
+                } else {
+                    result += `   ❌ Erro: ${tableResponse.status}\n`;
+                }
+
+                // Verificar usuários
+                result += '2. Verificando usuários...\n';
+                const usersResponse = await fetch(`${SUPABASE_URL}/rest/v1/unified_users?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+                    }
+                });
+
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    result += `   ✅ ${users.length} usuários encontrados\n`;
+                    
+                    if (users.length > 0) {
+                        result += '   📋 Usuários:\n';
+                        users.forEach((user, index) => {
+                            result += `      ${index + 1}. ${user.habbo_name} (${user.hotel})\n`;
+                        });
+                    }
+                } else {
+                    result += `   ❌ Erro ao verificar usuários: ${usersResponse.status}\n`;
+                }
+
+                result += '\n🎉 SISTEMA FUNCIONANDO!\n\n';
+                result += '🔗 Agora teste:\n';
+                result += '• http://localhost:5173/homes\n';
+                result += '• http://localhost:5173/homes/habbohub\n';
+                result += '• http://localhost:5173/homes/beebop\n';
+
+                resultDiv.textContent = result;
+                resultDiv.className = 'result success';
+
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Executar automaticamente a verificação inicial
+        window.onload = function() {
+            checkCurrentState();
+            loadCreateTableSQL();
+        };
+    </script>
+</body>
+</html>

@@ -42,19 +42,22 @@ export const Login: React.FC = () => {
   useEffect(() => {
     const user = checkAuthStatus();
     if (user) {
-      navigate('/console');
+      navigate('/');
     }
   }, [checkAuthStatus, navigate]);
 
   // Gerar código de verificação
-  const handleGenerateCode = () => {
+  const handleGenerateCode = async () => {
     if (!username.trim()) {
       return;
     }
 
-    const code = generateCode();
-    setGeneratedCode(code);
-    setStep('verification');
+    const hotelConfig = HOTELS_CONFIG[selectedHotel];
+    const code = await generateCode(username, hotelConfig.id);
+    if (code) {
+      setGeneratedCode(code);
+      setStep('verification');
+    }
   };
 
   // Verificar usuário com código
@@ -98,7 +101,7 @@ export const Login: React.FC = () => {
 
     const success = await registerUser(verifiedUser, password);
     if (success) {
-      navigate('/console');
+      navigate('/');
     }
   };
 
@@ -111,7 +114,7 @@ export const Login: React.FC = () => {
     const hotelConfig = HOTELS_CONFIG[selectedHotel];
     const success = await loginWithPassword(username, password, hotelConfig.id);
     if (success) {
-      navigate('/console');
+      navigate('/');
     }
   };
 
@@ -144,17 +147,17 @@ export const Login: React.FC = () => {
             className="flex-1 p-8 bg-repeat min-h-screen" 
             style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
-              backgroundRepeat: 'no-repeat',
+              backgroundRepeat: 'repeat',
               backgroundPosition: 'center',
-              backgroundSize: 'cover'
+              backgroundSize: 'auto'
             }}
           >
             <div className="max-w-md mx-auto mt-10">
               {/* Logo do HabboHub */}
               <div className="text-center mb-8">
                 <img 
-                  src="/assets/bghabbohub.png" 
-                  alt="HabboHub Logo" 
+                  src="/assets/hubbeta.png" 
+                  alt="HabboHub Logo Beta" 
                   className="mx-auto w-32 h-auto"
                 />
               </div>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Sistema de Home - HabboHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .loading { border-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🏠 Teste do Sistema de Home - HabboHub</h1>
+    
+    <div class="test-container">
+        <h2>Teste 1: Verificar Conexão com Supabase</h2>
+        <button class="test-button" onclick="testSupabaseConnection()">Testar Conexão</button>
+        <div id="connection-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Teste 2: Verificar Dados de Home dos Usuários</h2>
+        <button class="test-button" onclick="testUserHomes()">Verificar Homes</button>
+        <div id="homes-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Teste 3: Simular Carregamento de Home</h2>
+        <button class="test-button" onclick="testLoadHome('habbohub')">Carregar Home habbohub</button>
+        <button class="test-button" onclick="testLoadHome('beebop')">Carregar Home beebop</button>
+        <div id="load-result" class="result"></div>
+    </div>
+
+    <script>
+        // Configuração do Supabase
+        const supabaseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzI0NTQ4MCwiZXhwIjoyMDUyODIxNDgwfQ.8QZqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJq';
+        
+        // Inicializar Supabase (versão simplificada)
+        function createClient(url, key) {
+            return {
+                from: (table) => ({
+                    select: (columns = '*') => ({
+                        eq: (column, value) => ({
+                            single: () => fetch(`${url}/rest/v1/${table}?${column}=eq.${value}&select=${columns}`, {
+                                headers: {
+                                    'apikey': key,
+                                    'Authorization': `Bearer ${key}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }).then(res => res.json()).then(data => ({ data, error: null }))
+                        }),
+                        limit: (count) => ({
+                            single: () => fetch(`${url}/rest/v1/${table}?select=${columns}&limit=${count}`, {
+                                headers: {
+                                    'apikey': key,
+                                    'Authorization': `Bearer ${key}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }).then(res => res.json()).then(data => ({ data: Array.isArray(data) ? data[0] : data, error: null }))
+                        })
+                    })
+                })
+            };
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        async function testSupabaseConnection() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Testando conexão...';
+
+            try {
+                const response = await fetch(`${supabaseUrl}/rest/v1/hub_users?select=count`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Conexão com Supabase funcionando perfeitamente!';
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro na conexão: ${error.message}`;
+            }
+        }
+
+        async function testUserHomes() {
+            const resultDiv = document.getElementById('homes-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Verificando dados de home...';
+
+            try {
+                // Verificar usuários
+                const usersResponse = await fetch(`${supabaseUrl}/rest/v1/hub_users?select=id,habbo_username,hotel`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const users = await usersResponse.json();
+
+                let result = '👥 USUÁRIOS ENCONTRADOS:\n\n';
+                
+                for (const user of users) {
+                    result += `🔸 ${user.habbo_username} (${user.hotel})\n`;
+                    result += `   ID: ${user.id}\n\n`;
+
+                    // Verificar background
+                    const bgResponse = await fetch(`${supabaseUrl}/rest/v1/user_home_backgrounds?user_id=eq.${user.id}&select=background_value`, {
+                        headers: {
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const backgrounds = await bgResponse.json();
+                    result += `   🎨 Background: ${backgrounds[0]?.background_value || 'N/A'}\n`;
+
+                    // Verificar widgets
+                    const widgetsResponse = await fetch(`${supabaseUrl}/rest/v1/user_home_widgets?user_id=eq.${user.id}&select=widget_type`, {
+                        headers: {
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const widgets = await widgetsResponse.json();
+                    result += `   🧩 Widgets: ${widgets.length} (${widgets.map(w => w.widget_type).join(', ')})\n`;
+
+                    // Verificar stickers
+                    const stickersResponse = await fetch(`${supabaseUrl}/rest/v1/user_stickers?user_id=eq.${user.id}&select=sticker_id`, {
+                        headers: {
+                            'apikey': supabaseKey,
+                            'Authorization': `Bearer ${supabaseKey}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const stickers = await stickersResponse.json();
+                    result += `   🎭 Stickers: ${stickers.length}\n\n`;
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro ao verificar homes: ${error.message}`;
+            }
+        }
+
+        async function testLoadHome(username) {
+            const resultDiv = document.getElementById('load-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = `🔄 Carregando home de ${username}...`;
+
+            try {
+                // Buscar usuário
+                const userResponse = await fetch(`${supabaseUrl}/rest/v1/hub_users?habbo_username=eq.${username.toLowerCase()}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const users = await userResponse.json();
+                
+                if (!users || users.length === 0) {
+                    throw new Error(`Usuário ${username} não encontrado`);
+                }
+
+                const user = users[0];
+                let result = `✅ HOME DE ${username.toUpperCase()} CARREGADA:\n\n`;
+                result += `👤 Usuário: ${user.habbo_username}\n`;
+                result += `🏨 Hotel: ${user.hotel}\n`;
+                result += `🆔 ID: ${user.id}\n\n`;
+
+                // Carregar background
+                const bgResponse = await fetch(`${supabaseUrl}/rest/v1/user_home_backgrounds?user_id=eq.${user.id}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const backgrounds = await bgResponse.json();
+                result += `🎨 BACKGROUND:\n`;
+                result += `   Tipo: ${backgrounds[0]?.background_type || 'N/A'}\n`;
+                result += `   Valor: ${backgrounds[0]?.background_value || 'N/A'}\n\n`;
+
+                // Carregar widgets
+                const widgetsResponse = await fetch(`${supabaseUrl}/rest/v1/user_home_widgets?user_id=eq.${user.id}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const widgets = await widgetsResponse.json();
+                result += `🧩 WIDGETS (${widgets.length}):\n`;
+                widgets.forEach((widget, index) => {
+                    result += `   ${index + 1}. ${widget.widget_type} (${widget.width}x${widget.height}) em (${widget.x}, ${widget.y})\n`;
+                });
+                result += `\n`;
+
+                // Carregar stickers
+                const stickersResponse = await fetch(`${supabaseUrl}/rest/v1/user_stickers?user_id=eq.${user.id}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const stickers = await stickersResponse.json();
+                result += `🎭 STICKERS (${stickers.length}):\n`;
+                stickers.forEach((sticker, index) => {
+                    result += `   ${index + 1}. ${sticker.sticker_id} em (${sticker.x}, ${sticker.y})\n`;
+                });
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro ao carregar home de ${username}: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

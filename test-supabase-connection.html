@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Conexão Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .loading { border-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Teste de Conexão Supabase</h1>
+    
+    <div class="test-container">
+        <h2>Teste 1: Conexão Básica</h2>
+        <button class="test-button" onclick="testBasicConnection()">Testar Conexão</button>
+        <div id="basic-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Teste 2: Buscar Usuários</h2>
+        <button class="test-button" onclick="testGetUsers()">Buscar Usuários</button>
+        <div id="users-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2>Teste 3: Buscar Home do habbohub</h2>
+        <button class="test-button" onclick="testGetHabbohubHome()">Buscar Home habbohub</button>
+        <div id="home-result" class="result"></div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNzI0NTQ4MCwiZXhwIjoyMDUyODIxNDgwfQ.8QZqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJq';
+
+        async function testBasicConnection() {
+            const resultDiv = document.getElementById('basic-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Testando conexão básica...';
+
+            try {
+                const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = '✅ Conexão básica funcionando!';
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro na conexão: ${error.message}`;
+            }
+        }
+
+        async function testGetUsers() {
+            const resultDiv = document.getElementById('users-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Buscando usuários...';
+
+            try {
+                const response = await fetch(`${supabaseUrl}/rest/v1/hub_users?select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Usuários encontrados: ${users.length}\n\n${JSON.stringify(users, null, 2)}`;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro ao buscar usuários: ${error.message}`;
+            }
+        }
+
+        async function testGetHabbohubHome() {
+            const resultDiv = document.getElementById('home-result');
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '🔄 Buscando home do habbohub...';
+
+            try {
+                // Buscar usuário habbohub
+                const userResponse = await fetch(`${supabaseUrl}/rest/v1/hub_users?habbo_username=eq.habbohub&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error(`Erro ao buscar usuário: HTTP ${userResponse.status}`);
+                }
+
+                const users = await userResponse.json();
+                
+                if (!users || users.length === 0) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = '❌ Usuário habbohub não encontrado!';
+                    return;
+                }
+
+                const user = users[0];
+                let result = `✅ USUÁRIO HABBOHUB ENCONTRADO:\n\n`;
+                result += `👤 Usuário: ${user.habbo_username}\n`;
+                result += `🏨 Hotel: ${user.hotel}\n`;
+                result += `🆔 ID: ${user.id}\n\n`;
+
+                // Buscar background
+                const bgResponse = await fetch(`${supabaseUrl}/rest/v1/user_home_backgrounds?user_id=eq.${user.id}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (bgResponse.ok) {
+                    const backgrounds = await bgResponse.json();
+                    result += `🎨 BACKGROUND: ${backgrounds[0]?.background_value || 'N/A'}\n`;
+                } else {
+                    result += `🎨 BACKGROUND: Erro ao carregar\n`;
+                }
+
+                // Buscar widgets
+                const widgetsResponse = await fetch(`${supabaseUrl}/rest/v1/user_home_widgets?user_id=eq.${user.id}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (widgetsResponse.ok) {
+                    const widgets = await widgetsResponse.json();
+                    result += `🧩 WIDGETS: ${widgets.length}\n`;
+                } else {
+                    result += `🧩 WIDGETS: Erro ao carregar\n`;
+                }
+
+                // Buscar stickers
+                const stickersResponse = await fetch(`${supabaseUrl}/rest/v1/user_stickers?user_id=eq.${user.id}&select=*`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (stickersResponse.ok) {
+                    const stickers = await stickersResponse.json();
+                    result += `🎭 STICKERS: ${stickers.length}\n`;
+                } else {
+                    result += `🎭 STICKERS: Erro ao carregar\n`;
+                }
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Erro ao buscar home do habbohub: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

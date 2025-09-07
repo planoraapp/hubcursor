@@ -104,31 +104,252 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
     onOpenChange(false);
   };
 
-  // Lista completa de backgrounds que devem usar "repeat"
+  // PADRÕES DE NOMENCLATURA PADRONIZADA PARA BACKGROUNDS:
+  // 
+  // 🔄 BACKGROUNDS REPEAT (padrões/texturas que se repetem):
+  // - bg_pattern_[referencia] - TODOS os backgrounds que se repetem (ex: bg_pattern_clouds, bg_pattern_cars, bg_pattern_color_01)
+  // - bg_pattern_simple_[numero] - IDs numéricos simples (ex: bg_pattern_simple_17, bg_pattern_simple_28)
+  // - bg_pattern_color_[numero] - cores sólidas (ex: bg_pattern_color_01, bg_pattern_color_15)
+  // - bg_pattern_[material]_[tipo] - materiais/texturas (ex: bg_pattern_bathroom_tile, bg_pattern_submarine)
+  // - bg_pattern_[tema]_[variante] - temas específicos (ex: bg_pattern_xmas_starsky, bg_pattern_email)
+  // - bg_pattern_[animacao]_[nome] - animações (ex: bg_pattern_rain_animated, bg_pattern_bubble)
+  // - bg_pattern_[pais]_[campanha] - campanhas internacionais (ex: bg_pattern_australia_campaign)
+  //
+  // 🖼️ BACKGROUNDS COVER (cenários únicos que cobrem toda a tela):
+  // - bg_wall_[referencia] - TODOS os backgrounds únicos (ex: bg_wall_abril_diado, bg_wall_kingcorp)
+  // - bg_wall_[evento]_[nome] - eventos especiais (ex: bg_wall_abril_diado)
+  // - bg_wall_[tema]_[cenario] - cenários únicos (ex: bg_wall_scifi_space)
+  // - bg_wall_[estilo]_[ambiente] - ambientes específicos (ex: bg_wall_kingcorp)
+
+  // Lista completa de backgrounds que devem usar "repeat" (padrões/texturas)
   const REPEAT_BACKGROUNDS = [
-    '17', '28', 'ABRIL-DIADOJORNALISTA', 'AU_Australia_Campaign_bg_01_v1',
-    'bg_bathroom_tile', 'bg_colour_01', 'bg_colour_04', 'bg_colour_05',
-    'bg_colour_07', 'bg_colour_08', 'bg_colour_09', 'bg_colour_11', 
-    'bg_colour_15', 'bg_image_submarine', 'bg_pattern_abstract1',
-    'bg_pattern_bobbaskulls1', 'bg_pattern_carpants', 'bg_pattern_cars',
-    'bg_pattern_clouds', 'bg_pattern_cloud', 'bganimated_rain', 'bubble',
-    'DE_Background_Summer', 'metal', 'xmas_bgpattern_', 'email_bg'
+    // IDs numéricos simples
+    'bg_pattern_simple_17', 'bg_pattern_simple_28',
+    
+    // Padrões decorativos
+    'bg_pattern_abstract1', 'bg_pattern_bobbaskulls1', 'bg_pattern_carpants', 
+    'bg_pattern_cars', 'bg_pattern_clouds', 'bg_pattern_cloud',
+    
+    // Cores sólidas
+    'bg_pattern_color_01', 'bg_pattern_color_04', 'bg_pattern_color_05', 'bg_pattern_color_07', 
+    'bg_pattern_color_08', 'bg_pattern_color_09', 'bg_pattern_color_11', 'bg_pattern_color_15',
+    
+    // Materiais/texturas
+    'bg_pattern_bathroom_tile', 'bg_pattern_submarine',
+    
+    // Temas específicos
+    'bg_pattern_xmas_starsky', 'bg_pattern_email', 'bg_pattern_summer_german', 'bg_pattern_metal',
+    
+    // Animações
+    'bg_pattern_rain_animated', 'bg_pattern_bubble',
+    
+    // Campanhas internacionais
+    'bg_pattern_australia_campaign',
+    
+    // Padrões genéricos
+    'bg_pattern_generic_purple', 'bg_pattern_home_4', 'bg_pattern_disco', 'bg_pattern_hotel',
+    'bg_pattern_beach_bunny', 'bg_pattern_toolbar'
   ];
+
+  // Lista de backgrounds especiais que devem usar "cover" (cenários únicos)
+  const COVER_BACKGROUNDS = [
+    // Eventos especiais
+    'bg_wall_abril_diado',
+    
+    // Cenários corporativos
+    'bg_wall_kingcorp',
+    'bg_wall_openbeta',
+    'bg_wall_awards',
+    'bg_wall_bg35',
+    
+    // Cenários temáticos
+    'bg_wall_scifi_space',
+    'bg_wall_habbos_group'
+  ];
+
+  // Função para renomear nomes de wallpapers seguindo padrões estabelecidos
+  const getDisplayName = (assetName: string): string => {
+    // Backgrounds COVER - bg_wall_[nome]
+    if (assetName.startsWith('bg_wall_')) {
+      const wallName = assetName.replace('bg_wall_', '').replace(/_/g, ' ');
+      return `Parede ${wallName.charAt(0).toUpperCase() + wallName.slice(1)}`;
+    }
+    
+    // Backgrounds REPEAT - bg_pattern_[nome]
+    if (assetName.startsWith('bg_pattern_')) {
+      const patternName = assetName.replace('bg_pattern_', '').replace(/_/g, ' ');
+      return `Padrão ${patternName.charAt(0).toUpperCase() + patternName.slice(1)}`;
+    }
+    
+    // IDs numéricos simples - manter como estão
+    if (/^\d+$/.test(assetName)) {
+      return assetName;
+    }
+    
+    // Padrões decorativos antigos - bg_pattern_[nome]
+    if (assetName.startsWith('bg_pattern_')) {
+      const patternName = assetName.replace('bg_pattern_', '');
+      return `Padrão ${patternName.charAt(0).toUpperCase() + patternName.slice(1)}`;
+    }
+    
+    // Cores sólidas antigas - bg_colour_[numero]
+    if (assetName.startsWith('bg_colour_')) {
+      const colorNum = assetName.replace('bg_colour_', '');
+      return `Cor ${colorNum}`;
+    }
+    
+    // Materiais/texturas antigas - bg_[material]_[tipo]
+    if (assetName.startsWith('bg_') && !assetName.startsWith('bg_pattern_') && !assetName.startsWith('bg_colour_') && !assetName.startsWith('bg_wall_')) {
+      const materialName = assetName.replace('bg_', '').replace(/_/g, ' ');
+      return `Material ${materialName.charAt(0).toUpperCase() + materialName.slice(1)}`;
+    }
+    
+    // Temas específicos antigos - [tema]_[tipo]_[variante]
+    if (assetName.includes('_') && !assetName.startsWith('bg_')) {
+      const parts = assetName.split('_');
+      if (parts.length >= 2) {
+        const theme = parts[0].toUpperCase();
+        const type = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+        return `${theme} ${type}`;
+      }
+    }
+    
+    // Animações antigas - [animacao]_[nome]
+    if (assetName.startsWith('bg') && assetName.includes('animated')) {
+      const animName = assetName.replace('bganimated_', '').replace(/_/g, ' ');
+      return `Animação ${animName.charAt(0).toUpperCase() + animName.slice(1)}`;
+    }
+    
+    // Campanhas internacionais antigas - [pais]_[campanha]_[versao]
+    if (assetName.match(/^[A-Z]{2}_/)) {
+      const parts = assetName.split('_');
+      if (parts.length >= 3) {
+        const country = parts[0];
+        const campaign = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+        return `${country} ${campaign}`;
+      }
+    }
+    
+    // Eventos especiais antigos - [evento]_[nome]
+    if (assetName.includes('-') && assetName.length > 10) {
+      const parts = assetName.split('-');
+      if (parts.length >= 2) {
+        const event = parts[0].toUpperCase();
+        const name = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+        return `${event} ${name}`;
+      }
+    }
+    
+    // Cenários únicos antigos - [tema]_[cenario]_[variante]
+    if (assetName.includes('_') && assetName.length > 15) {
+      const parts = assetName.split('_');
+      if (parts.length >= 2) {
+        const theme = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        const scene = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+        return `${theme} ${scene}`;
+      }
+    }
+    
+    // Ambientes específicos antigos - [estilo]_[ambiente]_[versao]
+    if (assetName.includes('_') && assetName.length > 10) {
+      const parts = assetName.split('_');
+      if (parts.length >= 2) {
+        const style = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        const environment = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+        return `${style} ${environment}`;
+      }
+    }
+    
+    // Nomes simples - capitalizar primeira letra
+    return assetName.charAt(0).toUpperCase() + assetName.slice(1);
+  };
 
   const handleImageSelect = (asset: Asset) => {
     console.log('🖼️ Imagem selecionada:', asset);
     
-    // Verificar se o nome do asset está na lista de repeat backgrounds
-    const isRepeatBg = REPEAT_BACKGROUNDS.some(bgName => 
-      asset.name.toLowerCase().includes(bgName.toLowerCase()) ||
-      asset.file_path.toLowerCase().includes(bgName.toLowerCase())
-    );
+    // Função para detectar dimensões da imagem automaticamente
+    const detectImageDimensions = (url: string): Promise<{width: number, height: number}> => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        };
+        img.onerror = () => {
+          // Fallback: tentar extrair dimensões do nome do arquivo
+          const dimensionMatch = asset.name.match(/(\d+)x(\d+)/);
+          if (dimensionMatch) {
+            resolve({ 
+              width: parseInt(dimensionMatch[1]), 
+              height: parseInt(dimensionMatch[2]) 
+            });
+          } else {
+            // Se não conseguir detectar, assumir que é pequeno (repeat)
+            resolve({ width: 100, height: 100 });
+          }
+        };
+        img.src = url;
+      });
+    };
     
-    const backgroundType = isRepeatBg ? 'repeat' : 'cover';
-    console.log(`📐 Tipo detectado: ${backgroundType} para ${asset.name}`);
+    // Função para determinar tipo baseado nas dimensões
+    const getBackgroundTypeByDimensions = (width: number, height: number, assetName: string) => {
+      // Verificar primeiro se está na lista de backgrounds especiais
+      if (COVER_BACKGROUNDS.includes(assetName)) {
+        console.log(`🎯 Background especial detectado: ${assetName} -> cover`);
+        return 'cover';
+      }
+      
+      if (REPEAT_BACKGROUNDS.includes(assetName)) {
+        console.log(`🎯 Background especial detectado: ${assetName} -> repeat`);
+        return 'repeat';
+      }
+      
+      // Imagens pequenas (padrões/texturas) devem usar repeat
+      // Imagens grandes (cenários completos) devem usar cover
+      
+      // Limite: se a imagem for menor que 400x400, é um padrão pequeno
+      const isSmallPattern = width < 400 && height < 400;
+      
+      // Se for muito pequena (menos de 200x200), definitivamente é repeat
+      const isVerySmall = width < 200 && height < 200;
+      
+      // Se for grande (mais de 600x600), definitivamente é cover
+      const isLarge = width > 600 || height > 600;
+      
+      // Razão de aspecto: imagens muito largas ou muito altas são cenários
+      const aspectRatio = width / height;
+      const isWideScene = aspectRatio > 2 || aspectRatio < 0.5;
+      
+      console.log(`📏 Dimensões detectadas: ${width}x${height}`, {
+        isSmallPattern,
+        isVerySmall,
+        isLarge,
+        isWideScene,
+        aspectRatio: aspectRatio.toFixed(2)
+      });
+      
+      // Lógica de decisão
+      if (isVerySmall) return 'repeat';
+      if (isLarge || isWideScene) return 'cover';
+      if (isSmallPattern) return 'repeat';
+      
+      // Padrão: se não conseguir determinar, usar repeat para padrões pequenos
+      return 'repeat';
+    };
     
-    onWallpaperSelect(backgroundType, asset.url!);
-    onOpenChange(false);
+    // Detectar dimensões e determinar tipo
+    detectImageDimensions(asset.url!).then(({ width, height }) => {
+      const backgroundType = getBackgroundTypeByDimensions(width, height, asset.name);
+      
+      console.log(`📐 Tipo detectado por dimensões: ${backgroundType} para ${asset.name}`, {
+        dimensions: `${width}x${height}`,
+        name: asset.name,
+        filePath: asset.file_path
+      });
+      
+      onWallpaperSelect(backgroundType, asset.url!);
+      onOpenChange(false);
+    });
   };
 
   return (
@@ -206,9 +427,6 @@ export const WallpaperSelector: React.FC<WallpaperSelectorProps> = ({
                             console.log('✅ Imagem carregada:', asset.name);
                           }}
                         />
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-1">
-                        <div className="text-xs font-medium truncate font-volter">{asset.name}</div>
                       </div>
                     </div>
                   ))

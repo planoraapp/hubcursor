@@ -17,6 +17,8 @@ interface OptimizedDraggableWidgetProps {
   onSizeChange?: (width: number, height: number) => void;
   onZIndexChange?: (zIndex: number) => void;
   onRemove?: () => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
   sizeRestrictions?: {
     minWidth: number;
     maxWidth: number;
@@ -41,6 +43,8 @@ export const OptimizedDraggableWidget: React.FC<OptimizedDraggableWidgetProps> =
   onSizeChange,
   onZIndexChange,
   onRemove,
+  onDragStart,
+  onDragEnd,
   sizeRestrictions
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -74,6 +78,7 @@ export const OptimizedDraggableWidget: React.FC<OptimizedDraggableWidgetProps> =
     e.stopPropagation();
 
     setIsDragging(true);
+    onDragStart?.(); // Notificar que o drag começou
     setDragStart({
       x: e.clientX,
       y: e.clientY,
@@ -150,6 +155,7 @@ export const OptimizedDraggableWidget: React.FC<OptimizedDraggableWidgetProps> =
       
       setIsDragging(false);
       setIsResizing(false);
+      onDragEnd?.(); // Notificar que o drag terminou
     };
 
     if (isDragging || isResizing) {

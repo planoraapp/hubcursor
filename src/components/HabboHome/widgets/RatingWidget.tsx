@@ -102,35 +102,42 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
   }
 
   return (
-    <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-48 ${className}`}>
-      {/* Média no topo */}
-      <div className="text-2xl font-bold text-black mb-2">
-        {averageRating > 0 ? averageRating.toFixed(1) : '—'}
-      </div>
-      
-      {/* Estrelas centralizadas */}
-      <div className="mb-2">
-        <StarRating
-          rating={habboAccount ? userRating : averageRating}
-          onRate={habboAccount ? handleRate : undefined}
-          readonly={!habboAccount}
-          size="lg"
-        />
-      </div>
-      
-      {/* Contador de avaliações */}
-      <div className="text-xs text-gray-600 text-center">
-        {totalRatings === 0 
-          ? 'Nenhuma avaliação' 
-          : `${totalRatings} ${totalRatings === 1 ? 'avaliação' : 'avaliações'}`
-        }
-      </div>
-      
-      {!habboAccount && (
-        <div className="text-xs text-gray-500 mt-2 text-center">
-          Faça login para avaliar
+    <div className={`p-4 h-full bg-white/95 backdrop-blur-sm shadow-lg overflow-hidden ${className}`}>
+      <div className="flex flex-col items-center h-full">
+        {/* Título */}
+        <h4 className="font-volter font-bold text-black border-b pb-2 mb-3 w-full text-center">
+          ⭐ Avaliações
+        </h4>
+        
+        {/* Média no topo */}
+        <div className="text-3xl font-bold text-black mb-3">
+          {averageRating > 0 ? averageRating.toFixed(1) : '—'}
         </div>
-      )}
+        
+        {/* Estrelas centralizadas */}
+        <div className="mb-3">
+          <StarRating
+            rating={habboAccount ? userRating : averageRating}
+            onRate={habboAccount ? handleRate : undefined}
+            readonly={!habboAccount}
+            size="lg"
+          />
+        </div>
+        
+        {/* Contador de avaliações */}
+        <div className="text-sm text-gray-600 text-center mb-2">
+          {totalRatings === 0 
+            ? 'Nenhuma avaliação' 
+            : `${totalRatings} ${totalRatings === 1 ? 'avaliação' : 'avaliações'}`
+          }
+        </div>
+        
+        {!habboAccount && (
+          <div className="text-xs text-gray-500 text-center">
+            Faça login para avaliar
+          </div>
+        )}
+      </div>
     </div>
   );
 };

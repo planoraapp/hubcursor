@@ -19,14 +19,6 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
 }) => {
   const { assets, loading, getAssetUrl, syncAssets } = useHomeAssets();
   const [selectedCategory, setSelectedCategory] = useState<'Stickers' | 'Mockups' | 'Montáveis' | 'Ícones' | 'Animados'>('Stickers');
-  const [syncing, setSyncing] = useState(false);
-
-  // Auto-sync assets when modal opens if no assets are available
-  useEffect(() => {
-    if (isOpen && Object.values(assets).flat().length === 0 && !loading) {
-      handleSync();
-    }
-  }, [isOpen, assets, loading]);
 
   const categories = [
     { id: 'Stickers', label: 'Stickers', icon: '✨', count: assets.Stickers?.length || 0 },
@@ -37,28 +29,27 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
   ] as const;
 
   const handleStickerClick = (asset: any) => {
+    const assetUrl = getAssetUrl(asset);
+    
+    console.log('🎭 Asset selecionado:', {
+      asset: asset,
+      url: assetUrl,
+      isSupabaseUrl: assetUrl?.includes('supabase.co')
+    });
+    
     const stickerData = {
       sticker_id: asset.id,
-      sticker_src: getAssetUrl(asset),
+      sticker_src: assetUrl,
       category: asset.category?.toLowerCase() || 'decorative',
       rotation: 0,
       scale: 1
     };
 
+    console.log('🎭 Dados do sticker criados:', stickerData);
     onStickerDrop(stickerData);
     onClose();
   };
 
-  const handleSync = async () => {
-    try {
-      setSyncing(true);
-      await syncAssets();
-    } catch (error) {
-      console.error('Error syncing assets:', error);
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -69,15 +60,6 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
             <Badge className="bg-blue-100 text-blue-800">
               {Object.values(assets).flat().length} assets disponíveis
             </Badge>
-            <Button
-              onClick={handleSync}
-              disabled={syncing}
-              size="sm"
-              variant="outline"
-              className="ml-auto volter-font"
-            >
-              {syncing ? '🔄' : '🔄'} {syncing ? 'Sincronizando...' : 'Sincronizar'}
-            </Button>
           </DialogTitle>
           <DialogDescription className="text-slate-700 volter-font">
             Selecione stickers, mockups e outros elementos para adicionar à sua Habbo Home
@@ -114,7 +96,7 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
                 </div>
                 
                 <ScrollArea className="h-[calc(100%-80px)]">
-                  {loading || syncing ? (
+                  {loading ? (
                     <div className="flex items-center justify-center h-32">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                       <span className="ml-2 volter-font">Carregando {category.label.toLowerCase()}...</span>
@@ -154,14 +136,6 @@ export const EnhancedStickerInventory: React.FC<EnhancedStickerInventoryProps> =
                           <p className="text-gray-500 volter-font">
                             Nenhum {category.label.toLowerCase()} encontrado
                           </p>
-                          <Button
-                            onClick={handleSync}
-                            disabled={syncing}
-                            size="sm"
-                            className="mt-4 volter-font"
-                          >
-                            {syncing ? 'Sincronizando...' : 'Sincronizar Assets'}
-                          </Button>
                         </div>
                       )}
                     </div>

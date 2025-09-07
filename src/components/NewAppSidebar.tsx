@@ -41,7 +41,16 @@ export function NewAppSidebar() {
         <img 
           src={item.icon} 
           alt={item.name}
-          className={`flex-shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-4 h-4'}`}
+          className="flex-shrink-0"
+          style={{ 
+            imageRendering: 'pixelated',
+            width: 'auto',
+            height: 'auto',
+            maxWidth: isCollapsed ? '32px' : '16px',
+            maxHeight: isCollapsed ? '32px' : '16px',
+            objectFit: 'contain',
+            display: 'block'
+          }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
