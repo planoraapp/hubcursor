@@ -14,7 +14,8 @@ import HabboHomeV2 from './pages/HabboHomeV2'
 import Home from './pages/Home'
 import Homes from './pages/Homes'
 import Login from './pages/Login'
-import Noticias from './pages/Noticias'
+import Journal from './pages/Journal'
+import AdminPanel from './pages/AdminPanel'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
@@ -64,7 +65,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/noticias",
-    element: <Noticias />,
+    element: <Journal />,
+  },
+  {
+    path: "/journal",
+    element: <Journal />,
+  },
+  {
+    path: "/admin-panel",
+    element: <AdminPanel />,
   },
   {
     path: "/emblemas",

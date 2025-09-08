@@ -195,7 +195,10 @@ const HomesHub: React.FC = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-repeat" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="min-h-screen" style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}>
         <div className="flex min-h-screen">
           <NewAppSidebar />
           <main className="flex-1 p-4 md:p-8 overflow-y-auto">

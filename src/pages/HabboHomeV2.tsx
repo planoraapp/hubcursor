@@ -76,7 +76,7 @@ const HabboHomeV2: React.FC = () => {
     { id: 'home', label: 'Início', icon: '/assets/home.png', order: 1 },
     { id: 'homes', label: 'Home', icon: '/assets/homepadrao.png', order: 2 },
     { id: 'console', label: 'Console', icon: '/assets/consoleon3.gif', order: 3 },
-    { id: 'noticias', label: 'Notícias', icon: '/assets/news.png', order: 4 },
+    { id: 'journal', label: 'Jornal', icon: '/assets/news.png', order: 4 },
     { id: 'tools', label: 'Ferramentas', icon: '/assets/ferramentas.png', order: 5 }
   ];
 
@@ -91,8 +91,8 @@ const HabboHomeV2: React.FC = () => {
       case 'console':
         navigate('/console');
         break;
-      case 'noticias':
-        navigate('/noticias');
+      case 'journal':
+        navigate('/journal');
         break;
       default:
         console.log('Mobile item clicked:', itemId);
@@ -101,7 +101,10 @@ const HabboHomeV2: React.FC = () => {
 
   if (loading) {
     const loadingContent = (
-      <div className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="flex-1 flex items-center justify-center" style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-white" />
           <div className="text-lg volter-font text-white habbo-text">
@@ -133,7 +136,10 @@ const HabboHomeV2: React.FC = () => {
 
   if (!habboData) {
     const errorContent = (
-      <div className="flex-1 bg-repeat flex items-center justify-center" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+      <div className="flex-1 flex items-center justify-center" style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}>
         <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
           <CardHeader className="bg-gradient-to-r from-red-500 to-pink-500 text-white">
             <CardTitle className="text-center volter-font">Usuário não encontrado</CardTitle>
@@ -172,7 +178,10 @@ const HabboHomeV2: React.FC = () => {
   }
 
   const homeContent = (
-    <div className="flex-1 bg-repeat relative" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    <div className="flex-1 relative" style={{ 
+      backgroundImage: 'url(/assets/bghabbohub.png)',
+      backgroundRepeat: 'repeat'
+    }}>
       {/* Enhanced Toolbar - Desktop only */}
       {!isMobile && (
         <div className="fixed top-0 left-0 right-0 z-50 p-4">

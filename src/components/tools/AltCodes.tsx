@@ -6,17 +6,16 @@ const AltCodes = () => {
   const [generatedImage, setGeneratedImage] = useState<string>('');
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
-  // Dados dos Alt Codes com múltiplos URLs de fallback
+  // Dados dos Alt Codes usando imagens locais
   const habboAltCodes = [
     { 
       code: 'Alt + 7', 
       unicode: 'Alt + 0149', 
       character: '•', 
       description: 'Ponto de lista (bullet)', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/7-1.png',
+      imageUrl: '/images/alt-codes/alt-7.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/7/72/2_alt.png',
-        'https://habboxwiki.com/File:2_alt.png'
+        '/images/alt-codes/alt-7.png'
       ]
     },
     { 
@@ -24,10 +23,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0182', 
       character: '¶', 
       description: 'Símbolo de parágrafo', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/20.png',
+      imageUrl: '/images/alt-codes/alt-20-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/b/b2/3_alt.png',
-        'https://habboxwiki.com/File:3_alt.png'
+        '/images/alt-codes/alt-20.png'
       ]
     },
     { 
@@ -35,10 +33,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0124', 
       character: '|', 
       description: 'Barra vertical (pipe)', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/shiftheart.png',
+      imageUrl: '/images/alt-codes/alt-124-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/9/92/22_alt.png',
-        'https://habboxwiki.com/File:22_alt.png'
+        '/images/alt-codes/alt-124.png'
       ]
     },
     { 
@@ -46,11 +43,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0131', 
       character: 'ƒ', 
       description: 'Símbolo florin', 
-      imageUrl: 'https://habboxwiki.com/wiki/images/0/04/6_alt.png',
+      imageUrl: '/images/alt-codes/alt-159-correct.png',
       fallbackUrls: [
-        'https://habbox.com/wp-content/uploads/2016/10/159.png',
-        'https://habboxwiki.com/File:6_alt.png',
-        'https://habboxwiki.com/wiki/images/0/04/6_alt.png'
+        '/images/alt-codes/alt-159.png'
       ]
     },
     { 
@@ -58,10 +53,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0170', 
       character: 'ª', 
       description: 'Ordinal feminino', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/422.png',
+      imageUrl: '/images/alt-codes/alt-166-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/e/e6/32_alt.png',
-        'https://habboxwiki.com/File:32_alt.png'
+        '/images/alt-codes/alt-166.png'
       ]
     },
     { 
@@ -69,10 +63,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0186', 
       character: 'º', 
       description: 'Ordinal masculino', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/423.png',
+      imageUrl: '/images/alt-codes/alt-167-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/c/cc/33_alt.png',
-        'https://habboxwiki.com/File:33_alt.png'
+        '/images/alt-codes/alt-167.png'
       ]
     },
     { 
@@ -80,10 +73,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0172', 
       character: '¬', 
       description: 'Símbolo de negação', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/feesh.png',
+      imageUrl: '/images/alt-codes/alt-170-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/7/73/31_alt.png',
-        'https://habboxwiki.com/File:31_alt.png'
+        '/images/alt-codes/alt-170.png'
       ]
     },
     { 
@@ -91,10 +83,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0187', 
       character: '»', 
       description: 'Aspas angulares direitas', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/175.png',
+      imageUrl: '/images/alt-codes/alt-175-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/b/b6/10_alt.png',
-        'https://habboxwiki.com/File:10_alt.png'
+        '/images/alt-codes/alt-175.png'
       ]
     },
     { 
@@ -102,10 +93,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0165', 
       character: '¥', 
       description: 'Símbolo do yen', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/157.png',
+      imageUrl: '/images/alt-codes/alt-190-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/2/2e/5_alt.png',
-        'https://habboxwiki.com/File:5_alt.png'
+        '/images/alt-codes/alt-190.png'
       ]
     },
     { 
@@ -113,10 +103,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0181', 
       character: 'µ', 
       description: 'Símbolo micro', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/230.png',
+      imageUrl: '/images/alt-codes/alt-230-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/3/3a/27_alt.png',
-        'https://habboxwiki.com/File:27_alt.png'
+        '/images/alt-codes/alt-230.png'
       ]
     },
     { 
@@ -124,10 +113,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0177', 
       character: '±', 
       description: 'Símbolo mais-menos', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/241.png',
+      imageUrl: '/images/alt-codes/alt-241-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/5/58/17_alt.png',
-        'https://habboxwiki.com/File:17_alt.png'
+        '/images/alt-codes/alt-241.png'
       ]
     },
     { 
@@ -135,10 +123,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0247', 
       character: '÷', 
       description: 'Símbolo de divisão', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/246.png',
+      imageUrl: '/images/alt-codes/alt-246-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/d/d4/18_alt.png',
-        'https://habboxwiki.com/File:18_alt.png'
+        '/images/alt-codes/alt-246.png'
       ]
     },
     { 
@@ -146,10 +133,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0134', 
       character: '†', 
       description: 'Símbolo de adaga', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/0134.png',
+      imageUrl: '/images/alt-codes/alt-0134-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/4/49/35_alt.png',
-        'https://habboxwiki.com/File:35_alt.png'
+        '/images/alt-codes/alt-0134.png'
       ]
     },
     { 
@@ -157,10 +143,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0135', 
       character: '‡', 
       description: 'Símbolo de adaga dupla', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/0135-1.png',
+      imageUrl: '/images/alt-codes/alt-0135-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/a/a1/36_alt.png',
-        'https://habboxwiki.com/File:36_alt.png'
+        '/images/alt-codes/alt-0135.png'
       ]
     },
     { 
@@ -168,10 +153,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0145', 
       character: '\u2018', 
       description: 'Aspas simples esquerda', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/0145-1.png',
+      imageUrl: '/images/alt-codes/alt-0145-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/7/79/Lock_alt.png',
-        'https://habboxwiki.com/File:Lock_alt.png'
+        '/images/alt-codes/alt-0145.png'
       ]
     },
     { 
@@ -179,10 +163,9 @@ const AltCodes = () => {
       unicode: 'Alt + 0151', 
       character: '—', 
       description: 'Traço em (em dash)', 
-      imageUrl: 'https://habbox.com/wp-content/uploads/2016/10/music.png',
+      imageUrl: '/images/alt-codes/alt-0151-correct.png',
       fallbackUrls: [
-        'https://habboxwiki.com/wiki/images/7/7b/Music_alt.png',
-        'https://habboxwiki.com/File:Music_alt.png'
+        '/images/alt-codes/alt-0151.png'
       ]
     }
   ];
@@ -230,24 +213,24 @@ const AltCodes = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Mapear caracteres para suas imagens PNG
+    // Mapear caracteres para suas imagens PNG locais
     const altCodeMap: { [key: string]: string } = {
-      '•': 'https://habboxwiki.com/wiki/images/7/72/2_alt.png',
-      '¶': 'https://habboxwiki.com/wiki/images/b/b2/3_alt.png',
-      '|': 'https://habboxwiki.com/wiki/images/9/92/22_alt.png',
-      'ƒ': 'https://habboxwiki.com/wiki/images/0/04/6_alt.png',
-      'ª': 'https://habboxwiki.com/wiki/images/e/e6/32_alt.png',
-      'º': 'https://habboxwiki.com/wiki/images/c/cc/33_alt.png',
-      '¬': 'https://habboxwiki.com/wiki/images/7/73/31_alt.png',
-      '»': 'https://habboxwiki.com/wiki/images/b/b6/10_alt.png',
-      '¥': 'https://habboxwiki.com/wiki/images/2/2e/5_alt.png',
-      'µ': 'https://habboxwiki.com/wiki/images/3/3a/27_alt.png',
-      '±': 'https://habboxwiki.com/wiki/images/5/58/17_alt.png',
-      '÷': 'https://habboxwiki.com/wiki/images/d/d4/18_alt.png',
-      '†': 'https://habboxwiki.com/wiki/images/4/49/35_alt.png',
-      '‡': 'https://habboxwiki.com/wiki/images/a/a1/36_alt.png',
-      '\u2018': 'https://habboxwiki.com/wiki/images/7/79/Lock_alt.png',
-      '—': 'https://habboxwiki.com/wiki/images/7/7b/Music_alt.png'
+      '•': '/images/alt-codes/alt-7.png',
+      '¶': '/images/alt-codes/alt-20-correct.png',
+      '|': '/images/alt-codes/alt-124-correct.png',
+      'ƒ': '/images/alt-codes/alt-159-correct.png',
+      'ª': '/images/alt-codes/alt-166-correct.png',
+      'º': '/images/alt-codes/alt-167-correct.png',
+      '¬': '/images/alt-codes/alt-170-correct.png',
+      '»': '/images/alt-codes/alt-175-correct.png',
+      '¥': '/images/alt-codes/alt-190-correct.png',
+      'µ': '/images/alt-codes/alt-230-correct.png',
+      '±': '/images/alt-codes/alt-241-correct.png',
+      '÷': '/images/alt-codes/alt-246-correct.png',
+      '†': '/images/alt-codes/alt-0134-correct.png',
+      '‡': '/images/alt-codes/alt-0135-correct.png',
+      '\u2018': '/images/alt-codes/alt-0145-correct.png',
+      '—': '/images/alt-codes/alt-0151-correct.png'
     };
 
     // Configurar canvas

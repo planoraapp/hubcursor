@@ -1,0 +1,19 @@
+{
+  "name": "Cachorro",
+  "emoji": "🐕",
+  "id": "dog",
+  "sprites": {
+    "idle": {
+      "0": "dog_idle_0.png",
+      "1": "dog_idle_1.png",
+      "2": "dog_idle_2.png",
+      "3": "dog_idle_3.png",
+      "4": "dog_idle_4.png",
+      "5": "dog_idle_5.png",
+      "6": "dog_idle_6.png",
+      "7": "dog_idle_7.png"
+    }
+  },
+  "status": "temporary_emoji_based",
+  "instructions": "Use o gerador HTML para criar sprites reais"
+}

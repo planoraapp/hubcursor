@@ -36,7 +36,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const mainItems = [
   { title: "Início", url: "/", icon: Home },
   { title: "Console", url: "/console", icon: LayoutDashboard },
-  { title: "Notícias", url: "/noticias", icon: Newspaper },
+  { title: "Jornal", url: "/journal", icon: Newspaper },
   { title: "Eventos", url: "/eventos", icon: Gamepad2 },
 ];
 
@@ -194,7 +194,12 @@ export function AppSidebar() {
                     onClick={handleLogout}
                     className="h-8 w-8 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <img 
+                      src="/assets/logout.png" 
+                      alt="Logout" 
+                      className="h-4 w-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

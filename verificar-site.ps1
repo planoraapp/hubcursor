@@ -13,8 +13,8 @@ try {
         Write-Host "✅ Site acessível!" -ForegroundColor Green
         Write-Host "📄 Tamanho da página: $([math]::Round($response.Content.Length/1KB, 2)) KB" -ForegroundColor Cyan
         
-        # Extrair URLs de imagens (usar here-string para evitar problemas de escape)
-        $imagePattern = @'src=["\']([^"\']*\.(?:png|jpg|jpeg|gif|ico|svg))["\']'@
+        # Extrair URLs de imagens
+        $imagePattern = 'src=["\']([^"\']*\.(?:png|jpg|jpeg|gif|ico|svg))["\']'
         $imageMatches = [regex]::Matches($response.Content, $imagePattern)
         
         Write-Host ""

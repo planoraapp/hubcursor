@@ -1,0 +1,114 @@
+{
+  "pets": {
+    "monkey": {
+      "name": "monkey",
+      "id": "monkey",
+      "sprites": {
+        "idle": {
+          "0": "monkey_idle_0.png",
+          "1": "monkey_idle_1.png",
+          "2": "monkey_idle_2.png",
+          "3": "monkey_idle_3.png",
+          "7": "monkey_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "directions": [
+        0,
+        1,
+        2,
+        3,
+        7
+      ],
+      "status": "organized_complete",
+      "timestamp": "2025-09-03T22:45:02.337Z"
+    },
+    "dog": {
+      "name": "dog",
+      "id": "dog",
+      "sprites": {
+        "idle": {
+          "0": "dog_idle_0.png",
+          "1": "dog_idle_1.png",
+          "2": "dog_idle_2.png",
+          "3": "dog_idle_3.png",
+          "7": "dog_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "directions": [
+        0,
+        1,
+        2,
+        3,
+        7
+      ],
+      "status": "organized_complete",
+      "timestamp": "2025-09-03T22:45:02.348Z"
+    },
+    "cat": {
+      "name": "cat",
+      "id": "cat",
+      "sprites": {
+        "idle": {
+          "0": "cat_idle_0.png",
+          "1": "cat_idle_1.png",
+          "2": "cat_idle_2.png",
+          "3": "cat_idle_3.png",
+          "7": "cat_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "directions": [
+        0,
+        1,
+        2,
+        3,
+        7
+      ],
+      "status": "organized_complete",
+      "timestamp": "2025-09-03T22:45:02.374Z"
+    },
+    "bear": {
+      "name": "bear",
+      "id": "bear",
+      "sprites": {
+        "idle": {
+          "0": "bear_idle_0.png",
+          "1": "bear_idle_1.png",
+          "2": "bear_idle_2.png",
+          "3": "bear_idle_3.png",
+          "7": "bear_idle_7.png"
+        }
+      },
+      "totalSprites": 5,
+      "directions": [
+        0,
+        1,
+        2,
+        3,
+        7
+      ],
+      "status": "organized_complete",
+      "timestamp": "2025-09-03T22:45:02.386Z"
+    },
+    "dragon": {
+      "name": "dragon",
+      "id": "dragon",
+      "sprites": {
+        "idle": {
+          "2": "dragon_idle_2.png"
+        }
+      },
+      "totalSprites": 1,
+      "directions": [
+        2
+      ],
+      "status": "organized_complete",
+      "timestamp": "2025-09-03T22:45:02.392Z"
+    }
+  },
+  "totalPets": 5,
+  "status": "all_organized_complete",
+  "timestamp": "2025-09-03T22:45:02.393Z"
+}

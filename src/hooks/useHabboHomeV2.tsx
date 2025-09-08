@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSimpleAuth } from './useSimpleAuth';
+import { useHubLogin } from './useHubLogin';
 import { habboProxyService } from '@/services/habboProxyService';
 import { habboCache } from '@/services/habboCache';
 
@@ -106,7 +106,13 @@ export const useHabboHomeV2 = (username: string) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const { habboAccount } = useSimpleAuth();
+  const { currentUser, isLoggedIn } = useHubLogin();
+  
+  console.log('🔍 [useHabboHomeV2] Auth state:', { 
+    isLoggedIn, 
+    currentUser: currentUser?.habbo_username, 
+    targetUsername: username 
+  });
 
   const loadHabboHomeData = async () => {
     try {
@@ -143,9 +149,13 @@ export const useHabboHomeV2 = (username: string) => {
       setHabboData(basicHabboInfo);
 
       // 2. Verificar proprietário
-      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+      const currentUserIsOwner = currentUser?.habbo_username?.toLowerCase() === username.toLowerCase();
       setIsOwner(currentUserIsOwner);
-      console.log('🔍 Verificação de proprietário:', { currentUserIsOwner, currentUser: habboAccount?.habbo_name, targetUser: username });
+      console.log('🔍 Verificação de proprietário:', { 
+        currentUserIsOwner,
+        currentUser: currentUser?.habbo_username, 
+        targetUser: username 
+      });
 
       const userId = userData.supabase_user_id;
 
@@ -622,7 +632,7 @@ export const useHabboHomeV2 = (username: string) => {
     if (username) {
       loadHabboHomeData();
     }
-  }, [username, habboAccount]);
+  }, [username, currentUser]);
 
   return {
     widgets,

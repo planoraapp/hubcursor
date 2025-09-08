@@ -63,3 +63,4 @@ site-*.html
 
 # Supabase local files
 .supabase/
+.vercel
