@@ -112,3 +112,74 @@ Para dúvidas ou problemas:
 ---
 
 **🎉 Agora você pode testar o HabboHub localmente e implementar as funcionalidades reais!**
+
+## 🚀 Como Acessar a Versão de 12 Horas Atrás
+
+Para acessar a versão atualizada há 12 horas, você precisa iniciar o servidor de desenvolvimento. Aqui estão as opções:
+
+### **Opção 1: Via Terminal/PowerShell**
+
+1. **Abra o PowerShell como Administrador**
+2. **Navegue para a pasta do projeto:**
+   ```powershell
+   cd C:\Users\roque\dev\habbo-hub
+   ```
+
+3. **Instale as dependências (se necessário):**
+   ```powershell
+   npm install
+   ```
+
+4. **Inicie o servidor de desenvolvimento:**
+   ```powershell
+   npm run dev
+   ```
+
+5. **Acesse no navegador:**
+   - **URL:** `http://localhost:5173`
+   - **URL alternativa:** `http://127.0.0.1:5173`
+
+### **Opção 2: Via Script PowerShell (se disponível)**
+
+Se existir o script `servidor-local.ps1`:
+```powershell
+cd C:\Users\roque\dev\habbo-hub
+.\servidor-local.ps1
+```
+
+### **Opção 3: Via VS Code/Cursor**
+
+1. **Abra o terminal integrado** no VS Code/Cursor
+2. **Execute os comandos:**
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+## 🌐 URLs de Acesso
+
+- **Página Principal:** `http://localhost:5173/`
+- **Homes Hub:** `http://localhost:5173/homes`
+- **Console:** `http://localhost:5173/console`
+- **Ferramentas:** `http://localhost:5173/tools`
+
+## ⚠️ Se o Servidor Não Iniciar
+
+Se houver problemas, tente:
+
+1. **Verificar se a porta 5173 está livre:**
+   ```powershell
+   netstat -an | findstr :5173
+   ```
+
+2. **Usar uma porta diferente:**
+   ```powershell
+   npm run dev -- --port 3000
+   ```
+
+3. **Limpar cache:**
+   ```powershell
+   npm run dev -- --force
+   ```
+
+A versão que você tem é a mais recente (atualizada há 12 horas) e contém todas as funcionalidades de badges, sistema de homes e melhorias que foram implementadas!
