@@ -15,13 +15,39 @@ import {
 } from '@/components/ui/sidebar';
 import { useHubLogin } from '@/hooks/useHubLogin';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, User, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
   const { currentUser, isLoggedIn, logout } = useHubLogin();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
+
+  // Verificar se o usuário é admin
+  const isAdmin = currentUser && currentUser.habbo_username && (
+    currentUser.habbo_username.toLowerCase() === 'beebop' ||
+    currentUser.habbo_username.toLowerCase() === 'habbohub' ||
+    currentUser.habbo_username === 'Beebop' ||
+    currentUser.habbo_username === 'habbohub' ||
+    currentUser.habbo_username === 'Habbohub' ||
+    currentUser.habbo_username === 'HABHOHUB'
+  );
+
+  // Debug logs
+  console.log('🔍 [CollapsibleAppSidebar] Current user:', currentUser);
+  console.log('🔍 [CollapsibleAppSidebar] Username:', currentUser?.habbo_username);
+  console.log('🔍 [CollapsibleAppSidebar] Username lowercase:', currentUser?.habbo_username?.toLowerCase());
+  console.log('🔍 [CollapsibleAppSidebar] Is admin:', isAdmin);
+  
+  // Teste de comparação
+  if (currentUser?.habbo_username) {
+    console.log('🧪 [CollapsibleAppSidebar] Testing comparisons:');
+    console.log('  - habbohub === habbohub:', currentUser.habbo_username === 'habbohub');
+    console.log('  - habbohub === Habbohub:', currentUser.habbo_username === 'Habbohub');
+    console.log('  - lowercase === habbohub:', currentUser.habbo_username.toLowerCase() === 'habbohub');
+    console.log('  - includes habbohub:', ['Beebop', 'habbohub'].includes(currentUser.habbo_username));
+  }
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
@@ -35,21 +61,39 @@ export function CollapsibleAppSidebar() {
     { name: 'Mercado', path: '/mercado', icon: '/assets/Diamante.png' },
   ];
 
+  // Adicionar menu de admin se o usuário for admin
+  if (isAdmin) {
+    menuItems.push({ 
+      name: 'Admin', 
+      path: '/admin', 
+      icon: '/assets/shield.png' 
+    });
+  }
+
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
     const content = (
       <Link to={item.path} className="flex items-center gap-3 w-full">
-        <img 
-          src={item.icon} 
-          alt={item.name}
-          className={`flex-shrink-0 w-9 h-9`}
-          style={{ imageRendering: 'pixelated' }}
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-          }}
-        />
+        {item.name === 'Admin' ? (
+          <Shield className="w-9 h-9 text-yellow-500" />
+        ) : (
+          <img 
+            src={item.icon} 
+            alt={item.name}
+            className={`flex-shrink-0 w-9 h-9`}
+            style={{ imageRendering: 'pixelated' }}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+            }}
+          />
+        )}
         {!isCollapsed && (
-          <span className="habbo-text text-sm font-bold text-[#8B4513]">
+          <span 
+            className="habbo-text text-sm text-white"
+            style={{
+              textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+            }}
+          >
             {item.name}
           </span>
         )}
@@ -148,11 +192,23 @@ export function CollapsibleAppSidebar() {
                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`;
                      }}
                    />
-                   {!isCollapsed && (
-                     <span className="habbo-text text-sm font-bold text-[#8B4513] truncate">
-                       {currentUser.habbo_username}
-                     </span>
-                   )}
+                    {!isCollapsed && (
+                      <div className="flex flex-col">
+                        <span 
+                          className="habbo-text text-sm text-white truncate"
+                          style={{
+                            textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                          }}
+                        >
+                          {currentUser.habbo_username}
+                        </span>
+                        {isAdmin && (
+                          <Badge variant="secondary" className="text-xs w-fit">
+                            Admin
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                  </div>
                 {!isCollapsed && (
                   <TooltipProvider>

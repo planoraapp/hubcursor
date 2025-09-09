@@ -36,8 +36,12 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
         try {
           console.log(`📡 [Feed] Requesting activities for: ${username}`);
           
-          const response = await supabase.functions.invoke('habbo-widgets-proxy', {
-            body: { username }
+          const response = await supabase.functions.invoke('habbo-unified-api', {
+            body: { 
+              endpoint: 'feed',
+              action: 'activities',
+              params: { username, hotel: 'br' }
+            }
           });
           
           console.log(`📨 [Feed] Response for ${username}:`, response);
@@ -85,8 +89,12 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
         try {
           console.log(`📡 [Feed] Requesting activities for friend: ${username}`);
           
-          const response = await supabase.functions.invoke('habbo-widgets-proxy', {
-            body: { username }
+          const response = await supabase.functions.invoke('habbo-unified-api', {
+            body: { 
+              endpoint: 'feed',
+              action: 'activities',
+              params: { username, hotel: 'br' }
+            }
           });
           
           if (response.data?.success && response.data?.activities) {

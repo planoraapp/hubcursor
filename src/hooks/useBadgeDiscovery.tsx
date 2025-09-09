@@ -33,8 +33,12 @@ export const useBadgeDiscovery = () => {
     }) => {
       console.log(`🔍 [useBadgeDiscovery] Starting discovery for ${badgeCode} on ${hotel}`);
       
-      const { data, error } = await supabase.functions.invoke('habbo-discover-by-badges', {
-        body: { hotel, badge: badgeCode, limit }
+      const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
+        body: { 
+          endpoint: 'badges',
+          action: 'discover',
+          params: { hotel, badge: badgeCode, limit }
+        }
       });
 
       if (error) {
