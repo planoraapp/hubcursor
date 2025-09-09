@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useHubLogin } from './useHubLogin';
+import { useUnifiedAuth } from './useUnifiedAuth';
 import { habboProxyService } from '@/services/habboProxyService';
 import { habboCache } from '@/services/habboCache';
 
@@ -35,9 +35,14 @@ interface Background {
 
 interface GuestbookEntry {
   id: string;
+  home_owner_user_id?: string;
   author_habbo_name: string;
+  author_look?: string;
+  author_hotel?: string;
   message: string;
+  moderation_status?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 interface HabboData {
@@ -106,11 +111,11 @@ export const useHabboHomeV2 = (username: string) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const { currentUser, isLoggedIn } = useHubLogin();
+  const { habboAccount, isLoggedIn } = useUnifiedAuth();
   
   console.log('🔍 [useHabboHomeV2] Auth state:', { 
     isLoggedIn, 
-    currentUser: currentUser?.habbo_username, 
+    currentUser: habboAccount?.habbo_name, 
     targetUsername: username 
   });
 
@@ -148,7 +153,7 @@ export const useHabboHomeV2 = (username: string) => {
           setHabboData(basicHabboInfo);
           
           // Definir como proprietário se o usuário logado for habbohub
-          const currentUserIsOwner = currentUser?.habbo_username?.toLowerCase() === username.toLowerCase();
+          const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
           setIsOwner(currentUserIsOwner);
           
           // Criar widgets padrão fictícios
@@ -220,11 +225,11 @@ export const useHabboHomeV2 = (username: string) => {
       setHabboData(basicHabboInfo);
 
       // 2. Verificar proprietário
-      const currentUserIsOwner = currentUser?.habbo_username?.toLowerCase() === username.toLowerCase();
+      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
       setIsOwner(currentUserIsOwner);
       console.log('🔍 Verificação de proprietário:', { 
         currentUserIsOwner,
-        currentUser: currentUser?.habbo_username, 
+        currentUser: habboAccount?.habbo_name, 
         targetUser: username 
       });
 
@@ -443,9 +448,9 @@ export const useHabboHomeV2 = (username: string) => {
       // Calculate next z-index
       const nextZ = Math.max(0, ...stickers.map(s => s.z_index || 0), ...widgets.map(w => w.z_index || 0)) + 1;
       
-      // Centralizar na home (540px x 900px é o centro de 1080px x 1800px)
-      const centerX = 540;
-      const centerY = 900;
+      // Posicionar no canto superior esquerdo (20px x 20px)
+      const centerX = 20;
+      const centerY = 20;
       
       const payload = {
         user_id: habboData.id,
@@ -703,7 +708,7 @@ export const useHabboHomeV2 = (username: string) => {
     if (username) {
       loadHabboHomeData();
     }
-  }, [username, currentUser]);
+  }, [username, habboAccount]);
 
   return {
     widgets,

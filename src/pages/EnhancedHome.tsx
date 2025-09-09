@@ -20,8 +20,11 @@ const EnhancedHome = () => {
       <div className="min-h-screen flex w-full">
         <NewAppSidebar />
         <main 
-          className="flex-1 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+          className="flex-1 relative"
+          style={{ 
+            backgroundImage: 'url(/assets/bghabbohub.png)',
+            backgroundRepeat: 'repeat'
+          }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 via-purple-900/10 to-blue-900/30"></div>
           

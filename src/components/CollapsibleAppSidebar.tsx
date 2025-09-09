@@ -80,7 +80,12 @@ export function CollapsibleAppSidebar() {
             src={item.icon} 
             alt={item.name}
             className={`flex-shrink-0 w-9 h-9`}
-            style={{ imageRendering: 'pixelated' }}
+            style={{ 
+              imageRendering: 'pixelated',
+              objectFit: 'contain',
+              width: '36px',
+              height: '36px'
+            }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
@@ -142,7 +147,10 @@ export function CollapsibleAppSidebar() {
                 src="/assets/hubbeta.gif" 
                 alt="Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
-                style={{ imageRendering: 'pixelated' }}
+                style={{ 
+                  imageRendering: 'pixelated',
+                  objectFit: 'contain'
+                }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/assets/hub.gif";
@@ -153,7 +161,10 @@ export function CollapsibleAppSidebar() {
                 src="/assets/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
-                style={{ imageRendering: 'pixelated' }}
+                style={{ 
+                  imageRendering: 'pixelated',
+                  objectFit: 'contain'
+                }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/assets/hub.gif";
@@ -186,7 +197,10 @@ export function CollapsibleAppSidebar() {
                      src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`}
                      alt={`Avatar de ${currentUser.habbo_username}`}
                      className={`w-14 h-14`}
-                     style={{ imageRendering: 'pixelated' }}
+                     style={{ 
+                       imageRendering: 'pixelated',
+                       objectFit: 'contain'
+                     }}
                      onError={(e) => {
                        const target = e.target as HTMLImageElement;
                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`;
@@ -222,7 +236,10 @@ export function CollapsibleAppSidebar() {
                             src="/assets/logout.png" 
                             alt="Logout" 
                             className="w-3 h-3"
-                            style={{ imageRendering: 'pixelated' }}
+                            style={{ 
+                              imageRendering: 'pixelated',
+                              objectFit: 'contain'
+                            }}
                           />
                           Sair
                         </button>

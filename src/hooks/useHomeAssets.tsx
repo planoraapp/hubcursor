@@ -11,6 +11,7 @@ export interface HomeAsset {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  url?: string;
 }
 
 export interface GroupedAssets {
@@ -72,7 +73,11 @@ export const useHomeAssets = () => {
         // Type cast the category to ensure it matches our union type
         const category = asset.category as HomeAsset['category'];
         if (category in groupedAssets) {
-          groupedAssets[category].push(asset as HomeAsset);
+          const assetWithUrl = {
+            ...asset,
+            url: getAssetUrl(asset as HomeAsset)
+          } as HomeAsset;
+          groupedAssets[category].push(assetWithUrl);
         }
       });
 

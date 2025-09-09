@@ -22,7 +22,13 @@ const AdminHub = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div 
+      className="flex h-screen"
+      style={{ 
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat'
+      }}
+    >
       <NewAppSidebar />
       <div className="flex-1 overflow-auto">
         <div className="p-6">

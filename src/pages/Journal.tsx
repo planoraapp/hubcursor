@@ -118,12 +118,10 @@ const Journal = () => {
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
           <main 
-            className="flex-1 min-h-screen p-4 sm:p-8 bg-repeat" 
+            className="flex-1 min-h-screen p-4 sm:p-8" 
             style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              backgroundSize: 'cover'
+              backgroundRepeat: 'repeat'
             }}
           >
             <div className="max-w-7xl mx-auto relative" style={{ overflow: 'visible', padding: '20px' }}>

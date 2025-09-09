@@ -56,10 +56,9 @@ const HabboHomeV2: React.FC = () => {
   const handleStickerAdd = async (stickerId: string, stickerSrc: string, category: string) => {
     console.log('🎯 Tentando adicionar sticker:', { stickerId, stickerSrc, category });
     
-    const x = Math.random() * (1080 - 100) + 50;
-    const y = Math.random() * (1800 - 100) + 50;
-    
-    await addSticker(stickerId, x, y, stickerSrc, category);
+    // O hook useHabboHomeV2 já define a posição no canto superior esquerdo (20, 20)
+    // Então não precisamos passar x e y aqui
+    await addSticker(stickerId, 0, 0, stickerSrc, category);
   };
 
   const handleBackgroundChange = async (type: 'color' | 'cover' | 'repeat', value: string) => {

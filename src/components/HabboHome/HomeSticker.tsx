@@ -173,7 +173,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       data-sticker-id={sticker.id}
       className={`absolute pointer-events-auto select-none ${
         isEditMode && isOwner
-          ? 'cursor-move hover:scale-110 transition-transform ring-1 ring-blue-300 ring-opacity-50 rounded' 
+          ? 'cursor-move ring-1 ring-blue-300 ring-opacity-50 rounded' 
           : 'cursor-default'
       }`}
       style={containerStyle}
@@ -204,11 +204,11 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         }}
       />
       
-      {/* Botão de Remoção - Sempre visível em modo de edição */}
+      {/* Botão de Remoção - Sempre visível em modo de edição, sobreposto */}
       {isEditMode && isOwner && (
         <button
           onClick={handleRemove}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg z-10 border-2 border-white"
+          className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg z-20 border-2 border-white"
           title="Remover Sticker"
         >
           ×
