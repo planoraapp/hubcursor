@@ -317,16 +317,17 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       onMouseDown={handleMouseDown}
     >
       <Card className="h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black overflow-hidden">
-        {isEditMode && isOwner && widget.widget_type !== 'avatar' && widget.widget_type !== 'usercard' && (
+        {/* Botão de Remoção - Sempre visível em modo de edição para todos os widgets */}
+        {isEditMode && isOwner && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onRemove(widget.id);
             }}
-            className="absolute top-2 right-2 z-10 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md"
+            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm flex items-center justify-center shadow-lg z-10 border-2 border-white"
             title="Remover Widget"
           >
-            <X className="w-4 h-4" />
+            ×
           </button>
         )}
         

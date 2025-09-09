@@ -2,6 +2,7 @@
 import React from 'react';
 import { HomeWidget } from './HomeWidget';
 import { HomeSticker } from './HomeSticker';
+import { ExpandableHomeToolbar } from './ExpandableHomeToolbar';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Widget {
@@ -56,6 +57,12 @@ interface HomeCanvasProps {
   onStickerPositionChange: (stickerId: string, x: number, y: number) => void;
   onStickerRemove: (stickerId: string) => void;
   onWidgetRemove?: (widgetId: string) => void;
+  onOpenAssetsModal?: (type: 'stickers' | 'widgets' | 'backgrounds') => void;
+  onToggleEditMode?: () => void;
+  onSave?: () => void;
+  onBackgroundChange?: (type: 'color' | 'cover' | 'repeat', value: string) => void;
+  onStickerAdd?: (stickerId: string, stickerSrc: string, category: string) => void;
+  onWidgetAdd?: (widgetType: string) => Promise<boolean>;
 }
 
 export const HomeCanvas: React.FC<HomeCanvasProps> = ({
@@ -69,7 +76,13 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   onWidgetPositionChange,
   onStickerPositionChange,
   onStickerRemove,
-  onWidgetRemove
+  onWidgetRemove,
+  onOpenAssetsModal,
+  onToggleEditMode,
+  onSave,
+  onBackgroundChange,
+  onStickerAdd,
+  onWidgetAdd
 }) => {
   const isMobile = useIsMobile();
   console.log('🖼️ HomeCanvas renderizando:', {
@@ -115,6 +128,38 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
           ...backgroundStyle
         }}
       >
+        {/* Toolbar Expansível - Dentro do Canvas */}
+        {isEditMode && isOwner && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30">
+            <ExpandableHomeToolbar
+              onBackgroundChange={onBackgroundChange}
+              onStickerAdd={onStickerAdd}
+              onWidgetAdd={onWidgetAdd}
+              onSave={onSave}
+              onToggleEditMode={onToggleEditMode}
+            />
+          </div>
+        )}
+
+        {/* Ícone de Edição no Canto Superior Direito - Apenas para donos quando não está editando */}
+        {isOwner && !isEditMode && onToggleEditMode && (
+          <div className="absolute top-4 right-4 z-30">
+            <button
+              onClick={onToggleEditMode}
+              className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110 shadow-lg bg-yellow-500 hover:bg-yellow-600 border-2 border-black cursor-pointer"
+              style={{
+                width: '48px',
+                height: '48px',
+                backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                imageRendering: 'pixelated'
+              }}
+              title="Entrar no Modo de Edição"
+            />
+          </div>
+        )}
         {/* Renderizar Widgets */}
         {widgets.map((widget) => (
           <HomeWidget

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
 import { EnhancedHomeToolbar } from '@/components/HabboHome/EnhancedHomeToolbar';
+import { HubHomeAssets } from '@/components/HabboHome/HubHomeAssets';
 import { MobileLayout } from '@/components/ui/mobile-layout';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset, useSidebar } from '@/components/ui/sidebar';
@@ -16,6 +17,10 @@ const HabboHomeV2: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Estados para controlar os modais de edição
+  const [showAssetsModal, setShowAssetsModal] = useState(false);
+  const [currentAssetType, setCurrentAssetType] = useState<'stickers' | 'widgets' | 'backgrounds'>('stickers');
 
   const {
     widgets,
@@ -69,6 +74,29 @@ const HabboHomeV2: React.FC = () => {
     } catch (error) {
       console.error('Erro ao salvar:', error);
     }
+  };
+
+  // Funções para controlar os modais de edição
+  const handleOpenAssetsModal = (type: 'stickers' | 'widgets' | 'backgrounds') => {
+    setCurrentAssetType(type);
+    setShowAssetsModal(true);
+  };
+
+  const handleAssetSelect = (asset: any) => {
+    console.log('🎯 Asset selecionado:', asset);
+    
+    if (asset.type === 'background') {
+      // Para backgrounds, usar o callback existente
+      handleBackgroundChange('cover', asset.src);
+    } else if (asset.type === 'sticker') {
+      // Para stickers, usar o callback existente
+      handleStickerAdd(asset.id, asset.src, asset.category);
+    } else if (asset.type === 'widget') {
+      // Para widgets, usar o callback existente
+      addWidget(asset.id);
+    }
+    
+    setShowAssetsModal(false);
   };
 
   // Mobile dock items
@@ -182,20 +210,6 @@ const HabboHomeV2: React.FC = () => {
       backgroundImage: 'url(/assets/bghabbohub.png)',
       backgroundRepeat: 'repeat'
     }}>
-      {/* Enhanced Toolbar - Desktop only */}
-      {!isMobile && (
-        <div className="fixed top-0 left-0 right-0 z-50 p-4">
-          <EnhancedHomeToolbar
-            isEditMode={isEditMode}
-            isOwner={isOwner}
-            onToggleEditMode={() => setIsEditMode(!isEditMode)}
-            onSave={handleSave}
-            onBackgroundChange={handleBackgroundChange}
-            onStickerSelect={handleStickerAdd}
-            onWidgetAdd={addWidget}
-          />
-        </div>
-      )}
 
 
       <div className={`p-4 ${isMobile ? 'pb-24' : ''}`}>
@@ -206,26 +220,6 @@ const HabboHomeV2: React.FC = () => {
             </CardTitle>
           </CardHeader>
         </Card>
-
-        {/* Edit button for owner when not in edit mode - Position between banner and home */}
-        {isOwner && !isEditMode && (
-          <div className="flex justify-center mb-6">
-            <button
-              onClick={() => setIsEditMode(true)}
-              className="group relative overflow-hidden rounded-lg transition-all duration-300 hover:scale-110 shadow-lg bg-yellow-500 hover:bg-yellow-600 border-2 border-black cursor-pointer z-20"
-              style={{
-                width: '48px',
-                height: '48px',
-                backgroundImage: `url('https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home-assets/editinghome.png')`,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-                imageRendering: 'pixelated'
-              }}
-              title="Entrar no Modo de Edição"
-            />
-          </div>
-        )}
 
         <div className="relative">
           <HomeCanvas
@@ -240,9 +234,24 @@ const HabboHomeV2: React.FC = () => {
             onStickerPositionChange={updateStickerPosition}
             onStickerRemove={removeSticker}
             onWidgetRemove={removeWidget}
+            onOpenAssetsModal={handleOpenAssetsModal}
+            onToggleEditMode={() => setIsEditMode(!isEditMode)}
+            onSave={handleSave}
+            onBackgroundChange={handleBackgroundChange}
+            onStickerAdd={handleStickerAdd}
+            onWidgetAdd={addWidget}
           />
         </div>
       </div>
+
+      {/* Modal de Assets das Hub Homes */}
+      {showAssetsModal && (
+        <HubHomeAssets
+          type={currentAssetType}
+          onSelect={handleAssetSelect}
+          onClose={() => setShowAssetsModal(false)}
+        />
+      )}
     </div>
   );
 

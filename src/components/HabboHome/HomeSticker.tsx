@@ -204,17 +204,20 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         }}
       />
       
+      {/* Botão de Remoção - Sempre visível em modo de edição */}
+      {isEditMode && isOwner && (
+        <button
+          onClick={handleRemove}
+          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg z-10 border-2 border-white"
+          title="Remover Sticker"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Controles de escala e rotação - Apenas quando selecionado */}
       {isEditMode && isOwner && isSelected && (
         <>
-          {/* Botão X - Canto superior direito */}
-          <button
-            onClick={handleRemove}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg z-10"
-            title="Remover"
-          >
-            ×
-          </button>
-
           {/* Controles de escala - Canto superior esquerdo */}
           <div className="absolute -top-2 -left-2 flex gap-1">
             <button
