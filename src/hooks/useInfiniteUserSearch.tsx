@@ -15,11 +15,15 @@ export const useInfiniteUserSearch = (options: UseInfiniteUserSearchOptions = {}
       console.log(`🔍 [useInfiniteUserSearch] Loading page ${pageParam}`);
       
       try {
-        const { data, error } = await supabase.functions.invoke('habbo-official-ticker', {
+        const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
           body: { 
-            hotel: 'br',
-            limit,
-            offset: pageParam * limit
+            endpoint: 'feed',
+            action: 'general',
+            params: { 
+              hotel: 'br',
+              limit,
+              offset: pageParam * limit
+            }
           }
         });
 
@@ -33,12 +37,12 @@ export const useInfiniteUserSearch = (options: UseInfiniteUserSearchOptions = {}
           throw new Error(data.error);
         }
 
-        console.log(`✅ [useInfiniteUserSearch] Loaded ${data.activities?.length || 0} users for page ${pageParam}`);
+        console.log(`✅ [useInfiniteUserSearch] Loaded ${data.feed?.length || 0} users for page ${pageParam}`);
         
         return {
-          users: data.activities || [],
-          nextPage: (data.activities?.length === limit) ? pageParam + 1 : undefined,
-          hasMore: (data.activities?.length === limit)
+          users: data.feed || [],
+          nextPage: (data.feed?.length === limit) ? pageParam + 1 : undefined,
+          hasMore: (data.feed?.length === limit)
         };
       } catch (error: any) {
         console.error('❌ [useInfiniteUserSearch] Fetch failed:', error);

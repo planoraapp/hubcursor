@@ -41,7 +41,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
     error: emotionError 
   } = useHabboEmotionClothing(limit, category, gender);
 
-  // Terceira prioridade: Edge Function unificado
+  // Terceira prioridade: API Unificada
   const { 
     data: unifiedItems = [], 
     isLoading: unifiedLoading,
@@ -49,9 +49,13 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
   } = useQuery({
     queryKey: ['unified-clothing', { limit, category, gender, search }],
     queryFn: async () => {
-      console.log('🌐 [UnifiedClothing] Calling unified-clothing-api edge function');
-      const { data, error } = await supabase.functions.invoke('unified-clothing-api', {
-        body: { limit, category, gender, search }
+      console.log('🌐 [UnifiedClothing] Calling habbo-unified-api edge function');
+      const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
+        body: { 
+          endpoint: 'clothing',
+          action: 'search',
+          params: { limit, category, gender, search }
+        }
       });
 
       if (error) {
@@ -59,8 +63,8 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
         throw error;
       }
 
-      console.log(`✅ [UnifiedClothing] Edge function returned ${data?.data?.length || 0} items`);
-      return data?.data || [];
+      console.log(`✅ [UnifiedClothing] Edge function returned ${data?.clothing?.length || 0} items`);
+      return data?.clothing || [];
     },
     enabled: flashAssets.length === 0 && habboEmotionItems.length === 0,
     staleTime: 10 * 60 * 1000,

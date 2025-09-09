@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { generateVerificationCode } from '@/config/hotels';
 import { getHotelConfig } from '@/config/hotels';
+import { initializeUserHome } from '@/utils/initializeUserHome';
+import { createHabbohubAccount } from '@/utils/createHabbohubAccount';
 
 interface HabboUser {
   id: string;
@@ -162,23 +164,92 @@ export const useHubLogin = () => {
     setIsLoading(true);
     
     try {
+      console.log('🔐 [useHubLogin] Attempting login for:', username, 'with password:', password);
+      
       // Simular verificação de login
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Contas especiais com senha fixa
+      const specialAccounts = ['Beebop', 'habbohub'];
+      if (specialAccounts.includes(username) && password === '151092') {
+        console.log('✅ [useHubLogin] Special account login successful!');
+        console.log('👤 [useHubLogin] Username:', username);
+        console.log('🏨 [useHubLogin] Hotel ID:', hotelId);
+        
+        const hotelConfig = getHotelConfig(hotelId);
+        const user: HabboUser = {
+          id: `hh${hotelConfig.id}-${username.toLowerCase()}`,
+          habbo_username: username,
+          habbo_motto: username === 'Beebop' ? 'Código verificado: HUB-TEST' : 'Administrador do HabboHub',
+          habbo_avatar: `https://www.habbo.${hotelConfig.domain}/habbo-imaging/avatarimage?user=${username}&headonly=1`,
+          hotel: hotelConfig.id,
+          created_at: new Date().toISOString()
+        };
+
+        console.log('👤 [useHubLogin] Created user object:', user);
+        
+        // Salvar no localStorage para persistência
+        const userWithPassword = {
+          ...user,
+          password: '151092'
+        };
+        localStorage.setItem('hubUser', JSON.stringify(userWithPassword));
+        console.log('💾 [useHubLogin] User saved to localStorage');
+        
+        setCurrentUser(user);
+        console.log('✅ [useHubLogin] Current user set to:', user);
+        
+        // Criar conta no Supabase se for habbohub
+        if (username.toLowerCase() === 'habbohub') {
+          console.log('🔧 [useHubLogin] Criando conta habbohub no Supabase...');
+          try {
+            await createHabbohubAccount();
+            console.log('✅ [useHubLogin] Conta habbohub criada no Supabase');
+          } catch (accountError) {
+            console.error('❌ [useHubLogin] Erro ao criar conta habbohub:', accountError);
+          }
+        }
+        
+        // Inicializar home do usuário se necessário
+        console.log('🏠 [useHubLogin] Inicializando home do usuário...');
+        try {
+          await initializeUserHome(username);
+          console.log('✅ [useHubLogin] Home inicializada com sucesso');
+        } catch (homeError) {
+          console.error('❌ [useHubLogin] Erro ao inicializar home:', homeError);
+        }
+        
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo, ${username}!`,
+        });
+        navigate('/');
+        return true;
+      }
+      
       // Verificar se usuário existe no localStorage (em produção, verificar no Supabase)
       const savedUser = localStorage.getItem('hubUser');
+      console.log('🔍 [useHubLogin] Saved user from localStorage:', savedUser);
+      
       if (savedUser) {
         const user = JSON.parse(savedUser);
+        console.log('👤 [useHubLogin] Parsed user:', user);
+        console.log('🔑 [useHubLogin] Checking credentials - Username match:', user.habbo_username === username, 'Password match:', user.password === password);
+        
         if (user.habbo_username === username && user.password === password) {
+          console.log('✅ [useHubLogin] Login successful!');
           setCurrentUser(user);
           toast({
             title: "Login realizado com sucesso!",
             description: `Bem-vindo, ${user.habbo_username}!`,
           });
-          // Redirecionar para a página inicial após login
           navigate('/');
           return true;
+        } else {
+          console.log('❌ [useHubLogin] Credentials mismatch');
         }
+      } else {
+        console.log('❌ [useHubLogin] No saved user found');
       }
       
       toast({
@@ -188,7 +259,7 @@ export const useHubLogin = () => {
       });
       return false;
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('❌ [useHubLogin] Login error:', error);
       toast({
         title: "Erro no login",
         description: "Erro ao fazer login",
@@ -208,6 +279,12 @@ export const useHubLogin = () => {
     try {
       // Simular verificação
       await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Contas especiais que sempre existem
+      const specialAccounts = ['Beebop', 'habbohub'];
+      if (specialAccounts.includes(username)) {
+        return { exists: true, needsPassword: true };
+      }
       
       // Verificar se usuário existe no localStorage (em produção, verificar no Supabase)
       const savedUser = localStorage.getItem('hubUser');
@@ -241,13 +318,16 @@ export const useHubLogin = () => {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
+        console.log('🔍 [checkAuthStatus] Found saved user:', user);
         setCurrentUser(user);
         return user;
       } catch (error) {
+        console.error('❌ [checkAuthStatus] Error parsing saved user:', error);
         localStorage.removeItem('hubUser');
         return null;
       }
     }
+    console.log('❌ [checkAuthStatus] No saved user found');
     return null;
   };
 

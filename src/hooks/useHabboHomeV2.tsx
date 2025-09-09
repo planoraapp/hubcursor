@@ -128,7 +128,78 @@ export const useHabboHomeV2 = (username: string) => {
 
       if (userError || !userData) {
         console.error('❌ Usuário não encontrado:', userError);
+        
+        // Para usuários especiais como habbohub que existem apenas no localStorage
+        if (username.toLowerCase() === 'habbohub') {
+          console.log('ℹ️ [useHabboHomeV2] habbohub é um usuário especial (simulação)');
+          
+          // Criar dados básicos fictícios
+          const basicHabboInfo: HabboData = {
+            id: 'hhbr-habbohub-user-id-12345', // ID fictício
+            habbo_name: 'habbohub',
+            habbo_id: 'hhbr-habbohub-system',
+            hotel: 'br',
+            motto: 'Sistema HabboHub - Administrador',
+            figure_string: 'hd-180-1.ch-255-66.lg-285-80.sh-290-62.ha-1012-110.hr-831-49',
+            is_online: false,
+            memberSince: '2024'
+          };
+          
+          setHabboData(basicHabboInfo);
+          
+          // Definir como proprietário se o usuário logado for habbohub
+          const currentUserIsOwner = currentUser?.habbo_username?.toLowerCase() === username.toLowerCase();
+          setIsOwner(currentUserIsOwner);
+          
+          // Criar widgets padrão fictícios
+          const defaultWidgets: Widget[] = [
+            {
+              id: 'avatar-habbohub',
+              widget_type: 'avatar',
+              x: 20,
+              y: 20,
+              z_index: 1,
+              width: 520,
+              height: 180,
+              is_visible: true,
+              config: {}
+            },
+            {
+              id: 'guestbook-habbohub',
+              widget_type: 'guestbook',
+              x: 50,
+              y: 220,
+              z_index: 1,
+              width: 420,
+              height: 380,
+              is_visible: true,
+              config: {}
+            }
+          ];
+          
+          setWidgets(defaultWidgets);
+          setBackground({ background_type: 'color', background_value: '#c7d2dc' });
+          setGuestbook([
+            {
+              id: 'welcome-habbohub',
+              home_owner_user_id: 'hhbr-habbohub-user-id-12345',
+              author_habbo_name: 'HabboHub',
+              message: 'Bem-vindo à conta especial do sistema! 🏠✨',
+              moderation_status: 'approved',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              author_look: '',
+              author_hotel: 'br'
+            }
+          ]);
+          
+          console.log('✅ [useHabboHomeV2] Dados fictícios criados para habbohub');
+          setLoading(false);
+          return;
+        }
+        
         setHabboData(null);
+        setLoading(false);
         return;
       }
 

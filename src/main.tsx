@@ -1,7 +1,7 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
 import { UnifiedAuthProvider } from '@/hooks/useUnifiedAuth'
@@ -16,6 +16,7 @@ import Homes from './pages/Homes'
 import Login from './pages/Login'
 import Journal from './pages/Journal'
 import AdminPanel from './pages/AdminPanel'
+import AdminDashboard from './pages/AdminDashboard'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
@@ -27,6 +28,7 @@ import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer'
+import HomeRedirect from './components/HomeRedirect'
 
 const queryClient = new QueryClient()
 
@@ -52,12 +54,21 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/homes",
+    path: "/home",
     element: <Homes />,
   },
   {
-    path: "/homes/:username",
+    path: "/home/:username",
     element: <HabboHomeV2 />,
+  },
+  // Redirect from old /homes routes for backward compatibility
+  {
+    path: "/homes",
+    element: <Navigate to="/home" replace />,
+  },
+  {
+    path: "/homes/:username",
+    element: <HomeRedirect />,
   },
   {
     path: "/enhanced-home/:username",
@@ -74,6 +85,10 @@ const router = createBrowserRouter([
   {
     path: "/admin-panel",
     element: <AdminPanel />,
+  },
+  {
+    path: "/admin",
+    element: <AdminDashboard />,
   },
   {
     path: "/emblemas",

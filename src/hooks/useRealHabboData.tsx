@@ -22,23 +22,29 @@ const fetchRealHabboData = async (): Promise<RealHabboData> => {
   console.log('🌐 [RealHabboData] Fetching real Habbo data...');
   
   try {
-    const { data, error } = await supabase.functions.invoke('get-real-habbo-data');
+    const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
+      body: {
+        endpoint: 'clothing',
+        action: 'search',
+        params: { limit: 1000, category: 'all' }
+      }
+    });
     
     if (error) {
       throw new Error(`Edge Function error: ${error.message}`);
     }
     
-    if (!data?.data) {
+    if (!data?.clothing) {
       throw new Error('No data received from edge function');
     }
     
     console.log('✅ [RealHabboData] Data loaded:', {
-      categories: Object.keys(data.data).length,
-      totalItems: Object.values(data.data).reduce((sum: number, items: any) => sum + items.length, 0),
-      source: data.metadata?.source
+      categories: Object.keys(data.clothing).length,
+      totalItems: Object.values(data.clothing).reduce((sum: number, items: any) => sum + items.length, 0),
+      source: data.source
     });
     
-    return data.data;
+    return data.clothing;
     
   } catch (error) {
     console.error('❌ [RealHabboData] Error:', error);

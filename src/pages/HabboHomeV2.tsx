@@ -86,7 +86,7 @@ const HabboHomeV2: React.FC = () => {
         navigate('/');
         break;
       case 'homes':
-        navigate('/homes');
+        navigate('/home');
         break;
       case 'console':
         navigate('/console');
@@ -118,7 +118,7 @@ const HabboHomeV2: React.FC = () => {
       <MobileLayout
         menuItems={mobileMenuItems}
         onItemClick={handleMobileItemClick}
-        currentPath={`/homes/${username}`}
+        currentPath={`/home/${username}`}
       >
         {loadingContent}
       </MobileLayout>
@@ -161,7 +161,7 @@ const HabboHomeV2: React.FC = () => {
       <MobileLayout
         menuItems={mobileMenuItems}
         onItemClick={handleMobileItemClick}
-        currentPath={`/homes/${username}`}
+        currentPath={`/home/${username}`}
       >
         {errorContent}
       </MobileLayout>

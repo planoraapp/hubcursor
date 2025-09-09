@@ -48,18 +48,34 @@ export const useHabboFurniApi = ({
 
       const startTime = Date.now();
       
-      // Prioridade: habbo-emotion-furnis (aggregator)
+      // Prioridade 1: API unificada (nova)
       let data, error: any;
       try {
-        console.log('🌐 [useHabboFurniApi] Trying habbo-emotion-furnis (primary source)');
-        ({ data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
-          body: searchParams
+        console.log('🌐 [useHabboFurniApi] Trying habbo-unified-api (primary source)');
+        ({ data, error } = await supabase.functions.invoke('habbo-unified-api', {
+          body: {
+            endpoint: 'furni',
+            action: 'search',
+            params: searchParams
+          }
         }));
-      } catch (primaryError) {
-        console.warn('⚠️ [useHabboFurniApi] Primary source failed, falling back to habbo-furni-api');
-        ({ data, error } = await supabase.functions.invoke('habbo-furni-api', {
-          body: searchParams
-        }));
+        
+        // Ajustar formato da resposta da API unificada
+        if (data && data.furni) {
+          data.furnis = data.furni;
+        }
+      } catch (unifiedError) {
+        console.warn('⚠️ [useHabboFurniApi] Unified API failed, trying habbo-emotion-furnis');
+        try {
+          ({ data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
+            body: searchParams
+          }));
+        } catch (emotionError) {
+          console.warn('⚠️ [useHabboFurniApi] Emotion API failed, falling back to habbo-furni-api');
+          ({ data, error } = await supabase.functions.invoke('habbo-furni-api', {
+            body: searchParams
+          }));
+        }
       }
 
       const duration = Date.now() - startTime;
@@ -150,14 +166,37 @@ export const useHabboFurniApi = ({
     try {
       console.log(`🔍 [useHabboFurniApi] Finding item by className: ${targetClassName}`);
       
-      const { data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
-        body: {
-          className: targetClassName,
-          limit: 1,
-          searchTerm: '',
-          category: 'all'
+      // Tentar API unificada primeiro
+      let data, error: any;
+      try {
+        ({ data, error } = await supabase.functions.invoke('habbo-unified-api', {
+          body: {
+            endpoint: 'furni',
+            action: 'search',
+            params: {
+              className: targetClassName,
+              limit: 1,
+              searchTerm: '',
+              category: 'all'
+            }
+          }
+        }));
+        
+        // Ajustar formato da resposta
+        if (data && data.furni) {
+          data.furnis = data.furni;
         }
-      });
+      } catch (unifiedError) {
+        // Fallback para API original
+        ({ data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
+          body: {
+            className: targetClassName,
+            limit: 1,
+            searchTerm: '',
+            category: 'all'
+          }
+        }));
+      }
 
       if (error || !data?.furnis?.[0]) {
         console.log(`❌ [useHabboFurniApi] No item found for className: ${targetClassName}`);

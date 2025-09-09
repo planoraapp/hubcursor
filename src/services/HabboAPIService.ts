@@ -14,12 +14,16 @@ export class HabboAPIService {
     console.log('🚀 [HabboAPIService] Fetching data from HabboAPI.site...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('habbo-market-history', {
+      const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
         body: { 
-          hotel: params.hotel,
-          searchTerm: params.searchTerm,
-          category: params.category === 'all' ? '' : params.category,
-          days: params.days
+          endpoint: 'market',
+          action: 'history',
+          params: { 
+            hotel: params.hotel,
+            searchTerm: params.searchTerm,
+            category: params.category === 'all' ? '' : params.category,
+            days: params.days
+          }
         }
       });
       

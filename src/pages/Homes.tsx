@@ -12,7 +12,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useHubLogin } from '@/hooks/useHubLogin';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
-import { HomePreviewCard } from '@/components/HomePreviewCard';
+import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
+import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
+import { HomesGrid } from '@/components/HomesGrid';
 
 interface HabboUser {
   id: string;
@@ -30,6 +32,8 @@ const Homes: React.FC = () => {
   const { toast } = useToast();
   const { currentUser, isLoggedIn } = useHubLogin();
   const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
+  const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
+  const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,6 +100,12 @@ const Homes: React.FC = () => {
 
   const filteredUsers = users.filter((user) => user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  const handleHomeClick = (userId: string, habboName?: string) => {
+    if (habboName) {
+      navigate(`/home/${habboName}`);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -115,7 +125,7 @@ const Homes: React.FC = () => {
                     style={{
                       textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
                     }}>
-                  🏠 Habbo Homes
+                  🏠 Habbo Home
                 </h1>
                 <p className="text-lg text-white/90 volter-font drop-shadow">
                   Explore as homes dos usuários do HabboHub
@@ -125,7 +135,7 @@ const Homes: React.FC = () => {
                 <div className="mt-4">
                   {isLoggedIn && currentUser ? (
                     <Button 
-                      onClick={() => navigate(`/homes/${currentUser.habbo_username}`)}
+                      onClick={() => navigate(`/home/${currentUser.habbo_username}`)}
                       className="habbo-button-green volter-font px-6 py-2"
                     >
                       <UserCheck className="w-4 h-4 mr-2" />
@@ -176,37 +186,31 @@ const Homes: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Seção de Últimas Homes Editadas */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white mb-4 volter-font text-center"
-                    style={{
-                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                    }}>
-                  🎨 Últimas Homes Editadas
-                </h2>
-                
-                {loadingLatest ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin w-8 h-8 border-4 border-white/20 border-t-white rounded-full"></div>
-                    <span className="ml-3 text-white volter-font">Carregando homes...</span>
-                  </div>
-                ) : latestHomes && latestHomes.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                    {latestHomes.map((home) => (
-                      <HomePreviewCard key={home.user_id} home={home} />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
-                    <CardContent className="p-6 text-center">
-                      <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 volter-font">
-                        Ainda não há homes editadas recentemente
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              {/* Grids de Homes */}
+              <HomesGrid
+                title="🎨 Últimas Modificadas"
+                homes={latestHomes || []}
+                isLoading={loadingLatest}
+                error={null}
+                onHomeClick={handleHomeClick}
+              />
+
+              <HomesGrid
+                title="⭐ Maiores Avaliações"
+                homes={topRatedHomes || []}
+                isLoading={loadingTopRated}
+                error={null}
+                onHomeClick={handleHomeClick}
+              />
+
+              <HomesGrid
+                title="👥 Mais Visitadas"
+                homes={mostVisitedHomes || []}
+                isLoading={loadingMostVisited}
+                error={null}
+                showVisits={true}
+                onHomeClick={handleHomeClick}
+              />
 
               {searchInitiated && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -266,7 +270,7 @@ const Homes: React.FC = () => {
                         </div>
                         
                         <Button 
-                          onClick={() => navigate(`/homes/${user.habbo_name}`)}
+                          onClick={() => navigate(`/home/${user.habbo_name}`)}
                           className="w-full habbo-button-blue volter-font"
                         >
                           <Home className="w-4 h-4 mr-2" />
