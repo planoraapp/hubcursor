@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 interface HomeData {
   user_id: string;
   habbo_name?: string;
+  hotel?: string;
   updated_at: string;
   background_type?: string;
   background_value?: string;
@@ -20,7 +21,7 @@ interface HomesGridProps {
   isLoading: boolean;
   error: any;
   showVisits?: boolean;
-  onHomeClick: (userId: string, habboName?: string) => void;
+  onHomeClick: (userId: string, habboName?: string, hotel?: string) => void;
 }
 
 export const HomesGrid: React.FC<HomesGridProps> = ({

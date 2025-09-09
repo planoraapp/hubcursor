@@ -10,7 +10,7 @@ import { Search, User, Home, Calendar, MapPin, Star, ExternalLink, UserCheck } f
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useHubLogin } from '@/hooks/useHubLogin';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
 import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
@@ -30,7 +30,7 @@ interface HabboUser {
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentUser, isLoggedIn } = useHubLogin();
+  const { habboAccount, isLoggedIn } = useUnifiedAuth();
   const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
   const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
   const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
@@ -100,9 +100,11 @@ const Homes: React.FC = () => {
 
   const filteredUsers = users.filter((user) => user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const handleHomeClick = (userId: string, habboName?: string) => {
+  const handleHomeClick = (userId: string, habboName?: string, hotel?: string) => {
     if (habboName) {
-      navigate(`/home/${habboName}`);
+      // Incluir hotel na URL para evitar conflitos
+      const hotelParam = hotel ? `?hotel=${hotel}` : '';
+      navigate(`/home/${habboName}${hotelParam}`);
     }
   };
 
@@ -133,9 +135,9 @@ const Homes: React.FC = () => {
                 
                 {/* Botão Minha Home */}
                 <div className="mt-4">
-                  {isLoggedIn && currentUser ? (
+                  {isLoggedIn && habboAccount ? (
                     <Button 
-                      onClick={() => navigate(`/home/${currentUser.habbo_username}`)}
+                      onClick={() => navigate(`/home/${habboAccount.habbo_name}`)}
                       className="habbo-button-green volter-font px-6 py-2"
                     >
                       <UserCheck className="w-4 h-4 mr-2" />

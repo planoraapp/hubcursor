@@ -5,11 +5,11 @@ import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from 'lucide-react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
-  const { habboAccount } = useSimpleAuth();
+  const { habboAccount } = useUnifiedAuth();
   
   const displayName = username || habboAccount?.habbo_name || 'Usuário';
 

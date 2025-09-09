@@ -1,14 +1,16 @@
 import React from 'react';
+import { HotelTag } from './HotelTag';
 
 interface HomeCardProps {
   home: {
     user_id: string;
     habbo_name?: string;
+    hotel?: string;
     updated_at: string;
     background_type?: string;
     background_value?: string;
   };
-  onHomeClick: (userId: string, habboName?: string) => void;
+  onHomeClick: (userId: string, habboName?: string, hotel?: string) => void;
 }
 
 export const HomeCard: React.FC<HomeCardProps> = ({ 
@@ -16,7 +18,7 @@ export const HomeCard: React.FC<HomeCardProps> = ({
   onHomeClick
 }) => {
   const handleClick = () => {
-    onHomeClick(home.user_id, home.habbo_name);
+    onHomeClick(home.user_id, home.habbo_name, home.hotel);
   };
 
   // Gerar URL do background da casa baseado no tipo
@@ -97,14 +99,23 @@ export const HomeCard: React.FC<HomeCardProps> = ({
           )}
         </div>
         
-        {/* Nome do usuário sobreposto */}
-        <div 
-          className="absolute top-2 left-2 text-white text-sm px-2 py-1"
-          style={{
-            textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-          }}
-        >
-          {home.habbo_name || 'Usuário'}
+        {/* Nome do usuário e tag do hotel sobrepostos */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <div 
+            className="text-white text-sm px-2 py-1"
+            style={{
+              textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+            }}
+          >
+            {home.habbo_name || 'Usuário'}
+          </div>
+          {home.hotel && (
+            <HotelTag 
+              hotelId={home.hotel} 
+              size="sm" 
+              className="w-fit"
+            />
+          )}
         </div>
       </div>
     </div>

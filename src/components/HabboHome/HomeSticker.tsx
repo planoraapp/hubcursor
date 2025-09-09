@@ -1,6 +1,5 @@
 
 import React, { useState, useRef, useCallback } from 'react';
-import { RotationControl } from './RotationControl';
 
 interface Sticker {
   id: string;
@@ -21,6 +20,7 @@ interface HomeStickerProps {
   onPositionChange: (stickerId: string, x: number, y: number) => void;
   onRemove: (stickerId: string) => void;
   onStickerUpdate?: (stickerId: string, updates: Partial<Sticker>) => void;
+  onSelectionChange?: (stickerId: string | null) => void;
 }
 
 export const HomeSticker: React.FC<HomeStickerProps> = ({
@@ -29,21 +29,24 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
   isOwner,
   onPositionChange,
   onRemove,
-  onStickerUpdate
+  onStickerUpdate,
+  onSelectionChange
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: sticker.x, elementY: sticker.y });
   const [isSelected, setIsSelected] = useState(false);
-  const [localRotation, setLocalRotation] = useState(sticker.rotation);
-  const [localScale, setLocalScale] = useState(sticker.scale);
   const stickerRef = useRef<HTMLDivElement>(null);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
     e.preventDefault();
     e.stopPropagation();
-    setIsSelected(prev => !prev);
-  }, [isEditMode, isOwner]);
+    const newSelected = !isSelected;
+    setIsSelected(newSelected);
+    if (onSelectionChange) {
+      onSelectionChange(newSelected ? sticker.id : null);
+    }
+  }, [isEditMode, isOwner, isSelected, onSelectionChange, sticker.id]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
@@ -68,29 +71,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     onRemove(sticker.id);
   }, [sticker.id, onRemove]);
 
-  const handleRotationChange = useCallback((rotation: number) => {
-    setLocalRotation(rotation);
-    if (onStickerUpdate) {
-      onStickerUpdate(sticker.id, { rotation });
-    }
-  }, [sticker.id, onStickerUpdate]);
 
-  const handleScaleChange = useCallback((scale: number) => {
-    setLocalScale(scale);
-    if (onStickerUpdate) {
-      onStickerUpdate(sticker.id, { scale });
-    }
-  }, [sticker.id, onStickerUpdate]);
-
-  const handleScaleUp = useCallback(() => {
-    const newScale = Math.min(3, localScale + 0.1);
-    handleScaleChange(newScale);
-  }, [localScale, handleScaleChange]);
-
-  const handleScaleDown = useCallback(() => {
-    const newScale = Math.max(0.3, localScale - 0.1);
-    handleScaleChange(newScale);
-  }, [localScale, handleScaleChange]);
 
   // Handle click outside to deselect
   React.useEffect(() => {
@@ -121,10 +102,16 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         animationId = requestAnimationFrame(() => {
           const deltaX = e.clientX - dragStart.x;
           const deltaY = e.clientY - dragStart.y;
-          const canvasWidth = 768; // Use mobile width for consistency
-          const canvasHeight = 1280; // Use mobile height for consistency
-          const newX = Math.max(0, Math.min(canvasWidth - 100, dragStart.elementX + deltaX));
-          const newY = Math.max(0, Math.min(canvasHeight - 100, dragStart.elementY + deltaY));
+          
+          // Obter as dimensões reais do canvas
+          const canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
+          const canvasWidth = canvasElement ? canvasElement.offsetWidth : 768;
+          const canvasHeight = canvasElement ? canvasElement.offsetHeight : 1280;
+          
+          // Permitir movimento por todo o canvas, considerando o tamanho do sticker
+          const stickerSize = 100; // Tamanho aproximado do sticker
+          const newX = Math.max(0, Math.min(canvasWidth - stickerSize, dragStart.elementX + deltaX));
+          const newY = Math.max(0, Math.min(canvasHeight - stickerSize, dragStart.elementY + deltaY));
           
           onPositionChange(sticker.id, newX, newY);
         });
@@ -159,8 +146,6 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     left: sticker.x,
     top: sticker.y,
     zIndex: isDragging ? 9999 : sticker.z_index,
-    transform: `scale(${isDragging ? Math.abs(localScale) * 1.1 : localScale}) rotate(${localRotation}deg)`,
-    transformOrigin: 'center',
     transition: isDragging ? 'none' : 'transform 0.2s ease-out',
     opacity: isDragging ? 0.8 : 1
   };
@@ -215,35 +200,6 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         </button>
       )}
 
-      {/* Controles de escala e rotação - Apenas quando selecionado */}
-      {isEditMode && isOwner && isSelected && (
-        <>
-          {/* Controles de escala - Canto superior esquerdo */}
-          <div className="absolute -top-2 -left-2 flex gap-1">
-            <button
-              onClick={handleScaleDown}
-              className="w-5 h-5 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg"
-              title="Diminuir"
-            >
-              −
-            </button>
-            <button
-              onClick={handleScaleUp}
-              className="w-5 h-5 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors flex items-center justify-center shadow-lg"
-              title="Aumentar"
-            >
-              +
-            </button>
-          </div>
-
-          {/* Controle de Rotação 360° */}
-          <RotationControl
-            rotation={localRotation}
-            onRotationChange={handleRotationChange}
-            className="opacity-80 hover:opacity-100 transition-opacity"
-          />
-        </>
-      )}
 
       {isDragging && (
         <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded pointer-events-none" />

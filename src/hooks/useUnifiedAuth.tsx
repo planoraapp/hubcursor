@@ -17,9 +17,21 @@ interface HabboAccount {
   created_at: string;
 }
 
+interface CurrentUser {
+  id: string;
+  habbo_name: string;
+  habbo_id: string;
+  hotel: string;
+  is_admin: boolean;
+  motto?: string;
+  figure_string?: string;
+  is_online?: boolean;
+}
+
 interface UnifiedAuthContextType {
   user: User | null;
   habboAccount: HabboAccount | null;
+  currentUser: CurrentUser | null;
   isLoggedIn: boolean;
   loading: boolean;
   loginWithPassword: (habboName: string, password: string) => Promise<any>;
@@ -37,6 +49,18 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   const isLoggedIn = !!user && !!habboAccount;
+  
+  // Criar currentUser padronizado
+  const currentUser: CurrentUser | null = habboAccount ? {
+    id: habboAccount.id,
+    habbo_name: habboAccount.habbo_name,
+    habbo_id: habboAccount.habbo_id,
+    hotel: habboAccount.hotel,
+    is_admin: habboAccount.is_admin,
+    motto: habboAccount.motto,
+    figure_string: habboAccount.figure_string,
+    is_online: habboAccount.is_online
+  } : null;
 
   useEffect(() => {
     console.log('🚀 [useUnifiedAuth] Getting initial session...');
@@ -206,6 +230,7 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         habboAccount,
+        currentUser,
         isLoggedIn,
         loading,
         loginWithPassword,

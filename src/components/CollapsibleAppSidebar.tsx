@@ -13,41 +13,24 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useHubLogin } from '@/hooks/useHubLogin';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, User, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
-  const { currentUser, isLoggedIn, logout } = useHubLogin();
+  const { habboAccount, isLoggedIn, logout } = useUnifiedAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
-  // Verificar se o usuário é admin
-  const isAdmin = currentUser && currentUser.habbo_username && (
-    currentUser.habbo_username.toLowerCase() === 'beebop' ||
-    currentUser.habbo_username.toLowerCase() === 'habbohub' ||
-    currentUser.habbo_username === 'Beebop' ||
-    currentUser.habbo_username === 'habbohub' ||
-    currentUser.habbo_username === 'Habbohub' ||
-    currentUser.habbo_username === 'HABHOHUB'
-  );
+  // Verificar se o usuário é admin usando o campo is_admin do banco
+  const isAdmin = habboAccount?.is_admin === true;
 
   // Debug logs
-  console.log('🔍 [CollapsibleAppSidebar] Current user:', currentUser);
-  console.log('🔍 [CollapsibleAppSidebar] Username:', currentUser?.habbo_username);
-  console.log('🔍 [CollapsibleAppSidebar] Username lowercase:', currentUser?.habbo_username?.toLowerCase());
-  console.log('🔍 [CollapsibleAppSidebar] Is admin:', isAdmin);
-  
-  // Teste de comparação
-  if (currentUser?.habbo_username) {
-    console.log('🧪 [CollapsibleAppSidebar] Testing comparisons:');
-    console.log('  - habbohub === habbohub:', currentUser.habbo_username === 'habbohub');
-    console.log('  - habbohub === Habbohub:', currentUser.habbo_username === 'Habbohub');
-    console.log('  - lowercase === habbohub:', currentUser.habbo_username.toLowerCase() === 'habbohub');
-    console.log('  - includes habbohub:', ['Beebop', 'habbohub'].includes(currentUser.habbo_username));
-  }
+  console.log('🔍 [CollapsibleAppSidebar] Current user:', habboAccount);
+  console.log('🔍 [CollapsibleAppSidebar] Username:', habboAccount?.habbo_name);
+  console.log('🔍 [CollapsibleAppSidebar] Is admin (from DB):', isAdmin);
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
@@ -190,12 +173,12 @@ export function CollapsibleAppSidebar() {
 
         <SidebarFooter className="p-4 border-t-2 border-black">
           <div className="space-y-2">
-                         {isLoggedIn && currentUser ? (
+                         {isLoggedIn && habboAccount ? (
                <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
                  <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-2`}>
                    <img
-                     src={currentUser.habbo_avatar || `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`}
-                     alt={`Avatar de ${currentUser.habbo_username}`}
+                    src={habboAccount.figure_string ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
+                    alt={`Avatar de ${habboAccount.habbo_name}`}
                      className={`w-14 h-14`}
                      style={{ 
                        imageRendering: 'pixelated',
@@ -203,7 +186,7 @@ export function CollapsibleAppSidebar() {
                      }}
                      onError={(e) => {
                        const target = e.target as HTMLImageElement;
-                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${currentUser.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`;
+                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
                      }}
                    />
                     {!isCollapsed && (
@@ -214,7 +197,7 @@ export function CollapsibleAppSidebar() {
                             textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
                           }}
                         >
-                          {currentUser.habbo_username}
+                          {habboAccount.habbo_name}
                         </span>
                         {isAdmin && (
                           <Badge variant="secondary" className="text-xs w-fit">

@@ -196,10 +196,7 @@
   border: 2px dashed rgba(59, 130, 246, 0.5) !important;
 }
 
-.edit-mode-widget:hover {
-  border-color: rgba(59, 130, 246, 0.8) !important;
-  transform: scale(1.02);
-}
+/* Removido efeito de hover que interferia no arrasto */
 
 /* Sticker Animation */
 .sticker-animate {
@@ -284,9 +281,7 @@
   transition: opacity 0.2s ease;
 }
 
-.edit-mode-widget:hover .widget-controls {
-  opacity: 1;
-}
+/* Removido efeito de hover dos controles de widget */
 
 /* Sticker Grid */
 .sticker-grid {

@@ -46,6 +46,12 @@ interface HomeWidgetProps {
   isOwner: boolean;
   onRemove: (widgetId: string) => void;
   onPositionChange: (widgetId: string, x: number, y: number) => void;
+  onGuestbookSubmit?: (message: string) => Promise<void>;
+  onGuestbookDelete?: (entryId: string) => Promise<void>;
+  currentUser?: {
+    id: string;
+    habbo_name: string;
+  } | null;
 }
 
 // Helper function to get country flag PNG from hotel
@@ -71,12 +77,80 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   isEditMode,
   isOwner,
   onRemove,
-  onPositionChange
+  onPositionChange,
+  onGuestbookSubmit,
+  onGuestbookDelete,
+  currentUser
 }) => {
   const [isDragging, setIsDragging] = React.useState(false);
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0, elementX: widget.x, elementY: widget.y });
   const [newMessage, setNewMessage] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const isMobile = useIsMobile();
+
+  const handleGuestbookSubmit = async () => {
+    console.log('🔍 [HomeWidget] handleGuestbookSubmit chamado:', {
+      hasOnGuestbookSubmit: !!onGuestbookSubmit,
+      message: newMessage,
+      messageTrimmed: newMessage.trim(),
+      currentUser,
+      isOwner
+    });
+    
+    if (!onGuestbookSubmit || !newMessage.trim()) {
+      console.log('❌ [HomeWidget] Condições não atendidas para envio');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      console.log('📤 [HomeWidget] Enviando mensagem:', newMessage.trim());
+      await onGuestbookSubmit(newMessage.trim());
+      console.log('✅ [HomeWidget] Mensagem enviada com sucesso');
+      setNewMessage('');
+    } catch (error) {
+      console.error('❌ [HomeWidget] Erro ao enviar mensagem:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGuestbookDelete = async (entryId: string) => {
+    console.log('🗑️ [HomeWidget] handleGuestbookDelete chamado:', {
+      entryId,
+      hasOnGuestbookDelete: !!onGuestbookDelete,
+      currentUser: currentUser?.habbo_name,
+      isOwner,
+      onGuestbookDeleteType: typeof onGuestbookDelete
+    });
+    
+    if (!onGuestbookDelete) {
+      console.error('❌ [HomeWidget] onGuestbookDelete não está definido');
+      alert('Erro: Função de exclusão não disponível');
+      return;
+    }
+    
+    try {
+      console.log('🗑️ [HomeWidget] Chamando onGuestbookDelete...');
+      const result = await onGuestbookDelete(entryId);
+      console.log('✅ [HomeWidget] Mensagem deletada com sucesso:', result);
+    } catch (error) {
+      console.error('❌ [HomeWidget] Erro ao deletar mensagem:', error);
+      alert(`Erro ao deletar mensagem: ${error.message || error}`);
+    }
+  };
+
+  const canDeleteEntry = (entry: GuestbookEntry) => {
+    console.log('🔍 [HomeWidget] canDeleteEntry chamado:', {
+      entry: entry.author_habbo_name,
+      currentUser: currentUser?.habbo_name,
+      isOwner,
+      canDelete: !currentUser ? false : (isOwner || entry.author_habbo_name === currentUser.habbo_name)
+    });
+    
+    if (!currentUser) return false;
+    return isOwner || entry.author_habbo_name === currentUser.habbo_name;
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
@@ -127,6 +201,16 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   }, [isDragging, dragStart, onPositionChange, widget]);
 
   const renderWidgetContent = () => {
+    // Debug: Verificar estado do usuário
+    console.log('🔍 [HomeWidget] Debug currentUser:', { 
+      currentUser, 
+      isOwner, 
+      hasCurrentUser: !!currentUser,
+      currentUserType: typeof currentUser,
+      currentUserHabboName: currentUser?.habbo_name,
+      widgetType: widget.widget_type
+    });
+    
     switch (widget.widget_type) {
       case 'avatar':
       case 'usercard':
@@ -205,78 +289,146 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
 
       case 'guestbook':
         return (
-          <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-            <h4 className="font-volter font-bold text-black border-b pb-2">
-              📝 Livro de Visitas
-            </h4>
+          <div className="flex flex-col h-full">
+            {/* Cabeçalho fixo */}
+            <div className="p-4 border-b flex-shrink-0">
+              <h4 className="font-volter font-bold text-black">
+                📝 Livro de Visitas
+              </h4>
+            </div>
             
-            {guestbook.length === 0 ? (
-              <div className="text-center text-gray-500 py-4">
-                <p className="font-volter">Seja o primeiro a deixar uma mensagem!</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {guestbook.slice(0, 5).map((entry) => (
-                  <div key={entry.id} className="bg-gray-50 rounded p-2 border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <img
-                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s&headonly=1`}
-                        alt={entry.author_habbo_name}
-                        className="w-6 h-6 rounded object-contain"
-                        style={{ imageRendering: 'pixelated' }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`;
-                        }}
-                      />
-                      <a
-                        href={`/homes/${entry.author_habbo_name}`}
-                        className="font-volter text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors flex-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {entry.author_habbo_name}
-                      </a>
-                      <span className="text-xs text-gray-500">
-                        {new Date(entry.created_at).toLocaleDateString('pt-BR')}
-                      </span>
-                      {(isOwner || entry.author_habbo_name === habboData?.habbo_name) && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // TODO: Implement delete comment
-                          }}
-                          className="text-red-500 hover:text-red-700 text-xs px-1"
-                          title="Excluir comentário"
-                        >
-                          ×
-                        </button>
-                      )}
+            {/* Área de mensagens com scroll */}
+            <div className="flex-1 p-4 overflow-y-auto min-h-0">
+              {guestbook.length === 0 ? (
+                <div className="text-center text-gray-500 py-4">
+                  <p className="font-volter">Seja o primeiro a deixar uma mensagem!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Ordenar mensagens cronologicamente (mais recentes primeiro) */}
+                  {guestbook
+                    .slice()
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .slice(0, 10)
+                    .map((entry) => (
+                    <div key={entry.id} className="py-2">
+                      <div className="flex gap-3">
+                        {/* Avatar à esquerda */}
+                        <div className="flex-shrink-0">
+                            <img
+                              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=m&headonly=1`}
+                              alt={entry.author_habbo_name}
+                              className="w-12 h-12 rounded object-contain"
+                              style={{ imageRendering: 'pixelated' }}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=m`;
+                              }}
+                            />
+                        </div>
+                        
+                        {/* Conteúdo à direita */}
+                        <div className="flex-1 min-w-0">
+                          {/* Nome clicável e data */}
+                          <div className="flex items-center justify-between mb-1">
+                            <a
+                              href={`/homes/${entry.author_habbo_name}`}
+                              className="font-volter text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {entry.author_habbo_name}
+                            </a>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">
+                                {new Date(entry.created_at).toLocaleDateString('pt-BR')}
+                              </span>
+                                {canDeleteEntry(entry) && (
+                                  <button
+                                    onClick={(e) => {
+                                      console.log('🖱️ [HomeWidget] Botão de exclusão clicado:', {
+                                        entryId: entry.id,
+                                        entryAuthor: entry.author_habbo_name,
+                                        currentUser: currentUser?.habbo_name,
+                                        isOwner,
+                                        canDelete: canDeleteEntry(entry)
+                                      });
+                                      e.stopPropagation();
+                                      if (window.confirm('Tem certeza que deseja excluir este recado?\n\nEsta ação não pode ser desfeita.')) {
+                                        console.log('✅ [HomeWidget] Usuário confirmou exclusão, chamando handleGuestbookDelete');
+                                        try {
+                                          handleGuestbookDelete(entry.id);
+                                        } catch (error) {
+                                          console.error('❌ [HomeWidget] Erro ao chamar handleGuestbookDelete:', error);
+                                        }
+                                      } else {
+                                        console.log('❌ [HomeWidget] Usuário cancelou exclusão');
+                                      }
+                                    }}
+                                    className="text-red-500 hover:text-red-700 text-xs px-1 rounded hover:bg-red-50"
+                                    title="Excluir comentário"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                            </div>
+                          </div>
+                          
+                          {/* Mensagem */}
+                          <p className="text-sm text-gray-700 font-volter leading-relaxed">
+                            {entry.message}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700 ml-10">{entry.message}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Área para nova mensagem - apenas se não for o dono */}
-            {!isOwner && (
-              <div className="border-t pt-3">
-                <Textarea
-                  placeholder="Deixe sua mensagem..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  className="text-sm resize-none"
-                  rows={2}
-                />
-                <Button 
-                  size="sm" 
-                  className="mt-2 w-full font-volter"
-                  disabled={!newMessage.trim()}
-                >
-                  Enviar Mensagem
-                </Button>
-              </div>
-            )}
+            {/* Área de mensagem fixa na parte inferior */}
+            <div className="border-t p-4 flex-shrink-0 bg-white">
+              {/* Área para nova mensagem - para usuários logados (incluindo o dono) */}
+              {currentUser && (
+                <div className="flex gap-2 items-end">
+                  <Textarea
+                    placeholder="Deixe um recado"
+                    value={newMessage}
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      // Auto-scroll para baixo quando o texto cresce
+                      const textarea = e.target;
+                      textarea.style.height = 'auto';
+                      textarea.style.height = textarea.scrollHeight + 'px';
+                    }}
+                    className="text-sm resize-none flex-1 min-h-[40px] max-h-[120px] overflow-y-auto"
+                    rows={1}
+                    disabled={isSubmitting}
+                    style={{ 
+                      height: '40px',
+                      lineHeight: '1.2'
+                    }}
+                  />
+                  <Button 
+                    size="sm" 
+                    className="font-volter h-[40px] w-[40px] p-0 flex items-center justify-center"
+                    disabled={!newMessage.trim() || isSubmitting}
+                    onClick={handleGuestbookSubmit}
+                    title={isSubmitting ? 'Enviando...' : (isOwner ? 'Deixar Recado' : 'Enviar Mensagem')}
+                  >
+                    {isSubmitting ? '⏳' : '📤'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Mensagem para usuários não logados */}
+              {!currentUser && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 font-volter">
+                    Faça login para deixar uma mensagem
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         );
 
@@ -316,21 +468,21 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       style={containerStyle}
       onMouseDown={handleMouseDown}
     >
+      {/* Botão de Remoção - Acima do widget */}
+      {isEditMode && isOwner && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(widget.id);
+          }}
+          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm flex items-center justify-center shadow-lg z-30 border-2 border-white"
+          title="Remover Widget"
+        >
+          ×
+        </button>
+      )}
+
       <Card className="h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black overflow-hidden">
-        {/* Botão de Remoção - Sempre visível em modo de edição para todos os widgets, sobreposto */}
-        {isEditMode && isOwner && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(widget.id);
-            }}
-            className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm flex items-center justify-center shadow-lg z-20 border-2 border-white"
-            title="Remover Widget"
-          >
-            ×
-          </button>
-        )}
-        
         {renderWidgetContent()}
       </Card>
 

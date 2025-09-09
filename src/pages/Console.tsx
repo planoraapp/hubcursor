@@ -5,11 +5,11 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { FunctionalConsole } from '@/components/console/FunctionalConsole';
 import { TestConsole } from '@/components/console/TestConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
-import { useAuth } from '@/hooks/useAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { Button } from '@/components/ui/button';
 
 const Console: React.FC = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, currentUser } = useUnifiedAuth();
 
   const openPopupConsole = () => {
     // Calcular posição centralizada na tela
@@ -57,6 +57,17 @@ const Console: React.FC = () => {
                 <p className="text-white/80 volter-font" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                   Gerencie sua experiência no HabboHub
                 </p>
+                {/* Exemplo de uso do currentUser */}
+                {currentUser && (
+                  <div className="mt-2 p-2 bg-white/10 rounded-lg border border-white/20">
+                    <p className="text-white/90 text-sm volter-font">
+                      👤 Logado como: <strong>{currentUser.habbo_name}</strong>
+                    </p>
+                    <p className="text-white/70 text-xs volter-font">
+                      Hotel: {currentUser.hotel} | Admin: {currentUser.is_admin ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Console funcional com dados reais do Habbo */}
@@ -75,6 +86,90 @@ const Console: React.FC = () => {
                     }}
                   >
                     Abrir Console em Pop-up
+                  </button>
+                </div>
+
+                {/* Botão temporário para limpar guestbook */}
+                <div className="mt-4 flex justify-center gap-4">
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('Tem certeza que deseja limpar todos os comentários do guestbook (incluindo HabboHub)?')) {
+                        try {
+                          console.log('🧹 Limpando guestbook...');
+                          // Usar a edge function diretamente
+                          const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/delete-guestbook-comments', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                            },
+                            body: JSON.stringify({
+                              home_owner_user_id: 'hhbr-habbohub-user-id-12345' // ID da home do habbohub
+                            })
+                          });
+                          
+                          console.log('📡 Resposta da edge function:', response.status, response.statusText);
+                          
+                          if (response.ok) {
+                            const result = await response.json();
+                            console.log('✅ Resultado:', result);
+                            alert('✅ Guestbook limpo com sucesso!');
+                            window.location.reload();
+                          } else {
+                            const error = await response.json();
+                            console.error('❌ Erro da edge function:', error);
+                            alert(`❌ Erro: ${error.error}`);
+                          }
+                        } catch (error) {
+                          console.error('❌ Erro ao limpar guestbook:', error);
+                          alert(`❌ Erro ao limpar guestbook: ${error.message}`);
+                        }
+                      }
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    style={{
+                      textShadow: '1px 1px 0px rgba(0,0,0,0.5)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                      fontSize: '14px'
+                    }}
+                  >
+                    🧹 Limpar Guestbook (Incluindo HabboHub)
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      console.log('🔍 Testando edge function...');
+                      fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/delete-guestbook-comments', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                          home_owner_user_id: 'test'
+                        })
+                      })
+                      .then(response => {
+                        console.log('📡 Status:', response.status);
+                        return response.json();
+                      })
+                      .then(data => {
+                        console.log('📦 Dados:', data);
+                        alert(`Status: ${data.success ? 'OK' : 'Erro'}\nMensagem: ${data.message || data.error}`);
+                      })
+                      .catch(error => {
+                        console.error('❌ Erro:', error);
+                        alert(`Erro: ${error.message}`);
+                      });
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    style={{
+                      textShadow: '1px 1px 0px rgba(0,0,0,0.5)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                      fontSize: '14px'
+                    }}
+                  >
+                    🔍 Testar Edge Function
                   </button>
                 </div>
               </div>

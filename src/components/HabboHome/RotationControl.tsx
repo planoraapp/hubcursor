@@ -62,31 +62,39 @@ export const RotationControl: React.FC<RotationControlProps> = ({
   return (
     <div
       ref={controlRef}
-      className={`absolute w-16 h-16 rounded-full border-2 border-dashed border-blue-400 bg-blue-400/20 ${className}`}
+      className={`absolute ${className}`}
       style={{
         left: '50%',
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
-        cursor: isDragging ? 'grabbing' : 'grab'
+        top: '100%',
+        transform: 'translateX(-50%)',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        marginTop: '8px'
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Rotation handle */}
+      {/* Rotation handle - Botão preso à parte inferior */}
       <div
-        className="absolute w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-md"
+        className="w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
         style={{
-          right: '-6px',
-          top: '50%',
-          transform: `translateY(-50%) rotate(${rotation}deg)`,
-          transformOrigin: `-26px center`
+          transform: `rotate(${rotation}deg)`,
+          transformOrigin: 'center'
         }}
-      />
-      
-      {/* Center dot */}
-      <div className="absolute w-2 h-2 bg-blue-600 rounded-full left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+        title={`Rotação: ${rotation}°`}
+      >
+        {/* Ícone de rotação */}
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="white"
+          className="transform rotate-45"
+        >
+          <path d="M12 2L13.09 8.26L19 7L14.74 12.26L20 13L13.74 19.26L12 20L10.91 13.74L5 15L9.26 9.74L4 9L10.26 2.74L12 2Z"/>
+        </svg>
+      </div>
       
       {/* Rotation value display */}
-      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs font-volter text-white bg-black/80 px-2 py-1 rounded">
+      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs font-volter text-white bg-black/80 px-2 py-1 rounded whitespace-nowrap">
         {rotation}°
       </div>
     </div>

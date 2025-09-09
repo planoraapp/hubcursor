@@ -17,6 +17,7 @@ import Login from './pages/Login'
 import Journal from './pages/Journal'
 import AdminPanel from './pages/AdminPanel'
 import AdminDashboard from './pages/AdminDashboard'
+import { AccountManager } from './pages/AccountManager'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
@@ -89,6 +90,10 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: <AdminDashboard />,
+  },
+  {
+    path: "/admin/accounts",
+    element: <AccountManager />,
   },
   {
     path: "/emblemas",

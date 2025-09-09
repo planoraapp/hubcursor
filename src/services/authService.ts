@@ -1,4 +1,5 @@
 import { getHotelConfig } from '@/config/hotels';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface HabboUser {
   id: string;
@@ -188,31 +189,27 @@ export class AuthService {
     hotelId: string
   ): Promise<{ exists: boolean; needsPassword: boolean }> {
     try {
-      // Usar o sistema Supabase existente
-      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: username,
-          action: 'check-user',
-          hotel: hotelId
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          exists: data.exists || false,
-          needsPassword: data.needsPassword || false
-        };
+      // Usar diretamente o Supabase
+      const { data, error } = await supabase
+        .from('habbo_accounts')
+        .select('habbo_name, is_admin')
+        .ilike('habbo_name', username)
+        .eq('hotel', hotelId)
+        .single();
+
+      if (error) {
+        console.log('🔍 [checkExistingUser] Usuário não encontrado:', username);
+        return { exists: false, needsPassword: false };
       }
 
-      return { exists: false, needsPassword: false };
+      console.log('✅ [checkExistingUser] Usuário encontrado:', data);
+      return { 
+        exists: true, 
+        needsPassword: true // Todos os usuários precisam de senha
+      };
 
     } catch (error) {
-      console.error('Erro ao verificar usuário:', error);
+      console.error('❌ [checkExistingUser] Erro ao verificar usuário:', error);
       return { exists: false, needsPassword: false };
     }
   }

@@ -7,24 +7,20 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useHubLogin } from '@/hooks/useHubLogin';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { HOTELS_CONFIG, getAllHotels } from '@/config/hotels';
-import { HabboUser } from '@/services/authService';
+import { HabboUser, AuthService } from '@/services/authService';
 import { Copy, Check, ArrowLeft } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const {
-    isLoading,
-    currentUser,
-    generateCode,
-    verifyUserWithCode,
-    registerUser,
+    habboAccount,
+    isLoggedIn,
+    loading,
     loginWithPassword,
-    checkExistingUser,
-    checkAuthStatus,
-    createTestAccount
-  } = useHubLogin();
+    logout
+  } = useUnifiedAuth();
   
   // Estados do formulário
   const [username, setUsername] = useState('');
@@ -42,13 +38,23 @@ export const Login: React.FC = () => {
   const [step, setStep] = useState<'username' | 'verification' | 'password'>('username');
   const [activeTab, setActiveTab] = useState<'password' | 'motto'>('password');
 
+  // Função para gerar código de verificação
+  const generateCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  };
+
+  // Função para verificar se é usuário admin (não mais necessária - usar is_admin do DB)
+  // const isAdminUser = (username: string) => {
+  //   const adminUsers = ['beebop', 'habbohub'];
+  //   return adminUsers.includes(username.toLowerCase());
+  // };
+
   // Verificar se já está logado ao carregar a página
   useEffect(() => {
-    const user = checkAuthStatus();
-    if (user) {
+    if (isLoggedIn) {
       navigate('/console');
     }
-  }, [checkAuthStatus, navigate]);
+  }, [isLoggedIn, navigate]);
 
   // Verificar se usuário existe e gerar avatar
   const handleUsernameSubmit = async () => {
@@ -63,7 +69,7 @@ export const Login: React.FC = () => {
     setAvatarUrl(avatarUrl);
 
     // Verificar se usuário já tem conta
-    const userCheck = await checkExistingUser(username, hotelConfig.id);
+    const userCheck = await AuthService.checkExistingUser(username, hotelConfig.id);
     setUserExists(userCheck.exists);
 
     if (userCheck.exists) {
@@ -107,7 +113,8 @@ export const Login: React.FC = () => {
     }
 
     const hotelConfig = HOTELS_CONFIG[selectedHotel];
-    const user = await verifyUserWithCode(username, verificationCode, hotelConfig.id);
+    const result = await AuthService.verifyUserWithCode(username, verificationCode, hotelConfig.id);
+    const user = result.success ? result.user : null;
     
     if (user) {
       setVerifiedUser(user);
@@ -129,7 +136,8 @@ export const Login: React.FC = () => {
       return;
     }
 
-    const success = await registerUser(verifiedUser, password);
+    const result = await AuthService.registerUser(verifiedUser, password);
+    const success = result.success;
     if (success) {
       navigate('/console');
     }
@@ -142,7 +150,7 @@ export const Login: React.FC = () => {
     }
 
     const hotelConfig = HOTELS_CONFIG[selectedHotel];
-    const success = await loginWithPassword(username, password, hotelConfig.id);
+    const success = await loginWithPassword(username, password);
     if (success) {
       navigate('/console');
     }
@@ -181,9 +189,9 @@ export const Login: React.FC = () => {
             className="flex-1 p-8 bg-repeat min-h-screen" 
             style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
-              backgroundRepeat: 'no-repeat',
+              backgroundRepeat: 'repeat',
               backgroundPosition: 'center',
-              backgroundSize: 'cover'
+              backgroundSize: 'auto'
             }}
           >
             <div className="max-w-2xl mx-auto mt-10">
@@ -271,10 +279,10 @@ export const Login: React.FC = () => {
                       
                       <Button
                         onClick={handleUsernameSubmit}
-                        disabled={isLoading || !username}
+                        disabled={loading || !username}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                       >
-                        {isLoading ? 'Verificando...' : '🔍 Verificar Usuário'}
+                        {loading ? 'Verificando...' : '🔍 Verificar Usuário'}
                       </Button>
                     </>
                   )}
@@ -328,10 +336,10 @@ export const Login: React.FC = () => {
                               
                               <Button
                                 onClick={handleLoginWithPassword}
-                                disabled={isLoading || !username || !password}
+                                disabled={loading || !username || !password}
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                               >
-                                {isLoading ? 'Fazendo login...' : '🔐 Fazer Login'}
+                                {loading ? 'Fazendo login...' : '🔐 Fazer Login'}
                               </Button>
                             </>
                           ) : (
@@ -385,10 +393,10 @@ export const Login: React.FC = () => {
                           
                           <Button
                             onClick={handleVerifyCode}
-                            disabled={isLoading || !verificationCode}
+                            disabled={loading || !verificationCode}
                             className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                           >
-                            {isLoading ? 'Verificando...' : '✅ Verificar Motto'}
+                            {loading ? 'Verificando...' : '✅ Verificar Motto'}
                           </Button>
                         </TabsContent>
                       </Tabs>
@@ -446,10 +454,10 @@ export const Login: React.FC = () => {
                       <div className="flex gap-2">
                         <Button
                           onClick={handleCreateAccount}
-                          disabled={isLoading || !password || !confirmPassword || password !== confirmPassword}
+                          disabled={loading || !password || !confirmPassword || password !== confirmPassword}
                           className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                         >
-                          {isLoading ? 'Criando conta...' : '✅ Criar Conta'}
+                          {loading ? 'Criando conta...' : '✅ Criar Conta'}
                         </Button>
                         <Button
                           onClick={goBack}
@@ -462,16 +470,6 @@ export const Login: React.FC = () => {
                     </>
                   )}
 
-                  {/* Botão para criar conta de teste */}
-                  <div className="pt-4 border-t border-gray-200 text-center">
-                    <Button
-                      onClick={createTestAccount}
-                      variant="outline"
-                      className="w-full bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                    >
-                      🧪 Criar Conta de Teste (Beebop)
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </div>

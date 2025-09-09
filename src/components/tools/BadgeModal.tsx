@@ -6,10 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Search, X, RefreshCw } from 'lucide-react';
 import SimpleBadgeImage from './SimpleBadgeImage';
 import BadgeTooltip from './BadgeTooltip';
-import { getBadges, getBadgeStats, getAvailableCategories, getAvailableCountries, getRecentBadges, getClassicBadges, getLoadingProgress, type Badge, type BadgeFilters } from '@/lib/supabase-badges';
+import { getBadges, getBadgeStats, getAvailableCategories, getAvailableCountries, getRecentBadges, getClassicBadges, getLoadingProgress, type Badge as SupabaseBadgeType, type BadgeFilters } from '@/lib/supabase-badges';
 
 // Usar o tipo Badge do Supabase
-type BadgeItem = Badge;
+type BadgeItem = SupabaseBadgeType;
 
 interface BadgeModalProps {
   open: boolean;
@@ -173,7 +173,6 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       });
       
       setDisplayedBadges(initialBadges);
-      setCurrentPage(1);
       setHasMore(initialBadges.length === 1000);
       
     } catch (error) {

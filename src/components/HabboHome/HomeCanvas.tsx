@@ -30,7 +30,7 @@ interface Sticker {
 }
 
 interface Background {
-  background_type: 'color' | 'cover' | 'repeat';
+  background_type: 'color' | 'cover' | 'repeat' | 'image';
   background_value: string;
 }
 
@@ -63,6 +63,12 @@ interface HomeCanvasProps {
   onBackgroundChange?: (type: 'color' | 'cover' | 'repeat', value: string) => void;
   onStickerAdd?: (stickerId: string, stickerSrc: string, category: string) => void;
   onWidgetAdd?: (widgetType: string) => Promise<boolean>;
+  onGuestbookSubmit?: (message: string) => Promise<any>;
+  onGuestbookDelete?: (entryId: string) => Promise<void>;
+  currentUser?: {
+    id: string;
+    habbo_name: string;
+  } | null;
 }
 
 export const HomeCanvas: React.FC<HomeCanvasProps> = ({
@@ -73,6 +79,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   guestbook,
   isEditMode,
   isOwner,
+  currentUser,
   onWidgetPositionChange,
   onStickerPositionChange,
   onStickerRemove,
@@ -82,7 +89,9 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   onSave,
   onBackgroundChange,
   onStickerAdd,
-  onWidgetAdd
+  onWidgetAdd,
+  onGuestbookSubmit,
+  onGuestbookDelete
 }) => {
   const isMobile = useIsMobile();
   console.log('🖼️ HomeCanvas renderizando:', {
@@ -109,6 +118,17 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
       };
     }
 
+    // Para imagens únicas (não cover nem repeat), esticar para preencher o canvas
+    if (background.background_type === 'image') {
+      return {
+        ...baseStyle,
+        backgroundImage: `url("${background.background_value}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      };
+    }
+
     return baseStyle;
   };
 
@@ -119,6 +139,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   return (
     <div className="flex justify-center">
       <div 
+        data-canvas="true"
         className={`relative rounded-lg overflow-hidden shadow-2xl ${
           isEditMode ? 'border-4 border-dashed border-blue-400' : 'border-2 border-gray-300'
         }`}
@@ -142,6 +163,15 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
         )}
 
         {/* Ícone de Edição no Canto Superior Direito - Apenas para donos quando não está editando */}
+        {(() => {
+          console.log('🔍 [DEBUG] Condições do botão de edição:', {
+            isOwner,
+            isEditMode,
+            hasToggleEditMode: !!onToggleEditMode,
+            shouldShow: isOwner && !isEditMode && onToggleEditMode
+          });
+          return null;
+        })()}
         {isOwner && !isEditMode && onToggleEditMode && (
           <div className="absolute top-4 right-4 z-30">
             <button
@@ -171,6 +201,9 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
             isOwner={isOwner}
             onPositionChange={onWidgetPositionChange}
             onRemove={onWidgetRemove}
+            onGuestbookSubmit={onGuestbookSubmit}
+            onGuestbookDelete={onGuestbookDelete}
+            currentUser={currentUser}
           />
         ))}
 
@@ -205,14 +238,6 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
           </div>
         )}
 
-        {/* Instruções do modo de edição */}
-        {isEditMode && isOwner && (
-          <div className="absolute top-4 left-4 bg-blue-100/90 backdrop-blur-sm rounded-lg p-3 border border-blue-300">
-            <p className="text-sm text-blue-800 volter-font">
-              💡 Modo de edição ativo - use a toolbar para adicionar itens
-            </p>
-          </div>
-        )}
 
       </div>
     </div>

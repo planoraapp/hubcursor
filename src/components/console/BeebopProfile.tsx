@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Trophy, Home, Users, UserCheck } from 'lucide-react';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
-import { useDirectAuth } from '@/hooks/useDirectAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { BadgesModal } from './modals/BadgesModal';
 import { RoomsModal } from './modals/RoomsModal';
 import { FriendsModal } from './modals/FriendsModal';
@@ -12,7 +12,7 @@ import { GroupsModal } from './modals/GroupsModal';
 export const BeebopProfile: React.FC = () => {
   const [modalStates, setModalStates] = useState({ badges: false, rooms: false, friends: false, groups: false });
   const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI('Beebop');
-  const { currentUser, isLoggedIn } = useDirectAuth();
+  const { habboAccount, isLoggedIn } = useUnifiedAuth();
 
   // Função para formatar data no formato DD/MM/YYYY
   const formatDate = (dateString: string | null): string => {
@@ -116,7 +116,7 @@ export const BeebopProfile: React.FC = () => {
                 />
               </div>
               
-              {isLoggedIn && currentUser?.habbo_username === userData.name && (
+              {isLoggedIn && habboAccount?.habbo_name === userData.name && (
                 <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
                   Você
                 </div>

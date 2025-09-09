@@ -13,13 +13,13 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 
 export function NewAppSidebar() {
   const location = useLocation();
-  const { habboAccount, isLoggedIn, logout } = useSimpleAuth();
+  const { habboAccount, isLoggedIn, logout } = useUnifiedAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 

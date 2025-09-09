@@ -111,11 +111,11 @@ export const useHabboHomeV2 = (username: string) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const { habboAccount, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, currentUser, isLoggedIn } = useUnifiedAuth();
   
   console.log('🔍 [useHabboHomeV2] Auth state:', { 
     isLoggedIn, 
-    currentUser: habboAccount?.habbo_name, 
+    currentUser: currentUser?.habbo_name, 
     targetUsername: username 
   });
 
@@ -133,6 +133,7 @@ export const useHabboHomeV2 = (username: string) => {
 
       if (userError || !userData) {
         console.error('❌ Usuário não encontrado:', userError);
+        console.log('🔍 [DEBUG] Tentando carregar usuário:', username, 'Erro:', userError);
         
         // Para usuários especiais como habbohub que existem apenas no localStorage
         if (username.toLowerCase() === 'habbohub') {
@@ -154,6 +155,12 @@ export const useHabboHomeV2 = (username: string) => {
           
           // Definir como proprietário se o usuário logado for habbohub
           const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+          console.log('🔍 [DEBUG] Verificação de proprietário (hubbohub):', { 
+            currentUser: habboAccount?.habbo_name, 
+            targetUser: username,
+            isOwner: currentUserIsOwner,
+            habboAccount: habboAccount
+          });
           setIsOwner(currentUserIsOwner);
           
           // Criar widgets padrão fictícios
@@ -203,6 +210,48 @@ export const useHabboHomeV2 = (username: string) => {
           return;
         }
         
+        // Fallback: Se o usuário não foi encontrado no banco, mas é o usuário logado
+        if (habboAccount && habboAccount.habbo_name.toLowerCase() === username.toLowerCase()) {
+          console.log('ℹ️ [useHabboHomeV2] Usuário não encontrado no banco, mas é o usuário logado. Criando dados básicos...');
+          
+          // Criar dados básicos do usuário logado
+          const basicHabboInfo: HabboData = {
+            id: habboAccount.supabase_user_id,
+            habbo_name: habboAccount.habbo_name,
+            habbo_id: habboAccount.habbo_id,
+            hotel: habboAccount.hotel || 'br',
+            motto: habboAccount.motto || '',
+            figure_string: habboAccount.figure_string || '',
+            is_online: habboAccount.is_online || false,
+            memberSince: ''
+          };
+          
+          setHabboData(basicHabboInfo);
+          
+          // Definir como proprietário
+          const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+          console.log('🔍 [DEBUG] Verificação de proprietário (fallback):', { 
+            currentUser: habboAccount?.habbo_name, 
+            targetUser: username,
+            isOwner: currentUserIsOwner,
+            habboAccount: habboAccount
+          });
+          setIsOwner(currentUserIsOwner);
+          
+          // Criar widgets padrão vazios
+          setWidgets([]);
+          setStickers([]);
+          setBackground({
+            background_type: 'color',
+            background_value: '#87CEEB'
+          });
+          setGuestbook([]);
+          
+          console.log('✅ [useHabboHomeV2] Dados básicos criados para usuário logado');
+          setLoading(false);
+          return;
+        }
+        
         setHabboData(null);
         setLoading(false);
         return;
@@ -227,11 +276,14 @@ export const useHabboHomeV2 = (username: string) => {
       // 2. Verificar proprietário
       const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
       setIsOwner(currentUserIsOwner);
-      console.log('🔍 Verificação de proprietário:', { 
+      console.log('🔍 [DEBUG] Verificação de proprietário (real):', { 
         currentUserIsOwner,
         currentUser: habboAccount?.habbo_name, 
-        targetUser: username 
+        targetUser: username,
+        habboAccount: habboAccount,
+        isLoggedIn: !!habboAccount
       });
+      console.log('🔍 [DEBUG] isOwner será definido como:', currentUserIsOwner);
 
       const userId = userData.supabase_user_id;
 
@@ -244,12 +296,11 @@ export const useHabboHomeV2 = (username: string) => {
         { data: bgData },
         { data: guestbookData }
       ] = await Promise.all([
-        // Widgets
+        // Widgets - carregar todos, incluindo os ocultos
         supabase
           .from('user_home_widgets')
           .select('*')
-          .eq('user_id', userId)
-          .eq('is_visible', true),
+          .eq('user_id', userId),
         
         // Stickers
         supabase
@@ -274,10 +325,12 @@ export const useHabboHomeV2 = (username: string) => {
           .limit(10)
       ]);
 
-      // Processar widgets
+      // Processar widgets - filtrar apenas os visíveis para exibição
       let widgetsData: Widget[] = [];
       if (newWidgets && newWidgets.length > 0) {
-        widgetsData = newWidgets.map(widget => ({
+        // Filtrar apenas widgets visíveis para exibição
+        const visibleWidgets = newWidgets.filter(widget => widget.is_visible);
+        widgetsData = visibleWidgets.map(widget => ({
           id: widget.id,
           widget_type: widget.widget_type,
           x: widget.x,
@@ -288,9 +341,23 @@ export const useHabboHomeV2 = (username: string) => {
           is_visible: widget.is_visible,
           config: widget.config
         }));
+        
+        // Log de widgets ocultos para debug
+        const hiddenWidgets = newWidgets.filter(widget => !widget.is_visible);
+        if (hiddenWidgets.length > 0) {
+          console.log('🙈 Widgets ocultos encontrados:', hiddenWidgets.map(w => ({ 
+            id: w.id, 
+            type: w.widget_type, 
+            visible: w.is_visible 
+          })));
+        }
       }
 
       console.log('📦 Widgets carregados:', widgetsData);
+      console.log('🔍 Widgets por tipo:', widgetsData.reduce((acc, widget) => {
+        acc[widget.widget_type] = (acc[widget.widget_type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>));
       
       // Garantir que existe um widget avatar e está centralizado (só para o proprietário)
       const avatarWidget = widgetsData.find(w => w.widget_type === 'avatar');
@@ -553,11 +620,96 @@ export const useHabboHomeV2 = (username: string) => {
       return false;
     }
 
-    // Check if widget already exists
+    // Check if widget already exists in local state
+    console.log(`🔍 Verificando widgets existentes para tipo: ${widgetType}`);
+    console.log(`📋 Widgets atuais:`, widgets.map(w => ({ id: w.id, type: w.widget_type, visible: w.is_visible })));
+    
     const existingWidget = widgets.find(w => w.widget_type === widgetType);
     if (existingWidget) {
-      console.log(`⚠️ Widget ${widgetType} já existe`);
-      return false;
+      console.log(`🔄 Widget ${widgetType} já existe - movendo para o canto superior esquerdo`);
+      
+      // Mover widget existente para o canto superior esquerdo (50, 50)
+      const newX = 50;
+      const newY = 50;
+      
+      try {
+        // Atualizar posição no banco de dados
+        await supabase
+          .from('user_home_widgets')
+          .update({ 
+            x: newX, 
+            y: newY,
+            is_visible: true, // Garantir que está visível
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingWidget.id)
+          .eq('user_id', habboData.id);
+
+        // Atualizar estado local
+        setWidgets(prev => 
+          prev.map(widget => 
+            widget.id === existingWidget.id 
+              ? { ...widget, x: newX, y: newY, is_visible: true }
+              : widget
+          )
+        );
+
+        console.log(`✅ Widget ${widgetType} movido para posição (${newX}, ${newY})`);
+        return true;
+      } catch (error) {
+        console.error('❌ Erro ao mover widget existente:', error);
+        return false;
+      }
+    }
+
+    // Verificar se há widget oculto no banco de dados
+    try {
+      console.log(`🔍 Verificando se há widget ${widgetType} oculto no banco...`);
+      const { data: hiddenWidget, error: hiddenError } = await supabase
+        .from('user_home_widgets')
+        .select('*')
+        .eq('user_id', habboData.id)
+        .eq('widget_type', widgetType)
+        .eq('is_visible', false)
+        .single();
+
+      if (!hiddenError && hiddenWidget) {
+        console.log(`🙈 Widget ${widgetType} oculto encontrado - reativando e movendo para o canto superior esquerdo`);
+        
+        const newX = 50;
+        const newY = 50;
+        
+        // Reativar widget oculto
+        await supabase
+          .from('user_home_widgets')
+          .update({ 
+            x: newX, 
+            y: newY,
+            is_visible: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', hiddenWidget.id)
+          .eq('user_id', habboData.id);
+
+        // Adicionar ao estado local
+        const reactivatedWidget: Widget = {
+          id: hiddenWidget.id,
+          widget_type: hiddenWidget.widget_type,
+          x: newX,
+          y: newY,
+          z_index: hiddenWidget.z_index,
+          width: hiddenWidget.width,
+          height: hiddenWidget.height,
+          is_visible: true,
+          config: hiddenWidget.config
+        };
+
+        setWidgets(prev => [...prev, reactivatedWidget]);
+        console.log(`✅ Widget ${widgetType} reativado e movido para posição (${newX}, ${newY})`);
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar widget oculto:', error);
     }
 
     try {
@@ -637,27 +789,16 @@ export const useHabboHomeV2 = (username: string) => {
       const widget = widgets.find(w => w.id === widgetId);
       if (!widget) return;
 
-      // For guestbook and rating widgets, just hide them (preserve data)
-      if (widget.widget_type === 'guestbook' || widget.widget_type === 'rating') {
-        await supabase
-          .from('user_home_widgets')
-          .update({ is_visible: false })
-          .eq('id', widgetId)
-          .eq('user_id', habboData.id);
+      // Remove widget completely from database
+      await supabase
+        .from('user_home_widgets')
+        .delete()
+        .eq('id', widgetId)
+        .eq('user_id', habboData.id);
 
-        setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
-        console.log(`🙈 Widget ${widget.widget_type} ocultado (dados preservados)`);
-      } else {
-        // For other widgets, delete normally
-        await supabase
-          .from('user_home_widgets')
-          .delete()
-          .eq('id', widgetId)
-          .eq('user_id', habboData.id);
-
-        setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
-        console.log(`🗑️ Widget ${widget.widget_type} removido completamente`);
-      }
+      // Update local state
+      setWidgets(prev => prev.filter(widget => widget.id !== widgetId));
+      console.log(`🗑️ Widget ${widget.widget_type} removido completamente`);
     } catch (error) {
       console.error('❌ Erro ao remover widget:', error);
     }
@@ -710,6 +851,186 @@ export const useHabboHomeV2 = (username: string) => {
     }
   }, [username, habboAccount]);
 
+  // Função para enviar mensagem no guestbook
+  const submitGuestbookMessage = async (message: string) => {
+    if (!currentUser || !habboData) {
+      throw new Error('Usuário não autenticado ou dados da home não carregados');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('guestbook_entries')
+        .insert({
+          home_owner_user_id: habboData.id,
+          author_user_id: currentUser.id,
+          author_habbo_name: currentUser.habbo_name,
+          message: message.trim(),
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('❌ Erro ao enviar mensagem no guestbook:', error);
+        throw error;
+      }
+
+      // Atualizar estado local
+      setGuestbook(prev => [data, ...prev]);
+      console.log('✅ Mensagem enviada no guestbook:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Erro ao enviar mensagem no guestbook:', error);
+      throw error;
+    }
+  };
+
+  // Função para deletar mensagem do guestbook
+  const deleteGuestbookMessage = async (entryId: string) => {
+    console.log('🗑️ [useHabboHomeV2] deleteGuestbookMessage chamado:', {
+      entryId,
+      currentUser: currentUser?.habbo_name,
+      currentUserId: currentUser?.id,
+      hasCurrentUser: !!currentUser,
+      habboDataId: habboData?.id,
+      isOwner
+    });
+
+    if (!currentUser) {
+      console.error('❌ [useHabboHomeV2] Usuário não autenticado');
+      throw new Error('Usuário não autenticado');
+    }
+
+    try {
+      console.log('🗑️ [useHabboHomeV2] Executando delete no Supabase...');
+      
+      // Primeiro, vamos verificar se o comentário existe e suas permissões
+      const { data: existingEntry, error: fetchError } = await supabase
+        .from('guestbook_entries')
+        .select('*')
+        .eq('id', entryId)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ [useHabboHomeV2] Erro ao buscar entrada:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('🔍 [useHabboHomeV2] Entrada encontrada:', {
+        id: existingEntry.id,
+        author_habbo_name: existingEntry.author_habbo_name,
+        home_owner_user_id: existingEntry.home_owner_user_id,
+        author_user_id: existingEntry.author_user_id,
+        currentUserId: currentUser.id,
+        habboDataId: habboData?.id,
+        isOwner: habboData?.id === currentUser.id
+      });
+
+      // Tentar deletar via Supabase normal primeiro
+      const { error } = await supabase
+        .from('guestbook_entries')
+        .delete()
+        .eq('id', entryId);
+
+      console.log('🗑️ [useHabboHomeV2] Resultado do delete:', { error });
+
+      if (error) {
+        console.error('❌ [useHabboHomeV2] Erro do Supabase ao deletar:', error);
+        console.error('❌ [useHabboHomeV2] Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        // Se houver erro, tentar via edge function como fallback
+        console.warn('⚠️ [useHabboHomeV2] Erro no delete normal - tentando edge function...');
+        
+        try {
+          const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/delete-guestbook-comments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabase.supabaseKey}`
+            },
+            body: JSON.stringify({
+              home_owner_user_id: habboData?.id,
+              entry_id: entryId // Adicionar ID específico para deletar
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ [useHabboHomeV2] Erro da edge function:', errorData);
+            throw new Error(`Edge function falhou: ${errorData.error}`);
+          }
+
+          const result = await response.json();
+          console.log('✅ [useHabboHomeV2] Edge function executada com sucesso:', result);
+        } catch (edgeError) {
+          console.error('❌ [useHabboHomeV2] Erro na edge function:', edgeError);
+          throw new Error('Falha ao deletar via edge function');
+        }
+      }
+
+      console.log('🗑️ [useHabboHomeV2] Delete executado com sucesso, atualizando estado local...');
+      // Atualizar estado local
+      setGuestbook(prev => {
+        const newGuestbook = prev.filter(entry => entry.id !== entryId);
+        console.log('🗑️ [useHabboHomeV2] Estado local atualizado:', {
+          entriesBefore: prev.length,
+          entriesAfter: newGuestbook.length,
+          removedEntryId: entryId
+        });
+        return newGuestbook;
+      });
+      console.log('✅ [useHabboHomeV2] Mensagem deletada do guestbook:', entryId);
+      
+    } catch (error) {
+      console.error('❌ [useHabboHomeV2] Erro ao deletar mensagem do guestbook:', error);
+      throw error;
+    }
+  };
+
+  // Função para limpar todos os comentários do guestbook (para teste)
+  const clearAllGuestbookEntries = async () => {
+    if (!habboData) {
+      console.error('❌ [useHabboHomeV2] Dados da home não carregados');
+      return;
+    }
+
+    try {
+      console.log('🧹 [useHabboHomeV2] Limpando todos os comentários do guestbook...');
+      
+      // Usar edge function para contornar políticas RLS
+      const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/delete-guestbook-comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({
+          home_owner_user_id: habboData.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ [useHabboHomeV2] Erro da edge function:', errorData);
+        throw new Error(errorData.error || 'Erro ao limpar guestbook');
+      }
+
+      // Limpar estado local
+      setGuestbook([]);
+      console.log('✅ [useHabboHomeV2] Guestbook limpo com sucesso');
+      
+    } catch (error) {
+      console.error('❌ [useHabboHomeV2] Erro ao limpar guestbook:', error);
+    }
+  };
+
+
   return {
     widgets,
     stickers,
@@ -719,6 +1040,7 @@ export const useHabboHomeV2 = (username: string) => {
     loading,
     isEditMode,
     isOwner,
+    currentUser,
     setIsEditMode,
     updateWidgetPosition,
     updateStickerPosition,
@@ -727,6 +1049,9 @@ export const useHabboHomeV2 = (username: string) => {
     updateBackground,
     addWidget,
     removeWidget,
+    onGuestbookSubmit: submitGuestbookMessage,
+    onGuestbookDelete: deleteGuestbookMessage,
+    clearAllGuestbookEntries,
     reloadData: loadHabboHomeData
   };
 };

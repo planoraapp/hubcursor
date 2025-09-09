@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +12,12 @@ import { HubHomeAssets } from '@/components/HabboHome/HubHomeAssets';
 import { MobileLayout } from '@/components/ui/mobile-layout';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset, useSidebar } from '@/components/ui/sidebar';
+import { HotelTag } from '@/components/HotelTag';
 
 const HabboHomeV2: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const [searchParams] = useSearchParams();
+  const hotel = searchParams.get('hotel') || 'br'; // Default para Brasil
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -31,6 +34,7 @@ const HabboHomeV2: React.FC = () => {
     loading,
     isEditMode,
     isOwner,
+    currentUser,
     setIsEditMode,
     updateWidgetPosition,
     updateStickerPosition,
@@ -39,6 +43,9 @@ const HabboHomeV2: React.FC = () => {
     updateBackground,
     addWidget,
     removeWidget,
+    onGuestbookSubmit,
+    onGuestbookDelete,
+    clearAllGuestbookEntries,
     reloadData
   } = useHabboHomeV2(username || '');
 
@@ -69,9 +76,15 @@ const HabboHomeV2: React.FC = () => {
   const handleSave = async () => {
     console.log('💾 Salvando home...');
     try {
+      // Recarregar dados para garantir que tudo está salvo
       await reloadData();
+      
+      // Fechar o modo de edição após salvar
+      setIsEditMode(false);
+      
+      console.log('✅ Home salva e editor fechado');
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      console.error('❌ Erro ao salvar:', error);
     }
   };
 
@@ -96,6 +109,13 @@ const HabboHomeV2: React.FC = () => {
     }
     
     setShowAssetsModal(false);
+  };
+
+  // Função para limpar guestbook (temporária para teste)
+  const handleClearGuestbook = async () => {
+    if (window.confirm('Tem certeza que deseja limpar todos os comentários do guestbook?')) {
+      await clearAllGuestbookEntries();
+    }
   };
 
   // Mobile dock items
@@ -214,8 +234,9 @@ const HabboHomeV2: React.FC = () => {
       <div className={`p-4 ${isMobile ? 'pb-24' : ''}`}>
         <Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b-2 border-black">
-            <CardTitle className={`volter-font habbo-text text-center ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+            <CardTitle className={`volter-font habbo-text text-center ${isMobile ? 'text-lg' : 'text-2xl'} flex items-center justify-center gap-3`}>
               🏠 {habboData.habbo_name}'s Habbo Home
+              <HotelTag hotelId={hotel} size="md" />
             </CardTitle>
           </CardHeader>
         </Card>
@@ -229,6 +250,7 @@ const HabboHomeV2: React.FC = () => {
             guestbook={guestbook}
             isEditMode={isEditMode}
             isOwner={isOwner}
+            currentUser={currentUser}
             onWidgetPositionChange={updateWidgetPosition}
             onStickerPositionChange={updateStickerPosition}
             onStickerRemove={removeSticker}
@@ -239,6 +261,8 @@ const HabboHomeV2: React.FC = () => {
             onBackgroundChange={handleBackgroundChange}
             onStickerAdd={handleStickerAdd}
             onWidgetAdd={addWidget}
+            onGuestbookSubmit={onGuestbookSubmit}
+            onGuestbookDelete={onGuestbookDelete}
           />
         </div>
       </div>

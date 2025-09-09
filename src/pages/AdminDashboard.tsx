@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { createHabbohubAccount } from '@/utils/createHabbohubAccount';
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
+import { useNavigate } from 'react-router-dom';
 
 interface AdminStats {
   totalUsers: number;
@@ -41,6 +42,7 @@ interface FontPreview {
 }
 
 export const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalHomes: 0,
@@ -242,12 +244,19 @@ export const AdminDashboard: React.FC = () => {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">Contas de Teste</h3>
+                          <h3 className="font-bold volter-font mb-2">Gerenciar Contas</h3>
                           <p className="text-sm text-gray-600 volter-font mb-3">
-                            Criar contas de administrador para testes
+                            Ver e gerenciar todas as contas do sistema
                           </p>
                           <Button 
+                            onClick={() => navigate('/admin/accounts')}
+                            className="w-full volter-font mb-2"
+                          >
+                            👥 Gerenciar Contas
+                          </Button>
+                          <Button 
                             onClick={createHabbohubAccountHandler}
+                            variant="outline"
                             className="w-full volter-font"
                           >
                             🧪 Criar Conta habbohub

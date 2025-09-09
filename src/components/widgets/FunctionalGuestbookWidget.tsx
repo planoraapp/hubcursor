@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,7 +31,7 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { habboAccount } = useSimpleAuth();
+  const { habboAccount } = useUnifiedAuth();
   const { toast } = useToast();
   
   const isLoggedIn = !!habboAccount;
