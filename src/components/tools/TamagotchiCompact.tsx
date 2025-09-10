@@ -257,15 +257,25 @@ const TamagotchiCompact = () => {
       <div className="grid grid-cols-2 gap-2 mb-4">
         <Button
           onClick={feedPet}
-          className="volter-font text-xs bg-green-500 hover:bg-green-600 text-white h-8"
+          className="sidebar-font-option-4 text-xs bg-green-500 hover:bg-green-600 text-white h-8"
           disabled={hunger >= 95}
+          style={{
+            fontSize: '12px',
+            fontWeight: 'bold',
+            letterSpacing: '0.2px'
+          }}
         >
           🍽️ Feed
         </Button>
         <Button
           onClick={playWithPet}
-          className="volter-font text-xs bg-purple-500 hover:bg-purple-600 text-white h-8"
+          className="sidebar-font-option-4 text-xs bg-purple-500 hover:bg-purple-600 text-white h-8"
           disabled={energy < 20}
+          style={{
+            fontSize: '12px',
+            fontWeight: 'bold',
+            letterSpacing: '0.2px'
+          }}
         >
           🎮 Play
         </Button>
@@ -275,7 +285,12 @@ const TamagotchiCompact = () => {
       <div className="text-center">
         <Button 
           onClick={openModal}
-          className="volter-font text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
+          className="habbo-button-blue sidebar-font-option-4 text-white px-4 py-2 rounded w-full"
+          style={{
+            fontSize: '16px',
+            fontWeight: 'bold',
+            letterSpacing: '0.2px'
+          }}
         >
           Abrir Tamagotchi Completo
         </Button>

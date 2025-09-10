@@ -10,18 +10,19 @@ interface PageBannerProps {
 const PageBanner: React.FC<PageBannerProps> = ({ 
   title, 
   subtitle, 
-  backgroundImage = '/assets/gcreate_4_1.png',
+  backgroundImage = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_pattern_clouds.gif',
   className = ''
 }) => {
+  console.log('🔍 [PageBanner] Background image URL:', backgroundImage);
   return (
     <div className={`relative overflow-hidden rounded-lg mb-8 ${className}`}>
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-repeat bg-center"
+        className="absolute inset-0 bg-repeat"
         style={{
           backgroundImage: `url(${backgroundImage})`,
-          filter: 'brightness(0.8) contrast(1.1)',
-          backgroundSize: 'auto 100%'
+          filter: 'brightness(0.7) contrast(1.1)',
+          backgroundSize: '120px 120px'
         }}
       />
       
@@ -29,12 +30,15 @@ const PageBanner: React.FC<PageBannerProps> = ({
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent" />
       
       {/* Content */}
-      <div className="relative z-10 px-8 py-6 text-center">
-        <h1 className="volter-font text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+      <div className="relative z-10 px-6 py-4 text-left">
+        <h1 className="sidebar-font-option-4 text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 drop-shadow-lg"
+          style={{
+            letterSpacing: '0.3px'
+          }}>
           {title}
         </h1>
         {subtitle && (
-          <p className="volter-font text-lg md:text-xl text-white/90 drop-shadow-md max-w-2xl mx-auto">
+          <p className="volter-font text-sm md:text-base text-white/90 drop-shadow-md max-w-2xl">
             {subtitle}
           </p>
         )}

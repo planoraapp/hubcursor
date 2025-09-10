@@ -13,7 +13,7 @@ import { HabboUser, AuthService } from '@/services/authService';
 import { Copy, Check, ArrowLeft } from 'lucide-react';
 
 export const Login: React.FC = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate();step
   const {
     habboAccount,
     isLoggedIn,

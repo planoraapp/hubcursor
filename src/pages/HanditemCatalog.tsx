@@ -9,10 +9,7 @@ const HanditemCatalog = () => {
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ 
-        backgroundImage: 'url(/assets/bghabbohub.png)',
-        backgroundRepeat: 'repeat'
-      }}>
+          <main className="flex-1 p-8 min-h-screen">
             <div className="max-w-7xl mx-auto">
               <HanditemTool />
             </div>

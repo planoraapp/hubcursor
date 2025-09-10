@@ -9,6 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Search, Users, Calendar, Trophy, Settings, Monitor, AlertTriangle } from 'lucide-react';
 import { getUserByName } from '../services/habboApi';
+import { PageBanner } from '@/components/ui/PageBanner';
+import { AltCodesCompact } from './tools/AltCodesCompact';
+import { TamagotchiCompact } from './tools/TamagotchiCompact';
+import { Room7x7Modal } from './tools/Room7x7Modal';
+import { BadgeModal } from './tools/BadgeModal';
 
 export const Tools = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -78,53 +83,17 @@ export const Tools = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-primary">Ferramentas do Habbo</h1>
-        <p className="text-muted-foreground">Conjunto de ferramentas úteis para usuários do Habbo</p>
-      </div>
+      <PageBanner 
+        title="Ferramentas"
+        subtitle="Ferramentas úteis para a comunidade Habbo"
+      />
 
-      {/* Grid de Ferramentas */}
+      {/* Grid de Ferramentas Compactas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tools.map((tool) => {
-          const Icon = tool.icon;
-          return (
-            <Card key={tool.id} className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className={`p-3 rounded-lg ${tool.color} text-white group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon size={24} />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {tool.title}
-                      {tool.status === 'development' && (
-                        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                          <AlertTriangle size={12} className="mr-1" />
-                          Em Desenvolvimento
-                        </Badge>
-                      )}
-                    </CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
-                <Button 
-                  className="w-full" 
-                  onClick={() => handleToolClick(tool)}
-                  variant={tool.status === 'development' ? 'outline' : 'default'}
-                >
-                  {tool.path ? 'Acessar' : 'Em Breve'}
-                </Button>
-                {tool.status === 'development' && (
-                  <p className="text-xs text-orange-600 mt-2 text-center">
-                    Esta ferramenta está em desenvolvimento ativo
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+        <AltCodesCompact />
+        <TamagotchiCompact />
+        <Room7x7Modal />
+        <BadgeModal />
       </div>
 
       {/* Seção de Busca Rápida */}

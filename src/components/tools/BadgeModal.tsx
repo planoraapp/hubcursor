@@ -578,7 +578,12 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
         {/* Botão Ver Todos - só aparece quando não está no grid completo */}
         {!showAllGrid && (
           <div className="flex justify-center pt-4 border-t mt-4">
-            <Button onClick={toggleShowAll} className="volter-font px-8 py-2" size="lg">
+            <Button onClick={toggleShowAll} className="habbo-button-blue sidebar-font-option-4 px-8 py-2" size="lg"
+              style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                letterSpacing: '0.2px'
+              }}>
               📋 Ver Todos os Emblemas
             </Button>
           </div>

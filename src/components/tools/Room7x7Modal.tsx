@@ -58,7 +58,12 @@ export const Room7x7Modal: React.FC = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" className="volter-font">Abrir Quarto 6x8</Button>
+        <Button variant="default" className="habbo-button-blue sidebar-font-option-4"
+          style={{
+            fontSize: '16px',
+            fontWeight: 'bold',
+            letterSpacing: '0.2px'
+          }}>Abrir Quarto 6x8</Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
