@@ -77,9 +77,12 @@ export function CollapsibleAppSidebar() {
         )}
         {!isCollapsed && (
           <span 
-            className="habbo-text text-sm text-white"
+            className="sidebar-font-option-4 text-white"
             style={{
-              textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+              fontSize: '16px',
+              fontWeight: 'bold',
+              letterSpacing: '0.3px',
+              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
             }}
           >
             {item.name}
@@ -171,6 +174,7 @@ export function CollapsibleAppSidebar() {
           </SidebarGroup>
         </SidebarContent>
 
+
         <SidebarFooter className="p-4 border-t-2 border-black">
           <div className="space-y-2">
                          {isLoggedIn && habboAccount ? (
@@ -192,9 +196,12 @@ export function CollapsibleAppSidebar() {
                     {!isCollapsed && (
                       <div className="flex flex-col">
                         <span 
-                          className="habbo-text text-sm text-white truncate"
+                          className="sidebar-font-option-4 text-white truncate"
                           style={{
-                            textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.3px',
+                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                           }}
                         >
                           {habboAccount.habbo_name}
@@ -213,7 +220,13 @@ export function CollapsibleAppSidebar() {
                       <TooltipTrigger asChild>
                         <button 
                           onClick={logout}
-                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-sm font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
+                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-white rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4"
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.3px',
+                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                          }}
                         >
                           <img 
                             src="/assets/logout.png" 
@@ -238,7 +251,15 @@ export function CollapsibleAppSidebar() {
               <div className="space-y-2">
                 {!isCollapsed ? (
                   <Link to="/login" className="block">
-                    <button className="bg-blue-600 hover:bg-blue-700 w-full px-3 py-2 text-sm font-bold text-white rounded transition-colors flex items-center justify-center gap-2">
+                    <button 
+                      className="bg-blue-600 hover:bg-blue-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4"
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.3px',
+                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                      }}
+                    >
                       <User className="w-3 h-3" />
                       Conectar Conta Habbo
                     </button>

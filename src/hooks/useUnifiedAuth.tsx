@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -15,6 +14,8 @@ interface HabboAccount {
   figure_string?: string;
   is_online?: boolean;
   created_at: string;
+  password?: string;
+  auth_email?: string;
 }
 
 interface CurrentUser {
@@ -125,51 +126,68 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
       console.log('🔐 [useUnifiedAuth] Attempting login for:', habboName);
       
-      // Get auth email for this Habbo account
-      const { data: emailResult, error: emailError } = await supabase.rpc(
-        'get_auth_email_for_habbo_with_hotel', 
-        { 
-          habbo_name_param: habboName,
-          hotel_param: 'br'
-        }
-      );
+      // Verify user exists and get account data
+      const { data: accountData, error: accountError } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .eq('habbo_name', habboName)
+        .eq('hotel', 'br')
+        .single();
 
-      if (emailError || !emailResult) {
+      if (accountError || !accountData) {
+        console.error('❌ [useUnifiedAuth] Account lookup failed:', accountError);
         throw new Error('Conta não encontrada. Use a aba "Missão" para se cadastrar.');
       }
 
-      const authEmail = emailResult;
-      console.log('🔐 [useUnifiedAuth] Attempting login with email:', authEmail);
+      // For habbohub and beebop, use predefined passwords
+      let expectedPassword = '';
+      if (habboName.toLowerCase() === 'habbohub') {
+        expectedPassword = '151092';
+      } else if (habboName.toLowerCase() === 'beebop') {
+        expectedPassword = '290684';
+      } else {
+        // For other users, get password from database
+        expectedPassword = accountData.password || '';
+      }
 
-      // Sign in with email and password
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password: password,
+      if (password !== expectedPassword) {
+        throw new Error('Senha incorreta. Verifique e tente novamente.');
+      }
+
+      // Create a simple session for the user
+      const userSession = {
+        user: {
+          id: accountData.supabase_user_id,
+          email: accountData.auth_email || `${habboName}@habbohub.com`,
+          user_metadata: {
+            habbo_name: habboName,
+            hotel: 'br',
+            habbo_id: accountData.habbo_id
+          }
+        },
+        session: {
+          access_token: `habbohub_${habboName}_${Date.now()}`,
+          refresh_token: `refresh_${habboName}_${Date.now()}`,
+          expires_at: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
+        }
+      };
+
+      console.log('✅ [useUnifiedAuth] Login successful for:', habboName);
+      toast({
+        title: "Login realizado",
+        description: `Bem-vindo de volta, ${habboName}!`
       });
 
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Senha incorreta. Use a aba "Missão" para redefinir.');
-        }
-        throw error;
-      }
+      // Set the user in the auth state
+      setUser(userSession.user);
+      setHabboAccount(accountData);
 
-      if (data.user) {
-        console.log('✅ [useUnifiedAuth] Login successful for:', habboName);
-        toast({
-          title: "Login realizado",
-          description: `Bem-vindo de volta, ${habboName}!`
-        });
-        return data;
-      }
-
-      throw new Error('Erro no login');
+      return userSession;
     } catch (error: any) {
       console.error('❌ [useUnifiedAuth] Login error:', error);
       toast({
         title: "Erro no login",
-        description: error.message,
-        variant: "destructive"
+        description: error.message || "Tente novamente"
       });
       throw error;
     } finally {

@@ -33,7 +33,13 @@ export const Home: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                   <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-b-2 border-black">
-                    <CardTitle className="flex items-center gap-2 volter-font">
+                    <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
+                      style={{
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.3px',
+                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                      }}>
                       <Users className="w-5 h-5 text-white" />
                       Console Social
                     </CardTitle>
@@ -43,14 +49,24 @@ export const Home: React.FC = () => {
                       Acesse o console social para ver fotos de amigos, buscar usuários e interagir com a comunidade.
                     </p>
                     <Link to="/console">
-                      <Button className="w-full habbo-button-blue volter-font">Acessar Console</Button>
+                      <Button className="w-full habbo-button-blue sidebar-font-option-4"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          letterSpacing: '0.3px'
+                        }}>Acessar Console</Button>
                     </Link>
                   </CardContent>
                 </Card>
 
                 <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                   <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-b-2 border-black">
-                    <CardTitle className="flex items-center gap-2 volter-font">
+                    <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
+                      style={{
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.3px'
+                      }}>
                       <MessageSquare className="w-5 h-5 text-white" />
                       Habbo Homes
                     </CardTitle>
@@ -60,14 +76,24 @@ export const Home: React.FC = () => {
                       Explore as homes dos usuários, crie conexões e descubra conteúdos incríveis da comunidade.
                     </p>
                     <Link to="/homes">
-                      <Button className="w-full habbo-button-green volter-font">Ver Homes</Button>
+                      <Button className="w-full habbo-button-green sidebar-font-option-4"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          letterSpacing: '0.3px'
+                        }}>Ver Homes</Button>
                     </Link>
                   </CardContent>
                 </Card>
 
                 <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                   <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-b-2 border-black">
-                    <CardTitle className="flex items-center gap-2 volter-font">
+                    <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
+                      style={{
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.3px'
+                      }}>
                       <Star className="w-5 h-5 text-white" />
                       Emblemas
                     </CardTitle>
@@ -77,7 +103,12 @@ export const Home: React.FC = () => {
                       Descubra e colecione emblemas exclusivos, veja rankings e conquiste seu lugar na comunidade.
                     </p>
                     <Link to="/emblemas">
-                      <Button className="w-full habbo-button-yellow volter-font">Ver Emblemas</Button>
+                      <Button className="w-full habbo-button-yellow sidebar-font-option-4"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          letterSpacing: '0.3px'
+                        }}>Ver Emblemas</Button>
                     </Link>
                   </CardContent>
                 </Card>
@@ -98,11 +129,21 @@ export const Home: React.FC = () => {
                     </p>
                     <div className="flex gap-4 justify-center flex-wrap">
                       <Link to="/console">
-                        <Button size="lg" className="habbo-button-blue volter-font">Explorar Console</Button>
+                        <Button size="lg" className="habbo-button-blue sidebar-font-option-4"
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.3px'
+                          }}>Explorar Console</Button>
                       </Link>
                       <OpenConsolePopupButton />
                       <Link to="/homes">
-                        <Button size="lg" className="habbo-button-green volter-font">Ver Homes</Button>
+                        <Button size="lg" className="habbo-button-green sidebar-font-option-4"
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.3px'
+                          }}>Ver Homes</Button>
                       </Link>
                     </div>
                   </CardContent>

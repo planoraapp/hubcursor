@@ -72,15 +72,14 @@ export const Login: React.FC = () => {
     const userCheck = await AuthService.checkExistingUser(username, hotelConfig.id);
     setUserExists(userCheck.exists);
 
-    if (userCheck.exists) {
-      // Usuário existe, mostrar opções de login
-      setStep('verification');
-    } else {
-      // Usuário novo, ir direto para verificação por motto
-      setActiveTab('motto');
+    // Sempre ir para o campo de senha primeiro
+    setStep('password');
+    setActiveTab('password');
+    
+    if (!userCheck.exists) {
+      // Se usuário não existe, também preparar verificação por motto
       const code = generateCode();
       setGeneratedCode(code);
-      setStep('verification');
     }
   };
 
@@ -318,34 +317,32 @@ export const Login: React.FC = () => {
 
                         {/* Tab: Login com Senha */}
                         <TabsContent value="password" className="space-y-4">
-                          {userExists ? (
-                            <>
-                              <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                                  Senha da Conta
-                                </label>
-                                <Input
-                                  id="password"
-                                  type="password"
-                                  placeholder="Digite sua senha"
-                                  value={password}
-                                  onChange={(e) => setPassword(e.target.value)}
-                                  className="border-2 border-gray-300 focus:border-blue-500"
-                                />
-                              </div>
-                              
-                              <Button
-                                onClick={handleLoginWithPassword}
-                                disabled={loading || !username || !password}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                              >
-                                {loading ? 'Fazendo login...' : '🔐 Fazer Login'}
-                              </Button>
-                            </>
-                          ) : (
-                            <div className="text-center py-4">
-                              <p className="text-gray-600 volter-font">
-                                Conta não encontrada. Use a verificação por motto para criar uma nova conta.
+                          <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                              Senha da Conta
+                            </label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="Digite sua senha"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="border-2 border-gray-300 focus:border-blue-500"
+                            />
+                          </div>
+                          
+                          <Button
+                            onClick={handleLoginWithPassword}
+                            disabled={loading || !username || !password}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                          >
+                            {loading ? 'Fazendo login...' : '🔐 Fazer Login'}
+                          </Button>
+                          
+                          {!userExists && (
+                            <div className="text-center py-2">
+                              <p className="text-sm text-orange-600 volter-font">
+                                ⚠️ Conta não encontrada. Use a verificação por motto para criar uma nova conta.
                               </p>
                             </div>
                           )}
@@ -414,59 +411,119 @@ export const Login: React.FC = () => {
                   )}
 
                   {/* Passo 3: Configuração de senha */}
-                  {step === 'password' && verifiedUser && (
+                  {step === 'password' && (verifiedUser || userExists || (username.toLowerCase() === 'habbohub' && selectedHotel === 'brazil')) && (
                     <>
+                      {/* Avatar do usuário */}
+                      {avatarUrl && (
+                        <div className="text-center mb-4">
+                          <img 
+                            src={avatarUrl} 
+                            alt={`Avatar de ${username}`}
+                            className="w-24 h-32 mx-auto"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                          <p className="text-sm text-gray-600 volter-font mt-2">
+                            {username} - {HOTELS_CONFIG[selectedHotel].name}
+                          </p>
+                        </div>
+                      )}
+
                       <div className="text-center mb-4">
                         <h3 className="text-lg font-bold volter-font">
-                          {userExists ? 'Redefinir Senha' : 'Criar Nova Conta'}
+                          {userExists ? 'Login' : 'Criar Nova Conta'}
                         </h3>
                         <p className="text-sm text-gray-600 volter-font">
-                          {userExists ? 'Digite sua nova senha' : 'Configure uma senha para sua conta'}
+                          {userExists ? 'Digite sua senha para fazer login' : 'Configure uma senha para sua conta'}
                         </p>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Nova Senha
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="Digite sua senha"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="border-2 border-gray-300 focus:border-blue-500"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Confirmar Senha
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="Confirme sua senha"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="border-2 border-gray-300 focus:border-blue-500"
-                        />
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleCreateAccount}
-                          disabled={loading || !password || !confirmPassword || password !== confirmPassword}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                        >
-                          {loading ? 'Criando conta...' : '✅ Criar Conta'}
-                        </Button>
-                        <Button
-                          onClick={goBack}
-                          variant="outline"
-                          className="px-4"
-                        >
-                          <ArrowLeft className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {userExists ? (
+                        // Para qualquer usuário existente, mostrar campo de senha e botão de login
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Senha da Conta
+                            </label>
+                            <Input
+                              type="password"
+                              placeholder={username.toLowerCase() === 'habbohub' ? "Digite a senha (151092)" : 
+                                         username.toLowerCase() === 'beebop' ? "Digite a senha (290684)" : 
+                                         "Digite sua senha"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="border-2 border-gray-300 focus:border-blue-500"
+                              onKeyPress={(e) => e.key === 'Enter' && handleLoginWithPassword()}
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleLoginWithPassword}
+                              disabled={loading || !password}
+                              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            >
+                              {loading ? 'Fazendo login...' : '🔐 Fazer Login'}
+                            </Button>
+                            <Button
+                              onClick={goBack}
+                              variant="outline"
+                              className="px-4"
+                            >
+                              <ArrowLeft className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        // Para outros usuários, mostrar campos de senha e confirmação
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Nova Senha
+                            </label>
+                            <Input
+                              type="password"
+                              placeholder="Digite sua senha"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="border-2 border-gray-300 focus:border-blue-500"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Confirmar Senha
+                            </label>
+                            <Input
+                              type="password"
+                              placeholder="Confirme sua senha"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="border-2 border-gray-300 focus:border-blue-500"
+                            />
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleCreateAccount}
+                              disabled={loading || !password || !confirmPassword || password !== confirmPassword}
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                            >
+                              {loading ? 'Criando conta...' : '✅ Criar Conta'}
+                            </Button>
+                            <Button
+                              onClick={goBack}
+                              variant="outline"
+                              className="px-4"
+                            >
+                              <ArrowLeft className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
 

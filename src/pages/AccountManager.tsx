@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, UserPlus, Users, Shield, Globe } from 'lucide-react';
-import { checkSupabaseAccounts, checkSpecificAccount, createHabbohubAccountIfNeeded } from '@/utils/checkSupabaseAccounts';
+import { checkSupabaseAccounts, checkSpecificAccount } from '@/utils/checkSupabaseAccounts';
+import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
 
 interface AccountData {
   id: string;
@@ -19,235 +20,264 @@ export const AccountManager: React.FC = () => {
   const [accounts, setAccounts] = useState<AccountData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [habbohubStatus, setHabbohubStatus] = useState<string>('Verificando...');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Carregar contas ao montar o componente
   useEffect(() => {
     loadAccounts();
-    checkHabbohubAccount();
   }, []);
 
+  // Função para carregar todas as contas
   const loadAccounts = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      setError(null);
-      
       const result = await checkSupabaseAccounts();
       
       if (result.success) {
         setAccounts(result.accounts);
+        setSuccessMessage(`${result.accounts.length} contas carregadas com sucesso!`);
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         setError(result.error || 'Erro ao carregar contas');
       }
     } catch (err) {
-      setError('Erro interno');
+      setError('Erro interno ao carregar contas');
       console.error('Erro ao carregar contas:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const checkHabbohubAccount = async () => {
+  // Função para verificar conta específica
+  const checkAccount = async (username: string, hotel: string) => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      const result = await checkSpecificAccount('habbohub', 'br');
+      const result = await checkSpecificAccount(username, hotel);
       
       if (result.success) {
         if (result.found) {
-          setHabbohubStatus('✅ Conta habbohub existe');
+          setSuccessMessage(`Conta encontrada: ${username} (${hotel})`);
         } else {
-          setHabbohubStatus('❌ Conta habbohub não encontrada');
+          setError(`Conta não encontrada: ${username} (${hotel})`);
         }
       } else {
-        setHabbohubStatus(`❌ Erro: ${result.error}`);
+        setError(result.error || 'Erro ao verificar conta');
       }
     } catch (err) {
-      setHabbohubStatus('❌ Erro ao verificar');
-    }
-  };
-
-  const createHabbohub = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const result = await createHabbohubAccountIfNeeded();
-      
-      if (result.success) {
-        if (result.created) {
-          setHabbohubStatus('✅ Conta habbohub criada com sucesso!');
-          await loadAccounts(); // Recarregar lista
-        } else {
-          setHabbohubStatus('ℹ️ Conta habbohub já existia');
-        }
-      } else {
-        setError(result.error || 'Erro ao criar conta habbohub');
-        setHabbohubStatus(`❌ Erro: ${result.error}`);
-      }
-    } catch (err) {
-      setError('Erro interno');
-      setHabbohubStatus('❌ Erro interno');
+      setError('Erro interno ao verificar conta');
+      console.error('Erro ao verificar conta:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('pt-BR');
+  // Função para criar conta habbohub
+  const createHabbohubAccount = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await createHabbohubAccountDirect();
+      
+      if (result.success) {
+        setSuccessMessage('Conta habbohub criada com sucesso!');
+        await loadAccounts(); // Recarregar lista
+      } else {
+        setError(result.message || 'Erro ao criar conta habbohub');
+      }
+    } catch (err) {
+      setError('Erro interno ao criar conta habbohub');
+      console.error('Erro ao criar conta habbohub:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getHotelFlag = (hotel: string) => {
-    const flags: { [key: string]: string } = {
-      'br': '🇧🇷',
-      'com': '🇺🇸',
-      'com.tr': '🇹🇷',
-      'es': '🇪🇸',
-      'fi': '🇫🇮',
-      'fr': '🇫🇷',
-      'de': '🇩🇪',
-      'it': '🇮🇹',
-      'nl': '🇳🇱',
-      'com.br': '🇧🇷'
-    };
-    return flags[hotel] || '🌐';
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('pt-BR');
   };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white volter-font">
-          👥 Gerenciador de Contas
-        </h1>
-        <Button 
-          onClick={loadAccounts} 
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 volter-font">
+            Gerenciador de Contas
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Gerencie contas do sistema HabboHub
+          </p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            onClick={loadAccounts}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
+          
+          <Button
+            onClick={createHabbohubAccount}
+            disabled={loading}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <UserPlus className="w-4 h-4" />
+            Criar HabboHub
+          </Button>
+        </div>
       </div>
 
-      {/* Status do habbohub */}
-      <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Status da Conta habbohub
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <span className="text-lg">{habbohubStatus}</span>
-            {habbohubStatus.includes('não encontrada') && (
-              <Button 
-                onClick={createHabbohub}
-                disabled={loading}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Criar Conta habbohub
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Mensagens de status */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+          {successMessage}
+        </div>
+      )}
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-          <CardContent className="p-4 text-center">
-            <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-            <div className="text-2xl font-bold">{accounts.length}</div>
-            <div className="text-sm text-gray-600">Total de Contas</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Users className="h-8 w-8 text-blue-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total de Contas</p>
+              <p className="text-2xl font-bold text-gray-900">{accounts.length}</p>
+            </div>
           </CardContent>
         </Card>
-        
-        <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-          <CardContent className="p-4 text-center">
-            <Shield className="w-8 h-8 mx-auto mb-2 text-red-600" />
-            <div className="text-2xl font-bold">
-              {accounts.filter(acc => acc.is_admin).length}
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Shield className="h-8 w-8 text-green-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Administradores</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {accounts.filter(account => account.is_admin).length}
+              </p>
             </div>
-            <div className="text-sm text-gray-600">Administradores</div>
           </CardContent>
         </Card>
-        
-        <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-          <CardContent className="p-4 text-center">
-            <Globe className="w-8 h-8 mx-auto mb-2 text-green-600" />
-            <div className="text-2xl font-bold">
-              {accounts.filter(acc => acc.is_online).length}
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Globe className="h-8 w-8 text-purple-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Hotéis</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {new Set(accounts.map(account => account.hotel)).size}
+              </p>
             </div>
-            <div className="text-sm text-gray-600">Online</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">
-              {new Set(accounts.map(acc => acc.hotel)).size}
-            </div>
-            <div className="text-sm text-gray-600">Hotéis</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Lista de contas */}
-      <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
+      <Card>
         <CardHeader>
-          <CardTitle>Contas Registradas</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Contas Cadastradas
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-
           {loading ? (
-            <div className="text-center py-8">
-              <RefreshCw className="w-8 h-8 mx-auto animate-spin text-blue-600" />
-              <p className="mt-2">Carregando contas...</p>
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+              Carregando contas...
             </div>
           ) : accounts.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               Nenhuma conta encontrada
             </div>
           ) : (
-            <div className="space-y-2">
-              {accounts.map((account) => (
-                <div 
+            <div className="space-y-4">
+              {accounts.map((account, index) => (
+                <div
                   key={account.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="text-2xl">{getHotelFlag(account.hotel)}</div>
-                    <div>
-                      <div className="font-semibold flex items-center gap-2">
-                        {account.habbo_name}
-                        {account.is_admin && (
-                          <Badge variant="destructive" className="text-xs">
-                            Admin
-                          </Badge>
-                        )}
-                        {account.is_online && (
-                          <Badge variant="default" className="bg-green-600 text-xs">
-                            Online
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Hotel: {account.hotel} | 
-                        Criado: {formatDate(account.created_at)}
-                        {account.last_seen_at && (
-                          <span> | Última vez: {formatDate(account.last_seen_at)}</span>
-                        )}
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-sm">
+                          {account.habbo_name.charAt(0).toUpperCase()}
+                        </span>
                       </div>
                     </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {account.habbo_name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Hotel: {account.hotel.toUpperCase()} • 
+                        Criado em: {formatDate(account.created_at)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {account.is_admin && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <Shield className="w-3 h-3 mr-1" />
+                        Admin
+                      </Badge>
+                    )}
+                    
+                    <Badge 
+                      variant={account.is_online ? "default" : "secondary"}
+                      className={account.is_online ? "bg-green-600" : "bg-gray-400"}
+                    >
+                      {account.is_online ? "Online" : "Offline"}
+                    </Badge>
                   </div>
                 </div>
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Ferramentas de teste */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ferramentas de Teste</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Button
+              onClick={() => checkAccount('habbohub', 'br')}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              Verificar HabboHub
+            </Button>
+            
+            <Button
+              onClick={() => checkAccount('beebop', 'br')}
+              disabled={loading}
+              variant="outline"
+              size="sm"
+            >
+              Verificar Beebop
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

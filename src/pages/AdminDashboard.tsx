@@ -1,44 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
-  Eye, 
-  Calendar,
-  User,
+  Home, 
+  Shield, 
+  Activity, 
+  Settings, 
   Database,
-  Activity,
-  TrendingUp,
-  Clock,
+  RefreshCw,
+  UserPlus,
   Globe,
-  Shield,
-  Settings,
+  Heart,
+  MessageSquare,
+  Camera,
+  TrendingUp,
   BarChart3,
   FileText,
   Palette
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { createHabbohubAccount } from '@/utils/createHabbohubAccount';
+import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminStats {
   totalUsers: number;
   totalHomes: number;
-  totalVisits: number;
-  onlineUsers: number;
-  newUsersToday: number;
+  totalBadges: number;
+  activeUsers: number;
+  totalLikes: number;
+  totalComments: number;
+  totalPhotos: number;
   visitsToday: number;
-}
-
-interface FontPreview {
-  name: string;
-  className: string;
-  description: string;
 }
 
 export const AdminDashboard: React.FC = () => {
@@ -46,87 +41,66 @@ export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalHomes: 0,
-    totalVisits: 0,
-    onlineUsers: 0,
-    newUsersToday: 0,
+    totalBadges: 0,
+    activeUsers: 0,
+    totalLikes: 0,
+    totalComments: 0,
+    totalPhotos: 0,
     visitsToday: 0
   });
   const [loading, setLoading] = useState(true);
-
-  // Fontes disponíveis para preview
-  const fontPreviews: FontPreview[] = [
-    {
-      name: 'Volter Goldfish',
-      className: 'volter-font',
-      description: 'Fonte principal do Habbo'
-    },
-    {
-      name: 'Habbo Ubuntu',
-      className: 'habbo-ubuntu-font',
-      description: 'Fonte Ubuntu oficial do Habbo'
-    },
-    {
-      name: 'Habbo Ubuntu Condensed',
-      className: 'habbo-ubuntu-condensed-font',
-      description: 'Fonte Ubuntu Condensed oficial do Habbo'
-    },
-    {
-      name: 'Habbo Volter',
-      className: 'habbo-volter-font',
-      description: 'Fonte Volter oficial do Habbo'
-    },
-    {
-      name: 'Habbo Volter 9px',
-      className: 'habbo-volter-font-9px',
-      description: 'Fonte Volter 9px oficial do Habbo'
-    },
-    {
-      name: 'Habbo Volter 18px',
-      className: 'habbo-volter-font-18px',
-      description: 'Fonte Volter 18px oficial do Habbo'
-    }
-  ];
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadAdminStats();
+    loadStats();
   }, []);
 
-  const loadAdminStats = async () => {
+  const loadStats = async () => {
     try {
       setLoading(true);
 
-      // Carregar estatísticas do banco de dados
+      // Carregar estatísticas em paralelo
       const [
-        { count: totalUsers },
-        { count: totalHomes },
-        { count: totalVisits },
-        { count: onlineUsers }
+        usersResult,
+        homesResult,
+        badgesResult,
+        likesResult,
+        commentsResult,
+        photosResult,
+        visitsResult
       ] = await Promise.all([
         supabase.from('habbo_accounts').select('*', { count: 'exact', head: true }),
-        supabase.from('user_home_backgrounds').select('*', { count: 'exact', head: true }),
-        supabase.from('home_visits').select('*', { count: 'exact', head: true }),
-        supabase.from('habbo_accounts').select('*', { count: 'exact', head: true }).eq('is_online', true)
+        supabase.from('user_homes').select('*', { count: 'exact', head: true }),
+        supabase.from('user_badges').select('*', { count: 'exact', head: true }),
+        supabase.from('home_likes').select('*', { count: 'exact', head: true }),
+        supabase.from('home_comments').select('*', { count: 'exact', head: true }),
+        supabase.from('home_photos').select('*', { count: 'exact', head: true }),
+        supabase.from('home_visits').select('*', { count: 'exact', head: true })
+          .gte('visited_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
       ]);
 
-      // Calcular novos usuários hoje
-      const today = new Date().toISOString().split('T')[0];
-      const { count: newUsersToday } = await supabase
+      const totalUsers = usersResult.count || 0;
+      const totalHomes = homesResult.count || 0;
+      const totalBadges = badgesResult.count || 0;
+      const totalLikes = likesResult.count || 0;
+      const totalComments = commentsResult.count || 0;
+      const totalPhotos = photosResult.count || 0;
+      const visitsToday = visitsResult.count || 0;
+
+      // Usuários ativos (logados nas últimas 24 horas)
+      const { count: activeUsers } = await supabase
         .from('habbo_accounts')
         .select('*', { count: 'exact', head: true })
-        .gte('created_at', `${today}T00:00:00.000Z`);
-
-      // Calcular visitas hoje
-      const { count: visitsToday } = await supabase
-        .from('home_visits')
-        .select('*', { count: 'exact', head: true })
-        .gte('visited_at', `${today}T00:00:00.000Z`);
+        .gte('last_seen_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
       setStats({
-        totalUsers: totalUsers || 0,
-        totalHomes: totalHomes || 0,
-        totalVisits: totalVisits || 0,
-        onlineUsers: onlineUsers || 0,
-        newUsersToday: newUsersToday || 0,
+        totalUsers,
+        totalHomes,
+        totalBadges,
+        activeUsers: activeUsers || 0,
+        totalLikes,
+        totalComments,
+        totalPhotos,
         visitsToday: visitsToday || 0
       });
     } catch (error) {
@@ -138,275 +112,233 @@ export const AdminDashboard: React.FC = () => {
 
   const createHabbohubAccountHandler = async () => {
     try {
-      await createHabbohubAccount();
-      alert('Conta habbohub criada com sucesso!');
+      const result = await createHabbohubAccountDirect();
+      if (result.success) {
+        alert('Conta habbohub criada com sucesso!');
+        await loadStats(); // Recarregar estatísticas
+      } else {
+        alert(`Erro ao criar conta habbohub: ${result.message}`);
+      }
     } catch (error) {
       console.error('Erro ao criar conta habbohub:', error);
       alert('Erro ao criar conta habbohub');
     }
   };
 
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <CollapsibleAppSidebar />
-        <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 min-h-screen" 
-                style={{ 
-                  backgroundImage: 'url(/assets/bghabbohub.png)',
-                  backgroundRepeat: 'repeat'
-                }}>
-            <div className="max-w-7xl mx-auto">
-              {/* Header */}
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white volter-font mb-2" 
-                    style={{ textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black' }}>
-                  🛡️ Painel de Administração
-                </h1>
-                <p className="text-white volter-font" 
-                   style={{ textShadow: '1px 1px 0px black' }}>
-                  Gerencie o HabboHub e monitore as estatísticas
-                </p>
-              </div>
+  const refreshStats = async () => {
+    setRefreshing(true);
+    await loadStats();
+    setRefreshing(false);
+  };
 
-              <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="overview">📊 Visão Geral</TabsTrigger>
-                  <TabsTrigger value="users">👥 Usuários</TabsTrigger>
-                  <TabsTrigger value="tools">🔧 Ferramentas</TabsTrigger>
-                  <TabsTrigger value="fonts">🎨 Fontes</TabsTrigger>
-                </TabsList>
+  const initializeHomesHandler = async () => {
+    try {
+      await initializeAllMissingHomes();
+      alert('Homes inicializadas com sucesso!');
+      await loadStats();
+    } catch (error) {
+      console.error('Erro ao inicializar homes:', error);
+      alert('Erro ao inicializar homes');
+    }
+  };
 
-                {/* Visão Geral */}
-                <TabsContent value="overview" className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Estatísticas principais */}
-                    <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium volter-font">Total de Usuários</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold volter-font">{stats.totalUsers}</div>
-                        <p className="text-xs text-muted-foreground volter-font">
-                          +{stats.newUsersToday} hoje
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium volter-font">Casas Criadas</CardTitle>
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold volter-font">{stats.totalHomes}</div>
-                        <p className="text-xs text-muted-foreground volter-font">
-                          Casas ativas
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium volter-font">Total de Visitas</CardTitle>
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold volter-font">{stats.totalVisits}</div>
-                        <p className="text-xs text-muted-foreground volter-font">
-                          +{stats.visitsToday} hoje
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium volter-font">Usuários Online</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold volter-font">{stats.onlineUsers}</div>
-                        <p className="text-xs text-muted-foreground volter-font">
-                          Ativos agora
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                {/* Usuários */}
-                <TabsContent value="users" className="space-y-6">
-                  <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                    <CardHeader>
-                      <CardTitle className="volter-font">👥 Gerenciamento de Usuários</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">Gerenciar Contas</h3>
-                          <p className="text-sm text-gray-600 volter-font mb-3">
-                            Ver e gerenciar todas as contas do sistema
-                          </p>
-                          <Button 
-                            onClick={() => navigate('/admin/accounts')}
-                            className="w-full volter-font mb-2"
-                          >
-                            👥 Gerenciar Contas
-                          </Button>
-                          <Button 
-                            onClick={createHabbohubAccountHandler}
-                            variant="outline"
-                            className="w-full volter-font"
-                          >
-                            🧪 Criar Conta habbohub
-                          </Button>
-                        </div>
-                        
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">Estatísticas de Usuários</h3>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="volter-font">Total:</span>
-                              <Badge variant="secondary">{stats.totalUsers}</Badge>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="volter-font">Online:</span>
-                              <Badge variant="default">{stats.onlineUsers}</Badge>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="volter-font">Novos hoje:</span>
-                              <Badge variant="outline">{stats.newUsersToday}</Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* Ferramentas */}
-                <TabsContent value="tools" className="space-y-6">
-                  <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                    <CardHeader>
-                      <CardTitle className="volter-font">🔧 Ferramentas de Administração</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">🔄 Atualizar Estatísticas</h3>
-                          <p className="text-sm text-gray-600 volter-font mb-3">
-                            Recarregar dados do banco
-                          </p>
-                          <Button 
-                            onClick={loadAdminStats}
-                            disabled={loading}
-                            className="w-full volter-font"
-                          >
-                            {loading ? 'Carregando...' : 'Atualizar'}
-                          </Button>
-                        </div>
-
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">🏠 Inicializar Homes</h3>
-                          <p className="text-sm text-gray-600 volter-font mb-3">
-                            Criar homes para usuários que não têm
-                          </p>
-                          <Button 
-                            onClick={async () => {
-                              setLoading(true);
-                              try {
-                                await initializeAllMissingHomes();
-                                toast({
-                                  title: "Sucesso!",
-                                  description: "Homes inicializadas com sucesso!",
-                                });
-                                loadAdminStats();
-                              } catch (error) {
-                                toast({
-                                  title: "Erro",
-                                  description: "Erro ao inicializar homes",
-                                  variant: "destructive"
-                                });
-                              } finally {
-                                setLoading(false);
-                              }
-                            }}
-                            disabled={loading}
-                            className="w-full volter-font"
-                          >
-                            {loading ? 'Inicializando...' : 'Inicializar Homes'}
-                          </Button>
-                        </div>
-
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">📊 Relatórios</h3>
-                          <p className="text-sm text-gray-600 volter-font mb-3">
-                            Gerar relatórios de uso
-                          </p>
-                          <Button 
-                            variant="outline"
-                            className="w-full volter-font"
-                          >
-                            Gerar Relatório
-                          </Button>
-                        </div>
-
-                        <div className="p-4 border border-gray-200 rounded-lg">
-                          <h3 className="font-bold volter-font mb-2">⚙️ Configurações</h3>
-                          <p className="text-sm text-gray-600 volter-font mb-3">
-                            Configurações do sistema
-                          </p>
-                          <Button 
-                            variant="outline"
-                            className="w-full volter-font"
-                          >
-                            Configurar
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* Fontes */}
-                <TabsContent value="fonts" className="space-y-6">
-                  <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
-                    <CardHeader>
-                      <CardTitle className="volter-font">🎨 Preview das Fontes Oficiais do Habbo</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {fontPreviews.map((font, index) => (
-                          <div key={index} className="p-4 border border-gray-200 rounded-lg">
-                            <h3 className="font-bold volter-font mb-2">{font.name}</h3>
-                            <p className="text-sm text-gray-600 volter-font mb-3">{font.description}</p>
-                            <div className="space-y-2">
-                              <div className={`${font.className} text-lg`}>
-                                The quick brown fox jumps over the lazy dog
-                              </div>
-                              <div className={`${font.className} text-sm`}>
-                                ABCDEFGHIJKLMNOPQRSTUVWXYZ
-                              </div>
-                              <div className={`${font.className} text-sm`}>
-                                0123456789 !@#$%^&*()
-                              </div>
-                              <div className={`${font.className} text-sm`}>
-                                HabboHub - Portal do Habbo
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </main>
-        </SidebarInset>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center space-x-2">
+          <RefreshCw className="w-6 h-6 animate-spin" />
+          <span>Carregando dashboard...</span>
+        </div>
       </div>
-    </SidebarProvider>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 volter-font">
+            Painel Administrativo
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Dashboard do sistema HabboHub
+          </p>
+        </div>
+        
+        <Button
+          onClick={refreshStats}
+          disabled={refreshing}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Atualizar
+        </Button>
+      </div>
+
+      {/* Estatísticas principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Users className="h-8 w-8 text-blue-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Home className="h-8 w-8 text-green-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Homes Criadas</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalHomes}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Activity className="h-8 w-8 text-purple-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Usuários Ativos</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <TrendingUp className="h-8 w-8 text-orange-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Visitas Hoje</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.visitsToday}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Estatísticas de engajamento */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Heart className="h-8 w-8 text-red-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total de Likes</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalLikes}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <MessageSquare className="h-8 w-8 text-blue-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Comentários</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalComments}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Camera className="h-8 w-8 text-green-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Fotos</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalPhotos}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Ações administrativas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Gerenciamento de Usuários
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button
+              onClick={() => navigate('/admin/accounts')}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              👥 Gerenciar Contas
+            </Button>
+            <Button 
+              onClick={createHabbohubAccountHandler}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              🤖 Criar Conta HabboHub
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Home className="w-5 h-5" />
+              Gerenciamento de Homes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button
+              onClick={() => navigate('/admin/homes')}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              🏠 Gerenciar Homes
+            </Button>
+            <Button 
+              onClick={initializeHomesHandler}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              🔧 Inicializar Homes
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button
+              onClick={() => navigate('/admin/database')}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              🗄️ Banco de Dados
+            </Button>
+            <Button
+              onClick={() => navigate('/admin/settings')}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              ⚙️ Configurações
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Badge de sistema */}
+      <div className="flex justify-center">
+        <Badge variant="secondary" className="px-4 py-2">
+          <Shield className="w-4 h-4 mr-2" />
+          Sistema HabboHub v2.0
+        </Badge>
+      </div>
+    </div>
   );
 };
 

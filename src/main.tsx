@@ -28,7 +28,8 @@ import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
-import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer'
+import LoginTest from './pages/LoginTest'
+// import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer' // Desativado temporariamente
 import HomeRedirect from './components/HomeRedirect'
 
 const queryClient = new QueryClient()
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/login-test",
+    element: <LoginTest />,
   },
   {
     path: "/connect-habbo",
@@ -146,7 +151,7 @@ const router = createBrowserRouter([
 ])
 
 const AppWithInitializers = () => {
-  useDailyActivitiesInitializer();
+  // useDailyActivitiesInitializer(); // Desativado temporariamente
   return (
     <>
       <RouterProvider router={router} />

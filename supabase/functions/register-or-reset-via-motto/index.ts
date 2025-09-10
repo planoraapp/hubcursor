@@ -40,7 +40,9 @@ Deno.serve(async (req) => {
     console.log(`Generated verification code: ${verificationCode}`)
 
     // Get Habbo user data
-    const habboApiUrl = `https://www.habbo.${hotel}/api/public/users?name=${encodeURIComponent(habbo_name)}`
+    const hotelDomain = hotel === 'br' ? 'com.br' : hotel
+    const habboApiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(habbo_name)}`
+    console.log(`Fetching Habbo data from: ${habboApiUrl}`)
     const habboResponse = await fetch(habboApiUrl)
     
     if (!habboResponse.ok) {

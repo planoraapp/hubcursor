@@ -29,19 +29,12 @@ export const checkSupabaseAccounts = async () => {
 
     console.log(`✅ [checkSupabaseAccounts] Encontradas ${accounts?.length || 0} contas:`);
     
-    if (accounts && accounts.length > 0) {
-      accounts.forEach((account, index) => {
-        console.log(`${index + 1}. ${account.habbo_name} (${account.hotel}) - Admin: ${account.is_admin} - Online: ${account.is_online}`);
-      });
-    } else {
-      console.log('ℹ️ [checkSupabaseAccounts] Nenhuma conta encontrada');
-    }
+    // Log das contas encontradas
+    accounts?.forEach((account, index) => {
+      console.log(`${index + 1}. ${account.habbo_name} (${account.hotel}) - Admin: ${account.is_admin ? 'Sim' : 'Não'}`);
+    });
 
-    return { 
-      success: true, 
-      accounts: accounts || [], 
-      total: accounts?.length || 0 
-    };
+    return { success: true, accounts: accounts || [], error: null };
 
   } catch (error) {
     console.error('❌ [checkSupabaseAccounts] Erro geral:', error);
@@ -49,11 +42,12 @@ export const checkSupabaseAccounts = async () => {
   }
 };
 
-// Função para verificar se uma conta específica existe
-export const checkSpecificAccount = async (username: string, hotel: string = 'br') => {
+// Função para verificar conta específica
+export const checkSpecificAccount = async (username: string, hotel: string) => {
   try {
     console.log(`🔍 [checkSpecificAccount] Verificando conta: ${username} (${hotel})`);
 
+    // Buscar conta específica na tabela habbo_accounts
     const { data: account, error } = await supabase
       .from('habbo_accounts')
       .select('*')
@@ -77,54 +71,5 @@ export const checkSpecificAccount = async (username: string, hotel: string = 'br
   } catch (error) {
     console.error('❌ [checkSpecificAccount] Erro geral:', error);
     return { success: false, account: null, error: 'Erro interno' };
-  }
-};
-
-// Função para criar conta do habbohub se não existir
-export const createHabbohubAccountIfNeeded = async () => {
-  try {
-    console.log('🔧 [createHabbohubAccountIfNeeded] Verificando se conta habbohub existe...');
-
-    // Verificar se a conta já existe
-    const checkResult = await checkSpecificAccount('habbohub', 'br');
-    
-    if (checkResult.success && checkResult.found) {
-      console.log('✅ [createHabbohubAccountIfNeeded] Conta habbohub já existe');
-      return { success: true, created: false, account: checkResult.account };
-    }
-
-    if (!checkResult.success) {
-      console.error('❌ [createHabbohubAccountIfNeeded] Erro ao verificar conta:', checkResult.error);
-      return { success: false, created: false, error: checkResult.error };
-    }
-
-    // Criar conta habbohub
-    console.log('🔧 [createHabbohubAccountIfNeeded] Criando conta habbohub...');
-    
-    const { data: newAccount, error: createError } = await supabase
-      .from('habbo_accounts')
-      .insert({
-        habbo_name: 'habbohub',
-        hotel: 'br',
-        is_admin: true,
-        is_online: false,
-        created_at: new Date().toISOString(),
-        motto: 'Sistema HabboHub - Administrador',
-        figure_string: 'hd-180-1.ch-255-66.lg-285-80.sh-290-62.ha-1012-110.hr-831-49'
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error('❌ [createHabbohubAccountIfNeeded] Erro ao criar conta:', createError);
-      return { success: false, created: false, error: createError.message };
-    }
-
-    console.log('✅ [createHabbohubAccountIfNeeded] Conta habbohub criada com sucesso:', newAccount);
-    return { success: true, created: true, account: newAccount };
-
-  } catch (error) {
-    console.error('❌ [createHabbohubAccountIfNeeded] Erro geral:', error);
-    return { success: false, created: false, error: 'Erro interno' };
   }
 };

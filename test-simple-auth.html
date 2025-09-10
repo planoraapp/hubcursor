@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Simples - Sistema de Auth</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .result { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Simples do Sistema de Auth</h1>
+    
+    <div class="test">
+        <h3>1. Verificar se tabela habbo_users existe</h3>
+        <button onclick="checkTable()">Verificar Tabela</button>
+        <div id="tableResult" class="result"></div>
+    </div>
+
+    <div class="test">
+        <h3>2. Criar conta habbohub</h3>
+        <button onclick="createHabbohub()">Criar habbohub</button>
+        <div id="habbohubResult" class="result"></div>
+    </div>
+
+    <div class="test">
+        <h3>3. Criar conta beebop</h3>
+        <button onclick="createBeebop()">Criar beebop</button>
+        <div id="beebopResult" class="result"></div>
+    </div>
+
+    <div class="test">
+        <h3>4. Testar login habbohub</h3>
+        <button onclick="testLogin('habbohub', '151092')">Login habbohub</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczODA0NzQ0MCwiZXhwIjoyMDUzNjIzNDQwfQ.8Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q';
+
+        async function supabaseRequest(endpoint, options = {}) {
+            const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            return response;
+        }
+
+        async function checkTable() {
+            const resultDiv = document.getElementById('tableResult');
+            resultDiv.innerHTML = '🔄 Verificando tabela habbo_users...';
+            
+            try {
+                const response = await supabaseRequest('habbo_users?select=count');
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Tabela habbo_users existe e está acessível!</span>';
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function createHabbohub() {
+            const resultDiv = document.getElementById('habbohubResult');
+            resultDiv.innerHTML = '🔄 Criando conta habbohub...';
+            
+            try {
+                const habbohubData = {
+                    habbo_name: 'habbohub',
+                    habbo_id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
+                    hotel: 'br',
+                    figure_string: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
+                    motto: 'HUB-QQ797',
+                    is_admin: true,
+                    is_online: false,
+                    password_hash: '151092',
+                    profile_visible: false
+                };
+
+                const response = await supabaseRequest('habbo_users', {
+                    method: 'POST',
+                    body: JSON.stringify(habbohubData)
+                });
+
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Conta habbohub criada com sucesso!</span>';
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function createBeebop() {
+            const resultDiv = document.getElementById('beebopResult');
+            resultDiv.innerHTML = '🔄 Criando conta beebop...';
+            
+            try {
+                const beebopData = {
+                    habbo_name: 'beebop',
+                    habbo_id: 'hhbr-beebop-id',
+                    hotel: 'br',
+                    figure_string: 'hr-100-0.hd-180-1',
+                    motto: 'BEEBOP-MOTTO',
+                    is_admin: true,
+                    is_online: false,
+                    password_hash: '290684',
+                    profile_visible: true
+                };
+
+                const response = await supabaseRequest('habbo_users', {
+                    method: 'POST',
+                    body: JSON.stringify(beebopData)
+                });
+
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Conta beebop criada com sucesso!</span>';
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function testLogin(username, password) {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = `🔄 Testando login ${username}...`;
+            
+            try {
+                // Buscar conta
+                const response = await supabaseRequest(`habbo_users?select=*&habbo_name=eq.${username}&hotel=eq.br`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        const account = data[0];
+                        if (account.password_hash === password) {
+                            resultDiv.innerHTML = `<span class="success">✅ Login ${username} OK!
+👤 Nome: ${account.habbo_name}
+🆔 ID: ${account.habbo_id}
+👑 Admin: ${account.is_admin}
+🔐 Senha: ${account.password_hash}
+🟢 Online: ${account.is_online}</span>`;
+                        } else {
+                            resultDiv.innerHTML = `<span class="error">❌ Senha incorreta: ${account.password_hash}</span>`;
+                        }
+                    } else {
+                        resultDiv.innerHTML = `<span class="error">❌ Conta ${username} não encontrada</span>`;
+                    }
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

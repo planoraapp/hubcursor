@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Novo Sistema de Autenticação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste do Novo Sistema de Autenticação</h1>
+        
+        <div class="step">
+            <h3>1. Aplicar Migração do Banco</h3>
+            <button onclick="applyMigration()">Aplicar Migração SQL</button>
+            <div id="migrationResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>2. Criar Contas de Admin</h3>
+            <button onclick="createAdminAccounts()">Criar habbohub e beebop</button>
+            <div id="adminResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>3. Testar Login habbohub</h3>
+            <button onclick="testHabbohubLogin()">Testar Login habbohub</button>
+            <div id="habbohubResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>4. Testar Login beebop</h3>
+            <button onclick="testBeebopLogin()">Testar Login beebop</button>
+            <div id="beebopResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>5. Testar Verificação de Usuário</h3>
+            <input type="text" id="testUsername" placeholder="Nome do usuário" value="habbohub">
+            <select id="testHotel">
+                <option value="br">Brasil</option>
+                <option value="com">Internacional</option>
+            </select>
+            <button onclick="testUserVerification()">Verificar Usuário</button>
+            <div id="verificationResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczODA0NzQ0MCwiZXhwIjoyMDUzNjIzNDQwfQ.8Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q';
+
+        // Função para fazer requisições ao Supabase
+        async function supabaseRequest(endpoint, options = {}) {
+            const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            return response;
+        }
+
+        // 1. Aplicar migração
+        async function applyMigration() {
+            const resultDiv = document.getElementById('migrationResult');
+            resultDiv.innerHTML = '🔄 Aplicando migração...';
+            
+            try {
+                // SQL da migração
+                const migrationSQL = `
+                -- Criar tabela habbo_users
+                CREATE TABLE IF NOT EXISTS public.habbo_users (
+                  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+                  habbo_name text NOT NULL,
+                  habbo_id text NOT NULL,
+                  hotel text NOT NULL DEFAULT 'br',
+                  figure_string text,
+                  motto text,
+                  is_online boolean DEFAULT false,
+                  is_admin boolean DEFAULT false,
+                  password_hash text,
+                  profile_visible boolean DEFAULT true,
+                  member_since timestamp with time zone,
+                  last_access timestamp with time zone DEFAULT now(),
+                  current_level integer DEFAULT 1,
+                  total_experience integer DEFAULT 0,
+                  star_gem_count integer DEFAULT 0,
+                  selected_badges jsonb DEFAULT '[]'::jsonb,
+                  badges_data jsonb DEFAULT '{}'::jsonb,
+                  groups_data jsonb DEFAULT '{}'::jsonb,
+                  friends_data jsonb DEFAULT '{}'::jsonb,
+                  rooms_data jsonb DEFAULT '{}'::jsonb,
+                  achievements_data jsonb DEFAULT '{}'::jsonb,
+                  full_api_data jsonb DEFAULT '{}'::jsonb,
+                  data_collected_at timestamp with time zone DEFAULT now(),
+                  data_source text DEFAULT 'habbo.com.br',
+                  created_at timestamp with time zone DEFAULT now(),
+                  updated_at timestamp with time zone DEFAULT now(),
+                  CONSTRAINT unique_habbo_name_hotel UNIQUE (habbo_name, hotel),
+                  CONSTRAINT unique_habbo_id_hotel UNIQUE (habbo_id, hotel)
+                );
+
+                -- Habilitar RLS
+                ALTER TABLE public.habbo_users ENABLE ROW LEVEL SECURITY;
+
+                -- Políticas RLS
+                CREATE POLICY IF NOT EXISTS "Public can view habbo users"
+                  ON public.habbo_users
+                  FOR SELECT
+                  TO PUBLIC
+                  USING (true);
+
+                CREATE POLICY IF NOT EXISTS "Users can insert their own data"
+                  ON public.habbo_users
+                  FOR INSERT
+                  TO PUBLIC
+                  WITH CHECK (true);
+
+                CREATE POLICY IF NOT EXISTS "Users can update their own data"
+                  ON public.habbo_users
+                  FOR UPDATE
+                  TO PUBLIC
+                  USING (true)
+                  WITH CHECK (true);
+                `;
+
+                // Aplicar via rpc
+                const response = await supabaseRequest('rpc/exec_sql', {
+                    method: 'POST',
+                    body: JSON.stringify({ sql: migrationSQL })
+                });
+
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Migração aplicada com sucesso!</span>';
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro na migração: ${error}</span>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        // 2. Criar contas de admin
+        async function createAdminAccounts() {
+            const resultDiv = document.getElementById('adminResult');
+            resultDiv.innerHTML = '🔄 Criando contas de admin...';
+            
+            try {
+                // Criar habbohub
+                const habbohubData = {
+                    habbo_name: 'habbohub',
+                    habbo_id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
+                    hotel: 'br',
+                    figure_string: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
+                    motto: 'HUB-QQ797',
+                    is_admin: true,
+                    is_online: false,
+                    password_hash: '151092',
+                    profile_visible: false
+                };
+
+                const habbohubResponse = await supabaseRequest('habbo_users', {
+                    method: 'POST',
+                    body: JSON.stringify(habbohubData)
+                });
+
+                // Criar beebop
+                const beebopData = {
+                    habbo_name: 'beebop',
+                    habbo_id: 'hhbr-beebop-id',
+                    hotel: 'br',
+                    figure_string: 'hr-100-0.hd-180-1',
+                    motto: 'BEEBOP-MOTTO',
+                    is_admin: true,
+                    is_online: false,
+                    password_hash: '290684',
+                    profile_visible: true
+                };
+
+                const beebopResponse = await supabaseRequest('habbo_users', {
+                    method: 'POST',
+                    body: JSON.stringify(beebopData)
+                });
+
+                let result = '';
+                if (habbohubResponse.ok) {
+                    result += '<span class="success">✅ habbohub criado</span>\n';
+                } else {
+                    const error = await habbohubResponse.text();
+                    result += `<span class="error">❌ habbohub: ${error}</span>\n`;
+                }
+
+                if (beebopResponse.ok) {
+                    result += '<span class="success">✅ beebop criado</span>\n';
+                } else {
+                    const error = await beebopResponse.text();
+                    result += `<span class="error">❌ beebop: ${error}</span>\n`;
+                }
+
+                resultDiv.innerHTML = result;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        // 3. Testar login habbohub
+        async function testHabbohubLogin() {
+            const resultDiv = document.getElementById('habbohubResult');
+            resultDiv.innerHTML = '🔄 Testando login habbohub...';
+            
+            try {
+                // Buscar conta
+                const response = await supabaseRequest('habbo_users?select=*&habbo_name=eq.habbohub&hotel=eq.br');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        const account = data[0];
+                        if (account.password_hash === '151092') {
+                            resultDiv.innerHTML = `<span class="success">✅ Login habbohub OK!
+👤 Nome: ${account.habbo_name}
+🆔 ID: ${account.habbo_id}
+👑 Admin: ${account.is_admin}
+🔐 Senha: ${account.password_hash}</span>`;
+                        } else {
+                            resultDiv.innerHTML = `<span class="error">❌ Senha incorreta: ${account.password_hash}</span>`;
+                        }
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">❌ Conta habbohub não encontrada</span>';
+                    }
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        // 4. Testar login beebop
+        async function testBeebopLogin() {
+            const resultDiv = document.getElementById('beebopResult');
+            resultDiv.innerHTML = '🔄 Testando login beebop...';
+            
+            try {
+                // Buscar conta
+                const response = await supabaseRequest('habbo_users?select=*&habbo_name=eq.beebop&hotel=eq.br');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        const account = data[0];
+                        if (account.password_hash === '290684') {
+                            resultDiv.innerHTML = `<span class="success">✅ Login beebop OK!
+👤 Nome: ${account.habbo_name}
+🆔 ID: ${account.habbo_id}
+👑 Admin: ${account.is_admin}
+🔐 Senha: ${account.password_hash}</span>`;
+                        } else {
+                            resultDiv.innerHTML = `<span class="error">❌ Senha incorreta: ${account.password_hash}</span>`;
+                        }
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">❌ Conta beebop não encontrada</span>';
+                    }
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        // 5. Testar verificação de usuário
+        async function testUserVerification() {
+            const resultDiv = document.getElementById('verificationResult');
+            const username = document.getElementById('testUsername').value;
+            const hotel = document.getElementById('testHotel').value;
+            
+            resultDiv.innerHTML = `🔄 Verificando usuário ${username} (${hotel})...`;
+            
+            try {
+                // Buscar na API do Habbo
+                const hotelConfig = {
+                    br: 'https://www.habbo.com.br/api/public',
+                    com: 'https://www.habbo.com/api/public'
+                };
+
+                const apiUrl = `${hotelConfig[hotel]}/users?name=${encodeURIComponent(username)}`;
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'HabboHub/1.0'
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    resultDiv.innerHTML = `<span class="success">✅ Usuário encontrado na API do Habbo!
+👤 Nome: ${userData.name}
+🆔 ID: ${userData.uniqueId}
+💬 Motto: ${userData.motto}
+🎨 Figura: ${userData.figureString}
+🟢 Online: ${userData.online}</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Usuário não encontrado na API do Habbo (${response.status})</span>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
