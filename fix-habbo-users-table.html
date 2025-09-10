@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corrigir Tabela habbo_users</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .result { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; white-space: pre-wrap; }
+        .sql-code { background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Corrigir Tabela habbo_users</h1>
+        
+        <div class="step">
+            <h3>📋 Diagnóstico do Problema:</h3>
+            <p>O erro 400 indica que a tabela <code>habbo_users</code> não existe ou não tem políticas RLS adequadas.</p>
+        </div>
+
+        <div class="step">
+            <h3>🔍 1. Verificar se tabela existe</h3>
+            <button onclick="checkTableExists()">Verificar Tabela</button>
+            <div id="tableCheckResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>🛠️ 2. Criar/Corrigir tabela habbo_users</h3>
+            <button onclick="createTable()">Criar Tabela</button>
+            <div id="createResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>🔐 3. Configurar políticas RLS</h3>
+            <button onclick="setupRLS()">Configurar RLS</button>
+            <div id="rlsResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>📊 4. Inserir dados de teste</h3>
+            <button onclick="insertTestData()">Inserir Dados</button>
+            <div id="insertResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>✅ 5. Testar acesso</h3>
+            <button onclick="testAccess()">Testar Acesso</button>
+            <div id="testResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>📄 SQL para Executar Manualmente:</h3>
+            <div class="sql-code" id="sqlCode">
+-- ========================================
+-- CORREÇÃO COMPLETA DA TABELA HABBO_USERS
+-- ========================================
+
+-- 1. Criar tabela habbo_users se não existir
+CREATE TABLE IF NOT EXISTS public.habbo_users (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  habbo_name text NOT NULL,
+  habbo_id text NOT NULL,
+  hotel text NOT NULL DEFAULT 'br',
+  figure_string text,
+  motto text,
+  is_online boolean DEFAULT false,
+  is_admin boolean DEFAULT false,
+  password_hash text,
+  profile_visible boolean DEFAULT true,
+  member_since timestamp with time zone,
+  last_access timestamp with time zone DEFAULT now(),
+  current_level integer DEFAULT 1,
+  total_experience integer DEFAULT 0,
+  star_gem_count integer DEFAULT 0,
+  selected_badges jsonb DEFAULT '[]'::jsonb,
+  badges_data jsonb DEFAULT '{}'::jsonb,
+  groups_data jsonb DEFAULT '{}'::jsonb,
+  friends_data jsonb DEFAULT '{}'::jsonb,
+  rooms_data jsonb DEFAULT '{}'::jsonb,
+  achievements_data jsonb DEFAULT '{}'::jsonb,
+  full_api_data jsonb DEFAULT '{}'::jsonb,
+  data_collected_at timestamp with time zone DEFAULT now(),
+  data_source text DEFAULT 'habbo.com.br',
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  
+  -- Índices únicos
+  CONSTRAINT unique_habbo_name_hotel UNIQUE (habbo_name, hotel),
+  CONSTRAINT unique_habbo_id_hotel UNIQUE (habbo_id, hotel)
+);
+
+-- 2. Habilitar RLS
+ALTER TABLE public.habbo_users ENABLE ROW LEVEL SECURITY;
+
+-- 3. Políticas RLS para acesso público (temporário)
+DROP POLICY IF EXISTS "Public can view habbo users" ON public.habbo_users;
+CREATE POLICY "Public can view habbo users"
+  ON public.habbo_users
+  FOR SELECT
+  TO PUBLIC
+  USING (true);
+
+DROP POLICY IF EXISTS "Public can insert habbo users" ON public.habbo_users;
+CREATE POLICY "Public can insert habbo users"
+  ON public.habbo_users
+  FOR INSERT
+  TO PUBLIC
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public can update habbo users" ON public.habbo_users;
+CREATE POLICY "Public can update habbo users"
+  ON public.habbo_users
+  FOR UPDATE
+  TO PUBLIC
+  USING (true)
+  WITH CHECK (true);
+
+-- 4. Índices para performance
+CREATE INDEX IF NOT EXISTS idx_habbo_users_name_hotel ON public.habbo_users (habbo_name, hotel);
+CREATE INDEX IF NOT EXISTS idx_habbo_users_habbo_id ON public.habbo_users (habbo_id);
+CREATE INDEX IF NOT EXISTS idx_habbo_users_is_admin ON public.habbo_users (is_admin);
+CREATE INDEX IF NOT EXISTS idx_habbo_users_is_online ON public.habbo_users (is_online);
+
+-- 5. Trigger para updated_at
+CREATE OR REPLACE FUNCTION update_habbo_users_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_habbo_users_updated_at ON public.habbo_users;
+CREATE TRIGGER update_habbo_users_updated_at
+  BEFORE UPDATE ON public.habbo_users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_habbo_users_updated_at();
+
+-- 6. Inserir dados de teste
+INSERT INTO public.habbo_users (
+  habbo_name,
+  habbo_id,
+  hotel,
+  figure_string,
+  motto,
+  is_admin,
+  is_online,
+  password_hash,
+  profile_visible
+) VALUES 
+(
+  'habbohub',
+  'hhbr-81b7220d11b7a21997226bf7cfcbad51',
+  'br',
+  'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
+  'HUB-QQ797',
+  true,
+  false,
+  '151092',
+  false
+),
+(
+  'beebop',
+  'hhbr-beebop-id',
+  'br',
+  'hr-100-0.hd-180-1',
+  'BEEBOP-MOTTO',
+  true,
+  false,
+  '290684',
+  true
+)
+ON CONFLICT (habbo_name, hotel) DO UPDATE SET
+  habbo_id = EXCLUDED.habbo_id,
+  figure_string = EXCLUDED.figure_string,
+  motto = EXCLUDED.motto,
+  is_admin = EXCLUDED.is_admin,
+  password_hash = EXCLUDED.password_hash,
+  updated_at = now();
+
+-- 7. Verificar se foi criado corretamente
+SELECT 'Tabela habbo_users criada com sucesso!' as status;
+SELECT habbo_name, habbo_id, is_admin, password_hash FROM public.habbo_users;
+            </div>
+            <button onclick="copySQL()">📋 Copiar SQL</button>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczODA0NzQ0MCwiZXhwIjoyMDUzNjIzNDQwfQ.8Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzM4MDQ3NDQwLCJleHAiOjIwNTM2MjM0NDB9.8Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q7Q';
+
+        async function supabaseRequest(endpoint, options = {}) {
+            const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            return response;
+        }
+
+        async function checkTableExists() {
+            const resultDiv = document.getElementById('tableCheckResult');
+            resultDiv.innerHTML = '🔄 Verificando se tabela habbo_users existe...';
+            
+            try {
+                const response = await supabaseRequest('habbo_users?select=count');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<span class="success">✅ Tabela habbo_users existe e está acessível!
+📊 ${data.length} registros encontrados</span>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Tabela não existe ou não é acessível: ${error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function createTable() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.innerHTML = '🔄 Criando tabela habbo_users...';
+            
+            try {
+                // Usar Service Role Key para operações administrativas
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sql: `
+                        CREATE TABLE IF NOT EXISTS public.habbo_users (
+                          id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+                          habbo_name text NOT NULL,
+                          habbo_id text NOT NULL,
+                          hotel text NOT NULL DEFAULT 'br',
+                          figure_string text,
+                          motto text,
+                          is_online boolean DEFAULT false,
+                          is_admin boolean DEFAULT false,
+                          password_hash text,
+                          profile_visible boolean DEFAULT true,
+                          member_since timestamp with time zone,
+                          last_access timestamp with time zone DEFAULT now(),
+                          created_at timestamp with time zone DEFAULT now(),
+                          updated_at timestamp with time zone DEFAULT now(),
+                          CONSTRAINT unique_habbo_name_hotel UNIQUE (habbo_name, hotel),
+                          CONSTRAINT unique_habbo_id_hotel UNIQUE (habbo_id, hotel)
+                        );
+                        `
+                    })
+                });
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Tabela habbo_users criada com sucesso!</span>';
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Erro ao criar tabela: ${await response.text()}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function setupRLS() {
+            const resultDiv = document.getElementById('rlsResult');
+            resultDiv.innerHTML = '🔄 Configurando políticas RLS...';
+            
+            try {
+                // Usar Service Role Key para operações administrativas
+                const rlsResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sql: `
+                        ALTER TABLE public.habbo_users ENABLE ROW LEVEL SECURITY;
+                        
+                        DROP POLICY IF EXISTS "Public can view habbo users" ON public.habbo_users;
+                        CREATE POLICY "Public can view habbo users"
+                          ON public.habbo_users
+                          FOR SELECT
+                          TO PUBLIC
+                          USING (true);
+                          
+                        DROP POLICY IF EXISTS "Public can insert habbo users" ON public.habbo_users;
+                        CREATE POLICY "Public can insert habbo users"
+                          ON public.habbo_users
+                          FOR INSERT
+                          TO PUBLIC
+                          WITH CHECK (true);
+                          
+                        DROP POLICY IF EXISTS "Public can update habbo users" ON public.habbo_users;
+                        CREATE POLICY "Public can update habbo users"
+                          ON public.habbo_users
+                          FOR UPDATE
+                          TO PUBLIC
+                          USING (true)
+                          WITH CHECK (true);
+                        `
+                    })
+                });
+                
+                if (rlsResponse.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Políticas RLS configuradas com sucesso!</span>';
+                } else {
+                    resultDiv.innerHTML = `<span class="error">❌ Erro ao configurar RLS: ${await rlsResponse.text()}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function insertTestData() {
+            const resultDiv = document.getElementById('insertResult');
+            resultDiv.innerHTML = '🔄 Inserindo dados de teste...';
+            
+            try {
+                const habbohubData = {
+                    habbo_name: 'habbohub',
+                    habbo_id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
+                    hotel: 'br',
+                    figure_string: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
+                    motto: 'HUB-QQ797',
+                    is_admin: true,
+                    is_online: false,
+                    password_hash: '151092',
+                    profile_visible: false
+                };
+
+                const response = await supabaseRequest('habbo_users', {
+                    method: 'POST',
+                    body: JSON.stringify(habbohubData)
+                });
+
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="success">✅ Dados de teste inseridos com sucesso!</span>';
+                } else {
+                    const error = await response.text();
+                    if (error.includes('duplicate key')) {
+                        resultDiv.innerHTML = '<span class="info">⚠️ Dados já existem (isso é normal)</span>';
+                    } else {
+                        resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                    }
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        async function testAccess() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '🔄 Testando acesso à tabela habbo_users...';
+            
+            try {
+                const response = await supabaseRequest('habbo_users?select=habbo_name,habbo_id,is_admin,password_hash&habbo_name=eq.beebop&hotel=eq.br');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<span class="success">✅ Acesso funcionando!
+📊 ${data.length} registros encontrados:
+
+${data.map(user => `👤 ${user.habbo_name} (${user.habbo_id}) - Admin: ${user.is_admin} - Senha: ${user.password_hash}`).join('\n')}</span>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<span class="error">❌ Erro: ${error}</span>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Erro: ${error.message}</span>`;
+            }
+        }
+
+        function copySQL() {
+            const sqlCode = document.getElementById('sqlCode').textContent;
+            navigator.clipboard.writeText(sqlCode).then(() => {
+                alert('SQL copiado para a área de transferência!');
+            });
+        }
+    </script>
+</body>
+</html>

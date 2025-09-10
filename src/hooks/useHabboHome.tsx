@@ -79,9 +79,9 @@ export const useHabboHome = (username: string) => {
       
       // Buscar dados do usuário Habbo
       const { data: userData, error: userError } = await supabase
-        .from('habbo_accounts')
+        .from('habbo_auth')
         .select('*')
-        .ilike('habbo_name', username)
+        .eq('habbo_username', username)
         .single();
 
       if (userError || !userData) {
@@ -94,14 +94,14 @@ export const useHabboHome = (username: string) => {
       console.log('✅ Dados do usuário carregados:', userData);
 
       setHabboData({
-        id: userData.supabase_user_id || userData.id,
-        habbo_name: userData.habbo_name,
-        habbo_id: userData.habbo_id,
-        name: userData.habbo_name,
-        hotel: userData.hotel,
-        motto: userData.motto,
-        figure_string: userData.figure_string,
-        is_online: userData.is_online
+        id: userData.id,
+        habbo_name: userData.habbo_username,
+        habbo_id: userData.id,
+        name: userData.habbo_username,
+        hotel: 'br', // Padrão para BR
+        motto: userData.habbo_motto,
+        figure_string: userData.habbo_avatar,
+        is_online: false // Padrão
       });
 
       // Verificar se o usuário atual é o dono da home - MELHORADO

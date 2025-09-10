@@ -5,17 +5,15 @@ import { useToast } from './use-toast';
 
 interface HabboAccount {
   id: string;
-  supabase_user_id: string;
-  habbo_name: string;
-  habbo_id: string;
-  hotel: string;
+  habbo_username: string;
+  habbo_motto?: string;
+  habbo_avatar?: string;
+  password_hash: string;
   is_admin: boolean;
-  motto?: string;
-  figure_string?: string;
-  is_online?: boolean;
+  is_verified: boolean;
+  last_login?: string;
   created_at: string;
-  password?: string;
-  auth_email?: string;
+  updated_at: string;
 }
 
 interface CurrentUser {
@@ -54,13 +52,13 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
   // Criar currentUser padronizado
   const currentUser: CurrentUser | null = habboAccount ? {
     id: habboAccount.id,
-    habbo_name: habboAccount.habbo_name,
-    habbo_id: habboAccount.habbo_id,
-    hotel: habboAccount.hotel,
+    habbo_name: habboAccount.habbo_username,
+    habbo_id: habboAccount.id,
+    hotel: 'br',
     is_admin: habboAccount.is_admin,
-    motto: habboAccount.motto,
-    figure_string: habboAccount.figure_string,
-    is_online: habboAccount.is_online
+    motto: habboAccount.habbo_motto,
+    figure_string: habboAccount.habbo_avatar,
+    is_online: false
   } : null;
 
   useEffect(() => {
@@ -101,16 +99,16 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
       console.log(`🔍 [useUnifiedAuth] Loading Habbo account for user: ${userId}`);
       
       const { data, error } = await supabase
-        .from('habbo_accounts')
+        .from('habbo_auth')
         .select('*')
-        .eq('supabase_user_id', userId)
+        .eq('id', userId)
         .single();
 
       if (error) {
         console.error('❌ [useUnifiedAuth] Error loading Habbo account:', error);
         setHabboAccount(null);
       } else {
-        console.log('✅ [useUnifiedAuth] Habbo account loaded:', data.habbo_name);
+        console.log('✅ [useUnifiedAuth] Habbo account loaded:', data.habbo_username);
         setHabboAccount(data);
       }
     } catch (error) {
@@ -128,10 +126,9 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Verify user exists and get account data
       const { data: accountData, error: accountError } = await supabase
-        .from('habbo_accounts')
+        .from('habbo_auth')
         .select('*')
-        .eq('habbo_name', habboName)
-        .eq('hotel', 'br')
+        .eq('habbo_username', habboName)
         .single();
 
       if (accountError || !accountData) {
@@ -139,30 +136,52 @@ export const UnifiedAuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error('Conta não encontrada. Use a aba "Missão" para se cadastrar.');
       }
 
-      // For habbohub and beebop, use predefined passwords
-      let expectedPassword = '';
-      if (habboName.toLowerCase() === 'habbohub') {
-        expectedPassword = '151092';
-      } else if (habboName.toLowerCase() === 'beebop') {
-        expectedPassword = '290684';
-      } else {
-        // For other users, get password from database
-        expectedPassword = accountData.password || '';
+      // Check password from database
+      if (password !== accountData.password_hash) {
+        throw new Error('Senha incorreta. Verifique e tente novamente.');
       }
 
-      if (password !== expectedPassword) {
-        throw new Error('Senha incorreta. Verifique e tente novamente.');
+      // Atualizar dados reais do Habbo se for habbohub
+      if (habboName.toLowerCase() === 'habbohub') {
+        try {
+          console.log('🔄 [useUnifiedAuth] Buscando dados reais do habbohub...');
+          
+          // Buscar dados reais do habbo.com.br
+          const response = await fetch(`https://www.habbo.com.br/api/public/users?name=habbohub`);
+          if (response.ok) {
+            const habboData = await response.json();
+            if (habboData && habboData.name && habboData.uniqueId) {
+              console.log('✅ [useUnifiedAuth] Dados reais encontrados:', habboData);
+              
+              // Atualizar dados na tabela
+              await supabase
+                .from('habbo_auth')
+                .update({
+                  habbo_motto: habboData.motto || accountData.habbo_motto,
+                  habbo_avatar: habboData.figureString || accountData.habbo_avatar,
+                  last_login: new Date().toISOString()
+                })
+                .eq('id', accountData.id);
+              
+              // Atualizar accountData com dados reais
+              accountData.habbo_motto = habboData.motto || accountData.habbo_motto;
+              accountData.habbo_avatar = habboData.figureString || accountData.habbo_avatar;
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ [useUnifiedAuth] Erro ao buscar dados reais (não crítico):', error);
+        }
       }
 
       // Create a simple session for the user
       const userSession = {
         user: {
-          id: accountData.supabase_user_id,
-          email: accountData.auth_email || `${habboName}@habbohub.com`,
+          id: accountData.id,
+          email: `${habboName}@habbohub.com`,
           user_metadata: {
             habbo_name: habboName,
             hotel: 'br',
-            habbo_id: accountData.habbo_id
+            habbo_id: accountData.id
           }
         },
         session: {

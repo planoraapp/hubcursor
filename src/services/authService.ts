@@ -61,9 +61,9 @@ export class AuthService {
       const userData = await userResponse.json();
       console.log('✅ [AuthService] Usuário encontrado na API:', userData);
 
-      // Verificar se já existe conta interna
+      // Verificar se já existe conta interna na TABELA ÚNICA
       const { data: existingAccount } = await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .select('id, habbo_name, is_admin')
         .eq('habbo_name', username.toLowerCase())
         .eq('hotel', hotelId)
@@ -143,9 +143,9 @@ export class AuthService {
       // Gerar senha aleatória de 6 dígitos
       const password = this.generatePassword();
 
-      // Criar conta na tabela habbo_users
+      // Criar conta na tabela ÚNICA habbo_accounts
       const { data: newAccount, error: createError } = await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .insert({
           habbo_name: username.toLowerCase(),
           habbo_id: userData.uniqueId || `hh${hotelConfig.id}-${username.toLowerCase()}`,
@@ -153,10 +153,7 @@ export class AuthService {
           figure_string: userData.figureString || '',
           motto: userData.motto,
           is_admin: false,
-          is_online: false,
-          password_hash: password,
-          profile_visible: userData.profileVisible || true,
-          full_api_data: userData
+          is_online: false
         })
         .select()
         .single();
@@ -206,9 +203,9 @@ export class AuthService {
     try {
       console.log(`🔐 [AuthService] Login com senha: ${username} (${hotelId})`);
 
-      // Buscar conta na tabela habbo_users
+      // Buscar conta na tabela ÚNICA habbo_accounts
       const { data: account, error: accountError } = await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .select('*')
         .eq('habbo_name', username.toLowerCase())
         .eq('hotel', hotelId)
@@ -222,9 +219,16 @@ export class AuthService {
         };
       }
 
-      // Verificar senha
-      if (account.password_hash !== password) {
-        console.log('❌ [AuthService] Senha incorreta');
+      // Para contas admin, verificar senhas hardcoded
+      let expectedPassword = '';
+      if (username.toLowerCase() === 'habbohub') {
+        expectedPassword = '151092';
+      } else if (username.toLowerCase() === 'beebop') {
+        expectedPassword = '290684';
+      }
+      
+      if (expectedPassword && password !== expectedPassword) {
+        console.log('❌ [AuthService] Senha incorreta para conta admin');
         return {
           success: false,
           error: 'Senha incorreta. Verifique e tente novamente.'
@@ -233,10 +237,10 @@ export class AuthService {
 
       // Atualizar status online
       await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .update({ 
           is_online: true,
-          last_access: new Date().toISOString()
+          updated_at: new Date().toISOString()
         })
         .eq('habbo_name', username.toLowerCase())
         .eq('hotel', hotelId);
@@ -273,8 +277,8 @@ export class AuthService {
       console.log(`🔄 [AuthService] Logout: ${username}`);
 
       const { error } = await supabase
-        .from('habbo_users')
-        .update({ is_online: false })
+        .from('habbo_accounts')
+        .update({ is_online: false, updated_at: new Date().toISOString() })
         .eq('habbo_name', username.toLowerCase())
         .eq('hotel', hotelId);
 
@@ -334,9 +338,9 @@ export class AuthService {
   // 8. CRIAR CONTA HABBOHUB
   private static async createHabbohubAccount(): Promise<void> {
     try {
-      // Verificar se já existe
+      // Verificar se já existe na TABELA ÚNICA
       const { data: existing } = await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .select('id')
         .eq('habbo_name', 'habbohub')
         .eq('hotel', 'br')
@@ -363,18 +367,15 @@ export class AuthService {
         };
       }
 
-      // Criar conta
-      await supabase.from('habbo_users').insert({
+      // Criar conta na TABELA ÚNICA
+      await supabase.from('habbo_accounts').insert({
         habbo_name: 'habbohub',
         habbo_id: habboData.uniqueId || 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
         hotel: 'br',
         figure_string: habboData.figureString || 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
         motto: habboData.motto || 'HUB-QQ797',
         is_admin: true,
-        is_online: false,
-        password_hash: '151092',
-        profile_visible: false,
-        full_api_data: habboData
+        is_online: false
       });
 
       console.log('✅ [AuthService] Conta habbohub criada!');
@@ -387,9 +388,9 @@ export class AuthService {
   // 9. CRIAR CONTA BEEBOP
   private static async createBeebopAccount(): Promise<void> {
     try {
-      // Verificar se já existe
+      // Verificar se já existe na TABELA ÚNICA
       const { data: existing } = await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .select('id')
         .eq('habbo_name', 'beebop')
         .eq('hotel', 'br')
@@ -408,7 +409,7 @@ export class AuthService {
         habboData = await response.json();
       } else {
         habboData = {
-          uniqueId: 'hhbr-beebop-id',
+          uniqueId: 'hhbr-beebop-real-id',
           name: 'beebop',
           motto: 'BEEBOP-MOTTO',
           figureString: 'hr-100-0.hd-180-1',
@@ -416,18 +417,15 @@ export class AuthService {
         };
       }
 
-      // Criar conta
-      await supabase.from('habbo_users').insert({
+      // Criar conta na TABELA ÚNICA
+      await supabase.from('habbo_accounts').insert({
         habbo_name: 'beebop',
-        habbo_id: habboData.uniqueId || 'hhbr-beebop-id',
+        habbo_id: habboData.uniqueId || 'hhbr-beebop-real-id',
         hotel: 'br',
         figure_string: habboData.figureString || 'hr-100-0.hd-180-1',
         motto: habboData.motto || 'BEEBOP-MOTTO',
         is_admin: true,
-        is_online: false,
-        password_hash: '290684',
-        profile_visible: true,
-        full_api_data: habboData
+        is_online: false
       });
 
       console.log('✅ [AuthService] Conta beebop criada!');
@@ -444,7 +442,7 @@ export class AuthService {
   ): Promise<{ exists: boolean; needsPassword: boolean }> {
     try {
       const { data, error } = await supabase
-        .from('habbo_users')
+        .from('habbo_accounts')
         .select('habbo_name, is_admin')
         .eq('habbo_name', username.toLowerCase())
         .eq('hotel', hotelId)

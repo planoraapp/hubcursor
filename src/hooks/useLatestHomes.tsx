@@ -80,9 +80,9 @@ export const useLatestHomes = () => {
       
       // Get Habbo account names
       const { data: accounts } = await supabase
-        .from('habbo_accounts')
-        .select('supabase_user_id, habbo_name')
-        .in('supabase_user_id', userIds);
+        .from('habbo_auth')
+        .select('id, habbo_username')
+        .in('id', userIds);
 
       // Get background data
       const { data: backgrounds } = await supabase
@@ -98,7 +98,7 @@ export const useLatestHomes = () => {
 
       // Combine the data
       const enrichedHomes = latestUniqueHomes.map(home => {
-        const account = accounts?.find(acc => acc.supabase_user_id === home.user_id);
+        const account = accounts?.find(acc => acc.id === home.user_id);
         const background = backgrounds?.find(bg => bg.user_id === home.user_id);
         
         // Calculate average rating
@@ -109,7 +109,7 @@ export const useLatestHomes = () => {
         
         return {
           ...home,
-          habbo_name: account?.habbo_name,
+          habbo_name: account?.habbo_username,
           background_type: background?.background_type,
           background_value: background?.background_value,
           average_rating: Math.round(averageRating * 10) / 10,

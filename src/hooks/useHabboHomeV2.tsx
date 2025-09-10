@@ -126,9 +126,9 @@ export const useHabboHomeV2 = (username: string) => {
 
       // 1. Carregar dados do usuário Habbo
       const { data: userData, error: userError } = await supabase
-        .from('habbo_accounts')
+        .from('habbo_auth')
         .select('*')
-        .ilike('habbo_name', username)
+        .eq('habbo_username', username)
         .single();
 
       if (userError || !userData) {
@@ -261,13 +261,13 @@ export const useHabboHomeV2 = (username: string) => {
 
       // Criar dados básicos primeiro (sem API externa)
       const basicHabboInfo: HabboData = {
-        id: userData.supabase_user_id,
-        habbo_name: userData.habbo_name,
-        habbo_id: userData.habbo_id,
-        hotel: userData.hotel || 'br',
-        motto: userData.motto || '',
-        figure_string: userData.figure_string || '',
-        is_online: userData.is_online || false,
+        id: userData.id,
+        habbo_name: userData.habbo_username,
+        habbo_id: userData.id,
+        hotel: 'br', // Padrão para BR
+        motto: userData.habbo_motto || '',
+        figure_string: userData.habbo_avatar || '',
+        is_online: false, // Padrão
         memberSince: ''
       };
 

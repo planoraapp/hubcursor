@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta habbohub</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .result { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Criar Conta habbohub</h1>
+        
+        <div class="step">
+            <h3>📋 Informações da Conta:</h3>
+            <p><strong>Nome:</strong> habbohub</p>
+            <p><strong>Senha:</strong> 151092</p>
+            <p><strong>Hotel:</strong> br (Brasil)</p>
+            <p><strong>Admin:</strong> Sim</p>
+        </div>
+
+        <div class="step">
+            <h3>🔍 1. Verificar se conta já existe</h3>
+            <button onclick="checkAccount()">Verificar Conta</button>
+            <div id="checkResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>🛠️ 2. Criar conta habbohub</h3>
+            <button onclick="createAccount()">Criar Conta</button>
+            <div id="createResult" class="result"></div>
+        </div>
+
+        <div class="step">
+            <h3>✅ 3. Testar login</h3>
+            <button onclick="testLogin()">Testar Login</button>
+            <div id="testResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Suas chaves do Supabase
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNnZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNTQ2NzQ0MCwiZXhwIjoyMDUxMDQzNDQwfQ.8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNnZ2VpenpqbWpnbXVzY3kiLCJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNzM1NDY3NDQwLCJleHAiOjIwNTEwNDM0NDB9.8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8J8';
+
+        async function checkAccount() {
+            const resultDiv = document.getElementById('checkResult');
+            resultDiv.innerHTML = '🔍 Verificando conta habbohub...';
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts?select=*&habbo_name=eq.habbohub&hotel=eq.br`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        resultDiv.innerHTML = `✅ Conta encontrada:\n${JSON.stringify(data[0], null, 2)}`;
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.innerHTML = '❌ Conta não encontrada. Vamos criar uma nova.';
+                        resultDiv.className = 'result error';
+                    }
+                } else {
+                    resultDiv.innerHTML = `❌ Erro ao verificar: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createAccount() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.innerHTML = '🛠️ Criando conta habbohub...';
+            
+            try {
+                // Primeiro, criar usuário no Supabase Auth
+                const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'habbohub@habbohub.com',
+                        password: '151092',
+                        email_confirm: true
+                    })
+                });
+
+                if (!authResponse.ok) {
+                    const authError = await authResponse.text();
+                    resultDiv.innerHTML = `❌ Erro ao criar usuário Auth: ${authResponse.status} - ${authError}`;
+                    resultDiv.className = 'result error';
+                    return;
+                }
+
+                const authData = await authResponse.json();
+                const userId = authData.user.id;
+
+                // Agora criar conta na tabela habbo_accounts
+                const accountData = {
+                    id: userId,
+                    habbo_name: 'habbohub',
+                    habbo_id: '1', // ID fictício do Habbo
+                    hotel: 'br',
+                    is_admin: true,
+                    motto: 'HUB-ADMIN',
+                    figure_string: 'hd-180-1.ch-255-66.lg-285-91.sh-290-62.ha-1012-110.hr-831-49.wa-2001-62',
+                    is_online: false,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                const accountResponse = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_SERVICE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(accountData)
+                });
+
+                if (accountResponse.ok) {
+                    resultDiv.innerHTML = `✅ Conta habbohub criada com sucesso!\n\nDados da conta:\n${JSON.stringify(accountData, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    const errorText = await accountResponse.text();
+                    resultDiv.innerHTML = `❌ Erro ao criar conta: ${accountResponse.status} - ${errorText}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Erro: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '✅ Testando login habbohub...';
+            
+            try {
+                // Simular o processo de login
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/habbo_accounts?select=*&habbo_name=eq.habbohub&hotel=eq.br`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        resultDiv.innerHTML = `✅ Login testado com sucesso!\n\nConta encontrada:\n${JSON.stringify(data[0], null, 2)}`;
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.innerHTML = '❌ Conta não encontrada no teste.';
+                        resultDiv.className = 'result error';
+                    }
+                } else {
+                    resultDiv.innerHTML = `❌ Erro no teste: ${response.status} ${response.statusText}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Erro no teste: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

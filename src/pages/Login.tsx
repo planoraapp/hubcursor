@@ -33,14 +33,33 @@ export const Login: React.FC = () => {
   const [userExists, setUserExists] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [codeCopied, setCodeCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Estados de controle da interface
-  const [step, setStep] = useState<'username' | 'verification' | 'password'>('username');
+  const [step, setStep] = useState<'username' | 'verification' | 'password'>('password');
   const [activeTab, setActiveTab] = useState<'password' | 'motto'>('password');
 
   // Função para gerar código de verificação
   const generateCode = () => {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
+  };
+
+  // Função para login direto
+  const handleDirectLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await loginWithPassword(username.trim(), password);
+      // O redirecionamento será feito automaticamente pelo useEffect
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      // O erro será tratado pelo hook useUnifiedAuth
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Função para verificar se é usuário admin (não mais necessária - usar is_admin do DB)
@@ -216,13 +235,81 @@ export const Login: React.FC = () => {
               <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
                 <CardHeader>
                   <CardTitle className="text-center volter-font">
-                    {step === 'username' ? '🎮 Verificação de Usuário' : 
-                     step === 'verification' ? '🔐 Verificação de Conta' : 
-                     '🔑 Configuração de Senha'}
+                    🔐 HabboHub - Login e Cadastro
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   
+                  {/* Formulário de Login Direto */}
+                  <div className="space-y-4">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold volter-font">
+                        🔐 Login HabboHub
+                      </h3>
+                      <p className="text-sm text-gray-600 volter-font">
+                        Digite seu nome Habbo e senha para fazer login
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nome Habbo
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Digite seu nome Habbo"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="border-2 border-gray-300 focus:border-blue-500"
+                        onKeyPress={(e) => e.key === 'Enter' && handleDirectLogin()}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Senha
+                      </label>
+                      <Input
+                        type="password"
+                        placeholder="Digite sua senha"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border-2 border-gray-300 focus:border-blue-500"
+                        onKeyPress={(e) => e.key === 'Enter' && handleDirectLogin()}
+                      />
+                    </div>
+
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Contas de teste:</strong><br/>
+                        • habbohub (senha: 151092)<br/>
+                        • beebop (senha: 290684)
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleDirectLogin}
+                      disabled={isLoading || !username.trim() || !password.trim()}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                      {isLoading ? 'Fazendo login...' : '🔐 Fazer Login'}
+                    </Button>
+
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">
+                        Não tem conta? 
+                        <button 
+                          onClick={() => setStep('username')}
+                          className="text-blue-600 hover:text-blue-800 ml-1 underline"
+                        >
+                          Criar nova conta
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+
+                  <hr className="my-6 border-gray-300" />
+
                   {/* Passo 1: Nome de usuário e hotel */}
                   {step === 'username' && (
                     <>

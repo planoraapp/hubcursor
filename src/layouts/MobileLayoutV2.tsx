@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useUnifiedAuth } from '../hooks/useUnifiedAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { UserProfilePopover } from '../components/UserProfilePopover';
+import { UserLoginModal } from '../components/UserLoginModal';
 import { getUserByName } from '../services/habboApi';
 import { 
   Home, 
@@ -92,15 +93,7 @@ const MobileLayoutV2 = ({ children }: { children: React.ReactNode }) => {
               habboAccount={habboAccount}
             />
           ) : (
-            <Button
-              onClick={() => handleNavigation('/login')}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              Login
-            </Button>
+            <UserLoginModal />
           )}
         </div>
       </header>
