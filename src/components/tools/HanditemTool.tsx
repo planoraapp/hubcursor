@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter } from 'lucide-react';
+import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter, Eye, Zap, AlertCircle } from 'lucide-react';
+import { HanditemImage } from './HanditemImage';
 import { useToast } from '@/hooks/use-toast';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery';
+import { avatarPreview, AvatarOptions } from '@/utils/avatarPreview';
 
 
 interface HanditemData {
@@ -1217,112 +1220,475 @@ const generateHanditemAvatarUrl = (
   return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboName}&direction=${direction}&head_direction=${headDirection}&action=${actionParam}&gesture=${gesture}&size=${size}`;
 };
 
-// Dados estruturados baseados nas fontes fornecidas
+// Dados estruturados baseados nas fontes oficiais do Habbo
 const HANDITEM_DATA = [
-  // Bebidas
-  { id: 1, name: "Chá", category: "bebidas", subcategory: "chá", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_japanesetea.png" },
-  { id: 3, name: "Cenoura", category: "alimentos", subcategory: "vegetais", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_carrot.png" },
-  { id: 4, name: "Sorvete de baunilha", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" },
-  { id: 5, name: "Leite", category: "bebidas", subcategory: "laticínios", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 6, name: "Groselha", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 7, name: "Água", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 8, name: "Café", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
-  { id: 19, name: "Habbo Cola", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
-  { id: 20, name: "Limonada", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 24, name: "Champin 1", category: "bebidas", subcategory: "especiais", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 25, name: "Brebaje do Amor", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
+  // Handitems Básicos (IDs 1-100)
+  { id: 1, name: "Cenoura", category: "alimentos", subcategory: "vegetais", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_carrot.png" },
+  { id: 2, name: "Café", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 3, name: "Coquetel", category: "bebidas", subcategory: "alcoólicas", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 4, name: "Habbocola", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
+  { id: 5, name: "Sorvete", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" },
+  { id: 6, name: "Chá Japonês", category: "bebidas", subcategory: "chá", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_japanesetea.png" },
+  { id: 7, name: "Poção do Amor", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
+  { id: 8, name: "Radioativo", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_radioactive.png" },
+  { id: 9, name: "Tomate", category: "alimentos", subcategory: "vegetais", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_tomato.png" },
+  { id: 10, name: "Água", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 11, name: "Calippo", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" },
+  { id: 12, name: "Macchiato", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 13, name: "Expresso", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 14, name: "Café Filtro", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 15, name: "Café Gelado", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 16, name: "Cappuccino", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 17, name: "Xícara de Café", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 18, name: "Água da Torneira", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 19, name: "Habbo Refri", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
+  { id: 20, name: "Lata de Refri Verde", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
+  { id: 21, name: "Mão Vazia", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 22, name: "Invisível", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 23, name: "Invisível", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 24, name: "Taça de Suco", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 25, name: "Poção do Amor", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
   { id: 26, name: "Calippo", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" },
+  { id: 27, name: "Chá", category: "bebidas", subcategory: "chá", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_japanesetea.png" },
   { id: 28, name: "Sake", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 29, name: "Suco de Tomate", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_tomato.png" },
+  { id: 29, name: "Copo com Sangue", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 30, name: "Líquido Radioativo", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_radioactive.png" },
-  { id: 31, name: "Coquetel", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 31, name: "Champanhe Rosa", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 32, name: "Nada", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 33, name: "Refrigerante na Garrafa", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
   { id: 34, name: "Peixe", category: "alimentos", subcategory: "frutos do mar", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 35, name: "Champin 2", category: "bebidas", subcategory: "especiais", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 36, name: "Pera", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://i.imgur.com/0u2ZtNJ.png" },
-  { id: 37, name: "Maçã", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://i.imgur.com/apple.png" },
+  { id: 35, name: "Champanhe Rosa", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 36, name: "Pêra", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://i.imgur.com/0u2ZtNJ.png" },
+  { id: 37, name: "Mexerica", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 38, name: "Laranja", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 39, name: "Abacaxi", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 40, name: "Champin 3", category: "bebidas", subcategory: "especiais", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 41, name: "Sumppi-kuppi", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 42, name: "Suco de Laranja", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://i.imgur.com/pDRtHvO.png" },
-  { id: 43, name: "Limonada", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 44, name: "Água Galáctica", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 45, name: "Pêssego", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://i.imgur.com/VStOTCZ.png" },
-  { id: 46, name: "Brebaje Malhumor", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
-  { id: 47, name: "Tomate", category: "alimentos", subcategory: "vegetais", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_tomato.png" },
-  { id: 48, name: "Chupa Chups", category: "doces", subcategory: "pirulitos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" },
-  { id: 49, name: "Iogurte", category: "bebidas", subcategory: "laticínios", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 50, name: "Champanhe", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 51, name: "Pipas G", category: "doces", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 52, name: "Cheetos", category: "alimentos", subcategory: "salgados", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 53, name: "Expresso", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
-  { id: 54, name: "Chocapic", category: "alimentos", subcategory: "cereais", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 55, name: "Pepsi", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
-  { id: 57, name: "Suco de Uva", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 39, name: "Sanduíche", category: "alimentos", subcategory: "carnes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 40, name: "Champanhe", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 41, name: "Sumppi-Kuppi", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 42, name: "Fanta Laranja", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
+  { id: 43, name: "Suco de Bolhas Geladinho", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 44, name: "Energético Astrobar", category: "bebidas", subcategory: "energéticos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 45, name: "Carinha Feliz", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 46, name: "Carinha Feliz Verde", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 47, name: "Carinha Feliz Vermelha", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 48, name: "Pirulito Vermelho", category: "doces", subcategory: "pirulitos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_calippo.png" },
+  { id: 49, name: "Milkshake de Morango", category: "bebidas", subcategory: "milkshakes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 50, name: "Champanhe de Bolhas", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 51, name: "Salgadinhos", category: "alimentos", subcategory: "salgados", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 52, name: "Salgadinho Detalhado", category: "alimentos", subcategory: "salgados", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 53, name: "Café Expresso", category: "bebidas", subcategory: "café", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
+  { id: 54, name: "Sopa de Chocolate", category: "bebidas", subcategory: "especiais", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 55, name: "Garrafa de Pepsi", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
+  { id: 56, name: "Salgadinho Personalizado", category: "alimentos", subcategory: "salgados", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 57, name: "Refrigerante de Cereja", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
   { id: 58, name: "Sangue Fresco", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 59, name: "Poção", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
-  { id: 60, name: "Castanhas", category: "alimentos", subcategory: "nozes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 61, name: "Sunny", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
-  { id: 62, name: "Água Envenenada", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 63, name: "Pipoca", category: "alimentos", subcategory: "salgados", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 64, name: "Suco de Pera", category: "bebidas", subcategory: "sucos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 65, name: "Mamadeira", category: "bebidas", subcategory: "laticínios", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 59, name: "Saco de Ouro", category: "outros", subcategory: "diversos", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 60, name: "Shawarma", category: "alimentos", subcategory: "carnes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 61, name: "Handitem 61", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 62, name: "Água em Copo de Crânio", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 63, name: "Saco de Pipocas", category: "alimentos", subcategory: "salgados", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 64, name: "Refrigerante de Limão", category: "bebidas", subcategory: "refrigerantes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_habbocola.png" },
+  { id: 65, name: "Água", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 66, name: "Milkshake de Banana", category: "bebidas", subcategory: "milkshakes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 67, name: "Brebaje de Poder", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
-  { id: 68, name: "Brebaje Invisível", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
-  { id: 69, name: "Brebaje de Levitação", category: "bebidas", subcategory: "especiais", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_lovepotion.png" },
-  { id: 70, name: "Frango", category: "alimentos", subcategory: "carnes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 71, name: "Torrada", category: "alimentos", subcategory: "pães", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 72, name: "Gatorade", category: "bebidas", subcategory: "energéticos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 73, name: "Cerveja", category: "bebidas", subcategory: "alcoólicas", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
-  { id: 74, name: "Taça de Brinde", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 67, name: "Chiclete Azul", category: "doces", subcategory: "chicletes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 68, name: "Chiclete Vermelho", category: "doces", subcategory: "chicletes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 69, name: "Chiclete Verde", category: "doces", subcategory: "chicletes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 70, name: "Coxa de Frango", category: "alimentos", subcategory: "carnes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 71, name: "Pão de Forma", category: "alimentos", subcategory: "pães", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 72, name: "Perfume Azul", category: "utensílios", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 73, name: "Copo de Cerveja", category: "bebidas", subcategory: "alcoólicas", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
+  { id: 74, name: "Cálice Medieval", category: "bebidas", subcategory: "alcoólicas", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_cocktail.png" },
   { id: 75, name: "Sorvete de Morango", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" },
-  { id: 76, name: "Sorvete de Anis", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" },
+  { id: 76, name: "Sorvete Azul", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" },
   { id: 77, name: "Sorvete de Chocolate", category: "doces", subcategory: "sorvetes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_icecream.png" },
+  { id: 78, name: "Água", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 79, name: "Algodão Doce Rosa", category: "doces", subcategory: "algodão doce", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 80, name: "Algodão Doce Azul", category: "doces", subcategory: "algodão doce", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 81, name: "Cachorro-Quente", category: "alimentos", subcategory: "carnes", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 82, name: "Monóculo", category: "utensílios", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 83, name: "Maçã Envenenada", category: "alimentos", subcategory: "frutas", rarity: "rare", spriteUrl: "https://i.imgur.com/apple.png" },
-  { id: 84, name: "Biscoito de Gengibre", category: "doces", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 82, name: "Telescópio", category: "utensílios", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 83, name: "Maçã", category: "alimentos", subcategory: "frutas", rarity: "common", spriteUrl: "https://i.imgur.com/apple.png" },
+  { id: 84, name: "Boneco de Biscoito", category: "doces", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 85, name: "Starbucks Branco", category: "bebidas", subcategory: "café", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
   { id: 86, name: "Starbucks Transparente", category: "bebidas", subcategory: "café", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_coffee.png" },
   
-  // Flores e Plantas
-  { id: 1000, name: "Rosa Vermelha", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/handitem_1000.png" },
+  // Handitems Especiais (IDs 1000-1076)
+  { id: 1000, name: "Rosa", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/handitem_1000.png" },
   { id: 1001, name: "Rosa Negra", category: "outros", subcategory: "plantas e flores", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/handitem_1001.png" },
   { id: 1002, name: "Girassol", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/handitem_1002.png" },
   { id: 1003, name: "Livro Vermelho", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1004, name: "Livro Azul", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1004, name: "Livro Verde Escuro", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
   { id: 1005, name: "Livro Verde", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1006, name: "Flor de Presente", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1007, name: "Estramônio", category: "outros", subcategory: "plantas e flores", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1008, name: "Placer Amarelo", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1009, name: "Pandemia Rosa", category: "outros", subcategory: "plantas e flores", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1011, name: "Prendedor de Papel", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1013, name: "Pílulas", category: "utensílios", subcategory: "saúde", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1014, name: "Seringa", category: "utensílios", subcategory: "saúde", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1015, name: "Resíduos Tóxicos", category: "utensílios", subcategory: "laboratório", rarity: "rare", spriteUrl: "https://i.imgur.com/test_tube.png" },
-  { id: 1019, name: "Flor Bolly", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1021, name: "Jacinto 1", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1022, name: "Jacinto 2", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1023, name: "Flor de Páscoa", category: "outros", subcategory: "plantas e flores", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1024, name: "Pudim", category: "doces", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1025, name: "Bastão de Doce", category: "doces", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1026, name: "Presente", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1027, name: "Vela", category: "utensílios", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1028, name: "Kellogg's", category: "alimentos", subcategory: "cereais", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1029, name: "Balão", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1030, name: "Tablet", category: "eletrônicos", subcategory: "tablets", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1031, name: "Tocha Olímpica", category: "utensílios", subcategory: "diversos", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1032, name: "Comandante Tom", category: "outros", subcategory: "diversos", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1033, name: "OVNI", category: "outros", subcategory: "diversos", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
-  { id: 1034, name: "Alienígena", category: "outros", subcategory: "diversos", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1006, name: "Flor", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1007, name: "Erva-dos-Feitiços", category: "outros", subcategory: "plantas e flores", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1008, name: "Margarida", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1009, name: "Flor Rosa", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1010, name: "Água", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1046, name: "Caixa de Leite Colorida", category: "bebidas", subcategory: "laticínios", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1047, name: "Bola de Canhão", category: "outros", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1048, name: "Bandeira Preta e Branca", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1049, name: "Martelo do Thor", category: "outros", subcategory: "diversos", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1050, name: "Ovo de Páscoa", category: "outros", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1051, name: "Pincel Sujo de Tinta", category: "utensílios", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1052, name: "Bandeira Branca e Preta", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1053, name: "Pato de Borracha", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1054, name: "Balão Laranja", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1055, name: "Balão Verde", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1056, name: "Balão Azul", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1057, name: "Balão Rosa", category: "outros", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1058, name: "Luminária", category: "utensílios", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1059, name: "Papel Higiênico", category: "utensílios", subcategory: "diversos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1060, name: "Mamadeira com Leite", category: "bebidas", subcategory: "laticínios", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1061, name: "Flor Laranja", category: "outros", subcategory: "plantas e flores", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1062, name: "Caveira Colorida", category: "outros", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1063, name: "Caveira Verde", category: "outros", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1064, name: "Caveira Azul", category: "outros", subcategory: "diversos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1065, name: "Boneca", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1066, name: "Ursinho de Pelúcia", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1067, name: "Boneco", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1068, name: "Livro de Criança", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1069, name: "Outro Livro de Criança", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1070, name: "Livro Amarelo", category: "utensílios", subcategory: "escritório", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1071, name: "Tablet de Ouro", category: "eletrônicos", subcategory: "tablets", rarity: "rare", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1072, name: "Água", category: "bebidas", subcategory: "água", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1073, name: "Ovo de Dinossauro", category: "outros", subcategory: "brinquedos", rarity: "uncommon", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1074, name: "Dinossaurinho Verde", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1075, name: "Dinossaurinho Amarelo", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
+  { id: 1076, name: "Pterossaurinho Roxo", category: "outros", subcategory: "brinquedos", rarity: "common", spriteUrl: "https://images.habbotemplarios.com/web/avatargen/hand_water.png" },
 ];
+
+// Componente para o catálogo atual (handitems e mobis)
+const CurrentCatalog: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedType, setSelectedType] = useState<'all' | 'handitems' | 'mobis'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedRarity, setSelectedRarity] = useState<string>('all');
+  const [catalogData, setCatalogData] = useState<{
+    handitems: any[];
+    mobis: any[];
+  }>({ handitems: [], mobis: [] });
+
+  // Load catalog data
+  useEffect(() => {
+    const loadCatalogData = async () => {
+      setLoading(true);
+      try {
+        // Load from the JSON file we created
+        const response = await fetch('/catalog-data.json');
+        const data = await response.json();
+        setCatalogData(data);
+      } catch (error) {
+        console.error('Error loading catalog data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCatalogData();
+  }, []);
+
+  // Filter data based on search and filters
+  const filteredHanditems = useMemo(() => {
+    return catalogData.handitems.filter(item => {
+      const matchesSearch = (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                           (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      const matchesType = selectedType === 'all' || selectedType === 'handitems';
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesRarity = selectedRarity === 'all' || item.rarity === selectedRarity;
+      
+      return matchesSearch && matchesType && matchesCategory && matchesRarity;
+    });
+  }, [catalogData.handitems, searchTerm, selectedType, selectedCategory, selectedRarity]);
+
+  const filteredMobis = useMemo(() => {
+    return catalogData.mobis.filter(item => {
+      const matchesSearch = (item.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+                           (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      const matchesType = selectedType === 'all' || selectedType === 'mobis';
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesRarity = selectedRarity === 'all' || item.rarity === selectedRarity;
+      
+      return matchesSearch && matchesType && matchesCategory && matchesRarity;
+    });
+  }, [catalogData.mobis, searchTerm, selectedType, selectedCategory, selectedRarity]);
+
+  // Get unique categories and rarities
+  const categories = useMemo(() => {
+    const allCategories = new Set([
+      ...catalogData.handitems.map(item => item.category).filter(Boolean),
+      ...catalogData.mobis.map(item => item.category).filter(Boolean)
+    ]);
+    return Array.from(allCategories).sort();
+  }, [catalogData]);
+
+  const rarities = useMemo(() => {
+    const allRarities = new Set([
+      ...catalogData.handitems.map(item => item.rarity).filter(Boolean),
+      ...catalogData.mobis.map(item => item.rarity).filter(Boolean)
+    ]);
+    return Array.from(allRarities).sort();
+  }, [catalogData]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando catálogo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="volter-font text-2xl text-primary">
+            🏪 Catálogo Completo - Handitems e Mobis
+          </CardTitle>
+          <p className="text-muted-foreground volter-font">
+            Explore todos os handitems e mobis disponíveis no Habbo!
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-primary">{catalogData.handitems.length}</div>
+              <div className="text-sm text-muted-foreground">Handitems</div>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-primary">{catalogData.mobis.length}</div>
+              <div className="text-sm text-muted-foreground">Mobis</div>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-primary">{categories.length}</div>
+              <div className="text-sm text-muted-foreground">Categorias</div>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-primary">{filteredHanditems.length + filteredMobis.length}</div>
+              <div className="text-sm text-muted-foreground">Filtrados</div>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Search and Filters */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Buscar handitems ou mobis..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={selectedType === 'all' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('all')}
+                size="sm"
+              >
+                Todos
+              </Button>
+              <Button
+                variant={selectedType === 'handitems' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('handitems')}
+                size="sm"
+              >
+                Handitems
+              </Button>
+              <Button
+                variant={selectedType === 'mobis' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('mobis')}
+                size="sm"
+              >
+                Mobis
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                onClick={() => setSelectedCategory('all')}
+                size="sm"
+              >
+                Todas as Categorias
+              </Button>
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  onClick={() => setSelectedCategory(category)}
+                  size="sm"
+                >
+                  {category}
+                </Button>
+              ))}
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedRarity === 'all' ? 'default' : 'outline'}
+                onClick={() => setSelectedRarity('all')}
+                size="sm"
+              >
+                Todas as Raridades
+              </Button>
+              {rarities.map(rarity => (
+                <Button
+                  key={rarity}
+                  variant={selectedRarity === rarity ? 'default' : 'outline'}
+                  onClick={() => setSelectedRarity(rarity)}
+                  size="sm"
+                  className={rarity === 'epic' ? 'border-purple-500 text-purple-500' : 
+                           rarity === 'rare' ? 'border-red-500 text-red-500' : ''}
+                >
+                  {rarity === 'common' ? 'Comum' : 
+                   rarity === 'rare' ? 'Raro' : 
+                   rarity === 'epic' ? 'Épico' : rarity}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Handitems Section */}
+      {selectedType === 'all' || selectedType === 'handitems' ? (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="volter-font text-xl text-primary flex items-center gap-2">
+              🤲 Handitems ({filteredHanditems.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {filteredHanditems.map((handitem) => (
+                <div key={handitem.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="aspect-square mb-3 bg-muted rounded-lg flex items-center justify-center">
+                    <HanditemImage
+                      handitem={handitem}
+                      className="w-12 h-12 object-contain"
+                      alt={handitem.name}
+                    />
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1">{handitem.name}</h3>
+                  <p className="text-xs text-muted-foreground mb-2">{handitem.description}</p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-xs">
+                      {handitem.category}
+                    </Badge>
+                    <Badge 
+                      variant={handitem.rarity === 'epic' ? 'destructive' : 
+                              handitem.rarity === 'rare' ? 'destructive' : 'default'}
+                      className={`text-xs ${
+                        handitem.rarity === 'epic' ? 'bg-purple-500 text-white' :
+                        handitem.rarity === 'rare' ? 'bg-red-500 text-white' :
+                        'bg-gray-500 text-white'
+                      }`}
+                    >
+                      {handitem.rarity === 'common' ? 'Comum' : 
+                       handitem.rarity === 'rare' ? 'Raro' : 
+                       handitem.rarity === 'epic' ? 'Épico' : handitem.rarity}
+                    </Badge>
+                  </div>
+                  {handitem.mobi && (
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground">
+                        Obtido de: <span className="font-medium">{handitem.mobi.name}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {/* Mobis Section */}
+      {selectedType === 'all' || selectedType === 'mobis' ? (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="volter-font text-xl text-primary flex items-center gap-2">
+              🏠 Mobis ({filteredMobis.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {filteredMobis.map((mobi) => (
+                <div key={mobi.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="aspect-square mb-3 bg-muted rounded-lg flex items-center justify-center">
+                    <img
+                      src={mobi.image}
+                      alt={mobi.name}
+                      className="w-12 h-12 object-contain"
+                      onError={(e) => {
+                        // Se a imagem falhar, usar placeholder diretamente
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
+                    />
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1">{mobi.name}</h3>
+                  <p className="text-xs text-muted-foreground mb-2">{mobi.description}</p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-xs">
+                      {mobi.category}
+                    </Badge>
+                    <Badge 
+                      variant={mobi.rarity === 'epic' ? 'destructive' : 
+                              mobi.rarity === 'rare' ? 'destructive' : 'default'}
+                      className={`text-xs ${
+                        mobi.rarity === 'epic' ? 'bg-purple-500 text-white' :
+                        mobi.rarity === 'rare' ? 'bg-red-500 text-white' :
+                        'bg-gray-500 text-white'
+                      }`}
+                    >
+                      {mobi.rarity === 'common' ? 'Comum' : 
+                       mobi.rarity === 'rare' ? 'Raro' : 
+                       mobi.rarity === 'epic' ? 'Épico' : mobi.rarity}
+                    </Badge>
+                  </div>
+                  {mobi.handitems && mobi.handitems.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Entrega: {mobi.handitems.length} handitem(s)
+                      </p>
+                      <div className="flex gap-1">
+                        {mobi.handitems?.map((handitem: any, index: number) => (
+                          <HanditemImage
+                            key={`${mobi.id}-handitem-${handitem?.id || index}-${index}`}
+                            handitem={handitem}
+                            className="w-4 h-4 object-contain"
+                            alt={handitem?.name || 'Handitem'}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
+  );
+};
 
 // Componente para o catálogo unificado
 const UnifiedHanditemCatalog: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [discoveredHanditems, setDiscoveredHanditems] = useState<DiscoveredHanditem[]>([]);
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState<string>('');
+  const [selectedHanditem, setSelectedHanditem] = useState<number | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unifiedData, setUnifiedData] = useState<any[]>([]);
   const [filters, setFilters] = useState({
@@ -1333,6 +1699,66 @@ const UnifiedHanditemCatalog: React.FC = () => {
     showMobis: false,
     source: 'all'
   });
+
+  // Função para descobrir novos handitems automaticamente
+  const discoverNewHanditems = async () => {
+    try {
+      setIsDiscovering(true);
+      setError(null);
+      
+      console.log('🔍 Iniciando descoberta automática de handitems...');
+      
+      // Descobrir handitems dos IDs 170-200 (mais recentes)
+      const discovered = await handitemDiscovery.discoverHanditems(170, 200);
+      
+      setDiscoveredHanditems(discovered);
+      
+      // Atualizar dados unificados com novos handitems
+      const newUnifiedItems = discovered.map((item) => ({
+        id: item.id,
+        name: `Handitem ${item.id}`,
+        category: 'outros',
+        subcategory: 'diversos',
+        rarity: 'common',
+        spriteUrl: item.images[0]?.url || 'https://images.habbotemplarios.com/web/avatargen/hand_water.png',
+        source: 'discovered',
+        discovered: item.discovered,
+        variations: item.images
+      }));
+      
+      setUnifiedData(prev => [...prev, ...newUnifiedItems]);
+      
+      console.log(`✅ Descoberta concluída: ${discovered.length} novos handitems encontrados`);
+      
+    } catch (error) {
+      console.error('❌ Erro na descoberta de handitems:', error);
+      setError('Erro ao descobrir novos handitems');
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
+  // Função para testar handitem em avatar
+  const testHanditemInAvatar = async (handitemId: number, habboName: string) => {
+    try {
+      const isValid = await avatarPreview.testHanditem(habboName, handitemId);
+      if (isValid) {
+        setPreviewAvatar(habboName);
+        setSelectedHanditem(handitemId);
+        setShowPreview(true);
+      } else {
+        setError('Handitem não funciona com este avatar ou avatar inválido');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao testar handitem:', error);
+      setError('Erro ao testar handitem no avatar');
+    }
+  };
+
+  // Função para gerar URL de avatar com handitem
+  const generateAvatarUrl = (habboName: string, handitemId: number, size: 's' | 'm' | 'l' | 'xl' = 'l') => {
+    return avatarPreview.generateAvatarUrl(habboName, handitemId, { size });
+  };
 
   const fetchUnifiedData = async () => {
     try {
@@ -1418,7 +1844,23 @@ const UnifiedHanditemCatalog: React.FC = () => {
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            onClick={discoverNewHanditems}
+            disabled={isDiscovering}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Zap className="w-4 h-4" />
+            {isDiscovering ? 'Descobrindo...' : 'Descobrir Novos'}
+          </Button>
+          <Button
+            onClick={() => setShowPreview(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            Preview Avatar
+          </Button>
           <Button
             onClick={handleRefresh}
             variant="outline"
@@ -1614,7 +2056,7 @@ const UnifiedHanditemCatalog: React.FC = () => {
                   <h3 className="volter-font font-bold text-xs mb-1 line-clamp-2">{item.name}</h3>
                   <p className="text-xs text-muted-foreground volter-font mb-1">{item.category}</p>
                   
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-xs mb-2">
                     <span className={`px-1 py-0.5 rounded text-xs ${
                       item.rarity === 'common' ? 'bg-gray-100 text-gray-800' :
                       item.rarity === 'uncommon' ? 'bg-green-100 text-green-800' :
@@ -1625,6 +2067,33 @@ const UnifiedHanditemCatalog: React.FC = () => {
                       {item.rarity}
                     </span>
                     <span className="text-muted-foreground">ID: {item.handitemId}</span>
+                  </div>
+                  
+                  {/* Botões de Ação */}
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs h-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        testHanditemInAvatar(item.handitemId, 'Habbo');
+                      }}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      Testar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-6 px-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyHanditemId(item.handitemId);
+                      }}
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1637,24 +2106,55 @@ const UnifiedHanditemCatalog: React.FC = () => {
 };
 
 export const HanditemTool: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'catalog' | 'unified'>('catalog');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'unified' | 'current'>('catalog');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<keyof typeof MAIN_CATEGORIES>('Todos');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('Todos');
   const [selectedMobi, setSelectedMobi] = useState<MobiData | null>(null);
   const [selectedHanditem, setSelectedHanditem] = useState<HanditemData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewAvatar, setPreviewAvatar] = useState<string>('');
+  const [selectedHanditemId, setSelectedHanditemId] = useState<number | null>(null);
   const { toast } = useToast();
   const { habboAccount } = useUnifiedAuth();
 
   const defaultHabboName = habboAccount?.habbo_username || "Beebop";
 
+  // Função para testar handitem em avatar
+  const testHanditemInAvatar = async (handitemId: number, habboName: string) => {
+    try {
+      const isValid = await avatarPreview.testHanditem(habboName, handitemId);
+      if (isValid) {
+        setPreviewAvatar(habboName);
+        setSelectedHanditemId(handitemId);
+        setShowPreview(true);
+      } else {
+        toast({
+          title: "Erro",
+          description: "Handitem não funciona com este avatar ou avatar inválido",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao testar handitem:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao testar handitem no avatar",
+        variant: "destructive"
+      });
+    }
+  };
 
+  // Função para gerar URL de avatar com handitem
+  const generateAvatarUrl = (habboName: string, handitemId: number, size: 's' | 'm' | 'l' | 'xl' = 'l') => {
+    return avatarPreview.generateAvatarUrl(habboName, handitemId, { size });
+  };
 
   const filteredMobis = useMemo(() => {
 
     return MOBIS_DATA.filter(mobi => {
-      const mobiName = mobi.name.toLowerCase();
-      const handitemNames = mobi.handitems.map(item => item.name.toLowerCase()).join(' ');
+      const mobiName = mobi.name?.toLowerCase() || '';
+      const handitemNames = mobi.handitems?.map(item => item?.name?.toLowerCase() || '').join(' ') || '';
       const matchesSearch = mobiName.includes(searchTerm.toLowerCase()) || 
                           handitemNames.includes(searchTerm.toLowerCase());
 
@@ -1706,8 +2206,8 @@ export const HanditemTool: React.FC = () => {
       {/* Abas */}
       <Card className="bg-card border-border">
         <CardContent className="p-4">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'catalog' | 'unified')}>
-            <TabsList className="grid grid-cols-2 w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'catalog' | 'unified' | 'current')}>
+            <TabsList className="grid grid-cols-3 w-full">
               <TabsTrigger value="catalog" className="flex items-center gap-2">
                 <Package className="w-4 h-4" />
                 Catálogo Atual
@@ -1715,6 +2215,10 @@ export const HanditemTool: React.FC = () => {
               <TabsTrigger value="unified" className="flex items-center gap-2">
                 <Filter className="w-4 h-4" />
                 Catálogo Unificado
+              </TabsTrigger>
+              <TabsTrigger value="current" className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Catálogo Completo
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -1950,9 +2454,93 @@ export const HanditemTool: React.FC = () => {
          </DialogContent>
        </Dialog>
         </div>
-      ) : (
+      ) : activeTab === 'unified' ? (
         <UnifiedHanditemCatalog />
+      ) : (
+        <CurrentCatalog />
       )}
+
+      {/* Modal de Preview de Avatar */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Preview de Avatar com Handitem</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Input para nome do Habbo */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nome do Habbo:</label>
+              <div className="flex gap-2">
+                <Input
+                  value={previewAvatar}
+                  onChange={(e) => setPreviewAvatar(e.target.value)}
+                  placeholder="Digite o nome do Habbo"
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => setPreviewAvatar('Habbo')}
+                  variant="outline"
+                >
+                  Usar 'Habbo'
+                </Button>
+              </div>
+            </div>
+
+            {/* Preview do Avatar */}
+            {previewAvatar && selectedHanditemId && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Preview do Avatar</h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {['s', 'm', 'l', 'xl'].map((size) => (
+                    <div key={size} className="text-center space-y-2">
+                      <div className="w-24 h-32 mx-auto bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={generateAvatarUrl(previewAvatar, selectedHanditemId, size as any)}
+                          alt={`Avatar ${size}`}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <p className="text-sm font-medium">Tamanho {size.toUpperCase()}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Informações do Handitem */}
+                <div className="bg-muted p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">Handitem Selecionado</h4>
+                  <p className="text-sm">ID: {selectedHanditemId}</p>
+                  <p className="text-sm">URL do Avatar: {generateAvatarUrl(previewAvatar, selectedHanditemId)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Handitems para Teste */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Testar Handitems</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-60 overflow-y-auto">
+                {HANDITEM_DATA.slice(0, 20).map((item) => (
+                  <Button
+                    key={item.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => testHanditemInAvatar(item.id, previewAvatar || 'Habbo')}
+                    className="flex items-center gap-2"
+                  >
+                    <img
+                      src={item.spriteUrl}
+                      alt={item.name}
+                      className="w-4 h-4"
+                    />
+                    {item.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
