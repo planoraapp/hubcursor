@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
 import AltCodesCompact from '@/components/tools/AltCodesCompact';
 import BadgeModal from '@/components/tools/BadgeModal';
+import TraxMachineCompact from '@/components/tools/TraxMachineCompact';
 
 import TamagotchiCompact from '../components/tools/TamagotchiCompact';
 import PageBanner from '@/components/ui/PageBanner';
@@ -93,6 +94,9 @@ const Tools = () => {
 
                 {/* Tamagotchi Tool - NOVO COMPONENTE */}
                 <TamagotchiCompact />
+
+                {/* Sound Machine Editor - NOVO COMPONENTE */}
+                <TraxMachineCompact />
 
                 {/* Sala 7x7 Isométrica - Modal */}
                 <Card className="p-6 bg-white/90 backdrop-blur-sm border-2 border-black">

@@ -12,9 +12,11 @@
     "badge:install": "node scripts/install-badge-dependencies.cjs",
     "badge:populate": "node scripts/populate-badges-database.cjs",
     "badge:check": "node scripts/daily-badge-checker.cjs",
-    "badge:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-daily-badge-monitoring.ps1"
+    "badge:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-daily-badge-monitoring.ps1",
+    "trax:upload": "node scripts/upload-trax-samples.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.886.0",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

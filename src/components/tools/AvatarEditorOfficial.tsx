@@ -51,6 +51,84 @@ import {
   Apple
 } from 'lucide-react';
 import { useTemplariosData } from '@/hooks/useTemplariosData';
+import { useUnifiedHabboClothing } from '@/hooks/useUnifiedHabboClothing';
+
+// Componente para imagem com fallback
+const ClothingImageWithFallback = ({ itemId, category, gender, color, alt }: {
+  itemId: string;
+  category: string;
+  gender: string;
+  color: string;
+  alt: string;
+}) => {
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
+
+  const generateFallbackUrls = (itemId: string, category: string, gender: string, color: string) => {
+    // Avatar base para cabelos
+    let baseFigure = '';
+    if (category === 'hr') {
+      if (gender === 'F') {
+        baseFigure = 'hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-';
+      } else {
+        baseFigure = 'hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-';
+      }
+      baseFigure = `${baseFigure}.${category}-${itemId}-${color}`;
+    } else {
+      baseFigure = gender === 'M' 
+        ? `hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-.${category}-${itemId}-${color}`
+        : `hr-500-7-.hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-.${category}-${itemId}-${color}`;
+    }
+
+    const cleanFigure = baseFigure.replace(/\.$/, '');
+    
+    return [
+      // URL principal
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&action=gesture=std&size=m`,
+      // Fallback sem action
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
+      // Fallback com hotel brasileiro
+      `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
+      // Fallback com headonly para cabelos
+      category === 'hr' ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&headonly=1&size=m` : null,
+      // Fallback com formato diferente
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&size=m`
+    ].filter(Boolean);
+  };
+
+  const urls = generateFallbackUrls(itemId, category, gender, color);
+  const currentUrl = urls[currentUrlIndex];
+
+  const handleError = () => {
+    if (currentUrlIndex < urls.length - 1) {
+      setCurrentUrlIndex(currentUrlIndex + 1);
+    } else {
+      setImageError(true);
+    }
+  };
+
+  if (imageError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 text-xs">
+        Erro ao carregar
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={currentUrl}
+      alt={alt}
+      className="w-full h-full"
+      style={{ 
+        objectPosition: 'center 50%', 
+        objectFit: 'cover',
+        transform: 'scale(1.1)'
+      }}
+      onError={handleError}
+    />
+  );
+};
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 
 // Interfaces para o editor HabboTemplarios
@@ -160,10 +238,21 @@ const CATEGORIES = [
 ];
 
 const AvatarEditorOfficial = () => {
-  // Hook para dados do HabboTemplarios
+  // Hook para dados do HabboTemplarios (fallback)
   const { getItemsByCategory, getPaletteForCategory } = useTemplariosData();
   
-  // Estado do avatar
+  // Hook para dados oficiais unificados do Habbo
+  const { data: unifiedClothingData, colorPalettes, isLoading: isLoadingClothing, error: clothingError } = useUnifiedHabboClothing();
+  
+  // Debug: Log dos dados unificados
+  console.log('Unified Clothing Data:', {
+    hasData: !!unifiedClothingData,
+    categories: unifiedClothingData ? Object.keys(unifiedClothingData) : [],
+    isLoading: isLoadingClothing,
+    error: clothingError
+  });
+  
+  // Estado do avatar - CORRIGIDO para gênero masculino inicial
   const [currentFigure, setCurrentFigure] = useState<AvatarFigure>({
     hr: '100-7-',
     hd: '190-7-',
@@ -189,6 +278,38 @@ const AvatarEditorOfficial = () => {
 
   const [selectedCategory, setSelectedCategory] = useState('hd');
   const [selectedGender, setSelectedGender] = useState<'M' | 'F'>('M');
+  
+  // Função para trocar gênero e sincronizar com o avatar
+  const handleGenderChange = (newGender: 'M' | 'F') => {
+    setSelectedGender(newGender);
+    
+    // Atualizar o gênero do avatar atual com corpo correto
+    setCurrentFigure(prev => {
+      const newFigure = { ...prev, gender: newGender };
+      
+      // Atualizar partes do corpo base para o gênero correto
+      if (newGender === 'F') {
+        // Corpo feminino: cabelo, rosto, camisa, calça femininos
+        newFigure.hr = '500-7-';  // Cabelo feminino
+        newFigure.hd = '600-1-';  // Rosto feminino - CORRIGIDO
+        newFigure.ch = '710-66-'; // Camisa feminina
+        newFigure.lg = '870-82-'; // Calça feminina
+      } else {
+        // Corpo masculino: cabelo, rosto, camisa, calça masculinos
+        newFigure.hr = '100-7-';  // Cabelo masculino
+        newFigure.hd = '190-7-';  // Rosto masculino
+        newFigure.ch = '210-66-'; // Camisa masculina
+        newFigure.lg = '270-82-'; // Calça masculina
+      }
+      
+      return newFigure;
+    });
+    
+    // Se há um item selecionado, reaplicar com o novo gênero
+    if (selectedItemId) {
+      applyItem(selectedItemId, primaryColor);
+    }
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [showClubOnly, setShowClubOnly] = useState(false);
   const [showColorableOnly, setShowColorableOnly] = useState(false);
@@ -259,6 +380,22 @@ const AvatarEditorOfficial = () => {
       const figureParts = userData.figureString.split('.');
       const newFigure = { ...currentFigure };
       
+      // Detectar gênero baseado na figure string - MELHORADO
+      let detectedGender = 'M'; // Default
+      if (figureParts.some(part => 
+        part.includes('hr-500') || 
+        part.includes('ch-710') || 
+        part.includes('lg-870') ||
+        part.includes('hr-500-') ||
+        part.includes('ch-710-') ||
+        part.includes('lg-870-')
+      )) {
+        detectedGender = 'F';
+      }
+      
+      // Atualizar gênero selecionado
+      setSelectedGender(detectedGender as 'M' | 'F');
+      
       figureParts.forEach(part => {
         if (part.trim()) {
           // Remover duplicações (ex: hr-hr-100 -> hr-100)
@@ -279,6 +416,9 @@ const AvatarEditorOfficial = () => {
           else if (cleanPart.startsWith('wa-')) newFigure.wa = cleanPart;
         }
       });
+      
+      // Aplicar gênero detectado
+      newFigure.gender = detectedGender as 'M' | 'F';
       
       console.log('Nova figure aplicada:', newFigure);
       setCurrentFigure(newFigure);
@@ -304,10 +444,13 @@ const AvatarEditorOfficial = () => {
 
   // Gerar URL do avatar - Formato exato do HabboTemplarios
   const generateAvatarUrl = (colorHex?: string) => {
-    // Corpo base por gênero
-    const baseFigure = selectedGender === 'M'
+    // Corpo base por gênero - usar o gênero atual do avatar
+    const avatarGender = currentFigure.gender || selectedGender;
+    
+    // CORRIGIDO: Avatar base feminino com corpo feminino completo
+    let baseFigure = avatarGender === 'M'
       ? 'hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
-      : 'hr-500-7-.hd-190-7-.ch-710-66-.lg-870-82-.sh-290-80-';
+      : 'hr-500-7-.hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-'; // CORRIGIDO: hd-600-1- para feminino
 
     // Começa com as partes base e remove vazios
     const figureParts = baseFigure.split('.').filter(Boolean);
@@ -334,8 +477,16 @@ const AvatarEditorOfficial = () => {
 
     const figureString = figureParts.join('.');
 
-    // Monta URL do preview (reutilize sua lógica de gesture/actions/item se já existir)
-    const url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&direction=${currentFigure.direction}&head_direction=${currentFigure.headDirection}&action=gesture=${currentFigure.gesture}&&size=l`;
+    // Debug: Log para verificar a geração do avatar
+    console.log('Avatar URL Debug:', {
+      figureString,
+      avatarGender,
+      selectedGender,
+      currentFigure: currentFigure
+    });
+
+    // Monta URL do preview usando o gênero correto - CORRIGIDO: removido duplo &&
+    const url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${avatarGender}&direction=${currentFigure.direction}&head_direction=${currentFigure.headDirection}&action=gesture=${currentFigure.gesture}&size=l`;
 
     return url;
   };
@@ -343,7 +494,7 @@ const AvatarEditorOfficial = () => {
   // Aplicar item ao avatar
   const applyItem = (itemId: string, colorId?: string) => {
     const color = colorId || '7'; // Usar cor padrão 7
-    console.log('Applying item:', { itemId, color, selectedCategory });
+    console.log('Applying item:', { itemId, color, selectedCategory, selectedGender });
     
     setSelectedItemId(itemId);
     setPrimaryColor(color);
@@ -351,7 +502,8 @@ const AvatarEditorOfficial = () => {
     setCurrentFigure(prev => {
       const newFigure = {
         ...prev,
-        [selectedCategory]: `${itemId}-${color}-`
+        [selectedCategory]: `${itemId}-${color}-`,
+        gender: selectedGender // Garantir que o gênero seja atualizado
       };
       console.log('New figure state:', newFigure);
       return newFigure;
@@ -392,80 +544,111 @@ const AvatarEditorOfficial = () => {
 
   // Obter itens filtrados
   const getFilteredItems = () => {
-    const items = getItemsByCategory(selectedCategory, selectedGender);
-    console.log('Items for category:', selectedCategory, 'Gender:', selectedGender, 'Total items:', Object.keys(items).length);
+    // Usar dados unificados se disponíveis, senão fallback para Templarios
+    let items: any[] = [];
+    
+    if (unifiedClothingData && unifiedClothingData[selectedCategory]) {
+      // Usar dados oficiais unificados
+      items = unifiedClothingData[selectedCategory];
+      console.log('Using unified clothing data:', selectedCategory, 'Total items:', items.length);
+    } else {
+      // Fallback para dados Templarios
+      const templariosItems = getItemsByCategory(selectedCategory, selectedGender);
+      items = Object.entries(templariosItems).map(([itemId, itemData]) => ({
+        id: itemId,
+        figureId: itemId,
+        category: selectedCategory,
+        gender: itemData.gender || 'U',
+        club: itemData.club === 1 ? 'HC' : 'FREE',
+        name: `${selectedCategory} ${itemId}`,
+        thumbnailUrl: '',
+        colorable: itemData.colorable === 1,
+        selectable: true,
+        sellable: false,
+        colors: ['1', '2', '3', '4', '5']
+      }));
+      console.log('Using Templarios fallback data:', selectedCategory, 'Total items:', items.length);
+    }
+    
+    // Filtrar por gênero
+    const genderFiltered = items.filter(item => 
+      item.gender === selectedGender || item.gender === 'U'
+    );
     
     // Debug: contar itens por gênero
-    const itemsByGender = Object.values(items).reduce((acc, item) => {
+    const itemsByGender = genderFiltered.reduce((acc, item) => {
       acc[item.gender] = (acc[item.gender] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     console.log('Items by gender:', itemsByGender);
     
-    const filtered = Object.entries(items).filter(([itemId, itemData]) => {
-      if (searchTerm && !itemId.toLowerCase().includes(searchTerm.toLowerCase())) {
+    // Aplicar filtros adicionais
+    const filtered = genderFiltered.filter(item => {
+      if (searchTerm && !item.figureId.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
-      if (showClubOnly && itemData.club !== 1) {
+      if (showClubOnly && item.club !== 'HC') {
         return false;
       }
-      if (showColorableOnly && itemData.colorable !== 1) {
+      if (showColorableOnly && !item.colorable) {
         return false;
       }
       return true;
     });
     
     console.log('Filtered items:', filtered.length);
-    return filtered;
+    return filtered.map(item => [item.figureId, item]);
   };
 
-  // Gerar URL do item - Preview focado na região específica
+  // Gerar URL do item - Preview focado na região específica com gênero correto
   const getItemPreviewUrl = (itemId: string, colorHex?: string) => {
     const primaryColor = colorHex || '7';
     
-    // Para cabelos (hr), usar figura completa com corpo feminino para garantir preview correto
+    // Verificar se temos dados unificados com thumbnail URL
+    if (unifiedClothingData && unifiedClothingData[selectedCategory]) {
+      const item = unifiedClothingData[selectedCategory].find(item => item.figureId === itemId);
+      if (item && item.thumbnailUrl) {
+        console.log('Using unified thumbnail URL:', item.thumbnailUrl);
+        return item.thumbnailUrl;
+      }
+    }
+    
+    // Fallback: gerar URL usando habbo-imaging
+    // Avatar base mais simples e focado para previews
+    let baseFigure = '';
+    
     if (selectedCategory === 'hr') {
-      // Usar figura completa com corpo feminino para cabelos
-      // Baseado no exemplo do HabboTemplarios: hr-3870-33-61.hd-600-1-.ch-635-70-.lg-716-66-62-.sh-735-68-
-      let baseFigure = selectedGender === 'M' 
-        ? 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
-        : 'hr-500-undefined-.hd-190-7-.ch-710-66-.lg-870-82-.sh-290-80-'; // Corpo feminino com tom de pele masculino
-      
-      // Substituir apenas o cabelo
+      // Para cabelos, usar avatar base focado na cabeça
+      if (selectedGender === 'F') {
+        baseFigure = 'hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-'; // Cabeça feminina com corpo básico
+      } else {
+        baseFigure = 'hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'; // Cabeça masculina com corpo básico
+      }
+    } else {
+      // Para outras categorias, usar avatar completo
+      baseFigure = selectedGender === 'M' 
+        ? 'hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
+        : 'hr-500-7-.hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-';
+    }
+    
+    // Para cabelos, adicionar o cabelo específico
+    if (selectedCategory === 'hr') {
+      baseFigure = `${baseFigure}.${selectedCategory}-${itemId}-${primaryColor}`;
+    } else {
+      // Para outras categorias, substituir ou adicionar
       const figureParts = baseFigure.split('.');
-      const categoryIndex = figureParts.findIndex(part => part.startsWith('hr-'));
+      const categoryIndex = figureParts.findIndex(part => part.startsWith(selectedCategory + '-'));
       
       if (categoryIndex !== -1) {
-        figureParts[categoryIndex] = `hr-${itemId}-${primaryColor}-`;
+        // Substituir categoria existente
+        figureParts[categoryIndex] = `${selectedCategory}-${itemId}-${primaryColor}`;
+      } else {
+        // Adicionar nova categoria se não existir
+        figureParts.push(`${selectedCategory}-${itemId}-${primaryColor}`);
       }
+      
       baseFigure = figureParts.join('.');
-      
-      // Debug: Log para verificar se a substituição está funcionando
-      console.log('Hair Preview URL Debug:', {
-        itemId,
-        selectedGender,
-        primaryColor,
-        finalFigureString: baseFigure
-      });
-      
-      return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&&size=m`;
     }
-    
-    // Para outras categorias, usar figura completa
-    let baseFigure = selectedGender === 'M' 
-      ? 'hr-100-undefined-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-'
-      : 'hr-500-undefined-.hd-190-7-.ch-710-66-.lg-870-82-.sh-290-80-'; // Usando hd-190-7- (tom masculino)
-    
-    // Para todas as outras categorias, usar a lógica padrão de substituição
-    const figureParts = baseFigure.split('.');
-    const categoryIndex = figureParts.findIndex(part => part.startsWith(selectedCategory + '-'));
-    
-    if (categoryIndex !== -1) {
-      figureParts[categoryIndex] = `${selectedCategory}-${itemId}-${primaryColor}-`;
-    } else {
-      figureParts.push(`${selectedCategory}-${itemId}-${primaryColor}-`);
-    }
-    baseFigure = figureParts.join('.');
     
     // Debug: Log para verificar se a substituição está funcionando
     console.log('Item Preview URL Debug:', {
@@ -476,87 +659,82 @@ const AvatarEditorOfficial = () => {
       finalFigureString: baseFigure
     });
     
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&&size=m`;
+    // Corrigir a URL do habbo-imaging - remover duplo && e usar formato correto
+    const cleanFigure = baseFigure.replace(/\.$/, ''); // Remove trailing dot
+    
+    // Gerar múltiplas URLs de fallback
+    const urls = [
+      // URL principal
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&size=m`,
+      // Fallback com parâmetros diferentes
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&size=m`,
+      // Fallback com hotel brasileiro
+      `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&size=m`,
+      // Fallback com headonly para cabelos
+      selectedCategory === 'hr' ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&headonly=1&size=m` : null
+    ].filter(Boolean);
+    
+    return urls[0]; // Retorna a primeira URL, mas o componente pode implementar fallback
   };
 
-  // Sistema de cores do Habbo baseado no HTML do HabboTemplarios
-  // Separando cores primárias e secundárias para evitar duplicatas
-  const PRIMARY_COLORS = [
-    // Cores Normais (id="nonhc")
-    { color: '#F5DA88', isHC: false, id: '1' },
-    { color: '#FFDBC1', isHC: false, id: '2' },
-    { color: '#FFCB98', isHC: false, id: '3' },
-    { color: '#F4AC54', isHC: false, id: '4' },
-    { color: '#FF987F', isHC: false, id: '5' },
-    { color: '#e0a9a9', isHC: false, id: '6' },
-    { color: '#ca8154', isHC: false, id: '7' },
-    { color: '#B87560', isHC: false, id: '8' },
-    { color: '#9C543F', isHC: false, id: '9' },
-    { color: '#904925', isHC: false, id: '10' },
-    { color: '#4C311E', isHC: false, id: '11' },
-    
-    // Cores do Clube (id="hc" com classe colorClub)
-    { color: '#543d35', isHC: true, id: '12' },
-    { color: '#653a1d', isHC: true, id: '13' },
-    { color: '#6E392C', isHC: true, id: '14' },
-    { color: '#714947', isHC: true, id: '15' },
-    { color: '#856860', isHC: true, id: '16' },
-    { color: '#895048', isHC: true, id: '17' },
-    { color: '#a15253', isHC: true, id: '18' },
-    { color: '#aa7870', isHC: true, id: '19' },
-    { color: '#be8263', isHC: true, id: '20' },
-    { color: '#b6856d', isHC: true, id: '21' },
-    { color: '#ba8a82', isHC: true, id: '22' },
-    { color: '#c88f82', isHC: true, id: '23' },
-    { color: '#d9a792', isHC: true, id: '24' },
-    { color: '#c68383', isHC: true, id: '25' },
-    { color: '#BC576A', isHC: true, id: '26' },
-    { color: '#FF5757', isHC: true, id: '27' },
-    { color: '#FF7575', isHC: true, id: '28' },
-    { color: '#B65E38', isHC: true, id: '29' },
-    { color: '#a76644', isHC: true, id: '30' },
-    { color: '#7c5133', isHC: true, id: '31' },
-    { color: '#9a7257', isHC: true, id: '32' },
-    { color: '#945C2F', isHC: true, id: '33' },
-    { color: '#d98c63', isHC: true, id: '34' },
-    { color: '#AE7748', isHC: true, id: '35' },
-    { color: '#c57040', isHC: true, id: '36' },
-    { color: '#B88655', isHC: true, id: '37' },
-    { color: '#C99263', isHC: true, id: '38' },
-    { color: '#A89473', isHC: true, id: '39' },
-    { color: '#C89F56', isHC: true, id: '40' },
-    { color: '#DC9B4C', isHC: true, id: '41' },
-    { color: '#FF8C40', isHC: true, id: '42' },
-    { color: '#de9d75', isHC: true, id: '43' },
-    { color: '#eca782', isHC: true, id: '44' },
-    { color: '#FFB696', isHC: true, id: '45' },
-    { color: '#E3AE7D', isHC: true, id: '46' },
-    { color: '#FFC680', isHC: true, id: '47' },
-    { color: '#DFC375', isHC: true, id: '48' },
-    { color: '#F0DCA3', isHC: true, id: '49' },
-    { color: '#EAEFD0', isHC: true, id: '50' },
-    { color: '#E2E4B0', isHC: true, id: '51' },
-    { color: '#D5D08C', isHC: true, id: '52' },
-    { color: '#BDE05F', isHC: true, id: '53' },
-    { color: '#5DC446', isHC: true, id: '54' },
-    { color: '#A2CC89', isHC: true, id: '55' },
-    { color: '#C2C4A7', isHC: true, id: '56' },
-    { color: '#F1E5DA', isHC: true, id: '57' },
-    { color: '#f6d3d4', isHC: true, id: '58' },
-    { color: '#e5b6b0', isHC: true, id: '59' },
-    { color: '#C4A7B3', isHC: true, id: '60' },
-    { color: '#AC94B3', isHC: true, id: '61' },
-    { color: '#D288CE', isHC: true, id: '62' },
-    { color: '#6799CC', isHC: true, id: '63' },
-    { color: '#B3BDC3', isHC: true, id: '64' },
-    { color: '#C5C0C2', isHC: true, id: '65' }
-  ];
+  // Sistema de cores dinâmico baseado no figuredata.xml oficial
+  // Função para obter cores reais baseadas na categoria e paletas do figuredata
+  const getRealColorsForCategory = (category: string) => {
+    // Determinar paleta correta baseada na categoria
+    let paletteId = '3'; // Padrão para roupas
+    switch (category) {
+      case 'hd': // Rosto e Corpo - Paleta 1
+      case 'fc': // Rostos (categoria antiga)
+      case 'ey': // Olhos (categoria antiga)
+        paletteId = '1';
+        break;
+      case 'hr': // Cabelos - Paleta 2
+        paletteId = '2';
+        break;
+      default: // Todas as outras categorias - Paleta 3
+        paletteId = '3';
+        break;
+    }
 
-  // Cores secundárias (mesmas cores, mas com IDs diferentes para duotone)
-  const SECONDARY_COLORS = PRIMARY_COLORS.map((colorData, index) => ({
-    ...colorData,
-    id: `s${colorData.id}` // Prefixo 's' para cores secundárias
-  }));
+    // Obter cores da paleta real do figuredata
+    const palette = colorPalettes[paletteId] || [];
+    
+    // Se não temos paleta real, usar fallback
+    if (palette.length === 0) {
+      console.warn(`⚠️ [Colors] No palette found for category ${category}, using fallback`);
+      return getFallbackColorsForCategory(category);
+    }
+
+    // Converter para formato do seletor
+    return palette.map(color => ({
+      id: color.id,
+      name: `Cor ${color.id}`,
+      hex: color.hex,
+      isHC: false // TODO: Implementar detecção de HC baseada no figuredata
+    }));
+  };
+
+  // Fallback para cores quando não temos dados reais
+  const getFallbackColorsForCategory = (category: string) => {
+    const fallbackColors = [
+      { id: '1', name: 'Cor 1', hex: '#FFFFFF', isHC: false },
+      { id: '2', name: 'Cor 2', hex: '#000000', isHC: false },
+      { id: '3', name: 'Cor 3', hex: '#808080', isHC: false },
+      { id: '4', name: 'Cor 4', hex: '#FF0000', isHC: false },
+      { id: '5', name: 'Cor 5', hex: '#0000FF', isHC: false },
+      { id: '6', name: 'Cor 6', hex: '#008000', isHC: false },
+      { id: '7', name: 'Cor 7', hex: '#FFFF00', isHC: false },
+      { id: '8', name: 'Cor 8', hex: '#FFC0CB', isHC: false },
+      { id: '9', name: 'Cor 9', hex: '#800080', isHC: false },
+      { id: '10', name: 'Cor 10', hex: '#FFA500', isHC: false }
+    ];
+    return fallbackColors;
+  };
+
+  // Função para obter cores baseadas na categoria (usando dados reais do figuredata)
+  const getColorsForCategory = (category: string) => {
+    return getRealColorsForCategory(category);
+  };
 
   // Obter hex da cor por ID
   const getColorHex = (colorId: string) => {
@@ -890,9 +1068,9 @@ const AvatarEditorOfficial = () => {
 
         {/* Editor de Itens */}
         <div className="lg:col-span-2">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* Grid de Itens */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-9">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -945,7 +1123,7 @@ const AvatarEditorOfficial = () => {
                         <Button
                           size="sm"
                           variant={selectedGender === 'M' ? "default" : "ghost"}
-                          onClick={() => setSelectedGender('M')}
+                          onClick={() => handleGenderChange('M')}
                           className="volter-font text-xs"
                         >
                           <span className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center mr-1">
@@ -956,7 +1134,7 @@ const AvatarEditorOfficial = () => {
                         <Button
                           size="sm"
                           variant={selectedGender === 'F' ? "default" : "ghost"}
-                          onClick={() => setSelectedGender('F')}
+                          onClick={() => handleGenderChange('F')}
                           className="volter-font text-xs"
                         >
                           <span className="w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center mr-1">
@@ -970,279 +1148,137 @@ const AvatarEditorOfficial = () => {
 
                   <div className="text-sm text-gray-600 mb-2">
                     {CATEGORIES.find(c => c.id === selectedCategory)?.name} - {getFilteredItems().length} itens ({selectedGender === 'M' ? 'Masculino' : 'Feminino'})
+                    {isLoadingClothing && (
+                      <span className="ml-2 text-blue-500">🔄 Carregando dados oficiais...</span>
+                    )}
+                    {clothingError && (
+                      <span className="ml-2 text-red-500">⚠️ Erro ao carregar dados oficiais</span>
+                    )}
                   </div>
 
                   <Separator />
 
                   {/* Grid de itens - Preview centralizado e otimizado para cada categoria */}
                   <div className="grid grid-cols-6 gap-2 max-h-96 overflow-y-auto">
-                    {getFilteredItems().map(([itemId, itemData]) => {
-                      // Sistema de centralização otimizado para cada categoria
-                      const getOptimizedPosition = () => {
-                        switch (selectedCategory) {
-                          case 'hd': // Rostos - Foco centralizado no rosto
-                            return 'center 55%';
-                          case 'hr': // Cabelos - Foco no rosto e cabelo
-                            return 'center 50%';
-                          case 'ha': // Chapéus - Foco no topo da cabeça
-                            return 'center 45%';
-                          case 'he': // Acessórios de Cabeça - Foco no rosto
-                            return 'center 55%';
-                          case 'ea': // Brincos - Foco no rosto
-                            return 'center 60%';
-                          case 'fa': // Acessórios de Rosto - Foco no rosto
-                            return 'center 60%';
-                          case 'cc': // Colares - Foco no pescoço/torso superior
-                            return 'center 40%';
-                          case 'ch': // Camisas - Foco centralizado no torso
-                            return 'center 30%';
-                          case 'cp': // Capas - Foco no torso e ombros
-                            return 'center 25%';
-                          case 'ca': // Cintos - Foco na cintura
-                            return 'center 50%';
-                          case 'lg': // Calças - Foco centralizado nas pernas
-                            return 'center 70%';
-                          case 'sh': // Sapatos - Foco nos pés
-                            return 'center 85%';
-                          case 'wa': // Pulseiras - Foco nos braços
-                            return 'center 40%';
-                          default:
-                            return 'center center';
-                        }
-                      };
-
-                      // Determinar o tamanho e ajuste da imagem baseado na categoria
-                      const getImageStyle = () => {
-                        const baseStyle = {
-                          objectPosition: getOptimizedPosition(),
-                          objectFit: 'cover' as const
-                        };
-
-                        // Ajustes específicos por categoria para melhor visualização
-                        switch (selectedCategory) {
-                          case 'hd': // Rostos - Zoom no rosto
-                            return { ...baseStyle, transform: 'scale(1.2)' };
-                          case 'hr': // Cabelos - Zoom moderado
-                            return { ...baseStyle, transform: 'scale(1.1)' };
-                          case 'ha': // Chapéus - Zoom no topo
-                            return { ...baseStyle, transform: 'scale(1.1)' };
-                          case 'sh': // Sapatos - Zoom nos pés
-                            return { ...baseStyle, transform: 'scale(1.3)' };
-                          case 'lg': // Calças - Zoom nas pernas
-                            return { ...baseStyle, transform: 'scale(1.1)' };
-                          default:
-                            return baseStyle;
-                        }
-                      };
-
-                      return (
-                        <div key={itemId} className="relative group">
-                          <div className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 rounded bg-gray-50 overflow-hidden">
-                            <img
-                              src={getItemPreviewUrl(itemId)}
-                              alt={`${selectedCategory} ${itemId}`}
-                              className="w-full h-full"
-                              style={getImageStyle()}
-                          onClick={() => applyItem(itemId)}
-                              title={`${itemId} - ${itemData.club === 1 ? 'Habbo Club' : 'Normal'}${itemData.colorable === 1 ? ' - Colorável' : ''}`}
-                            />
-                          </div>
+                      {getFilteredItems().map(([itemId, itemData]) => {
+                        // Sistema de centralização otimizado para cada categoria
+                        const isSelected = selectedItemId === itemId;
                         
-                        {/* Badge de raridade único - Prioridade: HC > Duotone > Colorável > Vendável */}
-                        <div className="absolute bottom-1 right-1 z-10">
-                          {itemData.club === 1 ? (
-                            <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white font-bold">HC</span>
+                        return (
+                          <div
+                            key={itemId}
+                            className={`relative group cursor-pointer transition-all duration-200 ${
+                              isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:ring-1 hover:ring-gray-300'
+                            }`}
+                            onClick={() => applyItem(itemId, primaryColor)}
+                          >
+                            <div className="w-full h-20 cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 rounded bg-gray-50 overflow-hidden">
+                              <ClothingImageWithFallback
+                                itemId={itemId}
+                                category={selectedCategory}
+                                gender={selectedGender}
+                                color={primaryColor}
+                                alt={`${selectedCategory} ${itemId}`}
+                              />
                             </div>
-                          ) : itemData.duotone === 1 ? (
-                            <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white font-bold">2</span>
+                            
+                            {/* Badges de raridade e propriedades */}
+                            <div className="absolute top-1 right-1 z-10">
+                              {itemData.isNFT && (
+                                <div className="w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-white font-bold">NFT</span>
+                                </div>
+                              )}
+                              {itemData.isLTD && !itemData.isNFT && (
+                                <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-white font-bold">LTD</span>
+                                </div>
+                              )}
+                              {itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
+                                <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-white font-bold">R</span>
+                                </div>
+                              )}
+                              {itemData.isHC && !itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
+                                <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-white font-bold">HC</span>
+                                </div>
+                              )}
                             </div>
-                          ) : itemData.colorable === 1 ? (
-                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white">🎨</span>
+                            
+                            {/* Badge duotone */}
+                            {itemData.isDuotone && (
+                              <div className="absolute top-1 left-1 z-10">
+                                <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                                  <span className="text-xs text-white font-bold">2</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Badges de propriedades */}
+                            <div className="absolute bottom-1 left-1 z-10">
+                              {itemData.colorable && (
+                                <div className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center" title="Colorável">
+                                  <span className="text-xs text-white font-bold">C</span>
+                                </div>
+                              )}
                             </div>
-                          ) : itemData.sellable && itemData.sellable === 1 ? (
-                            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                              <span className="text-xs text-white">$</span>
+                            
+                            <div className="absolute bottom-1 right-1 z-10">
+                              {itemData.sellable && (
+                                <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center" title="Vendável">
+                                  <span className="text-xs text-white font-bold">$</span>
+                                </div>
+                              )}
                             </div>
-                          ) : null}
-                        </div>
-                      </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="text-sm text-muted-foreground">
-                    Mostrando {getFilteredItems().length} itens
-                  </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Painel de Cores */}
-            <div className="lg:col-span-1">
+            {/* Seletor de Cores */}
+            <div className="lg:col-span-3">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Palette className="w-5 h-5" />
-                    Cores do Habbo
+                    <span className="text-lg">🎨</span>
+                    Paleta de Cores
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Status do item selecionado */}
-                  {selectedItemId && (
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <div className="text-sm font-medium text-blue-800">
-                        Item: {selectedItemId}
-                      </div>
-                      {isDuotoneItem() && (
-                        <div className="text-xs text-blue-600 mt-1">
-                          ✨ Suporta duas cores (Duotone)
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Grid de Cores Primárias - Single Tone */}
-                  <div className="p-1">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Cor Primária</h4>
-                    <div className="bg-gray-100 rounded-md p-1">
-                      <div className="flex flex-wrap gap-1">
-                        {/* Cores Normais */}
-                        <div className="flex flex-wrap gap-1">
-                          {PRIMARY_COLORS.filter(c => !c.isHC).map((colorData, index) => {
-                            const isSelected = primaryColor === colorData.id;
-                            return (
-                              <button
-                                key={`primary-normal-${index}`}
-                                onClick={() => {
-                                  if (isDuotoneItem()) {
-                                    applyPrimaryColor(colorData.id);
-                                  } else {
-                                    const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
-                                    const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
-                                    if (currentItem) {
-                                      applyItem(currentItem, colorData.id);
-                                    }
-                                  }
-                                }}
-                                className={`w-4 h-4 border border-gray-300 hover:scale-110 transition-transform ${
-                                  isSelected ? 'ring-2 ring-blue-500' : ''
-                                }`}
-                                style={{ backgroundColor: colorData.color }}
-                                title={`Normal - ${colorData.color}`}
-                              />
-                            );
-                          })}
-                        </div>
-                        
-                        {/* Cores do Clube */}
-                        <div className="flex flex-wrap gap-1">
-                          {PRIMARY_COLORS.filter(c => c.isHC).map((colorData, index) => {
-                            const isSelected = primaryColor === colorData.id;
-                            return (
-                              <div key={`primary-hc-${index}`} className="relative">
-                                <button
-                        onClick={() => {
-                                    if (isDuotoneItem()) {
-                                      applyPrimaryColor(colorData.id);
-                                    } else {
-                          const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
-                          const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
-                          if (currentItem) {
-                                        applyItem(currentItem, colorData.id);
-                                      }
-                                    }
-                                  }}
-                                  className={`w-4 h-4 border border-gray-300 hover:scale-110 transition-transform ${
-                                    isSelected ? 'ring-2 ring-blue-500' : ''
-                                  }`}
-                                  style={{ backgroundColor: colorData.color }}
-                                  title={`HC - ${colorData.color}`}
-                                />
-                                {/* Badge HC pequeno */}
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-white font-bold" style={{ fontSize: '6px' }}>HC</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Grid de Cores Secundárias - Duo Tone (apenas para itens duotone) */}
-                  {isDuotoneItem() && (
-                    <div className="p-1">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Cor Secundária</h4>
-                      <div className="bg-gray-100 rounded-md p-1">
-                        <div className="flex flex-wrap gap-1">
-                          {/* Cores Normais */}
-                          <div className="flex flex-wrap gap-1">
-                            {SECONDARY_COLORS.filter(c => !c.isHC).map((colorData, index) => {
-                              const isSelected = secondaryColor === colorData.id;
-                              return (
-                                <button
-                                  key={`secondary-normal-${index}`}
-                                  onClick={() => {
-                                    if (isDuotoneItem()) {
-                                      applySecondaryColor(colorData.id);
-                                    } else {
-                                      const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
-                                      const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
-                                      if (currentItem) {
-                                        applyItem(currentItem, colorData.id);
-                                      }
-                                    }
-                                  }}
-                                  className={`w-4 h-4 border border-gray-300 hover:scale-110 transition-transform ${
-                                    isSelected ? 'ring-2 ring-blue-500' : ''
-                                  }`}
-                                  style={{ backgroundColor: colorData.color }}
-                                  title={`Normal - ${colorData.color}`}
-                                />
-                              );
-                            })}
+                <CardContent className="space-y-3">
+                  {/* Cores baseadas na categoria selecionada - Apenas quadros de cores */}
+                  <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto">
+                    {getColorsForCategory(selectedCategory).map((colorData) => (
+                      <div
+                        key={colorData.id}
+                        className={`relative w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
+                          primaryColor === colorData.id 
+                            ? 'border-blue-500 ring-2 ring-blue-300' 
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        style={{ backgroundColor: colorData.hex }}
+                        onClick={() => setPrimaryColor(colorData.id)}
+                        title={`${colorData.name} (ID: ${colorData.id})`}
+                      >
+                        {/* Badge HC para cores do Habbo Club */}
+                        {colorData.isHC && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-bold">HC</span>
                           </div>
-                          
-                          {/* Cores do Clube */}
-                          <div className="flex flex-wrap gap-1">
-                            {SECONDARY_COLORS.filter(c => c.isHC).map((colorData, index) => {
-                              const isSelected = secondaryColor === colorData.id;
-                              return (
-                                <div key={`secondary-hc-${index}`} className="relative">
-                                  <button
-                        onClick={() => {
-                                      if (isDuotoneItem()) {
-                                        applySecondaryColor(colorData.id);
-                                      } else {
-                          const currentItemValue = currentFigure[selectedCategory as keyof AvatarFigure];
-                          const currentItem = typeof currentItemValue === 'string' ? currentItemValue.split('-')[0] : '100';
-                          if (currentItem) {
-                                          applyItem(currentItem, colorData.id);
-                                        }
-                                      }
-                                    }}
-                                    className={`w-4 h-4 border border-gray-300 hover:scale-110 transition-transform ${
-                                      isSelected ? 'ring-2 ring-blue-500' : ''
-                                    }`}
-                                    style={{ backgroundColor: colorData.color }}
-                                    title={`HC - ${colorData.color}`}
-                                  />
-                                  {/* Badge HC pequeno */}
-                                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                    <span className="text-xs text-white font-bold" style={{ fontSize: '6px' }}>HC</span>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        )}
                       </div>
+                    ))}
                   </div>
-                  )}
+                  
+                  {/* Informação sobre a paleta atual */}
+                  <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                    {['hd', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 1: Cores para pele/rosto'}
+                    {selectedCategory === 'hr' && 'Paleta 2: Cores para cabelo'}
+                    {!['hd', 'hr', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 3: Cores para roupas'}
+                  </div>
                 </CardContent>
               </Card>
             </div>

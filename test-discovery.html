@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Descoberta de Handitems</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .handitem { border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .handitem img { width: 20px; height: 20px; margin-right: 10px; }
+        .loading { color: #666; font-style: italic; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        button { padding: 10px 20px; margin: 10px 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Teste de Descoberta de Handitems</h1>
+        <p>Este script testa a descoberta automática de handitems baseada no padrão do HabboTemplarios.</p>
+        
+        <div>
+            <button onclick="startDiscovery()" id="discoverBtn">Iniciar Descoberta</button>
+            <button onclick="clearResults()">Limpar Resultados</button>
+        </div>
+        
+        <div id="status" class="loading"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let isDiscovering = false;
+        
+        async function startDiscovery() {
+            if (isDiscovering) return;
+            
+            isDiscovering = true;
+            const btn = document.getElementById('discoverBtn');
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            btn.disabled = true;
+            btn.textContent = 'Descobrindo...';
+            status.textContent = '🔍 Iniciando descoberta de handitems...';
+            results.innerHTML = '';
+            
+            try {
+                const discovered = await discoverHanditems(170, 200);
+                
+                status.innerHTML = `<span class="success">✅ Descoberta concluída! ${discovered.length} handitems encontrados</span>`;
+                
+                if (discovered.length > 0) {
+                    results.innerHTML = discovered.map(item => `
+                        <div class="handitem">
+                            <h3>Handitem ${item.id}</h3>
+                            <p>Variações encontradas: ${item.images.length}</p>
+                            <div>
+                                ${item.images.map(img => `
+                                    <img src="${img.url}" alt="Variação ${img.variation}" title="Variação ${img.variation}" />
+                                `).join('')}
+                            </div>
+                            <p><small>Descoberto em: ${new Date(item.discovered).toLocaleString()}</small></p>
+                        </div>
+                    `).join('');
+                } else {
+                    results.innerHTML = '<p class="error">❌ Nenhum handitem encontrado no range testado</p>';
+                }
+                
+            } catch (error) {
+                status.innerHTML = `<span class="error">❌ Erro na descoberta: ${error.message}</span>`;
+                console.error('Erro:', error);
+            } finally {
+                isDiscovering = false;
+                btn.disabled = false;
+                btn.textContent = 'Iniciar Descoberta';
+            }
+        }
+        
+        async function discoverHanditems(startId, endId) {
+            const discovered = [];
+            const currentYear = new Date().getFullYear();
+            const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+            const baseUrl = `https://images.habbotemplarios.com/${currentYear}/${currentMonth}/handitem`;
+            
+            for (let id = startId; id <= endId; id++) {
+                const variations = [0, 1, 2, 3];
+                const images = [];
+                
+                for (const variation of variations) {
+                    const url = `${baseUrl}${id}_${variation}.png`;
+                    if (await imageExists(url)) {
+                        images.push({ variation, url });
+                    }
+                }
+                
+                if (images.length > 0) {
+                    discovered.push({
+                        id,
+                        images,
+                        discovered: new Date().toISOString()
+                    });
+                }
+                
+                // Atualizar status
+                const status = document.getElementById('status');
+                status.textContent = `🔍 Verificando ID ${id}/${endId}...`;
+                
+                // Pequena pausa para não sobrecarregar
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            return discovered;
+        }
+        
+        async function imageExists(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                return response.ok;
+            } catch {
+                return false;
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status').textContent = '';
+        }
+    </script>
+</body>
+</html>
