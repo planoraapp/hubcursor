@@ -883,7 +883,7 @@ const AvatarEditorOfficial = () => {
     });
     
     console.log('Filtered items:', filtered.length);
-    return filtered.map(item => [item.figureId, item]);
+    return filtered.map(item => [`${selectedCategory}-${item.figureId}`, item]);
   };
 
   // Gerar URL do item - Preview focado na região específica com gênero correto

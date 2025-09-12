@@ -168,6 +168,11 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
 
       // Processar cada categoria do figuredata
       Object.entries(figureData).forEach(([category, items]) => {
+        if (!Array.isArray(items)) {
+          console.warn(`⚠️ [UnifiedHabboClothing] Category ${category} items is not an array:`, typeof items);
+          unifiedData[category] = [];
+          return;
+        }
         unifiedData[category] = items.map(item => {
           // Buscar código científico do figuremap
           const scientificCode = findScientificCode(figureMapData, category, item.id);
