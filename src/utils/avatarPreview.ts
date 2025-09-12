@@ -1,6 +1,6 @@
 // Sistema de preview de avatar com handitems
 export class AvatarPreview {
-  private baseUrl = 'https://www.habbo.com.br/habbo-imaging/avatarimage';
+  private baseUrl = 'https://www.habbo.com/habbo-imaging/avatarimage'; // Mudado para domínio internacional
   
   // Gerar URL de avatar com handitem
   generateAvatarUrl(

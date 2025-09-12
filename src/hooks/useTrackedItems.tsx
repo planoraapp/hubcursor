@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useUnifiedAuth } from './useUnifiedAuth';
 
 interface TrackedItem {
   classname: string;
@@ -12,7 +12,7 @@ interface TrackedItem {
 }
 
 export const useTrackedItems = (hotelId: string) => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const [trackedItems, setTrackedItems] = useState<TrackedItem[]>([]);
   const [loading, setLoading] = useState(false);
 

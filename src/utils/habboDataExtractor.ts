@@ -20,7 +20,7 @@ export interface ExtractedFurni {
 }
 
 export class HabboDataExtractor {
-  private baseUrl = 'https://www.habbo.com.br';
+  private baseUrl = 'https://www.habbo.com'; // Mudado para domínio internacional
   private imagesUrl = 'https://images.habbo.com';
   
   // Extrair handitems do external_flash_texts

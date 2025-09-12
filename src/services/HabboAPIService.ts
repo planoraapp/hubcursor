@@ -57,7 +57,7 @@ export interface HabboImageInfo {
 }
 
 export class HabboApiService {
-  private baseUrl = 'https://www.habbo.com.br';
+  private baseUrl = 'https://www.habbo.com'; // Mudado para domínio internacional
   private imagesUrl = 'https://images.habbo.com';
   
   // Passo 1: Descobrir a build atual do Habbo

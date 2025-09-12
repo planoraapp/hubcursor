@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { usePuhekuplaClothing } from './usePuhekuplaData';
 
 export interface UnifiedHabboClothingItem {
   id: string;
@@ -18,9 +19,11 @@ export interface UnifiedHabboClothingItem {
   isLTD?: boolean;
   isNFT?: boolean;
   isHC?: boolean;
+  isSellable?: boolean;
+  isNormal?: boolean;
   swfUrl?: string;
   iconUrl?: string;
-  rarity?: 'normal' | 'rare' | 'ltd' | 'nft' | 'hc';
+  rarity?: 'normal' | 'rare' | 'ltd' | 'nft' | 'hc' | 'sellable';
   // Sistema duotone do tutorial
   isDuotone?: boolean;
   colorIndex?: string;
@@ -30,6 +33,9 @@ export interface UnifiedHabboClothingItem {
   preselectable?: boolean;
   sellable?: boolean;
   paletteId?: string;
+  // Propriedades do furnidata para detecção automática
+  furniline?: string;
+  classname?: string;
 }
 
 export interface UnifiedClothingData {
@@ -50,6 +56,9 @@ export const useUnifiedHabboClothing = () => {
   const [colorPalettes, setColorPalettes] = useState<ColorPalettes>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Buscar dados do Puhekupla para todas as categorias
+  const puhekuplaData = usePuhekuplaClothing(1);
 
   useEffect(() => {
     const loadData = async () => {
@@ -57,8 +66,21 @@ export const useUnifiedHabboClothing = () => {
       setError(null);
       
       try {
-        const data = await fetchUnifiedClothingData();
-        setData(data);
+        // Primeiro, tentar carregar dados do Puhekupla
+        if (puhekuplaData.data?.result?.clothing) {
+          console.log('🎯 [useUnifiedHabboClothing] Using Puhekupla data:', puhekuplaData.data.result.clothing.length, 'items');
+          const puhekuplaUnified = convertPuhekuplaToUnified(puhekuplaData.data.result.clothing);
+          setData(puhekuplaUnified);
+          
+          // Carregar paletas de cores separadamente (usar dados padrão por enquanto)
+          setColorPalettes({});
+        } else {
+          // Fallback para dados oficiais do Habbo
+          console.log('⚠️ [useUnifiedHabboClothing] Puhekupla data not available, using official Habbo data');
+          const result = await fetchUnifiedClothingData();
+          setData(result);
+          setColorPalettes({});
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load clothing data');
         setData({});
@@ -68,7 +90,7 @@ export const useUnifiedHabboClothing = () => {
     };
     
     loadData();
-  }, []);
+  }, [puhekuplaData.data]);
 
 const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
     console.log('🌐 [UnifiedHabboClothing] Fetching unified clothing data with OFFICIAL Habbo sources...');
@@ -96,6 +118,16 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         colorPalettes = figureDataResult.value.data.colorPalettes || {};
         console.log('✅ [UnifiedHabboClothing] Figuredata loaded:', Object.keys(figureData).length, 'categories');
         console.log('🎨 [UnifiedHabboClothing] Color palettes loaded:', Object.keys(colorPalettes).length, 'palettes');
+      } else {
+        // Fallback: usar dados locais
+        console.log('⚠️ [UnifiedHabboClothing] Figuredata API failed, using local data...');
+        try {
+          const localFigureData = await fetch('/figuredata.json').then(res => res.json());
+          figureData = localFigureData;
+          console.log('✅ [UnifiedHabboClothing] Local figuredata loaded:', Object.keys(figureData).length, 'categories');
+        } catch (localError) {
+          console.error('❌ [UnifiedHabboClothing] Local figuredata also failed:', localError);
+        }
       }
 
       // Processar figuremap (códigos científicos e URLs SWF)
@@ -107,6 +139,19 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         swfUrls = figureMapResult.value.data.swfUrls || {};
         iconUrls = figureMapResult.value.data.iconUrls || {};
         console.log('✅ [UnifiedHabboClothing] Figuremap loaded:', Object.keys(figureMapData).length, 'categories');
+      } else {
+        // Fallback: carregar figuremap local
+        console.log('⚠️ [UnifiedHabboClothing] Figuremap API failed, loading local figuremap...');
+        try {
+          const localFigureMapResponse = await fetch('/handitems/gamedata/figuremap.xml');
+          if (localFigureMapResponse.ok) {
+            const figureMapXml = await localFigureMapResponse.text();
+            figureMapData = parseFigureMapXml(figureMapXml);
+            console.log('✅ [UnifiedHabboClothing] Local figuremap loaded:', Object.keys(figureMapData).length, 'categories');
+          }
+        } catch (localError) {
+          console.error('❌ [UnifiedHabboClothing] Local figuremap also failed:', localError);
+        }
       }
 
       // Processar furnidata (classificação de raridade)
@@ -141,7 +186,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         gender: item.gender || 'U',
         colors: item.colors || ['1'],
             club: item.club === '2' ? 'HC' : 'FREE',
-            name: `${getCategoryDisplayName(category)} ${item.id}`,
+            name: scientificCode || `${getCategoryDisplayName(category)} ${item.id}`,
             source: 'habbo-official',
             thumbnailUrl: item.thumbnailUrl || generateThumbnailUrl(category, item.id, item.colors?.[0] || '1', item.gender),
             isValidated: true,
@@ -181,6 +226,45 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
       return {};
     }
 };
+
+  // Função para parsear o XML do figuremap e extrair nomes científicos
+  const parseFigureMapXml = (xmlText: string): Record<string, any[]> => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    const figureMapData: Record<string, any[]> = {};
+    
+    // Extrair todas as bibliotecas (libs) que contêm os nomes científicos
+    const libs = xmlDoc.querySelectorAll('lib');
+    
+    libs.forEach(lib => {
+      const libId = lib.getAttribute('id');
+      if (libId) {
+        // Extrair partes da biblioteca
+        const parts = lib.querySelectorAll('part');
+        
+        parts.forEach(part => {
+          const partId = part.getAttribute('id');
+          const partType = part.getAttribute('type');
+          
+          if (partId && partType) {
+            // Criar entrada no figureMapData
+            if (!figureMapData[partType]) {
+              figureMapData[partType] = [];
+            }
+            
+            figureMapData[partType].push({
+              id: partId,
+              scientificCode: libId, // O nome científico é o ID da lib
+              swfUrl: `/handitems/dcr/${libId}.swf`
+            });
+          }
+        });
+      }
+    });
+    
+    console.log('📋 [UnifiedHabboClothing] Parsed figuremap XML:', Object.keys(figureMapData).length, 'categories');
+    return figureMapData;
+  };
 
   // Função para buscar código científico no figuremap
   const findScientificCode = (figureMapData: Record<string, any[]>, category: string, itemId: string): string | null => {
@@ -292,4 +376,102 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
     error,
     refetch: fetchUnifiedClothingData
   };
+};
+
+// Função para converter dados do Puhekupla para formato unificado
+const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingData => {
+  const unifiedData: UnifiedClothingData = {};
+  
+  console.log('🔄 [convertPuhekuplaToUnified] Converting Puhekupla data:', puhekuplaClothing.length, 'items');
+  
+  puhekuplaClothing.forEach(item => {
+    // Extrair categoria do código (ex: 'ch-665' -> 'ch')
+    const category = item.code.split('-')[0];
+    
+    if (!unifiedData[category]) {
+      unifiedData[category] = [];
+    }
+    
+    // Detectar raridade baseada no nome real do Puhekupla
+    const assetName = item.name.toLowerCase();
+    const itemCode = item.code.toLowerCase();
+    
+    // Sistema de detecção automática baseado nos nomes reais do Puhekupla
+    const nftCollections = ['nft2025', 'nft2024', 'nft2023', 'nft', 'nftmint', 'testing'];
+    const isNFT = assetName.includes('nft') || 
+                  nftCollections.some(collection => assetName.includes(collection)) ||
+                  itemCode.includes('nft');
+    
+    const isLTD = assetName.includes('ltd') || 
+                  assetName.includes('limited') || 
+                  assetName.includes('loyalty') ||
+                  itemCode.includes('ltd');
+    
+    const isRare = assetName.includes('_r_') || 
+                   assetName.includes('rare') ||
+                   itemCode.includes('_r_');
+    
+    const isHC = assetName.includes('_hc') || 
+                 assetName.includes('club') ||
+                 itemCode.includes('hc');
+    
+    const isSellable = assetName.includes('sellable') || 
+                       assetName.includes('vend') ||
+                       itemCode.includes('sellable');
+    
+    const isNormal = !isNFT && !isLTD && !isRare && !isHC && !isSellable;
+    
+    // Determinar rarity final
+    let finalRarity: 'normal' | 'rare' | 'ltd' | 'nft' | 'hc' | 'sellable' = 'normal';
+    if (isNFT) finalRarity = 'nft';
+    else if (isLTD) finalRarity = 'ltd';
+    else if (isRare) finalRarity = 'rare';
+    else if (isHC) finalRarity = 'hc';
+    else if (isSellable) finalRarity = 'sellable';
+    
+    // Converter para formato unificado
+    const unifiedItem: UnifiedHabboClothingItem = {
+      id: item.guid,
+      figureId: item.code.split('-')[1] || item.guid,
+      category: category,
+      gender: item.gender || 'U',
+      club: isHC ? 'HC' : 'FREE', // Detectar HC baseado no nome
+      name: item.name, // Nome real do Puhekupla
+      scientificCode: item.name, // Usar nome como código científico
+      source: 'official-habbo',
+      thumbnailUrl: item.image,
+      colorable: true, // Assumir que são coloráveis
+      selectable: true,
+      colors: item.colors ? item.colors.split(',') : ['1', '2', '3', '4', '5'],
+      isDuotone: false,
+      rarity: finalRarity,
+      furniline: undefined,
+      classname: undefined,
+      // Propriedades de raridade detectadas
+      isNFT,
+      isLTD,
+      isRare,
+      isHC,
+      isSellable,
+      isNormal
+    };
+    
+    unifiedData[category].push(unifiedItem);
+    
+    // Debug: mostrar detecção de badges para itens especiais
+    if (isNFT || isLTD || isRare || isHC || isSellable) {
+      console.log(`🎯 Puhekupla Badge Detection - ${item.name}:`, {
+        NFT: isNFT,
+        LTD: isLTD,
+        Rare: isRare,
+        HC: isHC,
+        Sellable: isSellable,
+        Normal: isNormal,
+        FinalRarity: finalRarity
+      });
+    }
+  });
+  
+  console.log('✅ [convertPuhekuplaToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
+  return unifiedData;
 };

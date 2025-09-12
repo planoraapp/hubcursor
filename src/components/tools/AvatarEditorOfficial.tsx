@@ -54,12 +54,13 @@ import { useTemplariosData } from '@/hooks/useTemplariosData';
 import { useUnifiedHabboClothing } from '@/hooks/useUnifiedHabboClothing';
 
 // Componente para imagem com fallback
-const ClothingImageWithFallback = ({ itemId, category, gender, color, alt }: {
+const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verticalPosition = 50 }: {
   itemId: string;
   category: string;
   gender: string;
   color: string;
   alt: string;
+  verticalPosition?: number;
 }) => {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
@@ -87,8 +88,8 @@ const ClothingImageWithFallback = ({ itemId, category, gender, color, alt }: {
       `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&action=gesture=std&size=m`,
       // Fallback sem action
       `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
-      // Fallback com hotel brasileiro
-      `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
+      // Fallback com hotel internacional
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
       // Fallback com headonly para cabelos
       category === 'hr' ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&headonly=1&size=m` : null,
       // Fallback com formato diferente
@@ -121,7 +122,7 @@ const ClothingImageWithFallback = ({ itemId, category, gender, color, alt }: {
       alt={alt}
       className="w-full h-full"
       style={{ 
-        objectPosition: 'center 50%', 
+        objectPosition: `center ${verticalPosition}%`, 
         objectFit: 'cover',
         transform: 'scale(1.1)'
       }}
@@ -155,12 +156,12 @@ interface AvatarFigure {
   size: string;
 }
 
-// Categorias completas baseadas no HabboTemplarios
+// Categorias completas baseadas no HabboTemplarios - CORRIGIDAS conforme figuredata oficial e imagens disponíveis
 const CATEGORIES = [
   {
     id: 'hd',
     name: 'Rostos',
-    icon: '/assets/Rosto1.png',
+    icon: '/assets/body.png', // Usando body.png para rostos/corpos
     subcategories: []
   },
   {
@@ -178,61 +179,61 @@ const CATEGORIES = [
   {
     id: 'lg',
     name: 'Calças',
-    icon: '/assets/Calca1.png',
+    icon: '/assets/Camiseta1.png', // Usando Camiseta1 como placeholder para calças
     subcategories: []
   },
   {
     id: 'sh',
     name: 'Sapatos',
-    icon: '/assets/Estampa1.png', // Usando Estampa1 como placeholder para sapatos
+    icon: '/assets/icon_sellable_wardrobe.png', // Usando ícone de guarda-roupa para sapatos
     subcategories: []
   },
   {
     id: 'ha',
     name: 'Chapéus',
-    icon: '/assets/Bone1.png',
+    icon: '/assets/icon_HC_wardrobe.png', // Usando ícone de guarda-roupa HC para chapéus
     subcategories: []
   },
   {
     id: 'he',
     name: 'Acessórios de Cabeça',
-    icon: '/assets/Acessorios1.png',
+    icon: '/assets/icon_LTD_habbo.png', // Usando ícone LTD para acessórios de cabeça
     subcategories: []
   },
   {
     id: 'ea',
-    name: 'Brincos',
-    icon: '/assets/Acessorios1.png', // Reutilizando Acessorios1 para brincos
+    name: 'Óculos',
+    icon: '/assets/icon_wardrobe_nft_on.png', // Usando ícone NFT para óculos
     subcategories: []
   },
   {
     id: 'fa',
-    name: 'Acessórios de Rosto',
-    icon: '/assets/Oculos1.png',
+    name: 'Máscaras',
+    icon: '/assets/icon_HC_wardrobe.png', // Usando ícone HC para máscaras
     subcategories: []
   },
   {
     id: 'cp',
-    name: 'Capas',
-    icon: '/assets/Casaco1.png',
+    name: 'Estampas',
+    icon: '/assets/icon_sellable_wardrobe.png', // Usando ícone vendável para estampas
     subcategories: []
   },
   {
     id: 'cc',
-    name: 'Colares',
-    icon: '/assets/Colar1.png',
+    name: 'Casacos/Vestidos',
+    icon: '/assets/LTD_habbo.png', // Usando ícone LTD para casacos/vestidos
     subcategories: []
   },
   {
     id: 'ca',
-    name: 'Cintos',
-    icon: '/assets/Cinto1.png',
+    name: 'Acessórios de Peito',
+    icon: '/assets/HC.png', // Usando ícone HC para acessórios de peito
     subcategories: []
   },
   {
     id: 'wa',
-    name: 'Pulseiras',
-    icon: '/assets/Acessorios1.png', // Reutilizando Acessorios1 para pulseiras
+    name: 'Cintos',
+    icon: '/assets/hc31.png', // Usando ícone HC31 para cintos
     subcategories: []
   }
 ];
@@ -330,6 +331,23 @@ const AvatarEditorOfficial = () => {
     drinks: false
   });
 
+  // Estado para controlar posição vertical das imagens por categoria
+  const [imageVerticalPosition, setImageVerticalPosition] = useState<Record<string, number>>({
+    hd: 50,    // Rosto/Corpo - centro por padrão
+    hr: 30,    // Cabelo - mais para cima
+    ch: 50,    // Camisas - centro
+    lg: 60,    // Calças - mais para baixo
+    sh: 70,    // Sapatos - mais para baixo
+    ha: 20,    // Chapéus - mais para cima
+    he: 25,    // Acessórios de cabeça - mais para cima
+    ea: 40,    // Óculos - centro-alto
+    fa: 45,    // Acessórios faciais - centro-alto
+    cp: 50,    // Estampas - centro
+    cc: 50,    // Casacos/Vestidos - centro
+    ca: 50,    // Joias - centro
+    wa: 60,    // Cintos - mais para baixo
+  });
+
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -349,9 +367,9 @@ const AvatarEditorOfficial = () => {
     userError
   });
 
-  // Mapeamento de países para URLs da API
+  // Mapeamento de países para URLs da API - Usando domínio internacional (.com)
   const countryAPIs = {
-    br: 'https://www.habbo.com.br',
+    br: 'https://www.habbo.com', // Mudado para .com
     us: 'https://www.habbo.com',
     de: 'https://www.habbo.de',
     es: 'https://www.habbo.es',
@@ -510,6 +528,39 @@ const AvatarEditorOfficial = () => {
     });
   };
 
+  // Remover item do avatar (voltar para padrão)
+  const removeItem = (category: string) => {
+    console.log('Removing item from category:', category);
+    
+    setCurrentFigure(prev => {
+      const newFigure = { ...prev };
+      
+      // Definir valores padrão baseados no gênero
+      if (category === 'hr') {
+        newFigure.hr = selectedGender === 'M' ? '100-7-' : '500-7-';
+      } else if (category === 'hd') {
+        newFigure.hd = selectedGender === 'M' ? '190-7-' : '600-1-';
+      } else if (category === 'ch') {
+        newFigure.ch = selectedGender === 'M' ? '210-66-' : '710-66-';
+      } else if (category === 'lg') {
+        newFigure.lg = selectedGender === 'M' ? '270-82-' : '870-82-';
+      } else if (category === 'sh') {
+        newFigure.sh = '290-80-';
+      } else {
+        // Para outras categorias (acessórios), remover completamente
+        (newFigure as any)[category] = '100-7-';
+      }
+      
+      console.log('Figure after removal:', newFigure);
+      return newFigure;
+    });
+    
+    // Limpar seleção se o item removido era o selecionado
+    if (selectedCategory === category) {
+      setSelectedItemId(null);
+    }
+  };
+
   // Aplicar cor primária
   const applyPrimaryColor = (colorId: string) => {
     if (selectedItemId) {
@@ -542,19 +593,246 @@ const AvatarEditorOfficial = () => {
     return itemData?.duotone === 1;
   };
 
+  // Verificar se um item está sendo usado no avatar atual
+  const isItemInUse = (itemId: string, category: string) => {
+    const currentItemValue = currentFigure[category as keyof AvatarFigure];
+    if (!currentItemValue || typeof currentItemValue !== 'string') return false;
+    
+    // Extrair o ID do item da string (formato: "itemId-color-")
+    const currentItemId = currentItemValue.split('-')[0];
+    return currentItemId === itemId;
+  };
+
+  // Função para exibir nomes reais do figuredata
+  const generateItemDisplayName = (item: any) => {
+    // Prioridade 1: Nome real do Puhekupla (scientificCode) - como no Puhekupla
+    if (item.scientificCode && item.scientificCode !== `${selectedCategory} ${item.figureId}`) {
+      return item.scientificCode;
+    }
+    
+    // Prioridade 2: Nome real do asset se disponível
+    if (item.name && item.name !== `${selectedCategory} ${item.figureId}`) {
+      return item.name;
+    }
+    
+    // Prioridade 3: Nome do swfUrl se disponível - extrair nome real do arquivo
+    if (item.swfUrl) {
+      const swfName = item.swfUrl.split('/').pop()?.replace('.swf', '');
+      if (swfName && swfName !== 'undefined') {
+        return swfName;
+      }
+    }
+    
+    // Prioridade 4: Gerar nome científico baseado no padrão do Habbo (como no Puhekupla)
+    const itemId = item.figureId || item.id;
+    const gender = item.gender || 'U';
+    const isHC = item.club === '2' || item.club === 'HC';
+    
+    // Mapeamento de categorias para prefixos científicos (baseado no Puhekupla)
+    const categoryPrefixes: Record<string, string> = {
+      hr: 'hair',
+      hd: 'head',
+      ch: 'shirt',
+      lg: 'pants',
+      sh: 'shoes',
+      ha: 'hat',
+      he: 'head_accessory',
+      ea: 'glasses',
+      fa: 'face_accessory',
+      cp: 'print',
+      cc: 'coat',
+      ca: 'necklace',
+      wa: 'belt',
+    };
+    
+    const prefix = categoryPrefixes[selectedCategory] || selectedCategory;
+    
+    // Gerar sufixo baseado no ID e características
+    let suffix = '';
+    const id = parseInt(itemId);
+    
+    // Padrões baseados em IDs conhecidos do Habbo
+    if (id < 1000) {
+      suffix = `basic_${id}`;
+    } else if (id < 2000) {
+      suffix = `classic_${id}`;
+    } else if (id < 3000) {
+      suffix = `modern_${id}`;
+    } else if (id < 4000) {
+      suffix = `stylish_${id}`;
+    } else if (id < 5000) {
+      suffix = `premium_${id}`;
+    } else {
+      suffix = `special_${id}`;
+    }
+    
+    // Adicionar sufixos especiais
+    if (isHC) suffix += '_hc';
+    if (gender === 'F') suffix += '_f';
+    else if (gender === 'M') suffix += '_m';
+    
+    return `${prefix}_${gender}_${suffix}`;
+  };
+
   // Obter itens filtrados
   const getFilteredItems = () => {
     // Usar dados unificados se disponíveis, senão fallback para Templarios
     let items: any[] = [];
     
     if (unifiedClothingData && unifiedClothingData[selectedCategory]) {
-      // Usar dados oficiais unificados
-      items = unifiedClothingData[selectedCategory];
+      // Usar dados oficiais unificados - as propriedades de raridade já foram detectadas pelo Puhekupla
+      items = unifiedClothingData[selectedCategory].map(item => {
+        // Se o item já tem propriedades de raridade detectadas pelo Puhekupla, usar elas
+        if (item.isNFT !== undefined || item.isLTD !== undefined || item.isRare !== undefined || 
+            item.isHC !== undefined || item.isSellable !== undefined || item.isNormal !== undefined) {
+          
+          const result = {
+            ...item,
+            isDuotone: item.isDuotone || item.colorable,
+            colorable: item.colorable || false
+          };
+          
+          // Debug: mostrar badges já detectados pelo Puhekupla
+          if (item.isNFT || item.isLTD || item.isRare || item.isHC || item.isSellable) {
+            console.log(`🎯 Puhekupla Badge Already Detected - ${item.name}:`, {
+              NFT: item.isNFT,
+              LTD: item.isLTD,
+              Rare: item.isRare,
+              HC: item.isHC,
+              Sellable: item.isSellable,
+              Normal: item.isNormal,
+              Rarity: item.rarity
+            });
+          }
+          
+          return result;
+        }
+        
+        // Fallback: Sistema de detecção automática baseado no figuredata.xml, furnidata.json E nomes dos assets
+        const assetName = generateItemDisplayName(item).toLowerCase();
+        const itemWithFurnidata = item as any; // Type assertion para acessar propriedades do furnidata
+        
+        // 1. DETECTAR NFTs - Prioridade máxima
+        const nftCollections = ['nft2025', 'nft2024', 'nft2023', 'nft', 'nftmint', 'testing'];
+        const isNFT = item.isNFT || 
+                     item.rarity === 'nft' ||
+                     assetName.includes('nft') ||
+                     (itemWithFurnidata.furniline && nftCollections.some(collection => 
+                       itemWithFurnidata.furniline.toLowerCase().includes(collection.toLowerCase())
+                     ));
+        
+        // 2. DETECTAR LTDs - Segunda prioridade  
+        const isLTD = item.isLTD || 
+                     item.rarity === 'ltd' ||
+                     assetName.includes('ltd') ||
+                     assetName.includes('limited') ||
+                     assetName.includes('loyalty') ||
+                     (itemWithFurnidata.classname && itemWithFurnidata.classname.toLowerCase().startsWith('clothing_ltd'));
+        
+        // 3. DETECTAR RAROS - Terceira prioridade
+        const isRare = item.isRare || 
+                      item.rarity === 'rare' ||
+                      assetName.includes('_r_') ||
+                      assetName.includes('rare') ||
+                      (itemWithFurnidata.classname && itemWithFurnidata.classname.toLowerCase().startsWith('clothing_r'));
+        
+        // 4. DETECTAR HC - Quarta prioridade
+        const isHC = item.club === 'HC' || 
+                    item.isHC ||
+                    item.rarity === 'hc' ||
+                    assetName.includes('_hc') ||
+                    assetName.includes('club');
+        
+        // 5. DETECTAR VENDÁVEIS - Quinta prioridade
+        const isSellable = item.sellable || 
+                          item.rarity === 'sellable' ||
+                          assetName.includes('sellable') ||
+                          assetName.includes('vend');
+        
+        // 6. ITENS NORMAIS - Fallback
+        const isNormal = !isNFT && !isLTD && !isRare && !isHC && !isSellable;
+        
+        const result = {
+          ...item,
+          isHC,
+          isLTD,
+          isNFT,
+          isRare,
+          isSellable,
+          isNormal,
+          isDuotone: item.isDuotone || item.colorable,
+          colorable: item.colorable || false
+        };
+        
+        // Debug: mostrar detecção de badges para itens especiais
+        if (isNFT || isLTD || isRare || isHC || isSellable) {
+          console.log(`🎯 Fallback Badge Detection - ${assetName}:`, {
+            NFT: isNFT,
+            LTD: isLTD,
+            Rare: isRare,
+            HC: isHC,
+            Sellable: isSellable,
+            Normal: isNormal
+          });
+        }
+        
+        return result;
+      });
       console.log('Using unified clothing data:', selectedCategory, 'Total items:', items.length);
     } else {
       // Fallback para dados Templarios
       const templariosItems = getItemsByCategory(selectedCategory, selectedGender);
-      items = Object.entries(templariosItems).map(([itemId, itemData]) => ({
+      items = Object.entries(templariosItems).map(([itemId, itemData]) => {
+        // Sistema de detecção automática para dados Templarios (fallback)
+        // Criar item temporário para usar generateItemDisplayName
+        const tempItem = {
+          figureId: itemId,
+          id: itemId,
+          gender: itemData.gender || 'U',
+          club: itemData.club === 1 ? 'HC' : 'FREE',
+          scientificCode: null,
+          swfUrl: null,
+          name: null
+        };
+        
+        // Obter nome científico do asset para análise
+        const assetName = generateItemDisplayName(tempItem).toLowerCase();
+        const itemName = itemId.toLowerCase();
+        
+        // 1. DETECTAR NFTs - Prioridade máxima
+        const isNFT = itemName.includes('nft') || assetName.includes('nft');
+        
+        // 2. DETECTAR LTDs - Segunda prioridade
+        const isLTD = itemData.club === 2 || 
+                     itemName.includes('ltd') || 
+                     itemName.includes('limited') ||
+                     assetName.includes('ltd') ||
+                     assetName.includes('limited') ||
+                     assetName.includes('loyalty');
+        
+        // 3. DETECTAR RAROS - Terceira prioridade
+        const isRare = itemName.includes('_r_') || 
+                      itemName.includes('rare') ||
+                      assetName.includes('_r_') ||
+                      assetName.includes('rare');
+        
+        // 4. DETECTAR HC - Quarta prioridade
+        const isHC = itemData.club === 1 || 
+                    itemName.includes('hc') || 
+                    itemName.includes('club') ||
+                    assetName.includes('_hc') ||
+                    assetName.includes('club');
+        
+        // 5. DETECTAR VENDÁVEIS - Quinta prioridade
+        const isSellable = itemName.includes('sellable') || 
+                          itemName.includes('vend') ||
+                          assetName.includes('sellable') ||
+                          assetName.includes('vend');
+        
+        // 6. ITENS NORMAIS - Fallback
+        const isNormal = !isNFT && !isLTD && !isRare && !isHC && !isSellable;
+        
+        return {
         id: itemId,
         figureId: itemId,
         category: selectedCategory,
@@ -564,9 +842,17 @@ const AvatarEditorOfficial = () => {
         thumbnailUrl: '',
         colorable: itemData.colorable === 1,
         selectable: true,
-        sellable: false,
-        colors: ['1', '2', '3', '4', '5']
-      }));
+          sellable: isSellable,
+          colors: ['1', '2', '3', '4', '5'],
+          isHC,
+          isLTD,
+          isNFT,
+          isRare,
+          isSellable,
+          isNormal,
+          isDuotone: itemData.duotone === 1
+        };
+      });
       console.log('Using Templarios fallback data:', selectedCategory, 'Total items:', items.length);
     }
     
@@ -668,8 +954,8 @@ const AvatarEditorOfficial = () => {
       `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&action=gesture=std&size=m`,
       // Fallback com parâmetros diferentes
       `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&size=m`,
-      // Fallback com hotel brasileiro
-      `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&size=m`,
+      // Fallback com hotel internacional
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&size=m`,
       // Fallback com headonly para cabelos
       selectedCategory === 'hr' ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${selectedGender}&direction=2&head_direction=2&headonly=1&size=m` : null
     ].filter(Boolean);
@@ -677,111 +963,250 @@ const AvatarEditorOfficial = () => {
     return urls[0]; // Retorna a primeira URL, mas o componente pode implementar fallback
   };
 
-  // Sistema de cores baseado no exemplo HTML funcional do ViaJovem
+  // Sistema de cores baseado no figuredata oficial do Habbo Hotel
   const getHabboColorsForCategory = (category: string) => {
-    // Cores exatas do exemplo HTML do ViaJovem
+    // Cores exatas do figuredata oficial do Habbo Hotel
     const habboColors = {
-      // Paleta 1: Cores para pele/rosto (hd, fc, ey)
+      // Paleta 1: Cores para pele/rosto (hd) - 65 cores
       '1': [
-        // Cores gratuitas (nonhc)
-        { id: '1', hex: '#F5DA88', name: 'Pele Clara', isHC: false },
-        { id: '2', hex: '#FFDBC1', name: 'Pele Média Clara', isHC: false },
-        { id: '3', hex: '#FFCB98', name: 'Pele Média', isHC: false },
-        { id: '4', hex: '#F4AC54', name: 'Pele Média Escura', isHC: false },
-        { id: '5', hex: '#FF987F', name: 'Pele Escura Clara', isHC: false },
-        { id: '6', hex: '#e0a9a9', name: 'Pele Escura', isHC: false },
-        { id: '7', hex: '#ca8154', name: 'Pele Muito Escura', isHC: false },
-        { id: '8', hex: '#B87560', name: 'Pele Escura Profunda', isHC: false },
-        { id: '9', hex: '#9C543F', name: 'Pele Escura Intensa', isHC: false },
-        { id: '10', hex: '#904925', name: 'Pele Escura Muito Intensa', isHC: false },
-        { id: '11', hex: '#4C311E', name: 'Pele Escura Máxima', isHC: false },
+        // Cores gratuitas (club="0" selectable="1") - 11 cores
+        { id: '14', hex: '#F5DA88', name: 'Pele Clara 1', isHC: false },
+        { id: '10', hex: '#FFDBC1', name: 'Pele Clara 2', isHC: false },
+        { id: '1', hex: '#FFCB98', name: 'Pele Clara 3', isHC: false },
+        { id: '8', hex: '#F4AC54', name: 'Pele Clara 4', isHC: false },
+        { id: '12', hex: '#FF987F', name: 'Pele Clara 5', isHC: false },
+        { id: '1369', hex: '#e0a9a9', name: 'Pele Clara 6', isHC: false },
+        { id: '1370', hex: '#ca8154', name: 'Pele Clara 7', isHC: false },
+        { id: '19', hex: '#B87560', name: 'Pele Clara 8', isHC: false },
+        { id: '20', hex: '#9C543F', name: 'Pele Clara 9', isHC: false },
+        { id: '1371', hex: '#904925', name: 'Pele Clara 10', isHC: false },
+        { id: '30', hex: '#4C311E', name: 'Pele Clara 11', isHC: false },
         
-        // Cores club (hc)
-        { id: '12', hex: '#543d35', name: 'Pele Club 1', isHC: true },
-        { id: '13', hex: '#653a1d', name: 'Pele Club 2', isHC: true },
-        { id: '14', hex: '#6E392C', name: 'Pele Club 3', isHC: true },
-        { id: '15', hex: '#714947', name: 'Pele Club 4', isHC: true },
-        { id: '16', hex: '#856860', name: 'Pele Club 5', isHC: true },
-        { id: '17', hex: '#895048', name: 'Pele Club 6', isHC: true },
-        { id: '18', hex: '#a15253', name: 'Pele Club 7', isHC: true },
-        { id: '19', hex: '#aa7870', name: 'Pele Club 8', isHC: true },
-        { id: '20', hex: '#be8263', name: 'Pele Club 9', isHC: true },
-        { id: '21', hex: '#b6856d', name: 'Pele Club 10', isHC: true },
-        { id: '22', hex: '#ba8a82', name: 'Pele Club 11', isHC: true },
-        { id: '23', hex: '#c88f82', name: 'Pele Club 12', isHC: true },
-        { id: '24', hex: '#d9a792', name: 'Pele Club 13', isHC: true },
-        { id: '25', hex: '#c68383', name: 'Pele Club 14', isHC: true },
-        { id: '26', hex: '#BC576A', name: 'Pele Club 15', isHC: true },
-        { id: '27', hex: '#FF5757', name: 'Pele Club 16', isHC: true }
+        // Cores Habbo Club (club="2" selectable="1") - 54 cores
+        { id: '1372', hex: '#543d35', name: 'Pele HC 1', isHC: true },
+        { id: '1373', hex: '#653a1d', name: 'Pele HC 2', isHC: true },
+        { id: '21', hex: '#6E392C', name: 'Pele HC 3', isHC: true },
+        { id: '1374', hex: '#714947', name: 'Pele HC 4', isHC: true },
+        { id: '1375', hex: '#856860', name: 'Pele HC 5', isHC: true },
+        { id: '1376', hex: '#895048', name: 'Pele HC 6', isHC: true },
+        { id: '1377', hex: '#a15253', name: 'Pele HC 7', isHC: true },
+        { id: '1378', hex: '#aa7870', name: 'Pele HC 8', isHC: true },
+        { id: '1379', hex: '#be8263', name: 'Pele HC 9', isHC: true },
+        { id: '1380', hex: '#b6856d', name: 'Pele HC 10', isHC: true },
+        { id: '1381', hex: '#ba8a82', name: 'Pele HC 11', isHC: true },
+        { id: '1382', hex: '#c88f82', name: 'Pele HC 12', isHC: true },
+        { id: '1383', hex: '#d9a792', name: 'Pele HC 13', isHC: true },
+        { id: '1384', hex: '#c68383', name: 'Pele HC 14', isHC: true },
+        { id: '1368', hex: '#BC576A', name: 'Pele HC 15', isHC: true },
+        { id: '1367', hex: '#FF5757', name: 'Pele HC 16', isHC: true },
+        { id: '1366', hex: '#FF7575', name: 'Pele HC 17', isHC: true },
+        { id: '1358', hex: '#B65E38', name: 'Pele HC 18', isHC: true },
+        { id: '1385', hex: '#a76644', name: 'Pele HC 19', isHC: true },
+        { id: '1386', hex: '#7c5133', name: 'Pele HC 20', isHC: true },
+        { id: '1387', hex: '#9a7257', name: 'Pele HC 21', isHC: true },
+        { id: '5', hex: '#945C2F', name: 'Pele HC 22', isHC: true },
+        { id: '1389', hex: '#d98c63', name: 'Pele HC 23', isHC: true },
+        { id: '4', hex: '#AE7748', name: 'Pele HC 24', isHC: true },
+        { id: '1388', hex: '#c57040', name: 'Pele HC 25', isHC: true },
+        { id: '1359', hex: '#B88655', name: 'Pele HC 26', isHC: true },
+        { id: '3', hex: '#C99263', name: 'Pele HC 27', isHC: true },
+        { id: '18', hex: '#A89473', name: 'Pele HC 28', isHC: true },
+        { id: '17', hex: '#C89F56', name: 'Pele HC 29', isHC: true },
+        { id: '9', hex: '#DC9B4C', name: 'Pele HC 30', isHC: true },
+        { id: '1357', hex: '#FF8C40', name: 'Pele HC 31', isHC: true },
+        { id: '1390', hex: '#de9d75', name: 'Pele HC 32', isHC: true },
+        { id: '1391', hex: '#eca782', name: 'Pele HC 33', isHC: true },
+        { id: '11', hex: '#FFB696', name: 'Pele HC 34', isHC: true },
+        { id: '2', hex: '#E3AE7D', name: 'Pele HC 35', isHC: true },
+        { id: '7', hex: '#FFC680', name: 'Pele HC 36', isHC: true },
+        { id: '15', hex: '#DFC375', name: 'Pele HC 37', isHC: true },
+        { id: '13', hex: '#F0DCA3', name: 'Pele HC 38', isHC: true },
+        { id: '22', hex: '#EAEFD0', name: 'Pele HC 39', isHC: true },
+        { id: '23', hex: '#E2E4B0', name: 'Pele HC 40', isHC: true },
+        { id: '24', hex: '#D5D08C', name: 'Pele HC 41', isHC: true },
+        { id: '1361', hex: '#BDE05F', name: 'Pele HC 42', isHC: true },
+        { id: '1362', hex: '#5DC446', name: 'Pele HC 43', isHC: true },
+        { id: '1360', hex: '#A2CC89', name: 'Pele HC 44', isHC: true },
+        { id: '26', hex: '#C2C4A7', name: 'Pele HC 45', isHC: true },
+        { id: '28', hex: '#F1E5DA', name: 'Pele HC 46', isHC: true },
+        { id: '1392', hex: '#f6d3d4', name: 'Pele HC 47', isHC: true },
+        { id: '1393', hex: '#e5b6b0', name: 'Pele HC 48', isHC: true },
+        { id: '25', hex: '#C4A7B3', name: 'Pele HC 49', isHC: true },
+        { id: '1363', hex: '#AC94B3', name: 'Pele HC 50', isHC: true },
+        { id: '1364', hex: '#D288CE', name: 'Pele HC 51', isHC: true },
+        { id: '1365', hex: '#6799CC', name: 'Pele HC 52', isHC: true },
+        { id: '29', hex: '#B3BDC3', name: 'Pele HC 53', isHC: true },
+        { id: '27', hex: '#C5C0C2', name: 'Pele HC 54', isHC: true }
       ],
       
-      // Paleta 2: Cores para cabelo (hr)
+      // Paleta 2: Cores para cabelo (hr) - 61 cores
       '2': [
-        // Cores gratuitas para cabelo
-        { id: '1', hex: '#000000', name: 'Preto', isHC: false },
-        { id: '2', hex: '#8B4513', name: 'Marrom Escuro', isHC: false },
-        { id: '3', hex: '#A0522D', name: 'Marrom', isHC: false },
-        { id: '4', hex: '#CD853F', name: 'Marrom Claro', isHC: false },
-        { id: '5', hex: '#D2691E', name: 'Castanho', isHC: false },
-        { id: '6', hex: '#F4A460', name: 'Bege', isHC: false },
-        { id: '7', hex: '#FFD700', name: 'Dourado', isHC: false },
-        { id: '8', hex: '#FFA500', name: 'Laranja', isHC: false },
-        { id: '9', hex: '#FF6347', name: 'Vermelho', isHC: false },
-        { id: '10', hex: '#DC143C', name: 'Vermelho Escuro', isHC: false },
-        { id: '11', hex: '#800080', name: 'Roxo', isHC: false },
-        { id: '12', hex: '#0000FF', name: 'Azul', isHC: false },
-        { id: '13', hex: '#008000', name: 'Verde', isHC: false },
-        { id: '14', hex: '#808080', name: 'Cinza', isHC: false },
-        { id: '15', hex: '#FFFFFF', name: 'Branco', isHC: false },
+        // Cores gratuitas (club="0" selectable="1") - 16 cores
+        { id: '40', hex: '#D8D3D9', name: 'Cabelo Claro 1', isHC: false },
+        { id: '34', hex: '#FFEEB9', name: 'Cabelo Claro 2', isHC: false },
+        { id: '35', hex: '#F6D059', name: 'Cabelo Claro 3', isHC: false },
+        { id: '36', hex: '#F2B11D', name: 'Cabelo Claro 4', isHC: false },
+        { id: '31', hex: '#FFD6A9', name: 'Cabelo Claro 5', isHC: false },
+        { id: '32', hex: '#DFA66F', name: 'Cabelo Claro 6', isHC: false },
+        { id: '37', hex: '#9A5D2E', name: 'Cabelo Claro 7', isHC: false },
+        { id: '38', hex: '#AC5300', name: 'Cabelo Claro 8', isHC: false },
+        { id: '43', hex: '#F29159', name: 'Cabelo Claro 9', isHC: false },
+        { id: '46', hex: '#FF8746', name: 'Cabelo Claro 10', isHC: false },
+        { id: '47', hex: '#FC610C', name: 'Cabelo Claro 11', isHC: false },
+        { id: '48', hex: '#DE3900', name: 'Cabelo Claro 12', isHC: false },
+        { id: '44', hex: '#9E3D3B', name: 'Cabelo Claro 13', isHC: false },
+        { id: '39', hex: '#783400', name: 'Cabelo Claro 14', isHC: false },
+        { id: '45', hex: '#5C4332', name: 'Cabelo Claro 15', isHC: false },
+        { id: '42', hex: '#4A4656', name: 'Cabelo Claro 16', isHC: false },
         
-        // Cores club para cabelo
-        { id: '16', hex: '#FF1493', name: 'Rosa Vibrante', isHC: true },
-        { id: '17', hex: '#00CED1', name: 'Turquesa', isHC: true },
-        { id: '18', hex: '#9370DB', name: 'Roxo Médio', isHC: true },
-        { id: '19', hex: '#32CD32', name: 'Verde Lima', isHC: true },
-        { id: '20', hex: '#FF4500', name: 'Laranja Vermelho', isHC: true },
-        { id: '21', hex: '#1E90FF', name: 'Azul Dodger', isHC: true },
-        { id: '22', hex: '#FF69B4', name: 'Rosa Quente', isHC: true },
-        { id: '23', hex: '#00FF7F', name: 'Verde Primavera', isHC: true },
-        { id: '24', hex: '#FFD700', name: 'Dourado Brilhante', isHC: true },
-        { id: '25', hex: '#8A2BE2', name: 'Azul Violeta', isHC: true }
+        // Cores Habbo Club (club="2" selectable="1") - 45 cores
+        { id: '61', hex: '#2D2D2D', name: 'Cabelo HC 1', isHC: true },
+        { id: '1394', hex: '#3f2113', name: 'Cabelo HC 2', isHC: true },
+        { id: '1395', hex: '#774422', name: 'Cabelo HC 3', isHC: true },
+        { id: '33', hex: '#D1803A', name: 'Cabelo HC 4', isHC: true },
+        { id: '1396', hex: '#cc8b33', name: 'Cabelo HC 5', isHC: true },
+        { id: '1397', hex: '#e5ba6a', name: 'Cabelo HC 6', isHC: true },
+        { id: '1398', hex: '#f6d990', name: 'Cabelo HC 7', isHC: true },
+        { id: '49', hex: '#FFFFFF', name: 'Cabelo HC 8', isHC: true },
+        { id: '1342', hex: '#fffdd6', name: 'Cabelo HC 9', isHC: true },
+        { id: '1343', hex: '#fff392', name: 'Cabelo HC 10', isHC: true },
+        { id: '1399', hex: '#ffff00', name: 'Cabelo HC 11', isHC: true },
+        { id: '1344', hex: '#ffe508', name: 'Cabelo HC 12', isHC: true },
+        { id: '1400', hex: '#ff7716', name: 'Cabelo HC 13', isHC: true },
+        { id: '1401', hex: '#aa2c1b', name: 'Cabelo HC 14', isHC: true },
+        { id: '59', hex: '#E71B0A', name: 'Cabelo HC 15', isHC: true },
+        { id: '1345', hex: '#ff3e3e', name: 'Cabelo HC 16', isHC: true },
+        { id: '1348', hex: '#ff638f', name: 'Cabelo HC 17', isHC: true },
+        { id: '54', hex: '#FFBDBC', name: 'Cabelo HC 18', isHC: true },
+        { id: '1346', hex: '#ffddf1', name: 'Cabelo HC 19', isHC: true },
+        { id: '1347', hex: '#ffaedc', name: 'Cabelo HC 20', isHC: true },
+        { id: '55', hex: '#DE34A4', name: 'Cabelo HC 21', isHC: true },
+        { id: '1349', hex: '#9e326a', name: 'Cabelo HC 22', isHC: true },
+        { id: '56', hex: '#9F5699', name: 'Cabelo HC 23', isHC: true },
+        { id: '1350', hex: '#8a4fb5', name: 'Cabelo HC 24', isHC: true },
+        { id: '1351', hex: '#722ba6', name: 'Cabelo HC 25', isHC: true },
+        { id: '1352', hex: '#4c1d6f', name: 'Cabelo HC 26', isHC: true },
+        { id: '1402', hex: '#322c7a', name: 'Cabelo HC 27', isHC: true },
+        { id: '1403', hex: '#71584a', name: 'Cabelo HC 28', isHC: true },
+        { id: '1404', hex: '#aa8864', name: 'Cabelo HC 29', isHC: true },
+        { id: '1405', hex: '#bbb1aa', name: 'Cabelo HC 30', isHC: true },
+        { id: '1353', hex: '#c1c6ef', name: 'Cabelo HC 31', isHC: true },
+        { id: '57', hex: '#D5F9FB', name: 'Cabelo HC 32', isHC: true },
+        { id: '60', hex: '#95FFFA', name: 'Cabelo HC 33', isHC: true },
+        { id: '58', hex: '#6699CC', name: 'Cabelo HC 34', isHC: true },
+        { id: '1354', hex: '#4481e5', name: 'Cabelo HC 35', isHC: true },
+        { id: '1355', hex: '#2c50aa', name: 'Cabelo HC 36', isHC: true },
+        { id: '1356', hex: '#2a4167', name: 'Cabelo HC 37', isHC: true },
+        { id: '53', hex: '#3A7B93', name: 'Cabelo HC 38', isHC: true },
+        { id: '52', hex: '#339966', name: 'Cabelo HC 39', isHC: true },
+        { id: '1406', hex: '#70c100', name: 'Cabelo HC 40', isHC: true },
+        { id: '51', hex: '#A3FF8F', name: 'Cabelo HC 41', isHC: true },
+        { id: '1316', hex: '#D2FF00', name: 'Cabelo HC 42', isHC: true },
+        { id: '50', hex: '#E5FF09', name: 'Cabelo HC 43', isHC: true },
+        { id: '41', hex: '#918D98', name: 'Cabelo HC 44', isHC: true },
+        { id: '1407', hex: '#333333', name: 'Cabelo HC 45', isHC: true }
       ],
       
-      // Paleta 3: Cores para roupas e acessórios (todas as outras categorias)
+      // Paleta 3: Cores para roupas e acessórios - 95 cores
       '3': [
-        // Cores gratuitas para roupas
-        { id: '1', hex: '#000000', name: 'Preto', isHC: false },
-        { id: '2', hex: '#FFFFFF', name: 'Branco', isHC: false },
-        { id: '3', hex: '#808080', name: 'Cinza', isHC: false },
-        { id: '4', hex: '#FF0000', name: 'Vermelho', isHC: false },
-        { id: '5', hex: '#00FF00', name: 'Verde', isHC: false },
-        { id: '6', hex: '#0000FF', name: 'Azul', isHC: false },
-        { id: '7', hex: '#FFFF00', name: 'Amarelo', isHC: false },
-        { id: '8', hex: '#FFA500', name: 'Laranja', isHC: false },
-        { id: '9', hex: '#800080', name: 'Roxo', isHC: false },
-        { id: '10', hex: '#FFC0CB', name: 'Rosa', isHC: false },
-        { id: '11', hex: '#8B4513', name: 'Marrom', isHC: false },
-        { id: '12', hex: '#00FFFF', name: 'Ciano', isHC: false },
-        { id: '13', hex: '#FF00FF', name: 'Magenta', isHC: false },
-        { id: '14', hex: '#C0C0C0', name: 'Prata', isHC: false },
-        { id: '15', hex: '#FFD700', name: 'Dourado', isHC: false },
+        // Cores gratuitas (club="0" selectable="1") - 20 cores
+        { id: '1408', hex: '#dddddd', name: 'Roupa Clara 1', isHC: false },
+        { id: '90', hex: '#96743D', name: 'Roupa Clara 2', isHC: false },
+        { id: '91', hex: '#6B573B', name: 'Roupa Clara 3', isHC: false },
+        { id: '66', hex: '#E7B027', name: 'Roupa Clara 4', isHC: false },
+        { id: '1320', hex: '#fff7b7', name: 'Roupa Clara 5', isHC: false },
+        { id: '68', hex: '#F8C790', name: 'Roupa Clara 6', isHC: false },
+        { id: '73', hex: '#9F2B31', name: 'Roupa Clara 7', isHC: false },
+        { id: '72', hex: '#ED5C50', name: 'Roupa Clara 8', isHC: false },
+        { id: '71', hex: '#FFBFC2', name: 'Roupa Clara 9', isHC: false },
+        { id: '74', hex: '#E7D1EE', name: 'Roupa Clara 10', isHC: false },
+        { id: '75', hex: '#AC94B3', name: 'Roupa Clara 11', isHC: false },
+        { id: '76', hex: '#7E5B90', name: 'Roupa Clara 12', isHC: false },
+        { id: '82', hex: '#4F7AA2', name: 'Roupa Clara 13', isHC: false },
+        { id: '81', hex: '#75B7C7', name: 'Roupa Clara 14', isHC: false },
+        { id: '80', hex: '#C5EDE6', name: 'Roupa Clara 15', isHC: false },
+        { id: '83', hex: '#BBF3BD', name: 'Roupa Clara 16', isHC: false },
+        { id: '84', hex: '#6BAE61', name: 'Roupa Clara 17', isHC: false },
+        { id: '85', hex: '#456F40', name: 'Roupa Clara 18', isHC: false },
+        { id: '88', hex: '#7A7D22', name: 'Roupa Clara 19', isHC: false },
+        { id: '64', hex: '#595959', name: 'Roupa Clara 20', isHC: false },
         
-        // Cores club para roupas
-        { id: '16', hex: '#FF1493', name: 'Rosa Vibrante', isHC: true },
-        { id: '17', hex: '#00CED1', name: 'Turquesa', isHC: true },
-        { id: '18', hex: '#9370DB', name: 'Roxo Médio', isHC: true },
-        { id: '19', hex: '#32CD32', name: 'Verde Lima', isHC: true },
-        { id: '20', hex: '#FF4500', name: 'Laranja Vermelho', isHC: true },
-        { id: '21', hex: '#1E90FF', name: 'Azul Dodger', isHC: true },
-        { id: '22', hex: '#FF69B4', name: 'Rosa Quente', isHC: true },
-        { id: '23', hex: '#00FF7F', name: 'Verde Primavera', isHC: true },
-        { id: '24', hex: '#FFD700', name: 'Dourado Brilhante', isHC: true },
-        { id: '25', hex: '#8A2BE2', name: 'Azul Violeta', isHC: true },
-        { id: '26', hex: '#DC143C', name: 'Vermelho Escuro', isHC: true },
-        { id: '27', hex: '#00BFFF', name: 'Azul Céu', isHC: true },
-        { id: '28', hex: '#FF6347', name: 'Tomate', isHC: true },
-        { id: '29', hex: '#7FFF00', name: 'Verde Amarelo', isHC: true },
-        { id: '30', hex: '#FF1493', name: 'Rosa Profundo', isHC: true }
+        // Cores Habbo Club (club="2" selectable="1") - 75 cores
+        { id: '110', hex: '#1E1E1E', name: 'Roupa HC 1', isHC: true },
+        { id: '1325', hex: '#84573c', name: 'Roupa HC 2', isHC: true },
+        { id: '67', hex: '#A86B19', name: 'Roupa HC 3', isHC: true },
+        { id: '1409', hex: '#c69f71', name: 'Roupa HC 4', isHC: true },
+        { id: '89', hex: '#F3E1AF', name: 'Roupa HC 5', isHC: true },
+        { id: '92', hex: '#FFFFFF', name: 'Roupa HC 6', isHC: true },
+        { id: '93', hex: '#FFF41D', name: 'Roupa HC 7', isHC: true },
+        { id: '1321', hex: '#ffe508', name: 'Roupa HC 8', isHC: true },
+        { id: '1410', hex: '#ffcc00', name: 'Roupa HC 9', isHC: true },
+        { id: '1322', hex: '#ffa508', name: 'Roupa HC 10', isHC: true },
+        { id: '94', hex: '#FF9211', name: 'Roupa HC 11', isHC: true },
+        { id: '1323', hex: '#ff5b08', name: 'Roupa HC 12', isHC: true },
+        { id: '70', hex: '#C74400', name: 'Roupa HC 13', isHC: true },
+        { id: '1411', hex: '#da6a43', name: 'Roupa HC 14', isHC: true },
+        { id: '1324', hex: '#b18276', name: 'Roupa HC 15', isHC: true },
+        { id: '1329', hex: '#ae4747', name: 'Roupa HC 16', isHC: true },
+        { id: '1330', hex: '#813033', name: 'Roupa HC 17', isHC: true },
+        { id: '1331', hex: '#5b2420', name: 'Roupa HC 18', isHC: true },
+        { id: '100', hex: '#9B001D', name: 'Roupa HC 19', isHC: true },
+        { id: '1412', hex: '#d2183c', name: 'Roupa HC 20', isHC: true },
+        { id: '1413', hex: '#e53624', name: 'Roupa HC 21', isHC: true },
+        { id: '96', hex: '#FF1300', name: 'Roupa HC 22', isHC: true },
+        { id: '1328', hex: '#ff638f', name: 'Roupa HC 23', isHC: true },
+        { id: '1414', hex: '#fe86b1', name: 'Roupa HC 24', isHC: true },
+        { id: '97', hex: '#FF6D8F', name: 'Roupa HC 25', isHC: true },
+        { id: '1326', hex: '#ffc7e4', name: 'Roupa HC 26', isHC: true },
+        { id: '98', hex: '#E993FF', name: 'Roupa HC 27', isHC: true },
+        { id: '1327', hex: '#ff88f4', name: 'Roupa HC 28', isHC: true },
+        { id: '95', hex: '#FF27A6', name: 'Roupa HC 29', isHC: true },
+        { id: '99', hex: '#C600AD', name: 'Roupa HC 30', isHC: true },
+        { id: '1415', hex: '#a1295e', name: 'Roupa HC 31', isHC: true },
+        { id: '1416', hex: '#a723c9', name: 'Roupa HC 32', isHC: true },
+        { id: '1417', hex: '#6a0481', name: 'Roupa HC 33', isHC: true },
+        { id: '1418', hex: '#693959', name: 'Roupa HC 34', isHC: true },
+        { id: '1419', hex: '#62368c', name: 'Roupa HC 35', isHC: true },
+        { id: '79', hex: '#544A81', name: 'Roupa HC 36', isHC: true },
+        { id: '1420', hex: '#957caf', name: 'Roupa HC 37', isHC: true },
+        { id: '78', hex: '#6D80BB', name: 'Roupa HC 38', isHC: true },
+        { id: '1340', hex: '#574bfb', name: 'Roupa HC 39', isHC: true },
+        { id: '1421', hex: '#6b71ed', name: 'Roupa HC 40', isHC: true },
+        { id: '1339', hex: '#8791f0', name: 'Roupa HC 41', isHC: true },
+        { id: '1337', hex: '#c1c6ef', name: 'Roupa HC 42', isHC: true },
+        { id: '105', hex: '#94FFEC', name: 'Roupa HC 43', isHC: true },
+        { id: '104', hex: '#00B9A8', name: 'Roupa HC 44', isHC: true },
+        { id: '1422', hex: '#009db9', name: 'Roupa HC 45', isHC: true },
+        { id: '106', hex: '#1BD2FF', name: 'Roupa HC 46', isHC: true },
+        { id: '1423', hex: '#2f8ce9', name: 'Roupa HC 47', isHC: true },
+        { id: '107', hex: '#1F55FF', name: 'Roupa HC 48', isHC: true },
+        { id: '1424', hex: '#1946c7', name: 'Roupa HC 49', isHC: true },
+        { id: '108', hex: '#0219A5', name: 'Roupa HC 50', isHC: true },
+        { id: '1341', hex: '#394a7e', name: 'Roupa HC 51', isHC: true },
+        { id: '1425', hex: '#2d547b', name: 'Roupa HC 52', isHC: true },
+        { id: '1426', hex: '#406184', name: 'Roupa HC 53', isHC: true },
+        { id: '1338', hex: '#6fa5cc', name: 'Roupa HC 54', isHC: true },
+        { id: '77', hex: '#ACC9E6', name: 'Roupa HC 55', isHC: true },
+        { id: '1427', hex: '#c8c8c8', name: 'Roupa HC 56', isHC: true },
+        { id: '63', hex: '#A4A4A4', name: 'Roupa HC 57', isHC: true },
+        { id: '1428', hex: '#868686', name: 'Roupa HC 58', isHC: true },
+        { id: '1334', hex: '#89906e', name: 'Roupa HC 59', isHC: true },
+        { id: '1335', hex: '#738b6e', name: 'Roupa HC 60', isHC: true },
+        { id: '1429', hex: '#626738', name: 'Roupa HC 61', isHC: true },
+        { id: '109', hex: '#3A5341', name: 'Roupa HC 62', isHC: true },
+        { id: '1336', hex: '#1d301a', name: 'Roupa HC 63', isHC: true },
+        { id: '1430', hex: '#0a6437', name: 'Roupa HC 64', isHC: true },
+        { id: '1431', hex: '#47891f', name: 'Roupa HC 65', isHC: true },
+        { id: '1432', hex: '#10a32f', name: 'Roupa HC 66', isHC: true },
+        { id: '1433', hex: '#69bb2d', name: 'Roupa HC 67', isHC: true },
+        { id: '87', hex: '#BABB3D', name: 'Roupa HC 68', isHC: true },
+        { id: '86', hex: '#EDFF9A', name: 'Roupa HC 69', isHC: true },
+        { id: '1315', hex: '#D2FF00', name: 'Roupa HC 70', isHC: true },
+        { id: '103', hex: '#AFF203', name: 'Roupa HC 71', isHC: true },
+        { id: '102', hex: '#1CDC00', name: 'Roupa HC 72', isHC: true },
+        { id: '101', hex: '#76FF2D', name: 'Roupa HC 73', isHC: true },
+        { id: '1332', hex: '#9eff8d', name: 'Roupa HC 74', isHC: true },
+        { id: '1333', hex: '#a2cc89', name: 'Roupa HC 75', isHC: true }
       ]
     };
 
@@ -1232,10 +1657,11 @@ const AvatarEditorOfficial = () => {
                   <Separator />
 
                   {/* Grid de itens - Preview centralizado e otimizado para cada categoria */}
-                  <div className="grid grid-cols-6 gap-2 max-h-96 overflow-y-auto">
+                  <div className="grid grid-cols-6 gap-2 max-h-[28rem] overflow-y-auto">
                       {getFilteredItems().map(([itemId, itemData]) => {
                         // Sistema de centralização otimizado para cada categoria
                         const isSelected = selectedItemId === itemId;
+                        const isInUse = isItemInUse(itemId, selectedCategory);
                         
                         return (
                           <div
@@ -1252,34 +1678,98 @@ const AvatarEditorOfficial = () => {
                                 gender={selectedGender}
                                 color={primaryColor}
                                 alt={`${selectedCategory} ${itemId}`}
+                                verticalPosition={imageVerticalPosition[selectedCategory] || 50}
                               />
                             </div>
                             
-                            {/* Badges de raridade e propriedades */}
-                            <div className="absolute top-1 right-1 z-10">
-                              {itemData.isNFT && (
-                                <div className="w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-white font-bold">NFT</span>
-                                </div>
-                              )}
-                              {itemData.isLTD && !itemData.isNFT && (
-                                <div className="w-4 h-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-white font-bold">LTD</span>
-                                </div>
-                              )}
-                              {itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
-                                <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-white font-bold">R</span>
-                                </div>
-                              )}
-                              {itemData.isHC && !itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
-                                <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                  <span className="text-xs text-white font-bold">HC</span>
-                                </div>
-                              )}
+                            {/* Nome do item */}
+                            <div className="mt-1 px-1">
+                              <div className="text-xs text-gray-700 text-center truncate" title={generateItemDisplayName(itemData)}>
+                                {generateItemDisplayName(itemData)}
+                              </div>
                             </div>
                             
-                            {/* Badge duotone */}
+                            {/* Botão de remoção - aparece no hover quando o item está em uso OU selecionado */}
+                            {(isInUse || isSelected) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Evitar que o clique também aplique o item
+                                  console.log('Remove button clicked:', {
+                                    itemId,
+                                    selectedCategory,
+                                    isInUse,
+                                    isSelected,
+                                    currentValue: currentFigure[selectedCategory as keyof AvatarFigure]
+                                  });
+                                  removeItem(selectedCategory);
+                                }}
+                                className="absolute inset-0 z-20 bg-gray-500 bg-opacity-80 hover:bg-opacity-90 rounded flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                title={isInUse ? "Remover peça do avatar" : "Remover peça selecionada"}
+                              >
+                                <span className="text-2xl text-white font-bold">×</span>
+                              </button>
+                            )}
+                            
+                            {/* Badges de raridade e propriedades - usando imagens específicas com prioridade oficial */}
+                            <div className="absolute top-1 right-1 z-10">
+                              {/* 1. NFT - Prioridade máxima */}
+                              {itemData.isNFT && (
+                                <img 
+                                  src="/assets/icon_wardrobe_nft_on.png" 
+                                  alt="NFT" 
+                                  className="w-4 h-4 object-contain"
+                                  title="Item NFT"
+                                />
+                              )}
+                              
+                              {/* 2. LTD - Segunda prioridade */}
+                              {itemData.isLTD && !itemData.isNFT && (
+                                <img 
+                                  src="/assets/LTD_habbo.png" 
+                                  alt="LTD" 
+                                  className="w-4 h-4 object-contain"
+                                  title="Item Limitado"
+                                />
+                              )}
+                              
+                              {/* 3. RARO - Terceira prioridade */}
+                              {itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
+                                <img 
+                                  src="/assets/icon_sellable_wardrobe.png" 
+                                  alt="Raro" 
+                                  className="w-4 h-4 object-contain"
+                                  title="Item Raro"
+                                />
+                              )}
+                              
+                              {/* 4. HC - Quarta prioridade */}
+                              {itemData.isHC && !itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
+                                <img 
+                                  src="/assets/HC.png" 
+                                  alt="HC" 
+                                  className="w-4 h-4 object-contain"
+                                  title="Item Habbo Club"
+                                />
+                              )}
+                              
+                              {/* 5. VENDÁVEL - Quinta prioridade */}
+                              {itemData.isSellable && !itemData.isHC && !itemData.isRare && !itemData.isLTD && !itemData.isNFT && (
+                                <img 
+                                  src="/assets/icon_sellable_wardrobe.png" 
+                                  alt="Vendável" 
+                                  className="w-4 h-4 object-contain"
+                                  title="Item Vendável"
+                                />
+                              )}
+                              
+                              {/* 6. NORMAL - Sem badge (itens permanentes do guarda-roupa) */}
+                              {/* Itens normais não recebem badge, são os permanentes do guarda-roupa */}
+                            </div>
+                            
+                            {/* Badges funcionais - APENAS para itens especiais (não normais) */}
+                            {!itemData.isNormal && (
+                              <>
+                                {/* Badge duotone - apenas para itens especiais */}
                             {itemData.isDuotone && (
                               <div className="absolute top-1 left-1 z-10">
                                 <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
@@ -1288,7 +1778,7 @@ const AvatarEditorOfficial = () => {
                               </div>
                             )}
                             
-                            {/* Badges de propriedades */}
+                                {/* Badges de propriedades - apenas para itens especiais */}
                             <div className="absolute bottom-1 left-1 z-10">
                               {itemData.colorable && (
                                 <div className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center" title="Colorável">
@@ -1304,6 +1794,8 @@ const AvatarEditorOfficial = () => {
                                 </div>
                               )}
                             </div>
+                              </>
+                            )}
                           </div>
                         );
                       })}
@@ -1368,29 +1860,139 @@ const AvatarEditorOfficial = () => {
                                   style={{ backgroundColor: color.hex }}
                                   onClick={() => setPrimaryColor(color.id)}
                                   title={`${color.name} - ${color.hex}`}
-                                >
-                                  {/* Badge HC para cores do Habbo Club */}
-                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                                    <span className="text-xs text-white font-bold">HC</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                      >
+                        {/* Badge HC para cores do Habbo Club */}
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-bold">HC</span>
+                          </div>
+                      </div>
+                    ))}
+                  </div>
                           </div>
                         )}
-
-                        {/* Informação sobre a paleta atual */}
-                        <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                          {['hd', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 1: Cores para pele/rosto'}
-                          {selectedCategory === 'hr' && 'Paleta 2: Cores para cabelo'}
-                          {!['hd', 'fc', 'ey', 'hr'].includes(selectedCategory) && 'Paleta 3: Cores para roupas e acessórios'}
-                        </div>
+                  
+                  {/* Informação sobre a paleta atual */}
+                  <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                          {['hd', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 1: Cores para pele/rosto (65 cores: 11 gratuitas + 54 HC)'}
+                          {selectedCategory === 'hr' && 'Paleta 2: Cores para cabelo (61 cores: 16 gratuitas + 45 HC)'}
+                          {!['hd', 'fc', 'ey', 'hr'].includes(selectedCategory) && 'Paleta 3: Cores para roupas e acessórios (95 cores: 20 gratuitas + 75 HC)'}
+                  </div>
                       </>
                     );
                   })()}
                 </CardContent>
               </Card>
             </div>
+          </div>
+
+          {/* Configurador de Posição Vertical das Imagens */}
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-lg">⚙️</span>
+                  Configuração de Posição das Imagens
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm text-gray-600 mb-4">
+                  Ajuste a posição vertical das imagens para cada categoria. Isso controla qual parte da imagem será exibida no grid.
+        </div>
+                
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">
+                    Posição Vertical - {CATEGORIES.find(cat => cat.id === selectedCategory)?.name || selectedCategory}
+                  </Label>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={imageVerticalPosition[selectedCategory] || 50}
+                        onChange={(e) => {
+                          const newPosition = parseInt(e.target.value);
+                          setImageVerticalPosition(prev => ({
+                            ...prev,
+                            [selectedCategory]: newPosition
+                          }));
+                        }}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${imageVerticalPosition[selectedCategory] || 50}%, #e5e7eb ${imageVerticalPosition[selectedCategory] || 50}%, #e5e7eb 100%)`
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="text-sm font-mono bg-gray-100 px-2 py-1 rounded min-w-[3rem] text-center">
+                      {imageVerticalPosition[selectedCategory] || 50}%
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>↑ Mais para cima</span>
+                    <span>↓ Mais para baixo</span>
+                  </div>
+                </div>
+
+                {/* Preview da posição atual */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-medium mb-2">Preview da Posição:</div>
+                  <div className="w-full h-16 bg-white border border-gray-200 rounded overflow-hidden relative">
+                    <div 
+                      className="absolute w-full h-full bg-gradient-to-b from-blue-200 to-blue-400 opacity-30"
+                      style={{
+                        clipPath: `polygon(0% ${100 - (imageVerticalPosition[selectedCategory] || 50)}%, 100% ${100 - (imageVerticalPosition[selectedCategory] || 50)}%, 100% 100%, 0% 100%)`
+                      }}
+                    ></div>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-600">
+                      Posição: {imageVerticalPosition[selectedCategory] || 50}%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botões de reset */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setImageVerticalPosition(prev => ({
+                        ...prev,
+                        [selectedCategory]: 50
+                      }));
+                    }}
+                  >
+                    Resetar Categoria
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setImageVerticalPosition({
+                        hd: 50,
+                        hr: 30,
+                        ch: 50,
+                        lg: 60,
+                        sh: 70,
+                        ha: 20,
+                        he: 25,
+                        ea: 40,
+                        fa: 45,
+                        cp: 50,
+                        cc: 50,
+                        ca: 50,
+                        wa: 60,
+                      });
+                    }}
+                  >
+                    Resetar Todas
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -1399,3 +2001,45 @@ const AvatarEditorOfficial = () => {
 };
 
 export default AvatarEditorOfficial;
+
+// Estilos CSS para o slider personalizado
+const sliderStyles = `
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .slider::-webkit-slider-track {
+    height: 8px;
+    border-radius: 4px;
+  }
+  
+  .slider::-moz-range-track {
+    height: 8px;
+    border-radius: 4px;
+    background: transparent;
+  }
+`;
+
+// Adicionar estilos ao documento
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = sliderStyles;
+  document.head.appendChild(styleElement);
+}

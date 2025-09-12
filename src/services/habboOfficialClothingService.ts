@@ -69,13 +69,13 @@ export const HABBO_OFFICIAL_URLS = {
     FIGUREDATA: 'https://images.habbo.com/gordon/PRODUCTION-202211221644-994804644/figuredata.xml',
     FIGUREMAP_V2: 'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202504241358-338970472/figuremapv2.xml'
   },
-  // Brasil
+  // Brasil (usando domínio internacional)
   BRASIL: {
-    EXTERNAL_VARIABLES: 'https://www.habbo.com.br/gamedata/external_variables/1',
-    FIGUREDATA: 'https://www.habbo.com.br/gamedata/figuredata/1',
-    FIGUREMAP: 'https://www.habbo.com.br/gamedata/figuremap/1',
-    FURNIDATA: 'https://www.habbo.com.br/gamedata/furnidata_xml/1',
-    FURNIDATA_JSON: 'https://www.habbo.com.br/gamedata/furnidata_json/1'
+    EXTERNAL_VARIABLES: 'https://www.habbo.com/gamedata/external_variables/1',
+    FIGUREDATA: 'https://www.habbo.com/gamedata/figuredata/1',
+    FIGUREMAP: 'https://www.habbo.com/gamedata/figuremap/1',
+    FURNIDATA: 'https://www.habbo.com/gamedata/furnidata_xml/1',
+    FURNIDATA_JSON: 'https://www.habbo.com/gamedata/furnidata_json/1'
   },
   // Internacional
   INTERNATIONAL: {

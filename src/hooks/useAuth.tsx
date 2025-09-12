@@ -10,5 +10,5 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   console.warn('⚠️ [AuthProvider] DEPRECATED: Please use UnifiedAuthProvider instead');
-  return <>{children}</>;
+  return children;
 };

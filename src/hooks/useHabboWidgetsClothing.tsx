@@ -100,7 +100,7 @@ const processRawItem = (rawItem: any): HabboWidgetsItem | null => {
       return null;
     }
     
-    const isHC = rawItem.club === 'HC' || rawItem.club === true;
+    const isHC = rawItem.club === 'HC' || rawItem.club === true || rawItem.club === '2';
     
     return {
       id: rawItem.id || `processed_${rawItem.category}_${rawItem.figureId}`,

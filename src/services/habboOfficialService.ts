@@ -1,6 +1,8 @@
 // Serviço oficial do Habbo BR para Editor de Avatares
 // Baseado nas APIs oficiais do Habbo
 
+import { furnidataClothingService } from './FurnidataClothingService';
+
 export interface HabboFigureData {
   palettes: HabboPalette[];
   sets: HabboSet[];
@@ -55,7 +57,12 @@ export interface HabboClothingItem {
   selectable: boolean;
   sellable: boolean;
   colors: string[];
+  secondaryColors?: string[]; // Para roupas duotone
+  colorindex: string[];
+  isDuotone: boolean;
+  categoryType: 'NORMAL' | 'HC' | 'NFT' | 'RARE' | 'LTD' | 'SELLABLE';
   imageUrl: string;
+  duotoneImageUrl?: string; // URL para roupas duotone
 }
 
 export interface HabboCategory {
@@ -374,18 +381,45 @@ class HabboOfficialService {
         const palette = this.figureData!.palettes.find(p => p.id === type);
         const availableColors = palette ? palette.colors.map(c => c.id) : ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
+        // Verificar se é duotone (colorindex 1 e 2)
+        const colorindex = part.colorindex || [];
+        const isDuotone = colorindex.includes('1') && colorindex.includes('2');
+        
+        // Determinar categoria correta baseada na orientação
+        let categoryType: 'NORMAL' | 'HC' | 'NFT' | 'RARE' | 'LTD' | 'SELLABLE' = 'NORMAL';
+        
+        // Verificar furnidata para NFT, RARE, LTD
+        const furnidataInfo = await furnidataClothingService.analyzeClothingRarity(type, part.id);
+        if (furnidataInfo.type !== 'NORMAL') {
+          categoryType = furnidataInfo.type;
+        } else if (set.club === '2') {
+          categoryType = 'HC';
+        } else if (set.sellable === '1') {
+          categoryType = 'SELLABLE';
+        }
+        
+        // Gerar cores secundárias para duotone
+        const secondaryColors = isDuotone ? this.getSecondaryColors(availableColors) : undefined;
+        
         const item: HabboClothingItem = {
           id: `${type}-${part.id}`,
           name: `${TYPE_DISPLAY_NAMES[type]} ${part.id}`,
           type: type,
           category: type,
           gender: set.gender,
-          club: set.club,
+          club: set.club === '2', // CORRIGIDO: HC é club="2", não club="1"
           colorable: part.colorable,
           selectable: set.selectable,
-          sellable: set.sellable,
+          sellable: set.sellable === '1', // CORRIGIDO: Verificar sellable="1"
           colors: availableColors,
-          imageUrl: this.generateAvatarImageUrl(type, part.id, set.gender, availableColors[0] || '1')
+          secondaryColors,
+          colorindex,
+          isDuotone,
+          categoryType,
+          imageUrl: this.generateAvatarImageUrl(type, part.id, set.gender, availableColors[0] || '1'),
+          duotoneImageUrl: isDuotone && secondaryColors ? 
+            this.generateDuotoneImageUrl(type, part.id, availableColors[0] || '1', secondaryColors[0] || '2', set.gender) : 
+            undefined
         };
 
         category.items.push(item);
@@ -404,8 +438,21 @@ class HabboOfficialService {
 
   // Gerar URL da imagem do avatar
   generateAvatarImageUrl(type: string, id: string, gender: string, color: string = '1'): string {
-    const figure = `${type}-${id}-${color}-`;
-    return `${HABBO_BR_URLS.avatar_imaging}?figure=${figure}&gender=${gender}&size=l`;
+    const figure = `${type}-${id}-${color}`;
+    return `${HABBO_BR_URLS.avatar_imaging}?figure=${figure}&gender=${gender}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+  }
+
+  // Gerar URL da imagem duotone (duas cores)
+  generateDuotoneImageUrl(type: string, id: string, primaryColor: string, secondaryColor: string, gender: string = 'U'): string {
+    const figure = `${type}-${id}-${primaryColor}-${secondaryColor}`;
+    return `${HABBO_BR_URLS.avatar_imaging}?figure=${figure}&gender=${gender}&size=l&direction=2&head_direction=3&action=std&gesture=std`;
+  }
+
+  // Obter cores secundárias para roupas duotone
+  private getSecondaryColors(colors: string[]): string[] {
+    // Para roupas duotone, dividir as cores em primárias e secundárias
+    const midPoint = Math.ceil(colors.length / 2);
+    return colors.slice(midPoint);
   }
 
   // Gerar URL completa do avatar

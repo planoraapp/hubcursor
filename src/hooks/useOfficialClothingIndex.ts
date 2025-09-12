@@ -75,7 +75,7 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
           category: categoryId,
           figureId: item.id,
           gender: item.gender,
-          club: item.club === '1' ? 'HC' as const : 'FREE' as const,
+          club: item.club === '2' ? 'HC' as const : 'FREE' as const,
           colors: item.colors || ['1'],
           name: `${categoryInfo.name} ${item.id}`,
           paletteId: item.paletteId

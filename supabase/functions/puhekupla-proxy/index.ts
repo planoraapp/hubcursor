@@ -72,21 +72,22 @@ serve(async (req) => {
     console.log(`📡 [PuhekuplaProxy] Fetching: ${apiUrl}`);
     console.log(`🔑 [PuhekuplaProxy] Environment key available: ${!!envApiKey}`);
 
-    // Authentication strategies in order of preference
+    // CORRIGIDO: Authentication strategies com header correto X-Puhekupla-APIKey
     const authStrategies = [
-      // Environment API key first (if available)
+      // Environment API key first (if available) - CORRIGIDO: usar header correto
       ...(envApiKey ? [
+        { name: 'X-Puhekupla-APIKey (env)', headers: { 'X-Puhekupla-APIKey': envApiKey } },
         { name: 'X-API-Key (env)', headers: { 'X-API-Key': envApiKey } },
         { name: 'Authorization Bearer (env)', headers: { 'Authorization': `Bearer ${envApiKey}` } },
-        { name: 'apikey header (env)', headers: { 'apikey': envApiKey } },
       ] : []),
       
-      // Correct demo key format from documentation
+      // Correct demo key format from documentation - CORRIGIDO: usar header correto
+      { name: 'X-Puhekupla-APIKey (demo-habbohub)', headers: { 'X-Puhekupla-APIKey': correctDemoKey } },
       { name: 'X-API-Key (demo-habbohub)', headers: { 'X-API-Key': correctDemoKey } },
       { name: 'Authorization Bearer (demo-habbohub)', headers: { 'Authorization': `Bearer ${correctDemoKey}` } },
-      { name: 'apikey header (demo-habbohub)', headers: { 'apikey': correctDemoKey } },
       
-      // Alternative demo formats
+      // Alternative demo formats - CORRIGIDO: usar header correto
+      { name: 'X-Puhekupla-APIKey (demo-habbo-hub)', headers: { 'X-Puhekupla-APIKey': 'demo-habbo-hub' } },
       { name: 'X-API-Key (demo-habbo-hub)', headers: { 'X-API-Key': 'demo-habbo-hub' } },
       { name: 'Authorization Bearer (demo-habbo-hub)', headers: { 'Authorization': `Bearer demo-habbo-hub` } },
       

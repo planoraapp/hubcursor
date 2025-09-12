@@ -6,16 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "sonner";
-import { useAuth } from '@/hooks/useAuth';
 
 const ConsolePopup: React.FC = () => {
-  const { isLoggedIn: isUnifiedLoggedIn, loginWithPassword } = useUnifiedAuth();
-  const { isLoggedIn: isAuthLoggedIn } = useAuth();
+  const { isLoggedIn, loginWithPassword } = useUnifiedAuth();
   const [loginForm, setLoginForm] = useState({ habboName: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Usar o estado de login que funciona
-  const isLoggedIn = isAuthLoggedIn || isUnifiedLoggedIn;
 
   // Communicate with parent window
   useEffect(() => {

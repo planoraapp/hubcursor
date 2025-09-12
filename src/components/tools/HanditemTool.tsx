@@ -1221,7 +1221,7 @@ const generateHanditemAvatarUrl = (
   const gesture = 'nrm';
   const actionParam = handitemId && handitemId !== 0 ? `crr=${handitemId}` : '';
   
-  return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboName}&direction=${direction}&head_direction=${headDirection}&action=${actionParam}&gesture=${gesture}&size=${size}`;
+  return `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboName}&direction=${direction}&head_direction=${headDirection}&action=${actionParam}&gesture=${gesture}&size=${size}`;
 };
 
 // Dados estruturados baseados nas fontes oficiais do Habbo
