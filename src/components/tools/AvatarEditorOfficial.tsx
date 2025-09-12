@@ -677,10 +677,115 @@ const AvatarEditorOfficial = () => {
     return urls[0]; // Retorna a primeira URL, mas o componente pode implementar fallback
   };
 
-  // Sistema de cores dinâmico baseado no figuredata.xml oficial
-  // Função para obter cores reais baseadas na categoria e paletas do figuredata
-  const getRealColorsForCategory = (category: string) => {
-    // Determinar paleta correta baseada na categoria
+  // Sistema de cores baseado no exemplo HTML funcional do ViaJovem
+  const getHabboColorsForCategory = (category: string) => {
+    // Cores exatas do exemplo HTML do ViaJovem
+    const habboColors = {
+      // Paleta 1: Cores para pele/rosto (hd, fc, ey)
+      '1': [
+        // Cores gratuitas (nonhc)
+        { id: '1', hex: '#F5DA88', name: 'Pele Clara', isHC: false },
+        { id: '2', hex: '#FFDBC1', name: 'Pele Média Clara', isHC: false },
+        { id: '3', hex: '#FFCB98', name: 'Pele Média', isHC: false },
+        { id: '4', hex: '#F4AC54', name: 'Pele Média Escura', isHC: false },
+        { id: '5', hex: '#FF987F', name: 'Pele Escura Clara', isHC: false },
+        { id: '6', hex: '#e0a9a9', name: 'Pele Escura', isHC: false },
+        { id: '7', hex: '#ca8154', name: 'Pele Muito Escura', isHC: false },
+        { id: '8', hex: '#B87560', name: 'Pele Escura Profunda', isHC: false },
+        { id: '9', hex: '#9C543F', name: 'Pele Escura Intensa', isHC: false },
+        { id: '10', hex: '#904925', name: 'Pele Escura Muito Intensa', isHC: false },
+        { id: '11', hex: '#4C311E', name: 'Pele Escura Máxima', isHC: false },
+        
+        // Cores club (hc)
+        { id: '12', hex: '#543d35', name: 'Pele Club 1', isHC: true },
+        { id: '13', hex: '#653a1d', name: 'Pele Club 2', isHC: true },
+        { id: '14', hex: '#6E392C', name: 'Pele Club 3', isHC: true },
+        { id: '15', hex: '#714947', name: 'Pele Club 4', isHC: true },
+        { id: '16', hex: '#856860', name: 'Pele Club 5', isHC: true },
+        { id: '17', hex: '#895048', name: 'Pele Club 6', isHC: true },
+        { id: '18', hex: '#a15253', name: 'Pele Club 7', isHC: true },
+        { id: '19', hex: '#aa7870', name: 'Pele Club 8', isHC: true },
+        { id: '20', hex: '#be8263', name: 'Pele Club 9', isHC: true },
+        { id: '21', hex: '#b6856d', name: 'Pele Club 10', isHC: true },
+        { id: '22', hex: '#ba8a82', name: 'Pele Club 11', isHC: true },
+        { id: '23', hex: '#c88f82', name: 'Pele Club 12', isHC: true },
+        { id: '24', hex: '#d9a792', name: 'Pele Club 13', isHC: true },
+        { id: '25', hex: '#c68383', name: 'Pele Club 14', isHC: true },
+        { id: '26', hex: '#BC576A', name: 'Pele Club 15', isHC: true },
+        { id: '27', hex: '#FF5757', name: 'Pele Club 16', isHC: true }
+      ],
+      
+      // Paleta 2: Cores para cabelo (hr)
+      '2': [
+        // Cores gratuitas para cabelo
+        { id: '1', hex: '#000000', name: 'Preto', isHC: false },
+        { id: '2', hex: '#8B4513', name: 'Marrom Escuro', isHC: false },
+        { id: '3', hex: '#A0522D', name: 'Marrom', isHC: false },
+        { id: '4', hex: '#CD853F', name: 'Marrom Claro', isHC: false },
+        { id: '5', hex: '#D2691E', name: 'Castanho', isHC: false },
+        { id: '6', hex: '#F4A460', name: 'Bege', isHC: false },
+        { id: '7', hex: '#FFD700', name: 'Dourado', isHC: false },
+        { id: '8', hex: '#FFA500', name: 'Laranja', isHC: false },
+        { id: '9', hex: '#FF6347', name: 'Vermelho', isHC: false },
+        { id: '10', hex: '#DC143C', name: 'Vermelho Escuro', isHC: false },
+        { id: '11', hex: '#800080', name: 'Roxo', isHC: false },
+        { id: '12', hex: '#0000FF', name: 'Azul', isHC: false },
+        { id: '13', hex: '#008000', name: 'Verde', isHC: false },
+        { id: '14', hex: '#808080', name: 'Cinza', isHC: false },
+        { id: '15', hex: '#FFFFFF', name: 'Branco', isHC: false },
+        
+        // Cores club para cabelo
+        { id: '16', hex: '#FF1493', name: 'Rosa Vibrante', isHC: true },
+        { id: '17', hex: '#00CED1', name: 'Turquesa', isHC: true },
+        { id: '18', hex: '#9370DB', name: 'Roxo Médio', isHC: true },
+        { id: '19', hex: '#32CD32', name: 'Verde Lima', isHC: true },
+        { id: '20', hex: '#FF4500', name: 'Laranja Vermelho', isHC: true },
+        { id: '21', hex: '#1E90FF', name: 'Azul Dodger', isHC: true },
+        { id: '22', hex: '#FF69B4', name: 'Rosa Quente', isHC: true },
+        { id: '23', hex: '#00FF7F', name: 'Verde Primavera', isHC: true },
+        { id: '24', hex: '#FFD700', name: 'Dourado Brilhante', isHC: true },
+        { id: '25', hex: '#8A2BE2', name: 'Azul Violeta', isHC: true }
+      ],
+      
+      // Paleta 3: Cores para roupas e acessórios (todas as outras categorias)
+      '3': [
+        // Cores gratuitas para roupas
+        { id: '1', hex: '#000000', name: 'Preto', isHC: false },
+        { id: '2', hex: '#FFFFFF', name: 'Branco', isHC: false },
+        { id: '3', hex: '#808080', name: 'Cinza', isHC: false },
+        { id: '4', hex: '#FF0000', name: 'Vermelho', isHC: false },
+        { id: '5', hex: '#00FF00', name: 'Verde', isHC: false },
+        { id: '6', hex: '#0000FF', name: 'Azul', isHC: false },
+        { id: '7', hex: '#FFFF00', name: 'Amarelo', isHC: false },
+        { id: '8', hex: '#FFA500', name: 'Laranja', isHC: false },
+        { id: '9', hex: '#800080', name: 'Roxo', isHC: false },
+        { id: '10', hex: '#FFC0CB', name: 'Rosa', isHC: false },
+        { id: '11', hex: '#8B4513', name: 'Marrom', isHC: false },
+        { id: '12', hex: '#00FFFF', name: 'Ciano', isHC: false },
+        { id: '13', hex: '#FF00FF', name: 'Magenta', isHC: false },
+        { id: '14', hex: '#C0C0C0', name: 'Prata', isHC: false },
+        { id: '15', hex: '#FFD700', name: 'Dourado', isHC: false },
+        
+        // Cores club para roupas
+        { id: '16', hex: '#FF1493', name: 'Rosa Vibrante', isHC: true },
+        { id: '17', hex: '#00CED1', name: 'Turquesa', isHC: true },
+        { id: '18', hex: '#9370DB', name: 'Roxo Médio', isHC: true },
+        { id: '19', hex: '#32CD32', name: 'Verde Lima', isHC: true },
+        { id: '20', hex: '#FF4500', name: 'Laranja Vermelho', isHC: true },
+        { id: '21', hex: '#1E90FF', name: 'Azul Dodger', isHC: true },
+        { id: '22', hex: '#FF69B4', name: 'Rosa Quente', isHC: true },
+        { id: '23', hex: '#00FF7F', name: 'Verde Primavera', isHC: true },
+        { id: '24', hex: '#FFD700', name: 'Dourado Brilhante', isHC: true },
+        { id: '25', hex: '#8A2BE2', name: 'Azul Violeta', isHC: true },
+        { id: '26', hex: '#DC143C', name: 'Vermelho Escuro', isHC: true },
+        { id: '27', hex: '#00BFFF', name: 'Azul Céu', isHC: true },
+        { id: '28', hex: '#FF6347', name: 'Tomate', isHC: true },
+        { id: '29', hex: '#7FFF00', name: 'Verde Amarelo', isHC: true },
+        { id: '30', hex: '#FF1493', name: 'Rosa Profundo', isHC: true }
+      ]
+    };
+
+    // Determinar paleta baseada na categoria
     let paletteId = '3'; // Padrão para roupas
     switch (category) {
       case 'hd': // Rosto e Corpo - Paleta 1
@@ -696,44 +801,12 @@ const AvatarEditorOfficial = () => {
         break;
     }
 
-    // Obter cores da paleta real do figuredata
-    const palette = colorPalettes[paletteId] || [];
-    
-    // Se não temos paleta real, usar fallback
-    if (palette.length === 0) {
-      console.warn(`⚠️ [Colors] No palette found for category ${category}, using fallback`);
-      return getFallbackColorsForCategory(category);
-    }
-
-    // Converter para formato do seletor
-    return palette.map(color => ({
-      id: color.id,
-      name: `Cor ${color.id}`,
-      hex: color.hex,
-      isHC: false // TODO: Implementar detecção de HC baseada no figuredata
-    }));
+    return habboColors[paletteId] || habboColors['3'];
   };
 
-  // Fallback para cores quando não temos dados reais
-  const getFallbackColorsForCategory = (category: string) => {
-    const fallbackColors = [
-      { id: '1', name: 'Cor 1', hex: '#FFFFFF', isHC: false },
-      { id: '2', name: 'Cor 2', hex: '#000000', isHC: false },
-      { id: '3', name: 'Cor 3', hex: '#808080', isHC: false },
-      { id: '4', name: 'Cor 4', hex: '#FF0000', isHC: false },
-      { id: '5', name: 'Cor 5', hex: '#0000FF', isHC: false },
-      { id: '6', name: 'Cor 6', hex: '#008000', isHC: false },
-      { id: '7', name: 'Cor 7', hex: '#FFFF00', isHC: false },
-      { id: '8', name: 'Cor 8', hex: '#FFC0CB', isHC: false },
-      { id: '9', name: 'Cor 9', hex: '#800080', isHC: false },
-      { id: '10', name: 'Cor 10', hex: '#FFA500', isHC: false }
-    ];
-    return fallbackColors;
-  };
-
-  // Função para obter cores baseadas na categoria (usando dados reais do figuredata)
+  // Função para obter cores baseadas na categoria
   const getColorsForCategory = (category: string) => {
-    return getRealColorsForCategory(category);
+    return getHabboColorsForCategory(category);
   };
 
   // Obter hex da cor por ID
@@ -1249,36 +1322,72 @@ const AvatarEditorOfficial = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Cores baseadas na categoria selecionada - Apenas quadros de cores */}
-                  <div className="grid grid-cols-4 gap-2 max-h-80 overflow-y-auto">
-                    {getColorsForCategory(selectedCategory).map((colorData) => (
-                      <div
-                        key={colorData.id}
+                  {/* Cores baseadas no exemplo HTML funcional do ViaJovem */}
+                  {(() => {
+                    const colors = getHabboColorsForCategory(selectedCategory);
+                    
+                    return (
+                      <>
+                        {/* Cores Gratuitas */}
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">
+                            Cores Gratuitas ({colors.filter(c => !c.isHC).length})
+                          </h4>
+                          <div className="grid grid-cols-4 gap-2">
+                            {colors.filter(c => !c.isHC).map((color) => (
+                              <div
+                                key={`free-${color.id}`}
                         className={`relative w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
-                          primaryColor === colorData.id 
+                                  primaryColor === color.id 
                             ? 'border-blue-500 ring-2 ring-blue-300' 
                             : 'border-gray-300 hover:border-gray-400'
                         }`}
-                        style={{ backgroundColor: colorData.hex }}
-                        onClick={() => setPrimaryColor(colorData.id)}
-                        title={`${colorData.name} (ID: ${colorData.id})`}
-                      >
-                        {/* Badge HC para cores do Habbo Club */}
-                        {colorData.isHC && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white font-bold">HC</span>
+                                style={{ backgroundColor: color.hex }}
+                                onClick={() => setPrimaryColor(color.id)}
+                                title={`${color.name} - ${color.hex}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Cores Club */}
+                        {colors.filter(c => c.isHC).length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">
+                              Cores Club ({colors.filter(c => c.isHC).length})
+                            </h4>
+                            <div className="grid grid-cols-4 gap-2">
+                              {colors.filter(c => c.isHC).map((color) => (
+                                <div
+                                  key={`club-${color.id}`}
+                                  className={`relative w-8 h-8 rounded border-2 cursor-pointer transition-all hover:scale-110 ${
+                                    primaryColor === color.id 
+                                      ? 'border-blue-500 ring-2 ring-blue-300' 
+                                      : 'border-yellow-400 hover:border-yellow-500'
+                                  }`}
+                                  style={{ backgroundColor: color.hex }}
+                                  onClick={() => setPrimaryColor(color.id)}
+                                  title={`${color.name} - ${color.hex}`}
+                                >
+                                  {/* Badge HC para cores do Habbo Club */}
+                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                    <span className="text-xs text-white font-bold">HC</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Informação sobre a paleta atual */}
-                  <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                    {['hd', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 1: Cores para pele/rosto'}
-                    {selectedCategory === 'hr' && 'Paleta 2: Cores para cabelo'}
-                    {!['hd', 'hr', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 3: Cores para roupas'}
-                  </div>
+
+                        {/* Informação sobre a paleta atual */}
+                        <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                          {['hd', 'fc', 'ey'].includes(selectedCategory) && 'Paleta 1: Cores para pele/rosto'}
+                          {selectedCategory === 'hr' && 'Paleta 2: Cores para cabelo'}
+                          {!['hd', 'fc', 'ey', 'hr'].includes(selectedCategory) && 'Paleta 3: Cores para roupas e acessórios'}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             </div>

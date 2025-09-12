@@ -1,11 +1,12 @@
 // Cloudflare R2 Configuration
 export const R2_CONFIG = {
-  // Estas variáveis devem ser configuradas no Vercel
-  accountId: process.env.CLOUDFLARE_ACCOUNT_ID || '',
-  accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-  secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
-  bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME || 'habbohub-trax',
-  publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || '',
+  // Configuração do Cloudflare R2
+  accountId: 'bc052560bd9ab3ff936afd0013f1ecaa',
+  accessKeyId: import.meta.env.VITE_CLOUDFLARE_R2_ACCESS_KEY_ID || '',
+  secretAccessKey: import.meta.env.VITE_CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
+  bucketName: 'habbohub-trax',
+  publicUrl: import.meta.env.VITE_CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-af1b3571db674d6bbef76bd60d2423d3.r2.dev',
+  s3ApiUrl: 'https://bc052560bd9ab3ff936afd0013f1ecaa.r2.cloudflarestorage.com/habbohub-trax',
 };
 
 // Função para fazer upload de arquivos para o R2
