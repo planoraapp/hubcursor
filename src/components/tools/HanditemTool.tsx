@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery';
 import { avatarPreview, AvatarOptions } from '@/utils/avatarPreview';
 import { UnifiedCatalog } from './UnifiedCatalog';
-import { HabboHanditem, HabboFurni } from '@/services/habboApiService';
+import { HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
 import { TraxPlayerWidget } from '@/components/widgets/TraxPlayerWidget';
 
 
