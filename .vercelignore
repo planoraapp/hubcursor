@@ -1,0 +1,60 @@
+# Excluir arquivos desnecessários do deploy
+node_modules
+.git
+.vscode
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+
+# Excluir arquivos de desenvolvimento
+test-*.html
+debug-*.html
+demo-*.html
+*.ps1
+*.cjs
+*.js
+!src/**/*.js
+!src/**/*.ts
+!src/**/*.tsx
+
+# Excluir arquivos de build antigos
+dist
+build
+
+# Excluir arquivos de documentação
+*.md
+!README.md
+
+# Excluir arquivos de configuração local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Excluir arquivos de backup
+*.backup
+*.bak
+*.old
+
+# Excluir arquivos de pets e recursos grandes
+pets-swf
+resource
+habbo-hub
+
+# Excluir arquivos de dados grandes
+*.json
+!package.json
+!package-lock.json
+!tsconfig*.json
+!tailwind.config.ts
+!vite.config.ts
+!components.json
+!postcss.config.js
+!eslint.config.js
+
+# Excluir arquivos de teste
+test-*
+debug-*
+demo-*
