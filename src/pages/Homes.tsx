@@ -10,7 +10,7 @@ import { Search, User, Home, Calendar, MapPin, Star, ExternalLink, UserCheck } f
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
 import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
@@ -30,7 +30,7 @@ interface HabboUser {
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { habboAccount, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
   const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
   const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
   const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
@@ -307,3 +307,4 @@ const Homes: React.FC = () => {
 };
 
 export default Homes;
+

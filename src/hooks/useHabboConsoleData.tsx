@@ -5,7 +5,7 @@ import { consoleInteractionsService } from '@/services/consoleInteractionsServic
 import { useUnifiedAuth } from './useUnifiedAuth';
 
 export const useHabboConsoleData = (targetUsername?: string) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   const [searchUsername, setSearchUsername] = useState(targetUsername || '');
   const [selectedUser, setSelectedUser] = useState<HabboUser | null>(null);
 
@@ -255,3 +255,4 @@ export const useHabboConsoleData = (targetUsername?: string) => {
       habboProxyService.getBadgeUrl(badgeCode),
   };
 };
+

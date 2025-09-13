@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Home, Heart, MessageCircle, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProfileActionsProps {
   username: string;
@@ -23,7 +23,7 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
   isFollowing = false
 }) => {
   const navigate = useNavigate();
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const isOwnProfile = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
 
@@ -79,3 +79,4 @@ export const ProfileActions: React.FC<ProfileActionsProps> = ({
     </div>
   );
 };
+

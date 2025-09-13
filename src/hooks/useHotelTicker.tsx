@@ -12,7 +12,7 @@ interface AggregatedActivity {
 }
 
 export const useHotelTicker = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   // Detectar hotel do usuário autenticado
   const hotel = React.useMemo(() => {
@@ -129,3 +129,4 @@ export const useHotelTicker = () => {
     refetch
   };
 };
+

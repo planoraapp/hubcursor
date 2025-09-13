@@ -5,7 +5,7 @@ import { useUnifiedAuth } from './useUnifiedAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useInitializeUserFeed = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   const [isInitializing, setIsInitializing] = useState(false);
   const hasInitialized = useRef(false);
 
@@ -61,3 +61,4 @@ export const useInitializeUserFeed = () => {
 
   return { isInitializing };
 };
+

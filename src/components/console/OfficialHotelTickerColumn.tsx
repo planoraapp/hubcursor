@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Camera, UserPlus, Trophy, Palette, Radio, Filter } from 'lucide-react';
 import { useRealHotelFeed } from '@/hooks/useRealHotelFeed';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { habboFeedService } from '@/services/habboFeedService';
 import { supabase } from '@/integrations/supabase/client';
 
 export const OfficialHotelTickerColumn: React.FC = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   const [onlyOnline, setOnlyOnline] = useState(true);
   const [filterMode, setFilterMode] = useState<'all' | 'friends' | 'following'>('all');
   
@@ -379,3 +379,4 @@ export const OfficialHotelTickerColumn: React.FC = () => {
     </div>
   );
 };
+

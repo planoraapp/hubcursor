@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter, Eye, Zap, AlertCircle, Music, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import { HanditemImage } from './HanditemImage';
 import { useToast } from '@/hooks/use-toast';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useTrackedItems } from '@/hooks/useTrackedItems';
 import { supabase } from '@/integrations/supabase/client';
 import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery';
@@ -2134,7 +2134,7 @@ const HanditemToolFixed: React.FC = () => {
   });
   
   const { toast } = useToast();
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   // Sistema de Itens Rastreados
   const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems('br');

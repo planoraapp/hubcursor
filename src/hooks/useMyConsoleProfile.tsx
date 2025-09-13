@@ -1,12 +1,12 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { useUnifiedAuth } from './useUnifiedAuth';
+import { useAuth } from './useAuth';
 import { habboProxyService, HabboUser, HabboPhoto } from '@/services/habboProxyService';
 import { consoleInteractionsService, ConsoleFollow } from '@/services/consoleInteractionsService';
 import { getHotelDomain } from '@/utils/habboDomains';
 
 export const useMyConsoleProfile = () => {
-  const { habboAccount, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
   
   // Log detailed auth state for debugging
   console.log('[🔍 MY CONSOLE PROFILE] Auth state:', {

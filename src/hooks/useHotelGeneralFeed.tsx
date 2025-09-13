@@ -33,7 +33,7 @@ export const useHotelGeneralFeed = (options?: {
   refreshInterval?: number; 
   limit?: number; 
 }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = habboAccount?.hotel === 'br' ? 'com.br' : (habboAccount?.hotel || 'com.br');
   const refreshInterval = options?.refreshInterval || 30 * 1000; // 30 segundos

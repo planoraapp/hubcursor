@@ -111,7 +111,7 @@ export const useHabboHomeV2 = (username: string) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const { habboAccount, currentUser, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, currentUser, isLoggedIn } = useAuth();
   
   console.log('🔍 [useHabboHomeV2] Auth state:', { 
     isLoggedIn, 
@@ -1055,3 +1055,4 @@ export const useHabboHomeV2 = (username: string) => {
     reloadData: loadHabboHomeData
   };
 };
+

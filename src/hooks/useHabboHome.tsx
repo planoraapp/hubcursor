@@ -63,7 +63,7 @@ export const useHabboHome = (username: string) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
 
   useEffect(() => {
     if (username) {
@@ -588,3 +588,4 @@ export const useHabboHome = (username: string) => {
     getWidgetSizeRestrictions
   };
 };
+

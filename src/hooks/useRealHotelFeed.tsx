@@ -9,7 +9,7 @@ export const useRealHotelFeed = (options?: {
   mode?: 'official' | 'database' | 'hybrid';
   onlyOnline?: boolean;
 }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = useMemo(() => {
     const userHotel = (habboAccount as any)?.hotel as string | undefined;
@@ -124,3 +124,4 @@ export const useRealHotelFeed = (options?: {
 };
 
 export type { FeedActivity };
+

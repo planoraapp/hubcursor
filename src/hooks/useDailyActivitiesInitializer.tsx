@@ -3,7 +3,7 @@ import { useUnifiedAuth } from './useUnifiedAuth';
 import { useDailyActivitiesTracker } from './useDailyActivitiesTracker';
 
 export const useDailyActivitiesInitializer = () => {
-  const { habboAccount, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
   const { trackUserActivities } = useDailyActivitiesTracker();
 
   useEffect(() => {

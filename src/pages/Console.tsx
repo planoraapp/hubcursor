@@ -5,11 +5,11 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { FunctionalConsole } from '@/components/console/FunctionalConsole';
 import { TestConsole } from '@/components/console/TestConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
 const Console: React.FC = () => {
-  const { isLoggedIn, currentUser } = useUnifiedAuth();
+  const { isLoggedIn, habboAccount } = useAuth();
 
   const openPopupConsole = () => {
     // Calcular posição centralizada na tela
@@ -182,3 +182,4 @@ const Console: React.FC = () => {
 };
 
 export default Console;
+

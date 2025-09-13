@@ -24,7 +24,7 @@ export interface AggregatedActivity {
 }
 
 export const useHotelActivities = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = useMemo(() => {
     const userHotel = (habboAccount as any)?.hotel as string | undefined;
@@ -146,3 +146,4 @@ export const useHotelActivities = () => {
     refetch
   };
 };
+

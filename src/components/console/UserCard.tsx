@@ -6,7 +6,7 @@ import { User, Eye, Camera, Users, Heart, UserPlus, UserCheck } from 'lucide-rea
 import { habboProxyService } from '@/services/habboProxyService';
 import { usePhotosScraped } from '@/hooks/usePhotosScraped';
 import { useFollowSystem } from '@/hooks/useFollowSystem';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserCardProps {
   user: any;
@@ -14,7 +14,7 @@ interface UserCardProps {
 }
 
 export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   // Get photos count for this user
   const hotel = user.hotel === 'br' ? 'br' : (user.hotel || 'br');
@@ -173,3 +173,4 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
     </Card>
   );
 };
+

@@ -28,7 +28,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -55,7 +55,7 @@ const toolsItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { habboAccount, logout } = useUnifiedAuth();
+  const { habboAccount, logout } = useAuth();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
@@ -213,3 +213,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

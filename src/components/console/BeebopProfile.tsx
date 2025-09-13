@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Trophy, Home, Users, UserCheck } from 'lucide-react';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { BadgesModal } from './modals/BadgesModal';
 import { RoomsModal } from './modals/RoomsModal';
 import { FriendsModal } from './modals/FriendsModal';
@@ -12,7 +12,7 @@ import { GroupsModal } from './modals/GroupsModal';
 export const BeebopProfile: React.FC = () => {
   const [modalStates, setModalStates] = useState({ badges: false, rooms: false, friends: false, groups: false });
   const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI('Beebop');
-  const { habboAccount, isLoggedIn } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn } = useAuth();
 
   // Função para formatar data no formato DD/MM/YYYY
   const formatDate = (dateString: string | null): string => {
@@ -362,3 +362,4 @@ export const BeebopProfile: React.FC = () => {
     </>
   );
 };
+

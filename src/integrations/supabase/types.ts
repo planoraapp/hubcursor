@@ -2312,5 +2312,56 @@ export const Constants = {
         "friend_added",
       ],
     },
+    habbo_auth: {
+      Row: {
+        id: string
+        habbo_username: string
+        habbo_motto: string | null
+        habbo_avatar: string | null
+        habbo_figure_string: string | null
+        habbo_unique_id: string | null
+        password_hash: string
+        is_admin: boolean
+        is_verified: boolean
+        is_online: boolean
+        last_login: string | null
+        hotel: string
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        habbo_username: string
+        habbo_motto?: string | null
+        habbo_avatar?: string | null
+        habbo_figure_string?: string | null
+        habbo_unique_id?: string | null
+        password_hash: string
+        is_admin?: boolean
+        is_verified?: boolean
+        is_online?: boolean
+        last_login?: string | null
+        hotel?: string
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        habbo_username?: string
+        habbo_motto?: string | null
+        habbo_avatar?: string | null
+        habbo_figure_string?: string | null
+        habbo_unique_id?: string | null
+        password_hash?: string
+        is_admin?: boolean
+        is_verified?: boolean
+        is_online?: boolean
+        last_login?: string | null
+        hotel?: string
+        created_at?: string
+        updated_at?: string
+      }
+      Relationships: []
+    },
   },
 } as const

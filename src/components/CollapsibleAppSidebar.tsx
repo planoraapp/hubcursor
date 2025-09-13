@@ -12,14 +12,14 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, User, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
-  const { habboAccount, isLoggedIn, logout } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn, logout } = useAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 

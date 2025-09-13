@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FunctionalConsole } from '@/components/console/FunctionalConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from "sonner";
 
 const ConsolePopup: React.FC = () => {
-  const { isLoggedIn, loginWithPassword } = useUnifiedAuth();
+  const { isLoggedIn, login } = useAuth();
   const [loginForm, setLoginForm] = useState({ habboName: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,11 +49,11 @@ const ConsolePopup: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const result = await loginWithPassword(loginForm.habboName, loginForm.password);
-      if (result.error) {
-        toast.error(result.error.message || 'Erro ao fazer login');
-      } else {
+      const success = await login(loginForm.habboName, loginForm.password);
+      if (success) {
         toast.success('Login realizado com sucesso!');
+      } else {
+        toast.error('Erro ao fazer login');
       }
     } catch (error) {
       toast.error('Erro inesperado ao fazer login');

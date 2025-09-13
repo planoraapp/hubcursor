@@ -12,7 +12,7 @@ interface TrackedItem {
 }
 
 export const useTrackedItems = (hotelId: string) => {
-  const { user } = useUnifiedAuth();
+  const { user } = useAuth();
   const [trackedItems, setTrackedItems] = useState<TrackedItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -94,3 +94,4 @@ export const useTrackedItems = (hotelId: string) => {
     refresh: fetchTrackedItems
   };
 };
+

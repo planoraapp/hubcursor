@@ -44,7 +44,7 @@ interface OfficialTickerResponse {
 }
 
 export const useOfficialHotelTicker = (options?: { limit?: number }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = useMemo(() => {
     const userHotel = habboAccount?.hotel;
@@ -103,3 +103,4 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
     refetch
   };
 };
+
