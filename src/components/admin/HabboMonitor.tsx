@@ -15,7 +15,7 @@ import {
   Globe,
   Server
 } from 'lucide-react';
-import { habboApiService, HabboBuildInfo, HabboDiscoveryReport } from '@/services/habboApiService';
+import { habboApiService, HabboBuildInfo, HabboDiscoveryReport } from '@/services/HabboAPIService';
 import { useToast } from '@/hooks/use-toast';
 
 interface HabboMonitorProps {

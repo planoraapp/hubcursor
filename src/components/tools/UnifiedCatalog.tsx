@@ -25,7 +25,7 @@ import {
   Image as ImageIcon,
   Link
 } from 'lucide-react';
-import { habboApiService, HabboHanditem, HabboFurni, HabboBuildInfo } from '@/services/habboApiService';
+import { habboApiService, HabboHanditem, HabboFurni, HabboBuildInfo } from '@/services/HabboAPIService';
 import { habboDataExtractor, ExtractedHanditem } from '@/utils/habboDataExtractor';
 import { DiscoveryStats } from './DiscoveryStats';
 import { useToast } from '@/hooks/use-toast';
