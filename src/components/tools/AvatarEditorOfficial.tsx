@@ -54,46 +54,95 @@ import { useTemplariosData } from '@/hooks/useTemplariosData';
 import { useUnifiedHabboClothing } from '@/hooks/useUnifiedHabboClothing';
 
 // Componente para imagem com fallback
-const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verticalPosition = 50 }: {
+const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verticalPosition = 50, unifiedClothingData }: {
   itemId: string;
   category: string;
   gender: string;
   color: string;
   alt: string;
   verticalPosition?: number;
+  unifiedClothingData?: any;
 }) => {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
 
   const generateFallbackUrls = (itemId: string, category: string, gender: string, color: string) => {
-    // Avatar base para cabelos
-    let baseFigure = '';
-    if (category === 'hr') {
-      if (gender === 'F') {
-        baseFigure = 'hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-';
+    // Extrair o figureId real do itemId
+    // Formato esperado: category-figureId ou apenas figureId
+    let actualFigureId = itemId;
+    
+    // Se itemId contém hífen, extrair a parte após o primeiro hífen
+    if (itemId.includes('-')) {
+      const parts = itemId.split('-');
+      // Se o primeiro parte é a categoria, pegar o resto
+      if (parts[0] === category) {
+        actualFigureId = parts.slice(1).join('-');
       } else {
-        baseFigure = 'hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-';
+        // Caso contrário, pode ser um código completo como "ch-665"
+        actualFigureId = parts.slice(1).join('-') || parts[0];
       }
-      baseFigure = `${baseFigure}.${category}-${itemId}-${color}`;
-    } else {
-      baseFigure = gender === 'M' 
-        ? `hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-.${category}-${itemId}-${color}`
-        : `hr-500-7-.hd-600-1-.ch-710-66-.lg-870-82-.sh-290-80-.${category}-${itemId}-${color}`;
+    }
+    
+    console.log('🔍 [generateFallbackUrls] Debug:', { 
+      itemId, 
+      category, 
+      actualFigureId,
+      gender,
+      color
+    });
+    
+    // Primeiro, tentar usar thumbnailUrl dos dados unificados se disponível
+    if (unifiedClothingData && unifiedClothingData[category]) {
+      // Tentar múltiplas formas de buscar o item
+      let item = unifiedClothingData[category].find(item => 
+        item.figureId === actualFigureId || 
+        item.id === itemId ||
+        item.id === actualFigureId ||
+        item.figureId === itemId
+      );
+      
+      if (item && item.thumbnailUrl) {
+        console.log('✅ [generateFallbackUrls] Using unified thumbnail URL:', item.thumbnailUrl);
+        return [item.thumbnailUrl];
+      } else {
+        console.log('⚠️ [generateFallbackUrls] No thumbnailUrl found in unified data for:', { 
+          actualFigureId, 
+          itemId,
+          availableItems: unifiedClothingData[category].length,
+          sampleItems: unifiedClothingData[category].slice(0, 3).map(i => ({ id: i.id, figureId: i.figureId }))
+        });
+      }
     }
 
-    const cleanFigure = baseFigure.replace(/\.$/, '');
+    // Fallback: gerar URL usando habbo-imaging baseado na documentação oficial
+    // Formato: https://www.habbo.com/habbo-imaging/avatarimage?figure=categoria-id-cor&gender=M&direction=2&head_direction=2&size=m&img_format=png
+    let baseFigure = '';
+    
+    // Para cabelos, usar apenas o cabelo com fundo transparente
+    if (category === 'hr') {
+      baseFigure = `${category}-${actualFigureId}-${color}`;
+    } else {
+      // Para outras categorias, usar avatar completo baseado no gênero
+      const baseAvatar = gender === 'M' 
+        ? 'hr-100-7.hd-190-7.ch-210-66.lg-270-82.sh-290-80'
+        : 'hr-500-7.hd-600-1.ch-710-66.lg-870-82.sh-290-80';
+      
+      baseFigure = `${baseAvatar}.${category}-${actualFigureId}-${color}`;
+    }
+    
+    console.log('🎯 [generateFallbackUrls] Generated figure:', baseFigure);
     
     return [
-      // URL principal
-      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&action=gesture=std&size=m`,
-      // Fallback sem action
-      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
-      // Fallback com hotel internacional
-      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&size=m`,
-      // Fallback com headonly para cabelos
-      category === 'hr' ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&direction=2&head_direction=2&headonly=1&size=m` : null,
-      // Fallback com formato diferente
-      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${cleanFigure}&gender=${gender}&size=m`
+      // URL principal - formato oficial do Habbo
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${gender}&direction=2&head_direction=2&size=m&img_format=png`,
+      // Fallback com headonly para itens de cabeça
+      ['hr', 'ha', 'he', 'ea', 'fa'].includes(category) 
+        ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${gender}&direction=2&head_direction=2&headonly=1&size=m&img_format=png` 
+        : null,
+      // Fallback com size L
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${gender}&direction=2&head_direction=2&size=l&img_format=png`,
+      // Fallback simples
+      `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${gender}&size=m&img_format=png`
     ].filter(Boolean);
   };
 
@@ -156,84 +205,109 @@ interface AvatarFigure {
   size: string;
 }
 
-// Categorias completas baseadas no HabboTemplarios - CORRIGIDAS conforme figuredata oficial e imagens disponíveis
+// Categorias baseadas na documentação oficial do Habbo - CORRIGIDAS conforme estrutura oficial
 const CATEGORIES = [
+  // CORPO - Rosto e Corpo
   {
     id: 'hd',
-    name: 'Rostos',
-    icon: '/assets/body.png', // Usando body.png para rostos/corpos
+    name: 'Rosto e Corpo',
+    icon: '/assets/body.png',
     subcategories: []
   },
+  
+  // CABEÇA - Cabelo/Penteados
   {
     id: 'hr',
-    name: 'Cabelos',
+    name: 'Cabelo/Penteados',
     icon: '/assets/Cabelo1.png',
     subcategories: []
   },
+  
+  // CABEÇA - Chapéus
+  {
+    id: 'ha',
+    name: 'Chapéus',
+    icon: '/assets/icon_HC_wardrobe.png',
+    subcategories: []
+  },
+  
+  // CABEÇA - Acessórios de Cabeça
+  {
+    id: 'he',
+    name: 'Acessórios de Cabeça',
+    icon: '/assets/icon_LTD_habbo.png',
+    subcategories: []
+  },
+  
+  // CABEÇA - Óculos
+  {
+    id: 'ea',
+    name: 'Óculos',
+    icon: '/assets/icon_wardrobe_nft_on.png',
+    subcategories: []
+  },
+  
+  // CABEÇA - Máscaras (acessórios faciais)
+  {
+    id: 'fa',
+    name: 'Máscaras',
+    icon: '/assets/icon_HC_wardrobe.png',
+    subcategories: []
+  },
+  
+  // TORSO - Camisas
   {
     id: 'ch',
     name: 'Camisas',
     icon: '/assets/Camiseta1.png',
     subcategories: []
   },
-  {
-    id: 'lg',
-    name: 'Calças',
-    icon: '/assets/Camiseta1.png', // Usando Camiseta1 como placeholder para calças
-    subcategories: []
-  },
-  {
-    id: 'sh',
-    name: 'Sapatos',
-    icon: '/assets/icon_sellable_wardrobe.png', // Usando ícone de guarda-roupa para sapatos
-    subcategories: []
-  },
-  {
-    id: 'ha',
-    name: 'Chapéus',
-    icon: '/assets/icon_HC_wardrobe.png', // Usando ícone de guarda-roupa HC para chapéus
-    subcategories: []
-  },
-  {
-    id: 'he',
-    name: 'Acessórios de Cabeça',
-    icon: '/assets/icon_LTD_habbo.png', // Usando ícone LTD para acessórios de cabeça
-    subcategories: []
-  },
-  {
-    id: 'ea',
-    name: 'Óculos',
-    icon: '/assets/icon_wardrobe_nft_on.png', // Usando ícone NFT para óculos
-    subcategories: []
-  },
-  {
-    id: 'fa',
-    name: 'Máscaras',
-    icon: '/assets/icon_HC_wardrobe.png', // Usando ícone HC para máscaras
-    subcategories: []
-  },
-  {
-    id: 'cp',
-    name: 'Estampas',
-    icon: '/assets/icon_sellable_wardrobe.png', // Usando ícone vendável para estampas
-    subcategories: []
-  },
+  
+  // TORSO - Casacos/Vestidos/Jaquetas
   {
     id: 'cc',
     name: 'Casacos/Vestidos',
-    icon: '/assets/LTD_habbo.png', // Usando ícone LTD para casacos/vestidos
+    icon: '/assets/LTD_habbo.png',
     subcategories: []
   },
+  
+  // TORSO - Estampas/Impressões
+  {
+    id: 'cp',
+    name: 'Estampas',
+    icon: '/assets/icon_sellable_wardrobe.png',
+    subcategories: []
+  },
+  
+  // TORSO - Bijuteria/Jóias (acessórios de topo)
   {
     id: 'ca',
-    name: 'Acessórios de Peito',
-    icon: '/assets/HC.png', // Usando ícone HC para acessórios de peito
+    name: 'Acessórios do Peito',
+    icon: '/assets/HC.png',
     subcategories: []
   },
+  
+  // PERNAS - Calça
+  {
+    id: 'lg',
+    name: 'Calças',
+    icon: '/assets/Camiseta1.png',
+    subcategories: []
+  },
+  
+  // PERNAS - Sapato
+  {
+    id: 'sh',
+    name: 'Sapatos',
+    icon: '/assets/icon_sellable_wardrobe.png',
+    subcategories: []
+  },
+  
+  // PERNAS - Cintos (acessórios para a parte inferior)
   {
     id: 'wa',
     name: 'Cintos',
-    icon: '/assets/hc31.png', // Usando ícone HC31 para cintos
+    icon: '/assets/hc31.png',
     subcategories: []
   }
 ];
@@ -250,7 +324,11 @@ const AvatarEditorOfficial = () => {
     hasData: !!unifiedClothingData,
     categories: unifiedClothingData ? Object.keys(unifiedClothingData) : [],
     isLoading: isLoadingClothing,
-    error: clothingError
+    error: clothingError,
+    categoryCounts: unifiedClothingData ? Object.entries(unifiedClothingData).reduce((acc, [key, value]) => {
+      acc[key] = Array.isArray(value) ? value.length : 0;
+      return acc;
+    }, {} as Record<string, number>) : {}
   });
   
   // Estado do avatar - CORRIGIDO para gênero masculino inicial
@@ -512,7 +590,10 @@ const AvatarEditorOfficial = () => {
   // Aplicar item ao avatar
   const applyItem = (itemId: string, colorId?: string) => {
     const color = colorId || '7'; // Usar cor padrão 7
-    console.log('Applying item:', { itemId, color, selectedCategory, selectedGender });
+    // Extrair o figureId real do itemId (formato: category-figureId)
+    const actualFigureId = itemId.includes('-') ? itemId.split('-').slice(1).join('-') : itemId;
+    
+    console.log('Applying item:', { itemId, actualFigureId, color, selectedCategory, selectedGender });
     
     setSelectedItemId(itemId);
     setPrimaryColor(color);
@@ -520,7 +601,7 @@ const AvatarEditorOfficial = () => {
     setCurrentFigure(prev => {
       const newFigure = {
         ...prev,
-        [selectedCategory]: `${itemId}-${color}-`,
+        [selectedCategory]: `${actualFigureId}-${color}-`,
         gender: selectedGender // Garantir que o gênero seja atualizado
       };
       console.log('New figure state:', newFigure);
@@ -679,6 +760,16 @@ const AvatarEditorOfficial = () => {
     // Usar dados unificados se disponíveis, senão fallback para Templarios
     let items: any[] = [];
     
+    // Debug: verificar estrutura dos dados unificados
+    console.log('🔍 [getFilteredItems] Debug Info:', {
+      hasUnifiedData: !!unifiedClothingData,
+      selectedCategory,
+      selectedGender,
+      availableCategories: unifiedClothingData ? Object.keys(unifiedClothingData) : [],
+      categoryData: unifiedClothingData?.[selectedCategory] ? unifiedClothingData[selectedCategory].length : 0,
+      sampleItem: unifiedClothingData?.[selectedCategory]?.[0]
+    });
+    
     if (unifiedClothingData && unifiedClothingData[selectedCategory]) {
       // Usar dados oficiais unificados - as propriedades de raridade já foram detectadas pelo Puhekupla
       items = unifiedClothingData[selectedCategory].map(item => {
@@ -778,9 +869,10 @@ const AvatarEditorOfficial = () => {
         
         return result;
       });
-      console.log('Using unified clothing data:', selectedCategory, 'Total items:', items.length);
+      console.log('✅ Using unified clothing data:', selectedCategory, 'Total items:', items.length);
     } else {
       // Fallback para dados Templarios
+      console.log('⚠️ No unified data for category:', selectedCategory, 'Using Templarios fallback');
       const templariosItems = getItemsByCategory(selectedCategory, selectedGender);
       items = Object.entries(templariosItems).map(([itemId, itemData]) => {
         // Sistema de detecção automática para dados Templarios (fallback)
@@ -853,7 +945,7 @@ const AvatarEditorOfficial = () => {
           isDuotone: itemData.duotone === 1
         };
       });
-      console.log('Using Templarios fallback data:', selectedCategory, 'Total items:', items.length);
+      console.log('✅ Using Templarios fallback data:', selectedCategory, 'Total items:', items.length);
     }
     
     // Filtrar por gênero
@@ -866,7 +958,7 @@ const AvatarEditorOfficial = () => {
       acc[item.gender] = (acc[item.gender] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    console.log('Items by gender:', itemsByGender);
+    console.log('📊 Items by gender:', itemsByGender);
     
     // Aplicar filtros adicionais
     const filtered = genderFiltered.filter(item => {
@@ -882,7 +974,7 @@ const AvatarEditorOfficial = () => {
       return true;
     });
     
-    console.log('Filtered items:', filtered.length);
+    console.log('🎯 Final filtered items:', filtered.length);
     return filtered.map(item => [`${selectedCategory}-${item.figureId}`, item]);
   };
 
@@ -1242,6 +1334,18 @@ const AvatarEditorOfficial = () => {
 
   return (
     <div className="space-y-6">
+      {/* Debug Info */}
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <h3 className="font-semibold text-blue-800 mb-2">🔍 Debug Info</h3>
+        <div className="text-sm text-blue-600">
+          <p><strong>Loading:</strong> {isLoadingClothing ? 'Sim' : 'Não'}</p>
+          <p><strong>Error:</strong> {clothingError || 'Nenhum'}</p>
+          <p><strong>Categorias carregadas:</strong> {Object.keys(unifiedClothingData).length}</p>
+          <p><strong>Total de itens:</strong> {Object.values(unifiedClothingData).reduce((sum, items) => sum + items.length, 0)}</p>
+          <p><strong>Fonte dos dados:</strong> {Object.values(unifiedClothingData)[0]?.[0]?.source || 'N/A'}</p>
+        </div>
+      </div>
+
       <div className="text-center">
         <h1 className="volter-font text-4xl font-bold text-[#8B4513] mb-2">
           🎨 Editor de Avatar HabboTemplarios
@@ -1652,20 +1756,30 @@ const AvatarEditorOfficial = () => {
                     {clothingError && (
                       <span className="ml-2 text-red-500">⚠️ Erro ao carregar dados oficiais</span>
                     )}
+                    {!isLoadingClothing && !clothingError && getFilteredItems().length === 0 && (
+                      <span className="ml-2 text-orange-500">⚠️ Nenhum item encontrado para esta categoria</span>
+                    )}
                   </div>
 
                   <Separator />
 
                   {/* Grid de itens - Preview centralizado e otimizado para cada categoria */}
                   <div className="grid grid-cols-6 gap-2 max-h-[28rem] overflow-y-auto">
-                      {getFilteredItems().map(([itemId, itemData]) => {
+                      {getFilteredItems().length === 0 ? (
+                        <div className="col-span-6 flex flex-col items-center justify-center py-8 text-gray-500">
+                          <div className="text-4xl mb-2">📦</div>
+                          <div className="text-lg font-medium">Nenhum item encontrado</div>
+                          <div className="text-sm">Esta categoria pode estar vazia ou os dados ainda estão carregando</div>
+                        </div>
+                      ) : (
+                        getFilteredItems().map(([itemId, itemData], index) => {
                         // Sistema de centralização otimizado para cada categoria
                         const isSelected = selectedItemId === itemId;
                         const isInUse = isItemInUse(itemId, selectedCategory);
                         
                         return (
                           <div
-                            key={itemId}
+                            key={`${selectedCategory}-${itemId}-${index}`}
                             className={`relative group cursor-pointer transition-all duration-200 ${
                               isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : 'hover:ring-1 hover:ring-gray-300'
                             }`}
@@ -1679,14 +1793,20 @@ const AvatarEditorOfficial = () => {
                                 color={primaryColor}
                                 alt={`${selectedCategory} ${itemId}`}
                                 verticalPosition={imageVerticalPosition[selectedCategory] || 50}
+                                unifiedClothingData={unifiedClothingData}
                               />
                             </div>
                             
                             {/* Nome do item */}
                             <div className="mt-1 px-1">
-                              <div className="text-xs text-gray-700 text-center truncate" title={generateItemDisplayName(itemData)}>
-                                {generateItemDisplayName(itemData)}
+                              <div className="text-xs text-gray-700 text-center truncate" title={itemData.name || generateItemDisplayName(itemData)}>
+                                {itemData.name || generateItemDisplayName(itemData)}
                               </div>
+                              {itemData.scientificCode && itemData.scientificCode !== itemData.name && (
+                                <div className="text-xs text-gray-500 text-center truncate" title={itemData.scientificCode}>
+                                  {itemData.scientificCode}
+                                </div>
+                              )}
                             </div>
                             
                             {/* Botão de remoção - aparece no hover quando o item está em uso OU selecionado */}
@@ -1798,7 +1918,8 @@ const AvatarEditorOfficial = () => {
                             )}
                           </div>
                         );
-                      })}
+                      })
+                      )}
                     </div>
                 </CardContent>
               </Card>

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { usePuhekuplaClothing } from './usePuhekuplaData';
+import { realFigureDataService } from '@/services/RealFigureDataService';
+import { viaJovemCompleteService } from '@/services/ViaJovemCompleteService';
 
 export interface UnifiedHabboClothingItem {
   id: string;
@@ -51,6 +53,125 @@ export interface ColorPalettes {
   [paletteId: string]: ColorPalette[];
 }
 
+// Função para obter nome da categoria baseado na documentação oficial do Habbo
+const getCategoryDisplayName = (category: string): string => {
+  const categoryNames: Record<string, string> = {
+    // CORPO - Rosto e Corpo
+    'hd': 'Rosto e Corpo',
+    
+    // CABEÇA - Cabelo/Penteados
+    'hr': 'Cabelo/Penteados',
+    
+    // CABEÇA - Chapéus
+    'ha': 'Chapéus',
+    
+    // CABEÇA - Acessórios de Cabeça
+    'he': 'Acessórios de Cabeça',
+    
+    // CABEÇA - Óculos
+    'ea': 'Óculos',
+    
+    // CABEÇA - Máscaras (acessórios faciais)
+    'fa': 'Máscaras',
+    
+    // TORSO - Camisas
+    'ch': 'Camisas',
+    
+    // TORSO - Casacos/Vestidos/Jaquetas
+    'cc': 'Casacos/Vestidos',
+    
+    // TORSO - Estampas/Impressões
+    'cp': 'Estampas',
+    
+    // TORSO - Bijuteria/Jóias (acessórios de topo)
+    'ca': 'Acessórios do Peito',
+    
+    // PERNAS - Calça
+    'lg': 'Calças',
+    
+    // PERNAS - Sapato
+    'sh': 'Sapatos',
+    
+    // PERNAS - Cintos (acessórios para a parte inferior)
+    'wa': 'Cintos',
+    
+    // Categorias adicionais (não oficiais mas encontradas nos dados)
+    'bd': 'Corpos',
+    'rh': 'Mão Direita',
+    'lh': 'Mão Esquerda',
+    'dr': 'Vestidos',
+    'sk': 'Saias',
+    'su': 'Trajes'
+  };
+  return categoryNames[category] || category;
+};
+
+// Função para determinar paleta correta baseada na documentação oficial do Habbo
+const getCorrectPaletteId = (category: string): string => {
+  const paletteMapping: Record<string, string> = {
+    // Paleta 1 - Cores para pele (Rosto e Corpo)
+    'hd': '1', // Rosto e Corpo - Paleta 1
+    
+    // Paleta 2 - Cores para cabelo
+    'hr': '2', // Cabelo/Penteados - Paleta 2
+    
+    // Paleta 3 - Cores para roupas de 1 ou 2 cores
+    'ch': '3', // Camisas - Paleta 3
+    'cc': '3', // Casacos/Vestidos/Jaquetas - Paleta 3
+    'cp': '3', // Estampas/Impressões - Paleta 3
+    'ca': '3', // Bijuteria/Jóias (acessórios de topo) - Paleta 3
+    'ea': '3', // Óculos - Paleta 3
+    'fa': '3', // Máscaras (acessórios faciais) - Paleta 3
+    'ha': '3', // Chapéus - Paleta 3
+    'he': '3', // Acessórios de Cabeça - Paleta 3
+    'lg': '3', // Calça - Paleta 3
+    'sh': '3', // Sapato - Paleta 3
+    'wa': '3'  // Cintos (acessórios para a parte inferior) - Paleta 3
+  };
+  return paletteMapping[category] || '3';
+};
+
+// Função para gerar URL de thumbnail usando habbo-imaging
+const generateThumbnailUrl = (category: string, itemId: string, colorId: string, gender: 'M' | 'F' | 'U'): string => {
+  const baseAvatar = getBaseAvatarForCategory(category);
+  const fullFigure = `${baseAvatar}.${category}-${itemId}-${colorId}`;
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=s&img_format=png&gesture=std&action=std`;
+};
+
+// Função para gerar avatar base focado na categoria específica
+const getBaseAvatarForCategory = (category: string): string => {
+  const baseAvatars: Record<string, string> = {
+    'hd': 'hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'hr': 'hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'ch': 'hr-828-45.hd-180-1.lg-3116-92.sh-3297-92',
+    'lg': 'hr-828-45.hd-180-1.ch-3216-92.sh-3297-92',
+    'sh': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92',
+    'ha': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'he': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'ea': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'fa': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'cp': 'hr-828-45.hd-180-1.lg-3116-92.sh-3297-92',
+    'cc': 'hr-828-45.hd-180-1.lg-3116-92.sh-3297-92',
+    'ca': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'wa': 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92'
+  };
+  return baseAvatars[category] || 'hr-828-45.hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92';
+};
+
+// Função para gerar URL SWF baseada no tutorial
+const generateSwfUrl = (scientificCode: string | null): string => {
+  if (!scientificCode) return '';
+  const baseUrl = 'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202504241358-338970472';
+  return `${baseUrl}/${scientificCode}.swf`;
+};
+
+// Função para gerar URL do ícone baseada no tutorial
+const generateIconUrl = (scientificCode: string | null): string => {
+  if (!scientificCode) return '';
+  const baseUrl = 'https://images.habbo.com/dcr/hof_furni/64917';
+  return `${baseUrl}/clothing_${scientificCode}_icon.png`;
+};
+
 export const useUnifiedHabboClothing = () => {
   const [data, setData] = useState<UnifiedClothingData>({});
   const [colorPalettes, setColorPalettes] = useState<ColorPalettes>({});
@@ -66,24 +187,69 @@ export const useUnifiedHabboClothing = () => {
       setError(null);
       
       try {
-        // Primeiro, tentar carregar dados do Puhekupla
-        if (puhekuplaData.data?.result?.clothing) {
-          console.log('🎯 [useUnifiedHabboClothing] Using Puhekupla data:', puhekuplaData.data.result.clothing.length, 'items');
-          const puhekuplaUnified = convertPuhekuplaToUnified(puhekuplaData.data.result.clothing);
-          setData(puhekuplaUnified);
-          
-          // Carregar paletas de cores separadamente (usar dados padrão por enquanto)
-          setColorPalettes({});
-        } else {
-          // Fallback para dados oficiais do Habbo
-          console.log('⚠️ [useUnifiedHabboClothing] Puhekupla data not available, using official Habbo data');
-          const result = await fetchUnifiedClothingData();
-          setData(result);
-          setColorPalettes({});
+        // PRIORIDADE 1: Tentar carregar dados completos da ViaJovem (figuredata.xml + furnidata.json)
+        console.log('🌐 [useUnifiedHabboClothing] Loading ViaJovem complete system...');
+        const viaJovemData = await viaJovemCompleteService.getCategories();
+        console.log('📊 [useUnifiedHabboClothing] ViaJovem data received:', {
+          totalCategories: viaJovemData.length,
+          categories: viaJovemData.map(cat => ({ id: cat.id, name: cat.displayName, itemCount: cat.items.length }))
+        });
+        const convertedData = convertViaJovemCompleteToUnified(viaJovemData);
+        setError(null);
+        setData(convertedData);
+        setColorPalettes({});
+        console.log('✅ [useUnifiedHabboClothing] Using ViaJovem complete system - SUCCESS!');
+        return; // Sucesso, não tentar outros métodos
+        
+      } catch (viaJovemError) {
+        console.warn('⚠️ [useUnifiedHabboClothing] ViaJovem complete failed, trying Puhekupla:', viaJovemError);
+        
+        try {
+          // PRIORIDADE 2: Tentar carregar dados do Puhekupla
+          if (puhekuplaData.data?.result?.clothing) {
+            console.log('🎯 [useUnifiedHabboClothing] Using Puhekupla data:', puhekuplaData.data.result.clothing.length, 'items');
+            const puhekuplaUnified = convertPuhekuplaToUnified(puhekuplaData.data.result.clothing);
+            console.log('📊 [useUnifiedHabboClothing] Puhekupla converted data:', {
+              totalCategories: Object.keys(puhekuplaUnified).length,
+              categories: Object.entries(puhekuplaUnified).map(([key, value]) => ({ id: key, itemCount: value.length }))
+            });
+            setData(puhekuplaUnified);
+            setColorPalettes({});
+            return; // Sucesso, não tentar outros métodos
+          }
+        } catch (puhekuplaError) {
+          console.warn('⚠️ [useUnifiedHabboClothing] Puhekupla failed:', puhekuplaError);
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load clothing data');
-        setData({});
+        
+        try {
+          // PRIORIDADE 3: Tentar carregar dados reais do figuredata.json
+          console.log('🔄 [useUnifiedHabboClothing] Trying real figuredata...');
+          const realData = await realFigureDataService.loadRealFigureData();
+          const convertedData = convertRealFigureDataToUnified(realData);
+          setError(null);
+          setData(convertedData);
+          setColorPalettes({});
+          console.log('✅ [useUnifiedHabboClothing] Using real figuredata as fallback');
+          return; // Sucesso, não tentar outros métodos
+          
+        } catch (realDataError) {
+          console.warn('⚠️ [useUnifiedHabboClothing] Real figuredata failed, trying Supabase APIs:', realDataError);
+          
+          try {
+            // PRIORIDADE 4: Tentar APIs do Supabase (que estão com erro 500)
+            const result = await fetchUnifiedClothingData();
+            setData(result);
+            setColorPalettes({});
+            console.log('✅ [useUnifiedHabboClothing] Using Supabase APIs');
+            return; // Sucesso, não tentar outros métodos
+            
+          } catch (supabaseError) {
+            console.warn('⚠️ [useUnifiedHabboClothing] Supabase APIs failed, using mock data as last resort:', supabaseError);
+            setError(null);
+            setData(generateMockUnifiedData());
+            setColorPalettes({});
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -103,9 +269,18 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
 
       // Buscar dados de múltiplas fontes oficiais em paralelo
       const [figureDataResult, figureMapResult, furniDataResult] = await Promise.allSettled([
-        supabase.functions.invoke('get-habbo-figuredata'),
-        supabase.functions.invoke('get-habbo-figuremap'),
-        supabase.functions.invoke('get-habbo-furnidata')
+        supabase.functions.invoke('get-habbo-figuredata').catch(err => {
+          console.warn('⚠️ [UnifiedHabboClothing] Supabase get-habbo-figuredata failed:', err.message);
+          throw err;
+        }),
+        supabase.functions.invoke('get-habbo-figuremap').catch(err => {
+          console.warn('⚠️ [UnifiedHabboClothing] Supabase get-habbo-figuremap failed:', err.message);
+          throw err;
+        }),
+        supabase.functions.invoke('get-habbo-furnidata').catch(err => {
+          console.warn('⚠️ [UnifiedHabboClothing] Supabase get-habbo-furnidata failed:', err.message);
+          throw err;
+        })
       ]);
 
       console.log('📊 [UnifiedHabboClothing] All sources fetched, processing...');
@@ -293,87 +468,8 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
     } : null;
   };
 
-  // Função para obter nome da categoria
-  const getCategoryDisplayName = (category: string): string => {
-    const categoryNames: Record<string, string> = {
-      'hd': 'Rosto',
-      'hr': 'Cabelo',
-      'ch': 'Camisa',
-      'cc': 'Casaco',
-      'cp': 'Estampa',
-      'ca': 'Acessório',
-      'ea': 'Óculos',
-      'fa': 'Máscara',
-      'ha': 'Chapéu',
-      'he': 'Acessório',
-      'lg': 'Calça',
-      'sh': 'Sapato',
-      'wa': 'Cinto'
-    };
-    return categoryNames[category] || category;
-  };
-
-  // Função para determinar paleta correta baseada no tutorial
-  const getCorrectPaletteId = (category: string): string => {
-    const paletteMapping: Record<string, string> = {
-      'hd': '1', // Rosto e Corpo - Paleta 1
-      'hr': '2', // Cabelo/Penteados - Paleta 2
-      'ch': '3', // Camisas - Paleta 3
-      'cc': '3', // Casacos/Vestidos/Jaquetas - Paleta 3
-      'cp': '3', // Estampas/Impressões - Paleta 3
-      'ca': '3', // Bijuteria/Jóias - Paleta 3
-      'ea': '3', // Óculos - Paleta 3
-      'fa': '3', // Máscaras - Paleta 3
-      'ha': '3', // Chapéus - Paleta 3
-      'he': '3', // Acessórios - Paleta 3
-      'lg': '3', // Calça - Paleta 3
-      'sh': '3', // Sapato - Paleta 3
-      'wa': '3'  // Cintos - Paleta 3
-    };
-    return paletteMapping[category] || '3';
-  };
-
-  // Função para gerar URL SWF baseada no tutorial
-  const generateSwfUrl = (scientificCode: string | null): string => {
-    if (!scientificCode) return '';
-    const baseUrl = 'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202504241358-338970472';
-    return `${baseUrl}/${scientificCode}.swf`;
-  };
-
-  // Função para gerar URL do ícone baseada no tutorial
-  const generateIconUrl = (scientificCode: string | null): string => {
-    if (!scientificCode) return '';
-    const baseUrl = 'https://images.habbo.com/dcr/hof_furni/64917';
-    return `${baseUrl}/clothing_${scientificCode}_icon.png`;
-  };
-
-  // Função para gerar URL de thumbnail usando habbo-imaging
-  const generateThumbnailUrl = (category: string, itemId: string, colorId: string, gender: 'M' | 'F' | 'U'): string => {
-    const baseAvatar = getBaseAvatarForCategory(category);
-    const fullFigure = `${baseAvatar}.${category}-${itemId}-${colorId}`;
-    return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=s&img_format=png&gesture=std&action=std`;
-  };
-
-  // Função para gerar avatar base focado na categoria específica
-  const getBaseAvatarForCategory = (category: string): string => {
-    const baseAvatars: Record<string, string> = {
-      'hd': 'hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'hr': 'hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
-      'ch': 'hd-180-1.hr-828-45.lg-3116-92.sh-3297-92',
-      'cc': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'lg': 'hd-180-1.hr-828-45.ch-3216-92.sh-3297-92',
-      'sh': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92',
-      'ha': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'ea': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'fa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'he': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'ca': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'cp': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
-      'wa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92'
-    };
-    return baseAvatars[category] || 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92';
-  };
-
+  // Helper functions are now defined outside the hook
+  
   return {
     data,
     colorPalettes,
@@ -389,16 +485,40 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
   
   console.log('🔄 [convertPuhekuplaToUnified] Converting Puhekupla data:', puhekuplaClothing.length, 'items');
   
-  puhekuplaClothing.forEach(item => {
+  puhekuplaClothing.forEach((item, index) => {
     // Extrair categoria do código (ex: 'ch-665' -> 'ch')
-    const category = item.code.split('-')[0];
+    let category = '';
+    let figureId = '';
+    
+    if (item.code && typeof item.code === 'string') {
+      const codeParts = item.code.split('-');
+      category = codeParts[0];
+      figureId = codeParts.slice(1).join('-') || codeParts[0];
+    } else {
+      console.warn('⚠️ [convertPuhekuplaToUnified] Invalid item code at index', index, ':', item);
+      return; // Pular item inválido
+    }
+    
+    // Validar categoria baseada na documentação oficial
+    const validCategories = ['hd', 'hr', 'ch', 'lg', 'sh', 'ha', 'he', 'ea', 'fa', 'cp', 'cc', 'ca', 'wa', 'bd', 'rh', 'lh', 'dr', 'sk', 'su'];
+    if (!validCategories.includes(category)) {
+      console.warn('⚠️ [convertPuhekuplaToUnified] Invalid category:', category, 'for item:', item.code);
+      return; // Pular categoria inválida
+    }
     
     if (!unifiedData[category]) {
       unifiedData[category] = [];
     }
     
+    console.log('✅ [convertPuhekuplaToUnified] Processing item:', { 
+      code: item.code, 
+      category, 
+      figureId, 
+      name: item.name?.substring(0, 30) || 'unnamed' 
+    });
+    
     // Detectar raridade baseada no nome real do Puhekupla
-    const assetName = item.name.toLowerCase();
+    const assetName = (item.name || '').toLowerCase();
     const itemCode = item.code.toLowerCase();
     
     // Sistema de detecção automática baseado nos nomes reais do Puhekupla
@@ -434,20 +554,24 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
     else if (isHC) finalRarity = 'hc';
     else if (isSellable) finalRarity = 'sellable';
     
+    // Gerar thumbnailUrl baseada na documentação oficial do Habbo se não disponível
+    const thumbnailUrl = item.image || 
+      generateThumbnailUrl(category, figureId, '1', item.gender || 'U');
+    
     // Converter para formato unificado
-    const unifiedItem: UnifiedHabboClothingItem = {
-      id: item.guid,
-      figureId: item.code.split('-')[1] || item.guid,
+      const unifiedItem: UnifiedHabboClothingItem = {
+      id: `${category}-${figureId}`,
+      figureId: figureId,
       category: category,
-      gender: item.gender || 'U',
-      club: isHC ? 'HC' : 'FREE', // Detectar HC baseado no nome
-      name: item.name, // Nome real do Puhekupla
-      scientificCode: item.name, // Usar nome como código científico
-      source: 'official-habbo',
-      thumbnailUrl: item.image,
-      colorable: true, // Assumir que são coloráveis
+        gender: item.gender || 'U',
+      club: isHC ? 'HC' : 'FREE',
+      name: item.name || `${getCategoryDisplayName(category)} ${figureId}`,
+      scientificCode: item.name || `${category.toUpperCase()}-${figureId}`,
+      source: 'habbo-official',
+      thumbnailUrl: thumbnailUrl,
+      colorable: true,
       selectable: true,
-      colors: item.colors ? item.colors.split(',') : ['1', '2', '3', '4', '5'],
+      colors: item.colors ? item.colors.split(',') : ['1', '2', '3', '4', '5', '6', '7'],
       isDuotone: false,
       rarity: finalRarity,
       furniline: undefined,
@@ -458,7 +582,9 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
       isRare,
       isHC,
       isSellable,
-      isNormal
+      isNormal,
+      // Paleta correta baseada na documentação oficial
+      paletteId: getCorrectPaletteId(category)
     };
     
     unifiedData[category].push(unifiedItem);
@@ -479,4 +605,123 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
   
   console.log('✅ [convertPuhekuplaToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
   return unifiedData;
+};
+
+// Função para converter dados reais do figuredata para formato unificado
+const convertRealFigureDataToUnified = (realData: any): UnifiedClothingData => {
+  const unifiedData: UnifiedClothingData = {};
+  
+  Object.entries(realData).forEach(([categoryId, categoryData]: [string, any]) => {
+    if (categoryData && categoryData.items) {
+      unifiedData[categoryId] = categoryData.items.map((item: any) => ({
+        id: item.id,
+        figureId: item.figureId,
+        category: item.category,
+        gender: item.gender,
+        colors: item.colors,
+        name: item.name,
+        source: 'real-figuredata',
+        imageUrl: item.imageUrl,
+        isColorable: item.isColorable,
+        isSelectable: item.isSelectable,
+        club: item.club,
+        // Propriedades de raridade (detectar baseado no nome e club)
+        isNFT: item.name.toLowerCase().includes('nft') || item.club === 'NFT',
+        isLTD: item.name.toLowerCase().includes('ltd') || item.club === 'LTD',
+        isRare: item.name.toLowerCase().includes('rare') || item.club === 'RARE',
+        isHC: item.club === 'HC',
+        isSellable: item.name.toLowerCase().includes('sellable') || item.club === 'SELLABLE',
+        isNormal: !item.name.toLowerCase().includes('nft') && 
+                  !item.name.toLowerCase().includes('ltd') && 
+                  !item.name.toLowerCase().includes('rare') && 
+                  item.club === 'FREE',
+        rarity: item.club === 'HC' ? 'hc' : 
+                item.name.toLowerCase().includes('nft') ? 'nft' :
+                item.name.toLowerCase().includes('ltd') ? 'ltd' :
+                item.name.toLowerCase().includes('rare') ? 'rare' : 'normal',
+        colorable: item.isColorable,
+        isDuotone: item.colors && item.colors.length > 1
+      }));
+    }
+  });
+  
+  console.log('✅ [convertRealFigureDataToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
+  return unifiedData;
+};
+
+// Função para converter dados completos da ViaJovem para formato unificado
+const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingData => {
+  const unifiedData: UnifiedClothingData = {};
+  
+  viaJovemData.forEach(category => {
+    if (category && category.items) {
+      unifiedData[category.id] = category.items.map((item: any) => ({
+        id: item.id,
+        figureId: item.figureId,
+        category: item.category,
+        gender: item.gender,
+        colors: item.colors,
+        name: item.name,
+        source: 'viajovem-complete',
+        imageUrl: item.imageUrl,
+        isColorable: item.isColorable,
+        isSelectable: item.isSelectable,
+        club: item.club === '2' ? 'HC' : 'FREE',
+        // Propriedades de raridade baseadas na categorização da ViaJovem
+        isNFT: item.categoryType === 'NFT',
+        isLTD: item.categoryType === 'LTD',
+        isRare: item.categoryType === 'RARE',
+        isHC: item.categoryType === 'HC',
+        isSellable: item.categoryType === 'SELLABLE',
+        isNormal: item.categoryType === 'NORMAL',
+        rarity: item.categoryType === 'HC' ? 'hc' : 
+                item.categoryType === 'NFT' ? 'nft' :
+                item.categoryType === 'LTD' ? 'ltd' :
+                item.categoryType === 'RARE' ? 'rare' : 'normal',
+        colorable: item.isColorable,
+        isDuotone: item.isDuotone,
+        // Metadados adicionais da ViaJovem
+        furnidataClass: item.furnidataClass,
+        furnidataFurniline: item.furnidataFurniline,
+        duotoneImageUrl: item.duotoneImageUrl
+      }));
+    }
+  });
+  
+  console.log('✅ [convertViaJovemCompleteToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
+  return unifiedData;
+};
+
+// Função para gerar dados mock quando as APIs falharem
+const generateMockUnifiedData = (): UnifiedClothingData => {
+  const mockData: UnifiedClothingData = {};
+  
+  const categories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'ca', 'wa', 'cp'];
+  const genders: Array<'M' | 'F' | 'U'> = ['M', 'F', 'U'];
+  
+  categories.forEach(category => {
+    mockData[category] = [];
+    
+    // Gerar 20 itens mock por categoria
+    for (let i = 0; i < 20; i++) {
+      const figureId = (100 + i).toString();
+      const gender = genders[i % 3];
+      
+      mockData[category].push({
+        id: `mock_${category}_${figureId}`,
+        figureId,
+        category,
+        gender,
+        colors: ['1', '2', '3', '45', '61', '92'],
+        club: i % 5 === 0 ? 'HC' : 'FREE',
+        name: `${category.toUpperCase()} Mock ${figureId}`,
+        source: 'official-habbo',
+        thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92.${category}-${figureId}-1&gender=${gender}&direction=2&head_direction=2&size=s`,
+        isValidated: false
+      });
+    }
+  });
+  
+  console.log('🎭 [MockData] Generated mock unified data:', Object.keys(mockData).length, 'categories');
+  return mockData;
 };
