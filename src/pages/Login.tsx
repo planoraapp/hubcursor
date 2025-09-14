@@ -103,21 +103,13 @@ export const Login: React.FC = () => {
                 <img 
                   src="/assets/hubbeta.gif" 
                   alt="HabboHub" 
-                  className="mx-auto mb-4"
+                  className="mx-auto mb-8"
                   style={{ 
                     imageRendering: 'pixelated',
                     maxWidth: '200px',
                     height: 'auto'
                   }}
                 />
-                <h1 className="text-3xl font-bold text-white volter-font" 
-                    style={{ textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black' }}>
-                  HabboHub
-                </h1>
-                <p className="text-white volter-font" 
-                   style={{ textShadow: '1px 1px 0px black' }}>
-                  Portal do Habbo
-                </p>
               </div>
 
               {/* Card de Login */}
