@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import SimpleBadgeImage from './SimpleBadgeImage';
 // import realBadgeDescriptions from '@/data/real-badge-descriptions.json';
-import fullBadgeInfo from '@/data/full-badge-info.json';
+// import fullBadgeInfo from '@/data/full-badge-info.json';
 
 interface BadgeTooltipProps {
   code: string;
