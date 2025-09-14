@@ -19,13 +19,10 @@ export const OfficialHabboEditor: React.FC = () => {
 
   const handleItemSelect = useCallback((item: any) => {
     if (!item) {
-      console.warn('⚠️ No item provided to handleItemSelect');
-      return;
+            return;
     }
 
-    console.log('🎨 [OfficialHabboEditor] Item selected:', item);
-
-    try {
+        try {
       // Use the first available color as default
       const colorId = Array.isArray(item.colors) && item.colors.length > 0 ? item.colors[0] : '1';
       
@@ -37,10 +34,8 @@ export const OfficialHabboEditor: React.FC = () => {
         description: `${item.name || item.category} foi aplicado ao avatar`,
       });
       
-      console.log('✅ [OfficialHabboEditor] Figure updated:', newFigureString);
-    } catch (error) {
-      console.error('❌ [OfficialHabboEditor] Error applying item:', error);
-      toast({
+          } catch (error) {
+            toast({
         title: "❌ Erro",
         description: "Não foi possível aplicar o item",
         variant: "destructive"
@@ -76,8 +71,7 @@ export const OfficialHabboEditor: React.FC = () => {
         description: `Cache populado com ${data.totalInserted} itens`,
       });
     } catch (error) {
-      console.error('❌ Error populating cache:', error);
-      toast({
+            toast({
         title: "❌ Erro",
         description: "Falha ao popular cache de roupas",
         variant: "destructive"

@@ -73,8 +73,7 @@ const OptimizedAvatarRenderer: React.FC<OptimizedAvatarRendererProps> = ({
       });
       setAvatarUrl(url);
     } catch (err) {
-      console.error('❌ [AvatarRenderer] Error generating avatar:', err);
-      toast({
+            toast({
         title: "❌ Erro ao gerar avatar",
         description: "Não foi possível gerar a imagem do avatar. Tente novamente.",
         variant: "destructive"
@@ -232,8 +231,7 @@ const OptimizedAvatarRenderer: React.FC<OptimizedAvatarRendererProps> = ({
               className="max-w-full h-auto"
               style={{ imageRendering: 'pixelated' }}
               onError={() => {
-                console.error('❌ [AvatarRenderer] Image load error');
-                toast({
+                                toast({
                   title: "❌ Erro na imagem",
                   description: "Não foi possível carregar a imagem do avatar.",
                   variant: "destructive"

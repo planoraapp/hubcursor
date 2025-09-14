@@ -80,20 +80,16 @@ const ClothingThumbnail = ({
   ].filter(Boolean); // Remove URLs vazias
 
   const handleImageError = () => {
-    console.log(`❌ [ClothingThumbnail] Failed to load: ${thumbnailUrls[currentUrlIndex]}`);
-    
-    if (currentUrlIndex < thumbnailUrls.length - 1) {
+        if (currentUrlIndex < thumbnailUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
     } else {
-      console.log(`💥 [ClothingThumbnail] All URLs failed for ${category}-${itemId}`);
-      setHasError(true);
+            setHasError(true);
       setIsLoading(false);
     }
   };
 
   const handleImageLoad = () => {
-    console.log(`✅ [ClothingThumbnail] Successfully loaded: ${thumbnailUrls[currentUrlIndex]}`);
-    setIsLoading(false);
+        setIsLoading(false);
     setHasError(false);
   };
 

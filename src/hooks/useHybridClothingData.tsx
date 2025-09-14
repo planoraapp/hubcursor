@@ -24,14 +24,11 @@ export interface OfficialFigureItem {
 }
 
 const fetchHybridClothingData = async (hotel: string = 'com.br'): Promise<HybridClothingItem[]> => {
-  console.log(`🌐 [Hybrid] Starting data fetch for hotel: ${hotel}`);
-  
-  const hybridItems: HybridClothingItem[] = [];
+    const hybridItems: HybridClothingItem[] = [];
   
   try {
     // 1. Fetch official Habbo data (primary source)
-    console.log('📡 [Hybrid] Fetching official Habbo data...');
-    const { data: officialData, error: officialError } = await supabase.functions.invoke('get-habbo-official-data', {
+        const { data: officialData, error: officialError } = await supabase.functions.invoke('get-habbo-official-data', {
       body: { hotel: hotel === 'com.br' ? 'com' : hotel }
     });
 
@@ -56,19 +53,15 @@ const fetchHybridClothingData = async (hotel: string = 'com.br'): Promise<Hybrid
         });
       });
     } else {
-      console.warn('⚠️ [Hybrid] Official data failed:', officialError?.message);
-    }
+          }
 
     // 2. Fetch HabboWidgets data (secondary source)
-    console.log('📡 [Hybrid] Fetching HabboWidgets data...');
-    const { data: habboWidgetsData, error: widgetsError } = await supabase.functions.invoke('habbo-widgets-clothing', {
+        const { data: habboWidgetsData, error: widgetsError } = await supabase.functions.invoke('habbo-widgets-clothing', {
       body: { hotel }
     });
 
     if (habboWidgetsData && Array.isArray(habboWidgetsData) && !widgetsError) {
-      console.log('✅ [Hybrid] HabboWidgets data loaded:', habboWidgetsData.length, 'items');
-      
-      // Add HabboWidgets items, avoiding duplicates
+            // Add HabboWidgets items, avoiding duplicates
       const existingIds = new Set(hybridItems.map(item => `${item.category}_${item.figureId || item.swfName.split('_')[1]}`));
       
       habboWidgetsData.forEach((widgetItem: any) => {
@@ -91,8 +84,7 @@ const fetchHybridClothingData = async (hotel: string = 'com.br'): Promise<Hybrid
         }
       });
     } else {
-      console.warn('⚠️ [Hybrid] HabboWidgets data failed:', widgetsError?.message);
-    }
+          }
 
     // 3. Enhance items with hybrid data (best of both sources)
     const enhancedItems = enhanceWithHybridData(hybridItems);
@@ -108,9 +100,7 @@ const fetchHybridClothingData = async (hotel: string = 'com.br'): Promise<Hybrid
     return enhancedItems;
 
   } catch (error) {
-    console.error('❌ [Hybrid] Fatal error:', error);
-    
-    // Return enhanced fallback data
+        // Return enhanced fallback data
     return generateHybridFallbackData();
   }
 };
@@ -203,8 +193,7 @@ function generateHybridFallbackData(): HybridClothingItem[] {
     }
   });
   
-  console.log(`🔄 [Fallback] Generated ${fallbackItems.length} hybrid fallback items`);
-  return fallbackItems;
+    return fallbackItems;
 }
 
 export const useHybridClothingData = (hotel: string = 'com.br') => {

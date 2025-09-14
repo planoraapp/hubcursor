@@ -13,8 +13,7 @@ const PageBanner: React.FC<PageBannerProps> = ({
   backgroundImage = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_pattern_clouds.gif',
   className = ''
 }) => {
-  console.log('🔍 [PageBanner] Background image URL:', backgroundImage);
-  return (
+    return (
     <div className={`relative overflow-hidden rounded-lg mb-8 ${className}`}>
       {/* Background Image */}
       <div 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { habboFeedService } from '@/services/habboFeedService';
 
 interface HabboUserData {
@@ -30,8 +30,7 @@ export const useUserProfile = (username: string) => {
         });
 
       if (error || !data) {
-        console.error('User not found:', error);
-        throw new Error('Usuário não encontrado');
+                throw new Error('Usuário não encontrado');
       }
 
       const userData = Array.isArray(data) ? data[0] : data;
@@ -48,7 +47,7 @@ export const useUserProfile = (username: string) => {
     queryFn: async () => {
       if (!habboUser) return null;
       const hotel = habboUser.hotel === 'br' ? 'com.br' : (habboUser.hotel || 'com.br');
-      return await habboProxyService.getUserProfile(username, hotel);
+      return await unifiedHabboService.getUserProfile(username, hotel);
     },
     enabled: !!habboUser && !!username,
     staleTime: 5 * 60 * 1000,
@@ -60,7 +59,7 @@ export const useUserProfile = (username: string) => {
     queryFn: async () => {
       if (!habboUser) return [];
       const hotel = habboUser.hotel === 'br' ? 'com.br' : (habboUser.hotel || 'com.br');
-      return await habboProxyService.getUserPhotos(username, hotel);
+      return await unifiedHabboService.getUserPhotos(username, hotel);
     },
     enabled: !!habboUser && !!username,
     staleTime: 10 * 60 * 1000,

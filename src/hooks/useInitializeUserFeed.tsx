@@ -17,9 +17,7 @@ export const useInitializeUserFeed = () => {
       setIsInitializing(true);
 
       try {
-        console.log(`🚀 [InitializeFeed] Inicializando feed com dados do usuário ${habboAccount.habbo_name}`);
-        
-        // Garantir que o próprio usuário está sendo rastreado
+                // Garantir que o próprio usuário está sendo rastreado
         await habboFeedService.ensureTrackedAndSynced({
           habbo_name: habboAccount.habbo_name,
           habbo_id: habboAccount.habbo_id,
@@ -27,19 +25,15 @@ export const useInitializeUserFeed = () => {
         });
 
         // EMERGENCIAL: Disparar processamento em lote de todos os amigos
-        console.log(`🚨 [InitializeFeed] Disparando processamento emergencial para ${habboAccount.habbo_name}`);
-        
-        const { data, error } = await supabase.rpc('trigger_emergency_processing', {
+                const { data, error } = await supabase.rpc('trigger_emergency_processing', {
           p_user_habbo_name: habboAccount.habbo_name,
           p_user_habbo_id: habboAccount.habbo_id,
           p_hotel: habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel
         });
 
         if (error) {
-          console.error('❌ [InitializeFeed] Erro no processamento emergencial:', error);
-        } else {
-          console.log('✅ [InitializeFeed] Processamento emergencial disparado:', data);
-        }
+                  } else {
+                  }
 
         // Descobrir usuários online baseado no hotel do usuário
         const hotel = habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel;
@@ -48,10 +42,8 @@ export const useInitializeUserFeed = () => {
         // Sincronizar dados em lote para ter conteúdo inicial
         await habboFeedService.triggerBatchSync(hotel);
 
-        console.log(`✅ [InitializeFeed] Inicialização concluída para ${habboAccount.habbo_name}`);
-      } catch (error) {
-        console.error('❌ [InitializeFeed] Erro na inicialização:', error);
-      } finally {
+              } catch (error) {
+              } finally {
         setIsInitializing(false);
       }
     };

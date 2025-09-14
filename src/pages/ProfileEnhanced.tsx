@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { User, Calendar, MapPin, Trophy } from 'lucide-react';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
-import { habboProxyService } from '@/services/habboProxyService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 interface HabboProfile {
   name: string;
   motto: string;
@@ -29,7 +28,7 @@ const ProfileEnhanced = () => {
 
       try {
         setLoading(true);
-        const profileData = await habboProxyService.getUserProfile(username);
+        const profileData = await unifiedHabboService.getUserProfile(username);
         if (profileData) {
           // Transform HabboUser to HabboProfile format
           const transformedProfile: HabboProfile = {
@@ -46,8 +45,7 @@ const ProfileEnhanced = () => {
           setError('Perfil não encontrado');
         }
       } catch (err) {
-        console.error('Error loading profile:', err);
-        setError('Erro ao carregar perfil');
+                setError('Erro ao carregar perfil');
       } finally {
         setLoading(false);
       }

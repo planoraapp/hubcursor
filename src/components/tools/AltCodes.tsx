@@ -176,8 +176,7 @@ const AltCodes = () => {
       setCopiedCode(text);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (err) {
-      console.error('Erro ao copiar:', err);
-    }
+          }
   };
 
   const generateVolterText = async () => {
@@ -202,8 +201,7 @@ const AltCodes = () => {
         createAltCodesImage();
       }
     } catch (error) {
-      console.error('Erro ao gerar texto Volter:', error);
-      // Fallback: criar uma imagem com Alt Codes usando as PNGs
+            // Fallback: criar uma imagem com Alt Codes usando as PNGs
       createAltCodesImage();
     }
   };

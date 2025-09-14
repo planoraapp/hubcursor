@@ -71,8 +71,7 @@ export const LoginByMissao: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao buscar motto:', error);
-      toast({
+            toast({
         title: "Erro",
         description: "Erro ao buscar motto atual",
         variant: "destructive"
@@ -116,8 +115,7 @@ export const LoginByMissao: React.FC = () => {
       });
 
       if (error) {
-        console.error('Function error:', error);
-        throw new Error(error.message || 'Erro na requisição');
+                throw new Error(error.message || 'Erro na requisição');
       }
 
       if (data?.error) {
@@ -136,9 +134,7 @@ export const LoginByMissao: React.FC = () => {
       setCurrentMotto('');
 
     } catch (error: any) {
-      console.error('Motto verification error:', error);
-      
-      let errorMessage = error.message || 'Erro na verificação';
+            let errorMessage = error.message || 'Erro na verificação';
       
       // Handle specific error cases
       if (errorMessage.includes('não encontrado')) {

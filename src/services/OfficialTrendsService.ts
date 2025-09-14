@@ -18,35 +18,27 @@ export class OfficialTrendsService {
   // "Altas de Hoje" baseado 100% em dados oficiais
   static async getTodayHighs(hotel: string = 'br'): Promise<OfficialTrendItem[]> {
     try {
-      console.log(`📈 [TrendsService] Fetching today's highs with 100% real data for ${hotel}`);
-      
-      // Buscar dados oficiais
+            // Buscar dados oficiais
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
         body: { hotel }
       });
       
       if (error) {
-        console.error('❌ [TrendsService] Error fetching official data:', error);
-        return [];
+                return [];
       }
       
       if (!data?.items || !Array.isArray(data.items)) {
-        console.warn('⚠️ [TrendsService] No official items returned from API');
-        return [];
+                return [];
       }
       
-      console.log(`📊 [TrendsService] Processing ${data.items.length} official items`);
-      
-      // Filtrar apenas dados oficiais reais
+            // Filtrar apenas dados oficiais reais
       const officialItems = data.items.filter((item: any) => 
         item.isOfficialData === true && 
         item.currentPrice > 0 &&
         typeof item.soldItems === 'number'
       );
       
-      console.log(`✅ [TrendsService] Found ${officialItems.length} items with verified official data`);
-      
-      // Converter para formato de tendências (sem simular dados)
+            // Converter para formato de tendências (sem simular dados)
       const trendsItems: OfficialTrendItem[] = officialItems.map((item: any) => {
         const currentPrice = item.currentPrice;
         const soldItems = item.soldItems;
@@ -72,13 +64,10 @@ export class OfficialTrendsService {
         .sort((a, b) => b.soldItems - a.soldItems)
         .slice(0, 10);
       
-      console.log(`🔥 [TrendsService] Top items by sales volume: ${topByVolume.length}`);
-      
-      return topByVolume;
+            return topByVolume;
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get real today highs:', error);
-      return [];
+            return [];
     }
   }
   
@@ -111,12 +100,10 @@ export class OfficialTrendsService {
         .sort((a: any, b: any) => b.soldItems - a.soldItems)
         .slice(0, 10);
       
-      console.log(`📊 [TrendsService] Found ${topSellers.length} top sellers with official data`);
-      return topSellers;
+            return topSellers;
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get real top sellers:', error);
-      return [];
+            return [];
     }
   }
   
@@ -152,12 +139,10 @@ export class OfficialTrendsService {
         .sort((a: any, b: any) => b.currentPrice - a.currentPrice)
         .slice(0, 10);
       
-      console.log(`💎 [TrendsService] Found ${opportunities.length} rare opportunities with official data`);
-      return opportunities;
+            return opportunities;
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get real opportunities:', error);
-      return [];
+            return [];
     }
   }
   
@@ -194,8 +179,7 @@ export class OfficialTrendsService {
       };
       
     } catch (error) {
-      console.error('❌ [TrendsService] Failed to get data quality status:', error);
-      return {
+            return {
         totalItems: 0,
         officialItemsCount: 0,
         realDataPercentage: 0,

@@ -161,8 +161,7 @@ const AltCodesCompact = () => {
         try {
           document.execCommand('copy');
         } catch (fallbackErr) {
-          console.error('Erro no fallback de cópia:', fallbackErr);
-          // Se tudo falhar, mostrar o texto para o usuário copiar manualmente
+                    // Se tudo falhar, mostrar o texto para o usuário copiar manualmente
           alert(`Copie este caractere: ${text}`);
           return;
         } finally {
@@ -179,8 +178,7 @@ const AltCodesCompact = () => {
         isVisible: true
       });
     } catch (err) {
-      console.error('Erro ao copiar:', err);
-      // Mostrar notificação de erro
+            // Mostrar notificação de erro
       setNotification({
         message: `Erro ao copiar. Tente selecionar e copiar manualmente: ${text}`,
         isVisible: true

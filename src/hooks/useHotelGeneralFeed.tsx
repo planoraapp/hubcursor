@@ -47,29 +47,23 @@ export const useHotelGeneralFeed = (options?: {
   } = useQuery({
     queryKey: ['hotel-general-feed', hotel, limit],
     queryFn: async (): Promise<HotelFeedResponse> => {
-      console.log(`🏨 [HOTEL FEED] Buscando feed geral do hotel ${hotel}`);
-      
-      try {
+            try {
         const { data, error } = await supabase.functions.invoke('habbo-hotel-general-feed', {
           body: { hotel, limit }
         });
 
         if (error) {
-          console.error('❌ [HOTEL FEED] Error:', error);
-          throw new Error(error.message || 'Failed to fetch hotel feed');
+                    throw new Error(error.message || 'Failed to fetch hotel feed');
         }
 
         if (!data) {
-          console.error('❌ [HOTEL FEED] No data received');
-          throw new Error('No data received from hotel feed');
+                    throw new Error('No data received from hotel feed');
         }
 
-        console.log(`✅ [HOTEL FEED] Recebidas ${data.activities?.length || 0} atividades`);
-        return data as HotelFeedResponse;
+                return data as HotelFeedResponse;
 
       } catch (error: any) {
-        console.error('❌ [HOTEL FEED] Fetch failed:', error);
-        // Fallback com atividades mock
+                // Fallback com atividades mock
         return {
           activities: generateMockHotelActivities(hotel, limit),
           metadata: {

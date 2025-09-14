@@ -66,15 +66,7 @@ const AdvancedHabboEditor: React.FC = () => {
   } = useLookStringManager();
 
   const handleItemSelect = useCallback((item: UnifiedHabboClothingItem, colorId: string = '1') => {
-    console.log('🎯 [AdvancedEditor] Item aplicado:', { 
-      item: item.name, 
-      category: item.category, 
-      figureId: item.figureId,
-      colorId,
-      source: item.source
-    });
-    
-    addPart(item.category, item.figureId, colorId);
+        addPart(item.category, item.figureId, colorId);
     setSelectedColor(colorId);
     
     const sourceBadges = {
@@ -91,8 +83,7 @@ const AdvancedHabboEditor: React.FC = () => {
   }, [addPart, toast]);
 
   const handleRemoveItem = useCallback((category: string) => {
-    console.log('🗑️ [AdvancedEditor] Removendo categoria:', category);
-    removePart(category);
+        removePart(category);
     
     toast({
       title: "🗑️ Item removido",
@@ -103,9 +94,7 @@ const AdvancedHabboEditor: React.FC = () => {
   const handleResetAvatar = useCallback(() => {
     clear();
     
-    console.log('🔄 [AdvancedEditor] Avatar resetado');
-    
-    toast({
+        toast({
       title: "�� Avatar resetado",
       description: "Avatar voltou ao estado padrão.",
     });

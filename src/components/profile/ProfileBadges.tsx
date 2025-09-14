@@ -2,8 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy } from 'lucide-react';
-import { habboProxyService } from '@/services/habboProxyService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 interface Badge {
   code: string;
   name: string;
@@ -35,7 +34,7 @@ export const ProfileBadges: React.FC<ProfileBadgesProps> = ({ badges, habboName 
               >
                 <div className="relative">
                   <img
-                    src={habboProxyService.getBadgeUrl(badge.code)}
+                    src={unifiedHabboService.getBadgeUrl(badge.code)}
                     alt={badge.name}
                     className="w-12 h-12 mx-auto border border-gray-200 rounded bg-white p-1 group-hover:scale-110 transition-transform"
                     onError={(e) => {

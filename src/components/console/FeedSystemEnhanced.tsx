@@ -39,15 +39,12 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
     setErrorMessage('');
     
     try {
-      console.log('🔄 [FeedEnhanced] Fetching general feed...');
-      const sampleUsers = ['habbohub', 'Beebop', 'joao123'];
+            const sampleUsers = ['habbohub', 'Beebop', 'joao123'];
       const allActivities: Activity[] = [];
 
       for (const username of sampleUsers) {
         try {
-          console.log(`📡 [FeedEnhanced] Requesting activities for: ${username}`);
-          
-          const response = await supabase.functions.invoke('habbo-unified-api', {
+                    const response = await supabase.functions.invoke('habbo-unified-api', {
             body: { 
               endpoint: 'feed',
               action: 'activities',
@@ -55,28 +52,22 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
             }
           });
           
-          console.log(`📨 [FeedEnhanced] Response for ${username}:`, response);
-          
-          if (response.data?.success && response.data?.activities) {
+                    if (response.data?.success && response.data?.activities) {
             const userActivities = response.data.activities.map((activity: Activity) => ({
               ...activity,
               friendName: username,
               figureString: 'hd-180-1.ch-255-66.lg-280-110.sh-305-62'
             }));
             allActivities.push(...userActivities);
-            console.log(`✅ [FeedEnhanced] Added ${userActivities.length} activities for ${username}`);
-            setServiceStatus('online');
+                        setServiceStatus('online');
           } else {
-            console.warn(`⚠️ [FeedEnhanced] No activities found for ${username}`);
-          }
+                      }
         } catch (error) {
-          console.error(`❌ [FeedEnhanced] Error fetching activities for ${username}:`, error);
-        }
+                  }
       }
 
       if (allActivities.length === 0) {
-        console.log('⚠️ [FeedEnhanced] No real activities found, using mock data');
-        setActivities(MOCK_ACTIVITIES);
+                setActivities(MOCK_ACTIVITIES);
         setServiceStatus('limited');
         setErrorMessage('Usando dados de exemplo. HabboWidgets pode estar indisponível.');
       } else {
@@ -86,10 +77,8 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
       }
       
       setLastUpdate(new Date());
-      console.log(`📊 [FeedEnhanced] Final activities count: ${activities.length}`);
-    } catch (error) {
-      console.error('❌ [FeedEnhanced] Error fetching general feed:', error);
-      setActivities(MOCK_ACTIVITIES);
+          } catch (error) {
+            setActivities(MOCK_ACTIVITIES);
       setServiceStatus('offline');
       setErrorMessage('Serviço temporariamente indisponível. Exibindo dados de exemplo.');
     } finally {
@@ -99,8 +88,7 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
 
   const fetchFriendsFeed = async () => {
     if (followedUsers.length === 0) {
-      console.log('ℹ️ [FeedEnhanced] No followed users, showing mock data');
-      setActivities(MOCK_ACTIVITIES.slice(0, 3));
+            setActivities(MOCK_ACTIVITIES.slice(0, 3));
       setServiceStatus('limited');
       return;
     }
@@ -109,14 +97,11 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
     setErrorMessage('');
     
     try {
-      console.log('🔄 [FeedEnhanced] Fetching friends feed for:', followedUsers);
-      const allActivities: Activity[] = [];
+            const allActivities: Activity[] = [];
 
       for (const username of followedUsers.slice(0, 5)) {
         try {
-          console.log(`📡 [FeedEnhanced] Requesting activities for friend: ${username}`);
-          
-          const response = await supabase.functions.invoke('habbo-unified-api', {
+                    const response = await supabase.functions.invoke('habbo-unified-api', {
             body: { 
               endpoint: 'feed',
               action: 'activities',
@@ -131,11 +116,9 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
               figureString: 'hd-180-1.ch-255-66.lg-280-110.sh-305-62'
             }));
             allActivities.push(...userActivities);
-            console.log(`✅ [FeedEnhanced] Added ${userActivities.length} activities for friend ${username}`);
-          }
+                      }
         } catch (error) {
-          console.error(`❌ [FeedEnhanced] Error fetching activities for friend ${username}:`, error);
-        }
+                  }
       }
 
       if (allActivities.length === 0) {
@@ -153,10 +136,8 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
       }
       
       setLastUpdate(new Date());
-      console.log(`📊 [FeedEnhanced] Final friends activities count: ${activities.length}`);
-    } catch (error) {
-      console.error('❌ [FeedEnhanced] Error fetching friends feed:', error);
-      setActivities(MOCK_ACTIVITIES.slice(0, 5));
+          } catch (error) {
+            setActivities(MOCK_ACTIVITIES.slice(0, 5));
       setServiceStatus('offline');
       setErrorMessage('Feed de amigos indisponível. Exibindo dados de exemplo.');
     } finally {
@@ -180,8 +161,7 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
   };
 
   const refreshFeed = () => {
-    console.log(`🔄 [FeedEnhanced] Refreshing ${feedType} feed...`);
-    if (feedType === 'general') {
+        if (feedType === 'general') {
       fetchGeneralFeed();
     } else {
       fetchFriendsFeed();
@@ -189,13 +169,11 @@ export const FeedSystemEnhanced: React.FC<FeedSystemEnhancedProps> = ({ feedType
   };
 
   useEffect(() => {
-    console.log(`🚀 [FeedEnhanced] Initializing ${feedType} feed...`);
-    refreshFeed();
+        refreshFeed();
     
     // Auto-refresh every 10 minutes (reduced from 5 to avoid rate limits)
     const interval = setInterval(() => {
-      console.log(`⏰ [FeedEnhanced] Auto-refreshing ${feedType} feed...`);
-      refreshFeed();
+            refreshFeed();
     }, 10 * 60 * 1000);
     
     return () => clearInterval(interval);

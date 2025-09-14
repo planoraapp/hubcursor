@@ -26,7 +26,7 @@ export function NewAppSidebar() {
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
-    { name: 'Homes', path: '/homes', icon: '/assets/home.png' },
+    { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
     { name: 'Emblemas', path: '/emblemas', icon: '/assets/emblemas.png' },
     { name: 'Catálogo', path: '/catalogo', icon: '/assets/Carrinho.png' },
@@ -41,7 +41,17 @@ export function NewAppSidebar() {
         <img 
           src={item.icon} 
           alt={item.name}
-          className={`flex-shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-4 h-4'}`}
+          className={`flex-shrink-0`}
+          style={{
+            imageRendering: 'pixelated',
+            objectFit: 'contain',
+            width: 'auto',
+            height: 'auto',
+            maxWidth: isCollapsed ? '40px' : '24px',
+            maxHeight: isCollapsed ? '40px' : '24px',
+            minWidth: isCollapsed ? '20px' : '16px',
+            minHeight: isCollapsed ? '20px' : '16px'
+          }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';

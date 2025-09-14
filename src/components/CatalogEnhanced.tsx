@@ -33,20 +33,11 @@ export const CatalogEnhanced = ({ hotel = 'com.br' }: CatalogEnhancedProps) => {
 
   // Debug: Log dos dados recebidos
   useEffect(() => {
-    console.log('📊 [CatalogEnhanced] Debug Info:', {
-      furniDataLength: furniData?.length || 0,
-      loading,
-      error,
-      searchTerm,
-      selectedCategory,
-      firstItem: furniData?.[0]
-    });
-  }, [furniData, loading, error, searchTerm, selectedCategory]);
+      }, [furniData, loading, error, searchTerm, selectedCategory]);
 
   const filteredData = useMemo(() => {
     if (!furniData || !Array.isArray(furniData)) {
-      console.log('⚠️ [CatalogEnhanced] No furniData or not array:', furniData);
-      return [];
+            return [];
     }
 
     let filtered = [...furniData];

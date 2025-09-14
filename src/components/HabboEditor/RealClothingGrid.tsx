@@ -154,13 +154,11 @@ const RealClothingGrid = ({
   const categoryInfo = CATEGORY_CONFIG[selectedCategory as keyof typeof CATEGORY_CONFIG];
 
   const handleItemClick = (item: HabboRealClothingItem) => {
-    console.log('🎯 [RealClothingGrid] Item selecionado:', item);
-    onItemSelect?.(item, selectedColor);
+        onItemSelect?.(item, selectedColor);
   };
 
   const handleSync = () => {
-    console.log('🔄 [RealClothingGrid] Sincronizando dados reais...');
-    refetch();
+        refetch();
   };
 
   if (isLoading) {

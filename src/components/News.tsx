@@ -25,9 +25,7 @@ export const News = () => {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching Habbo news...');
-      
-      const { data, error } = await supabase.functions.invoke('habbo-news-scraper');
+            const { data, error } = await supabase.functions.invoke('habbo-news-scraper');
       
       if (error) {
         throw error;
@@ -35,13 +33,11 @@ export const News = () => {
       
       if (data?.news && Array.isArray(data.news)) {
         setNews(data.news);
-        console.log('✅ News loaded:', data.news.length, 'items');
-      } else {
+              } else {
         throw new Error('Invalid news data format');
       }
     } catch (err) {
-      console.error('❌ Error fetching news:', err);
-      setError('Erro ao carregar notícias');
+            setError('Erro ao carregar notícias');
       // Set fallback news
       setNews([
         {

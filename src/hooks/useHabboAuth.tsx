@@ -1,16 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
 
-interface HabboUser {
-  id: string
-  habbo_username: string
-  habbo_motto: string
-  habbo_avatar: string
-  is_admin: boolean
-  is_verified: boolean
-  last_login: string
-  created_at: string
-}
-
 interface AuthContextType {
   user: HabboUser | null
   isLoading: boolean
@@ -44,8 +33,7 @@ export const HabboAuthProvider = ({ children }: HabboAuthProviderProps) => {
       try {
         setUser(JSON.parse(savedUser))
       } catch (error) {
-        console.error('Erro ao carregar usuário:', error)
-        localStorage.removeItem('habbo_user')
+                localStorage.removeItem('habbo_user')
       }
     }
     setIsLoading(false)
@@ -74,12 +62,10 @@ export const HabboAuthProvider = ({ children }: HabboAuthProviderProps) => {
         localStorage.setItem('habbo_user', JSON.stringify(data.user))
         return true
       } else {
-        console.error('Erro no login:', data.error)
-        return false
+                return false
       }
     } catch (error) {
-      console.error('Erro na requisição de login:', error)
-      return false
+            return false
     } finally {
       setIsLoading(false)
     }
@@ -109,12 +95,10 @@ export const HabboAuthProvider = ({ children }: HabboAuthProviderProps) => {
         localStorage.setItem('habbo_user', JSON.stringify(data.user))
         return true
       } else {
-        console.error('Erro na verificação:', data.error)
-        return false
+                return false
       }
     } catch (error) {
-      console.error('Erro na requisição de verificação:', error)
-      return false
+            return false
     } finally {
       setIsLoading(false)
     }
@@ -140,3 +124,4 @@ export const HabboAuthProvider = ({ children }: HabboAuthProviderProps) => {
     </AuthContext.Provider>
   )
 }
+import type { HabboUser } from '@/types/habbo';

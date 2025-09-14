@@ -30,8 +30,7 @@ export class FurnidataService {
       });
     }
     
-    console.log(`📦 [FurnidataService] Loaded ${this.furniMap.size} furniture items from local data`);
-  }
+      }
 
   // Mapear className para dados completos
   static getFurniData(className: string): FurniItem | null {

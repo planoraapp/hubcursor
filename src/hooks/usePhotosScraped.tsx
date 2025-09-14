@@ -21,8 +21,7 @@ export const usePhotosScraped = (username?: string, hotel: string = 'br', forceR
   }));
 
   const refreshPhotos = () => {
-    console.log('%c[🔄 LEGACY PHOTOS] Refresh called via legacy hook', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;');
-    return refetch(forceRefresh);
+        return refetch(forceRefresh);
   };
 
   return { 

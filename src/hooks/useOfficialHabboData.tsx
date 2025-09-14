@@ -24,12 +24,9 @@ export interface OfficialHabboData {
 }
 
 const fetchOfficialData = async (): Promise<OfficialHabboData> => {
-  console.log('🔄 [OfficialHabboData] Iniciando busca de dados oficiais...');
-  
-  try {
+    try {
     // Fetch figure data
-    console.log('📡 [OfficialHabboData] Buscando figuredata...');
-    const figureResponse = await supabase.functions.invoke('get-habbo-figuredata');
+        const figureResponse = await supabase.functions.invoke('get-habbo-figuredata');
     
     let figureData: Record<string, OfficialFigureItem[]> = {};
     
@@ -40,13 +37,11 @@ const fetchOfficialData = async (): Promise<OfficialHabboData> => {
         totalItems: Object.values(figureData).reduce((acc, items) => acc + items.length, 0)
       });
     } else {
-      console.warn('⚠️ [OfficialHabboData] Sem dados de figuredata, usando fallback');
-      figureData = generateFallbackFigureData();
+            figureData = generateFallbackFigureData();
     }
 
     // Fetch badges
-    console.log('📡 [OfficialHabboData] Buscando badges...');
-    const badgeResponse = await supabase.functions.invoke('habbo-badges-storage', {
+        const badgeResponse = await supabase.functions.invoke('habbo-badges-storage', {
       body: { limit: 1000, search: '', category: 'all' }
     });
     
@@ -60,10 +55,8 @@ const fetchOfficialData = async (): Promise<OfficialHabboData> => {
         imageUrl: badge.imageUrl || '',
         category: badge.category || 'others'
       }));
-      console.log('✅ [OfficialHabboData] Badges carregados:', badges.length);
-    } else {
-      console.warn('⚠️ [OfficialHabboData] Sem dados de badges');
-    }
+          } else {
+          }
 
     const result = { figureData, badges };
     
@@ -73,17 +66,13 @@ const fetchOfficialData = async (): Promise<OfficialHabboData> => {
         ...result,
         cachedAt: Date.now()
       }));
-      console.log('💾 [OfficialHabboData] Dados salvos no cache');
-    } catch (e) {
-      console.warn('⚠️ [OfficialHabboData] Erro ao salvar cache:', e);
-    }
+          } catch (e) {
+          }
 
     return result;
     
   } catch (error) {
-    console.error('❌ [OfficialHabboData] Erro ao buscar dados:', error);
-    
-    // Tentar cache local
+        // Tentar cache local
     try {
       const cached = localStorage.getItem('habbo_official_data');
       if (cached) {
@@ -92,16 +81,14 @@ const fetchOfficialData = async (): Promise<OfficialHabboData> => {
         
         // Usar cache se for menos de 24 horas
         if (cacheAge < 24 * 60 * 60 * 1000) {
-          console.log('🔄 [OfficialHabboData] Usando dados do cache');
-          return {
+                    return {
             figureData: parsedCache.figureData || generateFallbackFigureData(),
             badges: parsedCache.badges || []
           };
         }
       }
     } catch (cacheError) {
-      console.warn('⚠️ [OfficialHabboData] Erro ao ler cache:', cacheError);
-    }
+          }
 
     // Fallback final
     return {

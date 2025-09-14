@@ -121,8 +121,7 @@ export const HanditemToolFixed: React.FC = () => {
         description: `Testando handitem ${handitemId} com ${habboName}`,
       });
     } catch (error) {
-      console.error('Erro ao testar handitem:', error);
-      toast({
+            toast({
         title: "Erro",
         description: "Não foi possível testar o handitem",
       });

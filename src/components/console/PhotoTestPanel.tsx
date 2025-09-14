@@ -19,16 +19,14 @@ export const PhotoTestPanel: React.FC = () => {
     try {
       await testPhotos(username, hotel);
     } catch (error) {
-      console.error('Basic test failed:', error);
-    }
+          }
   };
 
   const handleAdvancedDiscovery = async () => {
     try {
       await discoverPhotos(username, hotel);
     } catch (error) {
-      console.error('Advanced discovery failed:', error);
-    }
+          }
   };
 
   return (

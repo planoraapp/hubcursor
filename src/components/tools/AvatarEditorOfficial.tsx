@@ -83,15 +83,7 @@ const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verti
       }
     }
     
-    console.log('🔍 [generateFallbackUrls] Debug:', { 
-      itemId, 
-      category, 
-      actualFigureId,
-      gender,
-      color
-    });
-    
-    // Primeiro, tentar usar thumbnailUrl dos dados unificados se disponível
+        // Primeiro, tentar usar thumbnailUrl dos dados unificados se disponível
     if (unifiedClothingData && unifiedClothingData[category]) {
       // Tentar múltiplas formas de buscar o item
       let item = unifiedClothingData[category].find(item => 
@@ -102,8 +94,7 @@ const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verti
       );
       
       if (item && item.thumbnailUrl) {
-        console.log('✅ [generateFallbackUrls] Using unified thumbnail URL:', item.thumbnailUrl);
-        return [item.thumbnailUrl];
+                return [item.thumbnailUrl];
       } else {
         console.log('⚠️ [generateFallbackUrls] No thumbnailUrl found in unified data for:', { 
           actualFigureId, 
@@ -130,9 +121,7 @@ const ClothingImageWithFallback = ({ itemId, category, gender, color, alt, verti
       baseFigure = `${baseAvatar}.${category}-${actualFigureId}-${color}`;
     }
     
-    console.log('🎯 [generateFallbackUrls] Generated figure:', baseFigure);
-    
-    return [
+        return [
       // URL principal - formato oficial do Habbo
       `https://www.habbo.com/habbo-imaging/avatarimage?figure=${baseFigure}&gender=${gender}&direction=2&head_direction=2&size=m&img_format=png`,
       // Fallback com headonly para itens de cabeça
@@ -437,15 +426,7 @@ const AvatarEditorOfficial = () => {
   const { userData, isLoading: isLoadingUser, error: userError, refreshData } = useHabboPublicAPI(searchedUser, selectedCountry);
   
   // Debug logs
-  console.log('Estado do componente:', {
-    searchedUser,
-    selectedCountry,
-    userData,
-    isLoadingUser,
-    userError
-  });
-
-  // Mapeamento de países para URLs da API - Usando domínio internacional (.com)
+    // Mapeamento de países para URLs da API - Usando domínio internacional (.com)
   const countryAPIs = {
     br: 'https://www.habbo.com', // Mudado para .com
     us: 'https://www.habbo.com',
@@ -463,16 +444,13 @@ const AvatarEditorOfficial = () => {
     if (!searchUsername.trim()) return;
     
     console.log('Buscando usuário:', searchUsername.trim());
-    console.log('País selecionado:', selectedCountry);
-    setSearchedUser(searchUsername.trim());
+        setSearchedUser(searchUsername.trim());
   };
 
   // Função para aplicar avatar do usuário buscado
   const applyUserAvatar = () => {
     if (userData?.figureString) {
-      console.log('Figure string original:', userData.figureString);
-      
-      // Parsear a figure string do usuário e aplicar ao editor
+            // Parsear a figure string do usuário e aplicar ao editor
       const figureParts = userData.figureString.split('.');
       const newFigure = { ...currentFigure };
       
@@ -516,8 +494,7 @@ const AvatarEditorOfficial = () => {
       // Aplicar gênero detectado
       newFigure.gender = detectedGender as 'M' | 'F';
       
-      console.log('Nova figure aplicada:', newFigure);
-      setCurrentFigure(newFigure);
+            setCurrentFigure(newFigure);
     }
   };
 
@@ -574,14 +551,7 @@ const AvatarEditorOfficial = () => {
     const figureString = figureParts.join('.');
 
     // Debug: Log para verificar a geração do avatar
-    console.log('Avatar URL Debug:', {
-      figureString,
-      avatarGender,
-      selectedGender,
-      currentFigure: currentFigure
-    });
-
-    // Monta URL do preview usando o gênero correto - CORRIGIDO: removido duplo &&
+        // Monta URL do preview usando o gênero correto - CORRIGIDO: removido duplo &&
     const url = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&gender=${avatarGender}&direction=${currentFigure.direction}&head_direction=${currentFigure.headDirection}&action=gesture=${currentFigure.gesture}&size=l`;
 
     return url;
@@ -593,9 +563,7 @@ const AvatarEditorOfficial = () => {
     // Extrair o figureId real do itemId (formato: category-figureId)
     const actualFigureId = itemId.includes('-') ? itemId.split('-').slice(1).join('-') : itemId;
     
-    console.log('Applying item:', { itemId, actualFigureId, color, selectedCategory, selectedGender });
-    
-    setSelectedItemId(itemId);
+        setSelectedItemId(itemId);
     setPrimaryColor(color);
     
     setCurrentFigure(prev => {
@@ -604,16 +572,13 @@ const AvatarEditorOfficial = () => {
         [selectedCategory]: `${actualFigureId}-${color}-`,
         gender: selectedGender // Garantir que o gênero seja atualizado
       };
-      console.log('New figure state:', newFigure);
-      return newFigure;
+            return newFigure;
     });
   };
 
   // Remover item do avatar (voltar para padrão)
   const removeItem = (category: string) => {
-    console.log('Removing item from category:', category);
-    
-    setCurrentFigure(prev => {
+        setCurrentFigure(prev => {
       const newFigure = { ...prev };
       
       // Definir valores padrão baseados no gênero
@@ -632,8 +597,7 @@ const AvatarEditorOfficial = () => {
         (newFigure as any)[category] = '100-7-';
       }
       
-      console.log('Figure after removal:', newFigure);
-      return newFigure;
+            return newFigure;
     });
     
     // Limpar seleção se o item removido era o selecionado
@@ -785,16 +749,7 @@ const AvatarEditorOfficial = () => {
           
           // Debug: mostrar badges já detectados pelo Puhekupla
           if (item.isNFT || item.isLTD || item.isRare || item.isHC || item.isSellable) {
-            console.log(`🎯 Puhekupla Badge Already Detected - ${item.name}:`, {
-              NFT: item.isNFT,
-              LTD: item.isLTD,
-              Rare: item.isRare,
-              HC: item.isHC,
-              Sellable: item.isSellable,
-              Normal: item.isNormal,
-              Rarity: item.rarity
-            });
-          }
+                      }
           
           return result;
         }
@@ -857,23 +812,13 @@ const AvatarEditorOfficial = () => {
         
         // Debug: mostrar detecção de badges para itens especiais
         if (isNFT || isLTD || isRare || isHC || isSellable) {
-          console.log(`🎯 Fallback Badge Detection - ${assetName}:`, {
-            NFT: isNFT,
-            LTD: isLTD,
-            Rare: isRare,
-            HC: isHC,
-            Sellable: isSellable,
-            Normal: isNormal
-          });
-        }
+                  }
         
         return result;
       });
-      console.log('✅ Using unified clothing data:', selectedCategory, 'Total items:', items.length);
-    } else {
+          } else {
       // Fallback para dados Templarios
-      console.log('⚠️ No unified data for category:', selectedCategory, 'Using Templarios fallback');
-      const templariosItems = getItemsByCategory(selectedCategory, selectedGender);
+            const templariosItems = getItemsByCategory(selectedCategory, selectedGender);
       items = Object.entries(templariosItems).map(([itemId, itemData]) => {
         // Sistema de detecção automática para dados Templarios (fallback)
         // Criar item temporário para usar generateItemDisplayName
@@ -945,8 +890,7 @@ const AvatarEditorOfficial = () => {
           isDuotone: itemData.duotone === 1
         };
       });
-      console.log('✅ Using Templarios fallback data:', selectedCategory, 'Total items:', items.length);
-    }
+          }
     
     // Filtrar por gênero
     const genderFiltered = items.filter(item => 
@@ -958,9 +902,7 @@ const AvatarEditorOfficial = () => {
       acc[item.gender] = (acc[item.gender] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    console.log('📊 Items by gender:', itemsByGender);
-    
-    // Aplicar filtros adicionais
+        // Aplicar filtros adicionais
     const filtered = genderFiltered.filter(item => {
       if (searchTerm && !item.figureId.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
@@ -974,8 +916,7 @@ const AvatarEditorOfficial = () => {
       return true;
     });
     
-    console.log('🎯 Final filtered items:', filtered.length);
-    return filtered.map(item => [`${selectedCategory}-${item.figureId}`, item]);
+        return filtered.map(item => [`${selectedCategory}-${item.figureId}`, item]);
   };
 
   // Gerar URL do item - Preview focado na região específica com gênero correto
@@ -986,8 +927,7 @@ const AvatarEditorOfficial = () => {
     if (unifiedClothingData && unifiedClothingData[selectedCategory]) {
       const item = unifiedClothingData[selectedCategory].find(item => item.figureId === itemId);
       if (item && item.thumbnailUrl) {
-        console.log('Using unified thumbnail URL:', item.thumbnailUrl);
-        return item.thumbnailUrl;
+                return item.thumbnailUrl;
       }
     }
     
@@ -1029,15 +969,7 @@ const AvatarEditorOfficial = () => {
     }
     
     // Debug: Log para verificar se a substituição está funcionando
-    console.log('Item Preview URL Debug:', {
-      itemId,
-      selectedCategory,
-      selectedGender,
-      primaryColor,
-      finalFigureString: baseFigure
-    });
-    
-    // Corrigir a URL do habbo-imaging - remover duplo && e usar formato correto
+        // Corrigir a URL do habbo-imaging - remover duplo && e usar formato correto
     const cleanFigure = baseFigure.replace(/\.$/, ''); // Remove trailing dot
     
     // Gerar múltiplas URLs de fallback
@@ -1552,10 +1484,6 @@ const AvatarEditorOfficial = () => {
                 </div>
               </div>
 
-
-
-              
-
               <Button 
                 className="w-full"
                 onClick={() => {
@@ -1814,14 +1742,7 @@ const AvatarEditorOfficial = () => {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation(); // Evitar que o clique também aplique o item
-                                  console.log('Remove button clicked:', {
-                                    itemId,
-                                    selectedCategory,
-                                    isInUse,
-                                    isSelected,
-                                    currentValue: currentFigure[selectedCategory as keyof AvatarFigure]
-                                  });
-                                  removeItem(selectedCategory);
+                                                                    removeItem(selectedCategory);
                                 }}
                                 className="absolute inset-0 z-20 bg-gray-500 bg-opacity-80 hover:bg-opacity-90 rounded flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100"
                                 title={isInUse ? "Remover peça do avatar" : "Remover peça selecionada"}

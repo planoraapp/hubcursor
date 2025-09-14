@@ -52,8 +52,7 @@ export const FunctionalRatingWidget: React.FC<FunctionalRatingWidgetProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar avaliações:', error);
-    }
+          }
   };
 
   const loadUserRating = async () => {

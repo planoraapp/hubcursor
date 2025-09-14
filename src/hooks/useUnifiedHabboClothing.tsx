@@ -188,8 +188,7 @@ export const useUnifiedHabboClothing = () => {
       
       try {
         // PRIORIDADE 1: Tentar carregar dados completos da ViaJovem (figuredata.xml + furnidata.json)
-        console.log('🌐 [useUnifiedHabboClothing] Loading ViaJovem complete system...');
-        const viaJovemData = await viaJovemCompleteService.getCategories();
+                const viaJovemData = await viaJovemCompleteService.getCategories();
         console.log('📊 [useUnifiedHabboClothing] ViaJovem data received:', {
           totalCategories: viaJovemData.length,
           categories: viaJovemData.map(cat => ({ id: cat.id, name: cat.displayName, itemCount: cat.items.length }))
@@ -198,17 +197,13 @@ export const useUnifiedHabboClothing = () => {
         setError(null);
         setData(convertedData);
         setColorPalettes({});
-        console.log('✅ [useUnifiedHabboClothing] Using ViaJovem complete system - SUCCESS!');
-        return; // Sucesso, não tentar outros métodos
+                return; // Sucesso, não tentar outros métodos
         
       } catch (viaJovemError) {
-        console.warn('⚠️ [useUnifiedHabboClothing] ViaJovem complete failed, trying Puhekupla:', viaJovemError);
-        
-        try {
+                try {
           // PRIORIDADE 2: Tentar carregar dados do Puhekupla
           if (puhekuplaData.data?.result?.clothing) {
-            console.log('🎯 [useUnifiedHabboClothing] Using Puhekupla data:', puhekuplaData.data.result.clothing.length, 'items');
-            const puhekuplaUnified = convertPuhekuplaToUnified(puhekuplaData.data.result.clothing);
+                        const puhekuplaUnified = convertPuhekuplaToUnified(puhekuplaData.data.result.clothing);
             console.log('📊 [useUnifiedHabboClothing] Puhekupla converted data:', {
               totalCategories: Object.keys(puhekuplaUnified).length,
               categories: Object.entries(puhekuplaUnified).map(([key, value]) => ({ id: key, itemCount: value.length }))
@@ -218,34 +213,27 @@ export const useUnifiedHabboClothing = () => {
             return; // Sucesso, não tentar outros métodos
           }
         } catch (puhekuplaError) {
-          console.warn('⚠️ [useUnifiedHabboClothing] Puhekupla failed:', puhekuplaError);
-        }
+                  }
         
         try {
           // PRIORIDADE 3: Tentar carregar dados reais do figuredata.json
-          console.log('🔄 [useUnifiedHabboClothing] Trying real figuredata...');
-          const realData = await realFigureDataService.loadRealFigureData();
+                    const realData = await realFigureDataService.loadRealFigureData();
           const convertedData = convertRealFigureDataToUnified(realData);
           setError(null);
           setData(convertedData);
           setColorPalettes({});
-          console.log('✅ [useUnifiedHabboClothing] Using real figuredata as fallback');
-          return; // Sucesso, não tentar outros métodos
+                    return; // Sucesso, não tentar outros métodos
           
         } catch (realDataError) {
-          console.warn('⚠️ [useUnifiedHabboClothing] Real figuredata failed, trying Supabase APIs:', realDataError);
-          
-          try {
+                    try {
             // PRIORIDADE 4: Tentar APIs do Supabase (que estão com erro 500)
             const result = await fetchUnifiedClothingData();
             setData(result);
             setColorPalettes({});
-            console.log('✅ [useUnifiedHabboClothing] Using Supabase APIs');
-            return; // Sucesso, não tentar outros métodos
+                        return; // Sucesso, não tentar outros métodos
             
           } catch (supabaseError) {
-            console.warn('⚠️ [useUnifiedHabboClothing] Supabase APIs failed, using mock data as last resort:', supabaseError);
-            setError(null);
+                        setError(null);
             setData(generateMockUnifiedData());
             setColorPalettes({});
           }
@@ -259,9 +247,7 @@ export const useUnifiedHabboClothing = () => {
   }, [puhekuplaData.data]);
 
 const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
-    console.log('🌐 [UnifiedHabboClothing] Fetching unified clothing data with OFFICIAL Habbo sources...');
-
-    try {
+        try {
       // Verificar se o Supabase está configurado
       if (!supabase) {
         throw new Error('Supabase client not initialized');
@@ -270,22 +256,17 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
       // Buscar dados de múltiplas fontes oficiais em paralelo
       const [figureDataResult, figureMapResult, furniDataResult] = await Promise.allSettled([
         supabase.functions.invoke('get-habbo-figuredata').catch(err => {
-          console.warn('⚠️ [UnifiedHabboClothing] Supabase get-habbo-figuredata failed:', err.message);
-          throw err;
+                    throw err;
         }),
         supabase.functions.invoke('get-habbo-figuremap').catch(err => {
-          console.warn('⚠️ [UnifiedHabboClothing] Supabase get-habbo-figuremap failed:', err.message);
-          throw err;
+                    throw err;
         }),
         supabase.functions.invoke('get-habbo-furnidata').catch(err => {
-          console.warn('⚠️ [UnifiedHabboClothing] Supabase get-habbo-furnidata failed:', err.message);
-          throw err;
+                    throw err;
         })
       ]);
 
-      console.log('📊 [UnifiedHabboClothing] All sources fetched, processing...');
-
-      // Processar figuredata (base principal)
+            // Processar figuredata (base principal)
       let figureData: Record<string, any[]> = {};
       let colorPalettes: ColorPalettes = {};
       if (figureDataResult.status === 'fulfilled' && figureDataResult.value.data?.figureParts) {
@@ -295,14 +276,12 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         console.log('🎨 [UnifiedHabboClothing] Color palettes loaded:', Object.keys(colorPalettes).length, 'palettes');
       } else {
         // Fallback: usar dados locais
-        console.log('⚠️ [UnifiedHabboClothing] Figuredata API failed, using local data...');
-        try {
+                try {
           const localFigureData = await fetch('/figuredata.json').then(res => res.json());
           figureData = localFigureData;
           console.log('✅ [UnifiedHabboClothing] Local figuredata loaded:', Object.keys(figureData).length, 'categories');
         } catch (localError) {
-          console.error('❌ [UnifiedHabboClothing] Local figuredata also failed:', localError);
-        }
+                  }
       }
 
       // Processar figuremap (códigos científicos e URLs SWF)
@@ -316,8 +295,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
         console.log('✅ [UnifiedHabboClothing] Figuremap loaded:', Object.keys(figureMapData).length, 'categories');
       } else {
         // Fallback: carregar figuremap local
-        console.log('⚠️ [UnifiedHabboClothing] Figuremap API failed, loading local figuremap...');
-        try {
+                try {
           const localFigureMapResponse = await fetch('/handitems/gamedata/figuremap.xml');
           if (localFigureMapResponse.ok) {
             const figureMapXml = await localFigureMapResponse.text();
@@ -325,8 +303,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
             console.log('✅ [UnifiedHabboClothing] Local figuremap loaded:', Object.keys(figureMapData).length, 'categories');
           }
         } catch (localError) {
-          console.error('❌ [UnifiedHabboClothing] Local figuremap also failed:', localError);
-        }
+                  }
       }
 
       // Processar furnidata (classificação de raridade)
@@ -344,8 +321,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
       // Processar cada categoria do figuredata
       Object.entries(figureData).forEach(([category, items]) => {
         if (!Array.isArray(items)) {
-          console.warn(`⚠️ [UnifiedHabboClothing] Category ${category} items is not an array:`, typeof items);
-          unifiedData[category] = [];
+                    unifiedData[category] = [];
           return;
         }
         unifiedData[category] = items.map(item => {
@@ -400,9 +376,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
       return unifiedData;
     
   } catch (error) {
-    console.error('❌ [UnifiedHabboClothing] Error:', error);
-      
-      // Retornar dados vazios em caso de erro para não quebrar a UI
+          // Retornar dados vazios em caso de erro para não quebrar a UI
       return {};
     }
 };
@@ -483,9 +457,7 @@ const fetchUnifiedClothingData = async (): Promise<UnifiedClothingData> => {
 const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingData => {
   const unifiedData: UnifiedClothingData = {};
   
-  console.log('🔄 [convertPuhekuplaToUnified] Converting Puhekupla data:', puhekuplaClothing.length, 'items');
-  
-  puhekuplaClothing.forEach((item, index) => {
+    puhekuplaClothing.forEach((item, index) => {
     // Extrair categoria do código (ex: 'ch-665' -> 'ch')
     let category = '';
     let figureId = '';
@@ -495,15 +467,13 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
       category = codeParts[0];
       figureId = codeParts.slice(1).join('-') || codeParts[0];
     } else {
-      console.warn('⚠️ [convertPuhekuplaToUnified] Invalid item code at index', index, ':', item);
-      return; // Pular item inválido
+            return; // Pular item inválido
     }
     
     // Validar categoria baseada na documentação oficial
     const validCategories = ['hd', 'hr', 'ch', 'lg', 'sh', 'ha', 'he', 'ea', 'fa', 'cp', 'cc', 'ca', 'wa', 'bd', 'rh', 'lh', 'dr', 'sk', 'su'];
     if (!validCategories.includes(category)) {
-      console.warn('⚠️ [convertPuhekuplaToUnified] Invalid category:', category, 'for item:', item.code);
-      return; // Pular categoria inválida
+            return; // Pular categoria inválida
     }
     
     if (!unifiedData[category]) {
@@ -591,16 +561,7 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
     
     // Debug: mostrar detecção de badges para itens especiais
     if (isNFT || isLTD || isRare || isHC || isSellable) {
-      console.log(`🎯 Puhekupla Badge Detection - ${item.name}:`, {
-        NFT: isNFT,
-        LTD: isLTD,
-        Rare: isRare,
-        HC: isHC,
-        Sellable: isSellable,
-        Normal: isNormal,
-        FinalRarity: finalRarity
-      });
-    }
+          }
   });
   
   console.log('✅ [convertPuhekuplaToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');

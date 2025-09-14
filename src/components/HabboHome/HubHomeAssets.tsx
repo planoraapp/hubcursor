@@ -76,8 +76,7 @@ export const HubHomeAssets: React.FC<HubHomeAssetsProps> = ({
       
       setAssets(mockAssets);
     } catch (error) {
-      console.error('Erro ao carregar assets:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };

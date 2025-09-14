@@ -38,9 +38,7 @@ const LocalClothingGrid = ({
     return color?.isHC || false;
   };
 
-  console.log(`🎯 [LocalClothingGrid] Categoria: ${selectedCategory}, Items: ${items.length}, Modo: ${viewMode}`);
-
-  // Cores disponíveis baseadas no sistema ViaJovem (cores mais usadas)
+    // Cores disponíveis baseadas no sistema ViaJovem (cores mais usadas)
   const availableColors = useMemo(() => {
     return [
       '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
@@ -51,13 +49,11 @@ const LocalClothingGrid = ({
   }, []);
 
   const handleItemClick = (item: ViaJovemFlashItem) => {
-    console.log('🎯 [LocalClothingGrid] Item selecionado:', item.name);
-    onItemSelect(item, selectedColor);
+        onItemSelect(item, selectedColor);
   };
 
   const handleColorSelect = (item: ViaJovemFlashItem, colorId: string) => {
-    console.log('🎨 [LocalClothingGrid] Nova cor:', { item: item.name, colorId });
-    onItemSelect(item, colorId);
+        onItemSelect(item, colorId);
     setColorPopoverOpen(null);
   };
 
@@ -76,8 +72,7 @@ const LocalClothingGrid = ({
   }
 
   if (error) {
-    console.error('❌ [LocalClothingGrid] Erro:', error);
-    return (
+        return (
       <Card className="p-6">
         <div className="text-center text-red-500">
           <p className="font-medium">Erro ao carregar roupas</p>
@@ -88,8 +83,7 @@ const LocalClothingGrid = ({
   }
 
   if (items.length === 0) {
-    console.warn('⚠️ [LocalClothingGrid] Nenhum item encontrado');
-    return (
+        return (
       <Card className="p-8">
         <div className="text-center text-muted-foreground">
           <p className="font-medium">Nenhuma roupa encontrada</p>

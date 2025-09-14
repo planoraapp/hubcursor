@@ -16,9 +16,7 @@ export const useMostVisitedHomes = () => {
   return useQuery({
     queryKey: ['most-visited-homes'],
     queryFn: async (): Promise<MostVisitedHomeData[]> => {
-      console.log('👥 [MostVisitedHomes] Fetching most visited homes');
-      
-      // Get homes with visit counts (we'll simulate this with a combination of ratings and recent activity)
+            // Get homes with visit counts (we'll simulate this with a combination of ratings and recent activity)
       // In a real implementation, you'd have a visits table
       const { data: allHomes, error } = await supabase
         .from('user_home_backgrounds')
@@ -32,8 +30,7 @@ export const useMostVisitedHomes = () => {
         .limit(50);
 
       if (error) {
-        console.error('❌ [MostVisitedHomes] Error fetching homes:', error);
-        throw error;
+                throw error;
       }
 
       // Get ratings to use as a proxy for popularity/visits
@@ -108,8 +105,7 @@ export const useMostVisitedHomes = () => {
         };
       });
 
-      console.log('✅ [MostVisitedHomes] Found most visited homes:', enrichedHomes);
-      return enrichedHomes;
+            return enrichedHomes;
     },
     staleTime: 1000 * 60 * 15, // 15 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes

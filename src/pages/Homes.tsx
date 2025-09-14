@@ -15,18 +15,12 @@ import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
 import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
 import { HomesGrid } from '@/components/HomesGrid';
+import { generateUniqueUsername } from '@/utils/usernameUtils';
+import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 
-interface HabboUser {
-  id: string;
-  habbo_name: string;
-  hotel: string;
-  is_online: boolean;
-  motto: string;
-  created_at: string;
-  figure_string?: string;
-  last_seen_at?: string;
-}
 
+
+import type { HabboUser } from '@/types/habbo';
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -102,9 +96,10 @@ const Homes: React.FC = () => {
 
   const handleHomeClick = (userId: string, habboName?: string, hotel?: string) => {
     if (habboName) {
-      // Incluir hotel na URL para evitar conflitos
-      const hotelParam = hotel ? `?hotel=${hotel}` : '';
-      navigate(`/home/${habboName}${hotelParam}`);
+      // Gerar nome único com domínio baseado no hotel
+      const selectedHotel = hotel || 'br';
+      const domainUsername = generateUniqueUsername(habboName, selectedHotel);
+      navigate(`/home/${domainUsername}`);
     }
   };
 
@@ -113,14 +108,15 @@ const Homes: React.FC = () => {
   }, []);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <CollapsibleAppSidebar />
-        <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 min-h-screen" style={{ 
-            backgroundImage: 'url(/assets/bghabbohub.png)',
-            backgroundRepeat: 'repeat'
-          }}>
+    <EnhancedErrorBoundary>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <CollapsibleAppSidebar />
+          <SidebarInset className="flex-1">
+            <main className="flex-1 p-8 min-h-screen" style={{ 
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundRepeat: 'repeat'
+            }}>
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-white mb-4 volter-font"
@@ -137,7 +133,11 @@ const Homes: React.FC = () => {
                 <div className="mt-4">
                   {isLoggedIn && habboAccount ? (
                     <Button 
-                      onClick={() => navigate(`/home/${habboAccount.habbo_name}`)}
+                      onClick={() => {
+                        // Gerar nome único com domínio baseado no hotel do usuário
+                        const domainUsername = generateUniqueUsername(habboAccount.habbo_username, habboAccount.hotel);
+                        navigate(`/home/${domainUsername}`);
+                      }}
                       className="habbo-button-green volter-font px-6 py-2"
                     >
                       <UserCheck className="w-4 h-4 mr-2" />
@@ -272,7 +272,10 @@ const Homes: React.FC = () => {
                         </div>
                         
                         <Button 
-                          onClick={() => navigate(`/home/${user.habbo_name}`)}
+                          onClick={() => {
+                            const domainUsername = generateUniqueUsername(user.habbo_name, user.hotel);
+                            navigate(`/home/${domainUsername}`);
+                          }}
                           className="w-full habbo-button-blue volter-font"
                         >
                           <Home className="w-4 h-4 mr-2" />
@@ -303,6 +306,7 @@ const Homes: React.FC = () => {
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </EnhancedErrorBoundary>
   );
 };
 

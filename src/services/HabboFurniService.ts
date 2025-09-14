@@ -57,9 +57,7 @@ export class HabboFurniService {
     try {
       const url = `${this.BASE_URL}/furniture/${classname}`;
       
-      console.log(`🔍 [HabboFurniService] Buscando mobi: ${classname}`);
-      
-      const response = await fetch(url, {
+            const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${this.API_TOKEN}`,
           'X-Hotel-ID': this.HOTEL_ID.toString(),
@@ -69,20 +67,16 @@ export class HabboFurniService {
       
       if (!response.ok) {
         if (response.status === 404) {
-          console.log(`⚠️ [HabboFurniService] Mobi não encontrado: ${classname}`);
-          return null;
+                    return null;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json();
-      console.log(`✅ [HabboFurniService] Mobi encontrado: ${data.data?.name || classname}`);
-      
-      return data.data;
+            return data.data;
       
     } catch (error) {
-      console.error(`❌ [HabboFurniService] Erro ao buscar ${classname}:`, error);
-      return null;
+            return null;
     }
   }
 
@@ -92,9 +86,7 @@ export class HabboFurniService {
   static async getMultipleFurniture(classnames: string[]): Promise<Map<string, HabboFurniItem>> {
     const results = new Map<string, HabboFurniItem>();
     
-    console.log(`🔍 [HabboFurniService] Buscando ${classnames.length} mobis...`);
-    
-    for (const classname of classnames) {
+        for (const classname of classnames) {
       try {
         const mobi = await this.getFurnitureByClassname(classname);
         if (mobi) {
@@ -105,12 +97,10 @@ export class HabboFurniService {
         await new Promise(resolve => setTimeout(resolve, 100));
         
       } catch (error) {
-        console.error(`❌ [HabboFurniService] Erro ao buscar ${classname}:`, error);
-      }
+              }
     }
     
-    console.log(`✅ [HabboFurniService] ${results.size} mobis encontrados de ${classnames.length} solicitados`);
-    return results;
+        return results;
   }
 
   /**
@@ -134,9 +124,7 @@ export class HabboFurniService {
       
       const url = `${this.BASE_URL}/furniture?${queryParams.toString()}`;
       
-      console.log(`🔍 [HabboFurniService] Buscando: ${url}`);
-      
-      const response = await fetch(url, {
+            const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${this.API_TOKEN}`,
           'X-Hotel-ID': this.HOTEL_ID.toString(),
@@ -149,13 +137,10 @@ export class HabboFurniService {
       }
       
       const data = await response.json();
-      console.log(`📊 [HabboFurniService] Resposta recebida: ${data.data?.length || 0} itens`);
-      
-      return data;
+            return data;
       
     } catch (error) {
-      console.error('❌ [HabboFurniService] Erro na busca:', error);
-      return null;
+            return null;
     }
   }
 
@@ -164,21 +149,16 @@ export class HabboFurniService {
    */
   static async testApiAccess(): Promise<boolean> {
     try {
-      console.log('🧪 [HabboFurniService] Testando acesso à API...');
-      
-      const response = await this.searchFurniture({ per_page: 1, page: 1 });
+            const response = await this.searchFurniture({ per_page: 1, page: 1 });
       
       if (response && response.data && response.data.length > 0) {
-        console.log('✅ [HabboFurniService] API acessível!');
-        return true;
+                return true;
       } else {
-        console.log('❌ [HabboFurniService] API retornou dados vazios');
-        return false;
+                return false;
       }
       
     } catch (error) {
-      console.error('❌ [HabboFurniService] Erro ao testar API:', error);
-      return false;
+            return false;
     }
   }
 }

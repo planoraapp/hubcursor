@@ -163,8 +163,7 @@ export class ViaJovemClothingService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.warn('Erro ao carregar figuredata, usando dados mock:', error);
-      const mockData = this.getMockFigureData();
+            const mockData = this.getMockFigureData();
       this.cache.set(cacheKey, {
         data: mockData,
         timestamp: Date.now()
@@ -206,8 +205,7 @@ export class ViaJovemClothingService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.warn('Erro ao carregar furnidata, usando dados mock:', error);
-      this.loadMockFurnidata();
+            this.loadMockFurnidata();
     }
   }
 

@@ -42,8 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       path: path 
     });
   } catch (error) {
-    console.error('Erro no upload para R2:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
 

@@ -129,14 +129,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
 
   const getItemImage = (item: any) => {
     // Log para debug da imagem
-    console.log(`🖼️ [EnhancedItemGrid] Getting image for ${item.name}:`, {
-      providedImage: item.image,
-      icon: item.icon,
-      code: item.code,
-      type
-    });
-
-    // Usar a imagem fornecida pelos dados mock ou fallback
+        // Usar a imagem fornecida pelos dados mock ou fallback
     return item.image || item.icon || '/placeholder.svg';
   };
 
@@ -162,9 +155,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
   };
 
   const renderGridView = () => {
-    console.log(`🎨 [EnhancedItemGrid] Rendering grid with ${sortedItems.length} sorted items`);
-    
-    return (
+        return (
       <div className={config.gridCols + ' gap-4'}>
         {sortedItems.map((item, index) => {
           const isSelected = selectedItems.includes(item.guid);
@@ -172,15 +163,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
           const isHovered = hoveredItem === item.guid;
           const itemImage = getItemImage(item);
 
-          console.log(`🎯 [EnhancedItemGrid] Rendering item ${index + 1}/${sortedItems.length}:`, {
-            name: item.name,
-            guid: item.guid,
-            image: itemImage,
-            isSelected,
-            isFavorite
-          });
-
-          return (
+                    return (
             <Card 
               key={item.guid || `item-${index}`}
               className={`group relative cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 ${
@@ -216,12 +199,10 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
                     style={{ imageRendering: 'pixelated' }}
                     loading="lazy"
                     onError={(e) => {
-                      console.warn(`❌ [EnhancedItemGrid] Failed to load image for ${item.name}:`, itemImage);
-                      e.currentTarget.src = '/placeholder.svg';
+                                            e.currentTarget.src = '/placeholder.svg';
                     }}
                     onLoad={() => {
-                      console.log(`✅ [EnhancedItemGrid] Successfully loaded image for ${item.name}`);
-                    }}
+                                          }}
                   />
                   
                   {/* Status Badge */}
@@ -317,8 +298,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
   );
 
   if (loading) {
-    console.log(`⏳ [EnhancedItemGrid] Showing loading state for ${type}`);
-    return (
+        return (
       <div className="flex items-center justify-center h-96 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -329,14 +309,7 @@ const EnhancedItemGrid: React.FC<EnhancedItemGridProps> = ({
     );
   }
 
-  console.log(`🎬 [EnhancedItemGrid] Final render decision:`, {
-    type,
-    hasItems: sortedItems.length > 0,
-    viewMode,
-    itemCount: sortedItems.length
-  });
-
-  return (
+    return (
     <div className="space-y-6">
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">

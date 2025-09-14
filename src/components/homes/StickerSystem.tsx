@@ -1,18 +1,9 @@
 
 import React from 'react';
 
-interface Sticker {
-  id: string;
-  sticker_id: string;
-  sticker_src: string;
-  category: string;
-  x: number;
-  y: number;
-  z_index: number;
-  rotation?: number;
-  scale?: number;
-}
 
+
+import type { Sticker } from '@/types/habbo';
 interface StickerSystemProps {
   stickers: Sticker[];
   isEditMode: boolean;

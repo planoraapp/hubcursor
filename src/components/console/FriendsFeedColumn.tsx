@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { HabboFriend, TickerActivity } from '@/services/habboProxyService';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { useUserFigures } from '@/hooks/useUserFigures';
 import { Avatar } from '@/components/ui/avatar';
 import { AvatarImage, AvatarFallback } from '@radix-ui/react-avatar';
@@ -25,8 +25,7 @@ export const FriendsFeedColumn: React.FC<FriendsFeedColumnProps> = ({ friendsAct
     try {
       return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ptBR });
     } catch (error) {
-      console.warn('Erro ao formatar a data:', error);
-      return 'há alguns segundos';
+            return 'há alguns segundos';
     }
   };
 
@@ -57,7 +56,7 @@ export const FriendsFeedColumn: React.FC<FriendsFeedColumnProps> = ({ friendsAct
             <div className="flex items-center gap-3">
               <Avatar>
                 {figureMap && figureMap[friendActivity.friend.name] ? (
-                  <AvatarImage src={habboProxyService.getAvatarUrl(figureMap[friendActivity.friend.name], 's', true)} alt={friendActivity.friend.name} />
+                  <AvatarImage src={unifiedHabboService.getAvatarUrl(figureMap[friendActivity.friend.name], 's', true)} alt={friendActivity.friend.name} />
                 ) : (
                   <AvatarFallback>{friendActivity.friend.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                 )}

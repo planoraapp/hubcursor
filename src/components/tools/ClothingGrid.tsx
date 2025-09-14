@@ -55,8 +55,7 @@ const ClothingGrid: React.FC<ClothingGridProps> = ({
       setError(null);
     } catch (err) {
       setError('Erro ao carregar categorias');
-      console.error('Erro ao carregar categorias:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, []);
@@ -70,8 +69,7 @@ const ClothingGrid: React.FC<ClothingGridProps> = ({
       setError(null);
     } catch (err) {
       setError('Erro ao carregar itens da categoria');
-      console.error('Erro ao carregar itens:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, []);
@@ -90,8 +88,7 @@ const ClothingGrid: React.FC<ClothingGridProps> = ({
       setError(null);
     } catch (err) {
       setError('Erro na busca');
-      console.error('Erro na busca:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, [currentCategory]);

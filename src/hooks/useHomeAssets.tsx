@@ -54,8 +54,7 @@ export const useHomeAssets = () => {
         .order('name');
 
       if (fetchError) {
-        console.error('Error fetching assets:', fetchError);
-        setError(fetchError.message);
+                setError(fetchError.message);
         return;
       }
 
@@ -82,11 +81,8 @@ export const useHomeAssets = () => {
       });
 
       setAssets(groupedAssets);
-      console.log('✅ Assets loaded:', groupedAssets);
-
-    } catch (error) {
-      console.error('Error in fetchAssets:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch assets');
+          } catch (error) {
+            setError(error instanceof Error ? error.message : 'Failed to fetch assets');
     } finally {
       setLoading(false);
     }
@@ -94,24 +90,19 @@ export const useHomeAssets = () => {
 
   const syncAssets = async () => {
     try {
-      console.log('🔄 Starting asset sync...');
-      
-      const { error } = await supabase.functions.invoke('sync-home-assets', {
+            const { error } = await supabase.functions.invoke('sync-home-assets', {
         body: JSON.stringify({})
       });
 
       if (error) {
-        console.error('Sync error:', error);
-        throw error;
+                throw error;
       }
 
-      console.log('✅ Asset sync completed');
-      // Refresh assets after sync
+            // Refresh assets after sync
       await fetchAssets();
       
     } catch (error) {
-      console.error('Error syncing assets:', error);
-      setError(error instanceof Error ? error.message : 'Failed to sync assets');
+            setError(error instanceof Error ? error.message : 'Failed to sync assets');
       throw error;
     }
   };

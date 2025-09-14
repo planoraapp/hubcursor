@@ -32,7 +32,7 @@ export const useHotelTicker = () => {
     queryKey: ['hotel-ticker', hotel],
     queryFn: () => {
       console.log(`🎯 [useHotelTicker] Fetching ticker for hotel: ${hotel} (user: ${habboAccount?.habbo_name || 'guest'})`);
-      return habboProxyService.getHotelTicker(hotel);
+      return unifiedHabboService.getHotelTicker(hotel);
     },
     baseRefetchInterval: 30 * 1000, // 30 segundos para atualizações mais frequentes
     aggressiveCacheTime: 1 * 60 * 1000, // 1 minuto de cache
@@ -55,8 +55,7 @@ export const useHotelTicker = () => {
     console.log(`🔄 [useHotelTicker] Processing ${rawActivities.length} raw activities for aggregation (hotel: ${hotel}, source: ${metadata.source})`);
     
     if (rawActivities.length === 0) {
-      console.log(`⚠️ [useHotelTicker] No activities to process`);
-      return [];
+            return [];
     }
     
     const groupByUser = (items: TickerActivity[]) => {
@@ -90,8 +89,7 @@ export const useHotelTicker = () => {
     let result = groupByUser(recent);
     
     if (result.length < 8 && rawActivities.length > 0) {
-      console.warn('⚠️ [useHotelTicker] Few recent activities, using complete snapshot with diversity filter');
-      const allGrouped = groupByUser(rawActivities);
+            const allGrouped = groupByUser(rawActivities);
       
       // Implementar filtro de diversidade para evitar usuários repetitivos
       const diverseResult = [];

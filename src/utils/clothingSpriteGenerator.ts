@@ -33,8 +33,7 @@ export const getClothingSpriteUrl = (
 ): string => {
   const mapping = CLOTHING_SPRITE_MAPPING[category];
   if (!mapping) {
-    console.warn(`[ClothingSpriteGenerator] No mapping found for category: ${category}`);
-    return getFallbackThumbnail(category, figureId, colorId, gender);
+        return getFallbackThumbnail(category, figureId, colorId, gender);
   }
 
   const actualGender = gender === 'F' ? 'F' : 'M';
@@ -43,14 +42,12 @@ export const getClothingSpriteUrl = (
   // Strategy 1: Try swfName slug (preferred for Puhekupla)
   if (swfName && swfName !== figureId) {
     const slugUrl = `https://content.puhekupla.com/img/clothes/${mapping.prefix}_${actualGender}_${swfName}_${direction}.png`;
-    console.log(`🎯 [ClothingSpriteGenerator] Trying slug URL: ${slugUrl}`);
-    return slugUrl;
+        return slugUrl;
   }
   
   // Strategy 2: Try figureId (fallback)
   const figureUrl = `https://content.puhekupla.com/img/clothes/${mapping.prefix}_${actualGender}_${figureId}_${direction}.png`;
-  console.log(`🔄 [ClothingSpriteGenerator] Trying figureId URL: ${figureUrl}`);
-  return figureUrl;
+    return figureUrl;
 };
 
 export const getFallbackThumbnail = (
@@ -64,8 +61,7 @@ export const getFallbackThumbnail = (
   const figure = `${category}-${figureId}-${colorId}`;
   
   const fallbackUrl = `https://www.habbo.com/habbo-imaging/avatarimage?figure=${figure}&gender=${actualGender}&size=s&direction=2&head_direction=2&action=std&gesture=std`;
-  console.log(`🚨 [ClothingSpriteGenerator] Using fallback URL: ${fallbackUrl}`);
-  return fallbackUrl;
+    return fallbackUrl;
 };
 
 // Enhanced function that tries multiple strategies

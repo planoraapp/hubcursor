@@ -148,8 +148,7 @@ export function processFigureDataWithCategories(
   const items: EnhancedClothingItem[] = [];
 
   if (!figureData.settype) {
-    console.warn('⚠️ No settype found in figuredata');
-    return items;
+        return items;
   }
 
   // Processar cada categoria (settype)

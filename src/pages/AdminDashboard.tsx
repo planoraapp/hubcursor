@@ -104,8 +104,7 @@ export const AdminDashboard: React.FC = () => {
         visitsToday: visitsToday || 0
       });
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -120,8 +119,7 @@ export const AdminDashboard: React.FC = () => {
         alert(`Erro ao criar conta habbohub: ${result.message}`);
       }
     } catch (error) {
-      console.error('Erro ao criar conta habbohub:', error);
-      alert('Erro ao criar conta habbohub');
+            alert('Erro ao criar conta habbohub');
     }
   };
 
@@ -137,8 +135,7 @@ export const AdminDashboard: React.FC = () => {
       alert('Homes inicializadas com sucesso!');
       await loadStats();
     } catch (error) {
-      console.error('Erro ao inicializar homes:', error);
-      alert('Erro ao inicializar homes');
+            alert('Erro ao inicializar homes');
     }
   };
 

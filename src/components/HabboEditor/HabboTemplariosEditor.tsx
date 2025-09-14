@@ -45,8 +45,7 @@ const HabboTemplariosEditor: React.FC = () => {
       await navigator.clipboard.writeText(figureString);
       // Could add toast notification here
     } catch (error) {
-      console.error('Failed to copy:', error);
-    }
+          }
   };
 
   // Copy avatar URL to clipboard
@@ -55,8 +54,7 @@ const HabboTemplariosEditor: React.FC = () => {
       await navigator.clipboard.writeText(avatarUrl);
       // Could add toast notification here
     } catch (error) {
-      console.error('Failed to copy:', error);
-    }
+          }
   };
 
   return (

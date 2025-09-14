@@ -56,9 +56,7 @@ const fetchHabboAssetsBadges = async ({
   loadAll = false,
   forceRefresh = false
 }: UseHabboAssetsBadgesProps): Promise<HabboAssetsBadgesResponse> => {
-  console.log(`🎯 [HabboAssetsBadges] Fetching: search="${search}", category=${category}, page=${page}, limit=${limit}, loadAll=${loadAll}, forceRefresh=${forceRefresh}`);
-  
-  // Se loadAll for true, usar um limite muito alto
+    // Se loadAll for true, usar um limite muito alto
   const actualLimit = loadAll ? 5000 : limit;
   
   // Verificar cache do cliente (apenas se não forçar refresh)
@@ -66,8 +64,7 @@ const fetchHabboAssetsBadges = async ({
   if (!forceRefresh) {
     const cached = clientCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CLIENT_CACHE_TTL) {
-      console.log('📦 [HabboAssetsBadges] Using client cache');
-      return cached.data;
+            return cached.data;
     }
   }
   
@@ -77,20 +74,14 @@ const fetchHabboAssetsBadges = async ({
     });
 
     if (error) {
-      console.error('❌ [HabboAssetsBadges] Supabase function error:', error);
-      throw error;
+            throw error;
     }
 
     if (!data || !data.success || !data.badges || !Array.isArray(data.badges)) {
-      console.error('❌ [HabboAssetsBadges] Invalid response format:', data);
-      throw new Error('Resposta inválida do HabboAssets');
+            throw new Error('Resposta inválida do HabboAssets');
     }
 
-    console.log(`✅ [HabboAssetsBadges] Successfully fetched ${data.badges.length} badges`);
-    console.log(`📊 [HabboAssetsBadges] Categories:`, data.metadata?.categories);
-    console.log(`🗄️ [HabboAssetsBadges] Server cache status:`, data.metadata?.cached ? 'HIT' : 'MISS');
-    
-    const response: HabboAssetsBadgesResponse = {
+                const response: HabboAssetsBadgesResponse = {
       badges: data.badges,
       metadata: data.metadata || {
         total: data.badges.length,
@@ -109,8 +100,7 @@ const fetchHabboAssetsBadges = async ({
     return response;
     
   } catch (error) {
-    console.error('❌ [HabboAssetsBadges] Error:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -123,9 +113,7 @@ export const useHabboAssetsBadges = ({
   loadAll = false,
   forceRefresh = false
 }: UseHabboAssetsBadgesProps = {}) => {
-  console.log(`🔧 [useHabboAssetsBadges] Hook: search="${search}", category=${category}, page=${page}, limit=${limit}, enabled=${enabled}, loadAll=${loadAll}`);
-  
-  return useQuery({
+    return useQuery({
     queryKey: ['habbo-assets-badges', search, category, page, limit, loadAll, forceRefresh],
     queryFn: () => fetchHabboAssetsBadges({ search, category, page, limit, loadAll, forceRefresh }),
     enabled,
@@ -144,5 +132,4 @@ export const useHabboAssetsBadges = ({
 // Função utilitária para limpar cache
 export const clearBadgeCache = () => {
   clientCache.clear();
-  console.log('🧹 [HabboAssetsBadges] Client cache cleared');
-};
+  };

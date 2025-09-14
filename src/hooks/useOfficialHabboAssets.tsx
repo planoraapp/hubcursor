@@ -19,9 +19,7 @@ export interface OfficialHabboAssetsData {
 }
 
 const fetchOfficialHabboAssets = async (): Promise<OfficialHabboAssetsData> => {
-  console.log('🌐 [OfficialHabboAssets] Fetching real focused Habbo assets...');
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('get-official-habbo-assets');
     
     if (error) {
@@ -41,8 +39,7 @@ const fetchOfficialHabboAssets = async (): Promise<OfficialHabboAssetsData> => {
     return data.assets;
     
   } catch (error) {
-    console.error('❌ [OfficialHabboAssets] Error:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -63,9 +60,7 @@ export const useOfficialHabboCategory = (categoryId: string, gender: 'M' | 'F') 
     asset => asset.gender === gender || asset.gender === 'U'
   ) || [];
   
-  console.log(`🎯 [OfficialCategory] Filtered focused assets for ${categoryId}:`, filteredAssets.length);
-  
-  return {
+    return {
     ...queryResult,
     data: filteredAssets
   };

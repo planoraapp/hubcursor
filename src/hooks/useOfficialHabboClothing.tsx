@@ -44,9 +44,7 @@ export interface ColorPalettes {
 
 // Função para acessar diretamente as APIs oficiais do Habbo
 const fetchOfficialHabboData = async () => {
-  console.log('🌐 [OfficialHabboClothing] Fetching OFFICIAL Habbo data...');
-  
-  try {
+    try {
     // 1. Buscar figuredata.xml oficial do Habbo
     const figureDataResponse = await fetch('https://www.habbo.com/gamedata/figuredata.xml');
     if (!figureDataResponse.ok) {
@@ -68,24 +66,19 @@ const fetchOfficialHabboData = async () => {
     }
     const figureMapXml = await figureMapResponse.text();
     
-    console.log('✅ [OfficialHabboClothing] All official APIs loaded successfully');
-    
-    // Processar dados oficiais
+        // Processar dados oficiais
     const processedData = processOfficialHabboData(figureDataXml, furniData, figureMapXml);
     
     return processedData;
     
   } catch (error) {
-    console.error('❌ [OfficialHabboClothing] Error fetching official data:', error);
-    throw error;
+        throw error;
   }
 };
 
 // Função para processar dados oficiais do Habbo
 const processOfficialHabboData = (figureDataXml: string, furniData: any, figureMapXml: string) => {
-  console.log('🔄 [OfficialHabboClothing] Processing official data...');
-  
-  // Parsear figuredata.xml
+    // Parsear figuredata.xml
   const figureData = parseFigureDataXml(figureDataXml);
   
   // Parsear figuremap.xml

@@ -79,9 +79,7 @@ const mapSupabaseToHybrid = (swfFiles: any[]): HybridClothingItem[] => {
 };
 
 const fetchHybridClothingData = async (): Promise<Record<string, HybridClothingItem[]>> => {
-  console.log('🔄 [HybridSystem] Fetching hybrid clothing data...');
-  
-  try {
+    try {
     // Get official data first
     const officialResponse = await supabase.functions.invoke('get-habbo-figuredata');
     let officialData: Record<string, any> = {};
@@ -99,14 +97,9 @@ const fetchHybridClothingData = async (): Promise<Record<string, HybridClothingI
     }
     
     // Get Supabase assets
-    console.log('📦 [HybridSystem] Fetching Supabase assets...');
-    const supabaseAssets = await fetchSupabaseAssets();
-    console.log(`📦 [HybridSystem] Found ${supabaseAssets.length} SWF files`);
-    
-    const supabaseItems = mapSupabaseToHybrid(supabaseAssets);
-    console.log(`📦 [HybridSystem] Mapped ${supabaseItems.length} SWF items`);
-    
-    // Combine and organize by category
+        const supabaseAssets = await fetchSupabaseAssets();
+        const supabaseItems = mapSupabaseToHybrid(supabaseAssets);
+        // Combine and organize by category
     const result: Record<string, HybridClothingItem[]> = {};
     
     // Add official items
@@ -154,8 +147,7 @@ const fetchHybridClothingData = async (): Promise<Record<string, HybridClothingI
     return result;
     
   } catch (error) {
-    console.error('❌ [HybridSystem] Error:', error);
-    // Return fallback data structure
+        // Return fallback data structure
     return {
       hr: [],
       hd: [],

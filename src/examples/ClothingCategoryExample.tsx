@@ -69,12 +69,8 @@ export const ClothingCategoryExample: React.FC = () => {
       setStats(stats);
       setSelectedItem(items[0]); // Primeiro item como exemplo
       
-      console.log('📊 [ClothingCategoryExample] Stats:', stats);
-      console.log('👕 [ClothingCategoryExample] Items:', items);
-      
-    } catch (error) {
-      console.error('❌ [ClothingCategoryExample] Error:', error);
-    }
+                } catch (error) {
+          }
   };
 
   const getCategoryBadge = (type: string) => {

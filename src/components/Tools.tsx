@@ -29,8 +29,7 @@ export const Tools = () => {
       const result = await getUserByName(searchInput.trim());
       setSearchResult(result);
     } catch (error) {
-      console.error('Error searching user:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };

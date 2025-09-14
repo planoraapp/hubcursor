@@ -27,8 +27,7 @@ export const FriendsActivityColumn: React.FC = () => {
       (entries) => {
         const target = entries[0];
         if (target.isIntersecting && hasNextPage && !isFetchingNextPage && directActivities.length >= 10) {
-          console.log('[🔄 DIRECT ACTIVITIES] Loading next page...');
-          fetchNextPage();
+                    fetchNextPage();
         }
       },
       { 
@@ -45,8 +44,7 @@ export const FriendsActivityColumn: React.FC = () => {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, directActivities.length]);
 
   const handleRefresh = useCallback(() => {
-    console.log('[🔄 DIRECT ACTIVITIES] Manual refresh triggered');
-    refetch();
+        refetch();
   }, [refetch]);
 
   // Get unique friends count from activities

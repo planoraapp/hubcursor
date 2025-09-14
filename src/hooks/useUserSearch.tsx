@@ -31,19 +31,14 @@ export const useUserSearch = () => {
     setQuery(searchQuery.trim());
 
     try {
-      console.log(`🔍 [useUserSearch] Searching for: "${searchQuery}"`);
-      
-      await searchUser({
+            await searchUser({
         query: searchQuery.trim(),
         hotel: 'br',
         limit: 15
       });
 
-      console.log(`✅ [useUserSearch] Found ${searchResults.length} users for "${searchQuery}"`);
-
-    } catch (err) {
-      console.error('❌ [useUserSearch] Search error:', err);
-    }
+          } catch (err) {
+          }
   };
 
   return {

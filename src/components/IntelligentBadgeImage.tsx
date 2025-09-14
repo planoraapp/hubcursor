@@ -95,8 +95,7 @@ const IntelligentBadgeImage = ({
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
     } else {
-      console.log(`💥 All ${imageUrls.length} badge URLs failed for ${code}`);
-      setHasError(true);
+            setHasError(true);
       setIsLoading(false);
     }
   }, [currentUrlIndex, imageUrls, code]);

@@ -1,5 +1,5 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface LatestHomeData {
@@ -13,12 +13,16 @@ interface LatestHomeData {
 }
 
 export const useLatestHomes = () => {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const invalidateLatestHomes = () => {
+    queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
+  };
+
+  const query = useQuery({
     queryKey: ['latest-homes'],
     queryFn: async (): Promise<LatestHomeData[]> => {
-      console.log('🏠 [LatestHomes] Fetching latest created and updated homes');
-      
-      // Get the most recent homes by combining created and updated homes
+            // Get the most recent homes by combining created and updated homes
       const { data: updatedHomes, error: updateError } = await supabase
         .from('user_home_layouts')
         .select(`
@@ -40,8 +44,7 @@ export const useLatestHomes = () => {
         .limit(100);
 
       if (updateError || createError) {
-        console.error('❌ [LatestHomes] Error fetching homes:', updateError || createError);
-        throw updateError || createError;
+                throw updateError || createError;
       }
 
       // Combine and get unique users with most recent activity
@@ -117,10 +120,14 @@ export const useLatestHomes = () => {
         };
       });
 
-      console.log('✅ [LatestHomes] Found latest homes:', enrichedHomes);
-      return enrichedHomes;
+            return enrichedHomes;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
+
+  return {
+    ...query,
+    invalidateLatestHomes
+  };
 };

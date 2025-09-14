@@ -11,9 +11,7 @@ interface FetchMarketDataParams {
 
 export class MarketplaceService {
   static async fetchMarketData(params: FetchMarketDataParams): Promise<{ items: MarketItem[]; stats: MarketStats } | null> {
-    console.log('🔄 [MarketplaceService] Fetching 100% real marketplace data...');
-    
-    try {
+        try {
       // Usar apenas a API oficial com dados reais
       const { data, error } = await supabase.functions.invoke('habbo-official-marketplace', {
         body: { 
@@ -22,8 +20,7 @@ export class MarketplaceService {
       });
       
       if (error) {
-        console.error('❌ [MarketplaceService] Official API error:', error);
-        // Não lançar exceção - retornar dados vazios com transparência
+                // Não lançar exceção - retornar dados vazios com transparência
         return {
           items: [],
           stats: this.calculateRealStats([], { 
@@ -39,10 +36,7 @@ export class MarketplaceService {
         const officialItemsCount = data.metadata?.officialItemsCount || 0;
         const apiSuccessRate = data.metadata?.apiSuccessRate || 0;
         
-        console.log(`✅ [MarketplaceService] API Response received`);
-        console.log(`📊 [MarketplaceService] Items: ${data.items?.length || 0}, Success Rate: ${apiSuccessRate}%`);
-        
-        // Enriquecer dados oficiais disponíveis
+                        // Enriquecer dados oficiais disponíveis
         const items = data.items || [];
         const enrichedItems = items
           .filter((item: any) => item.isOfficialData === true)
@@ -82,8 +76,7 @@ export class MarketplaceService {
       }
       
       // Resposta sem dados - situação normal para API oficial instável
-      console.warn('⚠️ [MarketplaceService] No data returned from official API - this is normal');
-      return {
+            return {
         items: [],
         stats: this.calculateRealStats([], { 
           apiStatus: 'no-data',
@@ -92,8 +85,7 @@ export class MarketplaceService {
       };
       
     } catch (error: any) {
-      console.error('❌ [MarketplaceService] Network or system error:', error);
-      // Retornar dados vazios com informação do erro, não lançar exceção
+            // Retornar dados vazios com informação do erro, não lançar exceção
       return {
         items: [],
         stats: this.calculateRealStats([], { 

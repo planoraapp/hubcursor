@@ -62,8 +62,7 @@ const IntelligentFurniImage = ({
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
     } else {
-      console.log(`💥 All furni URLs failed for ${swfName}`);
-      setHasError(true);
+            setHasError(true);
       setIsLoading(false);
     }
   }, [currentUrlIndex, imageUrls, swfName]);

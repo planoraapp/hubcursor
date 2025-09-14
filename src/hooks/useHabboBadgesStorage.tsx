@@ -23,42 +23,30 @@ const fetchHabboBadgesFromStorage = async ({
   search = '',
   category = 'all'
 }: UseHabboBadgesStorageProps): Promise<HabboBadgeItem[]> => {
-  console.log(`🌐 [HabboBadgesStorage] Fetching badges with limit: ${limit}, search: "${search}", category: ${category}`);
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('habbo-badges-storage', {
       body: { limit, search, category }
     });
 
     if (error) {
-      console.error('❌ [HabboBadgesStorage] Supabase function error:', error);
-      throw error;
+            throw error;
     }
 
     if (!data || !data.badges || !Array.isArray(data.badges)) {
-      console.error('❌ [HabboBadgesStorage] Invalid response format:', data);
-      
-      // Fallback: tentar buscar diretamente do bucket
+            // Fallback: tentar buscar diretamente do bucket
       return await fetchBadgesDirectly();
     }
 
-    console.log(`✅ [HabboBadgesStorage] Successfully fetched ${data.badges.length} badges`);
-    console.log(`📊 [HabboBadgesStorage] Metadata:`, data.metadata);
-    
-    return data.badges;
+            return data.badges;
     
   } catch (error) {
-    console.error('❌ [HabboBadgesStorage] Error:', error);
-    
-    // Fallback: tentar buscar diretamente
+        // Fallback: tentar buscar diretamente
     return await fetchBadgesDirectly();
   }
 };
 
 const fetchBadgesDirectly = async (): Promise<HabboBadgeItem[]> => {
-  console.log('🔄 [HabboBadgesStorage] Tentando fallback direto...');
-  
-  try {
+    try {
     // Tentar APIs externas como fallback
     const externalBadges = await Promise.allSettled([
       fetchFromHabboAssets(),
@@ -72,15 +60,13 @@ const fetchBadgesDirectly = async (): Promise<HabboBadgeItem[]> => {
       .flat();
     
     if (successfulResults.length > 0) {
-      console.log(`✅ [HabboBadgesStorage] Fallback successful: ${successfulResults.length} badges`);
-      return successfulResults;
+            return successfulResults;
     }
     
     return [];
     
   } catch (error) {
-    console.error('❌ [HabboBadgesStorage] Fallback failed:', error);
-    return [];
+        return [];
   }
 };
 
@@ -150,9 +136,7 @@ export const useHabboBadgesStorage = ({
   category = 'all',
   enabled = true
 }: UseHabboBadgesStorageProps = {}) => {
-  console.log(`🔧 [HabboBadgesStorage] Hook called with limit: ${limit}, search: "${search}", category: ${category}, enabled: ${enabled}`);
-  
-  return useQuery({
+    return useQuery({
     queryKey: ['habbo-badges-storage', limit, search, category],
     queryFn: () => fetchHabboBadgesFromStorage({ limit, search, category }),
     enabled,

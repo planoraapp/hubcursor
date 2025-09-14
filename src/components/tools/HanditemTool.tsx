@@ -18,7 +18,6 @@ import { UnifiedCatalog } from './UnifiedCatalog';
 import { HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
 import { TraxPlayerWidget } from '@/components/widgets/TraxPlayerWidget';
 
-
 interface HanditemData {
   name: string;
   webId: number;
@@ -35,8 +34,6 @@ interface MobiData {
   function: string;
   handitems: HanditemData[];
 }
-
-
 
 const MAIN_CATEGORIES = {
   'Todos': { label: 'Todos', icon: Package, subCategories: [] },
@@ -450,7 +447,6 @@ const MOBIS_DATA: MobiData[] = [
     ]
   },
 
-
   // === ALIMENTOS E LANCHES ===
   {
     name: "Pipoqueira",
@@ -588,10 +584,6 @@ const MOBIS_DATA: MobiData[] = [
       { name: "Doce Assombrado", webId: 2042, inGameId: 2042, iconUrl: "https://i.imgur.com/ghost_candy.png", categoryType: "Doces - Diversos" },
     ]
   },
-
-
-
-
 
   // === ALIMENTOS PARA PETS ===
   {
@@ -1381,8 +1373,7 @@ const CurrentCatalog: React.FC = () => {
         const data = await response.json();
         setCatalogData(data);
       } catch (error) {
-        console.error('Error loading catalog data:', error);
-      } finally {
+              } finally {
         setLoading(false);
       }
     };
@@ -1710,9 +1701,7 @@ const UnifiedHanditemCatalog: React.FC = () => {
       setIsDiscovering(true);
       setError(null);
       
-      console.log('🔍 Iniciando descoberta automática de handitems...');
-      
-      // Descobrir handitems dos IDs 170-200 (mais recentes)
+            // Descobrir handitems dos IDs 170-200 (mais recentes)
       const discovered = await handitemDiscovery.discoverHanditems(170, 200);
       
       setDiscoveredHanditems(discovered);
@@ -1732,11 +1721,8 @@ const UnifiedHanditemCatalog: React.FC = () => {
       
       setUnifiedData(prev => [...prev, ...newUnifiedItems]);
       
-      console.log(`✅ Descoberta concluída: ${discovered.length} novos handitems encontrados`);
-      
-    } catch (error) {
-      console.error('❌ Erro na descoberta de handitems:', error);
-      setError('Erro ao descobrir novos handitems');
+          } catch (error) {
+            setError('Erro ao descobrir novos handitems');
     } finally {
       setIsDiscovering(false);
     }
@@ -1754,8 +1740,7 @@ const UnifiedHanditemCatalog: React.FC = () => {
         setError('Handitem não funciona com este avatar ou avatar inválido');
       }
     } catch (error) {
-      console.error('❌ Erro ao testar handitem:', error);
-      setError('Erro ao testar handitem no avatar');
+            setError('Erro ao testar handitem no avatar');
     }
   };
 
@@ -1769,9 +1754,7 @@ const UnifiedHanditemCatalog: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 [UnifiedHanditem] Loading handitem data from structured sources...');
-      
-      // Simular carregamento dos dados estruturados
+            // Simular carregamento dos dados estruturados
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Converter dados estruturados para formato unificado
@@ -1792,12 +1775,10 @@ const UnifiedHanditemCatalog: React.FC = () => {
         handitemId: item.id
       }));
 
-      console.log(`✅ [UnifiedHanditem] Loaded ${unifiedItems.length} handitems`);
-      setUnifiedData(unifiedItems);
+            setUnifiedData(unifiedItems);
       
     } catch (err: any) {
-      console.error('❌ [UnifiedHanditem] Error:', err);
-      setError(err.message || 'Erro ao carregar dados');
+            setError(err.message || 'Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
@@ -1808,14 +1789,12 @@ const UnifiedHanditemCatalog: React.FC = () => {
   };
 
   const handleDownload = () => {
-    console.log('📥 [UnifiedHanditem] Downloading handitems data...');
-    fetchUnifiedData();
+        fetchUnifiedData();
   };
 
   const handleCopyHanditemId = (handitemId: number) => {
     navigator.clipboard.writeText(handitemId.toString());
-    console.log(`📋 [UnifiedHanditem] Copied handitem ID: ${handitemId}`);
-  };
+      };
 
   // Carregar dados na inicialização
   useEffect(() => {
@@ -2215,8 +2194,7 @@ const HanditemToolFixed: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('❌ Erro ao testar handitem:', error);
-      toast({
+            toast({
         title: "Erro",
         description: "Erro ao testar handitem no avatar",
         variant: "destructive"
@@ -2326,7 +2304,6 @@ const HanditemToolFixed: React.FC = () => {
       {/* Search and Filters */}
       <Card className="bg-card border-border">
         <CardContent className="p-4 space-y-4">
-
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -2572,12 +2549,10 @@ const HanditemToolFixed: React.FC = () => {
       ) : activeTab === 'unified' ? (
         <UnifiedCatalog 
           onHanditemSelect={(handitem) => {
-            console.log('Handitem selecionado:', handitem);
-            // Aqui você pode adicionar lógica para quando um handitem é selecionado
+                        // Aqui você pode adicionar lógica para quando um handitem é selecionado
           }}
           onFurniSelect={(furni) => {
-            console.log('Mobília selecionada:', furni);
-            // Aqui você pode adicionar lógica para quando uma mobília é selecionada
+                        // Aqui você pode adicionar lógica para quando uma mobília é selecionada
           }}
         />
       ) : activeTab === 'trax' ? (

@@ -32,9 +32,7 @@ const fetchEnhancedFlashAssets = async (params: {
   search?: string;
   limit?: number;
 }): Promise<EnhancedFlashAsset[]> => {
-  console.log('🌐 [EnhancedFlashAssets] Buscando assets com sistema inteligente', params);
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
       body: { 
         limit: params.limit || 3000, 
@@ -45,23 +43,17 @@ const fetchEnhancedFlashAssets = async (params: {
     });
 
     if (error) {
-      console.error('❌ [EnhancedFlashAssets] Supabase function error:', error);
-      throw error;
+            throw error;
     }
 
     if (!data || !data.assets || !Array.isArray(data.assets)) {
-      console.error('❌ [EnhancedFlashAssets] Invalid response format:', data);
-      throw new Error('Invalid response format from enhanced flash assets');
+            throw new Error('Invalid response format from enhanced flash assets');
     }
 
-    console.log(`✅ [EnhancedFlashAssets] Successfully fetched ${data.assets.length} enhanced assets`);
-    console.log(`📊 [EnhancedFlashAssets] Metadata:`, data.metadata);
-    
-    return data.assets;
+            return data.assets;
     
   } catch (error) {
-    console.error('❌ [EnhancedFlashAssets] Error:', error);
-    throw error;
+        throw error;
   }
 };
 

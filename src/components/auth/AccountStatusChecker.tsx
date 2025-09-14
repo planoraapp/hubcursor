@@ -67,8 +67,7 @@ export const AccountStatusChecker: React.FC = () => {
 
       setSearched(true);
     } catch (error: any) {
-      console.error('Account check error:', error);
-      toast({
+            toast({
         title: "Erro",
         description: "Erro ao verificar conta. Tente novamente.",
         variant: "destructive"

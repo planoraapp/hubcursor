@@ -9,9 +9,7 @@ import { Loader2, Palette, User, Crown, Shirt, PaintBucket, Footprints, Glasses 
 import HabboWidgetsEditor from './HabboEditor/HabboWidgetsEditor';
 
 const HabboHubEditor = () => {
-  console.log('🎯 [HabboHubEditor] Inicializando sistema híbrido unificado...');
-  
-  // Usar o novo sistema HabboWidgets que agora é o sistema unificado
+    // Usar o novo sistema HabboWidgets que agora é o sistema unificado
   return <HabboWidgetsEditor />;
 };
 

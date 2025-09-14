@@ -77,8 +77,7 @@ const parseFigureData = (xmlData: string, category: string, gender: 'M' | 'F'): 
       });
     });
   } catch (error) {
-    console.error('Erro ao parsear XML:', error);
-  }
+      }
   
   return items;
 };
@@ -120,12 +119,10 @@ export const useOfficialClothingData = (category: string, gender: 'M' | 'F', hot
           imageUrl: generateImageUrl(item.figureId, item.colors[0], item.category, hotel)
         }));
         
-        console.log(`✅ ${itemsWithImages.length} itens carregados para ${category}`);
-        setItems(itemsWithImages);
+                setItems(itemsWithImages);
         
       } catch (error) {
-        console.error('❌ Erro ao buscar dados:', error);
-        setError(error instanceof Error ? error.message : 'Erro desconhecido');
+                setError(error instanceof Error ? error.message : 'Erro desconhecido');
         
         // Fallback: dados básicos para demonstração
         setItems(generateFallbackData(category, gender));

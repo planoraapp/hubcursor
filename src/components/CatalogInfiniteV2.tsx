@@ -36,9 +36,7 @@ export const CatalogInfiniteV2 = () => {
     setLoading(true);
     setError(null);
     
-    console.log(`🔍 [CatalogV2] Fetching furnis - Page: ${reset ? 1 : page}, Category: ${selectedCategory}, Search: "${searchTerm}"`);
-    
-    try {
+        try {
       const { data, error: supabaseError } = await supabase.functions.invoke('habbo-furni-api', {
         body: {
           limit: 50, // Menor limite para melhor performance
@@ -77,11 +75,9 @@ export const CatalogInfiniteV2 = () => {
           return [...new Set([...prev, ...allCategories])];
         });
         
-        console.log(`✅ [CatalogV2] Loaded ${sortedFurnis.length} furnis`);
-      }
+              }
     } catch (error) {
-      console.error('❌ [CatalogV2] Error:', error);
-      setError(error instanceof Error ? error.message : 'Erro desconhecido');
+            setError(error instanceof Error ? error.message : 'Erro desconhecido');
     } finally {
       setLoading(false);
     }

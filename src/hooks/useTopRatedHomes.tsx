@@ -15,9 +15,7 @@ export const useTopRatedHomes = () => {
   return useQuery({
     queryKey: ['top-rated-homes'],
     queryFn: async (): Promise<TopRatedHomeData[]> => {
-      console.log('⭐ [TopRatedHomes] Fetching top rated homes');
-      
-      // Get homes with ratings, ordered by average rating
+            // Get homes with ratings, ordered by average rating
       const { data: ratedHomes, error } = await supabase
         .from('user_home_ratings')
         .select(`
@@ -26,8 +24,7 @@ export const useTopRatedHomes = () => {
         `);
 
       if (error) {
-        console.error('❌ [TopRatedHomes] Error fetching ratings:', error);
-        throw error;
+                throw error;
       }
 
       // Calculate average ratings per home
@@ -85,8 +82,7 @@ export const useTopRatedHomes = () => {
         };
       });
 
-      console.log('✅ [TopRatedHomes] Found top rated homes:', enrichedHomes);
-      return enrichedHomes;
+            return enrichedHomes;
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes

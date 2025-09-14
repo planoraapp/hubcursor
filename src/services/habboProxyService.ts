@@ -1,20 +1,7 @@
 import { getAvatarUrl, getBadgeUrl, getUserByName } from '@/lib/habboApi';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface HabboUser {
-  id: string;
-  name: string;
-  motto: string;
-  online: boolean;
-  memberSince: string;
-  selectedBadges: HabboBadge[];
-  badges: HabboBadge[];
-  figureString: string;
-  profileVisible?: boolean;
-  lastWebVisit?: string;
-  uniqueId?: string;
-}
-
+import type { HabboUser } from '@/types/habbo';
 export interface HabboBadge {
   code: string;
   name: string;
@@ -69,66 +56,89 @@ class HabboProxyService {
   async getUserProfile(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
     try {
       const domain = this.getHotelDomain(hotel);
-      const { data, error } = await supabase.functions.invoke('habbo-widgets-proxy', {
-        body: {
-          endpoint: `users?name=${encodeURIComponent(username)}`,
-          hotel: domain,
-        },
-      });
+      
+      // Primeiro, buscar dados básicos por nome
+      let basicData = null;
+      try {
+        const resp = await fetch(`https://www.habbo.${domain}/api/public/users?name=${encodeURIComponent(username)}`, {
+          headers: { 'Accept': 'application/json' },
+        });
+        if (resp.ok) {
+          basicData = await resp.json();
+                  }
+      } catch (err) {
+              }
 
-      if (error || !data) {
-        console.warn(`Failed to fetch profile for ${username}:`, error?.message || 'no data');
-        return null;
-      }
-
-      console.log(`[HabboProxyService] Raw profile response for ${username}:`, data);
-
-      // Normalize candidate from proxy
-      let user: any = Array.isArray(data) ? data[0] : data;
-
-      // If proxy returned an unexpected shape (e.g., ticker), try official API fallback
-      if (!user || typeof user?.name !== 'string' || !(user?.uniqueId || user?.id)) {
+      // Se temos dados básicos com ID, buscar dados detalhados
+      if (basicData && basicData.uniqueId) {
         try {
-          const resp = await fetch(`https://www.habbo.${domain}/api/public/users?name=${encodeURIComponent(username)}`, {
-            headers: { 'Accept': 'application/json' },
-          });
-          if (resp.ok) {
-            const ud = await resp.json();
-            if (ud && typeof ud.name === 'string') {
-              user = ud;
-            }
+          const detailedProfile = await this.getUserDetailedProfile(basicData.uniqueId, hotel);
+          if (detailedProfile) {
+            return detailedProfile;
           }
-        } catch (fallbackErr) {
-          console.warn('[HabboProxyService] Official users fallback failed:', fallbackErr);
-        }
+        } catch (err) {
+                  }
       }
 
-      if (!user || typeof user?.name !== 'string') {
-        console.warn(`[HabboProxyService] Unexpected profile shape for ${username}:`, data);
-        return null;
+      // Fallback para dados básicos se detalhados falharem
+      if (basicData) {
+        return {
+          id: basicData.uniqueId || basicData.id || '',
+          name: basicData.name || username,
+          motto: basicData.motto || '',
+          online: !!basicData.online,
+          memberSince: basicData.memberSince || '',
+          selectedBadges: basicData.selectedBadges || [],
+          badges: basicData.badges || [],
+          figureString: basicData.figureString || '',
+          profileVisible: basicData.profileVisible ?? true,
+          lastWebVisit: basicData.lastAccessTime,
+          uniqueId: basicData.uniqueId || basicData.id || '',
+        };
       }
 
-      return {
-        id: user.uniqueId || user.id || '',
-        name: user.name || username,
-        motto: user.motto || '',
-        online: !!user.online,
-        memberSince: user.memberSince || '',
-        selectedBadges: user.selectedBadges || [],
-        badges: user.badges || [],
-        figureString: user.figureString || '',
-        profileVisible: user.profileVisible ?? true,
-        lastWebVisit: user.lastWebVisit,
-        uniqueId: user.uniqueId || user.id || '',
-      };
-    } catch (error) {
-      console.error(`Error fetching profile for ${username}:`, error);
       return null;
+    } catch (error) {
+            return null;
     }
   }
 
   async getUserByName(username: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
     return this.getUserProfile(username, hotel);
+  }
+
+  async getUserDetailedProfile(userId: string, hotel: string = 'com.br'): Promise<HabboUser | null> {
+    try {
+      const domain = this.getHotelDomain(hotel);
+      
+      // Buscar dados detalhados via API oficial
+      const resp = await fetch(`https://www.habbo.${domain}/api/public/users/${encodeURIComponent(userId)}/profile`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      
+      if (resp.ok) {
+        const profileData = await resp.json();
+                if (profileData && profileData.uniqueId) {
+          return {
+            id: profileData.uniqueId,
+            name: profileData.name,
+            motto: profileData.motto || '',
+            online: !!profileData.online,
+            memberSince: profileData.memberSince || '',
+            selectedBadges: profileData.selectedBadges || [],
+            badges: profileData.badges || [],
+            figureString: profileData.figureString || '',
+            profileVisible: profileData.profileVisible ?? true,
+            lastWebVisit: profileData.lastAccessTime,
+            uniqueId: profileData.uniqueId,
+          };
+        }
+      }
+      
+      return null;
+    } catch (error) {
+            return null;
+    }
   }
 
   async getUserBadges(username: string, hotel: string = 'com.br'): Promise<HabboBadge[]> {
@@ -142,20 +152,20 @@ class HabboProxyService {
       });
 
       if (error || !data) {
-        console.warn(`Failed to fetch badges for ${username}:`, error?.message || 'no data');
-        return [];
+                return [];
       }
-      console.log(`[HabboProxyService] Raw badges response for ${username}:`, data);
+            // Verificar se data é um array antes de fazer map - FIXED
+      if (!Array.isArray(data)) {
+                return [];
+      }
 
-
-      return (data as any[]).map(badge => ({
+      return data.map(badge => ({
         code: badge.code,
         name: badge.name,
         description: badge.description,
       }));
     } catch (error) {
-      console.error(`Error fetching badges for ${username}:`, error);
-      return [];
+            return [];
     }
   }
 
@@ -170,13 +180,9 @@ class HabboProxyService {
       });
 
       if (error || !data) {
-        console.warn(`Failed to fetch photos for ${username}:`, error?.message || 'no data');
-        return [];
+                return [];
       }
-      console.log(`[HabboProxyService] Raw photos response for ${username}:`, data);
-
-
-      // Handle different response formats including photos array
+            // Handle different response formats including photos array
       let photosArray = [];
       if (Array.isArray(data)) {
         photosArray = data;
@@ -204,8 +210,7 @@ class HabboProxyService {
       }
 
       if (photosArray.length === 0) {
-        console.warn(`[HabboProxyService] No photos found in response:`, data);
-        return [];
+                return [];
       }
 
         return photosArray.map((photo: any) => ({
@@ -215,8 +220,7 @@ class HabboProxyService {
         })).filter(photo => photo.url);
 
     } catch (error) {
-      console.error(`Error fetching photos for ${username}:`, error);
-      return [];
+            return [];
     }
   }
 
@@ -231,14 +235,10 @@ class HabboProxyService {
       });
 
       if (error || !data) {
-        console.warn(`Failed to fetch friends for ${username}:`, error?.message || 'no data');
-        return [];
+                return [];
       }
 
-      console.log(`[HabboProxyService] Raw friends response for ${username}:`, data);
-
-
-      // Handle different response formats including friends array
+            // Handle different response formats including friends array
       let friendsArray = [];
       if (Array.isArray(data)) {
         friendsArray = data;
@@ -266,8 +266,7 @@ class HabboProxyService {
       }
 
       if (friendsArray.length === 0) {
-        console.warn(`[HabboProxyService] No friends found in response:`, data);
-        return [];
+                return [];
       }
 
       return friendsArray.map((friend: any) => ({
@@ -278,8 +277,7 @@ class HabboProxyService {
       })).filter(friend => friend.name);
 
     } catch (error) {
-      console.error(`Error fetching friends for ${username}:`, error);
-      return [];
+            return [];
     }
   }
 
@@ -299,22 +297,17 @@ class HabboProxyService {
       });
 
       if (error || !data) {
-        console.warn(`Failed to fetch hotel ticker for ${hotel}:`, error?.message || 'no data');
-        return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
+                return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
       }
 
-      console.log(`[HabboProxyService] Raw ticker response for ${hotel}:`, data);
-
-
-      // Normalize activities array
+            // Normalize activities array
       let activities: any[] = [];
       if (Array.isArray(data)) {
           activities = data;
       } else if (data && Array.isArray(data.activities)) {
           activities = data.activities;
       } else {
-          console.warn(`[HabboProxyService] Unexpected ticker response format:`, data);
-          return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
+                    return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
       }
 
       const tickerActivities = activities.map(item => ({
@@ -335,8 +328,7 @@ class HabboProxyService {
         }
       };
     } catch (error) {
-      console.error(`Error fetching hotel ticker for ${hotel}:`, error);
-      return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
+            return { activities: [], meta: { source: 'error', timestamp: new Date().toISOString(), count: 0, onlineCount: 0 } };
     }
   }
 
@@ -368,15 +360,12 @@ class HabboProxyService {
       });
 
       if (error) {
-        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, error.message);
-        return null;
+                return null;
       }
 
-      console.log(`[HabboProxyService] Ensure tracked response for ${payload.habbo_name}:`, data);
-      return data;
+            return data;
     } catch (error) {
-      console.error(`Error ensuring tracking for ${payload.habbo_name}:`, error);
-      return null;
+            return null;
     }
   }
 }

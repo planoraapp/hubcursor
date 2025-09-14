@@ -51,7 +51,7 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     const homesItem: DockItem = { 
       id: 'homes', 
       label: 'Home', 
-      icon: '/assets/homepadrao.png',
+      icon: 'https://wueccgeizznjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif',
       order: 2 
     };
     
@@ -264,8 +264,16 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
                 <img 
                   src={item.icon} 
                   alt={item.label} 
-                  className="w-8 h-8 object-contain" 
-                  style={{ imageRendering: 'pixelated' }}
+                  className="object-contain" 
+                  style={{ 
+                    imageRendering: 'pixelated',
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '32px',
+                    maxHeight: '32px',
+                    minWidth: '20px',
+                    minHeight: '20px'
+                  }}
                 />
               );
             } else {

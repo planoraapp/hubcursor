@@ -13,7 +13,8 @@ const CATEGORIES = {
   'icons': 'Ícones',
   'mockups': 'Mockups',
   'mountable': 'Montáveis',
-  'stickers': 'Stickers'
+  'stickers': 'Stickers',
+  'alphabet': 'Alphabet'
 };
 
 Deno.serve(async (req) => {

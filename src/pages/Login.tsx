@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { HotelSelector } from '@/components/HotelSelector';
+import { getAvailableHotels } from '@/utils/usernameUtils';
 import { Loader2 } from 'lucide-react';
+import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -15,21 +18,11 @@ export const Login: React.FC = () => {
   // Estados do formulário
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('br');
+  const [selectedHotel, setSelectedHotel] = useState('br');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Lista dos hotéis Habbo com suas bandeiras
-  const habboHotels = [
-    { code: 'br', name: 'Brasil', flag: '/flags/br.png', apiUrl: 'https://www.habbo.com.br/api/public' },
-    { code: 'com', name: 'Internacional', flag: '/flags/us.png', apiUrl: 'https://www.habbo.com/api/public' },
-    { code: 'de', name: 'Alemanha', flag: '/flags/de.png', apiUrl: 'https://www.habbo.de/api/public' },
-    { code: 'es', name: 'Espanha', flag: '/flags/es.png', apiUrl: 'https://www.habbo.es/api/public' },
-    { code: 'fi', name: 'Finlândia', flag: '/flags/fi.png', apiUrl: 'https://www.habbo.fi/api/public' },
-    { code: 'fr', name: 'França', flag: '/flags/fr.png', apiUrl: 'https://www.habbo.fr/api/public' },
-    { code: 'it', name: 'Itália', flag: '/flags/it.png', apiUrl: 'https://www.habbo.it/api/public' },
-    { code: 'nl', name: 'Holanda', flag: '/flags/nl.png', apiUrl: 'https://www.habbo.nl/api/public' },
-    { code: 'tr', name: 'Turquia', flag: '/flags/tr.png', apiUrl: 'https://www.habbo.com.tr/api/public' }
-  ];
+  // Lista dos hotéis Habbo
+  const habboHotels = getAvailableHotels();
 
   // Verificar se já está logado
   useEffect(() => {
@@ -49,27 +42,54 @@ export const Login: React.FC = () => {
     setIsLoggingIn(true);
     try {
       // Salvar país selecionado no localStorage para uso posterior
-      localStorage.setItem('selected_habbo_hotel', selectedCountry);
+      localStorage.setItem('selected_habbo_hotel', selectedHotel);
       
       const success = await login(username.trim(), password);
       if (success) {
         // O redirecionamento será feito automaticamente pelo useEffect
       }
     } catch (error) {
-      console.error('Erro no login:', error);
-    } finally {
+          } finally {
       setIsLoggingIn(false);
     }
   };
 
   if (loading) {
     return (
+      <EnhancedErrorBoundary>
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <CollapsibleAppSidebar />
+            <SidebarInset className="flex-1">
+              <main 
+                className="flex-1 p-8 bg-repeat min-h-screen flex items-center justify-center" 
+                style={{ 
+                  backgroundImage: 'url(/assets/bghabbohub.png)',
+                  backgroundRepeat: 'repeat',
+                  backgroundPosition: 'center',
+                  backgroundSize: 'auto'
+                }}
+              >
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                  <p className="text-white">Carregando...</p>
+                </div>
+              </main>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </EnhancedErrorBoundary>
+    );
+  }
+
+  return (
+    <EnhancedErrorBoundary>
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
             <main 
-              className="flex-1 p-8 bg-repeat min-h-screen flex items-center justify-center" 
+              className="flex-1 p-8 bg-repeat min-h-screen" 
               style={{ 
                 backgroundImage: 'url(/assets/bghabbohub.png)',
                 backgroundRepeat: 'repeat',
@@ -77,31 +97,6 @@ export const Login: React.FC = () => {
                 backgroundSize: 'auto'
               }}
             >
-              <div className="text-center">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-                <p className="text-white">Carregando...</p>
-              </div>
-            </main>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    );
-  }
-
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <CollapsibleAppSidebar />
-        <SidebarInset className="flex-1">
-          <main 
-            className="flex-1 p-8 bg-repeat min-h-screen" 
-            style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
-              backgroundRepeat: 'repeat',
-              backgroundPosition: 'center',
-              backgroundSize: 'auto'
-            }}
-          >
             <div className="max-w-2xl mx-auto mt-10">
               {/* Logo do HabboHub */}
               <div className="text-center mb-8">
@@ -140,9 +135,9 @@ export const Login: React.FC = () => {
                           <button
                             key={hotel.code}
                             type="button"
-                            onClick={() => setSelectedCountry(hotel.code)}
+                            onClick={() => setSelectedHotel(hotel.code)}
                             className={`flex flex-col items-center p-2 rounded-lg border-2 transition-all duration-200 ${
-                              selectedCountry === hotel.code
+                              selectedHotel === hotel.code
                                 ? 'border-blue-500 bg-blue-50 shadow-md'
                                 : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
                             }`}
@@ -160,7 +155,7 @@ export const Login: React.FC = () => {
                         ))}
                       </div>
                       <div className="text-xs text-gray-500 text-center">
-                        Hotel selecionado: <strong>{habboHotels.find(h => h.code === selectedCountry)?.name}</strong>
+                        Hotel selecionado: <strong>{habboHotels.find(h => h.code === selectedHotel)?.name}</strong>
                       </div>
                     </div>
 
@@ -222,6 +217,7 @@ export const Login: React.FC = () => {
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </EnhancedErrorBoundary>
   );
 };
 

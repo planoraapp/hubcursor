@@ -83,8 +83,7 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ isOpen, 
 
       setStep(3);
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast({
+            toast({
         title: "Erro",
         description: error.message || 'Erro ao redefinir senha',
         variant: "destructive"

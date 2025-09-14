@@ -44,10 +44,8 @@ export const UnifiedProfileView: React.FC<UnifiedProfileViewProps> = ({
   const handleRefreshPhotos = async () => {
     try {
       await loadPhotos(true);
-      console.log('[✅ UNIFIED PROFILE] Photo refresh completed for:', habboName);
-    } catch (error) {
-      console.error('[❌ UNIFIED PROFILE] Photo refresh failed for:', habboName, error);
-    }
+          } catch (error) {
+          }
   };
 
   const getAvatarUrl = (figureString?: string, name?: string) => {

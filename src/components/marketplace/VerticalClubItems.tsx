@@ -83,9 +83,7 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
 
   useEffect(() => {
     const fetchClubItems = async () => {
-      console.log(`🏨 [VerticalClubItems] Fetching club items for hotel: ${hotel}`);
-      
-      try {
+            try {
         setLoading(true);
         
         // Itens HC e CA com imagens diretas
@@ -114,10 +112,8 @@ export const VerticalClubItems = ({ hotel }: VerticalClubItemsProps) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         setClubItems(mockItems);
-        console.log(`✅ [VerticalClubItems] Loaded ${mockItems.length} club items`);
-      } catch (error) {
-        console.error('❌ [VerticalClubItems] Error fetching club items:', error);
-        setClubItems([]);
+              } catch (error) {
+                setClubItems([]);
       } finally {
         setLoading(false);
       }

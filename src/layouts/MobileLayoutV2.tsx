@@ -34,8 +34,7 @@ const MobileLayoutV2 = ({ children }: { children: React.ReactNode }) => {
           const data = await getUserByName(habboAccount.name);
           setHabboData(data);
         } catch (error) {
-          console.error('Erro ao buscar dados do usuário:', error);
-        }
+                  }
       }
     };
 

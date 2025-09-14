@@ -61,13 +61,12 @@ const HabboTemplariosGrid: React.FC<HabboTemplariosGridProps> = ({
   const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
-      const cats = await habboOfficialService.getCategories();
+      const cats = await unifiedHabboService.getCategories();
       setCategories(cats);
       setError(null);
     } catch (err) {
       setError('Erro ao carregar dados do Habbo BR');
-      console.error('Erro ao carregar categorias:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, []);
@@ -83,8 +82,7 @@ const HabboTemplariosGrid: React.FC<HabboTemplariosGridProps> = ({
       }
     } catch (err) {
       setError('Erro ao carregar itens da categoria');
-      console.error('Erro ao carregar itens:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, [categories]);
@@ -107,8 +105,7 @@ const HabboTemplariosGrid: React.FC<HabboTemplariosGridProps> = ({
       setError(null);
     } catch (err) {
       setError('Erro na busca');
-      console.error('Erro na busca:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, [categories, currentCategory, loadCategoryItems]);
@@ -428,7 +425,7 @@ const HabboTemplariosGrid: React.FC<HabboTemplariosGridProps> = ({
                       onError={(e) => {
                         // Fallback para habbo-imaging se a imagem falhar
                         const target = e.target as HTMLImageElement;
-                        target.src = habboOfficialService.generateAvatarImageUrl(item.type, item.id.split('-')[1], selectedGender, currentColorState);
+                        target.src = unifiedHabboService.generateAvatarImageUrl(item.type, item.id.split('-')[1], selectedGender, currentColorState);
                       }}
                     />
                     

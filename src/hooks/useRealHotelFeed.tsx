@@ -26,8 +26,7 @@ export const useRealHotelFeed = (options?: {
 
   // DESABILITADO: Todas as edge functions foram removidas temporariamente
   const discoverOnlineUsers = useCallback(async () => {
-    console.log(`🔍 [useRealHotelFeed] DESABILITADO: Edge functions obsoletas`);
-    return Promise.resolve();
+        return Promise.resolve();
   }, []);
 
   // DESABILITADO: Fetch real feed data 
@@ -40,9 +39,7 @@ export const useRealHotelFeed = (options?: {
   } = useQuery({
     queryKey: ['real-hotel-feed', hotel, mode, onlineWithinSeconds, onlyOnline],
     queryFn: async (): Promise<FeedResponse> => {
-      console.log(`📡 [useRealHotelFeed] DESABILITADO: Sistema em manutenção`);
-      
-      // COMENTADO: Edge functions não existem mais
+            // COMENTADO: Edge functions não existem mais
       /*
       if (mode === 'hybrid' || mode === 'database') {
         discoverOnlineUsers().catch(() => {}); 
@@ -82,8 +79,7 @@ export const useRealHotelFeed = (options?: {
   const [mergedActivities] = useState<Array<FeedActivity & { key: string; isNew?: boolean }>>([]);
 
   const loadMoreData = useCallback(async (page: number) => {
-    console.log(`📈 [useRealHotelFeed] DESABILITADO: loadMoreData`);
-    return {
+        return {
       activities: [],
       meta: {
         source: 'database' as const,
@@ -104,8 +100,7 @@ export const useRealHotelFeed = (options?: {
   };
 
   const enhancedRefetch = useCallback(async () => {
-    console.log(`🔄 [useRealHotelFeed] DESABILITADO: enhancedRefetch`);
-    return Promise.resolve();
+        return Promise.resolve();
   }, []);
 
   return {

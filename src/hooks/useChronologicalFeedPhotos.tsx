@@ -28,11 +28,8 @@ export const useChronologicalFeedPhotos = (currentUserName: string, hotel: strin
   const queryResult = useQuery({
     queryKey: ['chronological-feed-photos', currentUserName, hotel, friends.length],
     queryFn: async (): Promise<ChronologicalPhoto[]> => {
-      console.log(`[📸 CHRONOLOGICAL FEED] Fetching photos for ${currentUserName} with ${friends.length} friends`);
-
-      if (friends.length === 0) {
-        console.log('[📸 CHRONOLOGICAL FEED] No friends found, returning empty array');
-        return [];
+            if (friends.length === 0) {
+                return [];
       }
 
       try {
@@ -44,9 +41,7 @@ export const useChronologicalFeedPhotos = (currentUserName: string, hotel: strin
         // Get friend names for the query
         const friendNames = friends.map(f => f.name).slice(0, 100); // Limit to 100 friends for performance
         
-        console.log(`[📸 CHRONOLOGICAL FEED] Querying photos for ${friendNames.length} friends`);
-        
-        // Query photos from the last 48 hours, ordered by real timestamp
+                // Query photos from the last 48 hours, ordered by real timestamp
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
         
@@ -74,18 +69,14 @@ export const useChronologicalFeedPhotos = (currentUserName: string, hotel: strin
           .limit(200); // Get more photos for better diversity
 
         if (error) {
-          console.error('[📸 CHRONOLOGICAL FEED] Query error:', error);
-          throw error;
+                    throw error;
         }
 
         if (!photos || photos.length === 0) {
-          console.log('[📸 CHRONOLOGICAL FEED] No photos found for friends');
-          return [];
+                    return [];
         }
 
-        console.log(`[📸 CHRONOLOGICAL FEED] Found ${photos.length} photos, processing chronologically...`);
-        
-        // Process and sort photos chronologically
+                // Process and sort photos chronologically
         const processedPhotos = photos
           .filter(photo => photo.s3_url && photo.habbo_name)
           .map(photo => {
@@ -141,9 +132,7 @@ export const useChronologicalFeedPhotos = (currentUserName: string, hotel: strin
           }, [])
           .slice(0, 50); // Final limit for feed display
 
-        console.log(`[📸 CHRONOLOGICAL FEED] Processed ${processedPhotos.length} chronological photos`);
-        
-        // Log diversity stats
+                // Log diversity stats
         const userCounts = processedPhotos.reduce((acc, photo) => {
           acc[photo.habbo_name] = (acc[photo.habbo_name] || 0) + 1;
           return acc;
@@ -156,8 +145,7 @@ export const useChronologicalFeedPhotos = (currentUserName: string, hotel: strin
 
         return processedPhotos;
       } catch (error: any) {
-        console.error('[📸 CHRONOLOGICAL FEED] Fetch failed:', error);
-        throw error;
+                throw error;
       }
     },
     enabled: !!currentUserName && !profileLoading && friends.length > 0,

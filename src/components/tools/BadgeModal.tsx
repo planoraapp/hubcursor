@@ -16,7 +16,6 @@ interface BadgeModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-
 // Lista de países/regiões com bandeiras (será carregada dinamicamente)
 const BADGE_COUNTRIES = [
   { name: 'Todos', flag: null },
@@ -90,8 +89,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       setStats({ total: badgeStats.total, filtered: badgeStats.total });
       
     } catch (error) {
-      console.error('Erro ao carregar dados iniciais:', error);
-    } finally {
+          } finally {
       setIsLoading(false);
     }
   }, []);
@@ -102,8 +100,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       const badges = await getRecentBadges(100);
       setRecentBadges(badges);
     } catch (error) {
-      console.error('Erro ao carregar emblemas recentes:', error);
-    }
+          }
   }, []);
 
   // Carregar emblemas clássicos (100 aleatórios dos 5000 mais antigos)
@@ -116,8 +113,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       const shuffled = allClassic.sort(() => Math.random() - 0.5);
       setClassicBadges(shuffled.slice(0, 100));
     } catch (error) {
-      console.error('Erro ao carregar emblemas clássicos:', error);
-    }
+          }
   }, []);
 
   // Carregar badges com filtros
@@ -152,8 +148,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       setStats(prev => ({ ...prev, filtered: badges.length }));
       
     } catch (error) {
-      console.error('Erro ao carregar badges:', error);
-    } finally {
+          } finally {
       setIsLoading(false);
     }
   }, [searchTerm, selectedCountry, selectedCategory, displayedBadges.length, hasMore]);
@@ -176,8 +171,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       setHasMore(initialBadges.length === 1000);
       
     } catch (error) {
-      console.error('Erro ao carregar grid completo:', error);
-    } finally {
+          } finally {
       setIsLoading(false);
     }
   }, [searchTerm, selectedCountry, selectedCategory]);
@@ -193,8 +187,7 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
         await loadBadges(true);
       }
     } catch (error) {
-      console.error('Erro ao atualizar dados:', error);
-    } finally {
+          } finally {
       setIsRefreshing(false);
     }
   }, [loadInitialData, loadRecentBadgesData, loadClassicBadgesData, loadBadges, showAllGrid]);
@@ -208,7 +201,6 @@ const BadgeModal = ({ open, onOpenChange }: BadgeModalProps) => {
       setShowAllGrid(false);
     }
   }, [showAllGrid, loadFullGrid]);
-
 
   // Carregar mais emblemas (scroll infinito)
   const loadMoreBadges = useCallback(() => {

@@ -50,8 +50,7 @@ export const usePhotoLikes = (photoId: string) => {
       toast.success('Foto curtida!');
     },
     onError: (error: any) => {
-      console.error('Erro ao curtir foto:', error);
-      toast.error('Erro ao curtir foto');
+            toast.error('Erro ao curtir foto');
     }
   });
 
@@ -75,8 +74,7 @@ export const usePhotoLikes = (photoId: string) => {
       toast.success('Curtida removida');
     },
     onError: (error: any) => {
-      console.error('Erro ao remover curtida:', error);
-      toast.error('Erro ao remover curtida');
+            toast.error('Erro ao remover curtida');
     }
   });
 

@@ -12,9 +12,7 @@ export const useInfiniteUserSearch = (options: UseInfiniteUserSearchOptions = {}
   const query = useInfiniteQuery({
     queryKey: ['infinite-user-search', limit],
     queryFn: async ({ pageParam = 0 }) => {
-      console.log(`🔍 [useInfiniteUserSearch] Loading page ${pageParam}`);
-      
-      try {
+            try {
         const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
           body: { 
             endpoint: 'feed',
@@ -28,25 +26,20 @@ export const useInfiniteUserSearch = (options: UseInfiniteUserSearchOptions = {}
         });
 
         if (error) {
-          console.error('❌ [useInfiniteUserSearch] Error:', error);
-          throw new Error(error.message || 'Failed to fetch users');
+                    throw new Error(error.message || 'Failed to fetch users');
         }
 
         if (data.error) {
-          console.error('❌ [useInfiniteUserSearch] API Error:', data.error);
-          throw new Error(data.error);
+                    throw new Error(data.error);
         }
 
-        console.log(`✅ [useInfiniteUserSearch] Loaded ${data.feed?.length || 0} users for page ${pageParam}`);
-        
-        return {
+                return {
           users: data.feed || [],
           nextPage: (data.feed?.length === limit) ? pageParam + 1 : undefined,
           hasMore: (data.feed?.length === limit)
         };
       } catch (error: any) {
-        console.error('❌ [useInfiniteUserSearch] Fetch failed:', error);
-        throw error;
+                throw error;
       }
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,

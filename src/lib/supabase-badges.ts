@@ -17,8 +17,7 @@ let supabase: any = null;
 if (supabaseUrl && supabaseKey && !supabaseUrl.includes('your-project') && !supabaseKey.includes('your-anon-key')) {
   supabase = createClient(supabaseUrl, supabaseKey);
 } else {
-  console.warn('Supabase não configurado. Usando dados locais como fallback.');
-}
+  }
 
 // Funções de fallback usando dados locais
 const generateBadgesFromLocalData = (limit?: number): Badge[] => {
@@ -303,8 +302,7 @@ export async function getBadges(filters: BadgeFilters = {}): Promise<Badge[]> {
     })) || [];
 
   } catch (error) {
-    console.error('Erro ao buscar badges:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -313,8 +311,7 @@ export async function getBadges(filters: BadgeFilters = {}): Promise<Badge[]> {
  */
 export async function getBadgeByCode(code: string): Promise<Badge | null> {
   if (!supabase) {
-    console.warn('Supabase não configurado. Retornando null.');
-    return null;
+        return null;
   }
 
   try {
@@ -343,8 +340,7 @@ export async function getBadgeByCode(code: string): Promise<Badge | null> {
     };
 
   } catch (error) {
-    console.error('Erro ao buscar badge:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -432,8 +428,7 @@ export async function getBadgeStats(): Promise<BadgeStats> {
     };
 
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -467,8 +462,7 @@ export async function getAvailableCategories(): Promise<string[]> {
     return [...new Set(data?.map((item: any) => item.category) || [])];
 
   } catch (error) {
-    console.error('Erro ao buscar categorias:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -502,8 +496,7 @@ export async function getAvailableCountries(): Promise<string[]> {
     return [...new Set(data?.map((item: any) => item.country) || [])];
 
   } catch (error) {
-    console.error('Erro ao buscar países:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -529,8 +522,7 @@ export async function getAvailableHotels(): Promise<string[]> {
     return [...new Set(data?.map((item: any) => item.hotel) || [])];
 
   } catch (error) {
-    console.error('Erro ao buscar hotéis:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -568,8 +560,7 @@ export async function getRecentBadges(limit: number = 10): Promise<Badge[]> {
     })) || [];
 
   } catch (error) {
-    console.error('Erro ao buscar badges recentes:', error);
-    throw error;
+        throw error;
   }
 }
 
@@ -608,7 +599,6 @@ export async function getClassicBadges(limit: number = 10): Promise<Badge[]> {
     })) || [];
 
   } catch (error) {
-    console.error('Erro ao buscar badges clássicos:', error);
-    throw error;
+        throw error;
   }
 }

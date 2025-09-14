@@ -77,8 +77,7 @@ export const fixInvalidColors = (figureString: string): string => {
     
     if (!isValidColorForCategory(colorId, category)) {
       const defaultColor = getDefaultColorForCategory(category);
-      console.log(`🔧 [ColorValidator] Corrigindo cor inválida: ${category}-${figureId}-${colorId} → ${category}-${figureId}-${defaultColor}`);
-      return `${category}-${figureId}-${defaultColor}`;
+            return `${category}-${figureId}-${defaultColor}`;
     }
     
     return part;

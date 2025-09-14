@@ -34,7 +34,5 @@ export const useHabboPhotos = (username?: string, hotel: string = 'com.br') => {
     source: 'profile_scraping'
   }));
 
-  console.log(`[🔧 ENHANCED PHOTOS] Converted ${photos.length} photos for ${username}`);
-
-  return { habboPhotos, isLoading, error };
+    return { habboPhotos, isLoading, error };
 };

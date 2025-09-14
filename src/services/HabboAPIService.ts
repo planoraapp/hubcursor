@@ -63,8 +63,7 @@ export class HabboApiService {
   // Passo 1: Descobrir a build atual do Habbo
   async getCurrentBuild(): Promise<HabboBuildInfo> {
     try {
-      console.log('🔍 Descobrindo build atual do Habbo...');
-      const response = await fetch(`${this.baseUrl}/gamedata/external_variables/1`);
+            const response = await fetch(`${this.baseUrl}/gamedata/external_variables/1`);
       const text = await response.text();
       
       // Buscar flash.client.url
@@ -77,9 +76,7 @@ export class HabboApiService {
       const buildId = this.extractBuildId(flashClientUrl);
       const now = new Date().toISOString();
       
-      console.log(`✅ Build descoberta: ${buildId}`);
-      
-      return {
+            return {
         buildId,
         flashClientUrl,
         avatarActionsUrl: `${flashClientUrl}HabboAvatarActions.xml`,
@@ -88,8 +85,7 @@ export class HabboApiService {
         lastChecked: now
       };
     } catch (error) {
-      console.error('❌ Erro ao obter build atual:', error);
-      throw error;
+            throw error;
     }
   }
   
@@ -121,11 +117,9 @@ export class HabboApiService {
         });
       }
       
-      console.log(`📋 Encontrados ${handitems.length} handitems nos textos`);
-      return handitems;
+            return handitems;
     } catch (error) {
-      console.error('Erro ao buscar handitems dos textos:', error);
-      return [];
+            return [];
     }
   }
   
@@ -176,11 +170,9 @@ export class HabboApiService {
         }
       });
       
-      console.log(`🎯 Encontradas ${handitems.length} definições de ações`);
-      return handitems;
+            return handitems;
     } catch (error) {
-      console.error('Erro ao buscar ações dos handitems:', error);
-      return [];
+            return [];
     }
   }
   
@@ -232,11 +224,9 @@ export class HabboApiService {
       
       furniData.push(...knownFurni);
       
-      console.log(`🏠 Encontradas ${furniData.length} mobílias com handitems`);
-      return furniData;
+            return furniData;
     } catch (error) {
-      console.error('Erro ao buscar mobílias:', error);
-        return [];
+              return [];
     }
   }
 
@@ -263,9 +253,7 @@ export class HabboApiService {
     handitems: HabboHanditem[];
     furni: HabboFurni[];
   }> {
-    console.log('🚀 Iniciando busca de dados internos do Habbo...');
-    
-    // Usar build real descoberta
+        // Usar build real descoberta
     const now = new Date().toISOString();
     const realBuildId = 'PRODUCTION-202509092352-15493374';
     const buildInfo: HabboBuildInfo = {
@@ -281,9 +269,7 @@ export class HabboApiService {
     const handitems = this.generateHanditemsFromInternalData();
     const furni = this.generateFurniFromInternalData();
     
-    console.log(`✅ Dados carregados: ${handitems.length} handitems, ${furni.length} mobílias`);
-    
-    return {
+        return {
       buildInfo,
       handitems,
       furni
@@ -292,9 +278,7 @@ export class HabboApiService {
   
   // Gerar handitems baseados nos dados reais extraídos do Habbo
   private generateHanditemsFromInternalData(): HabboHanditem[] {
-    console.log('📥 Usando dados reais extraídos do external_flash_texts.txt...');
-    
-    // Usar dados reais dos handitems importados
+        // Usar dados reais dos handitems importados
     
     // Build ID real do Habbo
     const buildId = 'PRODUCTION-202509092352-15493374';
@@ -323,8 +307,7 @@ export class HabboApiService {
       };
     });
     
-    console.log(`✅ Carregados ${handitems.length} handitems reais do Habbo`);
-    return handitems;
+        return handitems;
   }
   
   // Gerar mobílias baseadas nos dados internos existentes
@@ -678,8 +661,7 @@ export class HabboApiService {
    */
   async extractHanditemsFromFlashTexts(): Promise<HabboHanditem[]> {
     try {
-      console.log('🔍 Extraindo handitems do external_flash_texts...');
-      const response = await fetch(`${this.baseUrl}/gamedata/external_flash_texts/1`);
+            const response = await fetch(`${this.baseUrl}/gamedata/external_flash_texts/1`);
       const text = await response.text();
       
       const handitems: HabboHanditem[] = [];
@@ -705,11 +687,9 @@ export class HabboApiService {
         });
       }
       
-      console.log(`✅ Extraídos ${handitems.length} handitems do external_flash_texts`);
-      return handitems;
+            return handitems;
     } catch (error) {
-      console.error('❌ Erro ao extrair handitems:', error);
-      throw error;
+            throw error;
     }
   }
 
@@ -786,9 +766,7 @@ export class HabboApiService {
    */
   async discoverHanditemsWithImages(): Promise<HabboDiscoveryReport> {
     try {
-      console.log('🚀 Iniciando descoberta completa de handitems...');
-      
-      // 1. Descobrir build atual
+            // 1. Descobrir build atual
       const buildInfo = await this.getCurrentBuild();
       
       // 2. Extrair handitems do external_flash_texts
@@ -810,8 +788,7 @@ export class HabboApiService {
         );
         handitemsWithImages.push(...batchResults);
         
-        console.log(`📊 Verificadas imagens: ${i + batch.length}/${handitemsWithUrls.length}`);
-      }
+              }
       
       // 5. Gerar mobílias (usando dados internos por enquanto)
       const furni = this.generateFurniFromInternalData();
@@ -827,12 +804,10 @@ export class HabboApiService {
         status: 'success'
       };
       
-      console.log(`✅ Descoberta completa finalizada: ${handitemsWithImages.length} handitems, ${furni.length} mobílias`);
-      return report;
+            return report;
       
     } catch (error) {
-      console.error('❌ Erro na descoberta completa:', error);
-      return {
+            return {
         buildInfo: {
           buildId: 'error',
           flashClientUrl: '',

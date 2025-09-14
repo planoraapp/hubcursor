@@ -42,8 +42,7 @@ export const RealChatWindow: React.FC<RealChatWindowProps> = ({
       setInputText('');
     },
     onError: (error) => {
-      console.error('Error sending message:', error);
-      toast.error('Erro ao enviar mensagem');
+            toast.error('Erro ao enviar mensagem');
     }
   });
 

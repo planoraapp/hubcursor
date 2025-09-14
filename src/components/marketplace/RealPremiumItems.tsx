@@ -85,8 +85,7 @@ export const RealPremiumItems = ({ hotel }: RealPremiumItemsProps) => {
 
       setPremiumItems(realItems);
     } catch (error) {
-      console.error('Erro ao buscar preços reais:', error);
-      // Fallback com zero disponível
+            // Fallback com zero disponível
       setPremiumItems([
         {
           id: 'hc_premium_31',

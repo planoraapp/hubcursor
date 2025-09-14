@@ -164,16 +164,13 @@ const TraxMachineModal: React.FC<TraxMachineModalProps> = ({ open, onOpenChange 
         });
 
         audio.addEventListener('error', () => {
-          console.log('Sample não encontrado, usando versão simulada');
-          setIsLoading(false);
+                    setIsLoading(false);
         });
       } else {
-        console.log('URL do sample não encontrada');
-        setIsLoading(false);
+                setIsLoading(false);
       }
     } catch (error) {
-      console.error('Erro ao reproduzir sample:', error);
-      setIsLoading(false);
+            setIsLoading(false);
     }
   };
 

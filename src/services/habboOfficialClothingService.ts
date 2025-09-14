@@ -103,31 +103,22 @@ class HabboOfficialClothingService {
     if (this.cache.has(cacheKey) && this.lastUpdate.has(cacheKey)) {
       const lastUpdate = this.lastUpdate.get(cacheKey)!;
       if (now - lastUpdate < this.CACHE_DURATION) {
-        console.log('📦 [OfficialClothing] Using cached data');
-        return this.cache.get(cacheKey)!;
+                return this.cache.get(cacheKey)!;
       }
     }
 
-    console.log(`🌐 [OfficialClothing] Fetching fresh data from ${hotel}`);
-    
-    try {
+        try {
       // 1. Buscar external_variables para obter URL da build atual
       const buildUrl = await this.getCurrentBuildUrl(hotel);
-      console.log(`🔗 [OfficialClothing] Current build URL: ${buildUrl}`);
-
-      // 2. Buscar figuredata.xml
+            // 2. Buscar figuredata.xml
       const figureData = await this.fetchFigureData(buildUrl);
       console.log(`📊 [FigureData] Loaded ${Object.keys(figureData.categories).length} categories`);
 
       // 3. Buscar figuremap.xml para códigos científicos
       const figureMap = await this.fetchFigureMap(buildUrl);
-      console.log(`🗺️ [FigureMap] Loaded ${figureMap.size} scientific codes`);
-
-      // 4. Buscar furnidata para informações adicionais
+            // 4. Buscar furnidata para informações adicionais
       const furniData = await this.fetchFurniData(hotel);
-      console.log(`🏠 [FurniData] Loaded ${furniData.size} furni items`);
-
-      // 5. Processar e unificar dados
+            // 5. Processar e unificar dados
       const processedData = this.processClothingData(figureData, figureMap, furniData);
 
       // 6. Cachear resultado
@@ -137,12 +128,9 @@ class HabboOfficialClothingService {
       return processedData;
 
     } catch (error) {
-      console.error('❌ [OfficialClothing] Error fetching data:', error);
-      
-      // Retornar cache se disponível, mesmo que expirado
+            // Retornar cache se disponível, mesmo que expirado
       if (this.cache.has(cacheKey)) {
-        console.log('⚠️ [OfficialClothing] Using expired cache due to error');
-        return this.cache.get(cacheKey)!;
+                return this.cache.get(cacheKey)!;
       }
       
       throw error;
@@ -169,9 +157,7 @@ class HabboOfficialClothingService {
     }
     
     const baseUrl = match[1].trim();
-    console.log(`🔗 [BuildURL] Found: ${baseUrl}`);
-    
-    return baseUrl;
+        return baseUrl;
   }
 
   /**
@@ -182,9 +168,7 @@ class HabboOfficialClothingService {
     palettes: HabboColorPalette[];
   }> {
     const figureDataUrl = `${buildUrl}/figuredata.xml`;
-    console.log(`📥 [FigureData] Fetching: ${figureDataUrl}`);
-    
-    const response = await fetch(figureDataUrl);
+        const response = await fetch(figureDataUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch figuredata: ${response.status}`);
     }
@@ -198,12 +182,9 @@ class HabboOfficialClothingService {
    */
   private async fetchFigureMap(buildUrl: string): Promise<Map<string, string>> {
     const figureMapUrl = `${buildUrl}/figuremap.xml`;
-    console.log(`🗺️ [FigureMap] Fetching: ${figureMapUrl}`);
-    
-    const response = await fetch(figureMapUrl);
+        const response = await fetch(figureMapUrl);
     if (!response.ok) {
-      console.warn(`⚠️ [FigureMap] Failed to fetch: ${response.status}`);
-      return new Map();
+            return new Map();
     }
     
     const xmlText = await response.text();
@@ -215,12 +196,9 @@ class HabboOfficialClothingService {
    */
   private async fetchFurniData(hotel: 'sandbox' | 'br' | 'com'): Promise<Map<string, any>> {
     const furniDataUrl = HABBO_OFFICIAL_URLS[hotel.toUpperCase() as keyof typeof HABBO_OFFICIAL_URLS].FURNIDATA_JSON;
-    console.log(`🏠 [FurniData] Fetching: ${furniDataUrl}`);
-    
-    const response = await fetch(furniDataUrl);
+        const response = await fetch(furniDataUrl);
     if (!response.ok) {
-      console.warn(`⚠️ [FurniData] Failed to fetch: ${response.status}`);
-      return new Map();
+            return new Map();
     }
     
     const data = await response.json();
@@ -490,8 +468,7 @@ class HabboOfficialClothingService {
   clearCache(): void {
     this.cache.clear();
     this.lastUpdate.clear();
-    console.log('🧹 [OfficialClothing] Cache cleared');
-  }
+      }
 }
 
 // Instância singleton

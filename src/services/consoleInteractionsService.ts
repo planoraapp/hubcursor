@@ -40,8 +40,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching likes:', error);
-      return [];
+            return [];
     }
   }
 
@@ -61,8 +60,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error adding like:', error);
-      return false;
+            return false;
     }
   }
 
@@ -80,8 +78,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error removing like:', error);
-      return false;
+            return false;
     }
   }
 
@@ -100,8 +97,7 @@ class ConsoleInteractionsService {
       if (error && error.code !== 'PGRST116') throw error;
       return !!data;
     } catch (error) {
-      console.error('Error checking if user liked:', error);
-      return false;
+            return false;
     }
   }
 
@@ -117,8 +113,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching comments:', error);
-      return [];
+            return [];
     }
   }
 
@@ -140,8 +135,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error adding comment:', error);
-      return false;
+            return false;
     }
   }
 
@@ -155,8 +149,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error deleting comment:', error);
-      return false;
+            return false;
     }
   }
 
@@ -172,8 +165,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching follows:', error);
-      return [];
+            return [];
     }
   }
 
@@ -188,8 +180,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching following:', error);
-      return [];
+            return [];
     }
   }
 
@@ -210,8 +201,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error following user:', error);
-      return false;
+            return false;
     }
   }
 
@@ -229,8 +219,7 @@ class ConsoleInteractionsService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error unfollowing user:', error);
-      return false;
+            return false;
     }
   }
 
@@ -249,8 +238,7 @@ class ConsoleInteractionsService {
       if (error && error.code !== 'PGRST116') throw error;
       return !!data;
     } catch (error) {
-      console.error('Error checking if user is following:', error);
-      return false;
+            return false;
     }
   }
 }

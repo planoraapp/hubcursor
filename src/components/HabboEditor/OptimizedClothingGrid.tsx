@@ -110,13 +110,11 @@ const OptimizedClothingGrid: React.FC<OptimizedClothingGridProps> = ({
   }, [filteredAndSortedItems, preloadBatch]);
 
   const handleItemClick = useCallback((item: UnifiedHabboClothingItem) => {
-    console.log('🎯 [OptimizedGrid] Item selecionado:', item.name, item.source);
-    onItemSelect(item, selectedColor);
+        onItemSelect(item, selectedColor);
   }, [onItemSelect, selectedColor]);
 
   const handleColorChange = useCallback((item: UnifiedHabboClothingItem, colorId: string) => {
-    console.log('🎨 [OptimizedGrid] Cor alterada:', { item: item.name, colorId, source: item.source });
-    onItemSelect(item, colorId);
+        onItemSelect(item, colorId);
   }, [onItemSelect]);
 
   const toggleFavorite = useCallback((itemId: string) => {
@@ -161,8 +159,7 @@ const OptimizedClothingGrid: React.FC<OptimizedClothingGridProps> = ({
   }
 
   if (error) {
-    console.error('❌ [OptimizedGrid] Erro:', error);
-    return (
+        return (
       <Card className="p-6">
         <div className="text-center text-red-500">
           <p className="font-medium">Erro ao carregar sistema otimizado</p>
@@ -377,6 +374,4 @@ const OptimizedClothingGrid: React.FC<OptimizedClothingGridProps> = ({
 };
 
 export default OptimizedClothingGrid;
-
-
 

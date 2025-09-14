@@ -42,15 +42,13 @@ export class LookStringManager {
       }
     }
 
-    console.log('🎯 [LookString] Part added:', part);
-  }
+      }
 
   // Remover uma parte do avatar
   removePart(category: string): void {
     this.state.parts.delete(category);
     this.state.order = this.state.order.filter(cat => cat !== category);
-    console.log('️ [LookString] Part removed:', category);
-  }
+      }
 
   // Obter look string completa
   getLookString(): string {
@@ -82,8 +80,7 @@ export class LookStringManager {
   clear(): void {
     this.state.parts.clear();
     this.state.order = [...LookStringManager.CATEGORY_ORDER];
-    console.log('🔄 [LookString] Cleared all parts');
-  }
+      }
 
   // Carregar look string existente
   loadFromString(lookString: string): void {
@@ -101,8 +98,7 @@ export class LookStringManager {
       }
     });
 
-    console.log('📥 [LookString] Loaded from string:', lookString);
-  }
+      }
 
   // Validar look string
   validate(): { isValid: boolean; errors: string[] } {

@@ -22,20 +22,16 @@ export const usePhotoDiscovery = () => {
     setHotel(newHotel);
     
     try {
-      console.log(`[usePhotoDiscovery] Starting advanced discovery for ${newUsername} on ${newHotel}`);
-      
-      await discoverPhotos({
+            await discoverPhotos({
         username: newUsername,
         hotel: newHotel,
         action: 'discover'
       });
 
-      console.log('[usePhotoDiscovery] Discovery results:', results);
-      return results;
+            return results;
       
     } catch (error) {
-      console.error('[usePhotoDiscovery] Error:', error);
-      throw error;
+            throw error;
     }
   };
 

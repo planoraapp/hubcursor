@@ -44,8 +44,7 @@ export const AccountManager: React.FC = () => {
       }
     } catch (err) {
       setError('Erro interno ao carregar contas');
-      console.error('Erro ao carregar contas:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -69,8 +68,7 @@ export const AccountManager: React.FC = () => {
       }
     } catch (err) {
       setError('Erro interno ao verificar conta');
-      console.error('Erro ao verificar conta:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -91,8 +89,7 @@ export const AccountManager: React.FC = () => {
       }
     } catch (err) {
       setError('Erro interno ao criar conta habbohub');
-      console.error('Erro ao criar conta habbohub:', err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };

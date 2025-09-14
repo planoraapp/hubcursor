@@ -207,8 +207,7 @@ const EnhancedAvatarPreview: React.FC<EnhancedAvatarPreviewProps> = ({
                 title="Clique para girar o avatar"
                 style={{ imageRendering: 'pixelated' }}
                 onError={(e) => {
-                  console.error('Error loading avatar image');
-                  e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00MCA0NEg4OFY4NEg0MFY0NFoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+';
+                                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik00MCA0NEg4OFY4NEg0MFY0NFoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+';
                 }}
               />
             </div>

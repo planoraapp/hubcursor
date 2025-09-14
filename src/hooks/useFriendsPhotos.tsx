@@ -25,24 +25,19 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       }
 
       if (!completeProfile?.data?.friends?.length) {
-        console.log(`[🎯 FRIENDS PHOTOS] No friends found for ${currentUserName}`);
-        return [];
+                return [];
       }
 
-      console.log(`[🎯 FRIENDS PHOTOS] Fetching photos for ${completeProfile.data.friends.length} friends of ${currentUserName}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-friends-photos', {
+            const { data, error } = await supabase.functions.invoke('habbo-friends-photos', {
         body: { username: currentUserName, hotel }
       });
 
       if (error) {
-        console.error('[❌ FRIENDS PHOTOS] Error:', error);
-        throw new Error(error.message || 'Failed to fetch friends photos');
+                throw new Error(error.message || 'Failed to fetch friends photos');
       }
 
       if (!data || data.error) {
-        console.error('[❌ FRIENDS PHOTOS] API Error:', data?.error || 'No data returned');
-        return [];
+                return [];
       }
 
       console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${Array.isArray(data) ? data.length : 0} photos`);
@@ -72,9 +67,7 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
           return result;
         });
 
-      console.log(`[📊 FRIENDS PHOTOS] Filtered to ${validPhotos.length} valid photos, ordered chronologically`);
-      
-      return validPhotos;
+            return validPhotos;
     },
     enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
     staleTime: 5 * 60 * 1000, // Reduzido para 5 minutos

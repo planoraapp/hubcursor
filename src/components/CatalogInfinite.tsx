@@ -95,9 +95,7 @@ export const CatalogInfinite = () => {
     
     try {
       setLoading(true);
-      console.log(`🔄 Fetching enhanced furnis V2 page ${pageNum}, category: ${category}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
+            const { data, error } = await supabase.functions.invoke('habbo-emotion-furnis', {
         body: { page: pageNum, limit: 200, category }
       });
       
@@ -113,12 +111,9 @@ export const CatalogInfinite = () => {
           setCategories(['all', ...data.metadata.categories]);
         }
         
-        console.log(`✅ Loaded ${data.furnis.length} enhanced furnis V2`);
-        console.log(`📊 Total furnis loaded: ${reset ? data.furnis.length : furnis.length + data.furnis.length}`);
-      }
+                      }
     } catch (error) {
-      console.error('❌ Error fetching enhanced furnis V2:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, [loading, furnis.length]);

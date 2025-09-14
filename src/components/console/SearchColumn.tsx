@@ -25,8 +25,7 @@ export const SearchColumn: React.FC<SearchColumnProps> = ({ onStartConversation 
     queryClient.invalidateQueries({ queryKey: ['hotel-ticker'] });
     queryClient.invalidateQueries({ queryKey: ['friends-photos'] });
     queryClient.invalidateQueries({ queryKey: ['friends-activities'] });
-    console.log('🔄 [SEARCH DEBUG] Force refreshed all feeds');
-    refetchTicker();
+        refetchTicker();
   };
 
   const handleUserSearch = async (username: string) => {

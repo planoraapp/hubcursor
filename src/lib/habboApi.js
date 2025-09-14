@@ -8,13 +8,11 @@ export async function getUserByName(username) {
   const cacheKey = `user-${username.toLowerCase()}`;
   
   if (CACHE_DURATION > 0 && cache.has(cacheKey) && (Date.now() - cache.get(cacheKey).timestamp < CACHE_DURATION)) {
-    console.log('[habboApi Debug]: User data from cache:', username);
-    return cache.get(cacheKey).data;
+        return cache.get(cacheKey).data;
   }
 
   try {
-    console.log(`[habboApi Debug]: Fetching user: ${username} from ${BASE_URL}/users?name=${username}`);
-    const response = await fetch(`${BASE_URL}/users?name=${encodeURIComponent(username)}`, {
+        const response = await fetch(`${BASE_URL}/users?name=${encodeURIComponent(username)}`, {
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'HabboHub/1.0'
@@ -22,9 +20,7 @@ export async function getUserByName(username) {
     });
 
     if (!response.ok) {
-      console.warn(`[habboApi Debug]: API responded with status ${response.status} for user ${username}`);
-      
-      if (response.status === 404) {
+            if (response.status === 404) {
         console.warn(`[habboApi Debug]: User not found (404): ${username}`);
         return null;
       }
@@ -38,19 +34,15 @@ export async function getUserByName(username) {
     }
 
     const data = await response.json();
-    console.log('[habboApi Debug]: Raw API response data:', data);
-
-    if (!data) {
-      console.warn('[habboApi Debug]: No data returned from API');
-      return null;
+        if (!data) {
+            return null;
     }
 
     // Handle both array and object responses
     let user;
     if (Array.isArray(data)) {
       if (data.length === 0) {
-        console.warn('[habboApi Debug]: Empty array returned - user not found:', username);
-        return null;
+                return null;
       }
       user = data[0];
     } else {
@@ -58,14 +50,12 @@ export async function getUserByName(username) {
     }
 
     if (!user || !user.name) {
-      console.warn('[habboApi Debug]: Invalid user data structure:', user);
-      return null;
+            return null;
     }
 
     // Check if profile is private
     if (user.profileVisible === false) {
-      console.warn('[habboApi Debug]: User profile is private:', username);
-      return null;
+            return null;
     }
 
     const motto = user.motto ? String(user.motto).trim() : '';
@@ -82,17 +72,13 @@ export async function getUserByName(username) {
       figureString: user.figureString || '',
     };
 
-    console.log('[habboApi Debug]: Processed user data:', userToCache);
-
-    if (CACHE_DURATION > 0) {
+        if (CACHE_DURATION > 0) {
       cache.set(cacheKey, { data: userToCache, timestamp: Date.now() });
     }
     
     return userToCache;
   } catch (error) {
-    console.error(`[habboApi Debug]: Error fetching user '${username}':`, error);
-    
-    // Return basic fallback data
+        // Return basic fallback data
     return {
       id: `fallback-${Date.now()}`,
       name: username,

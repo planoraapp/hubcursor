@@ -64,8 +64,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      console.log('🔄 Carregando dados do servidor Habbo...');
-      const data = await habboApiService.getAllData();
+            const data = await habboApiService.getAllData();
       
       setBuildInfo(data.buildInfo);
       setHanditems(data.handitems);
@@ -77,10 +76,8 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
         description: `Encontrados ${data.handitems.length} handitems e ${data.furni.length} mobílias`,
       });
       
-      console.log('✅ Dados carregados:', data);
-    } catch (error) {
-      console.error('❌ Erro ao carregar dados:', error);
-      toast({
+          } catch (error) {
+            toast({
         title: "Erro ao carregar dados",
         description: "Não foi possível conectar aos servidores do Habbo",
         variant: "destructive",
@@ -93,8 +90,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   const extractData = async () => {
     setIsExtracting(true);
     try {
-      console.log('🚀 Iniciando extração completa de dados...');
-      const report = await habboApiService.discoverHanditemsWithImages();
+            const report = await habboApiService.discoverHanditemsWithImages();
       
       setBuildInfo(report.buildInfo);
       setHanditems(report.handitems);
@@ -106,10 +102,8 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
         description: `Descobertos ${report.totalHanditems} handitems e ${report.totalFurni} mobílias. Build: ${report.buildInfo.buildId}`,
       });
       
-      console.log('✅ Extração completa finalizada:', report);
-    } catch (error) {
-      console.error('❌ Erro na extração:', error);
-      toast({
+          } catch (error) {
+            toast({
         title: "Erro na extração",
         description: "Não foi possível extrair dados dos servidores do Habbo",
         variant: "destructive",

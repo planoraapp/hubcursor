@@ -241,8 +241,7 @@ const HabboTemplariosStyleEditor: React.FC<HabboTemplariosStyleEditorProps> = ({
         updateAvatar();
       }
     } catch (error) {
-      console.error('Erro ao buscar figura do usuário:', error);
-    }
+          }
   };
 
   // Função para copiar URL da imagem
@@ -268,8 +267,7 @@ const HabboTemplariosStyleEditor: React.FC<HabboTemplariosStyleEditorProps> = ({
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Erro ao baixar imagem:', error);
-      alert('Erro ao baixar a imagem. Tente novamente.');
+            alert('Erro ao baixar a imagem. Tente novamente.');
     }
   };
 

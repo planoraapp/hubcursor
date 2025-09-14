@@ -32,8 +32,7 @@ export const useTrackedItems = (hotelId: string) => {
         setTrackedItems(JSON.parse(stored));
       }
     } catch (error) {
-      console.error('Erro ao buscar itens salvos:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -58,8 +57,7 @@ export const useTrackedItems = (hotelId: string) => {
       
       return true;
     } catch (error) {
-      console.error('Erro ao salvar item:', error);
-      return false;
+            return false;
     }
   };
 
@@ -72,8 +70,7 @@ export const useTrackedItems = (hotelId: string) => {
       setTrackedItems(currentItems);
       return true;
     } catch (error) {
-      console.error('Erro ao remover item:', error);
-      return false;
+            return false;
     }
   };
 

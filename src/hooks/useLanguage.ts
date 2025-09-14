@@ -287,8 +287,7 @@ export const useLanguage = () => {
   const changeLanguage = (language: Language) => {
     setCurrentLanguage(language);
     localStorage.setItem('habbohub-language', language);
-    console.log(`🌐 [useLanguage] Language changed to: ${language}`);
-  };
+      };
 
   const t = (key: keyof Translations): string => {
     return translations[currentLanguage][key] || key;

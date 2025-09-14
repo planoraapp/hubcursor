@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { findUserByUsername, verifyCredentials, createUserWithDomain, type LocalUser } from '@/data/localUsers';
+import { generateUniqueUsername, extractOriginalUsername } from '@/utils/usernameUtils';
 
 interface HabboAccount {
   id: string;
@@ -29,62 +30,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isLoggedIn = !!habboAccount;
 
-  // Função para inicializar conta habbohub se não existir
-  const initializeHabboHubAccount = async () => {
-    try {
-      console.log('🔧 [Auth] Verificando se conta habbohub existe...');
-      
-      // Obter país selecionado do localStorage ou usar 'br' como padrão
-      const selectedHotel = localStorage.getItem('selected_habbo_hotel') || 'br';
-      
-      // Verificar se já existe usando SQL direto
-      const { data: existingAccount, error } = await (supabase as any)
-        .rpc('check_habbo_auth_exists', { username: 'habbohub' });
-
-      if (!error && existingAccount) {
-        console.log('✅ [Auth] Conta habbohub já existe');
-        return;
-      }
-
-      console.log('🔧 [Auth] Criando conta habbohub...');
-      
-      // Criar conta habbohub usando SQL direto
-      const { data: newAccount, error: insertError } = await (supabase as any)
-        .rpc('create_habbo_auth_account', {
-          username: 'habbohub',
-          motto: 'HUB-ADMIN',
-          avatar: 'https://www.habbo.com/habbo-imaging/avatarimage?size=l&figure=hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61&direction=2&head_direction=2&img_format=png',
-          password: '151092',
-          is_admin: true,
-          hotel: selectedHotel
-        });
-
-      if (insertError) {
-        console.error('❌ [Auth] Erro ao criar conta habbohub:', insertError);
-      } else {
-        console.log('✅ [Auth] Conta habbohub criada com sucesso:', newAccount);
-      }
-    } catch (error) {
-      console.error('❌ [Auth] Erro ao inicializar conta habbohub:', error);
-    }
-  };
-
   // Verificar sessão existente
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Primeiro, inicializar conta habbohub se necessário
-        await initializeHabboHubAccount();
-        
-        // Depois verificar sessão existente
+        // Verificar sessão existente no localStorage
         const sessionData = localStorage.getItem('habbohub_session');
         if (sessionData) {
           const session = JSON.parse(sessionData);
           setHabboAccount(session);
         }
       } catch (error) {
-        console.error('Erro ao inicializar autenticação:', error);
-        localStorage.removeItem('habbohub_session');
+                localStorage.removeItem('habbohub_session');
       } finally {
         setLoading(false);
       }
@@ -96,33 +53,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      console.log('🔐 [Auth] Tentando login para:', username);
-
-      // Verificar credenciais usando função SQL
-      console.log('🔍 [Auth] Verificando credenciais para:', username.toLowerCase());
-      const { data: authResult, error } = await (supabase as any)
-        .rpc('verify_habbo_auth_password', { 
-          username: username.toLowerCase(), 
-          password: password 
-        });
-
-      console.log('🔍 [Auth] Resultado da verificação:', { authResult, error });
-
-      if (error || !authResult || !(authResult as any).success) {
-        const errorMsg = (authResult as any)?.error || 'Erro na verificação';
-        console.log('❌ [Auth] Erro na verificação:', errorMsg);
-        toast({
+            // Verificar credenciais localmente
+      const authResult = verifyCredentials(username, password);
+      
+      if (!authResult.success) {
+                toast({
           title: "Erro no login",
-          description: errorMsg,
+          description: authResult.error || 'Erro na verificação',
           variant: "destructive"
         });
         return false;
       }
 
-      const accountData = (authResult as any).user;
+      const user = authResult.user!;
 
       // Buscar dados reais do Habbo se for habbohub
-      if (username.toLowerCase() === 'habbohub') {
+      const originalUsername = extractOriginalUsername(user.habbo_username);
+      if (originalUsername.toLowerCase() === 'habbohub') {
         try {
           // Obter país selecionado do localStorage
           const selectedHotel = localStorage.getItem('selected_habbo_hotel') || 'br';
@@ -145,43 +92,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (response.ok) {
             const habboData = await response.json();
             
-            // Atualizar dados na tabela usando SQL direto
-            const { data: updatedUser } = await (supabase as any)
-              .rpc('update_habbo_auth_user', {
-                user_id: accountData.id,
-                motto: habboData.motto || accountData.habbo_motto,
-                avatar: habboData.figureString || accountData.habbo_avatar,
-                last_login: new Date().toISOString()
-              });
-            
-            // Atualizar accountData com dados reais
-            if (updatedUser) {
-              accountData.habbo_motto = (updatedUser as any).habbo_motto;
-              accountData.habbo_avatar = (updatedUser as any).habbo_avatar;
-            }
+            // Atualizar dados do usuário com dados reais
+            user.habbo_motto = habboData.motto || user.habbo_motto;
+            user.habbo_avatar = habboData.figureString || user.habbo_avatar;
           }
         } catch (error) {
           console.warn('⚠️ [Auth] Erro ao buscar dados reais (não crítico):', error);
         }
       }
 
-      // Criar sessão
-      const session = {
-        id: accountData.id,
-        habbo_username: accountData.habbo_username,
-        habbo_motto: accountData.habbo_motto,
-        habbo_avatar: accountData.habbo_avatar,
-        is_admin: accountData.is_admin,
-        hotel: 'br',
-        created_at: accountData.created_at
+      // Criar sessão (usar nome original para exibição)
+      const session: HabboAccount = {
+        id: user.id,
+        habbo_username: originalUsername, // Usar nome original para exibição
+        habbo_motto: user.habbo_motto,
+        habbo_avatar: user.habbo_avatar,
+        is_admin: user.is_admin,
+        hotel: user.hotel,
+        created_at: user.created_at
       };
 
       // Salvar na sessão local
       localStorage.setItem('habbohub_session', JSON.stringify(session));
       setHabboAccount(session);
 
-      console.log('✅ [Auth] Login realizado com sucesso:', username);
-      toast({
+            toast({
         title: "Login realizado",
         description: `Bem-vindo, ${username}!`
       });
@@ -189,8 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
 
     } catch (error: any) {
-      console.error('❌ [Auth] Erro no login:', error);
-      toast({
+            toast({
         title: "Erro no login",
         description: error.message || "Erro interno",
         variant: "destructive"
@@ -209,15 +143,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('habbohub_session');
       setHabboAccount(null);
       
-      console.log('✅ [Auth] Logout realizado');
-      toast({
+            toast({
         title: "Logout realizado",
         description: "Até logo!"
       });
 
     } catch (error) {
-      console.error('❌ [Auth] Erro no logout:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };

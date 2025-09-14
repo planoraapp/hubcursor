@@ -28,15 +28,12 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
   const fetchGeneralFeed = async () => {
     setLoading(true);
     try {
-      console.log('🔄 [Feed] Fetching general feed...');
-      const sampleUsers = ['habbohub', 'Beebop', 'joao123', 'maria456', 'pedro789'];
+            const sampleUsers = ['habbohub', 'Beebop', 'joao123', 'maria456', 'pedro789'];
       const allActivities: Activity[] = [];
 
       for (const username of sampleUsers.slice(0, 3)) { // Reduced to 3 to avoid rate limits
         try {
-          console.log(`📡 [Feed] Requesting activities for: ${username}`);
-          
-          const response = await supabase.functions.invoke('habbo-unified-api', {
+                    const response = await supabase.functions.invoke('habbo-unified-api', {
             body: { 
               endpoint: 'feed',
               action: 'activities',
@@ -44,52 +41,41 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
             }
           });
           
-          console.log(`📨 [Feed] Response for ${username}:`, response);
-          
-          if (response.data?.success && response.data?.activities) {
+                    if (response.data?.success && response.data?.activities) {
             const userActivities = response.data.activities.map((activity: Activity) => ({
               ...activity,
               friendName: username,
               figureString: 'hd-180-1.ch-255-66.lg-280-110.sh-305-62' // Default figure
             }));
             allActivities.push(...userActivities);
-            console.log(`✅ [Feed] Added ${userActivities.length} activities for ${username}`);
-          } else {
-            console.warn(`⚠️ [Feed] No activities found for ${username}:`, response.error);
-          }
+                      } else {
+                      }
         } catch (error) {
-          console.error(`❌ [Feed] Error fetching activities for ${username}:`, error);
-        }
+                  }
       }
 
       const groupedActivities = groupActivitiesByUser(allActivities);
       setActivities(groupedActivities.slice(0, 20));
       setLastUpdate(new Date());
-      console.log(`📊 [Feed] Final activities count: ${groupedActivities.length}`);
-    } catch (error) {
-      console.error('❌ [Feed] Error fetching general feed:', error);
-    } finally {
+          } catch (error) {
+          } finally {
       setLoading(false);
     }
   };
 
   const fetchFriendsFeed = async () => {
     if (followedUsers.length === 0) {
-      console.log('ℹ️ [Feed] No followed users, skipping friends feed');
-      setActivities([]);
+            setActivities([]);
       return;
     }
 
     setLoading(true);
     try {
-      console.log('🔄 [Feed] Fetching friends feed for:', followedUsers);
-      const allActivities: Activity[] = [];
+            const allActivities: Activity[] = [];
 
       for (const username of followedUsers.slice(0, 5)) { // Limit to prevent rate limits
         try {
-          console.log(`📡 [Feed] Requesting activities for friend: ${username}`);
-          
-          const response = await supabase.functions.invoke('habbo-unified-api', {
+                    const response = await supabase.functions.invoke('habbo-unified-api', {
             body: { 
               endpoint: 'feed',
               action: 'activities',
@@ -104,20 +90,16 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
               figureString: 'hd-180-1.ch-255-66.lg-280-110.sh-305-62' // Would fetch actual figure
             }));
             allActivities.push(...userActivities);
-            console.log(`✅ [Feed] Added ${userActivities.length} activities for friend ${username}`);
-          }
+                      }
         } catch (error) {
-          console.error(`❌ [Feed] Error fetching activities for friend ${username}:`, error);
-        }
+                  }
       }
 
       const groupedActivities = groupActivitiesByUser(allActivities);
       setActivities(groupedActivities.slice(0, 15));
       setLastUpdate(new Date());
-      console.log(`📊 [Feed] Final friends activities count: ${groupedActivities.length}`);
-    } catch (error) {
-      console.error('❌ [Feed] Error fetching friends feed:', error);
-    } finally {
+          } catch (error) {
+          } finally {
       setLoading(false);
     }
   };
@@ -140,8 +122,7 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
   };
 
   const refreshFeed = () => {
-    console.log(`🔄 [Feed] Refreshing ${feedType} feed...`);
-    if (feedType === 'general') {
+        if (feedType === 'general') {
       fetchGeneralFeed();
     } else {
       fetchFriendsFeed();
@@ -149,13 +130,11 @@ export const FeedSystem: React.FC<FeedSystemProps> = ({ feedType, followedUsers 
   };
 
   useEffect(() => {
-    console.log(`🚀 [Feed] Initializing ${feedType} feed...`);
-    refreshFeed();
+        refreshFeed();
     
     // Auto-refresh every 5 minutes
     const interval = setInterval(() => {
-      console.log(`⏰ [Feed] Auto-refreshing ${feedType} feed...`);
-      refreshFeed();
+            refreshFeed();
     }, 5 * 60 * 1000);
     
     return () => clearInterval(interval);

@@ -58,8 +58,7 @@ const OfficialClothingGrid = ({
   });
 
   const handleItemClick = (item: ViaJovemFlashItem) => {
-    console.log('🎯 [OfficialGrid] Asset focado selecionado:', item.name, item.figureId);
-    // Convert back to OfficialHabboAsset format for the callback
+        // Convert back to OfficialHabboAsset format for the callback
     const originalAsset = filteredAssets.find(asset => asset.figureId === item.figureId);
     if (originalAsset) {
       onItemSelect(originalAsset, selectedColor);
@@ -67,8 +66,7 @@ const OfficialClothingGrid = ({
   };
 
   const handleColorChange = (item: ViaJovemFlashItem, colorId: string) => {
-    console.log('🎨 [OfficialGrid] Cor alterada com preview focado:', { asset: item.name, colorId });
-    const originalAsset = filteredAssets.find(asset => asset.figureId === item.figureId);
+        const originalAsset = filteredAssets.find(asset => asset.figureId === item.figureId);
     if (originalAsset) {
       onItemSelect(originalAsset, colorId);
     }
@@ -84,8 +82,7 @@ const OfficialClothingGrid = ({
   }
 
   if (error) {
-    console.error('❌ [OfficialGrid] Erro:', error);
-    return (
+        return (
       <Card className="p-6">
         <div className="text-center text-red-500">
           <p className="font-medium">Erro ao carregar assets oficiais</p>

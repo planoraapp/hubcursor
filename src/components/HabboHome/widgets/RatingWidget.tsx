@@ -26,7 +26,11 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
   const loadRatings = async () => {
     try {
       setLoading(true);
-      console.log('🌟 Carregando avaliações para:', homeOwnerId);
+            // Verificar se homeOwnerId é válido
+      if (!homeOwnerId || homeOwnerId === 'undefined') {
+                setLoading(false);
+        return;
+      }
 
       // Carregar todas as avaliações para calcular média
       const { data: allRatings, error: allError } = await supabase
@@ -34,7 +38,8 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
         .select('rating')
         .eq('home_owner_user_id', homeOwnerId);
 
-      if (!allError && allRatings) {
+      if (allError) {
+              } else if (allRatings) {
         const ratings = allRatings.map(r => r.rating);
         const avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
         setAverageRating(Math.round(avg * 10) / 10);
@@ -44,7 +49,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       }
 
       // Carregar avaliação do usuário atual se logado
-      if (habboAccount) {
+      if (habboAccount && habboAccount.supabase_user_id) {
         const { data: userRatingData, error: userError } = await supabase
           .from('user_home_ratings')
           .select('rating')
@@ -54,26 +59,21 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
 
         if (!userError && userRatingData) {
           setUserRating(userRatingData.rating);
-          console.log(`👤 Avaliação do usuário: ${userRatingData.rating}`);
-        }
+                  }
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar avaliações:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
 
   const handleRate = async (rating: number) => {
     if (!habboAccount) {
-      console.warn('⚠️ Usuário não logado tentando avaliar');
-      return;
+            return;
     }
 
     try {
-      console.log(`⭐ Avaliando com ${rating} estrelas`);
-      
-      const { error } = await supabase
+            const { error } = await supabase
         .from('user_home_ratings')
         .upsert({
           home_owner_user_id: homeOwnerId,
@@ -84,27 +84,24 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       if (!error) {
         setUserRating(rating);
         await loadRatings(); // Recarregar para atualizar média
-        console.log('✅ Avaliação salva com sucesso');
-      } else {
-        console.error('❌ Erro ao salvar avaliação:', error);
-      }
+              } else {
+              }
     } catch (error) {
-      console.error('❌ Erro inesperado ao avaliar:', error);
-    }
+          }
   };
 
   if (loading) {
     return (
-      <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-64 justify-center ${className}`}>
-        <div className="text-sm text-gray-500">Carregando avaliações...</div>
+      <div className={`flex flex-col items-center p-3 bg-white rounded-md volter-font min-h-[120px] w-64 justify-center ${className}`}>
+        <div className="text-sm text-gray-500 volter-font">Carregando avaliações...</div>
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col items-center p-3 bg-white rounded-md font-volter min-h-[120px] w-48 ${className}`}>
+    <div className={`flex flex-col items-center p-3 bg-white rounded-md volter-font min-h-[120px] w-48 ${className}`}>
       {/* Média no topo */}
-      <div className="text-2xl font-bold text-black mb-2">
+      <div className="text-2xl font-bold text-black mb-2 volter-font">
         {averageRating > 0 ? averageRating.toFixed(1) : '—'}
       </div>
       
@@ -119,7 +116,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       </div>
       
       {/* Contador de avaliações */}
-      <div className="text-xs text-gray-600 text-center">
+      <div className="text-xs text-gray-600 text-center volter-font">
         {totalRatings === 0 
           ? 'Nenhuma avaliação' 
           : `${totalRatings} ${totalRatings === 1 ? 'avaliação' : 'avaliações'}`
@@ -127,7 +124,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       </div>
       
       {!habboAccount && (
-        <div className="text-xs text-gray-500 mt-2 text-center">
+        <div className="text-xs text-gray-500 mt-2 text-center volter-font">
           Faça login para avaliar
         </div>
       )}

@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Activity, Trophy, Users, Loader2, Hotel, RefreshCw, Wifi, WifiOff, Archive, Heart, Camera, UserPlus, MessageSquare } from 'lucide-react';
 import { useHotelActivities } from '@/hooks/useHotelActivities';
 import { useUserFigures } from '@/hooks/useUserFigures';
-import { habboProxyService } from '@/services/habboProxyService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 export const HotelFeedColumn: React.FC = () => {
   const { aggregatedActivities, isLoading, error, hotel, metadata, refetch } = useHotelActivities();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -19,21 +18,17 @@ export const HotelFeedColumn: React.FC = () => {
     setIsRefreshing(true);
     try {
       await refetch();
-      console.log('✅ [HotelFeedColumn] Feed refreshed successfully');
-    } catch (error) {
-      console.error('❌ [HotelFeedColumn] Refresh error:', error);
-    } finally {
+          } catch (error) {
+          } finally {
       setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
     if (aggregatedActivities.length > 0) {
-      console.log(`📊 [HotelFeedColumn] Displaying ${aggregatedActivities.length} user groups for hotel ${hotel}`);
-      console.log(`👥 [HotelFeedColumn] Total unique users: ${usernames.length} (source: ${metadata.source})`);
+            console.log(`👥 [HotelFeedColumn] Total unique users: ${usernames.length} (source: ${metadata.source})`);
       const totalActivities = aggregatedActivities.reduce((sum, group) => sum + group.activityCount, 0);
-      console.log(`⚡ [HotelFeedColumn] Total activities: ${totalActivities}`);
-    }
+          }
   }, [aggregatedActivities, usernames.length, hotel, metadata.source]);
 
   const getActivityIcon = (activityType: string) => {
@@ -169,7 +164,7 @@ export const HotelFeedColumn: React.FC = () => {
                     <div className="flex-shrink-0">
                       {figureMap[userGroup.username] ? (
                         <img 
-                          src={habboProxyService.getAvatarUrl(figureMap[userGroup.username], 'l')} 
+                          src={unifiedHabboService.getAvatarUrl(figureMap[userGroup.username], 'l')} 
                           alt={userGroup.username}
                           className="h-[130px] w-auto object-contain bg-transparent"
                         />

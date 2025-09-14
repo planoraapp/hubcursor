@@ -26,9 +26,7 @@ export class HabboDataExtractor {
   // Extrair handitems do external_flash_texts
   async extractHanditemsFromTexts(): Promise<ExtractedHanditem[]> {
     try {
-      console.log('🔍 Extraindo handitems do external_flash_texts...');
-      
-      const response = await fetch(`${this.baseUrl}/gamedata/external_flash_texts/1`);
+            const response = await fetch(`${this.baseUrl}/gamedata/external_flash_texts/1`);
       const text = await response.text();
       
       const handitems: ExtractedHanditem[] = [];
@@ -49,20 +47,16 @@ export class HabboDataExtractor {
         });
       }
       
-      console.log(`✅ Extraídos ${handitems.length} handitems dos textos`);
-      return handitems;
+            return handitems;
     } catch (error) {
-      console.error('❌ Erro ao extrair handitems dos textos:', error);
-      return [];
+            return [];
     }
   }
   
   // Extrair definições de ações do HabboAvatarActions.xml
   async extractHanditemActions(buildUrl: string): Promise<ExtractedHanditem[]> {
     try {
-      console.log('🔍 Extraindo ações dos handitems...');
-      
-      const response = await fetch(`${buildUrl}HabboAvatarActions.xml`);
+            const response = await fetch(`${buildUrl}HabboAvatarActions.xml`);
       const xmlText = await response.text();
       
       const parser = new DOMParser();
@@ -110,20 +104,16 @@ export class HabboDataExtractor {
         }
       });
       
-      console.log(`✅ Extraídas ${handitems.length} definições de ações`);
-      return handitems;
+            return handitems;
     } catch (error) {
-      console.error('❌ Erro ao extrair ações dos handitems:', error);
-      return [];
+            return [];
     }
   }
   
   // Descobrir build atual
   async discoverCurrentBuild(): Promise<string> {
     try {
-      console.log('🔍 Descobrindo build atual...');
-      
-      const response = await fetch(`${this.baseUrl}/gamedata/external_variables/1`);
+            const response = await fetch(`${this.baseUrl}/gamedata/external_variables/1`);
       const text = await response.text();
       
       const flashClientMatch = text.match(/flash\.client\.url=(.+)/);
@@ -132,11 +122,9 @@ export class HabboDataExtractor {
       }
       
       const buildUrl = flashClientMatch[1];
-      console.log(`✅ Build descoberta: ${buildUrl}`);
-      return buildUrl;
+            return buildUrl;
     } catch (error) {
-      console.error('❌ Erro ao descobrir build:', error);
-      throw error;
+            throw error;
     }
   }
   
@@ -152,9 +140,7 @@ export class HabboDataExtractor {
   
   // Filtrar handitems que realmente existem (têm imagens)
   async filterExistingHanditems(handitems: ExtractedHanditem[]): Promise<ExtractedHanditem[]> {
-    console.log('🔍 Verificando existência das imagens...');
-    
-    const existingHanditems: ExtractedHanditem[] = [];
+        const existingHanditems: ExtractedHanditem[] = [];
     
     for (const handitem of handitems) {
       if (handitem.imageUrl) {
@@ -168,8 +154,7 @@ export class HabboDataExtractor {
       }
     }
     
-    console.log(`✅ ${existingHanditems.length} handitems com imagens válidas`);
-    return existingHanditems;
+        return existingHanditems;
   }
   
   // Extrair todos os dados de uma vez (usando dados internos devido ao CORS)
@@ -178,17 +163,13 @@ export class HabboDataExtractor {
     handitems: ExtractedHanditem[];
     totalDiscovered: number;
   }> {
-    console.log('🚀 Iniciando extração de dados internos...');
-    
-    // Usar build mockada devido ao CORS
+        // Usar build mockada devido ao CORS
     const buildUrl = 'https://images.habbo.com/gordon/flash-assets-PRODUCTION-202501131238-217734843/';
     
     // Gerar handitems baseados nos dados internos
     const handitems = this.generateInternalHanditems();
     
-    console.log(`🎉 Extração concluída: ${handitems.length} handitems descobertos`);
-    
-    return {
+        return {
       buildUrl,
       handitems,
       totalDiscovered: handitems.length

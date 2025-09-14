@@ -253,8 +253,7 @@ class PuhekuplaService {
         return this.parseRealItems(data, category);
       }
     } catch (error) {
-      console.log(`Erro ao buscar dados reais para ${category.name}:`, error);
-    }
+          }
 
     // Fallback: gerar dados baseados em IDs conhecidos do Habbo
     return this.generateRealisticItems(category);

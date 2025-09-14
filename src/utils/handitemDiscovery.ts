@@ -15,18 +15,15 @@ export class HanditemDiscovery {
         const handitem = await this.checkHanditem(id);
         if (handitem) {
           discovered.push(handitem);
-          console.log(`✅ Handitem ${id} encontrado: ${handitem.images.length} variações`);
-        }
+                  }
       } catch (error) {
-        console.log(`❌ Erro ao verificar handitem ${id}:`, error);
-      }
+              }
       
       // Pequena pausa para não sobrecarregar
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    console.log(`🎉 Descoberta concluída: ${discovered.length} handitems encontrados`);
-    return discovered;
+        return discovered;
   }
   
   // Verificar se um handitem específico existe

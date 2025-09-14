@@ -48,8 +48,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
         setTotalRatings(0);
       }
     } catch (error) {
-      console.error('Error loading ratings:', error);
-    }
+          }
   };
 
   const loadUserRating = async () => {
@@ -67,8 +66,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       
       setUserRating(data?.rating || 0);
     } catch (error) {
-      console.error('Error loading user rating:', error);
-    }
+          }
   };
 
   const handleRating = async (rating: number) => {
@@ -123,8 +121,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
         description: `Você avaliou a home de ${homeOwnerName} com ${rating} estrela${rating !== 1 ? 's' : ''}.`
       });
     } catch (error) {
-      console.error('Error saving rating:', error);
-      toast({
+            toast({
         title: "Erro ao avaliar",
         description: "Não foi possível salvar sua avaliação. Tente novamente.",
         variant: "destructive"

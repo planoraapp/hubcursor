@@ -48,8 +48,7 @@ export const DroppedSticker: React.FC<DroppedStickerProps> = ({
       elementY: y
     });
 
-    console.log(`🎯 Iniciando drag do sticker ${stickerId}`);
-  };
+      };
 
   const handleClick = (e: React.MouseEvent) => {
     if (!isEditMode) return;
@@ -57,8 +56,7 @@ export const DroppedSticker: React.FC<DroppedStickerProps> = ({
     // Double click para remover
     if (e.detail === 2 && onRemove) {
       onRemove(id);
-      console.log(`🗑️ Removendo sticker ${stickerId}`);
-    }
+          }
   };
 
   useEffect(() => {
@@ -74,8 +72,7 @@ export const DroppedSticker: React.FC<DroppedStickerProps> = ({
 
     const handleMouseUp = () => {
       if (isDragging) {
-        console.log(`✅ Drag do sticker ${stickerId} finalizado`);
-      }
+              }
       setIsDragging(false);
     };
 
@@ -119,8 +116,7 @@ export const DroppedSticker: React.FC<DroppedStickerProps> = ({
         draggable={false}
         style={{ imageRendering: 'pixelated' }}
         onError={(e) => {
-          console.error(`Erro ao carregar sticker: ${src}`);
-          const target = e.target as HTMLImageElement;
+                    const target = e.target as HTMLImageElement;
           target.src = '/assets/frank.png'; // Fallback
         }}
       />

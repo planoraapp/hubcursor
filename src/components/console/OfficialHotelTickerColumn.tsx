@@ -43,12 +43,9 @@ export const OfficialHotelTickerColumn: React.FC = () => {
       if (hasInitialized.current) return;
       hasInitialized.current = true;
 
-      console.log('🎯 [Feed Hotel] Inicializando feed do hotel...');
-      
-      try {
+            try {
         if (habboAccount?.habbo_name && habboAccount?.habbo_id) {
-          console.log(`🧭 [Feed Hotel] Ensuring user ${habboAccount.habbo_name} is tracked`);
-          await habboFeedService.ensureTrackedAndSynced({
+                    await habboFeedService.ensureTrackedAndSynced({
             habbo_name: habboAccount.habbo_name,
             habbo_id: habboAccount.habbo_id,
             hotel: hotel === 'com.br' ? 'br' : hotel
@@ -60,19 +57,15 @@ export const OfficialHotelTickerColumn: React.FC = () => {
         
         setTimeout(() => refetch(), 3000);
         
-        console.log('✅ [Feed Hotel] Inicialização concluída');
-      } catch (error) {
-        console.warn('⚠️ [Feed Hotel] Erro na inicialização:', error);
-      }
+              } catch (error) {
+              }
 
       syncIntervalRef.current = setInterval(async () => {
         try {
-          console.log('🔄 [Feed Hotel] Sync periódico iniciado');
-          await habboFeedService.triggerBatchSync(hotel);
+                    await habboFeedService.triggerBatchSync(hotel);
           setTimeout(() => refetch(), 2000);
         } catch (error) {
-          console.warn('⚠️ [Feed Hotel] Erro no sync periódico:', error);
-        }
+                  }
       }, 4 * 60 * 1000);
     };
 
@@ -89,13 +82,11 @@ export const OfficialHotelTickerColumn: React.FC = () => {
 
   const handleRefresh = async () => {
     try {
-      console.log('🔄 [Feed Hotel] Refresh manual iniciado');
-      await discoverOnlineUsers();
+            await discoverOnlineUsers();
       await habboFeedService.triggerBatchSync(hotel);
       setTimeout(() => refetch(), 3000);
     } catch (error) {
-      console.error('❌ [Feed Hotel] Erro na atualização:', error);
-    }
+          }
   };
 
   const getActivityItems = (activity: any) => {

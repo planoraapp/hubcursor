@@ -15,8 +15,7 @@ export const EnhancedActivityRenderer: React.FC<EnhancedActivityRendererProps> =
     try {
       return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ptBR });
     } catch (error) {
-      console.warn('Erro ao formatar a data:', error);
-      return 'há alguns momentos';
+            return 'há alguns momentos';
     }
   };
 

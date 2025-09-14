@@ -36,12 +36,10 @@ export const ConsoleProfileModal: React.FC<ConsoleProfileModalProps> = ({
   } = useOptimizedPhotos(habboName, 'br');
 
   const handleRefreshPhotos = async () => {
-    console.log('[🔄 PROFILE MODAL] Manual photo refresh initiated');
-    try {
+        try {
       await refreshPhotos();
     } catch (error) {
-      console.error('[❌ PROFILE MODAL] Photo refresh failed:', error);
-    }
+          }
   };
 
   // Map photos for PhotoGrid

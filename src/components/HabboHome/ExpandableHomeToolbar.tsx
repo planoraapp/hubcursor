@@ -19,6 +19,7 @@ const WIDGETS = [
   { id: 'rating', name: 'Avaliações', description: 'Sistema de like/dislike da home', icon: '⭐' },
 ];
 
+
 export const ExpandableHomeToolbar: React.FC<ExpandableHomeToolbarProps> = ({
   onBackgroundChange,
   onStickerAdd,
@@ -157,7 +158,9 @@ export const ExpandableHomeToolbar: React.FC<ExpandableHomeToolbarProps> = ({
                     {loading ? (
                       <div className="col-span-3 text-center text-gray-800 volter-font">Carregando backgrounds...</div>
                     ) : (
-                      assets['Papel de Parede'].map((bg) => (
+                      assets['Papel de Parede']
+                        .filter((bg) => !bg.name.toLowerCase().includes('abril') && !bg.name.toLowerCase().includes('diadojornalista'))
+                        .map((bg) => (
                         <button
                           key={bg.id}
                           onClick={() => handleBackgroundSelect(bg)}
@@ -236,6 +239,7 @@ export const ExpandableHomeToolbar: React.FC<ExpandableHomeToolbarProps> = ({
                 </div>
               </div>
             )}
+
           </div>
         </div>
       )}

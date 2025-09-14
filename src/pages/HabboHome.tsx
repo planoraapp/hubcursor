@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Home, Users, Calendar } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { NewAppSidebar } from '@/components/NewAppSidebar';
 
 interface HabboRoom {
@@ -33,12 +33,10 @@ const HabboHome = () => {
     setLoading(true);
     try {
       // This would be replaced with actual room search API
-      console.log('Searching for rooms:', searchQuery);
-      // Placeholder for room search results
+            // Placeholder for room search results
       setRooms([]);
     } catch (error) {
-      console.error('Error searching rooms:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };

@@ -10,14 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface GuestbookEntry {
-  id: string;
-  author_habbo_name: string;
-  message: string;
-  created_at: string;
-  author_user_id?: string;
-}
-
+import type { GuestbookEntry } from '@/types/habbo';
 interface FunctionalGuestbookWidgetProps {
   homeOwnerUserId: string;
   homeOwnerName: string;
@@ -55,8 +48,7 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
         setEntries(data);
       }
     } catch (error) {
-      console.error('Erro ao carregar entradas do guestbook:', error);
-    }
+          }
   };
 
   const handleSubmit = async () => {

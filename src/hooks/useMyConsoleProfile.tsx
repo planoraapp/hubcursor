@@ -9,14 +9,7 @@ export const useMyConsoleProfile = () => {
   const { habboAccount, isLoggedIn } = useAuth();
   
   // Log detailed auth state for debugging
-  console.log('[🔍 MY CONSOLE PROFILE] Auth state:', {
-    isLoggedIn,
-    habboName: habboAccount?.habbo_name,
-    hotel: habboAccount?.hotel,
-    hasAccount: !!habboAccount
-  });
-  
-  // Standardize hotel domain mapping
+    // Standardize hotel domain mapping
   const getApiHotel = (hotel: string) => {
     if (hotel === 'br') return 'com.br';
     return hotel || 'com.br';
@@ -35,11 +28,8 @@ export const useMyConsoleProfile = () => {
       }
       
       const apiHotel = getApiHotel(habboAccount.hotel);
-      console.log(`[🔍 MY CONSOLE PROFILE] Fetching profile for ${habboAccount.habbo_name} on ${apiHotel}`);
-      
-      const profile = await habboProxyService.getUserProfile(habboAccount.habbo_name, apiHotel);
-      console.log('[✅ MY CONSOLE PROFILE] Profile fetched successfully:', profile?.name || 'No name');
-      return profile;
+            const profile = await unifiedHabboService.getUserProfile(habboAccount.habbo_name, apiHotel);
+            return profile;
     },
     enabled: !!habboAccount?.habbo_name && !!habboAccount?.hotel,
     staleTime: 2 * 60 * 1000, // 2 minutes for fresh data
@@ -58,11 +48,8 @@ export const useMyConsoleProfile = () => {
       }
       
       const apiHotel = getApiHotel(habboAccount.hotel);
-      console.log(`[📸 MY CONSOLE PHOTOS] Fetching photos for ${habboAccount.habbo_name} on ${apiHotel}`);
-      
-      const userPhotos = await habboProxyService.getUserPhotos(habboAccount.habbo_name, apiHotel);
-      console.log(`[✅ MY CONSOLE PHOTOS] Fetched ${userPhotos?.length || 0} photos`);
-      return userPhotos;
+            const userPhotos = await unifiedHabboService.getUserPhotos(habboAccount.habbo_name, apiHotel);
+            return userPhotos;
     },
     enabled: !!habboAccount?.habbo_name && !!habboAccount?.hotel,
     staleTime: 5 * 60 * 1000, // 5 minutes

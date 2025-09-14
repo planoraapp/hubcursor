@@ -207,49 +207,39 @@ const SWF_CATEGORY_MAPPING = {
 
 export const parseAssetCategory = (swfName: string): string => {
   if (!swfName || typeof swfName !== 'string') {
-    console.warn('⚠️ [CategoryMapper V3] Invalid swfName:', swfName);
-    return 'ch';
+        return 'ch';
   }
 
   const lowerSwf = swfName.toLowerCase();
-  console.log(`🔍 [CategoryMapper V3] Analyzing: ${swfName}`);
-  
-  // 1. MAPEAMENTO DIRETO ESPECÍFICO COM PRIORIDADE
+    // 1. MAPEAMENTO DIRETO ESPECÍFICO COM PRIORIDADE
   // Verificar acessórios específicos PRIMEIRO
   if (lowerSwf.includes('acc_chest') || (lowerSwf.includes('necklace') || lowerSwf.includes('backpack') || lowerSwf.includes('tie') || lowerSwf.includes('badge') || lowerSwf.includes('medal'))) {
-    console.log(`✅ [CategoryMapper V3] Chest accessory: ${swfName} -> ca`);
-    return 'ca';
+        return 'ca';
   }
   
   if (lowerSwf.includes('acc_face') || lowerSwf.includes('face_u')) {
-    console.log(`✅ [CategoryMapper V3] Face accessory: ${swfName} -> fa`);
-    return 'fa';
+        return 'fa';
   }
   
   if (lowerSwf.includes('acc_head')) {
     // Verificar se é chapéu ou acessório facial
     if (lowerSwf.includes('hat') || lowerSwf.includes('cap') || lowerSwf.includes('helmet') || lowerSwf.includes('crown')) {
-      console.log(`✅ [CategoryMapper V3] Head hat: ${swfName} -> ha`);
-      return 'ha';
+            return 'ha';
     } else {
-      console.log(`✅ [CategoryMapper V3] Head accessory: ${swfName} -> fa`);
-      return 'fa';
+            return 'fa';
     }
   }
   
   if (lowerSwf.includes('acc_waist')) {
-    console.log(`✅ [CategoryMapper V3] Waist accessory: ${swfName} -> wa`);
-    return 'wa';
+        return 'wa';
   }
   
   if (lowerSwf.includes('acc_eye')) {
-    console.log(`✅ [CategoryMapper V3] Eye accessory: ${swfName} -> ea`);
-    return 'ea';
+        return 'ea';
   }
   
   if (lowerSwf.includes('acc_print')) {
-    console.log(`✅ [CategoryMapper V3] Print accessory: ${swfName} -> cp`);
-    return 'cp';
+        return 'cp';
   }
 
   // 2. MAPEAMENTO DIRETO EXPANDIDO (resto das regras)
@@ -262,28 +252,22 @@ export const parseAssetCategory = (swfName: string): string => {
   
   // 3. PADRÕES REGEX ESPECÍFICOS
   if (lowerSwf.match(/h[a-z]*r[0-9]/) || lowerSwf.match(/hr[0-9]/)) {
-    console.log(`✅ [CategoryMapper V3] Hair regex: ${swfName} -> hr`);
-    return 'hr';
+        return 'hr';
   }
   if (lowerSwf.match(/hd[0-9]/) || lowerSwf.match(/head[0-9]/)) {
-    console.log(`✅ [CategoryMapper V3] Head regex: ${swfName} -> hd`);
-    return 'hd';
+        return 'hd';
   }
   if (lowerSwf.match(/ha[0-9]/) || lowerSwf.match(/hat[0-9]/)) {
-    console.log(`✅ [CategoryMapper V3] Hat regex: ${swfName} -> ha`);
-    return 'ha';
+        return 'ha';
   }
   if (lowerSwf.match(/ch[0-9]/) || lowerSwf.match(/shirt[0-9]/)) {
-    console.log(`✅ [CategoryMapper V3] Shirt regex: ${swfName} -> ch`);
-    return 'ch';
+        return 'ch';
   }
   if (lowerSwf.match(/lg[0-9]/) || lowerSwf.match(/leg[0-9]/)) {
-    console.log(`✅ [CategoryMapper V3] Leg regex: ${swfName} -> lg`);
-    return 'lg';
+        return 'lg';
   }
   if (lowerSwf.match(/sh[0-9]/) || lowerSwf.match(/shoe[0-9]/)) {
-    console.log(`✅ [CategoryMapper V3] Shoe regex: ${swfName} -> sh`);
-    return 'sh';
+        return 'sh';
   }
   
   // 4. ANÁLISE DE PREFIXOS COMUNS
@@ -291,8 +275,7 @@ export const parseAssetCategory = (swfName: string): string => {
     const prefix = lowerSwf.substring(0, 2);
     const validCategories = ['hr', 'hd', 'ha', 'ea', 'fa', 'ch', 'cc', 'ca', 'cp', 'lg', 'sh', 'wa'];
     if (validCategories.includes(prefix)) {
-      console.log(`✅ [CategoryMapper V3] Prefix match: ${swfName} -> ${prefix}`);
-      return prefix;
+            return prefix;
     }
   }
   
@@ -311,20 +294,17 @@ export const parseAssetCategory = (swfName: string): string => {
   
   for (const analysis of contextAnalysis) {
     if (analysis.keywords.some(keyword => lowerSwf.includes(keyword))) {
-      console.log(`✅ [CategoryMapper V3] Context analysis: ${swfName} -> ${analysis.category}`);
-      return analysis.category;
+            return analysis.category;
     }
   }
   
   // 6. FALLBACK INTELIGENTE - preferir roupas básicas para itens não reconhecidos
   if (lowerSwf.includes('_m_') || lowerSwf.includes('_f_') || lowerSwf.includes('_u_')) {
-    console.log(`⚠️ [CategoryMapper V3] Gender fallback: ${swfName} -> ch`);
-    return 'ch';
+        return 'ch';
   }
   
   // 7. Fallback final para roupas (evitar jogar em efeitos)
-  console.warn(`⚠️ [CategoryMapper V3] No category found for: ${swfName}, using 'ch'`);
-  return 'ch';
+    return 'ch';
 };
 
 export const parseAssetGender = (swfName: string): 'M' | 'F' | 'U' => {

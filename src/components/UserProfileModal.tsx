@@ -36,8 +36,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         const data = await getUserByName(habboName);
         setUserData(data);
       } catch (error) {
-        console.error("Erro ao buscar dados do usuário:", error);
-        setUserData(null);
+                setUserData(null);
       } finally {
         setLoading(false);
       }

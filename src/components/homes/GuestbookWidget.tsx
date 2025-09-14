@@ -9,13 +9,7 @@ import { MessageSquare, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-interface GuestbookEntry {
-  id: string;
-  author_habbo_name: string;
-  message: string;
-  created_at: string;
-}
-
+import type { GuestbookEntry } from '@/types/habbo';
 interface GuestbookWidgetProps {
   entries: GuestbookEntry[];
   onAddEntry: (message: string) => Promise<void>;
@@ -41,8 +35,7 @@ export const GuestbookWidget: React.FC<GuestbookWidgetProps> = ({
       await onAddEntry(newMessage.trim());
       setNewMessage('');
     } catch (error) {
-      console.error('Erro ao adicionar mensagem:', error);
-    } finally {
+          } finally {
       setIsSubmitting(false);
     }
   };

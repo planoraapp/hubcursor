@@ -36,9 +36,7 @@ export const BadgesGrid3D = () => {
     
     try {
       setLoading(true);
-      console.log(`🔄 Fetching mega badges V2 page ${pageNum}, category: ${category}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-emotion-badges', {
+            const { data, error } = await supabase.functions.invoke('habbo-emotion-badges', {
         body: { page: pageNum, limit: 400, category }
       });
       
@@ -54,12 +52,9 @@ export const BadgesGrid3D = () => {
           setCategories(['all', ...data.metadata.categories]);
         }
         
-        console.log(`✅ Loaded ${data.badges.length} mega badges V2`);
-        console.log(`📊 Total badges loaded: ${reset ? data.badges.length : badges.length + data.badges.length}`);
-      }
+                      }
     } catch (error) {
-      console.error('❌ Error fetching mega badges V2:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, [loading, badges.length]);

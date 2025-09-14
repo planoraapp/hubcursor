@@ -17,14 +17,11 @@ export const BadgeGuide = () => {
   const loadBadges = async () => {
     try {
       setLoading(true);
-      console.log('Carregando emblemas...');
-      
-      const achievements = await getAchievements();
+            const achievements = await getAchievements();
       
       if (achievements) {
         setBadges(achievements);
-        console.log('Emblemas carregados:', achievements.length);
-      } else {
+              } else {
         // Fallback para dados mock se a API falhar
         setBadges([
           { code: 'ACH_BasicClub1', name: 'HC Básico 1 mês', description: 'Membro do Habbo Club por 1 mês' },
@@ -40,8 +37,7 @@ export const BadgeGuide = () => {
         ]);
       }
     } catch (error) {
-      console.error('Erro ao carregar emblemas:', error);
-      setError('Erro ao carregar emblemas. Tente novamente mais tarde.');
+            setError('Erro ao carregar emblemas. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }

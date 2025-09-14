@@ -61,9 +61,7 @@ export const OptimizedFurniImage: React.FC<OptimizedFurniImageProps> = ({
   }, [furni]);
 
   const handleImageError = () => {
-    console.log(`🖼️ [OptimizedFurniImage] Failed to load image ${currentSrcIndex + 1}/${imageUrls.length} for ${furni.name || furni.className}`);
-    
-    if (currentSrcIndex < imageUrls.length - 1) {
+        if (currentSrcIndex < imageUrls.length - 1) {
       setCurrentSrcIndex(currentSrcIndex + 1);
       setIsLoading(true);
     } else {
@@ -75,8 +73,7 @@ export const OptimizedFurniImage: React.FC<OptimizedFurniImageProps> = ({
   const handleImageLoad = () => {
     setIsLoading(false);
     setHasError(false);
-    console.log(`✅ [OptimizedFurniImage] Successfully loaded image ${currentSrcIndex + 1}/${imageUrls.length} for ${furni.name || furni.className}`);
-  };
+      };
 
   if (hasError || imageUrls.length === 0) {
     return (

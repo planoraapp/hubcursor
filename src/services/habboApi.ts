@@ -1,21 +1,8 @@
+import type { HabboUser } from '@/types/habbo';
 // Base URL para Habbo BR API
 const HABBO_API_BASE_URL = 'https://www.habbo.com.br/api/public';
 
-export interface HabboUser {
-  uniqueId: string;
-  name: string;
-  figureString: string;
-  motto: string;
-  online: boolean;
-  lastAccessTime: string;
-  memberSince: string;
-  profileVisible: boolean;
-  selectedBadges: Array<{
-    badgeIndex: number;
-    code: string;
-    name: string;
-    description: string;
-  }>;
+>;
 }
 
 export interface HabboRoom {
@@ -73,8 +60,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 const getCachedData = (key: string) => {
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log(`📦 [API Cache] Hit for ${key}`);
-    return cached.data;
+        return cached.data;
   }
   return null;
 };
@@ -87,9 +73,7 @@ const setCachedData = (key: string, data: any) => {
 const fetchWithRetry = async (url: string, retries = 3): Promise<any> => {
   for (let i = 0; i < retries; i++) {
     try {
-      console.log(`🌐 [API Request] Tentativa ${i + 1}: ${url}`);
-      
-      // Implementar timeout usando AbortController
+            // Implementar timeout usando AbortController
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
       
@@ -103,9 +87,7 @@ const fetchWithRetry = async (url: string, retries = 3): Promise<any> => {
       
       clearTimeout(timeoutId);
       
-      console.log(`📡 [API Response] Status ${response.status} para ${url}`);
-      
-      if (!response.ok) {
+            if (!response.ok) {
         if (response.status === 404) {
           console.warn(`⚠️ [API] Usuário não encontrado (404): ${url}`);
           return null;
@@ -118,13 +100,10 @@ const fetchWithRetry = async (url: string, retries = 3): Promise<any> => {
       }
       
       const data = await response.json();
-      console.log(`📊 [API Data] Dados recebidos para ${url}:`, data ? 'OK' : 'Empty');
-      return data;
+            return data;
       
     } catch (error) {
-      console.error(`❌ [API Error] Tentativa ${i + 1} falhou:`, error);
-      
-      if (i === retries - 1) {
+            if (i === retries - 1) {
         throw error; // Última tentativa, propagar o erro
       }
       
@@ -139,33 +118,27 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
   try {
     const trimmedName = name.trim();
     if (!trimmedName) {
-      console.warn('❌ Nome do usuário está vazio');
-      return null;
+            return null;
     }
 
-    console.log(`🔍 [API] Procurando usuário: ${trimmedName}`);
-    
-    const cacheKey = `user-${trimmedName.toLowerCase()}`;
+        const cacheKey = `user-${trimmedName.toLowerCase()}`;
     const cached = getCachedData(cacheKey);
     
     if (cached) {
-      console.log(`📦 [API Cache] Retornando dados em cache para: ${trimmedName}`);
-      return cached;
+            return cached;
     }
 
     const data = await fetchWithRetry(`${HABBO_API_BASE_URL}/users?name=${encodeURIComponent(trimmedName)}`);
     
     if (!data) {
-      console.warn('❌ Nenhum dado retornado da API para usuário:', trimmedName);
-      return null;
+            return null;
     }
 
     // A API do Habbo pode retornar um objeto diretamente ou um array
     let user;
     if (Array.isArray(data)) {
       if (data.length === 0) {
-        console.warn('❌ Array vazio retornado - usuário não encontrado:', trimmedName);
-        return null;
+                return null;
       }
       user = data[0]; // Pegar o primeiro usuário se for array
     } else {
@@ -174,14 +147,12 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
 
     // Verificar se o objeto do usuário tem as propriedades essenciais
     if (!user || typeof user !== 'object') {
-      console.warn('❌ Dados do usuário inválidos:', user);
-      return null;
+            return null;
     }
 
     // Verificar se o perfil é privado
     if (user.profileVisible === false) {
-      console.warn('❌ Perfil do usuário é privado:', trimmedName);
-      return null;
+            return null;
     }
 
     // Construir objeto do usuário com fallbacks seguros
@@ -197,22 +168,13 @@ export const getUserByName = async (name: string): Promise<HabboUser | null> => 
       selectedBadges: Array.isArray(user.selectedBadges) ? user.selectedBadges : []
     };
 
-    console.log('✅ Usuário processado com sucesso:');
-    console.log('👤 Nome:', processedUser.name);
-    console.log('💬 Motto:', `"${processedUser.motto}"`);
-    console.log('🟢 Online:', processedUser.online);
-    console.log('👁️ Perfil Visível:', processedUser.profileVisible);
-    console.log('🆔 ID Único:', processedUser.uniqueId);
-
-    // Salvar no cache
+                            // Salvar no cache
     setCachedData(cacheKey, processedUser);
     
     return processedUser;
     
   } catch (error) {
-    console.error('❌ Erro em getUserByName:', error);
-    
-    // Retornar dados básicos como fallback
+        // Retornar dados básicos como fallback
     return {
       uniqueId: `fallback-${Date.now()}`,
       name: name.trim(),
@@ -267,8 +229,7 @@ export const discoverRooms = async (): Promise<HabboRoom[]> => {
         }
       }
     } catch (error) {
-      console.error(`Erro ao buscar quartos do usuário ${username}:`, error);
-    }
+          }
   }
   
   return rooms;
@@ -352,8 +313,7 @@ export const getRealtimeStats = async () => {
       averageRating: rooms?.length ? rooms.reduce((acc, room) => acc + (room.rating || 0), 0) / rooms.length : 0
     };
   } catch (error) {
-    console.error('Erro ao calcular estatísticas em tempo real:', error);
-    return {
+        return {
       totalBadges: 0,
       totalRooms: 0,
       activeUsers: 0,
@@ -380,8 +340,7 @@ export const getTopBadgeCollectors = async (): Promise<Array<{ name: string; sco
         }
       }
     } catch (error) {
-      console.error(`Erro ao buscar emblemas do usuário ${username}:`, error);
-    }
+          }
   }
   
   return collectors.sort((a, b) => b.score - a.score).slice(0, 5);

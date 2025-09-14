@@ -4,8 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Trophy } from 'lucide-react';
-import { habboProxyService } from '@/services/habboProxyService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 interface BadgesModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,7 +38,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
               >
                 <div className="relative">
                   <img
-                    src={habboProxyService.getBadgeUrl(badge.code)}
+                    src={unifiedHabboService.getBadgeUrl(badge.code)}
                     alt={badge.name}
                     className="w-12 h-12 mx-auto border border-white/20 rounded bg-white p-1 group-hover:scale-110 transition-transform"
                     onError={(e) => {

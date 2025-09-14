@@ -49,15 +49,7 @@ const EnhancedAvatarPreview = ({
   const avatarImageUrl = useMemo(() => {
     const url = `https://www.habbo.${selectedHotel}/habbo-imaging/avatarimage?figure=${figureString}&gender=${selectedGender}&direction=2&head_direction=2&size=${previewSize}`;
     
-    console.log('🖼️ [AvatarPreview] Generated avatar URL:', {
-      figureString,
-      gender: selectedGender,
-      hotel: selectedHotel,
-      size: previewSize,
-      url
-    });
-    
-    return url;
+        return url;
   }, [figureString, selectedGender, selectedHotel, previewSize]);
 
   const handleCopyFigure = () => {

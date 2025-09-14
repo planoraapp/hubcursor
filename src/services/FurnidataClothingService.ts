@@ -51,19 +51,16 @@ export class FurnidataClothingService {
         data.forEach(item => {
           this.furnidataMap.set(item.classname, item);
         });
-        console.log('✅ [FurnidataClothing] Loaded from Supabase:', this.furnidataMap.size, 'items');
-        this.lastFetch = now;
+                this.lastFetch = now;
         return;
       }
 
       // Fallback: carregar dados mock
       this.loadMockFurnidata();
-      console.log('⚠️ [FurnidataClothing] Using mock data:', this.furnidataMap.size, 'items');
-      this.lastFetch = now;
+            this.lastFetch = now;
 
     } catch (error) {
-      console.error('❌ [FurnidataClothing] Error loading furnidata:', error);
-      this.loadMockFurnidata();
+            this.loadMockFurnidata();
     }
   }
 

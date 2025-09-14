@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/hooks/useAuth'
 import './index.css'
+import './styles/widget-skins.css'
 
 // Import pages
 import Console from './pages/Console'

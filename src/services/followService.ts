@@ -24,13 +24,11 @@ export const followService = {
         });
 
       if (error) {
-        console.error('Error following user:', error);
-        return false;
+                return false;
       }
       return true;
     } catch (error) {
-      console.error('Error in followUser:', error);
-      return false;
+            return false;
     }
   },
 
@@ -44,13 +42,11 @@ export const followService = {
         .eq('followed_habbo_id', followedHabboId);
 
       if (error) {
-        console.error('Error unfollowing user:', error);
-        return false;
+                return false;
       }
       return true;
     } catch (error) {
-      console.error('Error in unfollowUser:', error);
-      return false;
+            return false;
     }
   },
 
@@ -65,14 +61,12 @@ export const followService = {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error checking follow status:', error);
-        return false;
+                return false;
       }
 
       return !!data;
     } catch (error) {
-      console.error('Error in isFollowing:', error);
-      return false;
+            return false;
     }
   },
 
@@ -85,14 +79,12 @@ export const followService = {
         .eq('followed_habbo_id', habboId);
 
       if (error) {
-        console.error('Error getting followers count:', error);
-        return 0;
+                return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error('Error in getFollowersCount:', error);
-      return 0;
+            return 0;
     }
   },
 
@@ -105,14 +97,12 @@ export const followService = {
         .eq('follower_user_id', userId);
 
       if (error) {
-        console.error('Error getting following count:', error);
-        return 0;
+                return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error('Error in getFollowingCount:', error);
-      return 0;
+            return 0;
     }
   },
 
@@ -126,14 +116,12 @@ export const followService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error getting followers:', error);
-        return [];
+                return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getFollowers:', error);
-      return [];
+            return [];
     }
   },
 
@@ -147,14 +135,12 @@ export const followService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error getting following:', error);
-        return [];
+                return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error in getFollowing:', error);
-      return [];
+            return [];
     }
   }
 };

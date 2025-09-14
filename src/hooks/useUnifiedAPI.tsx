@@ -35,9 +35,7 @@ export const useUnifiedAPI = <T = any>({
     setError(null);
 
     try {
-      console.log(`🔄 [UnifiedAPI] ${endpoint}.${action}`, { ...params, ...customParams });
-
-      const { data: response, error: apiError } = await supabase.functions.invoke('habbo-unified-api', {
+            const { data: response, error: apiError } = await supabase.functions.invoke('habbo-unified-api', {
         body: {
           endpoint,
           action,
@@ -52,14 +50,12 @@ export const useUnifiedAPI = <T = any>({
       if (response.success) {
         setData(response.data);
         setSource(response.source);
-        console.log(`✅ [UnifiedAPI] Success from ${response.source}`);
-      } else {
+              } else {
         throw new Error(response.error || 'Unknown error');
       }
 
     } catch (err: any) {
-      console.error(`❌ [UnifiedAPI] Error:`, err);
-      setError(err.message);
+            setError(err.message);
     } finally {
       setLoading(false);
     }

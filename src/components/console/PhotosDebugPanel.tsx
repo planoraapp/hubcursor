@@ -26,15 +26,12 @@ export const PhotosDebugPanel: React.FC<PhotosDebugPanelProps> = ({
   );
 
   const handleDebugRefresh = async () => {
-    console.log('%c[🐛 DEBUG PANEL] Manual debug refresh initiated', 'background: #9C27B0; color: white; padding: 4px 8px; border-radius: 4px;');
-    setDebugForceRefresh(true);
+        setDebugForceRefresh(true);
     
     try {
       await refreshPhotos();
-      console.log('[✅ DEBUG PANEL] Debug refresh completed successfully');
-    } catch (err) {
-      console.error('[❌ DEBUG PANEL] Debug refresh failed:', err);
-    } finally {
+          } catch (err) {
+          } finally {
       // Reset force refresh after a delay
       setTimeout(() => {
         setDebugForceRefresh(false);
@@ -44,8 +41,7 @@ export const PhotosDebugPanel: React.FC<PhotosDebugPanelProps> = ({
 
   const handleClearConsole = () => {
     console.clear();
-    console.log('%c[🧹 DEBUG PANEL] Console cleared', 'background: #607D8B; color: white; padding: 4px 8px; border-radius: 4px;');
-  };
+      };
 
   if (!username) {
     return null;
@@ -158,8 +154,7 @@ export const PhotosDebugPanel: React.FC<PhotosDebugPanelProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  console.log('%c[📊 DEBUG PANEL] Current photos data:', 'background: #2196F3; color: white; padding: 4px 8px; border-radius: 4px;', scrapedPhotos);
-                }}
+                                  }}
                 className="flex items-center gap-1"
               >
                 <Bug className="w-3 h-3" />

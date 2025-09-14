@@ -40,8 +40,7 @@ const RealFurniImageHybrid = ({
         return parsed[className];
       }
     } catch (error) {
-      console.error('Cache read error:', error);
-    }
+          }
     return null;
   };
 
@@ -52,8 +51,7 @@ const RealFurniImageHybrid = ({
       parsed[className] = url;
       localStorage.setItem('furni-image-cache', JSON.stringify(parsed));
     } catch (error) {
-      console.error('Cache write error:', error);
-    }
+          }
   };
 
   // Fetch HabboFurni image URL
@@ -63,11 +61,9 @@ const RealFurniImageHybrid = ({
         const item = await findItemByClassName(className);
         if (item?.imageUrl) {
           setHabboFurniImageUrl(item.imageUrl);
-          console.log(`🎯 [RealFurniImage] Found HabboFurni image for ${className}:`, item.imageUrl);
-        }
+                  }
       } catch (error) {
-        console.error(`❌ [RealFurniImage] Error fetching HabboFurni image for ${className}:`, error);
-      }
+              }
     };
 
     if (className) {
@@ -161,8 +157,7 @@ const RealFurniImageHybrid = ({
     } else {
       setHasError(true);
       setIsLoading(false);
-      console.log(`❌ [RealFurniImage] All URLs failed for ${className}`);
-    }
+          }
   }, [currentUrlIndex, imageUrls.length, className]);
 
   const handleImageLoad = useCallback(() => {

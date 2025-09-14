@@ -40,9 +40,7 @@ export interface HabboRealAssetsData {
 }
 
 const fetchHabboRealAssets = async (hotel: string = 'com.br'): Promise<HabboRealAssetsData | null> => {
-  console.log('🚀 [useHabboRealAssets] Fetching real Habbo assets...');
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('habbo-real-assets', {
       body: { hotel }
     });
@@ -65,8 +63,7 @@ const fetchHabboRealAssets = async (hotel: string = 'com.br'): Promise<HabboReal
     return data.data;
     
   } catch (error) {
-    console.error('❌ [useHabboRealAssets] Error:', error);
-    throw error;
+        throw error;
   }
 };
 

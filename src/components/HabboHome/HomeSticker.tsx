@@ -1,18 +1,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 
-interface Sticker {
-  id: string;
-  sticker_id: string;
-  x: number;
-  y: number;
-  z_index: number;
-  scale: number;
-  rotation: number;
-  sticker_src: string;
-  category: string;
-}
-
+import type { Sticker } from '@/types/habbo';
 interface HomeStickerProps {
   sticker: Sticker;
   isEditMode: boolean;
@@ -62,16 +51,13 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       elementY: sticker.y
     });
 
-    console.log(`🎯 Iniciando drag do sticker ${sticker.sticker_id}`);
-  }, [isEditMode, isOwner, sticker.x, sticker.y, sticker.sticker_id]);
+      }, [isEditMode, isOwner, sticker.x, sticker.y, sticker.sticker_id]);
 
   const handleRemove = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onRemove(sticker.id);
   }, [sticker.id, onRemove]);
-
-
 
   // Handle click outside to deselect
   React.useEffect(() => {
@@ -121,8 +107,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     const handleMouseUp = () => {
       if (isDragging) {
         cancelAnimationFrame(animationId);
-        console.log(`✅ Drag completo do sticker ${sticker.sticker_id}`);
-        setIsDragging(false);
+                setIsDragging(false);
       }
     };
 
@@ -179,14 +164,12 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         }}
         draggable={false}
         onError={(e) => {
-          console.error(`❌ Erro ao carregar sticker: ${sticker.sticker_src}`);
-          const target = e.target as HTMLImageElement;
+                    const target = e.target as HTMLImageElement;
           target.src = '/assets/frank.png';
         }}
         onLoad={(e) => {
           const img = e.target as HTMLImageElement;
-          console.log(`✅ Sticker carregado: ${sticker.sticker_src} - Tamanho natural: ${img.naturalWidth}x${img.naturalHeight}`);
-        }}
+                  }}
       />
       
       {/* Botão de Remoção - Sempre visível em modo de edição, sobreposto */}
@@ -199,7 +182,6 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
           ×
         </button>
       )}
-
 
       {isDragging && (
         <div className="absolute inset-0 border-2 border-dashed border-blue-400 rounded pointer-events-none" />

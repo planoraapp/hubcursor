@@ -80,14 +80,11 @@ const HabboEmotionEditor = () => {
   const categoryGroups = useMemo(() => {
     if (!allItems || allItems.length === 0) return [];
 
-    console.log('🎯 [HabboEmotionEditor] Processing categories for', allItems.length, 'items');
-    console.log('🎯 [HabboEmotionEditor] Sample items:', allItems.slice(0, 3));
+        console.log('🎯 [HabboEmotionEditor] Sample items:', allItems.slice(0, 3));
 
     // Extrair categorias únicas dos dados
     const uniqueCategories = [...new Set(allItems.map(item => item.category))];
-    console.log('🎯 [HabboEmotionEditor] Unique categories found:', uniqueCategories);
-    
-    const groups = [
+        const groups = [
       {
         id: 'head',
         name: 'Cabeça e Acessórios',
@@ -143,9 +140,7 @@ const HabboEmotionEditor = () => {
     ];
 
     const filteredGroups = groups.filter(group => group.categories.length > 0);
-    console.log('🎯 [HabboEmotionEditor] Final category groups:', filteredGroups);
-    
-    return filteredGroups;
+        return filteredGroups;
   }, [allItems]);
 
   const generateFigureString = (): string => {
@@ -160,25 +155,11 @@ const HabboEmotionEditor = () => {
     
     const figureString = parts.join('.');
     
-    console.log('🎯 [HabboEmotionEditor] Generated figure string:', {
-      avatarState,
-      figureString,
-      parts: parts.length
-    });
-    
-    return figureString;
+        return figureString;
   };
 
   const handleItemSelect = (item: any, colorId: string = '1') => {
-    console.log('🎯 [HabboEmotionEditor] HabboEmotion item aplicado:', { 
-      item: item.name, 
-      category: item.category, 
-      id: item.id,
-      colorId,
-      source: item.source
-    });
-    
-    const itemString = `${item.id}-${colorId}`;
+        const itemString = `${item.id}-${colorId}`;
     
     setAvatarState(prevState => {
       const newState = {
@@ -186,14 +167,7 @@ const HabboEmotionEditor = () => {
         [item.category]: itemString
       };
       
-      console.log('🔄 [HabboEmotionEditor] Avatar state updated:', {
-        category: item.category,
-        oldValue: prevState[item.category as keyof AvatarState],
-        newValue: itemString,
-        newState
-      });
-      
-      return newState;
+            return newState;
     });
 
     setSelectedColor(colorId);
@@ -205,18 +179,11 @@ const HabboEmotionEditor = () => {
   };
 
   const handleRemoveItem = (category: string) => {
-    console.log('🗑️ [HabboEmotionEditor] Removendo categoria:', category);
-    
-    setAvatarState(prevState => {
+        setAvatarState(prevState => {
       const newState = { ...prevState };
       delete newState[category as keyof AvatarState];
       
-      console.log('🔄 [HabboEmotionEditor] Estado após remoção:', {
-        removedCategory: category,
-        newState
-      });
-      
-      return newState;
+            return newState;
     });
     
     toast({
@@ -228,9 +195,7 @@ const HabboEmotionEditor = () => {
   const handleResetAvatar = () => {
     setAvatarState({});
     
-    console.log('🔄 [HabboEmotionEditor] Avatar resetado');
-    
-    toast({
+        toast({
       title: "🔄 Avatar resetado",
       description: "Avatar voltou ao estado vazio.",
     });

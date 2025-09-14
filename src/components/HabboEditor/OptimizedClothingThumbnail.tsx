@@ -69,9 +69,7 @@ const OptimizedClothingThumbnail = ({
 
   const handleImageError = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`❌ [OptimizedThumbnail] Failed: ${currentUrl}`);
-    
-    // Mark this URL as failed in cache
+        // Mark this URL as failed in cache
     imageCache.set(currentUrl, false);
     
     if (currentUrlIndex < thumbnailUrls.length - 1) {
@@ -85,9 +83,7 @@ const OptimizedClothingThumbnail = ({
 
   const handleImageLoad = useCallback(() => {
     const currentUrl = thumbnailUrls[currentUrlIndex];
-    console.log(`✅ [OptimizedThumbnail] Success: ${currentUrl}`);
-    
-    // Mark this URL as successful in cache
+        // Mark this URL as successful in cache
     imageCache.set(currentUrl, true);
     
     setIsLoading(false);

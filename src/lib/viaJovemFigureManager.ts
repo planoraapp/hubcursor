@@ -66,8 +66,7 @@ export class ViaJovemFigureManager {
           color: colorId
         };
       }
-      console.log(`🤏 [ViaJovemFigureManager] Cor de pele aplicada: hd-${updatedFigure.hd.id}-${colorId}`);
-      return updatedFigure;
+            return updatedFigure;
     }
     
     // VALIDAÇÃO: Impedir conflitos entre categorias incompatíveis
@@ -81,8 +80,7 @@ export class ViaJovemFigureManager {
     if (incompatible) {
       incompatible.forEach(incompatCat => {
         if (updatedFigure[incompatCat]) {
-          console.log(`⚠️ [ViaJovemFigureManager] Removendo categoria incompatível: ${incompatCat}`);
-        }
+                  }
       });
     }
     
@@ -92,10 +90,7 @@ export class ViaJovemFigureManager {
       color: colorId
     };
     
-    console.log(`✅ [ViaJovemFigureManager] Item aplicado: ${category}-${item.figureId || item.id}-${colorId}`);
-    console.log(`📊 [ViaJovemFigureManager] Figure atual:`, updatedFigure);
-    
-    return updatedFigure;
+            return updatedFigure;
   }
 
   static getFigureString(figure: ViaJovemFigure): string {

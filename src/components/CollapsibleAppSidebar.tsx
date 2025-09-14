@@ -27,14 +27,12 @@ export function CollapsibleAppSidebar() {
   const isAdmin = habboAccount?.is_admin === true;
 
   // Debug logs
-  console.log('🔍 [CollapsibleAppSidebar] Current user:', habboAccount);
-  console.log('🔍 [CollapsibleAppSidebar] Username:', habboAccount?.habbo_username);
-  console.log('🔍 [CollapsibleAppSidebar] Is admin (from DB):', isAdmin);
+      console.log('🔍 [CollapsibleAppSidebar] Is admin (from DB):', isAdmin);
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
-    { name: 'Homes', path: '/homes', icon: '/assets/home.png' },
+    { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
     { name: 'Emblemas', path: '/emblemas', icon: '/assets/emblemas.png' },
     { name: 'Catálogo', path: '/catalogo', icon: '/assets/Carrinho.png' },
@@ -61,12 +59,16 @@ export function CollapsibleAppSidebar() {
           <img 
             src={item.icon} 
             alt={item.name}
-            className={`flex-shrink-0 w-9 h-9`}
+            className={`flex-shrink-0`}
             style={{ 
               imageRendering: 'pixelated',
               objectFit: 'contain',
-              width: '36px',
-              height: '36px'
+              width: 'auto',
+              height: 'auto',
+              maxWidth: '48px',
+              maxHeight: '48px',
+              minWidth: '24px',
+              minHeight: '24px'
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -172,7 +174,6 @@ export function CollapsibleAppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-
 
         <SidebarFooter className="p-4 border-t-2 border-black">
           <div className="space-y-2">

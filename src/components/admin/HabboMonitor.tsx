@@ -37,8 +37,7 @@ export const HabboMonitor: React.FC<HabboMonitorProps> = ({ className }) => {
     setError(null);
     
     try {
-      console.log('🔍 Verificando build atual do Habbo...');
-      const build = await habboApiService.getCurrentBuild();
+            const build = await habboApiService.getCurrentBuild();
       setBuildInfo(build);
       setLastCheck(new Date());
       
@@ -47,13 +46,10 @@ export const HabboMonitor: React.FC<HabboMonitorProps> = ({ className }) => {
         description: `Build atual: ${build.buildId}`,
       });
       
-      console.log('✅ Build verificada:', build);
-    } catch (error) {
+          } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       setError(errorMessage);
-      console.error('❌ Erro ao verificar build:', error);
-      
-      toast({
+            toast({
         title: "Erro ao verificar build",
         description: errorMessage,
         variant: "destructive",
@@ -69,8 +65,7 @@ export const HabboMonitor: React.FC<HabboMonitorProps> = ({ className }) => {
     setError(null);
     
     try {
-      console.log('🚀 Executando descoberta completa...');
-      const report = await habboApiService.discoverHanditemsWithImages();
+            const report = await habboApiService.discoverHanditemsWithImages();
       setLastReport(report);
       setLastCheck(new Date());
       
@@ -79,13 +74,10 @@ export const HabboMonitor: React.FC<HabboMonitorProps> = ({ className }) => {
         description: `Encontrados ${report.totalHanditems} handitems e ${report.totalFurni} mobílias`,
       });
       
-      console.log('✅ Descoberta completa:', report);
-    } catch (error) {
+          } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       setError(errorMessage);
-      console.error('❌ Erro na descoberta:', error);
-      
-      toast({
+            toast({
         title: "Erro na descoberta",
         description: errorMessage,
         variant: "destructive",

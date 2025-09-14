@@ -55,14 +55,11 @@ export const getRarityText = (rarity: string): string => {
 // Sistema de categorização AVANÇADO sincronizado com backend
 const parseItemCategory = (swfName: string): string => {
   if (!swfName || typeof swfName !== 'string') {
-    console.warn('⚠️ [HabboMapper] Invalid swfName:', swfName);
-    return 'ch';
+        return 'ch';
   }
 
   const lowerSwf = swfName.toLowerCase();
-  console.log(`🔍 [HabboMapper] Analisando: ${swfName}`);
-  
-  // === FASE 1: REGRAS ESPECÍFICAS COM PRIORIDADE MÁXIMA ===
+    // === FASE 1: REGRAS ESPECÍFICAS COM PRIORIDADE MÁXIMA ===
   
   // 1. ACESSÓRIOS DE PEITO - PRIORIDADE TOTAL
   if (lowerSwf.includes('acc_chest') || 
@@ -71,14 +68,12 @@ const parseItemCategory = (swfName: string): string => {
       lowerSwf.includes('tie') || 
       lowerSwf.includes('badge') || 
       lowerSwf.includes('medal')) {
-    console.log(`✅ [HabboMapper] Acessório de peito: ${swfName} -> ca`);
-    return 'ca';
+        return 'ca';
   }
   
   // 2. ACESSÓRIOS DE ROSTO - PRIORIDADE TOTAL
   if (lowerSwf.includes('acc_face') || lowerSwf.includes('face_u')) {
-    console.log(`✅ [HabboMapper] Acessório de rosto: ${swfName} -> fa`);
-    return 'fa';
+        return 'fa';
   }
   
   // 3. ACESSÓRIOS DE CABEÇA - LÓGICA DIFERENCIADA
@@ -89,28 +84,23 @@ const parseItemCategory = (swfName: string): string => {
         lowerSwf.includes('helmet') || 
         lowerSwf.includes('crown') || 
         lowerSwf.includes('tiara')) {
-      console.log(`✅ [HabboMapper] Chapéu de cabeça: ${swfName} -> ha`);
-      return 'ha';
+            return 'ha';
     } else {
-      console.log(`✅ [HabboMapper] Acessório de cabeça: ${swfName} -> fa`);
-      return 'fa';
+            return 'fa';
     }
   }
   
   // 4. OUTROS ACESSÓRIOS ESPECÍFICOS
   if (lowerSwf.includes('acc_waist')) {
-    console.log(`✅ [HabboMapper] Acessório de cintura: ${swfName} -> wa`);
-    return 'wa';
+        return 'wa';
   }
   
   if (lowerSwf.includes('acc_eye')) {
-    console.log(`✅ [HabboMapper] Óculos: ${swfName} -> ea`);
-    return 'ea';
+        return 'ea';
   }
   
   if (lowerSwf.includes('acc_print')) {
-    console.log(`✅ [HabboMapper] Estampa: ${swfName} -> cp`);
-    return 'cp';
+        return 'cp';
   }
   
   // === FASE 2: MAPEAMENTO GERAL ===
@@ -122,15 +112,13 @@ const parseItemCategory = (swfName: string): string => {
   }
   
   // === FALLBACK ===
-  console.warn(`⚠️ [HabboMapper] Categoria não encontrada para: ${swfName}, usando 'ch'`);
-  return 'ch';
+    return 'ch';
 };
 
 // Converter item da API para formato do editor COM NOVA LÓGICA
 export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
   if (!item || typeof item !== 'object') {
-    console.error('❌ Invalid item passed to mapHabboEmotionItem:', item);
-    return null;
+        return null;
   }
 
   try {
@@ -152,19 +140,15 @@ export const mapHabboEmotionItem = (item: HabboEmotionClothing) => {
     console.log(`✅ [HabboMapper] Item mapeado: ${mappedItem.name} (${mappedItem.category})`);
     return mappedItem;
   } catch (error) {
-    console.error('❌ Error mapping item:', item, error);
-    return null;
+        return null;
   }
 };
 
 // Agrupar itens por categoria
 export const groupItemsByCategory = (items: HabboEmotionClothing[] | undefined) => {
-  console.log('🔄 Grouping items by category. Input:', items);
-  
-  // Verificar se items é um array válido
+    // Verificar se items é um array válido
   if (!items || !Array.isArray(items)) {
-    console.warn('⚠️ Invalid items array provided to groupItemsByCategory:', items);
-    return {};
+        return {};
   }
 
   try {
@@ -172,8 +156,7 @@ export const groupItemsByCategory = (items: HabboEmotionClothing[] | undefined) 
       const mappedItem = mapHabboEmotionItem(item);
       
       if (!mappedItem) {
-        console.warn('⚠️ Skipping invalid item:', item);
-        return acc;
+                return acc;
       }
       
       const category = mappedItem.category;
@@ -189,8 +172,7 @@ export const groupItemsByCategory = (items: HabboEmotionClothing[] | undefined) 
     console.log('✅ Items grouped successfully:', Object.keys(grouped).map(k => `${k}: ${grouped[k].length}`));
     return grouped;
   } catch (error) {
-    console.error('❌ Error grouping items by category:', error);
-    return {};
+        return {};
   }
 };
 

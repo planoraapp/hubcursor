@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { useMemo } from 'react';
 
 export const useUserFigures = (usernames: string[]) => {
@@ -8,9 +8,7 @@ export const useUserFigures = (usernames: string[]) => {
     queryFn: async () => {
       if (usernames.length === 0) return {};
       
-      console.log(`🎭 [useUserFigures] Fetching figures for ${usernames.length} users`);
-      
-      const figureMap: Record<string, string> = {};
+            const figureMap: Record<string, string> = {};
       
       // Fetch figures in batches to avoid overwhelming the API
       const batchSize = 5;
@@ -20,13 +18,12 @@ export const useUserFigures = (usernames: string[]) => {
         await Promise.allSettled(
           batch.map(async (username) => {
             try {
-              const user = await habboProxyService.getUserProfile(username);
+              const user = await unifiedHabboService.getUserProfile(username);
               if (user?.figureString) {
                 figureMap[username] = user.figureString;
               }
             } catch (error) {
-              console.warn(`⚠️ [useUserFigures] Failed to fetch figure for ${username}:`, error);
-            }
+                          }
           })
         );
         

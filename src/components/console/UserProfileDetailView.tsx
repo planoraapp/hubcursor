@@ -38,13 +38,10 @@ export const UserProfileDetailView: React.FC<UserProfileDetailViewProps> = ({
   );
 
   const handleRefreshPhotos = async () => {
-    console.log('%c[🔄 USER PROFILE] Manual photo refresh for user:', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;', user.name);
-    try {
+        try {
       await refreshPhotos();
-      console.log('[✅ USER PROFILE] Photo refresh completed for:', user.name);
-    } catch (error) {
-      console.error('[❌ USER PROFILE] Photo refresh failed for:', user.name, error);
-    }
+          } catch (error) {
+          }
   };
 
   const avatarUrl = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.name}&direction=2&head_direction=3&size=l&action=std`;

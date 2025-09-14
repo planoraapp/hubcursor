@@ -19,9 +19,7 @@ export interface RealHabboData {
 }
 
 const fetchRealHabboData = async (): Promise<RealHabboData> => {
-  console.log('🌐 [RealHabboData] Fetching real Habbo data...');
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
       body: {
         endpoint: 'clothing',
@@ -47,8 +45,7 @@ const fetchRealHabboData = async (): Promise<RealHabboData> => {
     return data.clothing;
     
   } catch (error) {
-    console.error('❌ [RealHabboData] Error:', error);
-    throw error;
+        throw error;
   }
 };
 

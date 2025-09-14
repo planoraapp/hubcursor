@@ -57,13 +57,11 @@ const UnifiedClothingGrid = ({
   }, [items]);
 
   const handleItemClick = (item: UnifiedHabboClothingItem) => {
-    console.log('🎯 [UnifiedGrid] Item selecionado:', item.name, item.source);
-    onItemSelect(item, selectedColor);
+        onItemSelect(item, selectedColor);
   };
 
   const handleColorChange = (item: UnifiedHabboClothingItem, colorId: string) => {
-    console.log('🎨 [UnifiedGrid] Cor alterada:', { item: item.name, colorId, source: item.source });
-    onItemSelect(item, colorId);
+        onItemSelect(item, colorId);
   };
 
   if (isLoading) {
@@ -76,8 +74,7 @@ const UnifiedClothingGrid = ({
   }
 
   if (error) {
-    console.error('❌ [UnifiedGrid] Erro:', error);
-    return (
+        return (
       <Card className="p-6">
         <div className="text-center text-red-500">
           <p className="font-medium">Erro ao carregar sistema unificado</p>

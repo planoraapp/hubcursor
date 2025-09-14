@@ -91,20 +91,17 @@ const TamagotchiCompact = () => {
   const getPetImage = () => {
     // Se está configurado para usar emoji ou se há erro na imagem
     if (currentPetData.useEmoji || imageError) {
-      console.log('🔄 [Tamagotchi] Usando emoji com rotação CSS');
-      return currentPetData.emoji;
+            return currentPetData.emoji;
     }
     
     // Tentar usar sprite baseado na direção atual
     const spriteUrl = currentPetData.spriteUrls?.[currentDirection];
     if (spriteUrl) {
-      console.log('️ [Tamagotchi] Tentando carregar sprite:', spriteUrl);
-      return spriteUrl;
+            return spriteUrl;
     }
     
     // Fallback para emoji
-    console.log('🔄 [Tamagotchi] Fallback para emoji');
-    return currentPetData.emoji;
+        return currentPetData.emoji;
   };
 
   // Função para verificar se deve usar sprite ou emoji
@@ -217,8 +214,7 @@ const TamagotchiCompact = () => {
                   setImageError(true);
                 }}
                 onLoad={() => {
-                  console.log('✅ [Tamagotchi] Sprite carregado com sucesso!');
-                }}
+                                  }}
                 style={{ imageRendering: 'pixelated' }} // Para manter qualidade pixel art
               />
             )}
@@ -352,8 +348,7 @@ const TamagotchiCompact = () => {
                         setImageError(true);
                       }}
                       onLoad={() => {
-                        console.log('✅ [Tamagotchi] Sprite carregado no modal!');
-                      }}
+                                              }}
                       style={{ imageRendering: 'pixelated' }}
                     />
                   )}

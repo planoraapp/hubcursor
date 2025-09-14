@@ -24,12 +24,9 @@ export const LoginDebug: React.FC = () => {
     setError('');
     
     try {
-      console.log('🔐 [LOGIN DEBUG] Tentando login:', username);
-      const result = await loginWithPassword(username, password);
-      console.log('✅ [LOGIN DEBUG] Login result:', result);
-    } catch (err: any) {
-      console.error('❌ [LOGIN DEBUG] Login error:', err);
-      setError(err.message || 'Erro no login');
+            const result = await loginWithPassword(username, password);
+          } catch (err: any) {
+            setError(err.message || 'Erro no login');
     }
   };
 

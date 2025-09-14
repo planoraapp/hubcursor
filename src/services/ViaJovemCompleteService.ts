@@ -173,9 +173,7 @@ export class ViaJovemCompleteService {
     }
 
     try {
-      console.log('🌐 [ViaJovemComplete] Loading figuredata.xml...');
-      
-      const response = await fetch('/handitems/gamedata/figuredata.xml');
+            const response = await fetch('/handitems/gamedata/figuredata.xml');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -189,16 +187,10 @@ export class ViaJovemCompleteService {
       });
       
       this.figureData = figureData;
-      console.log('✅ [ViaJovemComplete] Figuredata loaded:', {
-        palettes: figureData.palettes.length,
-        sets: figureData.sets.length
-      });
-      
-      return figureData;
+            return figureData;
       
     } catch (error) {
-      console.warn('⚠️ [ViaJovemComplete] Error loading figuredata.xml, using mock data:', error);
-      const mockData = this.getMockFigureData();
+            const mockData = this.getMockFigureData();
       this.cache.set(cacheKey, {
         data: mockData,
         timestamp: Date.now()
@@ -221,9 +213,7 @@ export class ViaJovemCompleteService {
     }
 
     try {
-      console.log('🌐 [ViaJovemComplete] Loading furnidata.json...');
-      
-      const response = await fetch('/handitems/gamedata/furnidata.json');
+            const response = await fetch('/handitems/gamedata/furnidata.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -236,11 +226,8 @@ export class ViaJovemCompleteService {
         timestamp: Date.now()
       });
       
-      console.log('✅ [ViaJovemComplete] Furnidata loaded:', this.furnidataMap.size, 'items');
-      
-    } catch (error) {
-      console.warn('⚠️ [ViaJovemComplete] Error loading furnidata.json, using mock data:', error);
-      this.loadMockFurnidata();
+          } catch (error) {
+            this.loadMockFurnidata();
     }
   }
 
@@ -248,16 +235,13 @@ export class ViaJovemCompleteService {
    * Parsear XML do figuredata (baseado no tutorial ViaJovem)
    */
   private parseFigureDataXML(xmlText: string): { palettes: ViaJovemPalette[], sets: ViaJovemSet[] } {
-    console.log('🔍 [ViaJovemComplete] Parsing XML, length:', xmlText.length);
-    
-    const parser = new DOMParser();
+        const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
     
     // Verificar se há erros de parsing
     const parseError = xmlDoc.querySelector('parsererror');
     if (parseError) {
-      console.error('❌ [ViaJovemComplete] XML parsing error:', parseError.textContent);
-      throw new Error('Failed to parse XML');
+            throw new Error('Failed to parse XML');
     }
     
     const palettes: ViaJovemPalette[] = [];
@@ -265,9 +249,7 @@ export class ViaJovemCompleteService {
 
     // Parsear palettes
     const paletteElements = xmlDoc.querySelectorAll('palette');
-    console.log('🎨 [ViaJovemComplete] Found palettes:', paletteElements.length);
-    
-    paletteElements.forEach(palette => {
+        paletteElements.forEach(palette => {
       const id = palette.getAttribute('id') || '';
       const colors: Array<{id: string, index: string, club: string, selectable: string, hex: string}> = [];
 
@@ -286,8 +268,7 @@ export class ViaJovemCompleteService {
 
     // Parsear sets (baseado no tutorial ViaJovem)
     const setElements = xmlDoc.querySelectorAll('set');
-    console.log('👕 [ViaJovemComplete] Found sets:', setElements.length);
-    setElements.forEach(set => {
+        setElements.forEach(set => {
       const id = set.getAttribute('id') || '';
       const gender = (set.getAttribute('gender') as 'M' | 'F' | 'U') || 'U';
       const club = set.getAttribute('club') || '0';
@@ -451,11 +432,7 @@ export class ViaJovemCompleteService {
     await this.loadFigureData();
     await this.loadFurnidata();
 
-    console.log('🔄 [ViaJovemComplete] Processing categories from figureData...');
-    console.log('📊 [ViaJovemComplete] FigureData available:', !!this.figureData);
-    console.log('📊 [ViaJovemComplete] Sets to process:', this.figureData?.sets.length || 0);
-
-    const categories = new Map<string, ViaJovemCategory>();
+                const categories = new Map<string, ViaJovemCategory>();
 
     // Agrupar sets por tipo
     this.figureData!.sets.forEach(set => {

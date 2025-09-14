@@ -128,15 +128,12 @@ export const useAvatarUrlCache = () => {
   const getCachedUrl = useCallback((key: string, generator: () => string): string => {
     const cached = avatarUrlCache.get(key);
     if (cached) {
-      console.log('�� [Cache] Avatar URL hit:', key);
-      return cached;
+            return cached;
     }
 
     const url = generator();
     avatarUrlCache.set(key, url);
-    console.log('�� [Cache] Avatar URL cached:', key);
-    
-    setCacheStats(avatarUrlCache.getStats());
+        setCacheStats(avatarUrlCache.getStats());
     return url;
   }, []);
 
@@ -161,14 +158,12 @@ export const useFigureDataCache = () => {
   const getCachedData = useCallback((key: string, generator: () => Promise<any>): Promise<any> => {
     const cached = figureDataCache.get(key);
     if (cached) {
-      console.log('�� [Cache] FigureData hit:', key);
-      return Promise.resolve(cached);
+            return Promise.resolve(cached);
     }
 
     return generator().then(data => {
       figureDataCache.set(key, data);
-      console.log('�� [Cache] FigureData cached:', key);
-      return data;
+            return data;
     });
   }, []);
 
@@ -267,12 +262,10 @@ export const useImagePreloader = () => {
       const img = new Image();
       img.onload = () => {
         setPreloadedImages(prev => new Set([...prev, url]));
-        console.log('��️ [Preloader] Image preloaded:', url);
-        resolve();
+                resolve();
       };
       img.onerror = () => {
-        console.error('❌ [Preloader] Failed to preload:', url);
-        reject(new Error('Failed to preload image'));
+                reject(new Error('Failed to preload image'));
       };
       img.src = url;
     });

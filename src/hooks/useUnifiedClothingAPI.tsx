@@ -49,8 +49,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
   } = useQuery({
     queryKey: ['unified-clothing', { limit, category, gender, search }],
     queryFn: async () => {
-      console.log('🌐 [UnifiedClothing] Calling habbo-unified-api edge function');
-      const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
+            const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
         body: { 
           endpoint: 'clothing',
           action: 'search',
@@ -59,12 +58,10 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
       });
 
       if (error) {
-        console.error('❌ [UnifiedClothing] Edge function error:', error);
-        throw error;
+                throw error;
       }
 
-      console.log(`✅ [UnifiedClothing] Edge function returned ${data?.clothing?.length || 0} items`);
-      return data?.clothing || [];
+            return data?.clothing || [];
     },
     enabled: flashAssets.length === 0 && habboEmotionItems.length === 0,
     staleTime: 10 * 60 * 1000,
@@ -72,12 +69,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
 
   // Processar e unificar os dados
   const unifiedData = useMemo(() => {
-    console.log('🔄 [UnifiedClothing] Processing unified data:');
-    console.log(`- Flash Assets: ${flashAssets.length} items`);
-    console.log(`- HabboEmotion: ${habboEmotionItems.length} items`);
-    console.log(`- Unified API: ${unifiedItems.length} items`);
-
-    let result: UnifiedClothingItem[] = [];
+                    let result: UnifiedClothingItem[] = [];
 
     // Prioridade 1: Flash Assets
     if (flashAssets.length > 0) {
@@ -92,8 +84,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
         club: item.club === 'HC' ? 'HC' : 'FREE',
         source: 'flash-assets' as const
       }));
-      console.log(`✅ [UnifiedClothing] Using Flash Assets: ${result.length} items`);
-      return result;
+            return result;
     }
 
     // Prioridade 2: HabboEmotion
@@ -109,8 +100,7 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
         club: item.club === 'HC' ? 'HC' : 'FREE',
         source: 'habbo-emotion' as const
       }));
-      console.log(`✅ [UnifiedClothing] Using HabboEmotion: ${result.length} items`);
-      return result;
+            return result;
     }
 
     // Prioridade 3: Edge Function
@@ -126,12 +116,10 @@ export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) =
         club: item.club === 'HC' ? 'HC' : 'FREE',
         source: 'unified-api' as const
       }));
-      console.log(`✅ [UnifiedClothing] Using Unified API: ${result.length} items`);
-      return result;
+            return result;
     }
 
-    console.log('⚠️ [UnifiedClothing] No data from any source');
-    return [];
+        return [];
   }, [flashAssets, habboEmotionItems, unifiedItems]);
 
   const isLoading = flashLoading || emotionLoading || unifiedLoading;

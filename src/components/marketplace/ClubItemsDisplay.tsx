@@ -3,8 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CreditIcon } from './CreditIcon';
 import { useMarketplace } from '@/contexts/MarketplaceContext';
 import { useState, useEffect } from 'react';
-import { HabboAPIService } from '@/services/HabboAPIService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 interface RealClubItem {
   id: string;
   name: string;
@@ -24,17 +23,15 @@ export const ClubItemsDisplay = () => {
   const fetchRealClubPrices = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Buscando preços reais de HC e CA...');
-
-      // Buscar itens HC e CA de 31 dias
-      const hcData = await HabboAPIService.fetchMarketData({
+            // Buscar itens HC e CA de 31 dias
+      const hcData = await unifiedHabboService.fetchMarketData({
         searchTerm: 'hc_',
         category: '',
         hotel: selectedHotel,
         days: 7
       });
 
-      const caData = await HabboAPIService.fetchMarketData({
+      const caData = await unifiedHabboService.fetchMarketData({
         searchTerm: 'bc_',
         category: '',
         hotel: selectedHotel,
@@ -81,11 +78,8 @@ export const ClubItemsDisplay = () => {
       ];
 
       setClubItems(realClubItems);
-      console.log('✅ Preços de clube atualizados:', realClubItems);
-      
-    } catch (error) {
-      console.error('❌ Erro ao buscar preços de clube:', error);
-      // Fallback com dados básicos
+          } catch (error) {
+            // Fallback com dados básicos
       setClubItems([
         {
           id: 'hc_31_days',

@@ -78,9 +78,7 @@ export class RealFigureDataService {
     }
 
     try {
-      console.log('🌐 [RealFigureData] Loading real figuredata.json...');
-      
-      const response = await fetch('/figuredata.json');
+            const response = await fetch('/figuredata.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -101,8 +99,7 @@ export class RealFigureDataService {
       return processedData;
       
     } catch (error) {
-      console.warn('⚠️ [RealFigureData] Error loading figuredata.json, using mock data:', error);
-      const mockData = this.getMockFigureData();
+            const mockData = this.getMockFigureData();
       this.cache.set(cacheKey, {
         data: mockData,
         timestamp: Date.now()

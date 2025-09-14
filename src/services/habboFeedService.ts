@@ -56,24 +56,20 @@ class HabboFeedService {
 
   async getUserFeed(hotel: string, username: string) {
     try {
-      console.log(`🚫 [habboFeedService] DESABILITADO: getUserFeed para ${username}`);
-      
-      // COMENTADO: Edge function habbo-feed não existe mais
+            // COMENTADO: Edge function habbo-feed não existe mais
       /*
       const { data, error } = await supabase.functions.invoke('habbo-feed', {
         body: { hotel, username },
       });
       if (error || !data) {
-        console.warn(`Failed to fetch user feed for ${username}:`, error?.message || 'no data');
-        return null;
+                return null;
       }
       return data;
       */
       
       return null;
     } catch (error) {
-      console.error(`Error fetching user feed for ${username}:`, error);
-      return null;
+            return null;
     }
   }
 
@@ -88,9 +84,7 @@ class HabboFeedService {
     }
   ): Promise<FeedResponse> {
     try {
-      console.log(`🚫 [habboFeedService] DESABILITADO: getHotelFeed para ${hotel}`);
-      
-      // COMENTADO: Edge function habbo-feed não existe mais
+            // COMENTADO: Edge function habbo-feed não existe mais
       /*
       const { data, error } = await supabase.functions.invoke('habbo-feed', {
         body: {
@@ -103,8 +97,7 @@ class HabboFeedService {
       let baseResponse: FeedResponse = data as FeedResponse;
 
       if (error || !data) {
-        console.warn(`Failed to fetch hotel feed for ${hotel}:`, error?.message || 'no data');
-        baseResponse = {
+                baseResponse = {
           activities: [],
           meta: {
             source: 'database',
@@ -128,8 +121,7 @@ class HabboFeedService {
         },
       };
     } catch (error) {
-      console.error(`Error fetching hotel feed for ${hotel}:`, error);
-      return {
+            return {
         activities: [],
         meta: {
           source: 'database',
@@ -142,22 +134,18 @@ class HabboFeedService {
   }
 
   async triggerUserSync(username: string, hotel: string) {
-    console.log(`🚫 [habboFeedService] DESABILITADO: triggerUserSync para ${username}`);
-    
-    // COMENTADO: Edge function habbo-sync-user não existe mais
+        // COMENTADO: Edge function habbo-sync-user não existe mais
     /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-sync-user', {
         body: { habbo_name: username, hotel },
       });
       if (error) {
-        console.warn(`Failed to trigger sync for ${username}:`, error.message);
-        return null;
+                return null;
       }
       return data;
     } catch (error) {
-      console.error(`Error triggering sync for ${username}:`, error);
-      return null;
+            return null;
     }
     */
     
@@ -165,22 +153,18 @@ class HabboFeedService {
   }
 
   async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<any> {
-    console.log(`🚫 [habboFeedService] DESABILITADO: ensureTrackedAndSynced para ${payload.habbo_name}`);
-    
-    // COMENTADO: Edge function habbo-ensure-tracked não existe mais
+        // COMENTADO: Edge function habbo-ensure-tracked não existe mais
     /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-ensure-tracked', {
         body: payload,
       });
       if (error) {
-        console.warn(`Failed to ensure tracking for ${payload.habbo_name}:`, error.message);
-        return null;
+                return null;
       }
       return data;
     } catch (error) {
-      console.error(`Error ensuring tracking for ${payload.habbo_name}:`, error);
-      return null;
+            return null;
     }
     */
     
@@ -188,22 +172,18 @@ class HabboFeedService {
   }
 
   async discoverAndSyncOnlineUsers(hotel: string, limit: number = 50): Promise<any> {
-    console.log(`🚫 [habboFeedService] DESABILITADO: discoverAndSyncOnlineUsers para ${hotel}`);
-    
-    // COMENTADO: Edge function habbo-discover-online não existe mais
+        // COMENTADO: Edge function habbo-discover-online não existe mais
     /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-discover-online', {
         body: { hotel, limit },
       });
       if (error) {
-        console.warn(`Failed to discover online users for ${hotel}:`, error.message);
-        return null;
+                return null;
       }
       return data;
     } catch (error) {
-      console.error(`Error discovering online users for ${hotel}:`, error);
-      return null;
+            return null;
     }
     */
     
@@ -211,22 +191,18 @@ class HabboFeedService {
   }
 
   async triggerBatchSync(hotel: string): Promise<any> {
-    console.log(`🚫 [habboFeedService] DESABILITADO: triggerBatchSync para ${hotel}`);
-    
-    // COMENTADO: Edge function habbo-sync-batch não existe mais
+        // COMENTADO: Edge function habbo-sync-batch não existe mais
     /*
     try {
       const { data, error } = await supabase.functions.invoke('habbo-sync-batch', {
         body: { hotel },
       });
       if (error) {
-        console.warn(`Failed to trigger batch sync for ${hotel}:`, error.message);
-        return null;
+                return null;
       }
       return data;
     } catch (error) {
-      console.error(`Error triggering batch sync for ${hotel}:`, error);
-      return null;
+            return null;
     }
     */
     

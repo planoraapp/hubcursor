@@ -1,58 +1,18 @@
 
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X } from 'lucide-react';
+import { X, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { RatingWidget } from './widgets/RatingWidget';
 import { useIsMobile } from '@/hooks/use-mobile';
-
-interface Widget {
-  id: string;
-  widget_type: string;
-  x: number;
-  y: number;
-  z_index: number;
-  width: number;
-  height: number;
-  is_visible: boolean;
-  config?: any;
-}
-
-interface HabboData {
-  id: string;
-  habbo_name: string;
-  habbo_id: string;
-  hotel: string;
-  motto: string;
-  figure_string: string;
-  is_online: boolean;
-  memberSince?: string;
-}
-
-interface GuestbookEntry {
-  id: string;
-  author_habbo_name: string;
-  message: string;
-  created_at: string;
-}
-
-interface HomeWidgetProps {
-  widget: Widget;
-  habboData: HabboData;
-  guestbook: GuestbookEntry[];
-  isEditMode: boolean;
-  isOwner: boolean;
-  onRemove: (widgetId: string) => void;
-  onPositionChange: (widgetId: string, x: number, y: number) => void;
-  onGuestbookSubmit?: (message: string) => Promise<void>;
-  onGuestbookDelete?: (entryId: string) => Promise<void>;
-  currentUser?: {
-    id: string;
-    habbo_name: string;
-  } | null;
-}
+import type { 
+  Widget, 
+  HabboData, 
+  GuestbookEntry, 
+  HomeWidgetProps 
+} from '@/types/habbo';
 
 // Helper function to get country flag PNG from hotel
 const getCountryFlagPng = (hotel: string): string => {
@@ -70,6 +30,26 @@ const getCountryFlagPng = (hotel: string): string => {
   return hotelFlags[hotel.toLowerCase()] || '/assets/flagcom.png';
 };
 
+// Função para obter URL da skin do Supabase
+const getSkinUrl = (skinName: string): string => {
+  // URL do Supabase para as skins hospedadas
+  return `https://qjqjqjqjqjqjqjqjqjqj.supabase.co/storage/v1/object/public/home-assets/skins/${skinName}`;
+};
+
+// Função para aplicar skin ao guestbook
+const getGuestbookSkinStyle = (widget: Widget) => {
+  const skinConfig = widget.config?.skin;
+  if (skinConfig?.skinName) {
+    return {
+      backgroundImage: `url(${getSkinUrl(skinConfig.skinName)})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
+    };
+  }
+  return {};
+};
+
 export const HomeWidget: React.FC<HomeWidgetProps> = ({
   widget,
   habboData,
@@ -78,6 +58,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   isOwner,
   onRemove,
   onPositionChange,
+  onUpdateConfig,
   onGuestbookSubmit,
   onGuestbookDelete,
   currentUser
@@ -88,7 +69,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const isMobile = useIsMobile();
 
-  const handleGuestbookSubmit = async () => {
+  const handleGuestbookSubmit = useCallback(async () => {
     console.log('🔍 [HomeWidget] handleGuestbookSubmit chamado:', {
       hasOnGuestbookSubmit: !!onGuestbookSubmit,
       message: newMessage,
@@ -98,61 +79,39 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     });
     
     if (!onGuestbookSubmit || !newMessage.trim()) {
-      console.log('❌ [HomeWidget] Condições não atendidas para envio');
-      return;
+            return;
     }
     
     setIsSubmitting(true);
     try {
       console.log('📤 [HomeWidget] Enviando mensagem:', newMessage.trim());
       await onGuestbookSubmit(newMessage.trim());
-      console.log('✅ [HomeWidget] Mensagem enviada com sucesso');
-      setNewMessage('');
+            setNewMessage('');
     } catch (error) {
-      console.error('❌ [HomeWidget] Erro ao enviar mensagem:', error);
-    } finally {
+          } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [onGuestbookSubmit, newMessage, currentUser, isOwner]);
 
-  const handleGuestbookDelete = async (entryId: string) => {
-    console.log('🗑️ [HomeWidget] handleGuestbookDelete chamado:', {
-      entryId,
-      hasOnGuestbookDelete: !!onGuestbookDelete,
-      currentUser: currentUser?.habbo_name,
-      isOwner,
-      onGuestbookDeleteType: typeof onGuestbookDelete
-    });
-    
-    if (!onGuestbookDelete) {
-      console.error('❌ [HomeWidget] onGuestbookDelete não está definido');
-      alert('Erro: Função de exclusão não disponível');
+  const handleGuestbookDelete = useCallback(async (entryId: string) => {
+        if (!onGuestbookDelete) {
+            alert('Erro: Função de exclusão não disponível');
       return;
     }
     
     try {
-      console.log('🗑️ [HomeWidget] Chamando onGuestbookDelete...');
-      const result = await onGuestbookDelete(entryId);
-      console.log('✅ [HomeWidget] Mensagem deletada com sucesso:', result);
-    } catch (error) {
-      console.error('❌ [HomeWidget] Erro ao deletar mensagem:', error);
-      alert(`Erro ao deletar mensagem: ${error.message || error}`);
+            const result = await onGuestbookDelete(entryId);
+          } catch (error) {
+            alert(`Erro ao deletar mensagem: ${error.message || error}`);
     }
-  };
+  }, [onGuestbookDelete, currentUser, isOwner]);
 
-  const canDeleteEntry = (entry: GuestbookEntry) => {
-    console.log('🔍 [HomeWidget] canDeleteEntry chamado:', {
-      entry: entry.author_habbo_name,
-      currentUser: currentUser?.habbo_name,
-      isOwner,
-      canDelete: !currentUser ? false : (isOwner || entry.author_habbo_name === currentUser.habbo_name)
-    });
-    
+  const canDeleteEntry = useCallback((entry: GuestbookEntry) => {
     if (!currentUser) return false;
     return isOwner || entry.author_habbo_name === currentUser.habbo_name;
-  };
+  }, [currentUser, isOwner]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isEditMode || !isOwner) return;
     
     e.preventDefault();
@@ -165,28 +124,28 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       elementX: widget.x,
       elementY: widget.y
     });
-  };
+  }, [isEditMode, isOwner, widget.x, widget.y]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      const canvasWidth = isMobile ? 768 : 1080;
+      const canvasHeight = isMobile ? 1280 : 1800;
+      const newX = Math.max(0, Math.min(canvasWidth - widget.width, dragStart.elementX + deltaX));
+      const newY = Math.max(0, Math.min(canvasHeight - widget.height, dragStart.elementY + deltaY));
+      
+      onPositionChange(widget.id, newX, newY);
+    }
+  }, [isDragging, dragStart.x, dragStart.y, dragStart.elementX, dragStart.elementY, onPositionChange, widget.id, widget.width, widget.height, isMobile]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+    }
+  }, [isDragging]);
 
   React.useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        const deltaX = e.clientX - dragStart.x;
-        const deltaY = e.clientY - dragStart.y;
-        const canvasWidth = isMobile ? 768 : 1080;
-        const canvasHeight = isMobile ? 1280 : 1800;
-        const newX = Math.max(0, Math.min(canvasWidth - widget.width, dragStart.elementX + deltaX));
-        const newY = Math.max(0, Math.min(canvasHeight - widget.height, dragStart.elementY + deltaY));
-        
-        onPositionChange(widget.id, newX, newY);
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (isDragging) {
-        setIsDragging(false);
-      }
-    };
-
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -198,236 +157,308 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.userSelect = 'auto';
     };
-  }, [isDragging, dragStart, onPositionChange, widget]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const renderWidgetContent = () => {
-    // Debug: Verificar estado do usuário
-    console.log('🔍 [HomeWidget] Debug currentUser:', { 
-      currentUser, 
-      isOwner, 
-      hasCurrentUser: !!currentUser,
-      currentUserType: typeof currentUser,
-      currentUserHabboName: currentUser?.habbo_name,
-      widgetType: widget.widget_type
-    });
+    // Debug logs removidos para produção
     
     switch (widget.widget_type) {
       case 'avatar':
       case 'usercard':
+      case 'profile':
+        // Debug logs removidos para produção
+        
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
         const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=4&gesture=sml&size=l`;
         const flagUrl = getCountryFlagPng(habboData.hotel);
         
-        // Formatar data do memberSince
+        // Formatar data do memberSince (apenas dados reais)
         const formatMemberSince = (memberSince: string) => {
-          if (!memberSince) return 'Criado em: 2021';
+          if (!memberSince) return 'Data não disponível';
+          
+          // Verificar se é uma data fictícia conhecida
+          const fakeDates = [
+            '2024-01-01T00:00:00.000Z',
+            '2024-01-15',
+            '2024',
+            ''
+          ];
+          
+          if (fakeDates.includes(memberSince)) {
+            return 'Data não disponível';
+          }
+          
           try {
             const date = new Date(memberSince);
-            const day = date.getDate().toString().padStart(2, '0');
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const year = date.getFullYear();
-            return `Criado em: ${day}/${month}/${year}`;
+            
+            // Verificar se é uma data válida e não muito antiga (antes de 2020)
+            if (isNaN(date.getTime()) || date.getFullYear() < 2020) {
+              return 'Data não disponível';
+            }
+            
+            return date.toLocaleDateString('pt-BR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
           } catch {
-            return 'Criado em: 2021';
+            return 'Data não disponível';
           }
         };
-        
+
         return (
-          <div className="flex gap-3 p-4 h-full">
-            {/* Avatar - proporção 64x110 */}
-            <div className="flex-shrink-0">
-              <img
-                src={avatarUrl}
-                alt={`${habboData.habbo_name} avatar`}
-                className="w-16 h-28 object-contain"
-                style={{ imageRendering: 'pixelated' }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=l`;
-                }}
-              />
-            </div>
-            
-            {/* Informações do usuário - layout vertical organizado */}
-            <div className="flex-1 flex flex-col justify-start pt-1 min-w-0">
-              {/* Linha 1: Bandeira + Nome + Status online/offline */}
-              <div className="flex items-center gap-2 mb-2">
-                <img 
-                  src={flagUrl}
-                  alt={`${habboData.hotel} flag`}
-                  className="w-4 h-3 flex-shrink-0"
-                  style={{ imageRendering: 'pixelated' }}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/assets/flagcom.png';
-                  }}
-                />
-                <h3 className="text-sm font-bold text-gray-800 truncate flex-1 font-volter">
-                  {habboData.habbo_name}
-                </h3>
-                <div className="flex-shrink-0" title={habboData.is_online ? 'Online' : 'Offline'}>
-                  <span className={`inline-block w-2 h-2 rounded-full ${
-                    habboData.is_online ? 'bg-green-500' : 'bg-red-500'
-                  }`}></span>
+          <div className="relative">
+
+            <div className="flex items-start gap-4 p-6 h-full" style={{ 
+              minWidth: widget.config?.profileSize?.width || '280px', 
+              maxWidth: widget.config?.profileSize?.width || '350px',
+              minHeight: widget.config?.profileSize?.height || '180px'
+            }}>
+              {/* Informações do Usuário - Lado Esquerdo */}
+              <div className="flex-1 min-w-0">
+              <div className="space-y-3">
+                {/* Nome do usuário com bandeira */}
+                <div className="flex items-center gap-1">
+                  <img
+                    src={flagUrl}
+                    alt="Bandeira do país"
+                    className="w-9 h-6 object-contain"
+                  />
+                  <h3 className="text-xl font-bold text-gray-900 truncate volter-font">
+                    {habboData.habbo_name}
+                  </h3>
+                </div>
+
+                {/* Motto */}
+                <div>
+                  <p className="text-sm text-gray-600 italic volter-font">
+                    "{habboData.motto || 'Sem motto definido'}"
+                  </p>
+                </div>
+
+                {/* Status online/offline com GIFs */}
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={habboData.is_online 
+                      ? "https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif"
+                      : "https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif"
+                    }
+                    alt={habboData.is_online ? "Online" : "Offline"}
+                    onLoad={() => {
+                                          }}
+                    onError={(e) => {
+                                            // Fallback para o ícone original se o GIF falhar
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `
+                          <div class="w-2 h-2 rounded-full ${habboData.is_online ? 'bg-green-500' : 'bg-gray-400'}"></div>
+                          <span class="text-sm font-medium volter-font ${habboData.is_online ? 'text-green-600' : 'text-gray-500'}">
+                            ${habboData.is_online ? 'Online' : 'Offline'}
+                          </span>
+                        `;
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Data de criação */}
+                <div>
+                  <p className="text-[9px] text-gray-600 volter-font">
+                    <span className="font-medium">Membro desde:</span>{' '}
+                    {formatMemberSince(habboData.memberSince || '')}
+                  </p>
                 </div>
               </div>
-              
-              {/* Linha 2: Motto em itálico */}
-              {habboData.motto && (
-                <p className="text-xs text-gray-600 italic mb-2 line-clamp-2 font-volter">
-                  "{habboData.motto}"
-                </p>
-              )}
-              
-              {/* Linha 3: Data de criação formatada */}
-              <p className="text-xs text-gray-500 font-volter">
-                {formatMemberSince(habboData.memberSince || '')}
-              </p>
+            </div>
+
+            {/* Avatar do Habbo - Lado Direito */}
+            <div className="flex-shrink-0">
+              <div className="relative">
+                <img
+                  src={avatarUrl}
+                  alt={`Avatar de ${habboData.habbo_name}`}
+                  className="w-24 h-32 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&size=l&direction=4&head_direction=4&action=std&gesture=std`;
+                  }}
+                />
+              </div>
+            </div>
             </div>
           </div>
         );
 
       case 'guestbook':
         return (
-          <div className="flex flex-col h-full">
-            {/* Cabeçalho fixo */}
-            <div className="p-4 border-b flex-shrink-0">
-              <h4 className="font-volter font-bold text-black">
-                📝 Livro de Visitas
-              </h4>
+          <div 
+            className="widget w_skin_defaultskin relative w-full h-full"
+            style={getGuestbookSkinStyle(widget)}
+          >
+            {/* Widget Corner - Cabeçalho */}
+            <div className="widget-corner">
+              <div className="widget-headline relative px-3 py-2">
+                <h3 className="volter-font font-bold text-black text-sm m-0">
+                  Guestbook ({guestbook.length})
+                </h3>
+                
+                {/* Botões de controle (apenas em modo de edição) */}
+                {isEditMode && (
+                  <>
+                    <button 
+                      className="remove-widget-btn absolute top-1 right-6 cursor-pointer text-red-500 hover:text-red-700 text-xs"
+                      style={{ width: '12px', height: '12px' }}
+                      title="Remove widget"
+                    >
+                      ×
+                    </button>
+                    <button 
+                      className="edit-widget-btn absolute top-1 right-1 cursor-pointer text-blue-500 hover:text-blue-700 text-xs"
+                      style={{ width: '12px', height: '12px' }}
+                      title="Edit widget"
+                    >
+                      ✎
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-            
-            {/* Área de mensagens com scroll */}
-            <div className="flex-1 p-4 overflow-y-auto min-h-0">
-              {guestbook.length === 0 ? (
-                <div className="text-center text-gray-500 py-4">
-                  <p className="font-volter">Seja o primeiro a deixar uma mensagem!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Ordenar mensagens cronologicamente (mais recentes primeiro) */}
-                  {guestbook
-                    .slice()
-                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                    .slice(0, 10)
-                    .map((entry) => (
-                    <div key={entry.id} className="py-2">
-                      <div className="flex gap-3">
-                        {/* Avatar à esquerda */}
-                        <div className="flex-shrink-0">
-                            <img
-                              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=m&headonly=1`}
-                              alt={entry.author_habbo_name}
-                              className="w-12 h-12 rounded object-contain"
-                              style={{ imageRendering: 'pixelated' }}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = `https://www.habbo.com/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=m`;
-                              }}
-                            />
-                        </div>
-                        
-                        {/* Conteúdo à direita */}
-                        <div className="flex-1 min-w-0">
-                          {/* Nome clicável e data */}
-                          <div className="flex items-center justify-between mb-1">
-                            <a
-                              href={`/homes/${entry.author_habbo_name}`}
-                              className="font-volter text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {entry.author_habbo_name}
-                            </a>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">
-                                {new Date(entry.created_at).toLocaleDateString('pt-BR')}
-                              </span>
-                                {canDeleteEntry(entry) && (
-                                  <button
-                                    onClick={(e) => {
-                                      console.log('🖱️ [HomeWidget] Botão de exclusão clicado:', {
-                                        entryId: entry.id,
-                                        entryAuthor: entry.author_habbo_name,
-                                        currentUser: currentUser?.habbo_name,
-                                        isOwner,
-                                        canDelete: canDeleteEntry(entry)
-                                      });
-                                      e.stopPropagation();
-                                      if (window.confirm('Tem certeza que deseja excluir este recado?\n\nEsta ação não pode ser desfeita.')) {
-                                        console.log('✅ [HomeWidget] Usuário confirmou exclusão, chamando handleGuestbookDelete');
-                                        try {
+
+            {/* Widget Body - Conteúdo */}
+            <div className="widget-body flex-1">
+              <div 
+                className="widget-content guestbook-content flex flex-col h-full" 
+                style={{ width: '100%', height: '100%' }}
+              >
+                {/* Lista de comentários */}
+                <div 
+                  className="guestbook-list flex-1" 
+                  style={{ 
+                    width: '100%', 
+                    height: '250px', 
+                    overflowY: 'auto',
+                    padding: '8px'
+                  }}
+                >
+                  {guestbook.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#666', paddingTop: '20px' }}>
+                      <p className="volter-font text-sm">No comments yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {guestbook
+                        .slice()
+                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                        .slice(0, 15)
+                        .map((entry) => (
+                        <div key={entry.id} className="guestbook-entry p-2 border-b border-gray-200 last:border-b-0">
+                          <div className="flex gap-2 items-start">
+                            {/* Avatar */}
+                            <div className="flex-shrink-0">
+                              <img
+                                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s&headonly=1`}
+                                alt={entry.author_habbo_name}
+                                className="w-6 h-6 rounded object-contain"
+                                style={{ imageRendering: 'pixelated' }}
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`;
+                                }}
+                              />
+                            </div>
+                            
+                            {/* Conteúdo */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <a
+                                  href={`/homes/${entry.author_habbo_name}`}
+                                  className="volter-font text-xs font-bold text-blue-600 hover:text-blue-800"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {entry.author_habbo_name}
+                                </a>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-gray-500 volter-font">
+                                    {new Date(entry.created_at).toLocaleDateString('pt-BR', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                  {canDeleteEntry(entry) && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (window.confirm('Tem certeza que deseja excluir este recado?')) {
                                           handleGuestbookDelete(entry.id);
-                                        } catch (error) {
-                                          console.error('❌ [HomeWidget] Erro ao chamar handleGuestbookDelete:', error);
                                         }
-                                      } else {
-                                        console.log('❌ [HomeWidget] Usuário cancelou exclusão');
-                                      }
-                                    }}
-                                    className="text-red-500 hover:text-red-700 text-xs px-1 rounded hover:bg-red-50"
-                                    title="Excluir comentário"
-                                  >
-                                    ×
-                                  </button>
-                                )}
+                                      }}
+                                      className="text-red-500 hover:text-red-700 text-xs px-1 py-0.5 rounded hover:bg-red-50 volter-font"
+                                      title="Excluir comentário"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <p className="text-xs text-gray-700 volter-font leading-relaxed break-words">
+                                {entry.message}
+                              </p>
                             </div>
                           </div>
-                          
-                          {/* Mensagem */}
-                          <p className="text-sm text-gray-700 font-volter leading-relaxed">
-                            {entry.message}
-                          </p>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Área de mensagem fixa na parte inferior */}
-            <div className="border-t p-4 flex-shrink-0 bg-white">
-              {/* Área para nova mensagem - para usuários logados (incluindo o dono) */}
-              {currentUser && (
-                <div className="flex gap-2 items-end">
-                  <Textarea
-                    placeholder="Deixe um recado"
-                    value={newMessage}
-                    onChange={(e) => {
-                      setNewMessage(e.target.value);
-                      // Auto-scroll para baixo quando o texto cresce
-                      const textarea = e.target;
-                      textarea.style.height = 'auto';
-                      textarea.style.height = textarea.scrollHeight + 'px';
-                    }}
-                    className="text-sm resize-none flex-1 min-h-[40px] max-h-[120px] overflow-y-auto"
-                    rows={1}
-                    disabled={isSubmitting}
-                    style={{ 
-                      height: '40px',
-                      lineHeight: '1.2'
-                    }}
-                  />
-                  <Button 
-                    size="sm" 
-                    className="font-volter h-[40px] w-[40px] p-0 flex items-center justify-center"
-                    disabled={!newMessage.trim() || isSubmitting}
-                    onClick={handleGuestbookSubmit}
-                    title={isSubmitting ? 'Enviando...' : (isOwner ? 'Deixar Recado' : 'Enviar Mensagem')}
-                  >
-                    {isSubmitting ? '⏳' : '📤'}
-                  </Button>
+                {/* Footer com botão de adicionar comentário */}
+                <div 
+                  className="guestbook-footer flex-shrink-0" 
+                  style={{ padding: '8px' }}
+                >
+                  {currentUser ? (
+                    <div className="flex gap-2 items-end">
+                      <Textarea
+                        placeholder="Add Comment..."
+                        value={newMessage}
+                        onChange={(e) => {
+                          setNewMessage(e.target.value);
+                          const textarea = e.target;
+                          textarea.style.height = 'auto';
+                          textarea.style.height = Math.min(textarea.scrollHeight, 50) + 'px';
+                        }}
+                        className="text-xs resize-none flex-1 min-h-[28px] max-h-[50px] overflow-y-auto volter-font border-gray-300"
+                        rows={1}
+                        disabled={isSubmitting}
+                        style={{ 
+                          height: '28px',
+                          lineHeight: '1.2',
+                          fontSize: '11px'
+                        }}
+                      />
+                      <Button 
+                        size="sm" 
+                        className="volter-font h-[28px] w-[28px] p-0 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-xs"
+                        disabled={!newMessage.trim() || isSubmitting}
+                        onClick={handleGuestbookSubmit}
+                        title={isSubmitting ? 'Enviando...' : 'Add Comment'}
+                      >
+                        {isSubmitting ? '⏳' : '📤'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="volter-font text-xs text-gray-500">
+                        Faça login para comentar
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* Mensagem para usuários não logados */}
-              {!currentUser && (
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 font-volter">
-                    Faça login para deixar uma mensagem
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         );
@@ -443,7 +474,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       default:
         return (
           <div className="p-4 text-center">
-            <p className="text-gray-500 font-volter">
+            <p className="text-gray-500 volter-font">
               Widget: {widget.widget_type}
             </p>
           </div>
@@ -451,11 +482,33 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     }
   };
 
+  // Calcular o tamanho real do widget baseado no tipo
+  const getWidgetSize = () => {
+    if (widget.widget_type === 'profile') {
+      return {
+        width: widget.config?.profileSize?.width || '350px',
+        height: widget.config?.profileSize?.height || '189px'
+      };
+    }
+    if (widget.widget_type === 'guestbook') {
+      return {
+        width: '350px',
+        height: '400px'
+      };
+    }
+    return {
+      width: widget.width,
+      height: widget.height
+    };
+  };
+
+  const widgetSize = getWidgetSize();
+  
   const containerStyle = {
     left: widget.x,
     top: widget.y,
-    width: widget.width,
-    height: widget.height,
+    width: widgetSize.width,
+    height: widgetSize.height,
     zIndex: isDragging ? 9999 : widget.z_index,
     opacity: isDragging ? 0.8 : 1,
     transform: isDragging ? 'scale(1.02)' : 'scale(1)',
@@ -468,8 +521,8 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       style={containerStyle}
       onMouseDown={handleMouseDown}
     >
-      {/* Botão de Remoção - Acima do widget */}
-      {isEditMode && isOwner && (
+      {/* Botão de Remoção - Acima do widget (não exibir para widgets de perfil) */}
+      {isEditMode && isOwner && widget.widget_type !== 'profile' && (
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -482,7 +535,14 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
         </button>
       )}
 
-      <Card className="h-full bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black overflow-hidden">
+      <Card 
+        className={`w-full h-full backdrop-blur-sm shadow-lg overflow-hidden ${widget.config?.skin?.className || 'widget-skin-pillow'}`}
+        style={{
+          background: widget.config?.skin?.bgColor || '#f0f0f0',
+          borderColor: widget.config?.skin?.borderColor || '#d0d0d0',
+          color: widget.config?.skin?.textColor || '#333'
+        }}
+      >
         {renderWidgetContent()}
       </Card>
 

@@ -21,10 +21,8 @@ export const RealHotelFeedColumn: React.FC = () => {
     setIsRefreshing(true);
     try {
       await refetch();
-      console.log('✅ [RealHotelFeedColumn] Feed refreshed successfully');
-    } catch (error) {
-      console.error('❌ [RealHotelFeedColumn] Refresh error:', error);
-    } finally {
+          } catch (error) {
+          } finally {
       setIsRefreshing(false);
     }
   };
@@ -32,14 +30,11 @@ export const RealHotelFeedColumn: React.FC = () => {
   const handleModeChange = (newMode: 'official' | 'database' | 'hybrid') => {
     if (newMode === 'official') {
       // Use official mode for live data
-      console.log('🔄 [RealHotelFeedColumn] Switching to official mode for live data');
-    } else if (newMode === 'database') {
+          } else if (newMode === 'database') {
       // Use database mode for cached data
-      console.log('🔄 [RealHotelFeedColumn] Switching to database mode for cached data');
-    } else if (newMode === 'hybrid') {
+          } else if (newMode === 'hybrid') {
       // Use hybrid mode for combined data
-      console.log('🔄 [RealHotelFeedColumn] Switching to hybrid mode for combined data');
-    }
+          }
     
     // Trigger refetch with new mode
     refetch();
@@ -48,12 +43,10 @@ export const RealHotelFeedColumn: React.FC = () => {
   const handleLoadMore = useCallback(async () => {
     try {
       const nextPage = currentPage + 1;
-      console.log(`[RealHotelFeedColumn] Loading page ${nextPage}`);
-      await loadMoreData(nextPage);
+            await loadMoreData(nextPage);
       setCurrentPage(nextPage);
     } catch (loadError) {
-      console.error("Error loading more data:", loadError);
-      toast.error('Erro ao carregar mais atividades');
+            toast.error('Erro ao carregar mais atividades');
     }
   }, [currentPage, loadMoreData]);
 

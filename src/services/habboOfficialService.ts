@@ -274,8 +274,7 @@ class HabboOfficialService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.warn('Erro ao carregar figuredata, usando dados mock:', error);
-      // Fallback para dados mock se a API falhar
+            // Fallback para dados mock se a API falhar
       const mockData = this.getMockFigureData();
       this.cache.set(cacheKey, {
         data: mockData,
@@ -479,8 +478,7 @@ class HabboOfficialService {
       }
       return await response.json();
     } catch (error) {
-      console.error('Erro ao buscar usuário:', error);
-      throw new Error('Usuário não encontrado');
+            throw new Error('Usuário não encontrado');
     }
   }
 
@@ -493,8 +491,7 @@ class HabboOfficialService {
       }
       return await response.json();
     } catch (error) {
-      console.error('Erro ao obter perfil:', error);
-      throw new Error('Perfil não encontrado');
+            throw new Error('Perfil não encontrado');
     }
   }
 

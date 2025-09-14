@@ -11,9 +11,7 @@ export const useDailyActivitiesInitializer = () => {
 
     const initializeActivities = async () => {
       try {
-        console.log('[🚀 ACTIVITIES INIT] Initializing daily activities tracker...');
-        
-        // Delay para garantir que o usuário está totalmente carregado
+                // Delay para garantir que o usuário está totalmente carregado
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         await trackUserActivities(
@@ -22,10 +20,8 @@ export const useDailyActivitiesInitializer = () => {
           habboAccount.hotel
         );
         
-        console.log('[🚀 ACTIVITIES INIT] ✅ Daily activities initialized successfully');
-      } catch (error) {
-        console.error('[🚀 ACTIVITIES INIT] ❌ Error initializing activities:', error);
-      }
+              } catch (error) {
+              }
     };
 
     // Executar inicialização após o login
