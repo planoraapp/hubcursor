@@ -14,63 +14,63 @@ export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
     name: 'Brasil',
     domain: 'ptbr',
     apiUrl: 'https://www.habbo.com.br/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/brpt.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/brpt.png'
   },
   'com': {
     code: 'com',
     name: 'Internacional',
     domain: 'com',
     apiUrl: 'https://www.habbo.com/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagcom.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/flagcom.png'
   },
   'fi': {
     code: 'fi',
     name: 'Finlândia',
     domain: 'fi',
     apiUrl: 'https://www.habbo.fi/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/fi.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/fi.png'
   },
   'it': {
     code: 'it',
     name: 'Itália',
     domain: 'it',
     apiUrl: 'https://www.habbo.it/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/it.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/it.png'
   },
   'de': {
     code: 'de',
     name: 'Alemanha',
     domain: 'de',
     apiUrl: 'https://www.habbo.de/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/de.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/de.png'
   },
   'es': {
     code: 'es',
     name: 'Espanha',
     domain: 'es',
     apiUrl: 'https://www.habbo.es/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/es.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/es.png'
   },
   'fr': {
     code: 'fr',
     name: 'França',
     domain: 'fr',
     apiUrl: 'https://www.habbo.fr/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/fr.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/fr.png'
   },
   'nl': {
     code: 'nl',
     name: 'Holanda',
     domain: 'nl',
     apiUrl: 'https://www.habbo.nl/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/nl.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/nl.png'
   },
   'tr': {
     code: 'tr',
     name: 'Turquia',
     domain: 'com.tr',
     apiUrl: 'https://www.habbo.com.tr/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/tr.png'
+    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flags/tr.png'
   }
 };
 

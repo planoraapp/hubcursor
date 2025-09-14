@@ -143,6 +143,11 @@ export const Login: React.FC = () => {
                               alt={hotel.name}
                               className="w-8 h-6 object-cover mb-1"
                               style={{ imageRendering: 'pixelated' }}
+                              onError={(e) => {
+                                console.error(`Erro ao carregar bandeira ${hotel.name}:`, hotel.flag);
+                                // Fallback para bandeira local
+                                e.currentTarget.src = `/flags/${hotel.code}.png`;
+                              }}
                             />
                             <span className="text-xs font-medium text-gray-700 text-center">
                               {hotel.name}
