@@ -4,9 +4,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import badgeCodes from '@/data/badge-codes.json';
-import fullBadgeInfo from '@/data/full-badge-info.json';
-import realBadgeDescriptions from '@/data/real-badge-descriptions.json';
+// import badgeCodes from '@/data/badge-codes.json';
+// import fullBadgeInfo from '@/data/full-badge-info.json';
+// import realBadgeDescriptions from '@/data/real-badge-descriptions.json';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
