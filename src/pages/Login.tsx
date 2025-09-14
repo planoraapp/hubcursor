@@ -132,17 +132,25 @@ export const Login: React.FC = () => {
                             key={hotel.code}
                             type="button"
                             onClick={() => setSelectedHotel(hotel.code)}
-                            className={`p-1 rounded transition-all duration-200 ${
+                            className={`transition-all duration-200 ${
                               selectedHotel === hotel.code
-                                ? 'ring-2 ring-blue-500 bg-blue-50'
-                                : 'hover:bg-gray-50'
+                                ? 'ring-2 ring-blue-500 rounded'
+                                : ''
                             }`}
+                            style={{ 
+                              background: 'transparent',
+                              border: 'none',
+                              padding: '2px'
+                            }}
                           >
                             <img
                               src={hotel.flag}
                               alt={hotel.name}
-                              className="w-8 h-6 object-cover"
-                              style={{ imageRendering: 'pixelated' }}
+                              className="w-8 h-6"
+                              style={{ 
+                                imageRendering: 'pixelated',
+                                background: 'transparent'
+                              }}
                               onError={(e) => {
                                 console.error(`Erro ao carregar bandeira ${hotel.name}:`, hotel.flag);
                                 // Fallback para bandeira local
