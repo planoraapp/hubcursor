@@ -146,7 +146,7 @@ export const Login: React.FC = () => {
                             <img
                               src={hotel.flag}
                               alt={hotel.name}
-                              className="w-8 h-6"
+                              className="w-8 h-6 object-contain"
                               style={{ 
                                 imageRendering: 'pixelated',
                                 background: 'transparent'
