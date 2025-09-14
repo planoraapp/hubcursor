@@ -126,22 +126,22 @@ export const Login: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         🌍 Hotel Habbo
                       </label>
-                      <div className="grid grid-cols-4 gap-2 mb-3">
+                      <div className="flex flex-wrap gap-2 mb-3 justify-center">
                         {habboHotels.map((hotel) => (
                           <button
                             key={hotel.code}
                             type="button"
                             onClick={() => setSelectedHotel(hotel.code)}
-                            className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 ${
+                            className={`p-1 rounded transition-all duration-200 ${
                               selectedHotel === hotel.code
-                                ? 'bg-blue-50 shadow-md ring-2 ring-blue-500'
-                                : 'bg-white hover:bg-gray-50 hover:shadow-sm'
+                                ? 'ring-2 ring-blue-500 bg-blue-50'
+                                : 'hover:bg-gray-50'
                             }`}
                           >
                             <img
                               src={hotel.flag}
                               alt={hotel.name}
-                              className="w-8 h-6 object-cover mb-1"
+                              className="w-8 h-6 object-cover"
                               style={{ imageRendering: 'pixelated' }}
                               onError={(e) => {
                                 console.error(`Erro ao carregar bandeira ${hotel.name}:`, hotel.flag);
@@ -149,9 +149,6 @@ export const Login: React.FC = () => {
                                 e.currentTarget.src = `/flags/${hotel.code}.png`;
                               }}
                             />
-                            <span className="text-xs font-medium text-gray-700 text-center">
-                              {hotel.name}
-                            </span>
                           </button>
                         ))}
                       </div>
