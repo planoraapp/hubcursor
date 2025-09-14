@@ -103,8 +103,12 @@ export const Login: React.FC = () => {
                 <img 
                   src="/assets/hubbeta.gif" 
                   alt="HabboHub" 
-                  className="w-32 h-32 mx-auto mb-4"
-                  style={{ imageRendering: 'pixelated' }}
+                  className="mx-auto mb-4"
+                  style={{ 
+                    imageRendering: 'pixelated',
+                    maxWidth: '200px',
+                    height: 'auto'
+                  }}
                 />
                 <h1 className="text-3xl font-bold text-white volter-font" 
                     style={{ textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black' }}>
@@ -130,22 +134,22 @@ export const Login: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         🌍 Hotel Habbo
                       </label>
-                      <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="grid grid-cols-4 gap-2 mb-3">
                         {habboHotels.map((hotel) => (
                           <button
                             key={hotel.code}
                             type="button"
                             onClick={() => setSelectedHotel(hotel.code)}
-                            className={`flex flex-col items-center p-2 rounded-lg border-2 transition-all duration-200 ${
+                            className={`flex flex-col items-center p-2 rounded-lg transition-all duration-200 ${
                               selectedHotel === hotel.code
-                                ? 'border-blue-500 bg-blue-50 shadow-md'
-                                : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
+                                ? 'bg-blue-50 shadow-md ring-2 ring-blue-500'
+                                : 'bg-white hover:bg-gray-50 hover:shadow-sm'
                             }`}
                           >
                             <img
                               src={hotel.flag}
                               alt={hotel.name}
-                              className="w-8 h-6 object-cover rounded-sm mb-1"
+                              className="w-8 h-6 object-cover mb-1"
                               style={{ imageRendering: 'pixelated' }}
                             />
                             <span className="text-xs font-medium text-gray-700 text-center">

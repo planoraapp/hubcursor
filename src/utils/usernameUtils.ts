@@ -5,6 +5,7 @@ export interface HotelConfig {
   name: string;
   domain: string;
   apiUrl: string;
+  flag: string;
 }
 
 export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
@@ -12,49 +13,64 @@ export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
     code: 'br',
     name: 'Brasil',
     domain: 'ptbr',
-    apiUrl: 'https://www.habbo.com.br/api/public'
+    apiUrl: 'https://www.habbo.com.br/api/public',
+    flag: '/flags/br.png'
   },
   'com': {
     code: 'com',
     name: 'Internacional',
     domain: 'com',
-    apiUrl: 'https://www.habbo.com/api/public'
+    apiUrl: 'https://www.habbo.com/api/public',
+    flag: '/flags/us.png'
   },
   'fi': {
     code: 'fi',
     name: 'Finlândia',
     domain: 'fi',
-    apiUrl: 'https://www.habbo.fi/api/public'
+    apiUrl: 'https://www.habbo.fi/api/public',
+    flag: '/flags/fi.png'
   },
   'it': {
     code: 'it',
     name: 'Itália',
     domain: 'it',
-    apiUrl: 'https://www.habbo.it/api/public'
+    apiUrl: 'https://www.habbo.it/api/public',
+    flag: '/flags/it.png'
   },
   'de': {
     code: 'de',
     name: 'Alemanha',
     domain: 'de',
-    apiUrl: 'https://www.habbo.de/api/public'
+    apiUrl: 'https://www.habbo.de/api/public',
+    flag: '/flags/de.png'
   },
   'es': {
     code: 'es',
     name: 'Espanha',
     domain: 'es',
-    apiUrl: 'https://www.habbo.es/api/public'
+    apiUrl: 'https://www.habbo.es/api/public',
+    flag: '/flags/es.png'
   },
   'fr': {
     code: 'fr',
     name: 'França',
     domain: 'fr',
-    apiUrl: 'https://www.habbo.fr/api/public'
+    apiUrl: 'https://www.habbo.fr/api/public',
+    flag: '/flags/fr.png'
   },
   'nl': {
     code: 'nl',
     name: 'Holanda',
     domain: 'nl',
-    apiUrl: 'https://www.habbo.nl/api/public'
+    apiUrl: 'https://www.habbo.nl/api/public',
+    flag: '/flags/nl.png'
+  },
+  'tr': {
+    code: 'tr',
+    name: 'Turquia',
+    domain: 'com.tr',
+    apiUrl: 'https://www.habbo.com.tr/api/public',
+    flag: '/flags/tr.png'
   }
 };
 
