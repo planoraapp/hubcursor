@@ -83,9 +83,9 @@ export const useLatestHomes = () => {
       
       // Get Habbo account names
       const { data: accounts } = await supabase
-        .from('habbo_auth')
-        .select('id, habbo_username')
-        .in('id', userIds);
+        .from('habbo_accounts')
+        .select('supabase_user_id, habbo_name')
+        .in('supabase_user_id', userIds);
 
       // Get background data
       const { data: backgrounds } = await supabase
@@ -112,7 +112,7 @@ export const useLatestHomes = () => {
         
         return {
           ...home,
-          habbo_name: account?.habbo_username,
+          habbo_name: account?.habbo_name,
           background_type: background?.background_type,
           background_value: background?.background_value,
           average_rating: Math.round(averageRating * 10) / 10,

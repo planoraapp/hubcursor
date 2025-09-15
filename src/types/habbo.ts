@@ -9,7 +9,14 @@ export interface HabboData {
   motto: string;
   figure_string: string;
   is_online: boolean;
-  memberSince?: string;
+  member_since?: string;
+  current_level?: number;
+  total_experience?: number;
+  star_gem_count?: number;
+  last_access_time?: string;
+  is_admin?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface HabboUser {
@@ -23,6 +30,10 @@ export interface HabboUser {
   figureString: string;
   profileVisible: boolean;
   uniqueId?: string;
+  currentLevel?: number;
+  totalExperience?: number;
+  starGemCount?: number;
+  lastAccessTime?: string;
 }
 
 export interface HabboAccount {

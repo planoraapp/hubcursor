@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import Notification from '@/components/ui/notification';
+import { useQuickNotification } from '@/hooks/useNotification';
 
 const AltCodesCompact = () => {
   const [selectedAltCode, setSelectedAltCode] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{ message: string; isVisible: boolean }>({
-    message: '',
-    isVisible: false
-  });
+  const { success } = useQuickNotification();
 
   // Dados dos Alt Codes com imagens locais
   const habboAltCodes = [
@@ -173,22 +170,13 @@ const AltCodesCompact = () => {
       setTimeout(() => setCopiedCode(null), 2000);
       
       // Mostrar notificação
-      setNotification({
-        message: `Alt Code copiado: ${text}`,
-        isVisible: true
-      });
+      success('Alt Code copiado!', text);
     } catch (err) {
-            // Mostrar notificação de erro
-      setNotification({
-        message: `Erro ao copiar. Tente selecionar e copiar manualmente: ${text}`,
-        isVisible: true
-      });
+      // Mostrar notificação de erro
+      success('Erro ao copiar', `Tente selecionar e copiar manualmente: ${text}`);
     }
   };
 
-  const closeNotification = () => {
-    setNotification(prev => ({ ...prev, isVisible: false }));
-  };
 
   const openModal = (altCode: any) => {
     setSelectedAltCode(altCode);
@@ -377,13 +365,6 @@ const AltCodesCompact = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Notificação */}
-      <Notification
-        message={notification.message}
-        isVisible={notification.isVisible}
-        onClose={closeNotification}
-        duration={3000}
-      />
     </div>
   );
 };

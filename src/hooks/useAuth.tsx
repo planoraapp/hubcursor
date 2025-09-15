@@ -1,16 +1,17 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { findUserByUsername, verifyCredentials, createUserWithDomain, type LocalUser } from '@/data/localUsers';
-import { generateUniqueUsername, extractOriginalUsername } from '@/utils/usernameUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HabboAccount {
   id: string;
-  habbo_username: string;
-  habbo_motto: string;
-  habbo_avatar?: string;
-  is_admin: boolean;
+  habbo_name: string;
+  habbo_id: string;
+  figure_string: string;
+  motto: string;
   hotel: string;
+  is_admin: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 interface AuthContextType {
@@ -41,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setHabboAccount(session);
         }
       } catch (error) {
-                localStorage.removeItem('habbohub_session');
+        localStorage.removeItem('habbohub_session');
       } finally {
         setLoading(false);
       }
@@ -53,80 +54,65 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-            // Verificar credenciais localmente
-      const authResult = verifyCredentials(username, password);
       
-      if (!authResult.success) {
-                toast({
+      // 1. Buscar conta no Supabase
+      const { data: habboAccount, error: accountError } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .eq('habbo_name', username)
+        .single();
+
+      if (accountError || !habboAccount) {
+        toast({
           title: "Erro no login",
-          description: authResult.error || 'Erro na verificação',
+          description: "Usuário não encontrado",
           variant: "destructive"
         });
         return false;
       }
 
-      const user = authResult.user!;
+      // 2. Fazer login no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: `${habboAccount.habbo_id}@habbohub.com`,
+        password: password
+      });
 
-      // Buscar dados reais do Habbo se for habbohub
-      const originalUsername = extractOriginalUsername(user.habbo_username);
-      if (originalUsername.toLowerCase() === 'habbohub') {
-        try {
-          // Obter país selecionado do localStorage
-          const selectedHotel = localStorage.getItem('selected_habbo_hotel') || 'br';
-          
-          // Mapear código do país para URL da API
-          const hotelApiUrls = {
-            'br': 'https://www.habbo.com.br/api/public',
-            'com': 'https://www.habbo.com/api/public',
-            'de': 'https://www.habbo.de/api/public',
-            'es': 'https://www.habbo.es/api/public',
-            'fi': 'https://www.habbo.fi/api/public',
-            'fr': 'https://www.habbo.fr/api/public',
-            'it': 'https://www.habbo.it/api/public',
-            'nl': 'https://www.habbo.nl/api/public',
-            'tr': 'https://www.habbo.com.tr/api/public'
-          };
-          
-          const apiUrl = hotelApiUrls[selectedHotel as keyof typeof hotelApiUrls] || hotelApiUrls.br;
-          const response = await fetch(`${apiUrl}/users?name=habbohub`);
-          if (response.ok) {
-            const habboData = await response.json();
-            
-            // Atualizar dados do usuário com dados reais
-            user.habbo_motto = habboData.motto || user.habbo_motto;
-            user.habbo_avatar = habboData.figureString || user.habbo_avatar;
-          }
-        } catch (error) {
-          console.warn('⚠️ [Auth] Erro ao buscar dados reais (não crítico):', error);
-        }
+      if (authError) {
+        toast({
+          title: "Erro no login",
+          description: "Senha incorreta",
+          variant: "destructive"
+        });
+        return false;
       }
 
-      // Criar sessão (usar nome original para exibição)
-      const session: HabboAccount = {
-        id: user.id,
-        habbo_username: originalUsername, // Usar nome original para exibição
-        habbo_motto: user.habbo_motto,
-        habbo_avatar: user.habbo_avatar,
-        is_admin: user.is_admin,
-        hotel: user.hotel,
-        created_at: user.created_at
+      // 3. Salvar sessão no localStorage
+      const sessionData = {
+        id: habboAccount.id,
+        habbo_name: habboAccount.habbo_name,
+        habbo_id: habboAccount.habbo_id,
+        figure_string: habboAccount.figure_string,
+        motto: habboAccount.motto,
+        hotel: habboAccount.hotel,
+        is_admin: habboAccount.is_admin,
+        created_at: habboAccount.created_at,
+        updated_at: habboAccount.updated_at
       };
+      
+      localStorage.setItem('habbohub_session', JSON.stringify(sessionData));
+      setHabboAccount(sessionData);
 
-      // Salvar na sessão local
-      localStorage.setItem('habbohub_session', JSON.stringify(session));
-      setHabboAccount(session);
-
-            toast({
-        title: "Login realizado",
-        description: `Bem-vindo, ${username}!`
+      toast({
+        title: "Login realizado!",
+        description: `Bem-vindo, ${habboAccount.habbo_name}!`,
       });
 
       return true;
-
-    } catch (error: any) {
-            toast({
+    } catch (error) {
+      console.error('Erro no login:', error);
+      toast({
         title: "Erro no login",
-        description: error.message || "Erro interno",
+        description: "Erro inesperado ao fazer login",
         variant: "destructive"
       });
       return false;
@@ -139,17 +125,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       
+      // Fazer logout no Supabase Auth
+      await supabase.auth.signOut();
+      
       // Limpar sessão local
       localStorage.removeItem('habbohub_session');
       setHabboAccount(null);
       
-            toast({
+      toast({
         title: "Logout realizado",
         description: "Até logo!"
       });
 
     } catch (error) {
-          } finally {
+      console.error('Erro no logout:', error);
+    } finally {
       setLoading(false);
     }
   };

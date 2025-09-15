@@ -26,7 +26,7 @@ export const useUserProfile = (username: string) => {
       
       const { data, error } = await supabase
         .rpc('get_habbo_account_public_by_name', { 
-          habbo_name_param: username.trim().toLowerCase() 
+          habbo_name_param: username.trim() // Preservar capitalização original
         });
 
       if (error || !data) {

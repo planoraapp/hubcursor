@@ -5,6 +5,8 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/hooks/useAuth'
+import { NotificationProvider, useNotification } from '@/hooks/useNotification'
+import { NotificationContainer } from '@/components/ui/notification'
 import './index.css'
 import './styles/widget-skins.css'
 
@@ -28,6 +30,8 @@ import AltCodesPage from './pages/AltCodes'
 import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
+import NotificationDemo from './pages/NotificationDemo'
+import BeebopHome from './pages/BeebopHome'
 import NotFound from './pages/NotFound'
 // import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer' // Desativado temporariamente
 import HomeRedirect from './components/HomeRedirect'
@@ -145,6 +149,14 @@ const router = createBrowserRouter([
     element: <Profile />,
   },
   {
+    path: "/notification-demo",
+    element: <NotificationDemo />,
+  },
+  {
+    path: "/beebop",
+    element: <BeebopHome />,
+  },
+  {
     path: "*",
     element: <NotFound />,
   },
@@ -160,11 +172,29 @@ const AppWithInitializers = () => {
   );
 };
 
+const AppWithNotifications = () => {
+  return (
+    <NotificationProvider>
+      <AppWithInitializers />
+      <NotificationWrapper />
+    </NotificationProvider>
+  );
+};
+
+const NotificationWrapper = () => {
+  const { notifications, removeNotification } = useNotification();
+  
+  return <NotificationContainer 
+    notifications={notifications} 
+    onClose={removeNotification} 
+  />;
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppWithInitializers />
+        <AppWithNotifications />
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

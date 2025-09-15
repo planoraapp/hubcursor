@@ -16,50 +16,40 @@ export const useMostVisitedHomes = () => {
   return useQuery({
     queryKey: ['most-visited-homes'],
     queryFn: async (): Promise<MostVisitedHomeData[]> => {
-            // Get homes with visit counts (we'll simulate this with a combination of ratings and recent activity)
-      // In a real implementation, you'd have a visits table
-      const { data: allHomes, error } = await supabase
-        .from('user_home_backgrounds')
+      // Get homes with actual visit counts from user_home_visits table
+      const { data: visitStats, error: visitError } = await supabase
+        .from('user_home_visits')
         .select(`
-          user_id,
-          updated_at,
-          background_type,
-          background_value
-        `)
-        .order('updated_at', { ascending: false })
-        .limit(50);
+          home_owner_user_id,
+          visited_at
+        `);
 
-      if (error) {
-                throw error;
+      if (visitError) {
+        throw visitError;
       }
 
-      // Get ratings to use as a proxy for popularity/visits
-      const { data: ratings } = await supabase
-        .from('user_home_ratings')
-        .select('home_owner_user_id, rating');
-
-      // Calculate visit count based on ratings count and recency
-      const homeStats = new Map<string, { visit_count: number; last_activity: string }>();
+      // Count visits per home
+      const homeVisitCounts = new Map<string, { count: number; last_visit: string }>();
       
-      allHomes?.forEach(home => {
-        const homeRatings = ratings?.filter(r => r.home_owner_user_id === home.user_id) || [];
-        const visitCount = Math.max(
-          homeRatings.length * 2, // Base visits from ratings
-          Math.floor(Math.random() * 20) + 5 // Random visits between 5-25
-        );
+      visitStats?.forEach(visit => {
+        const existing = homeVisitCounts.get(visit.home_owner_user_id);
+        const count = existing ? existing.count + 1 : 1;
+        const lastVisit = existing 
+          ? (new Date(visit.visited_at) > new Date(existing.last_visit) ? visit.visited_at : existing.last_visit)
+          : visit.visited_at;
         
-        homeStats.set(home.user_id, {
-          visit_count: visitCount,
-          last_activity: home.updated_at
+        homeVisitCounts.set(visit.home_owner_user_id, {
+          count,
+          last_visit: lastVisit
         });
       });
 
-      // Sort by visit count
-      const mostVisitedHomes = Array.from(homeStats.entries())
+      // Sort by visit count and get top 8
+      const mostVisitedHomes = Array.from(homeVisitCounts.entries())
         .map(([userId, stats]) => ({
           user_id: userId,
-          visit_count: stats.visit_count,
-          updated_at: stats.last_activity
+          visit_count: stats.count,
+          updated_at: stats.last_visit
         }))
         .sort((a, b) => b.visit_count - a.visit_count)
         .slice(0, 8);

@@ -105,7 +105,7 @@ export const useHabboHomeV2 = (username: string) => {
         motto: realMotto,
         figure_string: realFigureString,
         is_online: realIsOnline,
-        memberSince: realMemberSince
+        member_since: realMemberSince
       };
       
       // Sempre atualizar com dados reais, mesmo se há dados salvos
@@ -121,7 +121,7 @@ export const useHabboHomeV2 = (username: string) => {
         motto: 'HUB-QQ797',
         figure_string: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
         is_online: false,
-        memberSince: '2024-01-01T00:00:00.000Z'
+        member_since: '2024-01-01T00:00:00.000Z'
       };
       
       // Sempre atualizar com dados de fallback se a busca real falhar
@@ -132,33 +132,10 @@ export const useHabboHomeV2 = (username: string) => {
   // Configurar dados reais do habbohub diretamente
   useEffect(() => {
     if (username.toLowerCase() === 'habbohub') {
-            // Aguardar um pouco para garantir que os dados salvos sejam carregados primeiro
+      // Aguardar um pouco para garantir que os dados salvos sejam carregados primeiro
       setTimeout(() => {
         fetchRealHabboData();
       }, 500);
-      
-      // Forçar atualização do card se já existir
-      setTimeout(() => {
-        if (widgets.length > 0) {
-          const updatedWidgets = widgets.map(widget => {
-            if (widget.widget_type === 'profile') {
-              return {
-                ...widget,
-                width: 350,
-                config: {
-                  ...widget.config,
-                  profileSize: {
-                    width: '350px',
-                    height: '180px'
-                  }
-                }
-              };
-            }
-            return widget;
-          });
-          setWidgets(updatedWidgets);
-                  }
-      }, 100);
     }
   }, [username]);
 
@@ -175,7 +152,7 @@ export const useHabboHomeV2 = (username: string) => {
           motto: cachedProfile.motto || prev!.motto,
           figure_string: cachedProfile.figureString || prev!.figure_string,
           is_online: cachedProfile.online ?? prev!.is_online,
-          memberSince: cachedProfile.memberSince || prev!.memberSince
+          member_since: cachedProfile.memberSince || prev!.member_since
         }));
         return;
       }
@@ -193,7 +170,7 @@ export const useHabboHomeV2 = (username: string) => {
           motto: profileData.motto || prev!.motto,
           figure_string: profileData.figureString || prev!.figure_string,
           is_online: profileData.online ?? prev!.is_online,
-          memberSince: profileData.memberSince || prev!.memberSince
+          member_since: profileData.memberSince || prev!.member_since
         }));
               }
     } catch (error) {
@@ -296,7 +273,7 @@ export const useHabboHomeV2 = (username: string) => {
           motto: username.toLowerCase() === 'habbohub' ? 'HUB-QQ797' : 'Desenvolvedor e Designer do HabboHub',
           figure_string: username.toLowerCase() === 'habbohub' ? 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408' : 'hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61',
           is_online: username.toLowerCase() === 'habbohub' ? false : true,
-          memberSince: username.toLowerCase() === 'habbohub' ? '' : '2024'
+          member_since: username.toLowerCase() === 'habbohub' ? '' : '2024'
         };
         
         setHabboData(basicHabboInfo);
@@ -369,7 +346,7 @@ export const useHabboHomeV2 = (username: string) => {
             motto: 'HUB-QQ797',
             figure_string: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
             is_online: false,
-            memberSince: '2024-01-01T00:00:00.000Z'
+            member_since: '2024-01-01T00:00:00.000Z'
           };
           
           setHabboData(realHabboInfo);
@@ -544,7 +521,7 @@ export const useHabboHomeV2 = (username: string) => {
             motto: 'Desenvolvedor e Designer do HabboHub',
             figure_string: 'hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61',
             is_online: true,
-            memberSince: '2024-01-15'
+            member_since: '2024-01-15'
           };
           
           setHabboData(basicHabboInfo);
@@ -665,7 +642,7 @@ export const useHabboHomeV2 = (username: string) => {
           motto: 'Usuário local',
           figure_string: 'hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61',
           is_online: false,
-          memberSince: ''
+          member_since: ''
         };
         
         setHabboData(basicHabboInfo);
@@ -712,7 +689,7 @@ export const useHabboHomeV2 = (username: string) => {
             motto: 'Sistema HabboHub - Administrador',
             figure_string: 'hd-180-1.ch-255-66.lg-285-80.sh-290-62.ha-1012-110.hr-831-49',
             is_online: false,
-            memberSince: '2024'
+            member_since: '2024'
           };
           
           setHabboData(basicHabboInfo);
@@ -847,7 +824,7 @@ export const useHabboHomeV2 = (username: string) => {
             motto: habboAccount.motto || '',
             figure_string: habboAccount.figure_string || '',
             is_online: habboAccount.is_online || false,
-            memberSince: ''
+            member_since: ''
           };
           
           setHabboData(basicHabboInfo);
@@ -891,7 +868,7 @@ export const useHabboHomeV2 = (username: string) => {
         motto: userData.habbo_motto || '',
         figure_string: userData.habbo_avatar || '',
         is_online: false, // Padrão
-        memberSince: ''
+        member_since: ''
       };
 
       setHabboData(basicHabboInfo);
@@ -1657,7 +1634,7 @@ export const useHabboHomeV2 = (username: string) => {
     if (username) {
       loadHabboHomeData();
     }
-  }, [username, habboAccount]);
+  }, [username]);
 
   // Função para enviar mensagem no guestbook
   const submitGuestbookMessage = async (message: string) => {

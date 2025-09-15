@@ -11,14 +11,14 @@ export interface HotelConfig {
 export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
   'br': {
     code: 'br',
-    name: 'Brasil',
+    name: 'Brasil/Portugal',
     domain: 'ptbr',
     apiUrl: 'https://www.habbo.com.br/api/public',
     flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagbrpt.png'
   },
   'com': {
     code: 'com',
-    name: 'Internacional',
+    name: 'UK e .com',
     domain: 'com',
     apiUrl: 'https://www.habbo.com/api/public',
     flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagcom.png'
@@ -76,15 +76,15 @@ export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
 
 /**
  * Gera um nome de usuário único com domínio do hotel
- * Formato: hotel-nome (ex: ptbr-habbohub, com-admin, fi-user123)
+ * Formato: hotel-nome (ex: ptbr-Beebop, com-admin, fi-user123)
  */
 export function generateUniqueUsername(username: string, hotel: string): string {
   const hotelConfig = HOTEL_CONFIGS[hotel];
   if (!hotelConfig) {
-        return `ptbr-${username.toLowerCase()}`;
+        return `ptbr-${username}`; // Preservar capitalização original
   }
   
-  return `${hotelConfig.domain}-${username.toLowerCase()}`;
+  return `${hotelConfig.domain}-${username}`; // Preservar capitalização original
 }
 
 /**
