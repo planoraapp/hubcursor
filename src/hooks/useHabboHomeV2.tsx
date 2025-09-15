@@ -279,18 +279,45 @@ export const useHabboHomeV2 = (username: string) => {
         setHabboData(basicHabboInfo);
         
         // Definir como proprietário se o usuário logado for o mesmo (extraindo nome do Habbo)
-        const currentUserHabboName = habboAccount?.habbo_username?.split('-').pop()?.toLowerCase();
+        const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
         const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
         setIsOwner(currentUserIsOwner);
         
+        // Para usuários fictícios (habbohub, beebop), buscar dados do Supabase primeiro
+        if (basicHabboInfo.id.startsWith('hhbr-') && supabase) {
+          console.log('🔍 Buscando dados do Supabase para usuário fictício...');
+          
+          try {
+            // Buscar background do Supabase
+            const { data: supabaseBg, error: bgError } = await supabase
+              .from('user_home_backgrounds')
+              .select('background_type, background_value')
+              .eq('user_id', basicHabboInfo.id)
+              .single();
+            
+            if (!bgError && supabaseBg) {
+              console.log('✅ Background encontrado no Supabase:', supabaseBg);
+              setBackground(supabaseBg);
+            } else {
+              console.log('⚠️ Background não encontrado no Supabase, usando localStorage');
+              setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
+            }
+          } catch (error) {
+            console.error('❌ Erro ao buscar dados do Supabase:', error);
+            setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
+          }
+        } else {
+          // Para outros usuários, usar localStorage
+          setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
+        }
+        
         if (savedData) {
-                                        // Carregar dados salvos e garantir que há um card de perfil
+          // Carregar dados salvos e garantir que há um card de perfil
           const savedWidgets = savedData.widgets || [];
           const widgetsWithProfile = ensureProfileCard(savedWidgets, basicHabboInfo.id);
           
           setWidgets(widgetsWithProfile);
           setStickers(savedData.stickers || []);
-          setBackground(savedData.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
           setGuestbook(savedData.guestbook || []);
           
           console.log('✅ Dados carregados do localStorage:', {
@@ -352,7 +379,7 @@ export const useHabboHomeV2 = (username: string) => {
           setHabboData(realHabboInfo);
           
           // Definir como proprietário se o usuário logado for habbohub
-          const currentUserHabboName = habboAccount?.habbo_username?.split('-').pop()?.toLowerCase();
+          const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
           const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
           setIsOwner(currentUserIsOwner);
           
@@ -527,10 +554,10 @@ export const useHabboHomeV2 = (username: string) => {
           setHabboData(basicHabboInfo);
           
           // Definir como proprietário se o usuário logado for beebop
-          const currentUserHabboName = habboAccount?.habbo_username?.split('-').pop()?.toLowerCase();
+          const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
           const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
           console.log('🔍 [DEBUG] Verificação de proprietário (beebop):', { 
-            currentUser: habboAccount?.habbo_username, 
+            currentUser: habboAccount?.habbo_name, 
             targetUsername: username,
             isOwner: currentUserIsOwner
           });
@@ -648,9 +675,9 @@ export const useHabboHomeV2 = (username: string) => {
         setHabboData(basicHabboInfo);
         
         // Definir como proprietário
-        const currentUserIsOwner = habboAccount?.habbo_username?.toLowerCase() === username.toLowerCase();
+        const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
         console.log('🔍 [DEBUG] Verificação de proprietário (fallback):', { 
-          currentUser: habboAccount?.habbo_username, 
+          currentUser: habboAccount?.habbo_name, 
           targetUser: username,
           isOwner: currentUserIsOwner,
           habboAccount: habboAccount
@@ -695,10 +722,10 @@ export const useHabboHomeV2 = (username: string) => {
           setHabboData(basicHabboInfo);
           
           // Definir como proprietário se o usuário logado for habbohub
-          const currentUserHabboName = habboAccount?.habbo_username?.split('-').pop()?.toLowerCase();
+          const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
           const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
           console.log('🔍 [DEBUG] Verificação de proprietário (hubbohub):', { 
-            currentUser: habboAccount?.habbo_username, 
+            currentUser: habboAccount?.habbo_name, 
             targetUser: username,
             isOwner: currentUserIsOwner,
             habboAccount: habboAccount
@@ -830,10 +857,10 @@ export const useHabboHomeV2 = (username: string) => {
           setHabboData(basicHabboInfo);
           
           // Definir como proprietário
-          const currentUserHabboName = habboAccount?.habbo_username?.split('-').pop()?.toLowerCase();
+          const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
           const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
           console.log('🔍 [DEBUG] Verificação de proprietário (fallback):', { 
-            currentUser: habboAccount?.habbo_username, 
+            currentUser: habboAccount?.habbo_name, 
             targetUser: username,
             isOwner: currentUserIsOwner,
             habboAccount: habboAccount
@@ -861,9 +888,9 @@ export const useHabboHomeV2 = (username: string) => {
 
             // Criar dados básicos primeiro (sem API externa)
       const basicHabboInfo: HabboData = {
-        id: userData.id.startsWith('hhbr-') ? userData.id : `hhbr-${userData.habbo_username}-user-id-${userData.id.slice(-5)}`,
-        habbo_name: userData.habbo_username,
-        habbo_id: userData.id.startsWith('hhbr-') ? userData.id : `hhbr-${userData.habbo_username}-user-id-${userData.id.slice(-5)}`,
+        id: userData.id.startsWith('hhbr-') ? userData.id : `hhbr-${userData.habbo_name}-user-id-${userData.id.slice(-5)}`,
+        habbo_name: userData.habbo_name,
+        habbo_id: userData.id.startsWith('hhbr-') ? userData.id : `hhbr-${userData.habbo_name}-user-id-${userData.id.slice(-5)}`,
         hotel: 'br', // Padrão para BR
         motto: userData.habbo_motto || '',
         figure_string: userData.habbo_avatar || '',
@@ -874,12 +901,12 @@ export const useHabboHomeV2 = (username: string) => {
       setHabboData(basicHabboInfo);
 
       // 2. Verificar proprietário (considerando domínio)
-      const currentUserIsOwner = habboAccount?.habbo_username?.toLowerCase() === username.toLowerCase() ||
-                                 (habboAccount?.habbo_username?.toLowerCase().includes('habbohub') && username.toLowerCase() === 'habbohub');
+      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase() ||
+                                 (habboAccount?.habbo_name?.toLowerCase().includes('habbohub') && username.toLowerCase() === 'habbohub');
       setIsOwner(currentUserIsOwner);
       console.log('🔍 [DEBUG] Verificação de proprietário (real):', { 
         currentUserIsOwner,
-        currentUser: habboAccount?.habbo_username, 
+        currentUser: habboAccount?.habbo_name, 
         targetUser: username,
         habboAccount: habboAccount,
         isLoggedIn: !!habboAccount,
@@ -1584,21 +1611,57 @@ export const useHabboHomeV2 = (username: string) => {
     }
 
     try {
-            // Para usuários fictícios, apenas atualizar estado local
+      // Atualizar estado local imediatamente
+      const newBackground = {
+        background_type: bgType,
+        background_value: bgValue
+      };
+      setBackground(newBackground);
+
+      // Para usuários fictícios (habbohub, beebop), salvar também no Supabase
       if (habboData.id.startsWith('hhbr-')) {
-                const newBackground = {
-          background_type: bgType,
-          background_value: bgValue
-        };
-        setBackground(newBackground);
-        
-        // Adicionar às mudanças pendentes para salvamento automático
+        // Salvar no localStorage para persistência local
         pendingChangesRef.current.background = newBackground;
         scheduleSave();
         
-                return;
+        // Também salvar no Supabase para que apareça nos cards da página /homes
+        if (supabase) {
+          const { error: supabaseError } = await supabase
+            .from('user_home_backgrounds')
+            .upsert({
+              user_id: habboData.id,
+              background_type: bgType,
+              background_value: bgValue,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id'
+            });
+          
+          if (supabaseError) {
+            console.error('❌ Erro ao salvar background no Supabase:', supabaseError);
+          } else {
+            console.log('✅ Background salvo no Supabase com sucesso!');
+          }
+          
+          // Invalidar cache para atualizar os cards
+          console.log('🔄 Invalidando cache do latest-homes após mudança de background');
+          
+          // Invalidação mais agressiva
+          await queryClient.removeQueries({ queryKey: ['latest-homes'] });
+          await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
+          await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
+          
+          // Também invalidar outros caches relacionados
+          await queryClient.removeQueries({ queryKey: ['most-visited-homes'] });
+          await queryClient.removeQueries({ queryKey: ['top-rated-homes'] });
+          await queryClient.invalidateQueries({ queryKey: ['most-visited-homes'] });
+          await queryClient.invalidateQueries({ queryKey: ['top-rated-homes'] });
+        }
+        
+        return;
       }
 
+      // Para usuários reais, salvar apenas no Supabase
       if (!supabase) {
                 return;
       }
@@ -1608,23 +1671,33 @@ export const useHabboHomeV2 = (username: string) => {
         .upsert({
           user_id: habboData.id,
           background_type: bgType,
-          background_value: bgValue
+          background_value: bgValue,
+          updated_at: new Date().toISOString()
         }, {
           onConflict: 'user_id'
         })
         .select();
 
       if (error) {
-                return;
+        console.error('❌ Erro ao salvar background no Supabase:', error);
+        return;
       }
-
-            // Atualizar estado local
-      const newBackground = {
-        background_type: bgType,
-        background_value: bgValue
-      };
       
-      setBackground(newBackground);
+      console.log('✅ Background salvo no Supabase com sucesso!');
+
+      // Invalidar cache para atualizar os cards
+      console.log('🔄 Invalidando cache do latest-homes após mudança de background');
+      
+      // Invalidação mais agressiva
+      await queryClient.removeQueries({ queryKey: ['latest-homes'] });
+      await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
+      await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
+      
+      // Também invalidar outros caches relacionados
+      await queryClient.removeQueries({ queryKey: ['most-visited-homes'] });
+      await queryClient.removeQueries({ queryKey: ['top-rated-homes'] });
+      await queryClient.invalidateQueries({ queryKey: ['most-visited-homes'] });
+      await queryClient.invalidateQueries({ queryKey: ['top-rated-homes'] });
       
           } catch (error) {
           }
@@ -1649,7 +1722,7 @@ export const useHabboHomeV2 = (username: string) => {
           id: `guestbook-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           home_owner_user_id: habboData.id,
           author_user_id: habboAccount.id,
-          author_habbo_name: habboAccount.habbo_username,
+          author_habbo_name: habboAccount.habbo_name,
           message: message.trim(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -1675,7 +1748,7 @@ export const useHabboHomeV2 = (username: string) => {
         .insert({
           home_owner_user_id: habboData.id,
           author_user_id: habboAccount.id,
-          author_habbo_name: habboAccount.habbo_username,
+          author_habbo_name: habboAccount.habbo_name,
           message: message.trim(),
           created_at: new Date().toISOString()
         })

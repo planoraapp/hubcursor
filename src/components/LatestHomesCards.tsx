@@ -8,6 +8,85 @@ import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
 import { StarRating } from '@/components/ui/star-rating';
 
+// Funções auxiliares para processar background (mesma lógica do HomeCard)
+const getHomeBackgroundUrl = (home: any) => {
+  if (!home.background_value) return null;
+  
+  // Detectar automaticamente se é uma URL de imagem
+  const isImageUrl = home.background_value.startsWith('http') || 
+                    home.background_value.startsWith('/') ||
+                    home.background_value.includes('.gif') ||
+                    home.background_value.includes('.png') ||
+                    home.background_value.includes('.jpg') ||
+                    home.background_value.includes('.jpeg') ||
+                    home.background_value.includes('.webp');
+  
+  // Se for uma URL de imagem, usar diretamente
+  if (isImageUrl) {
+    return `url(${home.background_value})`;
+  }
+  
+  // Se for uma cor hexadecimal
+  if (home.background_value.startsWith('#')) {
+    return `linear-gradient(135deg, ${home.background_value} 0%, ${home.background_value}dd 100%)`;
+  }
+  
+  // Se for um nome de background (como "bghabbohub"), tentar construir a URL
+  if (home.background_value === 'bghabbohub') {
+    return `url(/assets/bghabbohub.png)`;
+  }
+  
+  // Fallback para o tipo definido
+  switch (home.background_type) {
+    case 'image':
+      return `url(${home.background_value})`;
+    case 'color':
+      return `linear-gradient(135deg, ${home.background_value} 0%, ${home.background_value}dd 100%)`;
+    case 'repeat':
+      return `url(${home.background_value})`;
+    case 'cover':
+      return `url(${home.background_value})`;
+    case 'default':
+      // Para tipo "default", tentar construir a URL baseada no valor
+      if (home.background_value === 'bghabbohub') {
+        return `url(/assets/bghabbohub.png)`;
+      }
+      return `url(/assets/${home.background_value}.png)`;
+    default:
+      return null;
+  }
+};
+
+const getBackgroundColor = (home: any) => {
+  if (home.background_value?.startsWith('#')) {
+    return home.background_value;
+  }
+  if (home.background_type === 'color' && home.background_value) {
+    return home.background_value;
+  }
+  return '#c7d2dc'; // Cor padrão
+};
+
+const getBackgroundSize = (home: any) => {
+  switch (home.background_type) {
+    case 'repeat':
+      return 'auto';
+    case 'cover':
+      return 'cover';
+    default:
+      return 'cover';
+  }
+};
+
+const getBackgroundRepeat = (home: any) => {
+  switch (home.background_type) {
+    case 'repeat':
+      return 'repeat';
+    default:
+      return 'no-repeat';
+  }
+};
+
 export const LatestHomesCards: React.FC = () => {
   const { data: latestHomes, isLoading, error } = useLatestHomes();
 
@@ -43,12 +122,11 @@ export const LatestHomesCards: React.FC = () => {
             <div 
               className="w-full h-24 rounded-lg mb-3 relative overflow-hidden"
               style={{ 
-                backgroundColor: home.background_value || '#c7d2dc',
-                backgroundImage: home.background_type === 'image' 
-                  ? `url(${home.background_value})` 
-                  : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
+                backgroundColor: getBackgroundColor(home),
+                backgroundImage: getHomeBackgroundUrl(home),
+                backgroundSize: getBackgroundSize(home),
+                backgroundPosition: 'center',
+                backgroundRepeat: getBackgroundRepeat(home)
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />

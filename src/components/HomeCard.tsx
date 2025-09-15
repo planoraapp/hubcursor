@@ -44,6 +44,11 @@ export const HomeCard: React.FC<HomeCardProps> = ({
       return `linear-gradient(135deg, ${home.background_value} 0%, ${home.background_value}dd 100%)`;
     }
     
+    // Se for um nome de background (como "bghabbohub"), tentar construir a URL
+    if (home.background_value === 'bghabbohub') {
+      return `url(/assets/bghabbohub.png)`;
+    }
+    
     // Fallback para o tipo definido
     switch (home.background_type) {
       case 'image':
@@ -52,12 +57,54 @@ export const HomeCard: React.FC<HomeCardProps> = ({
         return `linear-gradient(135deg, ${home.background_value} 0%, ${home.background_value}dd 100%)`;
       case 'repeat':
         return `url(${home.background_value})`;
+      case 'cover':
+        return `url(${home.background_value})`;
+      case 'default':
+        // Para tipo "default", tentar construir a URL baseada no valor
+        if (home.background_value === 'bghabbohub') {
+          return `url(/assets/bghabbohub.png)`;
+        }
+        return `url(/assets/${home.background_value}.png)`;
       default:
         return null;
     }
   };
 
   const backgroundUrl = getHomeBackgroundUrl();
+
+  // Determinar cor de fundo baseada no tipo de background
+  const getBackgroundColor = () => {
+    if (home.background_value?.startsWith('#')) {
+      return home.background_value;
+    }
+    if (home.background_type === 'color' && home.background_value) {
+      return home.background_value;
+    }
+    return '#c7d2dc'; // Cor padrão
+  };
+
+  // Determinar configurações de background baseadas no tipo
+  const getBackgroundSettings = () => {
+    switch (home.background_type) {
+      case 'repeat':
+        return {
+          backgroundSize: 'auto',
+          backgroundRepeat: 'repeat'
+        };
+      case 'cover':
+        return {
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        };
+      default:
+        return {
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        };
+    }
+  };
+
+  const backgroundSettings = getBackgroundSettings();
 
   return (
     <div 
@@ -68,11 +115,11 @@ export const HomeCard: React.FC<HomeCardProps> = ({
       <div 
         className="w-full h-full relative"
         style={{ 
-          backgroundColor: home.background_value?.startsWith('#') ? home.background_value : '#c7d2dc',
+          backgroundColor: getBackgroundColor(),
           backgroundImage: backgroundUrl,
-          backgroundSize: 'cover',
+          backgroundSize: backgroundSettings.backgroundSize,
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
+          backgroundRepeat: backgroundSettings.backgroundRepeat,
           imageRendering: 'pixelated' // Preserva a pixel art
         }}
       >

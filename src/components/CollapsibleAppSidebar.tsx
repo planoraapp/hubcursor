@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, User, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { CountryFlags } from '@/components/marketplace/CountryFlags';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
@@ -181,36 +182,34 @@ export function CollapsibleAppSidebar() {
                <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
                  <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-2`}>
                    <img
-                    src={habboAccount.habbo_avatar ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.habbo_avatar}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`}
-                    alt={`Avatar de ${habboAccount.habbo_username}`}
-                     className={`w-14 h-14`}
+                    src={habboAccount.figure_string ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
+                    alt={`Avatar de ${habboAccount.habbo_name}`}
+                     className={`w-16 h-16`}
                      style={{ 
                        imageRendering: 'pixelated',
                        objectFit: 'contain'
                      }}
                      onError={(e) => {
                        const target = e.target as HTMLImageElement;
-                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_username}&size=m&direction=2&head_direction=3&headonly=1`;
+                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
                      }}
                    />
                     {!isCollapsed && (
                       <div className="flex flex-col">
-                        <span 
-                          className="sidebar-font-option-4 text-white truncate"
-                          style={{
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            letterSpacing: '0.3px',
-                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                          }}
-                        >
-                          {habboAccount.habbo_username}
-                        </span>
-                        {isAdmin && (
-                          <Badge variant="secondary" className="text-xs w-fit">
-                            Admin
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4" />
+                          <span 
+                            className="sidebar-font-option-4 text-white truncate"
+                            style={{
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              letterSpacing: '0.3px',
+                              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                            }}
+                          >
+                            {habboAccount.habbo_name}
+                          </span>
+                        </div>
                       </div>
                     )}
                  </div>

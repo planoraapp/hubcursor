@@ -17,6 +17,7 @@ import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
 import { HomesGrid } from '@/components/HomesGrid';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
+import { DebugCacheStatus } from '@/components/DebugCacheStatus';
 
 
 
@@ -25,7 +26,7 @@ const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { habboAccount, isLoggedIn } = useAuth();
-  const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
+  const { data: latestHomes, isLoading: loadingLatest, refetch: refetchLatest } = useLatestHomes();
   const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
   const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,6 +114,8 @@ const Homes: React.FC = () => {
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
+            {/* Debug Cache Status */}
+            <DebugCacheStatus queryKey={['latest-homes']} label="Últimas Modificadas" />
             <main className="flex-1 p-8 min-h-screen" style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
               backgroundRepeat: 'repeat'
@@ -135,7 +138,7 @@ const Homes: React.FC = () => {
                     <Button 
                       onClick={() => {
                         // Gerar nome único com domínio baseado no hotel do usuário
-                        const domainUsername = generateUniqueUsername(habboAccount.habbo_username, habboAccount.hotel);
+                        const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
                         navigate(`/home/${domainUsername}`);
                       }}
                       className="habbo-button-green volter-font px-6 py-2"
