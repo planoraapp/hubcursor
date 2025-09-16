@@ -2,6 +2,7 @@
 // Baseado no tutorial: https://viajovem.blogspot.com/2018/01/vida-de-jornalete-descobrindo-novos.html
 
 import { REAL_HANDITEMS } from '../data/realHanditems';
+import { handitemImageDiscovery } from './HanditemImageDiscovery';
 
 export interface HabboHanditem {
   id: number;
@@ -255,7 +256,7 @@ export class HabboApiService {
   }> {
         // Usar build real descoberta
     const now = new Date().toISOString();
-    const realBuildId = 'PRODUCTION-202509092352-15493374';
+    const realBuildId = 'PRODUCTION-202508202352-144965391';
     const buildInfo: HabboBuildInfo = {
       buildId: realBuildId,
       flashClientUrl: `https://images.habbo.com/gordon/flash-assets-${realBuildId}/`,
@@ -266,7 +267,7 @@ export class HabboApiService {
     };
     
     // Gerar handitems baseados nos dados internos existentes
-    const handitems = this.generateHanditemsFromInternalData();
+    const handitems = await this.generateHanditemsFromInternalData();
     const furni = this.generateFurniFromInternalData();
     
         return {
@@ -276,18 +277,18 @@ export class HabboApiService {
     };
   }
   
-  // Gerar handitems baseados nos dados reais extraídos do Habbo
-  private generateHanditemsFromInternalData(): HabboHanditem[] {
-        // Usar dados reais dos handitems importados
-    
-    // Build ID real do Habbo
-    const buildId = 'PRODUCTION-202509092352-15493374';
-    const baseUrl = `https://images.habbo.com/gordon/${buildId}/hh_human_item.swf`;
+  // Gerar handitems baseados nos dados reais extraídos do Habbo (otimizado)
+  private async generateHanditemsFromInternalData(): Promise<HabboHanditem[]> {
+    // Usar dados reais dos handitems extraídos do external_flash_texts
+    const handitemsData = await this.loadExtractedHanditems();
     
     // Converter dados reais para formato HabboHanditem
-    const handitems: HabboHanditem[] = REAL_HANDITEMS.map((item: any) => {
+    const handitems: HabboHanditem[] = handitemsData.map((item: any) => {
       // Determinar tipo baseado no nome (UseItem vs CarryItem)
       const isUseItem = this.isUseItem(item.name);
+      
+      // Gerar URLs de imagem diretamente sem fazer requisições HTTP
+      const imageUrls = this.generateImageUrlsDirectly(item.id, isUseItem);
       
       return {
         id: item.id,
@@ -297,17 +298,60 @@ export class HabboApiService {
         type: isUseItem ? 'UseItem' : 'CarryItem',
         assetPrefix: isUseItem ? 'drk' : 'crr',
         state: isUseItem ? 'usei' : 'cri',
-        imageUrls: {
-          drk: isUseItem ? `${baseUrl}/drk${item.id}.png` : undefined,
-          crr: !isUseItem ? `${baseUrl}/crr${item.id}.png` : undefined,
-          preview: `${baseUrl}/preview${item.id}.png`
-        },
         discovered: new Date().toISOString(),
-        buildId: buildId
+        imageUrls
       };
     });
+
+    return handitems;
+  }
+
+  /**
+   * Gera URLs de imagem diretamente sem verificação HTTP
+   */
+  private generateImageUrlsDirectly(handitemId: number, isUseItem: boolean): { drk?: string; crr?: string; preview?: string } {
+    // IDs das imagens que realmente existem (atualizado com mais imagens)
+    const existingImageIds = [0, 1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 30, 127, 128, 146, 149, 163];
     
-        return handitems;
+    // IDs das imagens extraídas (primeiros 100 handitems)
+    const extractedImageIds = Array.from({length: 100}, (_, i) => i);
+    
+    // Verificar se existe imagem preview original
+    const hasOriginalPreview = existingImageIds.includes(handitemId);
+    // Verificar se existe imagem extraída
+    const hasExtractedImage = extractedImageIds.includes(handitemId);
+    
+    let previewUrl;
+    if (hasOriginalPreview) {
+      previewUrl = `/handitems/images/preview/handitem_${handitemId}.svg`;
+    } else if (hasExtractedImage) {
+      previewUrl = `/handitems/images/extracted/handitem_${handitemId}.svg`;
+    } else {
+      previewUrl = undefined;
+    }
+
+    return {
+      drk: isUseItem ? `/handitems/images/drk/drk${handitemId}.png` : undefined,
+      crr: !isUseItem ? `/handitems/images/crr/crr${handitemId}.png` : undefined,
+      preview: previewUrl
+    };
+  }
+
+  /**
+   * Carrega handitems extraídos do external_flash_texts
+   */
+  private async loadExtractedHanditems(): Promise<any[]> {
+    try {
+      const response = await fetch('/handitems.json');
+      if (!response.ok) {
+        console.warn('Arquivo handitems.json não encontrado, usando dados internos');
+        return REAL_HANDITEMS;
+      }
+      return await response.json();
+    } catch (error) {
+      console.warn('Erro ao carregar handitems.json, usando dados internos:', error);
+      return REAL_HANDITEMS;
+    }
   }
   
   // Gerar mobílias baseadas nos dados internos existentes

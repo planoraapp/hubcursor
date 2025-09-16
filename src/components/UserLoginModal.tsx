@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useUnifiedAuth } from '../hooks/useUnifiedAuth';
+import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 export const UserLoginModal = () => {
@@ -18,7 +18,7 @@ export const UserLoginModal = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { loginWithPassword } = useUnifiedAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async () => {
@@ -33,7 +33,7 @@ export const UserLoginModal = () => {
 
     setIsLoading(true);
     try {
-      await loginWithPassword(habboName.trim(), password);
+      await login(habboName.trim(), password);
       toast({
         title: "Sucesso",
         description: `Bem-vindo de volta, ${habboName}!`

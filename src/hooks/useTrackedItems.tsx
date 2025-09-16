@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useUnifiedAuth } from './useUnifiedAuth';
+import { useAuth } from './useAuth';
 
 interface TrackedItem {
   classname: string;

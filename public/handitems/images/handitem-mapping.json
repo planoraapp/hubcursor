@@ -1,0 +1,2423 @@
+{
+  "handitems": [
+    {
+      "id": 30,
+      "name": "Sorvete de chocolate",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_rug_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_30.svg",
+      "hasImage": true
+    },
+    {
+      "id": 1,
+      "name": "Nenhum",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mastermouseact_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_1.svg",
+      "hasImage": true
+    },
+    {
+      "id": 1000,
+      "name": "Rosa",
+      "type": "CarryItem",
+      "drkImage": "wf_var_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1001,
+      "name": "Rosa Negra",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_by_var_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1002,
+      "name": "Girassol",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1003,
+      "name": "Livro Vermelho",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_mov_carry_users_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1004,
+      "name": "Livro Azul",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_text_output_username_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1005,
+      "name": "Livro Verde",
+      "type": "CarryItem",
+      "drkImage": "xmas_c20_woodenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1006,
+      "name": "Flor de Presente",
+      "type": "CarryItem",
+      "drkImage": "xmas_c23_mousechef_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1007,
+      "name": "Margarida Azul",
+      "type": "CarryItem",
+      "drkImage": "xmas_ltd23_carousel_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1008,
+      "name": "Margarida Amarela",
+      "type": "CarryItem",
+      "drkImage": "attic15_mousetrap_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1009,
+      "name": "Margarida Rosa",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mastermouseact_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 100,
+      "name": "Repolho",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledy_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1011,
+      "name": "Prancheta",
+      "type": "CarryItem",
+      "drkImage": "clothing_bratzeitantrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1013,
+      "name": "Comprimidos",
+      "type": "CarryItem",
+      "drkImage": "clothing_grungetrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1014,
+      "name": "Seringa",
+      "type": "CarryItem",
+      "drkImage": "clothing_highwaisttrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1015,
+      "name": "Bolsa de Resíduos Hospitalares",
+      "type": "CarryItem",
+      "drkImage": "clothing_knighttrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1019,
+      "name": "Flor Bolly",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 101,
+      "name": "Suco Borbulhante",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_res_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1021,
+      "name": "Jacinto Vermelho",
+      "type": "CarryItem",
+      "drkImage": "easter_c16_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1022,
+      "name": "Jacinto Azul",
+      "type": "CarryItem",
+      "drkImage": "easter_c23_greenhousewall_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1023,
+      "name": "Poinsétia",
+      "type": "CarryItem",
+      "drkImage": "house2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1024,
+      "name": "Panetone",
+      "type": "CarryItem",
+      "drkImage": "house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1025,
+      "name": "Bengala Doce",
+      "type": "CarryItem",
+      "drkImage": "house_sofa_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1026,
+      "name": "Presente",
+      "type": "CarryItem",
+      "drkImage": "hs_applause_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1027,
+      "name": "Vela Vermelha",
+      "type": "CarryItem",
+      "drkImage": "hween_c20_housewall_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1028,
+      "name": "Tigela de Cereal",
+      "type": "CarryItem",
+      "drkImage": "js_c16_drkcab_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1029,
+      "name": "Bexiga Bege",
+      "type": "CarryItem",
+      "drkImage": "loyalty_mouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 102,
+      "name": "Energético",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_rug_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1030,
+      "name": "HiPad",
+      "type": "CarryItem",
+      "drkImage": "mini_c24_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1031,
+      "name": "Tocha Habbolímpica",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_caps_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1032,
+      "name": "Major Tom",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_coil_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1033,
+      "name": "OVNI",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_fan_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1034,
+      "name": "Alienígena",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledg_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1035,
+      "name": "Osso",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledr_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1036,
+      "name": "Pato de Borracha Viscoso",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledy_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1037,
+      "name": "Cobra",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_res_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1038,
+      "name": "Graveto",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_rug_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1039,
+      "name": "Mão Decepada",
+      "type": "CarryItem",
+      "drkImage": "nft_h23_bday_balloonmouse1_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 103,
+      "name": "Banana",
+      "type": "CarryItem",
+      "drkImage": "nft_h23_bday_balloonmouse1_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1040,
+      "name": "Coração Animal",
+      "type": "CarryItem",
+      "drkImage": "nft_h23_bday_balloonmouse2_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1041,
+      "name": "Lula",
+      "type": "CarryItem",
+      "drkImage": "nft_h24_cefalu_greenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1042,
+      "name": "Bat-Cocô",
+      "type": "CarryItem",
+      "drkImage": "ny2015_drktray_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1043,
+      "name": "Verme",
+      "type": "CarryItem",
+      "drkImage": "nyc_c23_steakhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1044,
+      "name": "Rato Morto",
+      "type": "CarryItem",
+      "drkImage": "rare_r20_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1045,
+      "name": "Dentadura",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1046,
+      "name": "Creme Clearasil",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_lighthouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1047,
+      "name": "Pelouro",
+      "type": "CarryItem",
+      "drkImage": "santorini_ltd17_lighthouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1048,
+      "name": "Bandeira Ditch the Label Preta",
+      "type": "CarryItem",
+      "drkImage": "school_ltd22_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1049,
+      "name": "Marreta",
+      "type": "CarryItem",
+      "drkImage": "uservoice_soapbox_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 104,
+      "name": "Abacate",
+      "type": "CarryItem",
+      "drkImage": "nft_h23_bday_balloonmouse2_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1050,
+      "name": "Ovo de Páscoa",
+      "type": "CarryItem",
+      "drkImage": "vikings_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1051,
+      "name": "Pincel",
+      "type": "CarryItem",
+      "drkImage": "wf_act_furni_to_user_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1052,
+      "name": "Bandeira Ditch the Label Branca",
+      "type": "CarryItem",
+      "drkImage": "wf_act_kick_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1053,
+      "name": "Pato",
+      "type": "CarryItem",
+      "drkImage": "wf_act_move_rotate_user_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1054,
+      "name": "Bexiga Laranja",
+      "type": "CarryItem",
+      "drkImage": "wf_act_user_to_furni_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1055,
+      "name": "Bexiga Verde",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_not_user_count_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1056,
+      "name": "Bexiga Azul",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_not_user_performs_action_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1057,
+      "name": "Bexiga Rosa",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_user_count_in_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1058,
+      "name": "Lampião",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_user_performs_action_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1059,
+      "name": "Papel Higiênico",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_area_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 105,
+      "name": "Uvas",
+      "type": "CarryItem",
+      "drkImage": "nft_h24_cefalu_greenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1060,
+      "name": "Tinta Spray",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_byaction_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1061,
+      "name": "Cravo-de-tunes",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_byname_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1062,
+      "name": "Caveira de Doces Rosa",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_bytype_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1063,
+      "name": "Caveira de Doces Verde",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_group_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1064,
+      "name": "Caveira de Doces Azul",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_handitem_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1065,
+      "name": "Boneca Emília",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_neighborhood_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1066,
+      "name": "Ursinho",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_onfurni_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1067,
+      "name": "Soldadinho",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_signal_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1068,
+      "name": "Revista de Mangá",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_team_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1069,
+      "name": "Revista em Quadrinhos",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_with_var_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 106,
+      "name": "Vitamina",
+      "type": "CarryItem",
+      "drkImage": "ny2015_drktray_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1070,
+      "name": "Livro Amarelo",
+      "type": "CarryItem",
+      "drkImage": "wf_trg_click_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1071,
+      "name": "HiPad Dourado",
+      "type": "CarryItem",
+      "drkImage": "wf_trg_user_performs_action_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1072,
+      "name": "Bússola",
+      "type": "CarryItem",
+      "drkImage": "wf_var_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1073,
+      "name": "Ovo Dino",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_by_var_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1074,
+      "name": "Alossauro Verde",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1075,
+      "name": "Tricerátopo Amarelo",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_mov_carry_users_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1076,
+      "name": "Saurolofo Roxo",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_text_output_username_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1077,
+      "name": "Toalha Spa Verde",
+      "type": "CarryItem",
+      "drkImage": "xmas_c20_woodenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1079,
+      "name": "Besouro Lucano",
+      "type": "CarryItem",
+      "drkImage": "xmas_ltd23_carousel_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 107,
+      "name": "Suco de Vegetais",
+      "type": "CarryItem",
+      "drkImage": "nyc_c23_steakhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1080,
+      "name": "Besouro Rinoceronte",
+      "type": "CarryItem",
+      "drkImage": "attic15_mousetrap_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1081,
+      "name": "Regador",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mastermouseact_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1082,
+      "name": "Bandeira do Orgulho",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mouseact_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1083,
+      "name": "Abóbora de Arrepiar",
+      "type": "CarryItem",
+      "drkImage": "clothing_bratzeitantrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1084,
+      "name": "Sacola de Compras",
+      "type": "CarryItem",
+      "drkImage": "clothing_edwardianblouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1085,
+      "name": "DVD Ação",
+      "type": "CarryItem",
+      "drkImage": "clothing_grungetrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1086,
+      "name": "DVD Terror",
+      "type": "CarryItem",
+      "drkImage": "clothing_highwaisttrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1087,
+      "name": "Caderno",
+      "type": "CarryItem",
+      "drkImage": "clothing_knighttrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1088,
+      "name": "Lápis",
+      "type": "CarryItem",
+      "drkImage": "clothing_leathertrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1089,
+      "name": "Saco de Salgadinhos Lacrado",
+      "type": "CarryItem",
+      "drkImage": "clothing_mockymouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 108,
+      "name": "Haltere",
+      "type": "CarryItem",
+      "drkImage": "rare_r20_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1090,
+      "name": "Vara de Pescar com Peixe",
+      "type": "CarryItem",
+      "drkImage": "clothing_nftstripedtrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1091,
+      "name": "Vara de Pescar com uma Bota Velha",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1092,
+      "name": "Vara de Pescar com uma Mensagem na Garrafa",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse6_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1093,
+      "name": "Bandeira Ditch the Label Dourada",
+      "type": "CarryItem",
+      "drkImage": "easter_c16_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1094,
+      "name": "Espada",
+      "type": "CarryItem",
+      "drkImage": "easter_c23_greenhousewall_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1095,
+      "name": "Coração",
+      "type": "CarryItem",
+      "drkImage": "house2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1096,
+      "name": "Celular",
+      "type": "CarryItem",
+      "drkImage": "house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1097,
+      "name": "Vasinho com Muda",
+      "type": "CarryItem",
+      "drkImage": "house_sofa_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1098,
+      "name": "Robozinho",
+      "type": "CarryItem",
+      "drkImage": "hs_applause_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1099,
+      "name": "Ursinho Teddy",
+      "type": "CarryItem",
+      "drkImage": "hween_c20_housewall_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 109,
+      "name": "Hambúrguer",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 10,
+      "name": "café com leite",
+      "type": "CarryItem",
+      "drkImage": "clothing_nftstripedtrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_10.svg",
+      "hasImage": true
+    },
+    {
+      "id": 1100,
+      "name": "Pato Férias",
+      "type": "CarryItem",
+      "drkImage": "js_c16_drkcab_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1101,
+      "name": "Bola de Futebol",
+      "type": "CarryItem",
+      "drkImage": "loyalty_mouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1102,
+      "name": "Taco do Diálogo",
+      "type": "CarryItem",
+      "drkImage": "mini_c24_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1103,
+      "name": "Bola de Tênis",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_caps_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1104,
+      "name": "H-Phone",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_coil_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1105,
+      "name": "Microfone DR Sports",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_fan_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1106,
+      "name": "football",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledg_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1107,
+      "name": "Astral Bow",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledr_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1108,
+      "name": "Virvontavitsa",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledy_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 110,
+      "name": "Carta",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_lighthouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1115,
+      "name": "Chocolate Quente",
+      "type": "CarryItem",
+      "drkImage": "nyc_c23_steakhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1116,
+      "name": "Pato Rosa",
+      "type": "CarryItem",
+      "drkImage": "rare_r20_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 1117,
+      "name": "Faca",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 111,
+      "name": "Carangueijo",
+      "type": "CarryItem",
+      "drkImage": "santorini_ltd17_lighthouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 112,
+      "name": "Pimenta Malagueta",
+      "type": "CarryItem",
+      "drkImage": "school_ltd22_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 113,
+      "name": "Vitamina Cítrica",
+      "type": "CarryItem",
+      "drkImage": "uservoice_soapbox_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 114,
+      "name": "Vitamina Detox",
+      "type": "CarryItem",
+      "drkImage": "vikings_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 115,
+      "name": "Vitamina Framboesa",
+      "type": "CarryItem",
+      "drkImage": "wf_act_furni_to_user_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 116,
+      "name": "Limão",
+      "type": "CarryItem",
+      "drkImage": "wf_act_kick_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 117,
+      "name": "Cookie",
+      "type": "CarryItem",
+      "drkImage": "wf_act_move_rotate_user_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 118,
+      "name": "Ramune Rosa",
+      "type": "CarryItem",
+      "drkImage": "wf_act_user_to_furni_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 119,
+      "name": "Ramune Azul",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_not_user_count_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 11,
+      "name": "Mocaccino",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_11.svg",
+      "hasImage": true
+    },
+    {
+      "id": 120,
+      "name": "Raspadinha de Mirtilo",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_not_user_performs_action_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 121,
+      "name": "Raspadinha de Morango",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_user_count_in_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 122,
+      "name": "Espetinho de Takoyaki",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_user_performs_action_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 123,
+      "name": "Caldo Forte",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_area_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 124,
+      "name": "Chá Bobba Crepúsculo",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_byaction_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 125,
+      "name": "Chá Bobba Verde",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_byname_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 126,
+      "name": "Chá Bobba Pink",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_bytype_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 127,
+      "name": "Sorvete de Casquinha",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_group_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_127.svg",
+      "hasImage": true
+    },
+    {
+      "id": 128,
+      "name": "Sorvete de Carvão",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_handitem_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_128.svg",
+      "hasImage": true
+    },
+    {
+      "id": 129,
+      "name": "Iogurte",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_neighborhood_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 12,
+      "name": "Caffè Macchiato",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse6_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_12.svg",
+      "hasImage": true
+    },
+    {
+      "id": 130,
+      "name": "Queijo",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_onfurni_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 131,
+      "name": "Pão",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_signal_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 132,
+      "name": "Camarão",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_team_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 133,
+      "name": "Brócolis",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_with_var_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 134,
+      "name": "Melancia",
+      "type": "CarryItem",
+      "drkImage": "wf_trg_click_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 135,
+      "name": "Donut",
+      "type": "CarryItem",
+      "drkImage": "wf_trg_user_performs_action_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 136,
+      "name": "Linguiças",
+      "type": "CarryItem",
+      "drkImage": "wf_var_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 137,
+      "name": "Picolé",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_by_var_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 138,
+      "name": "Saco de Salgadinhos Aberto",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 13,
+      "name": "Café Expresso",
+      "type": "CarryItem",
+      "drkImage": "easter_c16_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_13.svg",
+      "hasImage": true
+    },
+    {
+      "id": 141,
+      "name": "Ovo de Páscoa Cintilante",
+      "type": "CarryItem",
+      "drkImage": "xmas_c20_woodenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 142,
+      "name": "Bebida Glacial",
+      "type": "CarryItem",
+      "drkImage": "xmas_c23_mousechef_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 143,
+      "name": "Banana com Chocolate",
+      "type": "CarryItem",
+      "drkImage": "xmas_ltd23_carousel_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 144,
+      "name": "Morango com Chocolate",
+      "type": "CarryItem",
+      "drkImage": "attic15_mousetrap_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 146,
+      "name": "Café Barista",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mouseact_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_146.svg",
+      "hasImage": true
+    },
+    {
+      "id": 147,
+      "name": "Garrafa de Fanta",
+      "type": "CarryItem",
+      "drkImage": "clothing_bratzeitantrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 148,
+      "name": "Lupa",
+      "type": "CarryItem",
+      "drkImage": "clothing_edwardianblouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 149,
+      "name": "Café com Chantilly",
+      "type": "CarryItem",
+      "drkImage": "clothing_grungetrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_149.svg",
+      "hasImage": true
+    },
+    {
+      "id": 14,
+      "name": "Café Preto",
+      "type": "CarryItem",
+      "drkImage": "easter_c23_greenhousewall_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_14.svg",
+      "hasImage": true
+    },
+    {
+      "id": 150,
+      "name": "Dalgona com Estrela",
+      "type": "CarryItem",
+      "drkImage": "clothing_highwaisttrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 151,
+      "name": "Dalgona com Círculo",
+      "type": "CarryItem",
+      "drkImage": "clothing_knighttrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 152,
+      "name": "Dalgona com Quadrado",
+      "type": "CarryItem",
+      "drkImage": "clothing_leathertrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 153,
+      "name": "Torrada Hello Kitty",
+      "type": "CarryItem",
+      "drkImage": "clothing_mockymouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 154,
+      "name": "Poção Kryptomon Rosa",
+      "type": "CarryItem",
+      "drkImage": "clothing_nftstripedtrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 155,
+      "name": "Refrigerante Bear",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 159,
+      "name": "Suco de Pêra",
+      "type": "CarryItem",
+      "drkImage": "house2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 15,
+      "name": "Cappuccino",
+      "type": "CarryItem",
+      "drkImage": "house2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_15.svg",
+      "hasImage": true
+    },
+    {
+      "id": 163,
+      "name": "Sorvete Arco-Íris",
+      "type": "CarryItem",
+      "drkImage": "hween_c20_housewall_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_163.svg",
+      "hasImage": true
+    },
+    {
+      "id": 165,
+      "name": "Palitinho de Marshmallow",
+      "type": "CarryItem",
+      "drkImage": "loyalty_mouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 166,
+      "name": "Cupcake",
+      "type": "CarryItem",
+      "drkImage": "mini_c24_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 167,
+      "name": "Sorvetinho de Baunilha",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_caps_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 168,
+      "name": "Batata",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_coil_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 169,
+      "name": "Coxinha",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_fan_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 16,
+      "name": "Cappuccino",
+      "type": "CarryItem",
+      "drkImage": "house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_16.svg",
+      "hasImage": true
+    },
+    {
+      "id": 171,
+      "name": "Bolo Pato",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledr_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 172,
+      "name": "Milkshake de Banana",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledy_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 173,
+      "name": "Frappucino Banana Deluxe",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_res_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 17,
+      "name": "Café Java",
+      "type": "CarryItem",
+      "drkImage": "house_sofa_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_17.svg",
+      "hasImage": true
+    },
+    {
+      "id": 18,
+      "name": "Água da Torneira",
+      "type": "CarryItem",
+      "drkImage": "hs_applause_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_18.svg",
+      "hasImage": true
+    },
+    {
+      "id": 19,
+      "name": "Suco Bubblejuice",
+      "type": "CarryItem",
+      "drkImage": "hween_c20_housewall_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_19.svg",
+      "hasImage": true
+    },
+    {
+      "id": 1,
+      "name": "Chá Refrescante",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mastermouseact_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_1.svg",
+      "hasImage": true
+    },
+    {
+      "id": 20,
+      "name": "Lata de Bubblejuice",
+      "type": "CarryItem",
+      "drkImage": "js_c16_drkcab_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_20.svg",
+      "hasImage": true
+    },
+    {
+      "id": 21,
+      "name": "Hambúrger",
+      "type": "CarryItem",
+      "drkImage": "loyalty_mouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": "handitem_21.svg",
+      "hasImage": true
+    },
+    {
+      "id": 22,
+      "name": "Habbo Limonada",
+      "type": "CarryItem",
+      "drkImage": "mini_c24_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 23,
+      "name": "Habbo Beterraba",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_caps_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 244,
+      "name": "Celular",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledy_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 24,
+      "name": "Suco de Bolhas de 1978",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_coil_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 25,
+      "name": "Poção do Amor",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_fan_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 26,
+      "name": "Calippo",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledg_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 27,
+      "name": "Chá Árabe",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledr_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 28,
+      "name": "Saquê",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledy_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 29,
+      "name": "Suco de Tomate",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_res_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 2,
+      "name": "Suco",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mouseact_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 30,
+      "name": "Líquido Radioativo",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_rug_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": "handitem_30.svg",
+      "hasImage": true
+    },
+    {
+      "id": 31,
+      "name": "Espumante Rosa",
+      "type": "CarryItem",
+      "drkImage": "nft_h23_bday_balloonmouse1_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 32,
+      "name": "Drink de Coco",
+      "type": "CarryItem",
+      "drkImage": "nft_h23_bday_balloonmouse2_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 33,
+      "name": "Refrigerante 711",
+      "type": "CarryItem",
+      "drkImage": "nft_h24_cefalu_greenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 34,
+      "name": "Peixe",
+      "type": "CarryItem",
+      "drkImage": "ny2015_drktray_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 35,
+      "name": "Champanhe",
+      "type": "CarryItem",
+      "drkImage": "nyc_c23_steakhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 36,
+      "name": "Pêra",
+      "type": "CarryItem",
+      "drkImage": "rare_r20_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 37,
+      "name": "Pêssego Suculento",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 38,
+      "name": "Laranja",
+      "type": "CarryItem",
+      "drkImage": "santorini_c17_lighthouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 39,
+      "name": "Fatia de Queijo",
+      "type": "CarryItem",
+      "drkImage": "santorini_ltd17_lighthouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 3,
+      "name": "Cenoura",
+      "type": "CarryItem",
+      "drkImage": "clothing_bratzeitantrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 40,
+      "name": "Suco de Laranja",
+      "type": "CarryItem",
+      "drkImage": "school_ltd22_treehouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 41,
+      "name": "Café Gourmet",
+      "type": "CarryItem",
+      "drkImage": "uservoice_soapbox_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 42,
+      "name": "Refrigerante de Laranja",
+      "type": "CarryItem",
+      "drkImage": "vikings_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 43,
+      "name": "Habbo Refri Geladinho",
+      "type": "CarryItem",
+      "drkImage": "wf_act_furni_to_user_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 44,
+      "name": "Energético Astrobar",
+      "type": "CarryItem",
+      "drkImage": "wf_act_kick_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 45,
+      "name": "Goma de Mascar Amarela",
+      "type": "CarryItem",
+      "drkImage": "wf_act_move_rotate_user_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 46,
+      "name": "Goma de Mascar Verde",
+      "type": "CarryItem",
+      "drkImage": "wf_act_user_to_furni_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 47,
+      "name": "Goma de Mascar Vermelha",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_not_user_count_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 48,
+      "name": "Pirulito",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_not_user_performs_action_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 49,
+      "name": "Pote de Iogurte Manchado",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_user_count_in_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 4,
+      "name": "Sorvete de Baunilha",
+      "type": "CarryItem",
+      "drkImage": "clothing_edwardianblouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 50,
+      "name": "Garrafa de Suco de Bolhas",
+      "type": "CarryItem",
+      "drkImage": "wf_cnd_user_performs_action_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 51,
+      "name": "Salgadinho Grefusa",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_area_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 52,
+      "name": "Salgadinho Cheetos",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_byaction_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 53,
+      "name": "Xícara de Café Expresso",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_byname_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 54,
+      "name": "Tigela de Cereais",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_bytype_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 55,
+      "name": "Garrafa de Pepsi",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_group_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 56,
+      "name": "Salgadinho Cheetos Hot-dog",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_handitem_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 57,
+      "name": "Refrigerante de Cereja",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_neighborhood_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 58,
+      "name": "Sangue fresco",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_onfurni_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 59,
+      "name": "Saco de Moedas",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_signal_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 5,
+      "name": "Leite",
+      "type": "CarryItem",
+      "drkImage": "clothing_grungetrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 60,
+      "name": "Castanhas",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_team_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 61,
+      "name": "Garrafinha de Suco de Laranja",
+      "type": "CarryItem",
+      "drkImage": "wf_slc_users_with_var_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 62,
+      "name": "Água Envenenada",
+      "type": "CarryItem",
+      "drkImage": "wf_trg_click_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 63,
+      "name": "Saco de Pipocas",
+      "type": "CarryItem",
+      "drkImage": "wf_trg_user_performs_action_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 64,
+      "name": "Suco de Limão",
+      "type": "CarryItem",
+      "drkImage": "wf_var_user_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 66,
+      "name": "Milkshake de Banana",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_filter_users_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 67,
+      "name": "Chiclete Azul",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_mov_carry_users_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 68,
+      "name": "Chiclete Rosa",
+      "type": "CarryItem",
+      "drkImage": "wf_xtra_text_output_username_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 69,
+      "name": "Chiclete Verde",
+      "type": "CarryItem",
+      "drkImage": "xmas_c20_woodenhouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 6,
+      "name": "Groselha",
+      "type": "CarryItem",
+      "drkImage": "clothing_highwaisttrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 70,
+      "name": "Coxa de frango",
+      "type": "CarryItem",
+      "drkImage": "xmas_c23_mousechef_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 71,
+      "name": "Torrada",
+      "type": "CarryItem",
+      "drkImage": "xmas_ltd23_carousel_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 72,
+      "name": "Garrafinha de Suco de Pêssego e Maçã",
+      "type": "CarryItem",
+      "drkImage": "attic15_mousetrap_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 73,
+      "name": "Eggnog",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mastermouseact_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 74,
+      "name": "Cálice Medieval",
+      "type": "CarryItem",
+      "drkImage": "circus_c24_mouseact_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 75,
+      "name": "Sorvete de Morango",
+      "type": "CarryItem",
+      "drkImage": "clothing_bratzeitantrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 76,
+      "name": "Sorvete de Menta",
+      "type": "CarryItem",
+      "drkImage": "clothing_edwardianblouse_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 77,
+      "name": "Sorvete de Chocolate",
+      "type": "CarryItem",
+      "drkImage": "clothing_grungetrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 79,
+      "name": "Algodão Doce Rosa",
+      "type": "CarryItem",
+      "drkImage": "clothing_knighttrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 7,
+      "name": "Água",
+      "type": "CarryItem",
+      "drkImage": "clothing_knighttrousers_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 80,
+      "name": "Algodão Doce Azul",
+      "type": "CarryItem",
+      "drkImage": "clothing_leathertrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 81,
+      "name": "Cachorro-quente",
+      "type": "CarryItem",
+      "drkImage": "clothing_mockymouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 82,
+      "name": "Luneta",
+      "type": "CarryItem",
+      "drkImage": "clothing_nftstripedtrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 83,
+      "name": "Maçã Suculenta",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 84,
+      "name": "Boneco de Biscoito de Gengibre",
+      "type": "CarryItem",
+      "drkImage": "dimmer_fuse6_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 85,
+      "name": "Americano",
+      "type": "CarryItem",
+      "drkImage": "easter_c16_house_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 86,
+      "name": "Frappuccino",
+      "type": "CarryItem",
+      "drkImage": "easter_c23_greenhousewall_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 87,
+      "name": "Caneca com Água",
+      "type": "CarryItem",
+      "drkImage": "house2_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 88,
+      "name": "Rum",
+      "type": "CarryItem",
+      "drkImage": "house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 89,
+      "name": "Cupcake",
+      "type": "CarryItem",
+      "drkImage": "house_sofa_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 8,
+      "name": "Café",
+      "type": "CarryItem",
+      "drkImage": "clothing_leathertrousers_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 90,
+      "name": "Champanhe Rosé",
+      "type": "CarryItem",
+      "drkImage": "hs_applause_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 91,
+      "name": "Chá Oriental",
+      "type": "CarryItem",
+      "drkImage": "hween_c20_housewall_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 92,
+      "name": "Goma de Mascar Azul",
+      "type": "CarryItem",
+      "drkImage": "js_c16_drkcab_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 93,
+      "name": "Goma de Mascar Vermelho",
+      "type": "CarryItem",
+      "drkImage": "loyalty_mouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 94,
+      "name": "Goma de Mascar Rosa",
+      "type": "CarryItem",
+      "drkImage": "mini_c24_house_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 95,
+      "name": "Goma de Mascar Verde",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_caps_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 96,
+      "name": "Fatia de Bolo",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_coil_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 97,
+      "name": "Croissant",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_fan_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 98,
+      "name": "Tomate",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledg_icon.png",
+      "crrImage": "hblooza14_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 99,
+      "name": "Beringela",
+      "type": "CarryItem",
+      "drkImage": "nft_h22_fusetronics_ledr_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    },
+    {
+      "id": 9,
+      "name": "Café Descafeinado",
+      "type": "CarryItem",
+      "drkImage": "clothing_mockymouse_icon.png",
+      "crrImage": "hween12_track_crr_icon.png",
+      "previewImage": null,
+      "hasImage": true
+    }
+  ],
+  "stats": {
+    "totalHanditems": 268,
+    "withDrkImages": 268,
+    "withCrrImages": 268,
+    "withPreviewImages": 21,
+    "createdAt": "2025-09-15T23:28:16.034Z"
+  }
+}

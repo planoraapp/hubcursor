@@ -6,6 +6,7 @@ import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { habboCache } from '@/services/habboCache';
 import { useUserProfile } from './useUserProfile';
 import { useHabboPublicData } from './useHabboPublicData';
+import { useRealHabboData } from './useRealHabboData';
 
 import type { HabboData, GuestbookEntry, Background, Sticker, Widget } from '@/types/habbo';
 export const useHabboHomeV2 = (username: string) => {
@@ -18,6 +19,8 @@ export const useHabboHomeV2 = (username: string) => {
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [habboData, setHabboData] = useState<HabboData | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const { getRealUserData, isRealUser } = useRealHabboData();
 
   // Usar dados internos para usuários normais
   const { habboUser, habboProfile, isLoading: profileLoading } = useUserProfile(username);
@@ -266,9 +269,9 @@ export const useHabboHomeV2 = (username: string) => {
         
         // Configurar dados básicos do usuário
         const basicHabboInfo: HabboData = {
-          id: username.toLowerCase() === 'habbohub' ? 'hhbr-81b7220d11b7a21997226bf7cfcbad51' : 'hhbr-beebop-user-id-67890',
+          id: username.toLowerCase() === 'habbohub' ? 'hhbr-81b7220d11b7a21997226bf7cfcbad51' : 'hhbr-00e6988dddeb5a1838658c854d62fe49',
           habbo_name: username,
-          habbo_id: username.toLowerCase() === 'habbohub' ? 'hhbr-81b7220d11b7a21997226bf7cfcbad51' : 'hhbr-beebop-user-id-67890',
+          habbo_id: username.toLowerCase() === 'habbohub' ? 'hhbr-81b7220d11b7a21997226bf7cfcbad51' : 'hhbr-00e6988dddeb5a1838658c854d62fe49',
           hotel: 'br',
           motto: username.toLowerCase() === 'habbohub' ? 'HUB-QQ797' : 'Desenvolvedor e Designer do HabboHub',
           figure_string: username.toLowerCase() === 'habbohub' ? 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408' : 'hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61',
@@ -541,9 +544,9 @@ export const useHabboHomeV2 = (username: string) => {
         // Configuração especial para beebop
         if (username.toLowerCase() === 'beebop') {
                     const basicHabboInfo: HabboData = {
-            id: 'hhbr-beebop-user-id-67890',
+            id: 'hhbr-00e6988dddeb5a1838658c854d62fe49',
             habbo_name: 'beebop',
-            habbo_id: 'hhbr-beebop-user-id-67890',
+            habbo_id: 'hhbr-00e6988dddeb5a1838658c854d62fe49',
             hotel: 'br',
             motto: 'Desenvolvedor e Designer do HabboHub',
             figure_string: 'hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61',
@@ -634,7 +637,7 @@ export const useHabboHomeV2 = (username: string) => {
           setGuestbook([
             {
               id: 'welcome-beebop',
-              home_owner_user_id: 'hhbr-beebop-user-id-67890',
+              home_owner_user_id: 'hhbr-00e6988dddeb5a1838658c854d62fe49',
               author_habbo_name: 'Sistema',
               message: 'Bem-vindo à home do desenvolvedor! 🚀💻',
               moderation_status: 'approved',
@@ -645,7 +648,7 @@ export const useHabboHomeV2 = (username: string) => {
             },
             {
               id: 'dev-beebop',
-              home_owner_user_id: 'hhbr-beebop-user-id-67890',
+              home_owner_user_id: 'hhbr-00e6988dddeb5a1838658c854d62fe49',
               author_habbo_name: 'Dev Team',
               message: 'Ótimo trabalho no desenvolvimento do HabboHub! 👨‍💻✨',
               moderation_status: 'approved',
@@ -709,7 +712,7 @@ export const useHabboHomeV2 = (username: string) => {
           
           // Criar dados básicos fictícios
           const basicHabboInfo: HabboData = {
-            id: 'hhbr-habbohub-user-id-12345', // ID fictício
+            id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51', // ID fictício
             habbo_name: 'habbohub',
             habbo_id: 'hhbr-habbohub-system',
             hotel: 'br',

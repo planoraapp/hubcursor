@@ -18,6 +18,9 @@ import { HomesGrid } from '@/components/HomesGrid';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { DebugCacheStatus } from '@/components/DebugCacheStatus';
+import { PerformanceMonitor } from '@/components/PerformanceMonitor';
+import { HotelSelector, useHotelSelection } from '@/components/HotelSelector';
+import { UserVerification } from '@/components/UserVerification';
 
 
 
@@ -26,13 +29,37 @@ const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { habboAccount, isLoggedIn } = useAuth();
-  const { data: latestHomes, isLoading: loadingLatest, refetch: refetchLatest } = useLatestHomes();
+  const { data: latestHomes, isLoading: loadingLatest, refetch: refetchLatest, cacheStats } = useLatestHomes();
   const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
   const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
+  
+  // Estados para sistema unificado
+  const [showUserVerification, setShowUserVerification] = useState(false);
+  const [showPerformanceMonitor, setShowPerformanceMonitor] = useState(false);
+  const { selectedHotel, changeHotel, isValidHotel } = useHotelSelection('br');
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchInitiated, setSearchInitiated] = useState(false);
+  
+  // Funções para sistema unificado
+  const handleVerificationSuccess = (userData: any) => {
+    console.log('✅ Verificação bem-sucedida:', userData);
+    toast({
+      title: "Verificação Bem-sucedida!",
+      description: `Usuário ${userData.name} verificado com sucesso.`,
+    });
+    setShowUserVerification(false);
+  };
+  
+  const handleVerificationError = (error: string) => {
+    console.error('❌ Erro na verificação:', error);
+    toast({
+      title: "Erro na Verificação",
+      description: error,
+      variant: "destructive",
+    });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -116,6 +143,46 @@ const Homes: React.FC = () => {
           <SidebarInset className="flex-1">
             {/* Debug Cache Status */}
             <DebugCacheStatus queryKey={['latest-homes']} label="Últimas Modificadas" />
+            
+            {/* Controles do Sistema Unificado */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 mb-6 shadow-lg">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-xl font-bold text-gray-800">Sistema Unificado Habbo</h2>
+                  <HotelSelector
+                    selectedHotel={selectedHotel}
+                    onHotelChange={changeHotel}
+                    className="w-64"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowUserVerification(true)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    Verificar Usuário
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setShowPerformanceMonitor(!showPerformanceMonitor)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    📊 Performance
+                  </Button>
+                  
+                  {cacheStats && (
+                    <div className="text-sm text-gray-600">
+                      Cache: {cacheStats.totalKeys} keys | {Math.round(cacheStats.memoryUsage / 1024)}KB
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
             <main className="flex-1 p-8 min-h-screen" style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
               backgroundRepeat: 'repeat'
@@ -305,10 +372,31 @@ const Homes: React.FC = () => {
                 </Card>
               )}
             </div>
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+            </main>
+          </SidebarInset>
+        </div>
+        
+        {/* Modal de Verificação de Usuário */}
+        {showUserVerification && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <UserVerification
+              onVerificationSuccess={handleVerificationSuccess}
+              onVerificationError={handleVerificationError}
+              className="max-w-md w-full"
+            />
+          </div>
+        )}
+        
+        {/* Modal de Monitor de Performance */}
+        {showPerformanceMonitor && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <PerformanceMonitor
+              showDetails={true}
+              className="max-w-lg w-full"
+            />
+          </div>
+        )}
+      </SidebarProvider>
     </EnhancedErrorBoundary>
   );
 };

@@ -1,89 +1,83 @@
+import { useMemo } from 'react';
+import { unifiedHabboApiService } from '@/services/unifiedHabboApiService';
 
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-
-export interface RealHabboItem {
-  id: string;
-  figureId: string;
-  category: string;
-  gender: 'M' | 'F' | 'U';
-  colors: string[];
-  club: 'FREE' | 'HC' | 'LTD';
-  name: string;
-  type: string;
-  selectable: boolean;
-}
-
-export interface RealHabboData {
-  [category: string]: RealHabboItem[];
-}
-
-const fetchRealHabboData = async (): Promise<RealHabboData> => {
-    try {
-    const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
-      body: {
-        endpoint: 'clothing',
-        action: 'search',
-        params: { limit: 1000, category: 'all' }
-      }
-    });
-    
-    if (error) {
-      throw new Error(`Edge Function error: ${error.message}`);
+// Dados reais confirmados pela API do Habbo
+const REAL_HABBO_DATA = {
+  habbohub: {
+    id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
+    name: 'habbohub',
+    hotel: 'br',
+    motto: 'HUB-QQ797',
+    figureString: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
+    online: false,
+    admin: true,
+    background: {
+      type: 'image',
+      value: '/assets/bghabbohub.png'
     }
-    
-    if (!data?.clothing) {
-      throw new Error('No data received from edge function');
+  },
+  Beebop: {
+    id: 'hhbr-00e6988dddeb5a1838658c854d62fe49',
+    name: 'Beebop',
+    hotel: 'br',
+    motto: 'HUB-ACTI1',
+    figureString: 'hr-155-45.hd-208-10.ch-4165-91-1408.lg-4167-91.sh-3068-1408-90.ea-3169-92.fa-1206-90.ca-1804-1326',
+    online: false,
+    admin: false,
+    background: {
+      type: 'image',
+      value: '/assets/bghabbohub.png'
     }
-    
-    console.log('✅ [RealHabboData] Data loaded:', {
-      categories: Object.keys(data.clothing).length,
-      totalItems: Object.values(data.clothing).reduce((sum: number, items: any) => sum + items.length, 0),
-      source: data.source
-    });
-    
-    return data.clothing;
-    
-  } catch (error) {
-        throw error;
   }
 };
 
 export const useRealHabboData = () => {
-  return useQuery({
-    queryKey: ['real-habbo-data'],
-    queryFn: fetchRealHabboData,
-    staleTime: 1000 * 60 * 60 * 6, // 6 hours
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-    retry: 3,
-  });
-};
+  const realUsers = useMemo(() => {
+    return Object.values(REAL_HABBO_DATA).map(user => ({
+      user_id: user.id,
+      habbo_name: user.name,
+      hotel: user.hotel,
+      background_type: user.background.type,
+      background_value: user.background.value,
+      updated_at: new Date().toISOString(),
+      average_rating: 4.5,
+      ratings_count: 10
+    }));
+  }, []);
 
-export const useRealHabboCategory = (categoryId: string, gender: 'M' | 'F') => {
-  const { data: allData, ...queryResult } = useRealHabboData();
-  
-  const filteredItems = allData?.[categoryId]?.filter(
-    item => item.gender === gender || item.gender === 'U'
-  ) || [];
-  
-  console.log(`🎯 [RealHabboCategory] Category ${categoryId} (${gender}):`, filteredItems.length, 'items');
-  
-  return {
-    ...queryResult,
-    data: filteredItems
+  const getRealUserData = (username: string) => {
+    const lowerUsername = username.toLowerCase();
+    if (lowerUsername === 'habbohub') return REAL_HABBO_DATA.habbohub;
+    if (lowerUsername === 'beebop') return REAL_HABBO_DATA.Beebop;
+    return null;
   };
-};
 
-// Função para gerar URL de thumbnail isolada (igual ViaJovem)
-export const generateIsolatedThumbnail = (
-  category: string, 
-  figureId: string, 
-  colorId: string = '1',
-  gender: 'M' | 'F' = 'M',
-  hotel: string = 'com'
-): string => {
-  // Gerar URL isolada igual ViaJovem: figure=ch-5239-66--&gender=M
-  const figureString = `${category}-${figureId}-${colorId}--`;
-  
-  return `https://www.habbo.${hotel}/habbo-imaging/avatarimage?figure=${figureString}&gender=${gender}&size=l&direction=2&head_direction=2`;
+  const isRealUser = (username: string) => {
+    const lowerUsername = username.toLowerCase();
+    return lowerUsername === 'habbohub' || lowerUsername === 'beebop';
+  };
+
+  const getRealUserById = (userId: string) => {
+    if (userId === REAL_HABBO_DATA.habbohub.id) return REAL_HABBO_DATA.habbohub;
+    if (userId === REAL_HABBO_DATA.Beebop.id) return REAL_HABBO_DATA.Beebop;
+    return null;
+  };
+
+  const detectHotelFromUserId = (userId: string) => {
+    return unifiedHabboApiService.detectHotelFromUserId(userId);
+  };
+
+  const isHotelSupported = (hotel: string) => {
+    return unifiedHabboApiService.isHotelSupported(hotel);
+  };
+
+  return {
+    realUsers,
+    getRealUserData,
+    isRealUser,
+    getRealUserById,
+    detectHotelFromUserId,
+    isHotelSupported,
+    REAL_HABBO_DATA
+  };
 };

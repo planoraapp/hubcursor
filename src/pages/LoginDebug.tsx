@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export const LoginDebug: React.FC = () => {
   const navigate = useNavigate();
-  const { habboAccount, isLoggedIn, loading, loginWithPassword } = useUnifiedAuth();
+  const { habboAccount, isLoggedIn, loading, login } = useAuth();
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +24,7 @@ export const LoginDebug: React.FC = () => {
     setError('');
     
     try {
-            const result = await loginWithPassword(username, password);
+            const result = await login(username, password);
           } catch (err: any) {
             setError(err.message || 'Erro no login');
     }

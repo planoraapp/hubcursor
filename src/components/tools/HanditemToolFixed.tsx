@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter, Eye, Zap, AlertCircle, Music, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import { HanditemImage } from './HanditemImage';
 import { useToast } from '@/hooks/use-toast';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { TraxPlayerWidget } from '@/components/widgets/TraxPlayerWidget';
 
 interface HanditemData {
@@ -74,7 +74,7 @@ export const HanditemToolFixed: React.FC = () => {
   });
   
   const { toast } = useToast();
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
 
   const defaultHabboName = habboAccount?.habbo_username || "Beebop";
 

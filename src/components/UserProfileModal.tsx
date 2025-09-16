@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { CalendarDays, Home, MessageSquare } from 'lucide-react';
 import { getUserByName } from '../services/habboApi';
 import { useNavigate } from 'react-router-dom';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfileModalProps {
   open: boolean;

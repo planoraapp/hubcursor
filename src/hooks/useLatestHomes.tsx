@@ -1,6 +1,9 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealHabboData } from './useRealHabboData';
+import { useDebouncedQuery } from './useDebouncedQuery';
+import { habboCacheService } from '@/services/habboCacheService';
 
 interface LatestHomeData {
   user_id: string;
@@ -14,6 +17,158 @@ interface LatestHomeData {
 
 export const useLatestHomes = () => {
   const queryClient = useQueryClient();
+  const { realUsers } = useRealHabboData();
+  
+  // Função para buscar dados das homes
+  const fetchLatestHomesData = async (): Promise<LatestHomeData[]> => {
+    console.log('🔍 [useLatestHomes] Buscando dados das homes...');
+    
+    // Buscar mudanças em TODAS as tabelas relacionadas ao canvas
+    const [
+      { data: updatedLayouts, error: layoutError },
+      { data: updatedBackgrounds, error: backgroundError },
+      { data: updatedWidgets, error: widgetError },
+      { data: updatedStickers, error: stickerError }
+    ] = await Promise.all([
+      // Layouts (widgets principais)
+      supabase
+        .from('user_home_layouts')
+        .select('user_id, updated_at, created_at')
+        .order('updated_at', { ascending: false })
+        .limit(100),
+      
+      // Backgrounds
+      supabase
+        .from('user_home_backgrounds')
+        .select('user_id, updated_at, created_at')
+        .order('updated_at', { ascending: false })
+        .limit(100),
+      
+      // Widgets
+      supabase
+        .from('user_home_widgets')
+        .select('user_id, updated_at, created_at')
+        .order('updated_at', { ascending: false })
+        .limit(100),
+      
+      // Stickers
+      supabase
+        .from('user_stickers')
+        .select('user_id, updated_at, created_at')
+        .order('updated_at', { ascending: false })
+        .limit(100)
+    ]);
+
+    // Verificar erros
+    if (layoutError) console.warn('Erro ao buscar layouts:', layoutError);
+    if (backgroundError) console.warn('Erro ao buscar backgrounds:', backgroundError);
+    if (widgetError) console.warn('Erro ao buscar widgets:', widgetError);
+    if (stickerError) console.warn('Erro ao buscar stickers:', stickerError);
+
+    // Combinar todas as mudanças
+    const allChanges = [
+      ...(updatedLayouts || []),
+      ...(updatedBackgrounds || []),
+      ...(updatedWidgets || []),
+      ...(updatedStickers || [])
+    ];
+
+    // Agrupar por user_id e pegar a mudança mais recente
+    const latestChanges = allChanges.reduce((acc, change) => {
+      const userId = change.user_id;
+      const existing = acc[userId];
+      
+      if (!existing || new Date(change.updated_at) > new Date(existing.updated_at)) {
+        acc[userId] = change;
+      }
+      
+      return acc;
+    }, {} as Record<string, any>);
+
+    // Converter para array e ordenar por updated_at
+    const latestUniqueHomes = Object.values(latestChanges)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, 20); // Limitar a 20 homes
+
+    // Buscar dados adicionais para enriquecer
+    const userIds = latestUniqueHomes.map(home => home.user_id);
+    
+    if (userIds.length === 0) {
+      console.log('📭 Nenhuma home encontrada');
+      return [];
+    }
+
+    // Buscar contas dos usuários
+    const { data: accounts, error: accountsError } = await supabase
+      .from('habbo_accounts')
+      .select('supabase_user_id, habbo_name, hotel')
+      .in('supabase_user_id', userIds);
+
+    if (accountsError) {
+      console.warn('Erro ao buscar contas:', accountsError);
+    }
+
+    // Buscar backgrounds
+    const { data: backgrounds, error: backgroundsError } = await supabase
+      .from('user_home_backgrounds')
+      .select('user_id, background_type, background_value')
+      .in('user_id', userIds);
+
+    if (backgroundsError) {
+      console.warn('Erro ao buscar backgrounds:', backgroundsError);
+    }
+
+    // Buscar avaliações
+    const { data: ratings, error: ratingsError } = await supabase
+      .from('user_home_ratings')
+      .select('home_owner_user_id, rating')
+      .in('home_owner_user_id', userIds);
+
+    if (ratingsError) {
+      console.warn('Erro ao buscar avaliações:', ratingsError);
+    }
+
+    // Combinar os dados
+    const enrichedHomes = latestUniqueHomes.map(home => {
+      const account = accounts?.find(acc => acc.supabase_user_id === home.user_id);
+      const background = backgrounds?.find(bg => bg.user_id === home.user_id);
+      
+      // Calcular avaliação média
+      const homeRatings = ratings?.filter(r => r.home_owner_user_id === home.user_id) || [];
+      const averageRating = homeRatings.length > 0 
+        ? homeRatings.reduce((sum, r) => sum + r.rating, 0) / homeRatings.length 
+        : 0;
+      
+      return {
+        ...home,
+        habbo_name: account?.habbo_name,
+        hotel: account?.hotel,
+        background_type: background?.background_type,
+        background_value: background?.background_value,
+        average_rating: Math.round(averageRating * 10) / 10,
+        ratings_count: homeRatings.length
+      };
+    });
+
+    // Incluir dados reais dos usuários do Habbo
+    const allHomes = [...enrichedHomes, ...realUsers];
+    
+    // Remover duplicatas baseado no user_id
+    const uniqueHomes = allHomes.filter((home, index, self) => 
+      index === self.findIndex(h => h.user_id === home.user_id)
+    );
+    
+    // Ordenar por updated_at (mais recentes primeiro)
+    return uniqueHomes.sort((a, b) => 
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    );
+  };
+  
+  // Hook de debounce para consultas
+  const { data: debouncedData, loading: debouncedLoading, error: debouncedError } = useDebouncedQuery(
+    fetchLatestHomesData,
+    { delay: 300, maxWait: 2000 }
+  );
 
   const invalidateLatestHomes = () => {
     console.log('🔄 [useLatestHomes] Invalidando cache...');
@@ -26,7 +181,21 @@ export const useLatestHomes = () => {
     await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
   };
 
+  // Query principal com configurações otimizadas
   const query = useQuery({
+    queryKey: ['latest-homes-optimized'],
+    queryFn: fetchLatestHomesData,
+    staleTime: 2 * 60 * 1000, // 2 minutos (mais conservador)
+    gcTime: 10 * 60 * 1000,   // 10 minutos
+    refetchInterval: 60 * 1000, // 1 minuto (menos agressivo)
+    refetchOnWindowFocus: false, // Desabilitar refetch automático
+    refetchOnMount: true,
+    retry: 2, // Máximo 2 tentativas
+    retryDelay: 1000, // 1 segundo entre tentativas
+  });
+
+  // Query de fallback (manter compatibilidade)
+  const fallbackQuery = useQuery({
     queryKey: ['latest-homes'],
     queryFn: async (): Promise<LatestHomeData[]> => {
       // Buscar mudanças em TODAS as tabelas relacionadas ao canvas
@@ -167,7 +336,18 @@ export const useLatestHomes = () => {
         };
       });
 
-      return enrichedHomes;
+      // Incluir dados reais dos usuários do Habbo
+      const allHomes = [...enrichedHomes, ...realUsers];
+      
+      // Remover duplicatas baseado no user_id
+      const uniqueHomes = allHomes.filter((home, index, self) => 
+        index === self.findIndex(h => h.user_id === home.user_id)
+      );
+      
+      // Ordenar por updated_at (mais recentes primeiro)
+      return uniqueHomes.sort((a, b) => 
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
     },
     staleTime: 0, // Sempre considerar dados como stale para detectar mudanças imediatamente
     gcTime: 1000 * 60 * 1, // 1 minuto
@@ -176,9 +356,18 @@ export const useLatestHomes = () => {
     refetchOnMount: true, // Sempre refetch ao montar
   });
 
+  // Usar query otimizada como principal, fallback como backup
+  const finalQuery = query.data ? query : fallbackQuery;
+  
   return {
-    ...query,
+    ...finalQuery,
+    // Adicionar dados do debounce se disponíveis
+    data: debouncedData || finalQuery.data,
+    loading: debouncedLoading || finalQuery.isLoading,
+    error: debouncedError || finalQuery.error,
     invalidateLatestHomes,
-    forceRefreshLatestHomes
+    forceRefreshLatestHomes,
+    // Estatísticas do cache
+    cacheStats: habboCacheService.getCacheStats()
   };
 };
