@@ -7,7 +7,7 @@ interface UseDebouncedQueryOptions {
   maxWait?: number;
 }
 
-export const useDebouncedQuery = <T>(
+export const useDebouncedQuery = <T,>(
   queryFn: () => Promise<T>,
   options: UseDebouncedQueryOptions = {}
 ) => {
