@@ -44,12 +44,19 @@ export const createBeebopAccount = async () => {
         console.log(`📊 Dados do Beebop encontrados:`, habboUser.name);
       }
     } catch (error) {
-      console.log(`❌ Beebop não encontrado em nenhum hotel`);
+      console.log(`❌ Beebop não encontrado em nenhum hotel, criando com dados padrão`);
     }
 
+    // Se não encontrou dados do Habbo, usar dados de fallback
     if (!habboUser) {
-      console.error('❌ Usuário Beebop não encontrado em nenhum hotel');
-      return;
+      console.log('🛠️ Criando conta Beebop com dados padrão de administrador...');
+      habboUser = {
+        uniqueId: 'hhbr-beebop-admin-001',
+        name: 'Beebop',
+        figureString: 'hd-180-7.ch-210-66.lg-270-82.sh-290-81.hr-831-49',
+        motto: 'Admin do HabboHub',
+        online: false
+      };
     }
 
     // Detectar hotel do habbo_id

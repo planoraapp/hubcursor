@@ -74,9 +74,20 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
   };
 
   const handleVerifyCode = async () => {
+    if (!verificationCode.trim()) {
+      toast({
+        title: "Erro",
+        description: "Digite o código de verificação",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsVerifying(true);
     
     try {
+      console.log('🔍 [VERIFY] Starting verification for:', habboName, 'with code:', verificationCode);
+      
       const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
         body: {
           habbo_name: habboName.trim(),
@@ -85,24 +96,51 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
         }
       });
 
-      if (error) throw error;
+      console.log('📡 [VERIFY] Edge function response:', { data, error });
+
+      if (error) {
+        console.error('❌ [VERIFY] Supabase function error:', error);
+        let errorMessage = 'Erro ao verificar código';
+        
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        
+        throw new Error(errorMessage);
+      }
 
       if (data.error) {
+        console.log('❌ [VERIFY] Function returned error:', data.error);
         throw new Error(data.error);
       }
 
-      if (data.verified) {
+      if (data.verified || data.success) {
+        console.log('✅ [VERIFY] Verification successful:', data);
         setStep('password');
         toast({
           title: "Código Verificado!",
           description: "Agora crie uma senha de 6 caracteres para sua conta.",
         });
+      } else {
+        throw new Error("Verificação falhou - resposta inesperada do servidor");
       }
     } catch (error: any) {
-      console.error('❌ Error verifying code:', error);
+      console.error('❌ [VERIFY] Caught exception:', error);
+      let errorMessage = error.message || 'Erro ao verificar código. Tente novamente.';
+      
+      if (error.message && error.message.includes('Edge Function returned a non-2xx status code')) {
+        errorMessage = 'Erro no servidor. Verifique se o usuário Habbo existe e tente novamente.';
+      } else if (error.message && error.message.includes('not found')) {
+        errorMessage = 'Usuário Habbo não encontrado. Verifique o nome e tente novamente.';
+      } else if (!error.message) {
+        errorMessage = "Código não encontrado na missão. Verifique se colocou o código completo na sua missão no Hotel.";
+      }
+      
       toast({
         title: "Erro na Verificação",
-        description: error.message || "Código não encontrado na missão. Verifique se colocou o código completo na sua missão no Hotel.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

@@ -10,9 +10,6 @@ max_rows = 1000
 [functions.verify-and-register-via-motto]
 verify_jwt = false
 
-[functions.setup-beebop-admin] 
-verify_jwt = false
-
 [functions.habbo-friends-activities-direct]
 verify_jwt = true
 
