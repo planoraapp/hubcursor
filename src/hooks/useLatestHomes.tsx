@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useRealHabboData } from './useRealHabboData';
@@ -8,6 +7,7 @@ import { habboCacheService } from '@/services/habboCacheService';
 interface LatestHomeData {
   user_id: string;
   habbo_name?: string;
+  hotel?: string;
   updated_at: string;
   background_type?: string;
   background_value?: string;
@@ -150,8 +150,11 @@ export const useLatestHomes = () => {
       };
     });
 
-    // Incluir dados reais dos usuários do Habbo
-    const allHomes = [...enrichedHomes, ...realUsers];
+    // Priorizar dados do banco sobre dados hardcoded
+    // Filtrar realUsers para não incluir usuários que já têm dados reais no banco
+    const userIdsFromDB = enrichedHomes.map(home => home.user_id);
+    const filteredRealUsers = realUsers.filter(user => !userIdsFromDB.includes(user.user_id));
+    const allHomes = [...enrichedHomes, ...filteredRealUsers];
     
     // Remover duplicatas baseado no user_id
     const uniqueHomes = allHomes.filter((home, index, self) => 
@@ -181,14 +184,14 @@ export const useLatestHomes = () => {
     await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
   };
 
-  // Query principal com configurações otimizadas
+  // Query principal com configurações OTIMIZADAS para detecção rápida
   const query = useQuery({
     queryKey: ['latest-homes-optimized'],
     queryFn: fetchLatestHomesData,
-    staleTime: 2 * 60 * 1000, // 2 minutos (mais conservador)
-    gcTime: 10 * 60 * 1000,   // 10 minutos
-    refetchInterval: 60 * 1000, // 1 minuto (menos agressivo)
-    refetchOnWindowFocus: false, // Desabilitar refetch automático
+    staleTime: 0, // Sempre considerar dados como stale para detectar mudanças imediatamente
+    gcTime: 5 * 60 * 1000,   // 5 minutos
+    refetchInterval: 3 * 1000, // 3 segundos para detectar mudanças rapidamente
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
     refetchOnMount: true,
     retry: 2, // Máximo 2 tentativas
     retryDelay: 1000, // 1 segundo entre tentativas
@@ -292,7 +295,7 @@ export const useLatestHomes = () => {
       // Ordenar por data mais recente e pegar os top 20
       const latestUniqueHomes = Array.from(uniqueUsers.values())
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-        .slice(0, 20); // Aumentado para 20 como solicitado
+        .slice(0, 20);
 
       // Buscar dados adicionais para esses usuários
       const userIds = latestUniqueHomes.map(home => home.user_id);
@@ -336,8 +339,11 @@ export const useLatestHomes = () => {
         };
       });
 
-      // Incluir dados reais dos usuários do Habbo
-      const allHomes = [...enrichedHomes, ...realUsers];
+      // Priorizar dados do banco sobre dados hardcoded
+      // Filtrar realUsers para não incluir usuários que já têm dados reais no banco
+      const userIdsFromDB = enrichedHomes.map(home => home.user_id);
+      const filteredRealUsers = realUsers.filter(user => !userIdsFromDB.includes(user.user_id));
+      const allHomes = [...enrichedHomes, ...filteredRealUsers];
       
       // Remover duplicatas baseado no user_id
       const uniqueHomes = allHomes.filter((home, index, self) => 
@@ -350,8 +356,8 @@ export const useLatestHomes = () => {
       );
     },
     staleTime: 0, // Sempre considerar dados como stale para detectar mudanças imediatamente
-    gcTime: 1000 * 60 * 1, // 1 minuto
-    refetchInterval: 1000 * 15, // Refetch a cada 15 segundos para detectar mudanças
+    gcTime: 5 * 60 * 1000, // 5 minutos
+    refetchInterval: 3 * 1000, // 3 segundos para detectar mudanças rapidamente
     refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
     refetchOnMount: true, // Sempre refetch ao montar
   });

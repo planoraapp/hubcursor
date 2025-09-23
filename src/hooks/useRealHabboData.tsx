@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { unifiedHabboApiService } from '@/services/unifiedHabboApiService';
+import { useBackgroundSync } from './useBackgroundSync';
 
 // Dados reais confirmados pela API do Habbo
 const REAL_HABBO_DATA = {
@@ -13,7 +14,7 @@ const REAL_HABBO_DATA = {
     admin: true,
     background: {
       type: 'image',
-      value: '/assets/bghabbohub.png'
+      value: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_pattern_clouds.gif'
     }
   },
   Beebop: {
@@ -32,18 +33,33 @@ const REAL_HABBO_DATA = {
 };
 
 export const useRealHabboData = () => {
+  const { syncData } = useBackgroundSync();
+  
   const realUsers = useMemo(() => {
-    return Object.values(REAL_HABBO_DATA).map(user => ({
-      user_id: user.id,
-      habbo_name: user.name,
-      hotel: user.hotel,
-      background_type: user.background.type,
-      background_value: user.background.value,
-      updated_at: new Date().toISOString(),
-      average_rating: 4.5,
-      ratings_count: 10
-    }));
-  }, []);
+    return Object.values(REAL_HABBO_DATA).map(user => {
+      // Usar dados sincronizados se disponíveis, senão usar dados hardcoded
+      let background = user.background;
+      
+      if (syncData) {
+        if (user.name.toLowerCase() === 'habbohub') {
+          background = syncData.habbohub;
+        } else if (user.name.toLowerCase() === 'beebop') {
+          background = syncData.beebop;
+        }
+      }
+      
+      return {
+        user_id: user.id,
+        habbo_name: user.name,
+        hotel: user.hotel,
+        background_type: background.type,
+        background_value: background.value,
+        updated_at: new Date().toISOString(),
+        average_rating: 4.5,
+        ratings_count: 10
+      };
+    });
+  }, [syncData]);
 
   const getRealUserData = (username: string) => {
     const lowerUsername = username.toLowerCase();

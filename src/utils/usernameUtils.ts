@@ -14,63 +14,63 @@ export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
     name: 'Brasil/Portugal',
     domain: 'ptbr',
     apiUrl: 'https://www.habbo.com.br/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagbrpt.png'
+    flag: '/assets/flagbrazil.png'
   },
   'com': {
     code: 'com',
     name: 'UK e .com',
     domain: 'com',
     apiUrl: 'https://www.habbo.com/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagcom.png'
+    flag: '/assets/flagcom.png'
   },
   'fi': {
     code: 'fi',
     name: 'Finlândia',
     domain: 'fi',
     apiUrl: 'https://www.habbo.fi/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flafinland.png'
+    flag: '/assets/flafinland.png'
   },
   'it': {
     code: 'it',
     name: 'Itália',
     domain: 'it',
     apiUrl: 'https://www.habbo.it/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagitaly.png'
+    flag: '/assets/flagitaly.png'
   },
   'de': {
     code: 'de',
     name: 'Alemanha',
     domain: 'de',
     apiUrl: 'https://www.habbo.de/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagdeus.png'
+    flag: '/assets/flagdeus.png'
   },
   'es': {
     code: 'es',
     name: 'Espanha',
     domain: 'es',
     apiUrl: 'https://www.habbo.es/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagspain.png'
+    flag: '/assets/flagspain.png'
   },
   'fr': {
     code: 'fr',
     name: 'França',
     domain: 'fr',
     apiUrl: 'https://www.habbo.fr/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagfrance.png'
+    flag: '/assets/flagfrance.png'
   },
   'nl': {
     code: 'nl',
     name: 'Holanda',
     domain: 'nl',
     apiUrl: 'https://www.habbo.nl/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagnetl.png'
+    flag: '/assets/flagnetl.png'
   },
   'tr': {
     code: 'tr',
     name: 'Turquia',
     domain: 'com.tr',
     apiUrl: 'https://www.habbo.com.tr/api/public',
-    flag: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/country-related/flagtrky.png'
+    flag: '/assets/flagtrky.png'
   }
 };
 

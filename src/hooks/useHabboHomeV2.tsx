@@ -7,6 +7,7 @@ import { habboCache } from '@/services/habboCache';
 import { useUserProfile } from './useUserProfile';
 import { useHabboPublicData } from './useHabboPublicData';
 import { useRealHabboData } from './useRealHabboData';
+import { getSupabaseUserId } from '@/utils/habboIdMapping';
 
 import type { HabboData, GuestbookEntry, Background, Sticker, Widget } from '@/types/habbo';
 export const useHabboHomeV2 = (username: string) => {
@@ -1629,10 +1630,12 @@ export const useHabboHomeV2 = (username: string) => {
         
         // Também salvar no Supabase para que apareça nos cards da página /homes
         if (supabase) {
+          const supabaseUserId = getSupabaseUserId(habboData.id);
+          
           const { error: supabaseError } = await supabase
             .from('user_home_backgrounds')
             .upsert({
-              user_id: habboData.id,
+              user_id: supabaseUserId,
               background_type: bgType,
               background_value: bgValue,
               updated_at: new Date().toISOString()
@@ -1669,10 +1672,12 @@ export const useHabboHomeV2 = (username: string) => {
                 return;
       }
       
+      const supabaseUserId = getSupabaseUserId(habboData.id);
+      
       const { data, error } = await supabase
         .from('user_home_backgrounds')
         .upsert({
-          user_id: habboData.id,
+          user_id: supabaseUserId,
           background_type: bgType,
           background_value: bgValue,
           updated_at: new Date().toISOString()
