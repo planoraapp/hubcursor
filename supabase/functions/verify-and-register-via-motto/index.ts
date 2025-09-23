@@ -34,24 +34,29 @@ serve(async (req) => {
   try {
     console.log('🔥 [VERIFY-MOTTO] Creating Supabase client...');
     
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Service role para poder criar usuários
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    // Verificar se estamos usando o service role
-    console.log('🔑 [VERIFY-MOTTO] Supabase URL:', Deno.env.get('SUPABASE_URL'));
-    console.log('🔑 [VERIFY-MOTTO] Service Role Key exists:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
-    console.log('🔑 [VERIFY-MOTTO] Service Role Key length:', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.length || 0);
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('🔥 [VERIFY-MOTTO] Parsing request body...');
-    const { habbo_name, verification_code, password, action } = await req.json()
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      console.error('❌ [VERIFY-MOTTO] JSON Parse Error:', parseError);
+      throw new Error('Invalid JSON in request body');
+    }
+    
+    const { habbo_name, verification_code, password, action } = requestBody;
+
+    if (!habbo_name || !action) {
+      throw new Error('Missing required fields: habbo_name and action');
+    }
 
     console.log(`🚀 [VERIFY-MOTTO] Processing ${action} for ${habbo_name}`, {
       habbo_name,
@@ -62,10 +67,13 @@ serve(async (req) => {
 
     // ===== STEP 1: GENERATE CODE =====
     if (action === 'generate') {
+      console.log('🎯 [VERIFY-MOTTO] Starting GENERATE action for:', habbo_name);
+      
       const habboData = await fetchHabboUser(habbo_name);
       if (!habboData) {
+        console.log('❌ [VERIFY-MOTTO] User not found in any hotel:', habbo_name);
         return new Response(JSON.stringify({ 
-          error: 'Usuário Habbo não encontrado. Verifique o nome.' 
+          error: `Usuário Habbo "${habbo_name}" não encontrado em nenhum hotel. Verifique o nome e tente novamente.` 
         }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -73,12 +81,20 @@ serve(async (req) => {
       }
 
       const verificationCode = generateVerificationCode();
+      const hotel = detectHotel(habboData.uniqueId);
+      
+      console.log('✅ [VERIFY-MOTTO] Generated code for user:', {
+        habbo_name: habboData.name,
+        code: verificationCode,
+        hotel: hotel,
+        uniqueId: habboData.uniqueId
+      });
       
       return new Response(JSON.stringify({
         success: true,
         verification_code: verificationCode,
         habbo_data: habboData,
-        hotel: detectHotel(habboData.uniqueId)
+        hotel: hotel
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -313,7 +329,7 @@ serve(async (req) => {
 // ===== HELPER FUNCTIONS =====
 
 async function fetchHabboUser(username: string): Promise<HabboUser | null> {
-  console.log('🔍 Searching for Habbo user:', username);
+  console.log('🔍 [FETCH] Searching for Habbo user:', username);
   
   const hotels = ['br', 'com', 'es', 'fr', 'de', 'it', 'nl', 'fi', 'tr'];
   
@@ -321,26 +337,34 @@ async function fetchHabboUser(username: string): Promise<HabboUser | null> {
     try {
       const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
       const url = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`;
-      console.log(`🌐 Trying ${hotel}: ${url}`);
+      console.log(`🌐 [FETCH] Trying ${hotel}: ${url}`);
       
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; HabboHub/1.0)',
+          'Accept': 'application/json',
         },
+        timeout: 10000,
       });
+
+      console.log(`📡 [FETCH] Response from ${hotel}: Status ${response.status}, OK: ${response.ok}`);
 
       if (response.ok) {
         const userData: HabboUser = await response.json();
-        console.log(`✅ Found user in ${hotel}:`, userData);
+        console.log(`✅ [FETCH] Found user in ${hotel}:`, JSON.stringify(userData, null, 2));
         return userData;
+      } else {
+        console.log(`⚠️ [FETCH] ${hotel} returned status ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.log(`⚠️ [FETCH] Error response body: ${errorText}`);
       }
     } catch (error) {
-      console.log(`❌ Error checking ${hotel}:`, error);
+      console.log(`❌ [FETCH] Error checking ${hotel}:`, error.message || error);
       continue;
     }
   }
   
-  console.log('❌ User not found in any hotel');
+  console.log('❌ [FETCH] User not found in any hotel');
   return null;
 }
 
