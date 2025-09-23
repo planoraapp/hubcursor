@@ -123,6 +123,13 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
     setIsCompletingRegistration(true);
 
     try {
+      console.log('🚀 Calling Edge Function for complete registration...', {
+        habbo_name: habboName.trim(),
+        verification_code: verificationCode,
+        action: 'complete',
+        password_length: password.length
+      });
+
       const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
         body: {
           habbo_name: habboName.trim(),
@@ -132,9 +139,15 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
         }
       });
 
-      if (error) throw error;
+      console.log('📊 Edge Function response:', { data, error });
 
-      if (data.error) {
+      if (error) {
+        console.error('❌ Edge Function returned error:', error);
+        throw error;
+      }
+
+      if (data && data.error) {
+        console.error('❌ Edge Function returned data.error:', data.error);
         throw new Error(data.error);
       }
 
@@ -161,9 +174,24 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
 
     } catch (error: any) {
       console.error('❌ Error completing registration:', error);
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
+      
+      // Log detalhado do erro
+      let errorMessage = "Erro ao completar o registro. Tente novamente.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Se for erro da Edge Function, tentar extrair mais detalhes
+      if (error.toString().includes('Edge Function returned a non-2xx status code')) {
+        console.error('🔥 Edge Function Error - Detailed debugging needed');
+        errorMessage = "Erro interno do servidor. Verifique os logs do Supabase ou tente novamente em alguns minutos.";
+      }
+      
       toast({
         title: "Erro no Registro",
-        description: error.message || "Erro ao completar o registro. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -172,11 +200,47 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(verificationCode);
-    toast({
-      title: "Código Copiado!",
-      description: "O código foi copiado para a área de transferência",
-    });
+    // Verificar se navigator.clipboard está disponível
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(verificationCode).then(() => {
+        toast({
+          title: "Código Copiado!",
+          description: "O código foi copiado para a área de transferência",
+        });
+      }).catch(() => {
+        // Fallback: copiar usando método alternativo
+        fallbackCopyToClipboard();
+      });
+    } else {
+      // Fallback para navegadores que não suportam clipboard API
+      fallbackCopyToClipboard();
+    }
+  };
+
+  const fallbackCopyToClipboard = () => {
+    // Criar elemento temporário para copiar
+    const textArea = document.createElement('textarea');
+    textArea.value = verificationCode;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      toast({
+        title: "Código Copiado!",
+        description: "O código foi copiado para a área de transferência",
+      });
+    } catch (err) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar automaticamente. Copie manualmente: " + verificationCode,
+        variant: "destructive"
+      });
+    }
+    
+    document.body.removeChild(textArea);
   };
 
   const resetProcess = () => {

@@ -36,8 +36,19 @@ serve(async (req) => {
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '' // Service role para poder criar usuários
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Service role para poder criar usuários
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     )
+    
+    // Verificar se estamos usando o service role
+    console.log('🔑 [VERIFY-MOTTO] Supabase URL:', Deno.env.get('SUPABASE_URL'));
+    console.log('🔑 [VERIFY-MOTTO] Service Role Key exists:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+    console.log('🔑 [VERIFY-MOTTO] Service Role Key length:', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.length || 0);
 
     console.log('🔥 [VERIFY-MOTTO] Parsing request body...');
     const { habbo_name, verification_code, password, action } = await req.json()
@@ -137,26 +148,33 @@ serve(async (req) => {
       const hotel = detectHotel(habboData.uniqueId);
 
       // Verificar se usuário já existe
-      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(authEmail);
+      console.log('🔍 [VERIFY-MOTTO] Checking if user exists with email:', authEmail);
+      const { data: existingUser, error: getUserError } = await supabase.auth.admin.getUserByEmail(authEmail);
+      
+      if (getUserError) {
+        console.error('❌ [VERIFY-MOTTO] Error checking existing user:', getUserError);
+      }
       
       let user;
       let userCreated = false;
 
       if (existingUser.user) {
         // Usuário existe - apenas atualizar senha
-        console.log('🔄 [VERIFY-MOTTO] Updating existing user password...');
+        console.log('🔄 [VERIFY-MOTTO] Updating existing user password for user:', existingUser.user.id);
         const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
           existingUser.user.id,
           { password }
         );
         
         if (updateError) {
+          console.error('❌ [VERIFY-MOTTO] Error updating user password:', updateError);
           throw new Error(`Erro ao atualizar senha: ${updateError.message}`);
         }
+        console.log('✅ [VERIFY-MOTTO] User password updated successfully');
         user = updateData.user;
       } else {
         // Criar novo usuário
-        console.log('👤 [VERIFY-MOTTO] Creating new user...');
+        console.log('👤 [VERIFY-MOTTO] Creating new user with email:', authEmail);
         const { data: createData, error: createError } = await supabase.auth.admin.createUser({
           email: authEmail,
           password: password,
@@ -164,36 +182,83 @@ serve(async (req) => {
         });
 
         if (createError) {
+          console.error('❌ [VERIFY-MOTTO] Error creating user:', createError);
           throw new Error(`Erro ao criar usuário: ${createError.message}`);
         }
+        console.log('✅ [VERIFY-MOTTO] New user created successfully:', createData.user.id);
         user = createData.user;
         userCreated = true;
       }
 
       // Criar ou atualizar registro em habbo_accounts
       if (user) {
-        console.log('💾 [VERIFY-MOTTO] Creating/updating habbo_accounts record...');
+        console.log('💾 [VERIFY-MOTTO] Creating/updating habbo_accounts record for user:', user.id);
         
-        const { error: habboError } = await supabase
+        const habboAccountData = {
+          supabase_user_id: user.id,
+          habbo_name: habboData.name,
+          habbo_id: habboData.uniqueId,
+          hotel: hotel,
+          figure_string: habboData.figureString,
+          motto: habboData.motto,
+          is_online: habboData.online,
+          is_admin: habbo_name.toLowerCase() === 'beebop' // Admin especial para Beebop
+        };
+        
+        console.log('📋 [VERIFY-MOTTO] Habbo account data to insert:', habboAccountData);
+        
+        // Tentar com diferentes estratégias
+        let habboAccountResult, habboError;
+        
+        // Estratégia 1: Upsert normal
+        const upsertResult = await supabase
           .from('habbo_accounts')
-          .upsert({
-            supabase_user_id: user.id,
-            habbo_name: habboData.name,
-            habbo_id: habboData.uniqueId,
-            hotel: hotel,
-            figure_string: habboData.figureString,
-            motto: habboData.motto,
-            is_online: habboData.online,
-            is_admin: habbo_name.toLowerCase() === 'beebop' // Admin especial para Beebop
-          }, {
+          .upsert(habboAccountData, {
             onConflict: 'supabase_user_id'
+          })
+          .select();
+        
+        habboAccountResult = upsertResult.data;
+        habboError = upsertResult.error;
+        
+        // Estratégia 2: Se falhou, tentar INSERT direto
+        if (habboError && habboError.message.includes('permission')) {
+          console.log('⚠️ [VERIFY-MOTTO] Upsert failed, trying direct insert...');
+          
+          const insertResult = await supabase
+            .from('habbo_accounts')
+            .insert(habboAccountData)
+            .select();
+          
+          habboAccountResult = insertResult.data;
+          habboError = insertResult.error;
+        }
+        
+        // Estratégia 3: Se ainda falhou, usar RPC call
+        if (habboError && habboError.message.includes('permission')) {
+          console.log('⚠️ [VERIFY-MOTTO] Insert failed, trying RPC call...');
+          
+          const rpcResult = await supabase.rpc('insert_habbo_account_via_service', {
+            account_data: habboAccountData
           });
+          
+          if (rpcResult.error) {
+            console.error('❌ [VERIFY-MOTTO] All strategies failed:', rpcResult.error);
+            habboError = rpcResult.error;
+          } else {
+            console.log('✅ [VERIFY-MOTTO] RPC insert successful');
+            habboAccountResult = [habboAccountData]; // Mock result
+            habboError = null;
+          }
+        }
 
         if (habboError) {
           console.error('❌ [VERIFY-MOTTO] Error creating habbo_accounts:', habboError);
+          console.error('❌ [VERIFY-MOTTO] Habbo error details:', JSON.stringify(habboError, null, 2));
           throw new Error(`Erro ao criar conta Habbo: ${habboError.message}`);
         }
 
+        console.log('✅ [VERIFY-MOTTO] Habbo account created/updated:', habboAccountResult);
         console.log('✅ [VERIFY-MOTTO] Registration completed successfully!');
       }
 
@@ -214,9 +279,30 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('❌ [VERIFY-MOTTO] Error in verify-and-register-via-motto:', error);
     console.error('❌ [VERIFY-MOTTO] Error stack:', error.stack);
+    console.error('❌ [VERIFY-MOTTO] Error name:', error.name);
+    console.error('❌ [VERIFY-MOTTO] Error message:', error.message);
+    console.error('❌ [VERIFY-MOTTO] Full error object:', JSON.stringify(error, null, 2));
+    
+    // Provide more specific error messages based on error type
+    let detailedError = `Erro interno: ${error.message}`;
+    
+    if (error.message?.includes('permission denied')) {
+      detailedError = 'Erro de permissão no banco de dados. Verifique as políticas RLS.';
+    } else if (error.message?.includes('auth')) {
+      detailedError = 'Erro de autenticação do Supabase. Verifique as credenciais.';
+    } else if (error.message?.includes('network')) {
+      detailedError = 'Erro de rede. Verifique sua conexão com a internet.';
+    } else if (error.message?.includes('timeout')) {
+      detailedError = 'Timeout na operação. Tente novamente.';
+    }
     
     return new Response(JSON.stringify({ 
-      error: `Erro interno: ${error.message}` 
+      error: detailedError,
+      debug_info: {
+        error_name: error.name,
+        error_message: error.message,
+        timestamp: new Date().toISOString()
+      }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
