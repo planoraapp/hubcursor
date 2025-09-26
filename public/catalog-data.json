@@ -1,0 +1,3725 @@
+{
+  "handitems": [
+    {
+      "id": 1,
+      "name": "Cenoura",
+      "category": "alimentos",
+      "subcategory": "vegetais",
+      "rarity": "common",
+      "image": "https://i.imgur.com/carrot.png",
+      "description": "Uma cenoura fresca e crocante",
+      "type": "handitem",
+      "id_web": "1",
+      "id_in_game": "1",
+      "mobi": {
+        "name": "Canteiro de Cenouras",
+        "id_web": "1001",
+        "id_in_game": "1001",
+        "image": "https://images.habbotemplarios.com/furni/1001.png"
+      },
+      "source": "Viajovem"
+    },
+    {
+      "id": 2,
+      "name": "Tomate",
+      "category": "alimentos",
+      "subcategory": "vegetais",
+      "rarity": "common",
+      "image": "https://i.imgur.com/tomato.png",
+      "description": "Um tomate vermelho e suculento",
+      "type": "handitem",
+      "id_web": "2",
+      "id_in_game": "2",
+      "mobi": {
+        "name": "Horta de Tomates",
+        "id_web": "1002",
+        "id_in_game": "1002",
+        "image": "https://images.habbotemplarios.com/furni/1002.png"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Maçã",
+      "category": "alimentos",
+      "subcategory": "frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/apple.png",
+      "description": "Uma maçã doce e crocante",
+      "type": "handitem",
+      "id_web": "3",
+      "id_in_game": "3",
+      "mobi": {
+        "name": "Pomar de Maçãs",
+        "id_web": "1003",
+        "id_in_game": "1003",
+        "image": "https://images.habbotemplarios.com/furni/1003.png"
+      },
+      "source": "Viajovem"
+    },
+    {
+      "id": 4,
+      "name": "Banana",
+      "category": "alimentos",
+      "subcategory": "frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/banana.png",
+      "description": "Uma banana amarela e nutritiva",
+      "type": "handitem",
+      "id_web": "4",
+      "id_in_game": "4",
+      "mobi": {
+        "name": "Bananeira",
+        "id_web": "1004",
+        "id_in_game": "1004",
+        "image": "https://images.habbotemplarios.com/furni/1004.png"
+      },
+      "source": "Viajovem"
+    },
+    {
+      "id": 5,
+      "name": "Pão",
+      "category": "alimentos",
+      "subcategory": "padaria",
+      "rarity": "common",
+      "image": "https://i.imgur.com/bread.png",
+      "description": "Pão fresco e macio",
+      "type": "handitem",
+      "id_web": "5",
+      "id_in_game": "5",
+      "mobi": {
+        "name": "Padaria Artesanal",
+        "id_web": "1005",
+        "id_in_game": "1005",
+        "image": "https://images.habbotemplarios.com/furni/1005.png"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Café",
+      "category": "bebidas",
+      "subcategory": "café",
+      "rarity": "common",
+      "image": "https://i.imgur.com/coffee.png",
+      "description": "Uma xícara de café quente",
+      "type": "handitem",
+      "id_web": "6",
+      "id_in_game": "6",
+      "mobi": {
+        "name": "Máquina de Café",
+        "id_web": "1006",
+        "id_in_game": "1006",
+        "image": "https://images.habbotemplarios.com/furni/m_quina_de_caf.png"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Chá Japonês",
+      "category": "bebidas",
+      "subcategory": "chá",
+      "rarity": "common",
+      "image": "https://i.imgur.com/japanese_tea.png",
+      "description": "Chá verde tradicional japonês",
+      "type": "handitem",
+      "id_web": "7",
+      "id_in_game": "7",
+      "mobi": {
+        "name": "Casa de Chá",
+        "id_web": "1007",
+        "id_in_game": "1007",
+        "image": "https://images.habbotemplarios.com/furni/casa_de_ch.png"
+      }
+    },
+    {
+      "id": 8,
+      "name": "Habbocola",
+      "category": "bebidas",
+      "subcategory": "refrigerantes",
+      "rarity": "common",
+      "image": "https://i.imgur.com/habbocola.png",
+      "description": "O refrigerante oficial do Habbo",
+      "type": "handitem",
+      "id_web": "8",
+      "id_in_game": "8",
+      "mobi": {
+        "name": "Máquina de Refrigerantes",
+        "id_web": "1008",
+        "id_in_game": "1008",
+        "image": "https://images.habbotemplarios.com/furni/m_quina_de_refrigerantes.png"
+      }
+    },
+    {
+      "id": 9,
+      "name": "Água",
+      "category": "bebidas",
+      "subcategory": "água",
+      "rarity": "common",
+      "image": "https://i.imgur.com/water.png",
+      "description": "Água pura e cristalina",
+      "type": "handitem",
+      "id_web": "9",
+      "id_in_game": "9",
+      "mobi": {
+        "name": "Fonte de Água",
+        "id_web": "1009",
+        "id_in_game": "1009",
+        "image": "https://images.habbotemplarios.com/furni/fonte_de_gua.png"
+      }
+    },
+    {
+      "id": 10,
+      "name": "Coquetel",
+      "category": "bebidas",
+      "subcategory": "alcoólicas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/cocktail.png",
+      "description": "Um coquetel refrescante",
+      "type": "handitem",
+      "id_web": "10",
+      "id_in_game": "10",
+      "mobi": {
+        "name": "Bar de Coquetéis",
+        "id_web": "1010",
+        "id_in_game": "1010",
+        "image": "https://images.habbotemplarios.com/furni/bar_de_coquet_is.png"
+      }
+    },
+    {
+      "id": 11,
+      "name": "Poção do Amor",
+      "category": "bebidas",
+      "subcategory": "especiais",
+      "rarity": "rare",
+      "image": "https://i.imgur.com/love_potion.png",
+      "description": "Uma poção mágica do amor",
+      "type": "handitem",
+      "id_web": "11",
+      "id_in_game": "11",
+      "mobi": {
+        "name": "Laboratório Mágico",
+        "id_web": "1011",
+        "id_in_game": "1011",
+        "image": "https://images.habbotemplarios.com/furni/laborat_rio_m_gico.png"
+      }
+    },
+    {
+      "id": 12,
+      "name": "Radioativo",
+      "category": "bebidas",
+      "subcategory": "especiais",
+      "rarity": "rare",
+      "image": "https://i.imgur.com/radioactive.png",
+      "description": "Bebida com propriedades especiais",
+      "type": "handitem",
+      "id_web": "12",
+      "id_in_game": "12",
+      "mobi": {
+        "name": "Laboratório Químico",
+        "id_web": "1012",
+        "id_in_game": "1012",
+        "image": "https://images.habbotemplarios.com/furni/laborat_rio_qu_mico.png"
+      }
+    },
+    {
+      "id": 13,
+      "name": "Sorvete",
+      "category": "doces",
+      "subcategory": "sorvetes",
+      "rarity": "common",
+      "image": "https://i.imgur.com/ice_cream.png",
+      "description": "Um delicioso sorvete",
+      "type": "handitem",
+      "id_web": "13",
+      "id_in_game": "13",
+      "mobi": {
+        "name": "Carrinho de Sorvetes",
+        "id_web": "1013",
+        "id_in_game": "1013",
+        "image": "https://images.habbotemplarios.com/furni/carrinho_de_sorvetes.png"
+      }
+    },
+    {
+      "id": 14,
+      "name": "Calippo",
+      "category": "doces",
+      "subcategory": "sorvetes",
+      "rarity": "common",
+      "image": "https://i.imgur.com/calippo.png",
+      "description": "Picolé refrescante",
+      "type": "handitem",
+      "id_web": "14",
+      "id_in_game": "14",
+      "mobi": {
+        "name": "Carrinho de Sorvetes",
+        "id_web": "1014",
+        "id_in_game": "1014",
+        "image": "https://images.habbotemplarios.com/furni/carrinho_de_sorvetes.png"
+      }
+    },
+    {
+      "id": 15,
+      "name": "Chocolate",
+      "category": "doces",
+      "subcategory": "chocolates",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_chocolate.png",
+      "description": "Chocolate cremoso e doce",
+      "type": "handitem",
+      "id_web": "15",
+      "id_in_game": "15",
+      "mobi": {
+        "name": "Chocolateria",
+        "id_web": "1015",
+        "id_in_game": "1015",
+        "image": "https://images.habbotemplarios.com/furni/chocolateria.png"
+      }
+    },
+    {
+      "id": 16,
+      "name": "Bolo",
+      "category": "doces",
+      "subcategory": "bolos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bolo.png",
+      "description": "Bolo fofo e delicioso",
+      "type": "handitem",
+      "id_web": "16",
+      "id_in_game": "16",
+      "mobi": {
+        "name": "Confeitaria",
+        "id_web": "1016",
+        "id_in_game": "1016",
+        "image": "https://images.habbotemplarios.com/furni/confeitaria.png"
+      }
+    },
+    {
+      "id": 17,
+      "name": "Pudim",
+      "category": "doces",
+      "subcategory": "sobremesas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_pudim.png",
+      "description": "Pudim cremoso",
+      "type": "handitem",
+      "id_web": "17",
+      "id_in_game": "17",
+      "mobi": {
+        "name": "Confeitaria",
+        "id_web": "1017",
+        "id_in_game": "1017",
+        "image": "https://images.habbotemplarios.com/furni/confeitaria.png"
+      }
+    },
+    {
+      "id": 18,
+      "name": "Bola",
+      "category": "brinquedos",
+      "subcategory": "esportes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bola.png",
+      "description": "Bola para brincar",
+      "type": "handitem",
+      "id_web": "18",
+      "id_in_game": "18",
+      "mobi": {
+        "name": "Loja de Brinquedos",
+        "id_web": "1018",
+        "id_in_game": "1018",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_brinquedos.png"
+      }
+    },
+    {
+      "id": 19,
+      "name": "Boneca",
+      "category": "brinquedos",
+      "subcategory": "bonecas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_boneca.png",
+      "description": "Boneca fofa",
+      "type": "handitem",
+      "id_web": "19",
+      "id_in_game": "19",
+      "mobi": {
+        "name": "Loja de Brinquedos",
+        "id_web": "1019",
+        "id_in_game": "1019",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_brinquedos.png"
+      }
+    },
+    {
+      "id": 20,
+      "name": "Carrinho",
+      "category": "brinquedos",
+      "subcategory": "veículos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_carrinho.png",
+      "description": "Carrinho de brinquedo",
+      "type": "handitem",
+      "id_web": "20",
+      "id_in_game": "20",
+      "mobi": {
+        "name": "Loja de Brinquedos",
+        "id_web": "1020",
+        "id_in_game": "1020",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_brinquedos.png"
+      }
+    },
+    {
+      "id": 21,
+      "name": "Martelo",
+      "category": "ferramentas",
+      "subcategory": "construção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_martelo.png",
+      "description": "Martelo para construção",
+      "type": "handitem",
+      "id_web": "21",
+      "id_in_game": "21",
+      "mobi": {
+        "name": "Ferramentaria",
+        "id_web": "1021",
+        "id_in_game": "1021",
+        "image": "https://images.habbotemplarios.com/furni/ferramentaria.png"
+      }
+    },
+    {
+      "id": 22,
+      "name": "Chave de Fenda",
+      "category": "ferramentas",
+      "subcategory": "construção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_chave_de_fenda.png",
+      "description": "Chave de fenda",
+      "type": "handitem",
+      "id_web": "22",
+      "id_in_game": "22",
+      "mobi": {
+        "name": "Ferramentaria",
+        "id_web": "1022",
+        "id_in_game": "1022",
+        "image": "https://images.habbotemplarios.com/furni/ferramentaria.png"
+      }
+    },
+    {
+      "id": 23,
+      "name": "Serra",
+      "category": "ferramentas",
+      "subcategory": "construção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_serra.png",
+      "description": "Serra para cortar madeira",
+      "type": "handitem",
+      "id_web": "23",
+      "id_in_game": "23",
+      "mobi": {
+        "name": "Ferramentaria",
+        "id_web": "1023",
+        "id_in_game": "1023",
+        "image": "https://images.habbotemplarios.com/furni/ferramentaria.png"
+      }
+    },
+    {
+      "id": 24,
+      "name": "Violão",
+      "category": "música",
+      "subcategory": "instrumentos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_viol_o.png",
+      "description": "Violão para tocar música",
+      "type": "handitem",
+      "id_web": "24",
+      "id_in_game": "24",
+      "mobi": {
+        "name": "Loja de Instrumentos",
+        "id_web": "1024",
+        "id_in_game": "1024",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_instrumentos.png"
+      }
+    },
+    {
+      "id": 25,
+      "name": "Microfone",
+      "category": "música",
+      "subcategory": "equipamentos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_microfone.png",
+      "description": "Microfone para cantar",
+      "type": "handitem",
+      "id_web": "25",
+      "id_in_game": "25",
+      "mobi": {
+        "name": "Estúdio de Música",
+        "id_web": "1025",
+        "id_in_game": "1025",
+        "image": "https://images.habbotemplarios.com/furni/est_dio_de_m_sica.png"
+      }
+    },
+    {
+      "id": 26,
+      "name": "Trompete",
+      "category": "música",
+      "subcategory": "instrumentos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_trompete.png",
+      "description": "Trompete de metal",
+      "type": "handitem",
+      "id_web": "26",
+      "id_in_game": "26",
+      "mobi": {
+        "name": "Loja de Instrumentos",
+        "id_web": "1026",
+        "id_in_game": "1026",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_instrumentos.png"
+      }
+    },
+    {
+      "id": 27,
+      "name": "Raquete",
+      "category": "esportes",
+      "subcategory": "tênis",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_raquete.png",
+      "description": "Raquete de tênis",
+      "type": "handitem",
+      "id_web": "27",
+      "id_in_game": "27",
+      "mobi": {
+        "name": "Loja de Esportes",
+        "id_web": "1027",
+        "id_in_game": "1027",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_esportes.png"
+      }
+    },
+    {
+      "id": 28,
+      "name": "Bola de Futebol",
+      "category": "esportes",
+      "subcategory": "futebol",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bola_de_futebol.png",
+      "description": "Bola de futebol",
+      "type": "handitem",
+      "id_web": "28",
+      "id_in_game": "28",
+      "mobi": {
+        "name": "Loja de Esportes",
+        "id_web": "1028",
+        "id_in_game": "1028",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_esportes.png"
+      }
+    },
+    {
+      "id": 29,
+      "name": "Taco de Beisebol",
+      "category": "esportes",
+      "subcategory": "beisebol",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_taco_de_beisebol.png",
+      "description": "Taco de beisebol",
+      "type": "handitem",
+      "id_web": "29",
+      "id_in_game": "29",
+      "mobi": {
+        "name": "Loja de Esportes",
+        "id_web": "1029",
+        "id_in_game": "1029",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_esportes.png"
+      }
+    },
+    {
+      "id": 30,
+      "name": "Celular",
+      "category": "tecnologia",
+      "subcategory": "comunicação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_celular.png",
+      "description": "Celular moderno",
+      "type": "handitem",
+      "id_web": "30",
+      "id_in_game": "30",
+      "mobi": {
+        "name": "Loja de Eletrônicos",
+        "id_web": "1030",
+        "id_in_game": "1030",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_eletr_nicos.png"
+      }
+    },
+    {
+      "id": 31,
+      "name": "Tablet",
+      "category": "tecnologia",
+      "subcategory": "computação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_tablet.png",
+      "description": "Tablet para trabalhar",
+      "type": "handitem",
+      "id_web": "31",
+      "id_in_game": "31",
+      "mobi": {
+        "name": "Loja de Eletrônicos",
+        "id_web": "1031",
+        "id_in_game": "1031",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_eletr_nicos.png"
+      }
+    },
+    {
+      "id": 32,
+      "name": "Câmera",
+      "category": "tecnologia",
+      "subcategory": "fotografia",
+      "rarity": "common",
+      "image": "https://i.imgur.com/camera.png",
+      "description": "Câmera digital",
+      "type": "handitem",
+      "id_web": "32",
+      "id_in_game": "32",
+      "mobi": {
+        "name": "Loja de Eletrônicos",
+        "id_web": "1032",
+        "id_in_game": "1032",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_eletr_nicos.png"
+      }
+    },
+    {
+      "id": 33,
+      "name": "Livro",
+      "category": "educação",
+      "subcategory": "livros",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_livro.png",
+      "description": "Livro para ler",
+      "type": "handitem",
+      "id_web": "33",
+      "id_in_game": "33",
+      "mobi": {
+        "name": "Biblioteca",
+        "id_web": "1033",
+        "id_in_game": "1033",
+        "image": "https://images.habbotemplarios.com/furni/biblioteca.png"
+      }
+    },
+    {
+      "id": 34,
+      "name": "Revista",
+      "category": "educação",
+      "subcategory": "revistas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_revista.png",
+      "description": "Revista informativa",
+      "type": "handitem",
+      "id_web": "34",
+      "id_in_game": "34",
+      "mobi": {
+        "name": "Banca de Jornais",
+        "id_web": "1034",
+        "id_in_game": "1034",
+        "image": "https://images.habbotemplarios.com/furni/banca_de_jornais.png"
+      }
+    },
+    {
+      "id": 35,
+      "name": "Jornal",
+      "category": "educação",
+      "subcategory": "jornais",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_jornal.png",
+      "description": "Jornal diário",
+      "type": "handitem",
+      "id_web": "35",
+      "id_in_game": "35",
+      "mobi": {
+        "name": "Banca de Jornais",
+        "id_web": "1035",
+        "id_in_game": "1035",
+        "image": "https://images.habbotemplarios.com/furni/banca_de_jornais.png"
+      }
+    },
+    {
+      "id": 36,
+      "name": "Vaso de Flores",
+      "category": "decoração",
+      "subcategory": "plantas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_vaso_de_flores.png",
+      "description": "Vaso com flores bonitas",
+      "type": "handitem",
+      "id_web": "36",
+      "id_in_game": "36",
+      "mobi": {
+        "name": "Floricultura",
+        "id_web": "1036",
+        "id_in_game": "1036",
+        "image": "https://images.habbotemplarios.com/furni/floricultura.png"
+      }
+    },
+    {
+      "id": 37,
+      "name": "Candeeiro",
+      "category": "decoração",
+      "subcategory": "iluminação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_candeeiro.png",
+      "description": "Candeeiro decorativo",
+      "type": "handitem",
+      "id_web": "37",
+      "id_in_game": "37",
+      "mobi": {
+        "name": "Loja de Decoração",
+        "id_web": "1037",
+        "id_in_game": "1037",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_decora_o.png"
+      }
+    },
+    {
+      "id": 38,
+      "name": "Relógio",
+      "category": "decoração",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_rel_gio.png",
+      "description": "Relógio de parede",
+      "type": "handitem",
+      "id_web": "38",
+      "id_in_game": "38",
+      "mobi": {
+        "name": "Loja de Decoração",
+        "id_web": "1038",
+        "id_in_game": "1038",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_decora_o.png"
+      }
+    },
+    {
+      "id": 39,
+      "name": "Chapéu",
+      "category": "roupas",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_chap_u.png",
+      "description": "Chapéu elegante",
+      "type": "handitem",
+      "id_web": "39",
+      "id_in_game": "39",
+      "mobi": {
+        "name": "Loja de Roupas",
+        "id_web": "1039",
+        "id_in_game": "1039",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_roupas.png"
+      }
+    },
+    {
+      "id": 40,
+      "name": "Óculos",
+      "category": "roupas",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_culos.png",
+      "description": "Óculos de sol",
+      "type": "handitem",
+      "id_web": "40",
+      "id_in_game": "40",
+      "mobi": {
+        "name": "Loja de Roupas",
+        "id_web": "1040",
+        "id_in_game": "1040",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_roupas.png"
+      }
+    },
+    {
+      "id": 41,
+      "name": "Luvas",
+      "category": "roupas",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_luvas.png",
+      "description": "Luvas quentes",
+      "type": "handitem",
+      "id_web": "41",
+      "id_in_game": "41",
+      "mobi": {
+        "name": "Loja de Roupas",
+        "id_web": "1041",
+        "id_in_game": "1041",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_roupas.png"
+      }
+    },
+    {
+      "id": 42,
+      "name": "Chave",
+      "category": "especiais",
+      "subcategory": "chaves",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_chave.png",
+      "description": "Chave misteriosa",
+      "type": "handitem",
+      "id_web": "42",
+      "id_in_game": "42",
+      "mobi": {
+        "name": "Baú do Tesouro",
+        "id_web": "1042",
+        "id_in_game": "1042",
+        "image": "https://images.habbotemplarios.com/furni/ba_do_tesouro.png"
+      }
+    },
+    {
+      "id": 43,
+      "name": "Anel",
+      "category": "especiais",
+      "subcategory": "joias",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_anel.png",
+      "description": "Anel precioso",
+      "type": "handitem",
+      "id_web": "43",
+      "id_in_game": "43",
+      "mobi": {
+        "name": "Joalheria",
+        "id_web": "1043",
+        "id_in_game": "1043",
+        "image": "https://images.habbotemplarios.com/furni/joalheria.png"
+      }
+    },
+    {
+      "id": 44,
+      "name": "Coroa",
+      "category": "especiais",
+      "subcategory": "joias",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_coroa.png",
+      "description": "Coroa real",
+      "type": "handitem",
+      "id_web": "44",
+      "id_in_game": "44",
+      "mobi": {
+        "name": "Tesouro Real",
+        "id_web": "1044",
+        "id_in_game": "1044",
+        "image": "https://images.habbotemplarios.com/furni/tesouro_real.png"
+      }
+    },
+    {
+      "id": 45,
+      "name": "Cristal",
+      "category": "especiais",
+      "subcategory": "cristais",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_cristal.png",
+      "description": "Cristal mágico",
+      "type": "handitem",
+      "id_web": "45",
+      "id_in_game": "45",
+      "mobi": {
+        "name": "Caverna Mágica",
+        "id_web": "1045",
+        "id_in_game": "1045",
+        "image": "https://images.habbotemplarios.com/furni/caverna_m_gica.png"
+      }
+    },
+    {
+      "id": 46,
+      "name": "Bala",
+      "category": "festa",
+      "subcategory": "doces",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bala.png",
+      "description": "Bala colorida",
+      "type": "handitem",
+      "id_web": "46",
+      "id_in_game": "46",
+      "mobi": {
+        "name": "Loja de Doces",
+        "id_web": "1046",
+        "id_in_game": "1046",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_doces.png"
+      }
+    },
+    {
+      "id": 47,
+      "name": "Bexiga",
+      "category": "festa",
+      "subcategory": "decoração",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bexiga.png",
+      "description": "Bexiga colorida",
+      "type": "handitem",
+      "id_web": "47",
+      "id_in_game": "47",
+      "mobi": {
+        "name": "Loja de Festa",
+        "id_web": "1047",
+        "id_in_game": "1047",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_festa.png"
+      }
+    },
+    {
+      "id": 48,
+      "name": "Vela",
+      "category": "festa",
+      "subcategory": "decoração",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_vela.png",
+      "description": "Vela de aniversário",
+      "type": "handitem",
+      "id_web": "48",
+      "id_in_game": "48",
+      "mobi": {
+        "name": "Loja de Festa",
+        "id_web": "1048",
+        "id_in_game": "1048",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_festa.png"
+      }
+    },
+    {
+      "id": 49,
+      "name": "Garfo",
+      "category": "cozinha",
+      "subcategory": "talheres",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_garfo.png",
+      "description": "Garfo para comer",
+      "type": "handitem",
+      "id_web": "49",
+      "id_in_game": "49",
+      "mobi": {
+        "name": "Loja de Utensílios",
+        "id_web": "1049",
+        "id_in_game": "1049",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_utens_lios.png"
+      }
+    },
+    {
+      "id": 50,
+      "name": "Faca",
+      "category": "cozinha",
+      "subcategory": "talheres",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_faca.png",
+      "description": "Faca para cortar",
+      "type": "handitem",
+      "id_web": "50",
+      "id_in_game": "50",
+      "mobi": {
+        "name": "Loja de Utensílios",
+        "id_web": "1050",
+        "id_in_game": "1050",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_utens_lios.png"
+      }
+    },
+    {
+      "id": 51,
+      "name": "Colher",
+      "category": "cozinha",
+      "subcategory": "talheres",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_colher.png",
+      "description": "Colher para comer",
+      "type": "handitem",
+      "id_web": "51",
+      "id_in_game": "51",
+      "mobi": {
+        "name": "Loja de Utensílios",
+        "id_web": "1051",
+        "id_in_game": "1051",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_utens_lios.png"
+      }
+    },
+    {
+      "id": 52,
+      "name": "Vassoura",
+      "category": "limpeza",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_vassoura.png",
+      "description": "Vassoura para limpar",
+      "type": "handitem",
+      "id_web": "52",
+      "id_in_game": "52",
+      "mobi": {
+        "name": "Loja de Limpeza",
+        "id_web": "1052",
+        "id_in_game": "1052",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png"
+      }
+    },
+    {
+      "id": 53,
+      "name": "Balde",
+      "category": "limpeza",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_balde.png",
+      "description": "Balde para água",
+      "type": "handitem",
+      "id_web": "53",
+      "id_in_game": "53",
+      "mobi": {
+        "name": "Loja de Limpeza",
+        "id_web": "1053",
+        "id_in_game": "1053",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png"
+      }
+    },
+    {
+      "id": 54,
+      "name": "Esponja",
+      "category": "limpeza",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_esponja.png",
+      "description": "Esponja para lavar",
+      "type": "handitem",
+      "id_web": "54",
+      "id_in_game": "54",
+      "mobi": {
+        "name": "Loja de Limpeza",
+        "id_web": "1054",
+        "id_in_game": "1054",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png"
+      }
+    },
+    {
+      "id": 55,
+      "name": "Regador",
+      "category": "jardinagem",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_regador.png",
+      "description": "Regador para plantas",
+      "type": "handitem",
+      "id_web": "55",
+      "id_in_game": "55",
+      "mobi": {
+        "name": "Loja de Jardinagem",
+        "id_web": "1055",
+        "id_in_game": "1055",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png"
+      }
+    },
+    {
+      "id": 56,
+      "name": "Pá",
+      "category": "jardinagem",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_p.png",
+      "description": "Pá para cavar",
+      "type": "handitem",
+      "id_web": "56",
+      "id_in_game": "56",
+      "mobi": {
+        "name": "Loja de Jardinagem",
+        "id_web": "1056",
+        "id_in_game": "1056",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png"
+      }
+    },
+    {
+      "id": 57,
+      "name": "Tesoura",
+      "category": "jardinagem",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_tesoura.png",
+      "description": "Tesoura para podar",
+      "type": "handitem",
+      "id_web": "57",
+      "id_in_game": "57",
+      "mobi": {
+        "name": "Loja de Jardinagem",
+        "id_web": "1057",
+        "id_in_game": "1057",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png"
+      }
+    },
+    {
+      "id": 58,
+      "name": "Caneta",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_caneta.png",
+      "description": "Caneta para escrever",
+      "type": "handitem",
+      "id_web": "58",
+      "id_in_game": "58",
+      "mobi": {
+        "name": "Papelaria",
+        "id_web": "1058",
+        "id_in_game": "1058",
+        "image": "https://images.habbotemplarios.com/furni/papelaria.png"
+      }
+    },
+    {
+      "id": 59,
+      "name": "Lápis",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_l_pis.png",
+      "description": "Lápis para desenhar",
+      "type": "handitem",
+      "id_web": "59",
+      "id_in_game": "59",
+      "mobi": {
+        "name": "Papelaria",
+        "id_web": "1059",
+        "id_in_game": "1059",
+        "image": "https://images.habbotemplarios.com/furni/papelaria.png"
+      }
+    },
+    {
+      "id": 60,
+      "name": "Borracha",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_borracha.png",
+      "description": "Borracha para apagar",
+      "type": "handitem",
+      "id_web": "60",
+      "id_in_game": "60",
+      "mobi": {
+        "name": "Papelaria",
+        "id_web": "1060",
+        "id_in_game": "1060",
+        "image": "https://images.habbotemplarios.com/furni/papelaria.png"
+      }
+    },
+    {
+      "id": 61,
+      "name": "Termômetro",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_term_metro.png",
+      "description": "Termômetro médico",
+      "type": "handitem",
+      "id_web": "61",
+      "id_in_game": "61",
+      "mobi": {
+        "name": "Farmácia",
+        "id_web": "1061",
+        "id_in_game": "1061",
+        "image": "https://images.habbotemplarios.com/furni/farm_cia.png"
+      }
+    },
+    {
+      "id": 62,
+      "name": "Band-aid",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_band_aid.png",
+      "description": "Band-aid para curar",
+      "type": "handitem",
+      "id_web": "62",
+      "id_in_game": "62",
+      "mobi": {
+        "name": "Farmácia",
+        "id_web": "1062",
+        "id_in_game": "1062",
+        "image": "https://images.habbotemplarios.com/furni/farm_cia.png"
+      }
+    },
+    {
+      "id": 63,
+      "name": "Pílula",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_p_lula.png",
+      "description": "Pílula medicinal",
+      "type": "handitem",
+      "id_web": "63",
+      "id_in_game": "63",
+      "mobi": {
+        "name": "Farmácia",
+        "id_web": "1063",
+        "id_in_game": "1063",
+        "image": "https://images.habbotemplarios.com/furni/farm_cia.png"
+      }
+    },
+    {
+      "id": 64,
+      "name": "Mala",
+      "category": "viagem",
+      "subcategory": "bagagem",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_mala.png",
+      "description": "Mala para viajar",
+      "type": "handitem",
+      "id_web": "64",
+      "id_in_game": "64",
+      "mobi": {
+        "name": "Loja de Viagem",
+        "id_web": "1064",
+        "id_in_game": "1064",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png"
+      }
+    },
+    {
+      "id": 65,
+      "name": "Câmera",
+      "category": "viagem",
+      "subcategory": "fotografia",
+      "rarity": "common",
+      "image": "https://i.imgur.com/camera.png",
+      "description": "Câmera de viagem",
+      "type": "handitem",
+      "id_web": "65",
+      "id_in_game": "65",
+      "mobi": {
+        "name": "Loja de Viagem",
+        "id_web": "1065",
+        "id_in_game": "1065",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png"
+      }
+    },
+    {
+      "id": 66,
+      "name": "Mapa",
+      "category": "viagem",
+      "subcategory": "navegação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_mapa.png",
+      "description": "Mapa para navegar",
+      "type": "handitem",
+      "id_web": "66",
+      "id_in_game": "66",
+      "mobi": {
+        "name": "Loja de Viagem",
+        "id_web": "1066",
+        "id_in_game": "1066",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png"
+      }
+    },
+    {
+      "id": 67,
+      "name": "Pincel",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_pincel.png",
+      "description": "Pincel para pintar",
+      "type": "handitem",
+      "id_web": "67",
+      "id_in_game": "67",
+      "mobi": {
+        "name": "Loja de Arte",
+        "id_web": "1067",
+        "id_in_game": "1067",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png"
+      }
+    },
+    {
+      "id": 68,
+      "name": "Tinta",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_tinta.png",
+      "description": "Tinta colorida",
+      "type": "handitem",
+      "id_web": "68",
+      "id_in_game": "68",
+      "mobi": {
+        "name": "Loja de Arte",
+        "id_web": "1068",
+        "id_in_game": "1068",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png"
+      }
+    },
+    {
+      "id": 69,
+      "name": "Tela",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_tela.png",
+      "description": "Tela para pintar",
+      "type": "handitem",
+      "id_web": "69",
+      "id_in_game": "69",
+      "mobi": {
+        "name": "Loja de Arte",
+        "id_web": "1069",
+        "id_in_game": "1069",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png"
+      }
+    },
+    {
+      "id": 70,
+      "name": "Varinha",
+      "category": "mágica",
+      "subcategory": "instrumentos",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_varinha.png",
+      "description": "Varinha mágica",
+      "type": "handitem",
+      "id_web": "70",
+      "id_in_game": "70",
+      "mobi": {
+        "name": "Loja de Magia",
+        "id_web": "1070",
+        "id_in_game": "1070",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png"
+      }
+    },
+    {
+      "id": 71,
+      "name": "Cristal",
+      "category": "mágica",
+      "subcategory": "cristais",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_cristal.png",
+      "description": "Cristal mágico",
+      "type": "handitem",
+      "id_web": "71",
+      "id_in_game": "71",
+      "mobi": {
+        "name": "Loja de Magia",
+        "id_web": "1071",
+        "id_in_game": "1071",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png"
+      }
+    },
+    {
+      "id": 72,
+      "name": "Livro de Feitiços",
+      "category": "mágica",
+      "subcategory": "livros",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_livro_de_feiti_os.png",
+      "description": "Livro de feitiços antigos",
+      "type": "handitem",
+      "id_web": "72",
+      "id_in_game": "72",
+      "mobi": {
+        "name": "Loja de Magia",
+        "id_web": "1072",
+        "id_in_game": "1072",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png"
+      }
+    },
+    {
+      "id": 73,
+      "name": "Microscópio",
+      "category": "ciência",
+      "subcategory": "laboratório",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_microsc_pio.png",
+      "description": "Microscópio para pesquisar",
+      "type": "handitem",
+      "id_web": "73",
+      "id_in_game": "73",
+      "mobi": {
+        "name": "Laboratório Científico",
+        "id_web": "1073",
+        "id_in_game": "1073",
+        "image": "https://images.habbotemplarios.com/furni/laborat_rio_cient_fico.png"
+      }
+    },
+    {
+      "id": 74,
+      "name": "Tubo de Ensaio",
+      "category": "ciência",
+      "subcategory": "laboratório",
+      "rarity": "common",
+      "image": "https://i.imgur.com/test_tube.png",
+      "description": "Tubo de ensaio",
+      "type": "handitem",
+      "id_web": "74",
+      "id_in_game": "74",
+      "mobi": {
+        "name": "Laboratório Científico",
+        "id_web": "1074",
+        "id_in_game": "1074",
+        "image": "https://images.habbotemplarios.com/furni/laborat_rio_cient_fico.png"
+      }
+    },
+    {
+      "id": 75,
+      "name": "Bata de Laboratório",
+      "category": "ciência",
+      "subcategory": "roupas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bata_de_laborat_rio.png",
+      "description": "Bata de laboratório",
+      "type": "handitem",
+      "id_web": "75",
+      "id_in_game": "75",
+      "mobi": {
+        "name": "Laboratório Científico",
+        "id_web": "1075",
+        "id_in_game": "1075",
+        "image": "https://images.habbotemplarios.com/furni/laborat_rio_cient_fico.png"
+      }
+    },
+    {
+      "id": 76,
+      "name": "Óculos de Natação",
+      "category": "esporte",
+      "subcategory": "aquático",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_culos_de_nata_o.png",
+      "description": "Óculos para nadar",
+      "type": "handitem",
+      "id_web": "76",
+      "id_in_game": "76",
+      "mobi": {
+        "name": "Loja de Esportes Aquáticos",
+        "id_web": "1076",
+        "id_in_game": "1076",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_esportes_aqu_ticos.png"
+      }
+    },
+    {
+      "id": 77,
+      "name": "Bóia",
+      "category": "esporte",
+      "subcategory": "aquático",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_b_ia.png",
+      "description": "Bóia para flutuar",
+      "type": "handitem",
+      "id_web": "77",
+      "id_in_game": "77",
+      "mobi": {
+        "name": "Loja de Esportes Aquáticos",
+        "id_web": "1077",
+        "id_in_game": "1077",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_esportes_aqu_ticos.png"
+      }
+    },
+    {
+      "id": 78,
+      "name": "Snorkel",
+      "category": "esporte",
+      "subcategory": "aquático",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_snorkel.png",
+      "description": "Snorkel para mergulhar",
+      "type": "handitem",
+      "id_web": "78",
+      "id_in_game": "78",
+      "mobi": {
+        "name": "Loja de Esportes Aquáticos",
+        "id_web": "1078",
+        "id_in_game": "1078",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_esportes_aqu_ticos.png"
+      }
+    },
+    {
+      "id": 79,
+      "name": "Colher de Pau",
+      "category": "culinária",
+      "subcategory": "utensílios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_colher_de_pau.png",
+      "description": "Colher de pau para cozinhar",
+      "type": "handitem",
+      "id_web": "79",
+      "id_in_game": "79",
+      "mobi": {
+        "name": "Loja de Culinária",
+        "id_web": "1079",
+        "id_in_game": "1079",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_culin_ria.png"
+      }
+    },
+    {
+      "id": 80,
+      "name": "Frigideira",
+      "category": "culinária",
+      "subcategory": "utensílios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_frigideira.png",
+      "description": "Frigideira para fritar",
+      "type": "handitem",
+      "id_web": "80",
+      "id_in_game": "80",
+      "mobi": {
+        "name": "Loja de Culinária",
+        "id_web": "1080",
+        "id_in_game": "1080",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_culin_ria.png"
+      }
+    },
+    {
+      "id": 81,
+      "name": "Tigela",
+      "category": "culinária",
+      "subcategory": "utensílios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_tigela.png",
+      "description": "Tigela para misturar",
+      "type": "handitem",
+      "id_web": "81",
+      "id_in_game": "81",
+      "mobi": {
+        "name": "Loja de Culinária",
+        "id_web": "1081",
+        "id_in_game": "1081",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_culin_ria.png"
+      }
+    },
+    {
+      "id": 82,
+      "name": "Aspirador",
+      "category": "limpeza",
+      "subcategory": "eletrodomésticos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_aspirador.png",
+      "description": "Aspirador de pó",
+      "type": "handitem",
+      "id_web": "82",
+      "id_in_game": "82",
+      "mobi": {
+        "name": "Loja de Eletrodomésticos",
+        "id_web": "1082",
+        "id_in_game": "1082",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_eletrodom_sticos.png"
+      }
+    },
+    {
+      "id": 83,
+      "name": "Detergente",
+      "category": "limpeza",
+      "subcategory": "produtos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_detergente.png",
+      "description": "Detergente para lavar",
+      "type": "handitem",
+      "id_web": "83",
+      "id_in_game": "83",
+      "mobi": {
+        "name": "Loja de Limpeza",
+        "id_web": "1083",
+        "id_in_game": "1083",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png"
+      }
+    },
+    {
+      "id": 84,
+      "name": "Papel Toalha",
+      "category": "limpeza",
+      "subcategory": "produtos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_papel_toalha.png",
+      "description": "Papel toalha",
+      "type": "handitem",
+      "id_web": "84",
+      "id_in_game": "84",
+      "mobi": {
+        "name": "Loja de Limpeza",
+        "id_web": "1084",
+        "id_in_game": "1084",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png"
+      }
+    },
+    {
+      "id": 85,
+      "name": "Mangueira",
+      "category": "jardinagem",
+      "subcategory": "irrigação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_mangueira.png",
+      "description": "Mangueira para regar",
+      "type": "handitem",
+      "id_web": "85",
+      "id_in_game": "85",
+      "mobi": {
+        "name": "Loja de Jardinagem",
+        "id_web": "1085",
+        "id_in_game": "1085",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png"
+      }
+    },
+    {
+      "id": 86,
+      "name": "Adubo",
+      "category": "jardinagem",
+      "subcategory": "fertilizantes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_adubo.png",
+      "description": "Adubo para plantas",
+      "type": "handitem",
+      "id_web": "86",
+      "id_in_game": "86",
+      "mobi": {
+        "name": "Loja de Jardinagem",
+        "id_web": "1086",
+        "id_in_game": "1086",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png"
+      }
+    },
+    {
+      "id": 87,
+      "name": "Sementes",
+      "category": "jardinagem",
+      "subcategory": "plantas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_sementes.png",
+      "description": "Sementes para plantar",
+      "type": "handitem",
+      "id_web": "87",
+      "id_in_game": "87",
+      "mobi": {
+        "name": "Loja de Jardinagem",
+        "id_web": "1087",
+        "id_in_game": "1087",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png"
+      }
+    },
+    {
+      "id": 88,
+      "name": "Calculadora",
+      "category": "escritório",
+      "subcategory": "eletrônicos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_calculadora.png",
+      "description": "Calculadora para calcular",
+      "type": "handitem",
+      "id_web": "88",
+      "id_in_game": "88",
+      "mobi": {
+        "name": "Papelaria",
+        "id_web": "1088",
+        "id_in_game": "1088",
+        "image": "https://images.habbotemplarios.com/furni/papelaria.png"
+      }
+    },
+    {
+      "id": 89,
+      "name": "Grampeador",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_grampeador.png",
+      "description": "Grampeador para prender",
+      "type": "handitem",
+      "id_web": "89",
+      "id_in_game": "89",
+      "mobi": {
+        "name": "Papelaria",
+        "id_web": "1089",
+        "id_in_game": "1089",
+        "image": "https://images.habbotemplarios.com/furni/papelaria.png"
+      }
+    },
+    {
+      "id": 90,
+      "name": "Clipes",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_clipes.png",
+      "description": "Clipes para organizar",
+      "type": "handitem",
+      "id_web": "90",
+      "id_in_game": "90",
+      "mobi": {
+        "name": "Papelaria",
+        "id_web": "1090",
+        "id_in_game": "1090",
+        "image": "https://images.habbotemplarios.com/furni/papelaria.png"
+      }
+    },
+    {
+      "id": 91,
+      "name": "Estetoscópio",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_estetosc_pio.png",
+      "description": "Estetoscópio médico",
+      "type": "handitem",
+      "id_web": "91",
+      "id_in_game": "91",
+      "mobi": {
+        "name": "Hospital",
+        "id_web": "1091",
+        "id_in_game": "1091",
+        "image": "https://images.habbotemplarios.com/furni/hospital.png"
+      }
+    },
+    {
+      "id": 92,
+      "name": "Seringa",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://i.imgur.com/u8R1Arz.png",
+      "description": "Seringa para medicar",
+      "type": "handitem",
+      "id_web": "92",
+      "id_in_game": "92",
+      "mobi": {
+        "name": "Hospital",
+        "id_web": "1092",
+        "id_in_game": "1092",
+        "image": "https://images.habbotemplarios.com/furni/hospital.png"
+      }
+    },
+    {
+      "id": 93,
+      "name": "Máscara",
+      "category": "saúde",
+      "subcategory": "proteção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_m_scara.png",
+      "description": "Máscara de proteção",
+      "type": "handitem",
+      "id_web": "93",
+      "id_in_game": "93",
+      "mobi": {
+        "name": "Hospital",
+        "id_web": "1093",
+        "id_in_game": "1093",
+        "image": "https://images.habbotemplarios.com/furni/hospital.png"
+      }
+    },
+    {
+      "id": 94,
+      "name": "Binóculos",
+      "category": "viagem",
+      "subcategory": "observação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_bin_culos.png",
+      "description": "Binóculos para observar",
+      "type": "handitem",
+      "id_web": "94",
+      "id_in_game": "94",
+      "mobi": {
+        "name": "Loja de Viagem",
+        "id_web": "1094",
+        "id_in_game": "1094",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png"
+      }
+    },
+    {
+      "id": 95,
+      "name": "Bússola",
+      "category": "viagem",
+      "subcategory": "navegação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_b_ssola.png",
+      "description": "Bússola para navegar",
+      "type": "handitem",
+      "id_web": "95",
+      "id_in_game": "95",
+      "mobi": {
+        "name": "Loja de Viagem",
+        "id_web": "1095",
+        "id_in_game": "1095",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png"
+      }
+    },
+    {
+      "id": 96,
+      "name": "Lanterna",
+      "category": "viagem",
+      "subcategory": "iluminação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_lanterna.png",
+      "description": "Lanterna para iluminar",
+      "type": "handitem",
+      "id_web": "96",
+      "id_in_game": "96",
+      "mobi": {
+        "name": "Loja de Viagem",
+        "id_web": "1096",
+        "id_in_game": "1096",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png"
+      }
+    },
+    {
+      "id": 97,
+      "name": "Paleta",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_paleta.png",
+      "description": "Paleta de cores",
+      "type": "handitem",
+      "id_web": "97",
+      "id_in_game": "97",
+      "mobi": {
+        "name": "Loja de Arte",
+        "id_web": "1097",
+        "id_in_game": "1097",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png"
+      }
+    },
+    {
+      "id": 98,
+      "name": "Cavalete",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_cavalete.png",
+      "description": "Cavalete para pintar",
+      "type": "handitem",
+      "id_web": "98",
+      "id_in_game": "98",
+      "mobi": {
+        "name": "Loja de Arte",
+        "id_web": "1098",
+        "id_in_game": "1098",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png"
+      }
+    },
+    {
+      "id": 99,
+      "name": "Escultura",
+      "category": "arte",
+      "subcategory": "escultura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_escultura.png",
+      "description": "Escultura artística",
+      "type": "handitem",
+      "id_web": "99",
+      "id_in_game": "99",
+      "mobi": {
+        "name": "Loja de Arte",
+        "id_web": "1099",
+        "id_in_game": "1099",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png"
+      }
+    },
+    {
+      "id": 100,
+      "name": "Cristal Mágico",
+      "category": "mágica",
+      "subcategory": "cristais",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_cristal_m_gico.png",
+      "description": "Cristal mágico poderoso",
+      "type": "handitem",
+      "id_web": "100",
+      "id_in_game": "100",
+      "mobi": {
+        "name": "Loja de Magia",
+        "id_web": "1100",
+        "id_in_game": "1100",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png"
+      }
+    },
+    {
+      "id": 101,
+      "name": "Pó de Fada",
+      "category": "mágica",
+      "subcategory": "pós",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_p_de_fada.png",
+      "description": "Pó de fada mágico",
+      "type": "handitem",
+      "id_web": "101",
+      "id_in_game": "101",
+      "mobi": {
+        "name": "Loja de Magia",
+        "id_web": "1101",
+        "id_in_game": "1101",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png"
+      }
+    },
+    {
+      "id": 102,
+      "name": "Amuleto",
+      "category": "mágica",
+      "subcategory": "amuletos",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_amuleto.png",
+      "description": "Amuleto de proteção",
+      "type": "handitem",
+      "id_web": "102",
+      "id_in_game": "102",
+      "mobi": {
+        "name": "Loja de Magia",
+        "id_web": "1102",
+        "id_in_game": "1102",
+        "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png"
+      }
+    },
+    {
+      "id": 200,
+      "name": "Suco",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_juice.png",
+      "description": "Handitem Suco do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 200,
+      "id_in_game": 200,
+      "mobi": null
+    },
+    {
+      "id": 201,
+      "name": "Chá Árabe",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/arabic_tea.png",
+      "description": "Handitem Chá Árabe do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 201,
+      "id_in_game": 201,
+      "mobi": null
+    },
+    {
+      "id": 203,
+      "name": "Pêra",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/0u2ZtNJ.png",
+      "description": "Handitem Pêra do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 203,
+      "id_in_game": 203,
+      "mobi": null
+    },
+    {
+      "id": 204,
+      "name": "Pêssego Suculento",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/VStOTCZ.png",
+      "description": "Handitem Pêssego Suculento do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 204,
+      "id_in_game": 204,
+      "mobi": null
+    },
+    {
+      "id": 205,
+      "name": "Laranja",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/pDRtHvO.png",
+      "description": "Handitem Laranja do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 205,
+      "id_in_game": 205,
+      "mobi": null
+    },
+    {
+      "id": 207,
+      "name": "Uva",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_grapes.png",
+      "description": "Handitem Uva do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 207,
+      "id_in_game": 207,
+      "mobi": null
+    },
+    {
+      "id": 209,
+      "name": "Morango",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_strawberry.png",
+      "description": "Handitem Morango do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 209,
+      "id_in_game": 209,
+      "mobi": null
+    },
+    {
+      "id": 210,
+      "name": "Limão",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_lemon.png",
+      "description": "Handitem Limão do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 210,
+      "id_in_game": 210,
+      "mobi": null
+    },
+    {
+      "id": 211,
+      "name": "Abacaxi",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://i.imgur.com/pineapple.png",
+      "description": "Handitem Abacaxi do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 211,
+      "id_in_game": 211,
+      "mobi": null
+    },
+    {
+      "id": 212,
+      "name": "Melancia",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_watermelon.png",
+      "description": "Handitem Melancia do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 212,
+      "id_in_game": 212,
+      "mobi": null
+    },
+    {
+      "id": 213,
+      "name": "Coco",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_coconut.png",
+      "description": "Handitem Coco do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 213,
+      "id_in_game": 213,
+      "mobi": null
+    },
+    {
+      "id": 214,
+      "name": "Manga",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_mango.png",
+      "description": "Handitem Manga do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 214,
+      "id_in_game": 214,
+      "mobi": null
+    },
+    {
+      "id": 215,
+      "name": "Kiwi",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_kiwi.png",
+      "description": "Handitem Kiwi do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 215,
+      "id_in_game": 215,
+      "mobi": null
+    },
+    {
+      "id": 216,
+      "name": "Pêssego",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_peach2.png",
+      "description": "Handitem Pêssego do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 216,
+      "id_in_game": 216,
+      "mobi": null
+    },
+    {
+      "id": 217,
+      "name": "Cereja",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_cherry.png",
+      "description": "Handitem Cereja do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 217,
+      "id_in_game": 217,
+      "mobi": null
+    },
+    {
+      "id": 218,
+      "name": "Framboesa",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_raspberry.png",
+      "description": "Handitem Framboesa do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 218,
+      "id_in_game": 218,
+      "mobi": null
+    },
+    {
+      "id": 219,
+      "name": "Amora",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_blackberry.png",
+      "description": "Handitem Amora do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 219,
+      "id_in_game": 219,
+      "mobi": null
+    },
+    {
+      "id": 220,
+      "name": "Açaí",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_acai.png",
+      "description": "Handitem Açaí do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 220,
+      "id_in_game": 220,
+      "mobi": null
+    },
+    {
+      "id": 221,
+      "name": "Goiaba",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_guava.png",
+      "description": "Handitem Goiaba do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 221,
+      "id_in_game": 221,
+      "mobi": null
+    },
+    {
+      "id": 222,
+      "name": "Jabuticaba",
+      "category": "Comida",
+      "subcategory": "Frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/web/avatargen/hand_jabuticaba.png",
+      "description": "Handitem Jabuticaba do Viajovem",
+      "variations": [],
+      "discovered": true,
+      "source": "Viajovem",
+      "id_web": 222,
+      "id_in_game": 222,
+      "mobi": null
+    },
+    {
+      "id": 246,
+      "name": "Garrafa de Fanta",
+      "category": "bebidas",
+      "subcategory": "refrigerantes",
+      "rarity": "common",
+      "image": "https://i.imgur.com/HbBXdEx.png",
+      "description": "Uma garrafa de Fanta refrescante",
+      "type": "handitem",
+      "id_web": "246",
+      "id_in_game": "147",
+      "source": "Viajovem"
+    }
+  ],
+  "mobis": [
+    {
+      "id": 1001,
+      "name": "Canteiro de Cenouras",
+      "category": "alimentos",
+      "subcategory": "vegetais",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/1001.png",
+      "description": "Mobi que entrega cenoura",
+      "type": "mobi",
+      "id_web": "1001",
+      "id_in_game": "1001",
+      "handitems": [
+        1
+      ]
+    },
+    {
+      "id": 1002,
+      "name": "Horta de Tomates",
+      "category": "alimentos",
+      "subcategory": "vegetais",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/1002.png",
+      "description": "Mobi que entrega tomate",
+      "type": "mobi",
+      "id_web": "1002",
+      "id_in_game": "1002",
+      "handitems": [
+        2
+      ]
+    },
+    {
+      "id": 1003,
+      "name": "Pomar de Maçãs",
+      "category": "alimentos",
+      "subcategory": "frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/1003.png",
+      "description": "Mobi que entrega maçã",
+      "type": "mobi",
+      "id_web": "1003",
+      "id_in_game": "1003",
+      "handitems": [
+        3
+      ]
+    },
+    {
+      "id": 1004,
+      "name": "Bananeira",
+      "category": "alimentos",
+      "subcategory": "frutas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/1004.png",
+      "description": "Mobi que entrega banana",
+      "type": "mobi",
+      "id_web": "1004",
+      "id_in_game": "1004",
+      "handitems": [
+        4
+      ]
+    },
+    {
+      "id": 1005,
+      "name": "Padaria Artesanal",
+      "category": "alimentos",
+      "subcategory": "padaria",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/1005.png",
+      "description": "Mobi que entrega pão",
+      "type": "mobi",
+      "id_web": "1005",
+      "id_in_game": "1005",
+      "handitems": [
+        5
+      ]
+    },
+    {
+      "id": 1006,
+      "name": "Máquina de Café",
+      "category": "bebidas",
+      "subcategory": "café",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/m_quina_de_caf.png",
+      "description": "Mobi que entrega café",
+      "type": "mobi",
+      "id_web": "1006",
+      "id_in_game": "1006",
+      "handitems": [
+        6
+      ]
+    },
+    {
+      "id": 1007,
+      "name": "Casa de Chá",
+      "category": "bebidas",
+      "subcategory": "chá",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/casa_de_ch.png",
+      "description": "Mobi que entrega chá japonês",
+      "type": "mobi",
+      "id_web": "1007",
+      "id_in_game": "1007",
+      "handitems": [
+        7
+      ]
+    },
+    {
+      "id": 1008,
+      "name": "Máquina de Refrigerantes",
+      "category": "bebidas",
+      "subcategory": "refrigerantes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/m_quina_de_refrigerantes.png",
+      "description": "Mobi que entrega habbocola",
+      "type": "mobi",
+      "id_web": "1008",
+      "id_in_game": "1008",
+      "handitems": [
+        8
+      ]
+    },
+    {
+      "id": 1009,
+      "name": "Fonte de Água",
+      "category": "bebidas",
+      "subcategory": "água",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/fonte_de_gua.png",
+      "description": "Mobi que entrega água",
+      "type": "mobi",
+      "id_web": "1009",
+      "id_in_game": "1009",
+      "handitems": [
+        9
+      ]
+    },
+    {
+      "id": 1010,
+      "name": "Bar de Coquetéis",
+      "category": "bebidas",
+      "subcategory": "alcoólicas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/bar_de_coquet_is.png",
+      "description": "Mobi que entrega coquetel",
+      "type": "mobi",
+      "id_web": "1010",
+      "id_in_game": "1010",
+      "handitems": [
+        10
+      ]
+    },
+    {
+      "id": 1011,
+      "name": "Laboratório Mágico",
+      "category": "bebidas",
+      "subcategory": "especiais",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/laborat_rio_m_gico.png",
+      "description": "Mobi que entrega poção do amor",
+      "type": "mobi",
+      "id_web": "1011",
+      "id_in_game": "1011",
+      "handitems": [
+        11
+      ]
+    },
+    {
+      "id": 1012,
+      "name": "Laboratório Químico",
+      "category": "bebidas",
+      "subcategory": "especiais",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/laborat_rio_qu_mico.png",
+      "description": "Mobi que entrega radioativo",
+      "type": "mobi",
+      "id_web": "1012",
+      "id_in_game": "1012",
+      "handitems": [
+        12
+      ]
+    },
+    {
+      "id": 1013,
+      "name": "Carrinho de Sorvetes",
+      "category": "doces",
+      "subcategory": "sorvetes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/carrinho_de_sorvetes.png",
+      "description": "Mobi que entrega sorvete",
+      "type": "mobi",
+      "id_web": "1013",
+      "id_in_game": "1013",
+      "handitems": [
+        13
+      ]
+    },
+    {
+      "id": 1014,
+      "name": "Carrinho de Sorvetes",
+      "category": "doces",
+      "subcategory": "sorvetes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/carrinho_de_sorvetes.png",
+      "description": "Mobi que entrega calippo",
+      "type": "mobi",
+      "id_web": "1014",
+      "id_in_game": "1014",
+      "handitems": [
+        14
+      ]
+    },
+    {
+      "id": 1015,
+      "name": "Chocolateria",
+      "category": "doces",
+      "subcategory": "chocolates",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/chocolateria.png",
+      "description": "Mobi que entrega chocolate",
+      "type": "mobi",
+      "id_web": "1015",
+      "id_in_game": "1015",
+      "handitems": [
+        15
+      ]
+    },
+    {
+      "id": 1016,
+      "name": "Confeitaria",
+      "category": "doces",
+      "subcategory": "bolos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/confeitaria.png",
+      "description": "Mobi que entrega bolo",
+      "type": "mobi",
+      "id_web": "1016",
+      "id_in_game": "1016",
+      "handitems": [
+        16
+      ]
+    },
+    {
+      "id": 1017,
+      "name": "Confeitaria",
+      "category": "doces",
+      "subcategory": "sobremesas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/confeitaria.png",
+      "description": "Mobi que entrega pudim",
+      "type": "mobi",
+      "id_web": "1017",
+      "id_in_game": "1017",
+      "handitems": [
+        17
+      ]
+    },
+    {
+      "id": 1018,
+      "name": "Loja de Brinquedos",
+      "category": "brinquedos",
+      "subcategory": "esportes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_brinquedos.png",
+      "description": "Mobi que entrega bola",
+      "type": "mobi",
+      "id_web": "1018",
+      "id_in_game": "1018",
+      "handitems": [
+        18
+      ]
+    },
+    {
+      "id": 1019,
+      "name": "Loja de Brinquedos",
+      "category": "brinquedos",
+      "subcategory": "bonecas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_brinquedos.png",
+      "description": "Mobi que entrega boneca",
+      "type": "mobi",
+      "id_web": "1019",
+      "id_in_game": "1019",
+      "handitems": [
+        19
+      ]
+    },
+    {
+      "id": 1020,
+      "name": "Loja de Brinquedos",
+      "category": "brinquedos",
+      "subcategory": "veículos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_brinquedos.png",
+      "description": "Mobi que entrega carrinho",
+      "type": "mobi",
+      "id_web": "1020",
+      "id_in_game": "1020",
+      "handitems": [
+        20
+      ]
+    },
+    {
+      "id": 1021,
+      "name": "Ferramentaria",
+      "category": "ferramentas",
+      "subcategory": "construção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/ferramentaria.png",
+      "description": "Mobi que entrega martelo",
+      "type": "mobi",
+      "id_web": "1021",
+      "id_in_game": "1021",
+      "handitems": [
+        21
+      ]
+    },
+    {
+      "id": 1022,
+      "name": "Ferramentaria",
+      "category": "ferramentas",
+      "subcategory": "construção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/ferramentaria.png",
+      "description": "Mobi que entrega chave de fenda",
+      "type": "mobi",
+      "id_web": "1022",
+      "id_in_game": "1022",
+      "handitems": [
+        22
+      ]
+    },
+    {
+      "id": 1023,
+      "name": "Ferramentaria",
+      "category": "ferramentas",
+      "subcategory": "construção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/ferramentaria.png",
+      "description": "Mobi que entrega serra",
+      "type": "mobi",
+      "id_web": "1023",
+      "id_in_game": "1023",
+      "handitems": [
+        23
+      ]
+    },
+    {
+      "id": 1024,
+      "name": "Loja de Instrumentos",
+      "category": "música",
+      "subcategory": "instrumentos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_instrumentos.png",
+      "description": "Mobi que entrega violão",
+      "type": "mobi",
+      "id_web": "1024",
+      "id_in_game": "1024",
+      "handitems": [
+        24
+      ]
+    },
+    {
+      "id": 1025,
+      "name": "Estúdio de Música",
+      "category": "música",
+      "subcategory": "equipamentos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/est_dio_de_m_sica.png",
+      "description": "Mobi que entrega microfone",
+      "type": "mobi",
+      "id_web": "1025",
+      "id_in_game": "1025",
+      "handitems": [
+        25
+      ]
+    },
+    {
+      "id": 1026,
+      "name": "Loja de Instrumentos",
+      "category": "música",
+      "subcategory": "instrumentos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_instrumentos.png",
+      "description": "Mobi que entrega trompete",
+      "type": "mobi",
+      "id_web": "1026",
+      "id_in_game": "1026",
+      "handitems": [
+        26
+      ]
+    },
+    {
+      "id": 1027,
+      "name": "Loja de Esportes",
+      "category": "esportes",
+      "subcategory": "tênis",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_esportes.png",
+      "description": "Mobi que entrega raquete",
+      "type": "mobi",
+      "id_web": "1027",
+      "id_in_game": "1027",
+      "handitems": [
+        27
+      ]
+    },
+    {
+      "id": 1028,
+      "name": "Loja de Esportes",
+      "category": "esportes",
+      "subcategory": "futebol",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_esportes.png",
+      "description": "Mobi que entrega bola de futebol",
+      "type": "mobi",
+      "id_web": "1028",
+      "id_in_game": "1028",
+      "handitems": [
+        28
+      ]
+    },
+    {
+      "id": 1029,
+      "name": "Loja de Esportes",
+      "category": "esportes",
+      "subcategory": "beisebol",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_esportes.png",
+      "description": "Mobi que entrega taco de beisebol",
+      "type": "mobi",
+      "id_web": "1029",
+      "id_in_game": "1029",
+      "handitems": [
+        29
+      ]
+    },
+    {
+      "id": 1030,
+      "name": "Loja de Eletrônicos",
+      "category": "tecnologia",
+      "subcategory": "comunicação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_eletr_nicos.png",
+      "description": "Mobi que entrega celular",
+      "type": "mobi",
+      "id_web": "1030",
+      "id_in_game": "1030",
+      "handitems": [
+        30
+      ]
+    },
+    {
+      "id": 1031,
+      "name": "Loja de Eletrônicos",
+      "category": "tecnologia",
+      "subcategory": "computação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_eletr_nicos.png",
+      "description": "Mobi que entrega tablet",
+      "type": "mobi",
+      "id_web": "1031",
+      "id_in_game": "1031",
+      "handitems": [
+        31
+      ]
+    },
+    {
+      "id": 1032,
+      "name": "Loja de Eletrônicos",
+      "category": "tecnologia",
+      "subcategory": "fotografia",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_eletr_nicos.png",
+      "description": "Mobi que entrega câmera",
+      "type": "mobi",
+      "id_web": "1032",
+      "id_in_game": "1032",
+      "handitems": [
+        32
+      ]
+    },
+    {
+      "id": 1033,
+      "name": "Biblioteca",
+      "category": "educação",
+      "subcategory": "livros",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/biblioteca.png",
+      "description": "Mobi que entrega livro",
+      "type": "mobi",
+      "id_web": "1033",
+      "id_in_game": "1033",
+      "handitems": [
+        33
+      ]
+    },
+    {
+      "id": 1034,
+      "name": "Banca de Jornais",
+      "category": "educação",
+      "subcategory": "revistas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/banca_de_jornais.png",
+      "description": "Mobi que entrega revista",
+      "type": "mobi",
+      "id_web": "1034",
+      "id_in_game": "1034",
+      "handitems": [
+        34
+      ]
+    },
+    {
+      "id": 1035,
+      "name": "Banca de Jornais",
+      "category": "educação",
+      "subcategory": "jornais",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/banca_de_jornais.png",
+      "description": "Mobi que entrega jornal",
+      "type": "mobi",
+      "id_web": "1035",
+      "id_in_game": "1035",
+      "handitems": [
+        35
+      ]
+    },
+    {
+      "id": 1036,
+      "name": "Floricultura",
+      "category": "decoração",
+      "subcategory": "plantas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/floricultura.png",
+      "description": "Mobi que entrega vaso de flores",
+      "type": "mobi",
+      "id_web": "1036",
+      "id_in_game": "1036",
+      "handitems": [
+        36
+      ]
+    },
+    {
+      "id": 1037,
+      "name": "Loja de Decoração",
+      "category": "decoração",
+      "subcategory": "iluminação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_decora_o.png",
+      "description": "Mobi que entrega candeeiro",
+      "type": "mobi",
+      "id_web": "1037",
+      "id_in_game": "1037",
+      "handitems": [
+        37
+      ]
+    },
+    {
+      "id": 1038,
+      "name": "Loja de Decoração",
+      "category": "decoração",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_decora_o.png",
+      "description": "Mobi que entrega relógio",
+      "type": "mobi",
+      "id_web": "1038",
+      "id_in_game": "1038",
+      "handitems": [
+        38
+      ]
+    },
+    {
+      "id": 1039,
+      "name": "Loja de Roupas",
+      "category": "roupas",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_roupas.png",
+      "description": "Mobi que entrega chapéu",
+      "type": "mobi",
+      "id_web": "1039",
+      "id_in_game": "1039",
+      "handitems": [
+        39
+      ]
+    },
+    {
+      "id": 1040,
+      "name": "Loja de Roupas",
+      "category": "roupas",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_roupas.png",
+      "description": "Mobi que entrega óculos",
+      "type": "mobi",
+      "id_web": "1040",
+      "id_in_game": "1040",
+      "handitems": [
+        40
+      ]
+    },
+    {
+      "id": 1041,
+      "name": "Loja de Roupas",
+      "category": "roupas",
+      "subcategory": "acessórios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_roupas.png",
+      "description": "Mobi que entrega luvas",
+      "type": "mobi",
+      "id_web": "1041",
+      "id_in_game": "1041",
+      "handitems": [
+        41
+      ]
+    },
+    {
+      "id": 1042,
+      "name": "Baú do Tesouro",
+      "category": "especiais",
+      "subcategory": "chaves",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/ba_do_tesouro.png",
+      "description": "Mobi que entrega chave",
+      "type": "mobi",
+      "id_web": "1042",
+      "id_in_game": "1042",
+      "handitems": [
+        42
+      ]
+    },
+    {
+      "id": 1043,
+      "name": "Joalheria",
+      "category": "especiais",
+      "subcategory": "joias",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/joalheria.png",
+      "description": "Mobi que entrega anel",
+      "type": "mobi",
+      "id_web": "1043",
+      "id_in_game": "1043",
+      "handitems": [
+        43
+      ]
+    },
+    {
+      "id": 1044,
+      "name": "Tesouro Real",
+      "category": "especiais",
+      "subcategory": "joias",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/furni/tesouro_real.png",
+      "description": "Mobi que entrega coroa",
+      "type": "mobi",
+      "id_web": "1044",
+      "id_in_game": "1044",
+      "handitems": [
+        44
+      ]
+    },
+    {
+      "id": 1045,
+      "name": "Caverna Mágica",
+      "category": "especiais",
+      "subcategory": "cristais",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/furni/caverna_m_gica.png",
+      "description": "Mobi que entrega cristal",
+      "type": "mobi",
+      "id_web": "1045",
+      "id_in_game": "1045",
+      "handitems": [
+        45
+      ]
+    },
+    {
+      "id": 1046,
+      "name": "Loja de Doces",
+      "category": "festa",
+      "subcategory": "doces",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_doces.png",
+      "description": "Mobi que entrega bala",
+      "type": "mobi",
+      "id_web": "1046",
+      "id_in_game": "1046",
+      "handitems": [
+        46
+      ]
+    },
+    {
+      "id": 1047,
+      "name": "Loja de Festa",
+      "category": "festa",
+      "subcategory": "decoração",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_festa.png",
+      "description": "Mobi que entrega bexiga",
+      "type": "mobi",
+      "id_web": "1047",
+      "id_in_game": "1047",
+      "handitems": [
+        47
+      ]
+    },
+    {
+      "id": 1048,
+      "name": "Loja de Festa",
+      "category": "festa",
+      "subcategory": "decoração",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_festa.png",
+      "description": "Mobi que entrega vela",
+      "type": "mobi",
+      "id_web": "1048",
+      "id_in_game": "1048",
+      "handitems": [
+        48
+      ]
+    },
+    {
+      "id": 1049,
+      "name": "Loja de Utensílios",
+      "category": "cozinha",
+      "subcategory": "talheres",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_utens_lios.png",
+      "description": "Mobi que entrega garfo",
+      "type": "mobi",
+      "id_web": "1049",
+      "id_in_game": "1049",
+      "handitems": [
+        49
+      ]
+    },
+    {
+      "id": 1050,
+      "name": "Loja de Utensílios",
+      "category": "cozinha",
+      "subcategory": "talheres",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_utens_lios.png",
+      "description": "Mobi que entrega faca",
+      "type": "mobi",
+      "id_web": "1050",
+      "id_in_game": "1050",
+      "handitems": [
+        50
+      ]
+    },
+    {
+      "id": 1051,
+      "name": "Loja de Utensílios",
+      "category": "cozinha",
+      "subcategory": "talheres",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_utens_lios.png",
+      "description": "Mobi que entrega colher",
+      "type": "mobi",
+      "id_web": "1051",
+      "id_in_game": "1051",
+      "handitems": [
+        51
+      ]
+    },
+    {
+      "id": 1052,
+      "name": "Loja de Limpeza",
+      "category": "limpeza",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png",
+      "description": "Mobi que entrega vassoura",
+      "type": "mobi",
+      "id_web": "1052",
+      "id_in_game": "1052",
+      "handitems": [
+        52
+      ]
+    },
+    {
+      "id": 1053,
+      "name": "Loja de Limpeza",
+      "category": "limpeza",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png",
+      "description": "Mobi que entrega balde",
+      "type": "mobi",
+      "id_web": "1053",
+      "id_in_game": "1053",
+      "handitems": [
+        53
+      ]
+    },
+    {
+      "id": 1054,
+      "name": "Loja de Limpeza",
+      "category": "limpeza",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png",
+      "description": "Mobi que entrega esponja",
+      "type": "mobi",
+      "id_web": "1054",
+      "id_in_game": "1054",
+      "handitems": [
+        54
+      ]
+    },
+    {
+      "id": 1055,
+      "name": "Loja de Jardinagem",
+      "category": "jardinagem",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png",
+      "description": "Mobi que entrega regador",
+      "type": "mobi",
+      "id_web": "1055",
+      "id_in_game": "1055",
+      "handitems": [
+        55
+      ]
+    },
+    {
+      "id": 1056,
+      "name": "Loja de Jardinagem",
+      "category": "jardinagem",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png",
+      "description": "Mobi que entrega pá",
+      "type": "mobi",
+      "id_web": "1056",
+      "id_in_game": "1056",
+      "handitems": [
+        56
+      ]
+    },
+    {
+      "id": 1057,
+      "name": "Loja de Jardinagem",
+      "category": "jardinagem",
+      "subcategory": "ferramentas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png",
+      "description": "Mobi que entrega tesoura",
+      "type": "mobi",
+      "id_web": "1057",
+      "id_in_game": "1057",
+      "handitems": [
+        57
+      ]
+    },
+    {
+      "id": 1058,
+      "name": "Papelaria",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/papelaria.png",
+      "description": "Mobi que entrega caneta",
+      "type": "mobi",
+      "id_web": "1058",
+      "id_in_game": "1058",
+      "handitems": [
+        58
+      ]
+    },
+    {
+      "id": 1059,
+      "name": "Papelaria",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/papelaria.png",
+      "description": "Mobi que entrega lápis",
+      "type": "mobi",
+      "id_web": "1059",
+      "id_in_game": "1059",
+      "handitems": [
+        59
+      ]
+    },
+    {
+      "id": 1060,
+      "name": "Papelaria",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/papelaria.png",
+      "description": "Mobi que entrega borracha",
+      "type": "mobi",
+      "id_web": "1060",
+      "id_in_game": "1060",
+      "handitems": [
+        60
+      ]
+    },
+    {
+      "id": 1061,
+      "name": "Farmácia",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/farm_cia.png",
+      "description": "Mobi que entrega termômetro",
+      "type": "mobi",
+      "id_web": "1061",
+      "id_in_game": "1061",
+      "handitems": [
+        61
+      ]
+    },
+    {
+      "id": 1062,
+      "name": "Farmácia",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/farm_cia.png",
+      "description": "Mobi que entrega band-aid",
+      "type": "mobi",
+      "id_web": "1062",
+      "id_in_game": "1062",
+      "handitems": [
+        62
+      ]
+    },
+    {
+      "id": 1063,
+      "name": "Farmácia",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/farm_cia.png",
+      "description": "Mobi que entrega pílula",
+      "type": "mobi",
+      "id_web": "1063",
+      "id_in_game": "1063",
+      "handitems": [
+        63
+      ]
+    },
+    {
+      "id": 1064,
+      "name": "Loja de Viagem",
+      "category": "viagem",
+      "subcategory": "bagagem",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png",
+      "description": "Mobi que entrega mala",
+      "type": "mobi",
+      "id_web": "1064",
+      "id_in_game": "1064",
+      "handitems": [
+        64
+      ]
+    },
+    {
+      "id": 1065,
+      "name": "Loja de Viagem",
+      "category": "viagem",
+      "subcategory": "fotografia",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png",
+      "description": "Mobi que entrega câmera",
+      "type": "mobi",
+      "id_web": "1065",
+      "id_in_game": "1065",
+      "handitems": [
+        65
+      ]
+    },
+    {
+      "id": 1066,
+      "name": "Loja de Viagem",
+      "category": "viagem",
+      "subcategory": "navegação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png",
+      "description": "Mobi que entrega mapa",
+      "type": "mobi",
+      "id_web": "1066",
+      "id_in_game": "1066",
+      "handitems": [
+        66
+      ]
+    },
+    {
+      "id": 1067,
+      "name": "Loja de Arte",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png",
+      "description": "Mobi que entrega pincel",
+      "type": "mobi",
+      "id_web": "1067",
+      "id_in_game": "1067",
+      "handitems": [
+        67
+      ]
+    },
+    {
+      "id": 1068,
+      "name": "Loja de Arte",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png",
+      "description": "Mobi que entrega tinta",
+      "type": "mobi",
+      "id_web": "1068",
+      "id_in_game": "1068",
+      "handitems": [
+        68
+      ]
+    },
+    {
+      "id": 1069,
+      "name": "Loja de Arte",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png",
+      "description": "Mobi que entrega tela",
+      "type": "mobi",
+      "id_web": "1069",
+      "id_in_game": "1069",
+      "handitems": [
+        69
+      ]
+    },
+    {
+      "id": 1070,
+      "name": "Loja de Magia",
+      "category": "mágica",
+      "subcategory": "instrumentos",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png",
+      "description": "Mobi que entrega varinha",
+      "type": "mobi",
+      "id_web": "1070",
+      "id_in_game": "1070",
+      "handitems": [
+        70
+      ]
+    },
+    {
+      "id": 1071,
+      "name": "Loja de Magia",
+      "category": "mágica",
+      "subcategory": "cristais",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png",
+      "description": "Mobi que entrega cristal",
+      "type": "mobi",
+      "id_web": "1071",
+      "id_in_game": "1071",
+      "handitems": [
+        71
+      ]
+    },
+    {
+      "id": 1072,
+      "name": "Loja de Magia",
+      "category": "mágica",
+      "subcategory": "livros",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png",
+      "description": "Mobi que entrega livro de feitiços",
+      "type": "mobi",
+      "id_web": "1072",
+      "id_in_game": "1072",
+      "handitems": [
+        72
+      ]
+    },
+    {
+      "id": 1073,
+      "name": "Laboratório Científico",
+      "category": "ciência",
+      "subcategory": "laboratório",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/laborat_rio_cient_fico.png",
+      "description": "Mobi que entrega microscópio",
+      "type": "mobi",
+      "id_web": "1073",
+      "id_in_game": "1073",
+      "handitems": [
+        73
+      ]
+    },
+    {
+      "id": 1074,
+      "name": "Laboratório Científico",
+      "category": "ciência",
+      "subcategory": "laboratório",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/laborat_rio_cient_fico.png",
+      "description": "Mobi que entrega tubo de ensaio",
+      "type": "mobi",
+      "id_web": "1074",
+      "id_in_game": "1074",
+      "handitems": [
+        74
+      ]
+    },
+    {
+      "id": 1075,
+      "name": "Laboratório Científico",
+      "category": "ciência",
+      "subcategory": "roupas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/laborat_rio_cient_fico.png",
+      "description": "Mobi que entrega bata de laboratório",
+      "type": "mobi",
+      "id_web": "1075",
+      "id_in_game": "1075",
+      "handitems": [
+        75
+      ]
+    },
+    {
+      "id": 1076,
+      "name": "Loja de Esportes Aquáticos",
+      "category": "esporte",
+      "subcategory": "aquático",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_esportes_aqu_ticos.png",
+      "description": "Mobi que entrega óculos de natação",
+      "type": "mobi",
+      "id_web": "1076",
+      "id_in_game": "1076",
+      "handitems": [
+        76
+      ]
+    },
+    {
+      "id": 1077,
+      "name": "Loja de Esportes Aquáticos",
+      "category": "esporte",
+      "subcategory": "aquático",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_esportes_aqu_ticos.png",
+      "description": "Mobi que entrega bóia",
+      "type": "mobi",
+      "id_web": "1077",
+      "id_in_game": "1077",
+      "handitems": [
+        77
+      ]
+    },
+    {
+      "id": 1078,
+      "name": "Loja de Esportes Aquáticos",
+      "category": "esporte",
+      "subcategory": "aquático",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_esportes_aqu_ticos.png",
+      "description": "Mobi que entrega snorkel",
+      "type": "mobi",
+      "id_web": "1078",
+      "id_in_game": "1078",
+      "handitems": [
+        78
+      ]
+    },
+    {
+      "id": 1079,
+      "name": "Loja de Culinária",
+      "category": "culinária",
+      "subcategory": "utensílios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_culin_ria.png",
+      "description": "Mobi que entrega colher de pau",
+      "type": "mobi",
+      "id_web": "1079",
+      "id_in_game": "1079",
+      "handitems": [
+        79
+      ]
+    },
+    {
+      "id": 1080,
+      "name": "Loja de Culinária",
+      "category": "culinária",
+      "subcategory": "utensílios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_culin_ria.png",
+      "description": "Mobi que entrega frigideira",
+      "type": "mobi",
+      "id_web": "1080",
+      "id_in_game": "1080",
+      "handitems": [
+        80
+      ]
+    },
+    {
+      "id": 1081,
+      "name": "Loja de Culinária",
+      "category": "culinária",
+      "subcategory": "utensílios",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_culin_ria.png",
+      "description": "Mobi que entrega tigela",
+      "type": "mobi",
+      "id_web": "1081",
+      "id_in_game": "1081",
+      "handitems": [
+        81
+      ]
+    },
+    {
+      "id": 1082,
+      "name": "Loja de Eletrodomésticos",
+      "category": "limpeza",
+      "subcategory": "eletrodomésticos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_eletrodom_sticos.png",
+      "description": "Mobi que entrega aspirador",
+      "type": "mobi",
+      "id_web": "1082",
+      "id_in_game": "1082",
+      "handitems": [
+        82
+      ]
+    },
+    {
+      "id": 1083,
+      "name": "Loja de Limpeza",
+      "category": "limpeza",
+      "subcategory": "produtos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png",
+      "description": "Mobi que entrega detergente",
+      "type": "mobi",
+      "id_web": "1083",
+      "id_in_game": "1083",
+      "handitems": [
+        83
+      ]
+    },
+    {
+      "id": 1084,
+      "name": "Loja de Limpeza",
+      "category": "limpeza",
+      "subcategory": "produtos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_limpeza.png",
+      "description": "Mobi que entrega papel toalha",
+      "type": "mobi",
+      "id_web": "1084",
+      "id_in_game": "1084",
+      "handitems": [
+        84
+      ]
+    },
+    {
+      "id": 1085,
+      "name": "Loja de Jardinagem",
+      "category": "jardinagem",
+      "subcategory": "irrigação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png",
+      "description": "Mobi que entrega mangueira",
+      "type": "mobi",
+      "id_web": "1085",
+      "id_in_game": "1085",
+      "handitems": [
+        85
+      ]
+    },
+    {
+      "id": 1086,
+      "name": "Loja de Jardinagem",
+      "category": "jardinagem",
+      "subcategory": "fertilizantes",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png",
+      "description": "Mobi que entrega adubo",
+      "type": "mobi",
+      "id_web": "1086",
+      "id_in_game": "1086",
+      "handitems": [
+        86
+      ]
+    },
+    {
+      "id": 1087,
+      "name": "Loja de Jardinagem",
+      "category": "jardinagem",
+      "subcategory": "plantas",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_jardinagem.png",
+      "description": "Mobi que entrega sementes",
+      "type": "mobi",
+      "id_web": "1087",
+      "id_in_game": "1087",
+      "handitems": [
+        87
+      ]
+    },
+    {
+      "id": 1088,
+      "name": "Papelaria",
+      "category": "escritório",
+      "subcategory": "eletrônicos",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/papelaria.png",
+      "description": "Mobi que entrega calculadora",
+      "type": "mobi",
+      "id_web": "1088",
+      "id_in_game": "1088",
+      "handitems": [
+        88
+      ]
+    },
+    {
+      "id": 1089,
+      "name": "Papelaria",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/papelaria.png",
+      "description": "Mobi que entrega grampeador",
+      "type": "mobi",
+      "id_web": "1089",
+      "id_in_game": "1089",
+      "handitems": [
+        89
+      ]
+    },
+    {
+      "id": 1090,
+      "name": "Papelaria",
+      "category": "escritório",
+      "subcategory": "material",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/papelaria.png",
+      "description": "Mobi que entrega clipes",
+      "type": "mobi",
+      "id_web": "1090",
+      "id_in_game": "1090",
+      "handitems": [
+        90
+      ]
+    },
+    {
+      "id": 1091,
+      "name": "Hospital",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/hospital.png",
+      "description": "Mobi que entrega estetoscópio",
+      "type": "mobi",
+      "id_web": "1091",
+      "id_in_game": "1091",
+      "handitems": [
+        91
+      ]
+    },
+    {
+      "id": 1092,
+      "name": "Hospital",
+      "category": "saúde",
+      "subcategory": "medicina",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/hospital.png",
+      "description": "Mobi que entrega seringa",
+      "type": "mobi",
+      "id_web": "1092",
+      "id_in_game": "1092",
+      "handitems": [
+        92
+      ]
+    },
+    {
+      "id": 1093,
+      "name": "Hospital",
+      "category": "saúde",
+      "subcategory": "proteção",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/hospital.png",
+      "description": "Mobi que entrega máscara",
+      "type": "mobi",
+      "id_web": "1093",
+      "id_in_game": "1093",
+      "handitems": [
+        93
+      ]
+    },
+    {
+      "id": 1094,
+      "name": "Loja de Viagem",
+      "category": "viagem",
+      "subcategory": "observação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png",
+      "description": "Mobi que entrega binóculos",
+      "type": "mobi",
+      "id_web": "1094",
+      "id_in_game": "1094",
+      "handitems": [
+        94
+      ]
+    },
+    {
+      "id": 1095,
+      "name": "Loja de Viagem",
+      "category": "viagem",
+      "subcategory": "navegação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png",
+      "description": "Mobi que entrega bússola",
+      "type": "mobi",
+      "id_web": "1095",
+      "id_in_game": "1095",
+      "handitems": [
+        95
+      ]
+    },
+    {
+      "id": 1096,
+      "name": "Loja de Viagem",
+      "category": "viagem",
+      "subcategory": "iluminação",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_viagem.png",
+      "description": "Mobi que entrega lanterna",
+      "type": "mobi",
+      "id_web": "1096",
+      "id_in_game": "1096",
+      "handitems": [
+        96
+      ]
+    },
+    {
+      "id": 1097,
+      "name": "Loja de Arte",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png",
+      "description": "Mobi que entrega paleta",
+      "type": "mobi",
+      "id_web": "1097",
+      "id_in_game": "1097",
+      "handitems": [
+        97
+      ]
+    },
+    {
+      "id": 1098,
+      "name": "Loja de Arte",
+      "category": "arte",
+      "subcategory": "pintura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png",
+      "description": "Mobi que entrega cavalete",
+      "type": "mobi",
+      "id_web": "1098",
+      "id_in_game": "1098",
+      "handitems": [
+        98
+      ]
+    },
+    {
+      "id": 1099,
+      "name": "Loja de Arte",
+      "category": "arte",
+      "subcategory": "escultura",
+      "rarity": "common",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_arte.png",
+      "description": "Mobi que entrega escultura",
+      "type": "mobi",
+      "id_web": "1099",
+      "id_in_game": "1099",
+      "handitems": [
+        99
+      ]
+    },
+    {
+      "id": 1100,
+      "name": "Loja de Magia",
+      "category": "mágica",
+      "subcategory": "cristais",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png",
+      "description": "Mobi que entrega cristal mágico",
+      "type": "mobi",
+      "id_web": "1100",
+      "id_in_game": "1100",
+      "handitems": [
+        100
+      ]
+    },
+    {
+      "id": 1101,
+      "name": "Loja de Magia",
+      "category": "mágica",
+      "subcategory": "pós",
+      "rarity": "rare",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png",
+      "description": "Mobi que entrega pó de fada",
+      "type": "mobi",
+      "id_web": "1101",
+      "id_in_game": "1101",
+      "handitems": [
+        101
+      ]
+    },
+    {
+      "id": 1102,
+      "name": "Loja de Magia",
+      "category": "mágica",
+      "subcategory": "amuletos",
+      "rarity": "epic",
+      "image": "https://images.habbotemplarios.com/furni/loja_de_magia.png",
+      "description": "Mobi que entrega amuleto",
+      "type": "mobi",
+      "id_web": "1102",
+      "id_in_game": "1102",
+      "handitems": [
+        102
+      ]
+    }
+  ],
+  "totalItems": 204,
+  "totalHanditems": 102,
+  "totalMobis": 102,
+  "categories": [
+    "alimentos",
+    "bebidas",
+    "doces",
+    "brinquedos",
+    "ferramentas",
+    "música",
+    "esportes",
+    "tecnologia",
+    "educação",
+    "decoração",
+    "roupas",
+    "especiais",
+    "festa",
+    "cozinha",
+    "limpeza",
+    "jardinagem",
+    "escritório",
+    "saúde",
+    "viagem",
+    "arte",
+    "mágica",
+    "ciência",
+    "esporte",
+    "culinária"
+  ],
+  "rarities": [
+    "common",
+    "rare",
+    "epic"
+  ],
+  "createdAt": "2025-09-10T22:59:58.153Z",
+  "version": "1.1.0",
+  "imageSource": "HabboTemplarios.com"
+}

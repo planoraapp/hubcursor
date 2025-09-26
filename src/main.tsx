@@ -1,11 +1,14 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
-import { UnifiedAuthProvider } from '@/hooks/useUnifiedAuth'
+import { AuthProvider } from '@/hooks/useAuth'
+import { NotificationProvider, useNotification } from '@/hooks/useNotification'
+import { NotificationContainer } from '@/components/ui/notification'
 import './index.css'
+import './styles/widget-skins.css'
 
 // Import pages
 import Console from './pages/Console'
@@ -14,17 +17,29 @@ import HabboHomeV2 from './pages/HabboHomeV2'
 import Home from './pages/Home'
 import Homes from './pages/Homes'
 import Login from './pages/Login'
-import Noticias from './pages/Noticias'
+import Journal from './pages/Journal'
+import AdminPanel from './pages/AdminPanel'
+import AdminDashboard from './pages/AdminDashboard'
+import { AccountManager } from './pages/AccountManager'
 import Emblemas from './pages/Emblemas'
 import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
 import HanditemCatalog from './pages/HanditemCatalog'
+import AvatarEditor from './pages/AvatarEditor'
+import AltCodesPage from './pages/AltCodes'
 import Eventos from './pages/Eventos'
 import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
+import NotificationDemo from './pages/NotificationDemo'
+import BeebopHome from './pages/BeebopHome'
 import NotFound from './pages/NotFound'
+<<<<<<< HEAD
 import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer'
 import { useBeebopAccountInitializer } from './hooks/useBeebopAccountInitializer'
+=======
+// import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer' // Desativado temporariamente
+import HomeRedirect from './components/HomeRedirect'
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
 
 const queryClient = new QueryClient()
 
@@ -46,16 +61,29 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
+    path: "/login-test",
+    element: <Login />,
+  },
+  {
     path: "/connect-habbo",
     element: <Login />,
   },
   {
-    path: "/homes",
+    path: "/home",
     element: <Homes />,
   },
   {
-    path: "/homes/:username",
+    path: "/home/:username",
     element: <HabboHomeV2 />,
+  },
+  // Redirect from old /homes routes for backward compatibility
+  {
+    path: "/homes",
+    element: <Navigate to="/home" replace />,
+  },
+  {
+    path: "/homes/:username",
+    element: <HomeRedirect />,
   },
   {
     path: "/enhanced-home/:username",
@@ -63,7 +91,23 @@ const router = createBrowserRouter([
   },
   {
     path: "/noticias",
-    element: <Noticias />,
+    element: <Journal />,
+  },
+  {
+    path: "/journal",
+    element: <Journal />,
+  },
+  {
+    path: "/admin-panel",
+    element: <AdminPanel />,
+  },
+  {
+    path: "/admin",
+    element: <AdminDashboard />,
+  },
+  {
+    path: "/admin/accounts",
+    element: <AccountManager />,
   },
   {
     path: "/emblemas",
@@ -80,6 +124,14 @@ const router = createBrowserRouter([
   {
     path: "/ferramentas/handitems",
     element: <HanditemCatalog />,
+  },
+  {
+    path: "/ferramentas/avatar-editor",
+    element: <AvatarEditor />,
+  },
+  {
+    path: "/ferramentas/alt-codes",
+    element: <AltCodesPage />,
   },
   {
     path: "/tools",
@@ -102,14 +154,26 @@ const router = createBrowserRouter([
     element: <Profile />,
   },
   {
+    path: "/notification-demo",
+    element: <NotificationDemo />,
+  },
+  {
+    path: "/beebop",
+    element: <BeebopHome />,
+  },
+  {
     path: "*",
     element: <NotFound />,
   },
 ])
 
 const AppWithInitializers = () => {
+<<<<<<< HEAD
   useDailyActivitiesInitializer();
   useBeebopAccountInitializer();
+=======
+  // useDailyActivitiesInitializer(); // Desativado temporariamente
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
   return (
     <>
       <RouterProvider router={router} />
@@ -118,12 +182,30 @@ const AppWithInitializers = () => {
   );
 };
 
+const AppWithNotifications = () => {
+  return (
+    <NotificationProvider>
+      <AppWithInitializers />
+      <NotificationWrapper />
+    </NotificationProvider>
+  );
+};
+
+const NotificationWrapper = () => {
+  const { notifications, removeNotification } = useNotification();
+  
+  return <NotificationContainer 
+    notifications={notifications} 
+    onClose={removeNotification} 
+  />;
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <UnifiedAuthProvider>
-        <AppWithInitializers />
-      </UnifiedAuthProvider>
+      <AuthProvider>
+        <AppWithNotifications />
+      </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 )

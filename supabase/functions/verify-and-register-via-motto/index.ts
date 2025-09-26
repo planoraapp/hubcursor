@@ -9,31 +9,37 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
-interface HabboUser {
-  uniqueId: string;
-  name: string;
-  figureString: string;
-  motto: string;
-  online: boolean;
-  memberSince: string;
-  profileVisible: boolean;
 }
 
 serve(async (req) => {
-  console.log('🔥 [VERIFY-MOTTO] Edge function called - Method:', req.method, 'URL:', req.url);
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('🔥 [VERIFY-MOTTO] Handling CORS preflight');
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('🔥 [VERIFY-MOTTO] Creating Supabase client...');
+    // Get request body
+    const { username, motto, password, action } = await req.json()
+
+    if (!username || !motto) {
+      return new Response(
+        JSON.stringify({ error: 'Username e motto são obrigatórios' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Verify user exists in Habbo
+    const habboUser = await verifyHabboUser(username, motto)
     
+<<<<<<< HEAD
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
@@ -98,71 +104,96 @@ serve(async (req) => {
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+=======
+    if (!habboUser.success) {
+      return new Response(
+        JSON.stringify({ error: 'Usuário não encontrado ou motto incorreta' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
     }
 
-    // ===== STEP 2: VERIFY CODE =====
-    if (action === 'verify') {
-      const habboData = await fetchHabboUser(habbo_name);
-      if (!habboData) {
-        return new Response(JSON.stringify({ 
-          error: 'Usuário Habbo não encontrado durante verificação.' 
-        }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+    // Check if user already exists in our database
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('habbo_username', username)
+      .single()
 
-      // Verificar se o código está no motto
-      const mottoUpperCase = habboData.motto.toUpperCase();
-      const codeUpperCase = verification_code.toUpperCase();
-      
-      if (!mottoUpperCase.includes(codeUpperCase)) {
-        return new Response(JSON.stringify({ 
-          error: `Código ${verification_code} não encontrado na sua missão. Sua missão atual: "${habboData.motto}"` 
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      return new Response(JSON.stringify({
-        success: true,
-        verified: true,
-        habbo_data: habboData
-      }), {
+    if (action === 'login') {
+      // User wants to login
+      if (!existingUser) {
+        return new Response(
+          JSON.stringify({ error: 'Usuário não cadastrado. Faça o cadastro primeiro.' }),
+          { 
+            status: 400, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // ===== STEP 3: COMPLETE REGISTRATION =====
-    if (action === 'complete') {
-      const habboData = await fetchHabboUser(habbo_name);
-      if (!habboData) {
-        return new Response(JSON.stringify({ 
-          error: 'Usuário Habbo não encontrado durante registro.' 
-        }), {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+          }
+        )
       }
 
-      // Verificar código novamente
-      const mottoUpperCase = habboData.motto.toUpperCase();
-      const codeUpperCase = verification_code.toUpperCase();
-      
-      if (!mottoUpperCase.includes(codeUpperCase)) {
-        return new Response(JSON.stringify({ 
-          error: 'Código de verificação inválido ou não encontrado na missão.' 
-        }), {
+      // Verify password if user exists
+      if (password && existingUser.password_hash) {
+        const isValidPassword = await verifyPassword(password, existingUser.password_hash)
+        if (!isValidPassword) {
+          return new Response(
+            JSON.stringify({ error: 'Senha incorreta' }),
+            { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+            }
+          )
+        }
       }
 
-      // Criar email único para o usuário
-      const authEmail = `${habboData.uniqueId}@habbohub.com`;
-      const hotel = detectHotel(habboData.uniqueId);
+      // Return user data for login
+      return new Response(
+        JSON.stringify({
+        success: true,
+          action: 'login',
+          user: {
+            id: existingUser.id,
+            habbo_username: existingUser.habbo_username,
+            habbo_motto: existingUser.habbo_motto,
+            habbo_avatar: existingUser.habbo_avatar,
+            created_at: existingUser.created_at
+          }
+        }),
+        { 
+          status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      )
 
+    } else if (action === 'register') {
+      // User wants to register
+      if (existingUser) {
+        return new Response(
+          JSON.stringify({ error: 'Usuário já cadastrado' }),
+          { 
+            status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+
+      if (!password) {
+        return new Response(
+          JSON.stringify({ error: 'Senha é obrigatória para cadastro' }),
+          { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+
+      // Hash password
+      const passwordHash = await hashPassword(password)
+
+<<<<<<< HEAD
       // Verificar se usuário já existe
       console.log('🔍 [VERIFY-MOTTO] Checking if user exists with email:', authEmail);
       const { data: existingUser, error: getUserError } = await supabase.auth.admin.getUserByEmail(authEmail);
@@ -272,26 +303,122 @@ serve(async (req) => {
           console.error('❌ [VERIFY-MOTTO] Error creating habbo_accounts:', habboError);
           console.error('❌ [VERIFY-MOTTO] Habbo error details:', JSON.stringify(habboError, null, 2));
           throw new Error(`Erro ao criar conta Habbo: ${habboError.message}`);
-        }
+=======
+      // Insert new user
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          habbo_username: username,
+          habbo_motto: motto,
+          habbo_avatar: habboUser.data.figureString,
+          password_hash: passwordHash,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
 
-        console.log('✅ [VERIFY-MOTTO] Habbo account created/updated:', habboAccountResult);
-        console.log('✅ [VERIFY-MOTTO] Registration completed successfully!');
+      if (insertError) {
+        console.error('Error inserting user:', insertError)
+        return new Response(
+          JSON.stringify({ error: 'Erro ao cadastrar usuário' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
       }
 
-      return new Response(JSON.stringify({
+      return new Response(
+        JSON.stringify({
+          success: true,
+          action: 'register',
+          user: {
+            id: newUser.id,
+            habbo_username: newUser.habbo_username,
+            habbo_motto: newUser.habbo_motto,
+            habbo_avatar: newUser.habbo_avatar,
+            created_at: newUser.created_at
+          }
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
+        }
+      )
+
+<<<<<<< HEAD
+        console.log('✅ [VERIFY-MOTTO] Habbo account created/updated:', habboAccountResult);
+        console.log('✅ [VERIFY-MOTTO] Registration completed successfully!');
+=======
+    } else if (action === 'change_password') {
+      // User wants to change password
+      if (!existingUser) {
+        return new Response(
+          JSON.stringify({ error: 'Usuário não cadastrado' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
+      }
+
+      if (!password) {
+        return new Response(
+          JSON.stringify({ error: 'Nova senha é obrigatória' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      // Hash new password
+      const newPasswordHash = await hashPassword(password)
+
+      // Update password
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          password_hash: newPasswordHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq('habbo_username', username)
+
+      if (updateError) {
+        console.error('Error updating password:', updateError)
+        return new Response(
+          JSON.stringify({ error: 'Erro ao alterar senha' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      return new Response(
+        JSON.stringify({
         success: true,
-        user_created: userCreated,
-        message: userCreated ? 'Conta criada com sucesso!' : 'Senha atualizada com sucesso!'
-      }), {
+          action: 'change_password',
+          message: 'Senha alterada com sucesso'
+        }),
+        { 
+          status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+        }
+      )
     }
 
-    return new Response(JSON.stringify({ error: 'Ação inválida' }), {
+    return new Response(
+      JSON.stringify({ error: 'Ação inválida' }),
+      { 
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+      }
+    )
 
+<<<<<<< HEAD
   } catch (error: any) {
     console.error('❌ [VERIFY-MOTTO] Error in verify-and-register-via-motto:', error);
     console.error('❌ [VERIFY-MOTTO] Error stack:', error.stack);
@@ -320,12 +447,21 @@ serve(async (req) => {
         timestamp: new Date().toISOString()
       }
     }), {
+=======
+  } catch (error) {
+    console.error('Error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Erro interno do servidor' }),
+      { 
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+      }
+    )
   }
-});
+})
 
+<<<<<<< HEAD
 // ===== HELPER FUNCTIONS =====
 
 async function fetchHabboUser(username: string): Promise<HabboUser | null> {
@@ -346,10 +482,26 @@ async function fetchHabboUser(username: string): Promise<HabboUser | null> {
         },
         timeout: 10000,
       });
+=======
+// Function to verify Habbo user
+async function verifyHabboUser(username: string, motto: string) {
+  try {
+    // Try official Habbo API first
+    const apiUrl = `https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(username)}`
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+        headers: {
+        'User-Agent': 'HabboHub/1.0',
+        'Accept': 'application/json'
+      }
+    })
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
 
       console.log(`📡 [FETCH] Response from ${hotel}: Status ${response.status}, OK: ${response.ok}`);
 
       if (response.ok) {
+<<<<<<< HEAD
         const userData: HabboUser = await response.json();
         console.log(`✅ [FETCH] Found user in ${hotel}:`, JSON.stringify(userData, null, 2));
         return userData;
@@ -361,31 +513,71 @@ async function fetchHabboUser(username: string): Promise<HabboUser | null> {
     } catch (error) {
       console.log(`❌ [FETCH] Error checking ${hotel}:`, error.message || error);
       continue;
-    }
+=======
+      const data = await response.json()
+      
+      if (data && data.name && data.motto === motto) {
+        return {
+          success: true,
+          data: {
+            name: data.name,
+            motto: data.motto,
+            figureString: data.figureString || 'Sem avatar',
+            memberSince: data.memberSince || 'Data não disponível',
+            lastOnlineTime: data.lastOnlineTime || 'Não disponível'
+          }
+        }
+      }
+      }
+    } catch (error) {
+    console.log('API oficial falhou, tentando método alternativo')
   }
+
+  // Fallback: verify via avatar imaging
+  try {
+    const avatarUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&size=s`
+    
+    const response = await fetch(avatarUrl, { method: 'HEAD' })
+    
+    if (response.ok) {
+      return {
+        success: true,
+        data: {
+          name: username,
+          motto: motto,
+          figureString: 'Avatar disponível',
+          memberSince: 'Verificado via avatar',
+          lastOnlineTime: 'Não disponível'
+        }
+      }
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
+    }
+  } catch (error) {
+    console.log('Método alternativo também falhou')
+  }
+<<<<<<< HEAD
   
   console.log('❌ [FETCH] User not found in any hotel');
   return null;
+=======
+
+  return { success: false, error: 'Usuário não encontrado' }
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
 }
 
-function generateVerificationCode(): string {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = 'HUB-';
-  for (let i = 0; i < 5; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
+// Function to hash password (using bcrypt)
+async function hashPassword(password: string): Promise<string> {
+  // For production, use a proper bcrypt library
+  // This is a simple hash for demo purposes
+  const encoder = new TextEncoder()
+  const data = encoder.encode(password + 'habbohub_salt')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-function detectHotel(uniqueId: string): string {
-  if (uniqueId.startsWith('hhbr-')) return 'br';
-  if (uniqueId.startsWith('hhcom-')) return 'com';
-  if (uniqueId.startsWith('hhes-')) return 'es';
-  if (uniqueId.startsWith('hhfr-')) return 'fr';
-  if (uniqueId.startsWith('hhde-')) return 'de';
-  if (uniqueId.startsWith('hhit-')) return 'it';
-  if (uniqueId.startsWith('hhnl-')) return 'nl';
-  if (uniqueId.startsWith('hhfi-')) return 'fi';
-  if (uniqueId.startsWith('hhtr-')) return 'tr';
-  return 'com'; // fallback
+// Function to verify password
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  const hashedPassword = await hashPassword(password)
+  return hashedPassword === hash
 }

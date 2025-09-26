@@ -50,17 +50,7 @@ const CompleteFlashAssetsEditor = ({
     rarity: selectedRarity === 'all' ? undefined : selectedRarity
   });
 
-  console.log('🎯 [CompleteFlashAssetsEditor] Stats COMPLETAS:', {
-    category: selectedCategory,
-    section: selectedSection,
-    gender: selectedGender,
-    rarity: selectedRarity,
-    itemsCount: items.length,
-    totalItems,
-    stats: { categoryStats, rarityStats, sectionStats }
-  });
-
-  const sections = getAllSections();
+    const sections = getAllSections();
   const currentSection = getSectionMetadata(selectedSection);
 
   // Atualizar categoria quando mudar seção
@@ -71,8 +61,7 @@ const CompleteFlashAssetsEditor = ({
   }, [selectedSection, currentSection, selectedCategory]);
 
   const handleItemClick = (item: any) => {
-    console.log('🎯 [CompleteFlashAssetsEditor] Item selecionado:', item);
-    onItemSelect(item, selectedColor);
+        onItemSelect(item, selectedColor);
   };
 
   const getItemImageUrl = (item: any) => {

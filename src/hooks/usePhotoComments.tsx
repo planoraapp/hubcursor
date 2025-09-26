@@ -53,8 +53,7 @@ export const usePhotoComments = (photoId: string) => {
       toast.success('Comentário adicionado!');
     },
     onError: (error: any) => {
-      console.error('Erro ao adicionar comentário:', error);
-      toast.error('Erro ao adicionar comentário');
+            toast.error('Erro ao adicionar comentário');
     }
   });
 
@@ -73,8 +72,7 @@ export const usePhotoComments = (photoId: string) => {
       toast.success('Comentário excluído!');
     },
     onError: (error: any) => {
-      console.error('Erro ao excluir comentário:', error);
-      toast.error('Erro ao excluir comentário');
+            toast.error('Erro ao excluir comentário');
     }
   });
 
@@ -86,18 +84,11 @@ export const usePhotoComments = (photoId: string) => {
       }
 
       // For now, just log the report (can be enhanced later with comment_reports table)
-      console.log('📢 [REPORT] Comment reported:', { 
-        commentId, 
-        reason, 
-        reportedBy: habboAccount.habbo_name 
-      });
-      
-      // Future: Insert into comment_reports table
+            // Future: Insert into comment_reports table
       toast.success('Comentário denunciado! Nossa equipe irá analisar.');
     },
     onError: (error: any) => {
-      console.error('Erro ao denunciar comentário:', error);
-      toast.error('Erro ao denunciar comentário');
+            toast.error('Erro ao denunciar comentário');
     }
   });
 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Activity, Hotel, RefreshCw, Wifi, Archive, ExternalLink, Trophy, Camera, UserPlus, MessageSquare, Heart } from 'lucide-react';
 import { useHotelActivities } from '@/hooks/useHotelActivities';
 import { useUserFigures } from '@/hooks/useUserFigures';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { Link } from 'react-router-dom';
 
 export const CompactHotelFeed: React.FC = () => {
@@ -123,7 +123,7 @@ export const CompactHotelFeed: React.FC = () => {
                   <div className="flex-shrink-0">
                     {figureMap[userGroup.username] ? (
                       <img 
-                        src={habboProxyService.getAvatarUrl(figureMap[userGroup.username], 's')} 
+                        src={unifiedHabboService.getAvatarUrl(figureMap[userGroup.username], 's')} 
                         alt={userGroup.username}
                         className="h-12 w-auto object-contain bg-transparent"
                       />

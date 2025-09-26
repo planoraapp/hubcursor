@@ -27,8 +27,7 @@ export const OptimizedUserDiscoveryColumn: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['hotel-ticker'] });
     queryClient.invalidateQueries({ queryKey: ['friends-photos'] });
     queryClient.invalidateQueries({ queryKey: ['friends-activities'] });
-    console.log('🔄 [DEBUG] Force refreshed all caches');
-    refetch();
+        refetch();
   };
 
   const formatTimeAgo = (timestamp: string): string => {

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { HabboAPIImage } from './HabboAPIImage';
 import { CreditIcon } from './CreditIcon';
 import { TrendingUp, TrendingDown, Package2, Clock, Zap } from 'lucide-react';
-import { HabboAPIService } from '@/services/HabboAPIService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import type { MarketItem } from '@/contexts/MarketplaceContext';
 
 interface MarketItemModalProps {
@@ -33,7 +33,7 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 text-2xl font-bold text-blue-600 mb-2">
               <CreditIcon size="lg" />
-              {HabboAPIService.formatPrice(item.currentPrice)} créditos
+              {unifiedHabboService.formatPrice(item.currentPrice)} créditos
             </div>
             
             {item.trend !== 'stable' && (
@@ -55,7 +55,7 @@ export const MarketItemModal = ({ item, open, onOpenChange }: MarketItemModalPro
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="font-semibold">Categoria:</div>
-              <div>{HabboAPIService.getCategoryTranslation(item.category)}</div>
+              <div>{unifiedHabboService.getCategoryTranslation(item.category)}</div>
             </div>
             <div>
               <div className="font-semibold">Raridade:</div>

@@ -39,13 +39,7 @@ export const CleanBadgesGrid: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  console.log('🔍 [CleanBadgesGrid] Component state:', {
-    activeCategory,
-    searchTerm: debouncedSearch,
-    forceRefresh
-  });
-
-  // Fetch badges data - carregar todos os emblemas com debounced search
+    // Fetch badges data - carregar todos os emblemas com debounced search
   const { 
     data: badgeData, 
     isLoading, 
@@ -66,12 +60,10 @@ export const CleanBadgesGrid: React.FC = () => {
   // Process and filter badges
   const badges = useMemo(() => {
     if (!badgeData?.badges) {
-      console.log('📦 [CleanBadgesGrid] No badge data available');
-      return [];
+            return [];
     }
 
-    console.log(`📦 [CleanBadgesGrid] Received ${badgeData.badges.length} badges`);
-    return badgeData.badges;
+        return badgeData.badges;
   }, [badgeData]);
 
   // Category options with translations and icons

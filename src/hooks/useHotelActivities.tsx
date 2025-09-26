@@ -24,7 +24,7 @@ export interface AggregatedActivity {
 }
 
 export const useHotelActivities = () => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = useMemo(() => {
     const userHotel = (habboAccount as any)?.hotel as string | undefined;
@@ -43,9 +43,7 @@ export const useHotelActivities = () => {
   } = useQuery({
     queryKey: ['hotel-activities', hotel],
     queryFn: async (): Promise<HabboActivity[]> => {
-      console.log(`🎯 [useHotelActivities] Fetching activities for hotel: ${hotel}`);
-      
-      // Since the table doesn't exist yet, return mock data for now
+            // Since the table doesn't exist yet, return mock data for now
       // This will be replaced once the database is properly set up
       const mockActivities: HabboActivity[] = [
         {
@@ -83,8 +81,7 @@ export const useHotelActivities = () => {
         }
       ];
 
-      console.log(`✅ [useHotelActivities] Returning ${mockActivities.length} mock activities for ${hotel}`);
-      return mockActivities;
+            return mockActivities;
     },
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
@@ -93,9 +90,7 @@ export const useHotelActivities = () => {
 
   // Aggregate activities by user
   const aggregatedActivities: AggregatedActivity[] = useMemo(() => {
-    console.log(`🔄 [useHotelActivities] Processing ${rawActivities.length} activities for aggregation`);
-    
-    if (rawActivities.length === 0) {
+        if (rawActivities.length === 0) {
       return [];
     }
     
@@ -125,8 +120,7 @@ export const useHotelActivities = () => {
       new Date(b.lastActivityTime).getTime() - new Date(a.lastActivityTime).getTime()
     );
 
-    console.log(`✅ [useHotelActivities] Aggregated into ${result.length} user groups`);
-    return result;
+        return result;
   }, [rawActivities]);
 
   const metadata = {
@@ -146,3 +140,4 @@ export const useHotelActivities = () => {
     refetch
   };
 };
+

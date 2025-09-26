@@ -51,8 +51,7 @@ export const useOptimizedQuery = <T,>(
     refetchOnReconnect: false, // Desabilita refresh automático na reconexão
     retry: (failureCount, error) => {
       if (enableRateLimit && !rateLimit.canMakeRequest()) {
-        console.warn(`[useOptimizedQuery] Rate limit reached, skipping retry`);
-        return false;
+                return false;
       }
       return failureCount < 2;
     },
@@ -60,8 +59,7 @@ export const useOptimizedQuery = <T,>(
 
   // Função de refresh forçado que ignora cache
   const forceRefresh = () => {
-    console.log('[useOptimizedQuery] Forcing refresh, invalidating cache');
-    return query.refetch({ cancelRefetch: true });
+        return query.refetch({ cancelRefetch: true });
   };
 
   return {

@@ -27,9 +27,7 @@ const BadgesCategoryGridComponent: React.FC<BadgesCategoryGridProps> = ({
 
   useEffect(() => {
     if (badges && badges.length > 0) {
-      console.log('📊 [BadgesCategoryGrid] Processing badges:', badges.length);
-      
-      const stats = {
+            const stats = {
         official: 0,
         achievements: 0,
         fansites: 0,
@@ -41,8 +39,7 @@ const BadgesCategoryGridComponent: React.FC<BadgesCategoryGridProps> = ({
         stats[category]++;
       });
 
-      console.log('📊 [BadgesCategoryGrid] Category stats:', stats);
-      setCategoryStats(stats);
+            setCategoryStats(stats);
     }
   }, [badges]);
 
@@ -54,8 +51,7 @@ const BadgesCategoryGridComponent: React.FC<BadgesCategoryGridProps> = ({
           .filter((badge: HabboBadgeItem) => categorizeBadge(badge.code, badge.name) === selectedCategory)
           .slice(0, 200);
         
-        console.log(`📊 [BadgesCategoryGrid] Loaded ${filtered.length} badges for category: ${selectedCategory}`);
-        setDisplayedBadges(filtered);
+                setDisplayedBadges(filtered);
         setLoadingMore(false);
       }, 300);
     } else {

@@ -8,8 +8,11 @@ const EditorPuhekupla = () => {
   return (
     <SidebarProvider>
       <div 
-        className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+        className="min-h-screen flex w-full"
+        style={{ 
+          backgroundImage: 'url(/assets/bghabbohub.png)',
+          backgroundRepeat: 'repeat'
+        }}
       >
         <NewAppSidebar />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">

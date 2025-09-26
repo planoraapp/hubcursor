@@ -61,22 +61,18 @@ const EnhancedBadgeImage = ({
   };
 
   const handleImageError = useCallback(() => {
-    console.log(`❌ Failed to load badge ${code} from URL ${currentUrlIndex + 1}/${badgeUrls.length}`);
-    
-    if (currentUrlIndex < badgeUrls.length - 1) {
+        if (currentUrlIndex < badgeUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
       setImageLoaded(false);
     } else {
       setHasError(true);
       setIsLoading(false);
-      console.log(`❌ All URLs failed for badge ${code}`);
-    }
+          }
   }, [currentUrlIndex, badgeUrls.length, code]);
 
   const handleImageLoad = useCallback(() => {
-    console.log(`✅ Successfully loaded badge ${code} from URL ${currentUrlIndex + 1}`);
-    setIsLoading(false);
+        setIsLoading(false);
     setHasError(false);
     setImageLoaded(true);
     
@@ -92,8 +88,7 @@ const EnhancedBadgeImage = ({
         }));
       } catch (e) {
         // Ignorar erros de localStorage
-        console.warn('Failed to cache badge URL:', e);
-      }
+              }
     }
   }, [code, badgeUrls, currentUrlIndex]);
 
@@ -115,13 +110,11 @@ const EnhancedBadgeImage = ({
           
           if (!isExpired && urlIndex < badgeUrls.length) {
             setCurrentUrlIndex(urlIndex);
-            console.log(`💾 Using cached URL for badge ${code}: index ${urlIndex}`);
-          }
+                      }
         }
       } catch (e) {
         // Cache inválido, continuar normalmente
-        console.warn('Invalid cache for badge', code, e);
-      }
+              }
     }
   }, [code, badgeUrls.length]);
 

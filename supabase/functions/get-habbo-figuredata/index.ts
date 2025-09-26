@@ -4,6 +4,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
 serve(async (req) => {
@@ -15,9 +16,14 @@ serve(async (req) => {
   try {
     console.log('🔄 [FigureData] Fetching official Habbo figuredata with colors...');
     
-    // Try multiple Habbo hotels for figuredata
+    // URLs oficiais do Habbo baseadas no tutorial
+    // Prioridade: Sandbox (mais atualizado) > Brasil > Internacional
     const figuredataUrls = [
+      // Sandbox - mais atualizado com novidades
+      'https://images.habbo.com/gordon/PRODUCTION-202211221644-994804644/figuredata.xml',
+      // Brasil - versão estável
       'https://www.habbo.com.br/gamedata/figuredata/1',
+      // Internacional - fallback
       'https://www.habbo.com/gamedata/figuredata/1',
       'https://www.habbo.es/gamedata/figuredata/1'
     ];
@@ -115,10 +121,21 @@ async function parseXMLToJSONWithColors(xmlString: string) {
     const figureData: Record<string, any[]> = {};
     const colorPalettes: Record<string, any[]> = {};
     
-    // Valid clothing categories
+    // 13 categorias oficiais do Habbo baseadas no tutorial
     const VALID_CATEGORIES = new Set([
-      'hd', 'hr', 'ha', 'he', 'ea', 'fa', 
-      'ch', 'cc', 'cp', 'ca', 'lg', 'sh', 'wa'
+      'hd', // Rosto e Corpo (paleta 1)
+      'hr', // Cabelo/Penteados (paleta 2)
+      'ch', // Camisas (paleta 3)
+      'cc', // Casacos/Vestidos/Jaquetas (paleta 3)
+      'cp', // Estampas/Impressões (paleta 3)
+      'ca', // Bijuteria/Jóias (acessórios de topo) (paleta 3)
+      'ea', // Óculos (paleta 3)
+      'fa', // Máscaras (acessórios faciais) (paleta 3)
+      'ha', // Chapéus (paleta 3)
+      'he', // Acessórios (paleta 3)
+      'lg', // Calça (paleta 3)
+      'sh', // Sapato (paleta 3)
+      'wa'  // Cintos (acessórios para a parte inferior) (paleta 3)
     ]);
     
     console.log('📋 [FigureData] Valid categories:', Array.from(VALID_CATEGORIES));
@@ -174,8 +191,8 @@ async function parseXMLToJSONWithColors(xmlString: string) {
       
       figureData[setId] = [];
       
-      // Enhanced part parsing with palette information
-      const partRegex = /<part[^>]+id="([^"]+)"[^>]*(?:gender="([^"]*)")?[^>]*(?:club="([^"]*)")?[^>]*(?:colorable="([^"]*)")?[^>]*(?:palette="([^"]*)")?[^>]*\/?>/g;
+      // Enhanced part parsing com informações completas do tutorial
+      const partRegex = /<part[^>]+id="([^"]+)"[^>]*(?:gender="([^"]*)")?[^>]*(?:club="([^"]*)")?[^>]*(?:colorable="([^"]*)")?[^>]*(?:selectable="([^"]*)")?[^>]*(?:preselectable="([^"]*)")?[^>]*(?:sellable="([^"]*)")?[^>]*(?:palette="([^"]*)")?[^>]*(?:colorindex="([^"]*)")?[^>]*\/?>/g;
       let partMatch;
       let partsInCategory = 0;
       
@@ -184,27 +201,54 @@ async function parseXMLToJSONWithColors(xmlString: string) {
         const gender = partMatch[2] || 'U';
         const club = partMatch[3] || '0';
         const colorable = partMatch[4] === '1';
-        const paletteId = partMatch[5];
+        const selectable = partMatch[5] || '1';
+        const preselectable = partMatch[6] || '0';
+        const sellable = partMatch[7] || '0';
+        const paletteId = partMatch[8];
+        const colorIndex = partMatch[9] || '1'; // Para sistema duotone do tutorial
         
         // Validate numeric ID
         if (!/^\d+$/.test(partId)) {
           continue;
         }
         
+        // Determinar paleta correta baseada na categoria (tutorial)
+        const correctPaletteId = paletteId || getCorrectPaletteId(setId);
+        
         // Get available colors for this part
         let availableColors = ['1', '2', '3', '4', '5']; // Default colors
         
-        if (colorable && paletteId && colorPalettes[paletteId]) {
-          availableColors = colorPalettes[paletteId].map(color => color.id);
+        if (colorable && correctPaletteId && colorPalettes[correctPaletteId]) {
+          availableColors = colorPalettes[correctPaletteId].map(color => color.id);
         }
+        
+        // Detectar duotone baseado no tutorial (colorindex="1" e colorindex="2")
+        const isDuotone = colorIndex === '2' || colorIndex === '1';
+        
+        // Gerar URL de thumbnail usando habbo-imaging
+        const thumbnailUrl = generateThumbnailUrl(setId, partId, availableColors[0], gender);
         
         const partData = {
           id: partId,
+          figureId: partId, // Para compatibilidade
+          category: setId,
           gender: gender as 'M' | 'F' | 'U',
           club: club,
           colorable: colorable,
+          selectable: selectable,
+          preselectable: preselectable,
+          sellable: sellable,
           colors: availableColors,
-          paletteId: paletteId || null
+          paletteId: correctPaletteId,
+          thumbnailUrl: thumbnailUrl,
+          // Sistema duotone do tutorial
+          colorIndex: colorIndex,
+          isDuotone: isDuotone,
+          // Informações adicionais do tutorial
+          isHC: club === '2',
+          isRare: false, // Será determinado pelo furnidata
+          isLTD: false,  // Será determinado pelo furnidata
+          isNFT: false   // Será determinado pelo furnidata
         };
         
         figureData[setId].push(partData);
@@ -232,4 +276,55 @@ async function parseXMLToJSONWithColors(xmlString: string) {
     console.error('❌ [FigureData] XML parsing error:', error);
     throw new Error('Failed to parse figuredata XML: ' + error.message);
   }
+}
+
+// Função auxiliar para determinar paleta correta baseada no tutorial
+function getCorrectPaletteId(category: string): string {
+  const paletteMapping = {
+    'hd': '1', // Rosto e Corpo - Paleta 1
+    'hr': '2', // Cabelo/Penteados - Paleta 2
+    'ch': '3', // Camisas - Paleta 3
+    'cc': '3', // Casacos/Vestidos/Jaquetas - Paleta 3
+    'cp': '3', // Estampas/Impressões - Paleta 3
+    'ca': '3', // Bijuteria/Jóias - Paleta 3
+    'ea': '3', // Óculos - Paleta 3
+    'fa': '3', // Máscaras - Paleta 3
+    'ha': '3', // Chapéus - Paleta 3
+    'he': '3', // Acessórios - Paleta 3
+    'lg': '3', // Calça - Paleta 3
+    'sh': '3', // Sapato - Paleta 3
+    'wa': '3'  // Cintos - Paleta 3
+  };
+  
+  return paletteMapping[category as keyof typeof paletteMapping] || '3';
+}
+
+// Função para gerar URL de thumbnail usando habbo-imaging
+function generateThumbnailUrl(category: string, figureId: string, colorId: string, gender: 'M' | 'F' | 'U'): string {
+  // Avatar base focado na categoria específica
+  const baseAvatar = getBaseAvatarForCategory(category);
+  const fullFigure = `${baseAvatar}.${category}-${figureId}-${colorId}`;
+  
+  return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${fullFigure}&gender=${gender}&direction=2&head_direction=2&size=s&img_format=png&gesture=std&action=std`;
+}
+
+// Função para gerar avatar base focado na categoria específica
+function getBaseAvatarForCategory(category: string): string {
+  const baseAvatars = {
+    'hd': 'hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'hr': 'hd-180-1.ch-3216-92.lg-3116-92.sh-3297-92',
+    'ch': 'hd-180-1.hr-828-45.lg-3116-92.sh-3297-92',
+    'cc': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'lg': 'hd-180-1.hr-828-45.ch-3216-92.sh-3297-92',
+    'sh': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92',
+    'ha': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'ea': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'fa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'he': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'ca': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'cp': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92',
+    'wa': 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92'
+  };
+  
+  return baseAvatars[category as keyof typeof baseAvatars] || 'hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92';
 }

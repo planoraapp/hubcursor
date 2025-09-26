@@ -1,6 +1,6 @@
 import React from 'react';
 import { TickerActivity } from '@/services/habboProxyService';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { useFigureData } from '@/hooks/useFigureData';
 import { useUserFigures } from '@/hooks/useUserFigures';
 
@@ -42,7 +42,7 @@ export const ActivityTicker: React.FC<ActivityTickerProps> = ({ activities }) =>
       {activities.map((activity, index) => (
               <div className="flex items-center gap-3 p-3 rounded-lg bg-habbo-blue/10 border border-habbo-blue/20">
                 <img
-                  src={habboProxyService.getAvatarUrl(figureMap[activity.username] || 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true)}
+                  src={unifiedHabboService.getAvatarUrl(figureMap[activity.username] || 'lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true)}
                   alt={activity.username}
                   className="w-8 h-8 rounded-full"
                 />

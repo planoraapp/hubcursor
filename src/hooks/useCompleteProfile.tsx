@@ -43,33 +43,19 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
     queryFn: async (): Promise<CompleteProfile> => {
       if (!username) throw new Error('Username is required');
       
-      console.log(`[🚀 COMPLETE PROFILE] Fetching optimized profile for ${username} on ${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
+            const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
         body: { username: username.trim(), hotel }
       });
 
       if (error) {
-        console.error('[❌ COMPLETE PROFILE] Error:', error);
-        throw new Error(error.message || 'Failed to fetch complete profile');
+                throw new Error(error.message || 'Failed to fetch complete profile');
       }
 
       if (data.error) {
-        console.error('[❌ COMPLETE PROFILE] API Error:', data.error);
-        throw new Error(data.error);
+                throw new Error(data.error);
       }
 
-      console.log(`[✅ COMPLETE PROFILE] Successfully fetched optimized profile for ${username}`);
-      console.log(`[📊 COMPLETE PROFILE] Profile stats:`, {
-        photos: data.stats?.photosCount || 0,
-        badges: data.stats?.badgesCount || 0,
-        friends: data.stats?.friendsCount || 0,
-        groups: data.stats?.groupsCount || 0,
-        rooms: data.stats?.roomsCount || 0,
-        online: data.online
-      });
-
-      return {
+                  return {
         uniqueId: data.uniqueId,
         name: data.name,
         figureString: data.figureString,

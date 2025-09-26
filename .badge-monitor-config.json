@@ -1,0 +1,8 @@
+{
+  "lastCheck": null,
+  "autoUpdate": true,
+  "checkInterval": 24,
+  "logLevel": "info",
+  "backupEnabled": true,
+  "maxBackups": 7
+}

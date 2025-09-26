@@ -67,8 +67,7 @@ const fetchViaJovemData = async (): Promise<{ [key: string]: ViaJovemCategory }>
     console.log('✅ ViaJovem data processed:', Object.keys(processedData).length, 'categories');
     return processedData;
   } catch (error) {
-    console.error('❌ Error loading ViaJovem data:', error);
-    throw error;
+        throw error;
   }
 };
 

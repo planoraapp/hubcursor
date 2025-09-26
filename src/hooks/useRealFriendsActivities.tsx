@@ -58,14 +58,10 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
     queryKey: ['realFriendsActivities', friendNames.join(','), completeProfile?.data?.friends?.length],
     queryFn: async ({ pageParam }): Promise<ActivitiesPage> => {
       if (friendNames.length === 0) {
-        console.log('[❌ REAL ACTIVITIES] No friends to query activities for');
-        return { activities: [], nextCursor: null, hasMore: false };
+                return { activities: [], nextCursor: null, hasMore: false };
       }
 
-      console.log(`[🔍 REAL ACTIVITIES] Fetching page with cursor: ${pageParam || 'initial'}`);
-      console.log(`[🔍 REAL ACTIVITIES] Querying activities for ${friendNames.length} friends`);
-      
-      // Create a case-insensitive set of friend names with normalization
+                  // Create a case-insensitive set of friend names with normalization
       const normalizedFriendNames = friendNames.map(name => name.toLowerCase().trim());
 
       // Build query with cursor-based pagination
@@ -83,13 +79,10 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
       const { data, error } = await query;
 
       if (error) {
-        console.error('[❌ REAL ACTIVITIES] Database error:', error);
-        throw error;
+                throw error;
       }
 
-      console.log(`[📊 REAL ACTIVITIES] Raw query returned ${data?.length || 0} activities`);
-      
-      // Debug: Show unique user names in activities (CORRIGIDO)
+            // Debug: Show unique user names in activities (CORRIGIDO)
       if (data && data.length > 0) {
         const uniqueUsers = [...new Set(data.map(act => act.friend_name))];
         console.log(`[🔍 REAL ACTIVITIES] Unique users in this page (${uniqueUsers.length}):`, uniqueUsers.slice(0, 10));
@@ -106,9 +99,7 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
         return normalizedFriendNames.includes(activityName);
       });
 
-      console.log(`[✅ REAL ACTIVITIES] After filtering: ${filteredActivities.length} activities from friends`);
-
-  // ETAPA 2: Deduplicação e Melhoria da Apresentação
+        // ETAPA 2: Deduplicação e Melhoria da Apresentação
   // Convert friends_activities to RealFriendActivity format
   const convertedActivities: RealFriendActivity[] = filteredActivities.map(activity => ({
     id: activity.id,
@@ -192,8 +183,7 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
       }
       
     } catch (parseError) {
-      console.warn(`[⚠️ REAL ACTIVITIES] Error parsing new_data for activity ${latestActivity.id}:`, parseError);
-    }
+          }
 
     processedActivities.push({
       ...latestActivity,
@@ -213,9 +203,7 @@ export const useRealFriendsActivities = (initialLimit = 100) => {
   const nextCursor = processedActivities.length > 0 ? processedActivities[processedActivities.length - 1].created_at : null;
   const hasMore = data && data.length === initialLimit && processedActivities.length > 0;
 
-      console.log(`[🎯 REAL ACTIVITIES] Page processed: ${processedActivities.length} activities, hasMore: ${hasMore}`);
-      
-      return { 
+            return { 
         activities: processedActivities, 
         nextCursor, 
         hasMore 

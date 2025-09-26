@@ -21,22 +21,17 @@ export interface HybridClothingItemV2 {
 }
 
 const fetchHybridClothingDataV2 = async (hotel: string = 'com.br'): Promise<HybridClothingItemV2[]> => {
-  console.log(`🌐 [Hybrid V2] Starting hybrid data fetch for hotel: ${hotel}`);
-  
-  const hybridItems: HybridClothingItemV2[] = [];
+    const hybridItems: HybridClothingItemV2[] = [];
   const processedIds = new Set<string>();
 
   try {
     // 1. Fetch HabboEmotion data (primary source - most structured)
-    console.log('📡 [Hybrid V2] Fetching HabboEmotion data...');
-    const { data: emotionData, error: emotionError } = await supabase.functions.invoke('habbo-emotion-clothing', {
+        const { data: emotionData, error: emotionError } = await supabase.functions.invoke('habbo-emotion-clothing', {
       body: { limit: 400 }
     });
 
     if (emotionData?.items && Array.isArray(emotionData.items) && !emotionError) {
-      console.log(`✅ [Hybrid V2] HabboEmotion loaded: ${emotionData.items.length} items`);
-      
-      emotionData.items.forEach((item: any) => {
+            emotionData.items.forEach((item: any) => {
         const hybridItem = convertEmotionToHybrid(item);
         if (hybridItem && !processedIds.has(hybridItem.id)) {
           hybridItems.push(hybridItem);
@@ -44,19 +39,15 @@ const fetchHybridClothingDataV2 = async (hotel: string = 'com.br'): Promise<Hybr
         }
       });
     } else {
-      console.warn('⚠️ [Hybrid V2] HabboEmotion data failed:', emotionError?.message);
-    }
+          }
 
     // 2. Fetch HabboWidgets data (secondary source for additional items)
-    console.log('📡 [Hybrid V2] Fetching HabboWidgets data...');
-    const { data: widgetsData, error: widgetsError } = await supabase.functions.invoke('habbo-widgets-clothing', {
+        const { data: widgetsData, error: widgetsError } = await supabase.functions.invoke('habbo-widgets-clothing', {
       body: { hotel }
     });
 
     if (widgetsData && Array.isArray(widgetsData) && !widgetsError) {
-      console.log(`✅ [Hybrid V2] HabboWidgets loaded: ${widgetsData.length} items`);
-      
-      widgetsData.forEach((item: any) => {
+            widgetsData.forEach((item: any) => {
         const hybridItem = convertWidgetsToHybrid(item);
         if (hybridItem && !processedIds.has(hybridItem.id)) {
           hybridItems.push(hybridItem);
@@ -64,12 +55,10 @@ const fetchHybridClothingDataV2 = async (hotel: string = 'com.br'): Promise<Hybr
         }
       });
     } else {
-      console.warn('⚠️ [Hybrid V2] HabboWidgets data failed:', widgetsError?.message);
-    }
+          }
 
     // 3. Fetch Official Habbo data (validation and fallback)
-    console.log('📡 [Hybrid V2] Fetching Official Habbo data...');
-    const { data: officialData, error: officialError } = await supabase.functions.invoke('get-habbo-official-data', {
+        const { data: officialData, error: officialError } = await supabase.functions.invoke('get-habbo-official-data', {
       body: { hotel: hotel === 'com.br' ? 'com' : hotel }
     });
 
@@ -86,8 +75,7 @@ const fetchHybridClothingDataV2 = async (hotel: string = 'com.br'): Promise<Hybr
         });
       });
     } else {
-      console.warn('⚠️ [Hybrid V2] Official data failed:', officialError?.message);
-    }
+          }
 
     // 4. Sort items by priority (HabboEmotion > HabboWidgets > Official)
     const sortedItems = hybridItems.sort((a, b) => {
@@ -106,8 +94,7 @@ const fetchHybridClothingDataV2 = async (hotel: string = 'com.br'): Promise<Hybr
     return sortedItems;
 
   } catch (error) {
-    console.error('❌ [Hybrid V2] Fatal error:', error);
-    return generateHybridFallbackDataV2();
+        return generateHybridFallbackDataV2();
   }
 };
 
@@ -130,8 +117,7 @@ function convertEmotionToHybrid(item: any): HybridClothingItemV2 | null {
       }
     };
   } catch (error) {
-    console.warn('⚠️ [Hybrid V2] Error converting emotion item:', error);
-    return null;
+        return null;
   }
 }
 
@@ -149,8 +135,7 @@ function convertWidgetsToHybrid(item: any): HybridClothingItemV2 | null {
       source: 'habbowidgets'
     };
   } catch (error) {
-    console.warn('⚠️ [Hybrid V2] Error converting widgets item:', error);
-    return null;
+        return null;
   }
 }
 
@@ -168,8 +153,7 @@ function convertOfficialToHybrid(item: any, category: string, hotel: string): Hy
       source: 'official'
     };
   } catch (error) {
-    console.warn('⚠️ [Hybrid V2] Error converting official item:', error);
-    return null;
+        return null;
   }
 }
 
@@ -247,8 +231,7 @@ function generateHybridFallbackDataV2(): HybridClothingItemV2[] {
     }
   });
   
-  console.log(`🔄 [Fallback V2] Generated ${fallbackItems.length} hybrid fallback items`);
-  return fallbackItems;
+    return fallbackItems;
 }
 
 export const useHybridClothingDataV2 = (hotel: string = 'com.br') => {

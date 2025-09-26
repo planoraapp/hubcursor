@@ -73,8 +73,7 @@ const Forum = () => {
 
       setPosts(postsWithCounts);
     } catch (error) {
-      console.error('Erro ao carregar posts:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -90,8 +89,7 @@ const Forum = () => {
       if (error) throw error;
       setComments(data || []);
     } catch (error) {
-      console.error('Erro ao carregar comentários:', error);
-    }
+          }
   };
 
   const createPost = async () => {
@@ -125,8 +123,7 @@ const Forum = () => {
       setShowCreatePost(false);
       loadPosts();
     } catch (error) {
-      console.error('Erro ao criar post:', error);
-      toast.error('Erro ao criar post');
+            toast.error('Erro ao criar post');
     }
   };
 
@@ -157,8 +154,7 @@ const Forum = () => {
       setNewComment('');
       loadComments(selectedPost.id);
     } catch (error) {
-      console.error('Erro ao comentar:', error);
-      toast.error('Erro ao adicionar comentário');
+            toast.error('Erro ao adicionar comentário');
     }
   };
 
@@ -266,8 +262,11 @@ const Forum = () => {
   return (
     <SidebarProvider>
       <div 
-        className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+        className="min-h-screen flex w-full"
+        style={{ 
+          backgroundImage: 'url(/assets/bghabbohub.png)',
+          backgroundRepeat: 'repeat'
+        }}
       >
         <NewAppSidebar />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">

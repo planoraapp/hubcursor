@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, UserPlus, UserMinus, Send, Trash2, Calendar, MapPin } from 'lucide-react';
 import { HabboUser } from '@/services/habboProxyService';
 import { ConsoleComment } from '@/services/consoleInteractionsService';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 interface EnhancedUserProfileCardProps {
@@ -38,7 +38,7 @@ export const EnhancedUserProfileCard: React.FC<EnhancedUserProfileCardProps> = (
   onDeleteComment,
   onToggleFollow
 }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   const { toast } = useToast();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -314,3 +314,4 @@ export const EnhancedUserProfileCard: React.FC<EnhancedUserProfileCardProps> = (
     </Card>
   );
 };
+

@@ -27,8 +27,7 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error checking follow status:', error);
-        return false;
+                return false;
       }
 
       return !!data;
@@ -48,8 +47,7 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
         .eq('target_habbo_id', targetHabboId);
 
       if (error) {
-        console.error('Error fetching followers count:', error);
-        return 0;
+                return 0;
       }
 
       return count || 0;
@@ -69,8 +67,7 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
         .eq('follower_user_id', user.id);
 
       if (error) {
-        console.error('Error fetching following count:', error);
-        return 0;
+                return 0;
       }
 
       return count || 0;
@@ -114,8 +111,7 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
       toast.success(`Agora você está seguindo ${targetHabboName}!`);
     },
     onError: (error) => {
-      console.error('Error following user:', error);
-      toast.error('Erro ao seguir usuário');
+            toast.error('Erro ao seguir usuário');
     }
   });
 
@@ -141,8 +137,7 @@ export const useFollowProfile = ({ targetHabboId, targetHabboName }: UseFollowPr
       toast.success(`Você parou de seguir ${targetHabboName}`);
     },
     onError: (error) => {
-      console.error('Error unfollowing user:', error);
-      toast.error('Erro ao deixar de seguir usuário');
+            toast.error('Erro ao deixar de seguir usuário');
     }
   });
 

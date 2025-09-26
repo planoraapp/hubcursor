@@ -1,0 +1,17 @@
+{
+  "name": "dragon",
+  "id": "dragon",
+  "sprites": {
+    "idle": {
+      "0": "dragon_idle_0.png",
+      "2": "dragon_idle_2.png",
+      "3": "dragon_idle_3.png",
+      "5": "dragon_idle_5.png",
+      "7": "dragon_idle_7.png"
+    }
+  },
+  "totalSprites": 5,
+  "animation": 500,
+  "status": "organized_alt",
+  "timestamp": "2025-09-03T22:44:02.283Z"
+}

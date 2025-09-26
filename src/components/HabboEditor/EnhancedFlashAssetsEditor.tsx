@@ -41,15 +41,7 @@ const EnhancedFlashAssetsEditor = ({
     search: searchTerm
   });
 
-  console.log('🎯 [EnhancedFlashAssetsEditor] Stats:', {
-    category: selectedCategory,
-    gender: selectedGender,
-    itemsCount: items.length,
-    totalItems,
-    stats: categoryStats
-  });
-
-  // Categories with enhanced organization
+    // Categories with enhanced organization
   const categories = [
     { id: 'hd', name: 'Rostos', icon: '😊', color: 'bg-pink-100' },
     { id: 'hr', name: 'Cabelos', icon: '💇', color: 'bg-purple-100' },
@@ -67,8 +59,7 @@ const EnhancedFlashAssetsEditor = ({
   ];
 
   const handleItemClick = (item: any) => {
-    console.log('🎯 [EnhancedFlashAssetsEditor] Item selecionado:', item);
-    onItemSelect(item, selectedColor);
+        onItemSelect(item, selectedColor);
   };
 
   const getItemImageUrl = (item: any) => {

@@ -35,9 +35,10 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [displayedCount, setDisplayedCount] = useState(30);
+  const [displayedCount, setDisplayedCount] = useState(100);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [fetchingComplete, setFetchingComplete] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<Array<{name: string, count: number, displayName: string}>>([]);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -48,15 +49,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     
     try {
       setLoading(true);
-      console.log(`🔍 Buscando ${type}s...`);
-      
-      let query = supabase
+            let query = supabase
         .from('home_assets')
         .select('*')
         .eq('is_active', true);
 
       if (type === 'stickers') {
-        query = query.not('category', 'eq', 'Papel de Parede');
+        // Para stickers, buscar apenas categorias de stickers
+        query = query.in('category', ['Stickers', 'Animados', 'Ícones', 'Mockups', 'Montáveis', 'Alphabet']);
       } else {
         query = query.like('file_path', '%bg_%');
       }
@@ -66,25 +66,38 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
         .limit(1000);
 
       if (error) {
-        console.error(`❌ Erro ao buscar ${type}s:`, error);
-        return;
+                return;
       }
 
-      console.log(`✅ ${type}s carregados:`, data?.length || 0);
-      
-      const assetsWithUrls = (data || []).map((asset) => ({
+            const assetsWithUrls = (data || []).map((asset) => ({
         ...asset,
         url: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`,
         src: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
       }));
 
       setAllAssets(assetsWithUrls);
-      setDisplayedCount(30);
+      setDisplayedCount(100);
       setFetchingComplete(true);
       
+      // Calcular categorias dinâmicas para stickers
+      if (type === 'stickers') {
+        const categoryMap = new Map<string, number>();
+        assetsWithUrls.forEach(asset => {
+          const category = asset.category || 'Outros';
+          categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+        });
+        
+        const categories = Array.from(categoryMap.entries()).map(([name, count]) => ({
+          name: name.toLowerCase().replace(/\s+/g, '-'),
+          count,
+          displayName: name
+        })).sort((a, b) => b.count - a.count);
+        
+        setAvailableCategories(categories);
+                      }
+      
     } catch (err) {
-      console.error(`❌ Erro inesperado ao buscar ${type}s:`, err);
-    } finally {
+          } finally {
       setLoading(false);
     }
   }, [type, fetchingComplete]);
@@ -93,19 +106,31 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     let filtered = allAssets;
     
     if (selectedCategory !== 'all') {
-      const categoryMap: Record<string, string[]> = {
-        'animados': ['Animados'],
-        'icones': ['Ícones'], 
-        'mockups': ['Mockups'],
-        'montaveis': ['Montáveis'],
-        'outros': ['Stickers']
-      };
-      
-      const validCategories = categoryMap[selectedCategory.toLowerCase()] || [selectedCategory];
-      filtered = allAssets.filter(asset => {
-        const assetCategory = asset.category || '';
-        return validCategories.some(cat => assetCategory === cat);
-      });
+      // Para stickers, usar categorias dinâmicas
+      if (type === 'stickers') {
+        const selectedCategoryData = availableCategories.find(cat => cat.name === selectedCategory);
+        if (selectedCategoryData) {
+          filtered = allAssets.filter(asset => {
+            const assetCategory = asset.category || 'Outros';
+            return assetCategory === selectedCategoryData.displayName;
+          });
+        }
+      } else {
+        // Para backgrounds, manter lógica antiga
+        const categoryMap: Record<string, string[]> = {
+          'animados': ['Animados'],
+          'icones': ['Ícones'], 
+          'mockups': ['Mockups'],
+          'montaveis': ['Montáveis'],
+          'outros': ['Stickers']
+        };
+        
+        const validCategories = categoryMap[selectedCategory.toLowerCase()] || [selectedCategory];
+        filtered = allAssets.filter(asset => {
+          const assetCategory = asset.category || '';
+          return validCategories.some(cat => assetCategory === cat);
+        });
+      }
     }
     
     if (searchTerm.trim()) {
@@ -124,36 +149,14 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       displayedAssets: displayed,
       hasMore: hasMoreItems
     };
-  }, [allAssets, selectedCategory, searchTerm, displayedCount]);
-
-  const availableCategories = useMemo(() => {
-    const categories = new Map<string, number>();
-    
-    allAssets.forEach(asset => {
-      const category = asset.category || 'outros';
-      
-      let friendlyName = 'outros';
-      switch (category) {
-        case 'Animados': friendlyName = 'animados'; break;
-        case 'Ícones': friendlyName = 'icones'; break;
-        case 'Mockups': friendlyName = 'mockups'; break;
-        case 'Montáveis': friendlyName = 'montaveis'; break;
-        case 'Stickers': friendlyName = 'outros'; break;
-        default: friendlyName = 'outros'; break;
-      }
-      
-      categories.set(friendlyName, (categories.get(friendlyName) || 0) + 1);
-    });
-    
-    return categories;
-  }, [allAssets]);
+  }, [allAssets, selectedCategory, searchTerm, displayedCount, availableCategories, type]);
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     
     setIsLoadingMore(true);
     await new Promise(resolve => setTimeout(resolve, 300));
-    setDisplayedCount(prev => prev + 30);
+    setDisplayedCount(prev => prev + 50);
     setIsLoadingMore(false);
   }, [isLoadingMore, hasMore]);
 
@@ -187,22 +190,21 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
     if (open && !fetchingComplete) {
       setSelectedCategory('all');
       setSearchTerm('');
-      setDisplayedCount(30);
+      setDisplayedCount(100);
       setFetchingComplete(false);
       fetchAssets();
     }
   }, [open, fetchAssets, fetchingComplete]);
 
   const handleAssetClick = useCallback((asset: Asset) => {
-    console.log('🎯 Asset selecionado:', asset);
-    onAssetSelect(asset);
+        onAssetSelect(asset);
     onOpenChange(false);
   }, [onAssetSelect, onOpenChange]);
 
   const handleClearFilters = useCallback(() => {
     setSelectedCategory('all');
     setSearchTerm('');
-    setDisplayedCount(30);
+    setDisplayedCount(100);
   }, []);
 
   return (
@@ -210,8 +212,13 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
       <DialogContent className="sm:max-w-7xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-volter text-xl">
-            {title || (type === 'backgrounds' ? 'Selecionar Background' : '✨ Escolher Adesivo')}
+            {title || (type === 'backgrounds' ? 'Selecionar Background' : '✨ Escolher Sticker')}
           </DialogTitle>
+          {type === 'stickers' && availableCategories.length > 0 && (
+            <p className="text-sm text-muted-foreground font-volter">
+              {availableCategories.length} categorias disponíveis • {allAssets.length} assets total
+            </p>
+          )}
         </DialogHeader>
 
         {type === 'stickers' && (
@@ -253,27 +260,17 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 >
                   Todos ({allAssets.length})
                 </Button>
-                {Array.from(availableCategories).map(([category, count]) => {
-                  const categoryLabels: Record<string, string> = {
-                    'animados': '🎬 Animados',
-                    'icones': '🔰 Ícones', 
-                    'mockups': '🖼️ Mockups',
-                    'montaveis': '📌 Montáveis',
-                    'outros': '✨ Outros'
-                  };
-                  
-                  return (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                      className="w-full justify-start font-volter text-xs"
-                    >
-                      {categoryLabels[category] || category} ({count})
-                    </Button>
-                  );
-                })}
+                {availableCategories.map((category) => (
+                  <Button
+                    key={category.name}
+                    variant={selectedCategory === category.name ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.name)}
+                    className="w-full justify-start font-volter text-xs"
+                  >
+                    📁 {category.displayName} ({category.count})
+                  </Button>
+                ))}
               </div>
             </div>
           )}

@@ -76,8 +76,7 @@ export const ChatColumn: React.FC<ChatColumnProps> = ({
           setShowChatWindow(true);
           onConversationStarted?.();
         } catch (error) {
-          console.error('Error starting conversation:', error);
-        }
+                  }
       }
     };
 

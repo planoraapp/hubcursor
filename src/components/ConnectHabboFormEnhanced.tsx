@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
+import { useQuickNotification } from '@/hooks/useNotification';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName } from '../services/habboApi';
 
@@ -15,7 +15,7 @@ export const ConnectHabboFormEnhanced = () => {
   const [habboData, setHabboData] = useState(null);
   
   const { user, habboAccount } = useAuth();
-  const { toast } = useToast();
+  const { success, error } = useQuickNotification();
 
   const generateVerificationCode = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -154,12 +154,13 @@ export const ConnectHabboFormEnhanced = () => {
               </p>
               <div 
                 className="bg-gray-100 p-4 rounded-lg border cursor-pointer"
-                onClick={() => {
-                  navigator.clipboard.writeText(verificationCode);
-                  toast({
-                    title: "Copiado",
-                    description: "Código copiado para a área de transferência!"
-                  });
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(verificationCode);
+                    success('Código copiado!', 'Cole na sua motto do Habbo');
+                  } catch (err) {
+                    error('Erro ao copiar', 'Copie manualmente o código');
+                  }
                 }}
               >
                 <p className="text-xl font-bold text-blue-600 select-all">

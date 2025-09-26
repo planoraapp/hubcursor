@@ -28,9 +28,7 @@ const fetchOfficialFigureData = async (): Promise<{
   figureParts: OfficialFigureData;
   colorPalettes: ColorPalettes;
 }> => {
-  console.log('🌐 [OfficialFigureData] Fetching from official Habbo sources with colors...');
-  
-  try {
+    try {
     const response = await supabase.functions.invoke('get-habbo-figuredata');
     
     if (response.error) {
@@ -44,8 +42,7 @@ const fetchOfficialFigureData = async (): Promise<{
     // Check if we have valid categories
     const categoryCount = Object.keys(response.data.figureParts).length;
     if (categoryCount === 0) {
-      console.warn('⚠️ [OfficialFigureData] Edge Function returned 0 categories, forcing fallback');
-      throw new Error('Empty figureParts data, falling back to local data');
+            throw new Error('Empty figureParts data, falling back to local data');
     }
     
     console.log('✅ [OfficialFigureData] Data loaded from official source:', {
@@ -61,22 +58,15 @@ const fetchOfficialFigureData = async (): Promise<{
     };
     
   } catch (error) {
-    console.error('❌ [OfficialFigureData] Error loading official data:', error);
-    
-    // Fallback to local figuredata.json
-    console.log('🔄 [OfficialFigureData] Trying local fallback...');
-    try {
+        // Fallback to local figuredata.json
+        try {
       const fallbackResponse = await fetch('/figuredata.json');
       if (fallbackResponse.ok) {
         const fallbackData = await fallbackResponse.json();
         const { _metadata, ...figureData } = fallbackData;
         
         const fallbackCategoryCount = Object.keys(figureData).length;
-        console.log('✅ [OfficialFigureData] Fallback data loaded:', {
-          categories: fallbackCategoryCount,
-          source: 'local fallback',
-          availableCategories: Object.keys(figureData)
-        });
+                });
         
         return {
           figureParts: figureData,
@@ -84,8 +74,7 @@ const fetchOfficialFigureData = async (): Promise<{
         };
       }
     } catch (fallbackError) {
-      console.error('❌ [OfficialFigureData] Fallback also failed:', fallbackError);
-    }
+          }
     
     throw error;
   }

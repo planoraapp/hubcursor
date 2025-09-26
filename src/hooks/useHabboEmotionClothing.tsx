@@ -29,27 +29,20 @@ const fetchHabboEmotionClothing = async (
   category?: string, 
   gender: 'M' | 'F' | 'U' = 'U'
 ): Promise<HabboEmotionClothingItem[]> => {
-  console.log(`🌐 [HabboEmotion] Fetching real clothing data - limit: ${limit}, category: ${category}, gender: ${gender}`);
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('habbo-emotion-clothing', {
       body: { limit, category, gender }
     });
 
     if (error) {
-      console.error('❌ [HabboEmotion] Supabase function error:', error);
-      throw error;
+            throw error;
     }
 
     if (!data || !data.items || !Array.isArray(data.items)) {
-      console.error('❌ [HabboEmotion] Invalid response format:', data);
-      throw new Error('Invalid response format from HabboEmotion system');
+            throw new Error('Invalid response format from HabboEmotion system');
     }
 
-    console.log(`✅ [HabboEmotion] Successfully fetched ${data.items.length} real items from ${data.metadata?.source}`);
-    console.log(`📊 [HabboEmotion] Metadata:`, data.metadata);
-    
-    // Process and enrich the items with corrected URLs
+            // Process and enrich the items with corrected URLs
     const enrichedItems = data.items.map((item: any) => {
       const colorDetails = item.colors?.map((colorId: string) => {
         const colorInfo = getColorById(colorId);
@@ -84,8 +77,7 @@ const fetchHabboEmotionClothing = async (
     return enrichedItems;
     
   } catch (error) {
-    console.error('❌ [HabboEmotion] Error:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -93,8 +85,7 @@ const generateCorrectImageUrl = (code: string, part: string, gender: 'M' | 'F' |
   // PRIORITY 1: Official Habbo imaging (most reliable for clothing items)
   const officialUrl = `https://www.habbo.com/habbo-imaging/clothing/${part}/${itemId}/1.png`;
   
-  console.log(`🖼️ [HabboEmotion] Generated official URL: ${officialUrl}`);
-  return officialUrl;
+    return officialUrl;
 };
 
 export const useHabboEmotionClothing = (
@@ -131,19 +122,14 @@ export const useHabboEmotionClothingByCategory = (
 // Manual synchronization function
 export const triggerHabboEmotionSync = async () => {
   try {
-    console.log('🔄 [HabboEmotion] Triggering real synchronization...');
-    
-    const { data, error } = await supabase.functions.invoke('sync-habbo-emotion-data');
+        const { data, error } = await supabase.functions.invoke('sync-habbo-emotion-data');
     
     if (error) {
-      console.error('❌ [HabboEmotion] Sync error:', error);
-      throw error;
+            throw error;
     }
     
-    console.log('✅ [HabboEmotion] Sync completed:', data);
-    return data;
+        return data;
   } catch (error) {
-    console.error('❌ [HabboEmotion] Sync failed:', error);
-    throw error;
+        throw error;
   }
 };

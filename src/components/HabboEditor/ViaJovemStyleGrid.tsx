@@ -39,22 +39,11 @@ const ViaJovemStyleGrid = ({
 
   const handleItemClick = (item: ViaJovemFlashItem) => {
     const colorToUse = currentColorSelections[item.id] || selectedColor || '1';
-    console.log('🎯 [ViaJovemGrid] Item selecionado:', {
-      name: item.name,
-      category: item.category,
-      figureId: item.figureId,
-      colorId: colorToUse
-    });
-    onItemSelect(item, colorToUse);
+        onItemSelect(item, colorToUse);
   };
 
   const handleColorChange = (item: ViaJovemFlashItem, colorId: string) => {
-    console.log('🎨 [ViaJovemGrid] Cor alterada:', {
-      item: item.name,
-      newColor: colorId
-    });
-    
-    // Atualizar cor local para o item
+        // Atualizar cor local para o item
     setCurrentColorSelections(prev => ({
       ...prev,
       [item.id]: colorId

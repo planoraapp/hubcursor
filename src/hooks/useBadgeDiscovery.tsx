@@ -31,19 +31,19 @@ export const useBadgeDiscovery = () => {
       badgeCode?: string; 
       limit?: number; 
     }) => {
-      console.log(`🔍 [useBadgeDiscovery] Starting discovery for ${badgeCode} on ${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-discover-by-badges', {
-        body: { hotel, badge: badgeCode, limit }
+            const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
+        body: { 
+          endpoint: 'badges',
+          action: 'discover',
+          params: { hotel, badge: badgeCode, limit }
+        }
       });
 
       if (error) {
-        console.error('❌ [useBadgeDiscovery] Error:', error);
-        throw new Error(`Badge discovery failed: ${error.message}`);
+                throw new Error(`Badge discovery failed: ${error.message}`);
       }
 
-      console.log('✅ [useBadgeDiscovery] Discovery completed:', data);
-      return data as BadgeDiscoveryResponse;
+            return data as BadgeDiscoveryResponse;
     },
     onSuccess: (data) => {
       const { result } = data;
@@ -62,8 +62,7 @@ export const useBadgeDiscovery = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-detector'] });
     },
     onError: (error) => {
-      console.error('❌ [useBadgeDiscovery] Mutation error:', error);
-      toast.error('Erro na descoberta de usuários', {
+            toast.error('Erro na descoberta de usuários', {
         description: error.message,
       });
     },
@@ -73,9 +72,7 @@ export const useBadgeDiscovery = () => {
   const { data: discoveryStats, isLoading: statsLoading } = useQuery({
     queryKey: ['discovery-stats'],
     queryFn: async () => {
-      console.log('📊 [useBadgeDiscovery] Fetching discovery statistics');
-      
-      const [trackedUsersQuery, badgesQuery, activitiesQuery] = await Promise.all([
+            const [trackedUsersQuery, badgesQuery, activitiesQuery] = await Promise.all([
         supabase.from('tracked_habbo_users').select('id', { count: 'exact' }),
         supabase.from('habbo_badges').select('id', { count: 'exact' }),
         supabase.from('habbo_activities').select('id', { count: 'exact' })

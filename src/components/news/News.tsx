@@ -22,9 +22,7 @@ export const News = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        console.log('🔄 Fetching Habbo news...');
-        
-        // Mock data for now - replace with actual API call later
+                // Mock data for now - replace with actual API call later
         const mockNews: NewsArticle[] = [
           {
             id: '1',
@@ -47,10 +45,8 @@ export const News = () => {
         ];
         
         setArticles(mockNews);
-        console.log('✅ News loaded: 2 items');
-      } catch (error) {
-        console.error('❌ Error fetching news:', error);
-      } finally {
+              } catch (error) {
+              } finally {
         setIsLoading(false);
       }
     };

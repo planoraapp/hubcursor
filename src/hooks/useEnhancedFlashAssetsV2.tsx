@@ -42,9 +42,7 @@ interface FetchParams {
 }
 
 const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<EnhancedFlashAssetV2[]> => {
-  console.log('🌐 [EnhancedFlashAssetsV2] Fetching with enhanced categorization', params);
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
       body: { 
         limit: params.limit || 3000, 
@@ -56,8 +54,7 @@ const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<Enhanced
     });
 
     if (error) {
-      console.error('❌ [EnhancedFlashAssetsV2] Supabase function error:', error);
-      throw error;
+            throw error;
     }
 
     // Tolerate multiple response shapes
@@ -73,20 +70,17 @@ const fetchEnhancedFlashAssetsV2 = async (params: FetchParams): Promise<Enhanced
     }
 
     if (!assets) {
-      console.error('❌ [EnhancedFlashAssetsV2] Invalid response format:', data);
-      throw new Error('Invalid response format from enhanced flash assets V2');
+            throw new Error('Invalid response format from enhanced flash assets V2');
     }
 
-    console.log(`✅ [EnhancedFlashAssetsV2] Successfully fetched ${assets.length} raw assets`);
-    if ((data as any)?.metadata) {
+        if ((data as any)?.metadata) {
       console.log(`📊 [EnhancedFlashAssetsV2] Metadata:`, (data as any).metadata);
     }
     
     return assets;
     
   } catch (error) {
-    console.error('❌ [EnhancedFlashAssetsV2] Error:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -124,8 +118,7 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
       'lg', 'sh', 'wa'              // Legs section
     ]);
 
-    console.log('🔧 [Normalization] Starting enhanced normalization process');
-    console.log('📊 [Normalization] Official data structure:', Object.keys(officialData));
+        console.log('📊 [Normalization] Official data structure:', Object.keys(officialData));
     
     // Build enhanced ID-to-category mapping from official data
     const idToCategory = new Map<string, string>();
@@ -196,8 +189,7 @@ export const useEnhancedFlashAssetsV2 = (params: UseEnhancedFlashAssetsV2Params)
 
       // STRICT VALIDATION: Only numeric figureId, not '0'
       if (!/^\d+$/.test(String(figureId)) || String(figureId) === '0') {
-        console.log(`🚫 [Normalization] Rejecting invalid figureId '${figureId}' for ${swf}`);
-        return null;
+                return null;
       }
 
       // Enhanced gender parsing

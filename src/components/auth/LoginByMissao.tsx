@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Check, Info, RefreshCw, Eye, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useQuickNotification } from '@/hooks/useNotification';
 import { supabase } from '@/integrations/supabase/client';
 import { getUserByName } from '@/services/habboApiMultiHotel';
 
@@ -17,7 +17,7 @@ export const LoginByMissao: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMotto, setIsLoadingMotto] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
+  const { success, error } = useQuickNotification();
 
   const generateVerificationCode = () => {
     const code = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -31,16 +31,9 @@ export const LoginByMissao: React.FC = () => {
       await navigator.clipboard.writeText(verificationCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Código copiado!",
-        description: "Cole na sua motto do Habbo"
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao copiar",
-        description: "Copie manualmente o código",
-        variant: "destructive"
-      });
+      success('Código copiado!', 'Cole na sua motto do Habbo');
+    } catch (err) {
+      error('Erro ao copiar', 'Copie manualmente o código');
     }
   };
 
@@ -71,8 +64,7 @@ export const LoginByMissao: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao buscar motto:', error);
-      toast({
+            toast({
         title: "Erro",
         description: "Erro ao buscar motto atual",
         variant: "destructive"
@@ -106,18 +98,17 @@ export const LoginByMissao: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('register-or-reset-via-motto', {
+      const { data, error } = await supabase.functions.invoke('auto-register-via-motto', {
         body: {
-          habboName: habboName.trim(),
-          verificationCode: verificationCode.trim(),
-          newPassword: newPassword,
+          habbo_name: habboName.trim(),
+          verification_code: verificationCode.trim(),
+          new_password: newPassword,
           hotel: 'br'
         }
       });
 
       if (error) {
-        console.error('Function error:', error);
-        throw new Error(error.message || 'Erro na requisição');
+                throw new Error(error.message || 'Erro na requisição');
       }
 
       if (data?.error) {
@@ -136,9 +127,7 @@ export const LoginByMissao: React.FC = () => {
       setCurrentMotto('');
 
     } catch (error: any) {
-      console.error('Motto verification error:', error);
-      
-      let errorMessage = error.message || 'Erro na verificação';
+            let errorMessage = error.message || 'Erro na verificação';
       
       // Handle specific error cases
       if (errorMessage.includes('não encontrado')) {

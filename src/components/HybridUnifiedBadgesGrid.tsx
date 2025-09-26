@@ -78,8 +78,7 @@ export const HybridUnifiedBadgesGrid: React.FC = () => {
       refetch(); // Atualizar dados após população
     } catch (error) {
       toast.error('Erro ao popular base de dados');
-      console.error('Population error:', error);
-    }
+          }
   }, [populateMutation, refetch]);
 
   const handleTabChange = useCallback((value: string) => {

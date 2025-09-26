@@ -13,21 +13,21 @@ import {
   SidebarGroupContent,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 
 export function NewAppSidebar() {
   const location = useLocation();
-  const { habboAccount, isLoggedIn, logout } = useSimpleAuth();
+  const { habboAccount, isLoggedIn, logout } = useAuth();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
-    { name: 'Homes', path: '/homes', icon: '/assets/home.png' },
-    { name: 'Notícias', path: '/noticias', icon: '/assets/news.png' },
+    { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
+    { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
     { name: 'Emblemas', path: '/emblemas', icon: '/assets/emblemas.png' },
     { name: 'Catálogo', path: '/catalogo', icon: '/assets/Carrinho.png' },
     { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/ferramentas.png' },
@@ -41,7 +41,17 @@ export function NewAppSidebar() {
         <img 
           src={item.icon} 
           alt={item.name}
-          className={`flex-shrink-0 ${isCollapsed ? 'w-8 h-8' : 'w-4 h-4'}`}
+          className={`flex-shrink-0`}
+          style={{
+            imageRendering: 'pixelated',
+            objectFit: 'contain',
+            width: 'auto',
+            height: 'auto',
+            maxWidth: isCollapsed ? '40px' : '24px',
+            maxHeight: isCollapsed ? '40px' : '24px',
+            minWidth: isCollapsed ? '20px' : '16px',
+            minHeight: isCollapsed ? '20px' : '16px'
+          }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
@@ -104,7 +114,7 @@ export function NewAppSidebar() {
               />
             ) : (
               <img 
-                src="/assets/habbohub.gif" 
+                src="/assets/bghabbohub.png" 
                 alt="Habbo Hub" 
                 className="w-full h-auto max-w-[200px]"
                 onError={(e) => {
@@ -158,7 +168,12 @@ export function NewAppSidebar() {
                           onClick={logout}
                           className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-xs font-bold text-white rounded transition-colors flex items-center justify-center gap-2"
                         >
-                          <LogOut className="w-3 h-3" />
+                          <img 
+                            src="/assets/logout.png" 
+                            alt="Logout" 
+                            className="w-3 h-3"
+                            style={{ imageRendering: 'pixelated' }}
+                          />
                           Sair
                         </button>
                       </TooltipTrigger>
@@ -196,3 +211,4 @@ export function NewAppSidebar() {
     </div>
   );
 }
+

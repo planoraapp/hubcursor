@@ -1,0 +1,19 @@
+{
+  "name": "Dragão",
+  "emoji": "🐉",
+  "id": "dragon",
+  "sprites": {
+    "idle": {
+      "0": "dragon_idle_0.png",
+      "1": "dragon_idle_1.png",
+      "2": "dragon_idle_2.png",
+      "3": "dragon_idle_3.png",
+      "4": "dragon_idle_4.png",
+      "5": "dragon_idle_5.png",
+      "6": "dragon_idle_6.png",
+      "7": "dragon_idle_7.png"
+    }
+  },
+  "status": "temporary_emoji_based",
+  "instructions": "Use o gerador HTML para criar sprites reais"
+}

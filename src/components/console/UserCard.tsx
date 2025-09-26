@@ -3,10 +3,10 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, Eye, Camera, Users, Heart, UserPlus, UserCheck } from 'lucide-react';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { usePhotosScraped } from '@/hooks/usePhotosScraped';
 import { useFollowSystem } from '@/hooks/useFollowSystem';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserCardProps {
   user: any;
@@ -14,7 +14,7 @@ interface UserCardProps {
 }
 
 export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   // Get photos count for this user
   const hotel = user.hotel === 'br' ? 'br' : (user.hotel || 'br');
@@ -34,7 +34,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
   });
 
   const avatarUrl = user.figure_string 
-    ? habboProxyService.getAvatarUrl(user.figure_string, 'm')
+    ? unifiedHabboService.getAvatarUrl(user.figure_string, 'm')
     : `https://www.habbo.${hotel === 'br' ? 'com.br' : hotel}/habbo-imaging/avatarimage?user=${user.habbo_name}&size=m&direction=2&head_direction=3&action=std`;
 
   const handleFollowClick = async (e: React.MouseEvent) => {
@@ -173,3 +173,4 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onSelect }) => {
     </Card>
   );
 };
+

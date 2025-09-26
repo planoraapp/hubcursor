@@ -9,8 +9,11 @@ interface PageBackgroundProps {
 export const PageBackground: React.FC<PageBackgroundProps> = ({ children, className = "" }) => {
   return (
     <div 
-      className={`min-h-screen bg-repeat ${className}`}
-      style={{ backgroundImage: 'url("/assets/bghabbohub.png")' }}
+      className={`min-h-screen ${className}`}
+      style={{ 
+        backgroundImage: 'url("/assets/bghabbohub.png")',
+        backgroundRepeat: 'repeat'
+      }}
     >
       {children}
     </div>

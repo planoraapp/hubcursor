@@ -46,14 +46,12 @@ export const Forum = () => {
         .order('name');
 
       if (error) {
-        console.error('Erro ao carregar categorias:', error);
-        return;
+                return;
       }
 
       setCategories(data || []);
     } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
-    }
+          }
   };
 
   const loadPosts = async () => {
@@ -74,8 +72,7 @@ export const Forum = () => {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Erro ao carregar posts:', error);
-        toast({
+                toast({
           title: "Erro",
           description: "Erro ao carregar posts do fórum",
           variant: "destructive"
@@ -85,8 +82,7 @@ export const Forum = () => {
 
       setPosts(data || []);
     } catch (error) {
-      console.error('Erro ao carregar posts:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -113,8 +109,7 @@ export const Forum = () => {
           .upload(`forum/${fileName}`, image);
 
         if (uploadError) {
-          console.error('Erro ao fazer upload da imagem:', uploadError);
-          toast({
+                    toast({
             title: "Erro",
             description: "Erro ao fazer upload da imagem",
             variant: "destructive"
@@ -144,8 +139,7 @@ export const Forum = () => {
         .single();
 
       if (error) {
-        console.error('Erro ao criar post:', error);
-        toast({
+                toast({
           title: "Erro",
           description: "Erro ao criar post",
           variant: "destructive"
@@ -160,8 +154,7 @@ export const Forum = () => {
 
       loadPosts();
     } catch (error) {
-      console.error('Erro ao criar post:', error);
-      toast({
+            toast({
         title: "Erro",
         description: "Erro inesperado ao criar post",
         variant: "destructive"
@@ -191,8 +184,7 @@ export const Forum = () => {
         .single();
 
       if (fetchError) {
-        console.error('Erro ao buscar post:', fetchError);
-        return;
+                return;
       }
 
       // Update with incremented likes
@@ -202,8 +194,7 @@ export const Forum = () => {
         .eq('id', postId);
 
       if (error) {
-        console.error('Erro ao curtir post:', error);
-        return;
+                return;
       }
 
       // Atualizar localmente
@@ -215,8 +206,7 @@ export const Forum = () => {
         )
       );
     } catch (error) {
-      console.error('Erro ao curtir post:', error);
-    }
+          }
   };
 
   return (

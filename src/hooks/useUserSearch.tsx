@@ -1,64 +1,50 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useUnifiedUserSearch } from './useUnifiedAPI';
 
 export const useUserSearch = () => {
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState<string>('');
+  
+  const { 
+    data: searchResults = [], 
+    loading: isSearching, 
+    error, 
+    fetchData: searchUser 
+  } = useUnifiedUserSearch({
+    query,
+    hotel: 'br',
+    limit: 15,
+    enabled: false // Don't auto-fetch
+  });
 
-  const searchUser = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setError(null);
+  const searchUserQuery = async (searchQuery: string) => {
+    if (!searchQuery.trim()) {
+      setQuery('');
       return;
     }
 
-    if (query.trim().length < 2) {
-      setSearchResults([]);
-      setError(null);
+    if (searchQuery.trim().length < 2) {
+      setQuery('');
       return;
     }
 
-    setIsSearching(true);
-    setError(null);
+    setQuery(searchQuery.trim());
 
     try {
-      console.log(`🔍 [useUserSearch] Searching for: "${query}"`);
-      
-      // Usar edge function de busca de usuários
-      const { data, error } = await supabase.functions.invoke('habbo-user-search', {
-        body: { 
-          query: query.trim(),
-          hotel: 'br',
-          limit: 15 
-        }
+            await searchUser({
+        query: searchQuery.trim(),
+        hotel: 'br',
+        limit: 15
       });
 
-      if (error) {
-        console.error('❌ [useUserSearch] Edge function error:', error);
-        setError('Erro na busca. Tente novamente.');
-        setSearchResults([]);
-        return;
-      }
-
-      const users = data?.users || [];
-      setSearchResults(users);
-      console.log(`✅ [useUserSearch] Found ${users.length} users for "${query}"`);
-
-    } catch (err) {
-      console.error('❌ [useUserSearch] Search error:', err);
-      setError('Erro na busca. Tente novamente.');
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
+          } catch (err) {
+          }
   };
 
   return {
     searchResults,
     isSearching,
-    error,
-    searchUser
+    error: error || null,
+    searchUser: searchUserQuery
   };
 };

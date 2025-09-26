@@ -6,34 +6,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, User, Home, Calendar, MapPin, Star, ExternalLink, UserCheck } from 'lucide-react';
+import { Search, User, Home, Calendar, MapPin, Star, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
-import { HomePreviewCard } from '@/components/HomePreviewCard';
+import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
+import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
+import { HomesGrid } from '@/components/HomesGrid';
+import { generateUniqueUsername } from '@/utils/usernameUtils';
+import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
+import { DebugCacheStatus } from '@/components/DebugCacheStatus';
 
-interface HabboUser {
-  id: string;
-  habbo_name: string;
-  hotel: string;
-  is_online: boolean;
-  motto: string;
-  created_at: string;
-  figure_string?: string;
-  last_seen_at?: string;
-}
 
+
+import type { HabboUser } from '@/types/habbo';
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { habboAccount, isLoggedIn } = useSimpleAuth();
-  const { data: latestHomes, isLoading: loadingLatest } = useLatestHomes();
+  const { habboAccount, isLoggedIn } = useAuth();
+  const { data: latestHomes, isLoading: loadingLatest, refetch: refetchLatest } = useLatestHomes();
+  const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
+  const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchInitiated, setSearchInitiated] = useState(false);
+  
 
   const fetchUsers = async () => {
     try {
@@ -96,23 +97,40 @@ const Homes: React.FC = () => {
 
   const filteredUsers = users.filter((user) => user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  const handleHomeClick = (userId: string, habboName?: string, hotel?: string) => {
+    if (habboName) {
+      // Gerar nome único com domínio baseado no hotel
+      const selectedHotel = hotel || 'br';
+      const domainUsername = generateUniqueUsername(habboName, selectedHotel);
+      navigate(`/home/${domainUsername}`);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <CollapsibleAppSidebar />
-        <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+    <EnhancedErrorBoundary>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <CollapsibleAppSidebar />
+          <SidebarInset className="flex-1">
+            {/* Debug Cache Status */}
+            <DebugCacheStatus queryKey={['latest-homes']} label="Últimas Modificadas" />
+            
+            
+            <main className="flex-1 p-8 min-h-screen" style={{ 
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundRepeat: 'repeat'
+            }}>
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-white mb-4 volter-font"
                     style={{
                       textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
                     }}>
-                  🏠 Habbo Homes
+                  🏠 Habbo Home
                 </h1>
                 <p className="text-lg text-white/90 volter-font drop-shadow">
                   Explore as homes dos usuários do HabboHub
@@ -122,10 +140,14 @@ const Homes: React.FC = () => {
                 <div className="mt-4">
                   {isLoggedIn && habboAccount ? (
                     <Button 
-                      onClick={() => navigate(`/homes/${habboAccount.habbo_name}`)}
+                      onClick={() => {
+                        // Gerar nome único com domínio baseado no hotel do usuário
+                        const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
+                        navigate(`/home/${domainUsername}`);
+                      }}
                       className="habbo-button-green volter-font px-6 py-2"
                     >
-                      <UserCheck className="w-4 h-4 mr-2" />
+                      <User className="w-4 h-4 mr-2" />
                       Ver Minha Home
                       <Home className="w-4 h-4 ml-2" />
                     </Button>
@@ -173,37 +195,31 @@ const Homes: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Seção de Últimas Homes Editadas */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-white mb-4 volter-font text-center"
-                    style={{
-                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                    }}>
-                  🎨 Últimas Homes Editadas
-                </h2>
-                
-                {loadingLatest ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin w-8 h-8 border-4 border-white/20 border-t-white rounded-full"></div>
-                    <span className="ml-3 text-white volter-font">Carregando homes...</span>
-                  </div>
-                ) : latestHomes && latestHomes.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                    {latestHomes.map((home) => (
-                      <HomePreviewCard key={home.user_id} home={home} />
-                    ))}
-                  </div>
-                ) : (
-                  <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
-                    <CardContent className="p-6 text-center">
-                      <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 volter-font">
-                        Ainda não há homes editadas recentemente
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              {/* Grids de Homes */}
+              <HomesGrid
+                title="🎨 Últimas Modificadas"
+                homes={latestHomes || []}
+                isLoading={loadingLatest}
+                error={null}
+                onHomeClick={handleHomeClick}
+              />
+
+              <HomesGrid
+                title="⭐ Maiores Avaliações"
+                homes={topRatedHomes || []}
+                isLoading={loadingTopRated}
+                error={null}
+                onHomeClick={handleHomeClick}
+              />
+
+              <HomesGrid
+                title="👥 Mais Visitadas"
+                homes={mostVisitedHomes || []}
+                isLoading={loadingMostVisited}
+                error={null}
+                showVisits={true}
+                onHomeClick={handleHomeClick}
+              />
 
               {searchInitiated && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -225,10 +241,10 @@ const Homes: React.FC = () => {
                               {user.habbo_name}
                             </CardTitle>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge className={`text-xs volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
+                              <Badge className={`text-sm volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
                                 {user.is_online ? 'Online' : 'Offline'}
                               </Badge>
-                              <Badge className="bg-white/20 text-white text-xs volter-font">
+                              <Badge className="bg-white/20 text-white text-sm volter-font">
                                 {user.hotel?.toUpperCase() || 'BR'}
                               </Badge>
                             </div>
@@ -249,7 +265,7 @@ const Homes: React.FC = () => {
                         {user.created_at && (
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-blue-500" />
-                            <span className="text-xs text-gray-600 volter-font">
+                            <span className="text-sm text-gray-600 volter-font">
                               Descoberto em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
@@ -263,7 +279,10 @@ const Homes: React.FC = () => {
                         </div>
                         
                         <Button 
-                          onClick={() => navigate(`/homes/${user.habbo_name}`)}
+                          onClick={() => {
+                            const domainUsername = generateUniqueUsername(user.habbo_name, user.hotel);
+                            navigate(`/home/${domainUsername}`);
+                          }}
                           className="w-full habbo-button-blue volter-font"
                         >
                           <Home className="w-4 h-4 mr-2" />
@@ -290,11 +309,14 @@ const Homes: React.FC = () => {
                 </Card>
               )}
             </div>
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+            </main>
+          </SidebarInset>
+        </div>
+        
+      </SidebarProvider>
+    </EnhancedErrorBoundary>
   );
 };
 
 export default Homes;
+

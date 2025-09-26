@@ -21,8 +21,7 @@ export const OpenConsolePopupButton: React.FC = () => {
           break;
         case 'AUTH_STATE_CHANGE':
           // Sync auth state between windows if needed
-          console.log('Auth state changed in popup:', event.data.isLoggedIn);
-          break;
+                    break;
       }
     };
 

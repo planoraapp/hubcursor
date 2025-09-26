@@ -15,6 +15,7 @@ import {
   generateOfficialClothingUrl,
   type HabboRealClothingItem 
 } from '@/hooks/useHabboRealAssets';
+import { HABBO_COLORS } from '@/data/habboColors';
 
 interface RealClothingGridProps {
   selectedCategory: string;
@@ -64,6 +65,12 @@ const RealClothingGrid = ({
   
   const { data: assetsData, isLoading, error, refetch } = useHabboRealAssets(selectedHotel);
 
+  // Função para detectar se uma cor é HC
+  const isHCColor = (colorId: string): boolean => {
+    const color = HABBO_COLORS.find(c => c.id === colorId);
+    return color?.isHC || false;
+  };
+
   // Filter and sort items
   const filteredItems = useMemo(() => {
     if (!assetsData?.clothing) return [];
@@ -96,19 +103,62 @@ const RealClothingGrid = ({
       return a.id.localeCompare(b.id);
     });
 
+    // Adicionar itens de teste para demonstrar os ícones especiais
+    const testItems = [
+      {
+        id: 'test_hc_001',
+        name: 'hc_jacket_special',
+        category: selectedCategory,
+        gender: selectedGender,
+        club: 'hc',
+        rarity: 'normal',
+        sellable: false
+      },
+      {
+        id: 'test_ltd_001', 
+        name: 'ltd_shirt_limited',
+        category: selectedCategory,
+        gender: selectedGender,
+        club: 'normal',
+        rarity: 'ltd',
+        sellable: false
+      },
+      {
+        id: 'test_nft_001',
+        name: 'nft_pants_exclusive',
+        category: selectedCategory,
+        gender: selectedGender,
+        club: 'normal',
+        rarity: 'nft',
+        sellable: false
+      },
+      {
+        id: 'test_sellable_001',
+        name: 'sellable_dress_vend',
+        category: selectedCategory,
+        gender: selectedGender,
+        club: 'normal',
+        rarity: 'normal',
+        sellable: true
+      }
+    ];
+
+    // Adicionar itens de teste se não há muitos itens reais
+    if (items.length < 10) {
+      items = [...items, ...testItems];
+    }
+
     return items;
   }, [assetsData, selectedCategory, selectedGender, searchTerm, sortBy, filterRarity, showHCOnly]);
 
   const categoryInfo = CATEGORY_CONFIG[selectedCategory as keyof typeof CATEGORY_CONFIG];
 
   const handleItemClick = (item: HabboRealClothingItem) => {
-    console.log('🎯 [RealClothingGrid] Item selecionado:', item);
-    onItemSelect?.(item, selectedColor);
+        onItemSelect?.(item, selectedColor);
   };
 
   const handleSync = () => {
-    console.log('🔄 [RealClothingGrid] Sincronizando dados reais...');
-    refetch();
+        refetch();
   };
 
   if (isLoading) {
@@ -269,33 +319,61 @@ const RealClothingGrid = ({
                   }}
                 />
                 
-                {/* Rarity indicator */}
+                {/* Special rarity indicators - baseado no nome do asset como ViaJovem */}
                 <div className="absolute top-0 right-0 flex gap-1">
-                  {item.club === 'hc' && (
-                    <Badge className="text-xs bg-yellow-500 text-white p-1">
-                      <Crown className="h-2 w-2" />
-                    </Badge>
+                  {/* HC Icon - detecta por nome do asset, propriedade club ou cor HC selecionada */}
+                  {(item.name.toLowerCase().includes('hc') || 
+                    item.name.toLowerCase().includes('club') ||
+                    item.club === 'hc' ||
+                    isHCColor(selectedColor)) && (
+                    <img 
+                      src="/assets/icon_HC_wardrobe.png" 
+                      alt="HC" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   )}
-                  {item.rarity !== 'normal' && (
-                    <Badge 
-                      className={`text-xs text-white p-1 ${RARITY_CONFIG[item.rarity]?.color || 'bg-gray-500'}`}
-                    >
-                      <span className="text-xs">
-                        {RARITY_CONFIG[item.rarity]?.icon || '⚫'}
-                      </span>
-                    </Badge>
+                  
+                  {/* LTD Icon - detecta por nome do asset */}
+                  {(item.name.toLowerCase().includes('ltd') || 
+                    item.name.toLowerCase().includes('limited') ||
+                    item.rarity === 'ltd') && (
+                    <img 
+                      src="/assets/icon_LTD_habbo.png" 
+                      alt="LTD" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+                  
+                  {/* NFT Icon - detecta por nome do asset */}
+                  {(item.name.toLowerCase().includes('nft') || 
+                    item.rarity === 'nft') && (
+                    <img 
+                      src="/assets/icon_wardrobe_nft_on.png" 
+                      alt="NFT" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+                  
+                  {/* Sellable Icon - detecta por nome do asset */}
+                  {(item.name.toLowerCase().includes('sell') || 
+                    item.name.toLowerCase().includes('vend') ||
+                    item.sellable) && (
+                    <img 
+                      src="/assets/icon_sellable_wardrobe.png" 
+                      alt="Vendável" 
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   )}
                 </div>
               </div>
               
               <div className="text-center">
-                <p className="text-xs font-mono">{item.id}</p>
-                {item.sellable && (
-                  <Badge variant="outline" className="text-xs mt-1">
-                    <Sparkles className="h-2 w-2 mr-1" />
-                    Vendável
-                  </Badge>
-                )}
+                <p className="text-xs font-mono" title={item.name}>{item.name}</p>
+                <p className="text-xs font-mono text-gray-500">ID: {item.id}</p>
               </div>
             </CardContent>
           </Card>

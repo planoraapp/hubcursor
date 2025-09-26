@@ -39,8 +39,7 @@ export const useOptimizedPhotos = (username?: string, hotel: string = 'br') => {
     }));
 
     try {
-      console.log(`[🔄 OPTIMIZED PHOTOS] Loading photos for ${username}...`);
-      await refetch(force);
+            await refetch(force);
       
       setLoadingState(prev => ({
         ...prev,
@@ -48,11 +47,8 @@ export const useOptimizedPhotos = (username?: string, hotel: string = 'br') => {
         retryCount: 0
       }));
       
-      console.log(`[✅ OPTIMIZED PHOTOS] Successfully loaded ${photoCount} photos`);
-    } catch (error: any) {
-      console.error(`[❌ OPTIMIZED PHOTOS] Failed to load photos:`, error);
-      
-      setLoadingState(prev => ({
+          } catch (error: any) {
+            setLoadingState(prev => ({
         ...prev,
         isLoading: false,
         hasError: true,

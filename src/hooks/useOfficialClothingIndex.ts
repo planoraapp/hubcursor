@@ -42,8 +42,7 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
 
   const categorizedItems = useMemo(() => {
     if (!data?.figureParts) {
-      console.log('📋 [OfficialClothingIndex] No figure data available yet');
-      return {};
+            return {};
     }
 
     console.log('📋 [OfficialClothingIndex] Processing figure data with gender filtering:', {
@@ -57,8 +56,7 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
     Object.entries(data.figureParts).forEach(([categoryId, items]) => {
       const categoryInfo = OFFICIAL_CATEGORIES[categoryId as keyof typeof OFFICIAL_CATEGORIES];
       if (!categoryInfo) {
-        console.log(`⚠️ [OfficialClothingIndex] Skipping unknown category: ${categoryId}`);
-        return;
+                return;
       }
 
       // Enhanced gender filtering with detailed logging
@@ -75,7 +73,7 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
           category: categoryId,
           figureId: item.id,
           gender: item.gender,
-          club: item.club === '1' ? 'HC' as const : 'FREE' as const,
+          club: item.club === '2' ? 'HC' as const : 'FREE' as const,
           colors: item.colors || ['1'],
           name: `${categoryInfo.name} ${item.id}`,
           paletteId: item.paletteId
@@ -91,8 +89,7 @@ export const useOfficialClothingIndex = (selectedGender: 'M' | 'F') => {
         
         console.log(`✅ [OfficialClothingIndex] Category ${categoryId} (${categoryInfo.name}): ${filteredItems.length} items for ${selectedGender}`);
       } else {
-        console.log(`📋 [OfficialClothingIndex] Category ${categoryId} has no items for gender ${selectedGender}`);
-      }
+              }
     });
 
     const totalCategories = Object.keys(result).length;

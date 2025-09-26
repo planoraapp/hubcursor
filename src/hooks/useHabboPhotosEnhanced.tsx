@@ -49,7 +49,5 @@ export const useHabboPhotosEnhanced = (username?: string, hotel: string = 'br') 
     updated_at: new Date().toISOString()
   }));
 
-  console.log(`[🔧 DB ENHANCED PHOTOS] Converted ${photos.length} photos for ${username}`);
-
-  return { habboPhotos, isLoading, error };
+    return { habboPhotos, isLoading, error };
 };

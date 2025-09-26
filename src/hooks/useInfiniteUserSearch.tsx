@@ -12,37 +12,34 @@ export const useInfiniteUserSearch = (options: UseInfiniteUserSearchOptions = {}
   const query = useInfiniteQuery({
     queryKey: ['infinite-user-search', limit],
     queryFn: async ({ pageParam = 0 }) => {
-      console.log(`🔍 [useInfiniteUserSearch] Loading page ${pageParam}`);
-      
-      try {
-        const { data, error } = await supabase.functions.invoke('habbo-official-ticker', {
+            try {
+        const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
           body: { 
-            hotel: 'br',
-            limit,
-            offset: pageParam * limit
+            endpoint: 'feed',
+            action: 'general',
+            params: { 
+              hotel: 'br',
+              limit,
+              offset: pageParam * limit
+            }
           }
         });
 
         if (error) {
-          console.error('❌ [useInfiniteUserSearch] Error:', error);
-          throw new Error(error.message || 'Failed to fetch users');
+                    throw new Error(error.message || 'Failed to fetch users');
         }
 
         if (data.error) {
-          console.error('❌ [useInfiniteUserSearch] API Error:', data.error);
-          throw new Error(data.error);
+                    throw new Error(data.error);
         }
 
-        console.log(`✅ [useInfiniteUserSearch] Loaded ${data.activities?.length || 0} users for page ${pageParam}`);
-        
-        return {
-          users: data.activities || [],
-          nextPage: (data.activities?.length === limit) ? pageParam + 1 : undefined,
-          hasMore: (data.activities?.length === limit)
+                return {
+          users: data.feed || [],
+          nextPage: (data.feed?.length === limit) ? pageParam + 1 : undefined,
+          hasMore: (data.feed?.length === limit)
         };
       } catch (error: any) {
-        console.error('❌ [useInfiniteUserSearch] Fetch failed:', error);
-        throw error;
+                throw error;
       }
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,

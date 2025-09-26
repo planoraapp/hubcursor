@@ -1,0 +1,1074 @@
+[
+  {
+    "id": 30,
+    "name": "Sorvete de chocolate"
+  },
+  {
+    "id": 0,
+    "name": "Nenhum"
+  },
+  {
+    "id": 1000,
+    "name": "Rosa"
+  },
+  {
+    "id": 1001,
+    "name": "Rosa Negra"
+  },
+  {
+    "id": 1002,
+    "name": "Girassol"
+  },
+  {
+    "id": 1003,
+    "name": "Livro Vermelho"
+  },
+  {
+    "id": 1004,
+    "name": "Livro Azul"
+  },
+  {
+    "id": 1005,
+    "name": "Livro Verde"
+  },
+  {
+    "id": 1006,
+    "name": "Flor de Presente"
+  },
+  {
+    "id": 1007,
+    "name": "Margarida Azul"
+  },
+  {
+    "id": 1008,
+    "name": "Margarida Amarela"
+  },
+  {
+    "id": 1009,
+    "name": "Margarida Rosa"
+  },
+  {
+    "id": 100,
+    "name": "Repolho"
+  },
+  {
+    "id": 1011,
+    "name": "Prancheta"
+  },
+  {
+    "id": 1013,
+    "name": "Comprimidos"
+  },
+  {
+    "id": 1014,
+    "name": "Seringa"
+  },
+  {
+    "id": 1015,
+    "name": "Bolsa de Resíduos Hospitalares"
+  },
+  {
+    "id": 1019,
+    "name": "Flor Bolly"
+  },
+  {
+    "id": 101,
+    "name": "Suco Borbulhante"
+  },
+  {
+    "id": 1021,
+    "name": "Jacinto Vermelho"
+  },
+  {
+    "id": 1022,
+    "name": "Jacinto Azul"
+  },
+  {
+    "id": 1023,
+    "name": "Poinsétia"
+  },
+  {
+    "id": 1024,
+    "name": "Panetone"
+  },
+  {
+    "id": 1025,
+    "name": "Bengala Doce"
+  },
+  {
+    "id": 1026,
+    "name": "Presente"
+  },
+  {
+    "id": 1027,
+    "name": "Vela Vermelha"
+  },
+  {
+    "id": 1028,
+    "name": "Tigela de Cereal"
+  },
+  {
+    "id": 1029,
+    "name": "Bexiga Bege"
+  },
+  {
+    "id": 102,
+    "name": "Energético"
+  },
+  {
+    "id": 1030,
+    "name": "HiPad"
+  },
+  {
+    "id": 1031,
+    "name": "Tocha Habbolímpica"
+  },
+  {
+    "id": 1032,
+    "name": "Major Tom"
+  },
+  {
+    "id": 1033,
+    "name": "OVNI"
+  },
+  {
+    "id": 1034,
+    "name": "Alienígena"
+  },
+  {
+    "id": 1035,
+    "name": "Osso"
+  },
+  {
+    "id": 1036,
+    "name": "Pato de Borracha Viscoso"
+  },
+  {
+    "id": 1037,
+    "name": "Cobra"
+  },
+  {
+    "id": 1038,
+    "name": "Graveto"
+  },
+  {
+    "id": 1039,
+    "name": "Mão Decepada"
+  },
+  {
+    "id": 103,
+    "name": "Banana"
+  },
+  {
+    "id": 1040,
+    "name": "Coração Animal"
+  },
+  {
+    "id": 1041,
+    "name": "Lula"
+  },
+  {
+    "id": 1042,
+    "name": "Bat-Cocô"
+  },
+  {
+    "id": 1043,
+    "name": "Verme"
+  },
+  {
+    "id": 1044,
+    "name": "Rato Morto"
+  },
+  {
+    "id": 1045,
+    "name": "Dentadura"
+  },
+  {
+    "id": 1046,
+    "name": "Creme Clearasil"
+  },
+  {
+    "id": 1047,
+    "name": "Pelouro"
+  },
+  {
+    "id": 1048,
+    "name": "Bandeira Ditch the Label Preta"
+  },
+  {
+    "id": 1049,
+    "name": "Marreta"
+  },
+  {
+    "id": 104,
+    "name": "Abacate"
+  },
+  {
+    "id": 1050,
+    "name": "Ovo de Páscoa"
+  },
+  {
+    "id": 1051,
+    "name": "Pincel"
+  },
+  {
+    "id": 1052,
+    "name": "Bandeira Ditch the Label Branca"
+  },
+  {
+    "id": 1053,
+    "name": "Pato"
+  },
+  {
+    "id": 1054,
+    "name": "Bexiga Laranja"
+  },
+  {
+    "id": 1055,
+    "name": "Bexiga Verde"
+  },
+  {
+    "id": 1056,
+    "name": "Bexiga Azul"
+  },
+  {
+    "id": 1057,
+    "name": "Bexiga Rosa"
+  },
+  {
+    "id": 1058,
+    "name": "Lampião"
+  },
+  {
+    "id": 1059,
+    "name": "Papel Higiênico"
+  },
+  {
+    "id": 105,
+    "name": "Uvas"
+  },
+  {
+    "id": 1060,
+    "name": "Tinta Spray"
+  },
+  {
+    "id": 1061,
+    "name": "Cravo-de-tunes"
+  },
+  {
+    "id": 1062,
+    "name": "Caveira de Doces Rosa"
+  },
+  {
+    "id": 1063,
+    "name": "Caveira de Doces Verde"
+  },
+  {
+    "id": 1064,
+    "name": "Caveira de Doces Azul"
+  },
+  {
+    "id": 1065,
+    "name": "Boneca Emília"
+  },
+  {
+    "id": 1066,
+    "name": "Ursinho"
+  },
+  {
+    "id": 1067,
+    "name": "Soldadinho"
+  },
+  {
+    "id": 1068,
+    "name": "Revista de Mangá"
+  },
+  {
+    "id": 1069,
+    "name": "Revista em Quadrinhos"
+  },
+  {
+    "id": 106,
+    "name": "Vitamina"
+  },
+  {
+    "id": 1070,
+    "name": "Livro Amarelo"
+  },
+  {
+    "id": 1071,
+    "name": "HiPad Dourado"
+  },
+  {
+    "id": 1072,
+    "name": "Bússola"
+  },
+  {
+    "id": 1073,
+    "name": "Ovo Dino"
+  },
+  {
+    "id": 1074,
+    "name": "Alossauro Verde"
+  },
+  {
+    "id": 1075,
+    "name": "Tricerátopo Amarelo"
+  },
+  {
+    "id": 1076,
+    "name": "Saurolofo Roxo"
+  },
+  {
+    "id": 1077,
+    "name": "Toalha Spa Verde"
+  },
+  {
+    "id": 1079,
+    "name": "Besouro Lucano"
+  },
+  {
+    "id": 107,
+    "name": "Suco de Vegetais"
+  },
+  {
+    "id": 1080,
+    "name": "Besouro Rinoceronte"
+  },
+  {
+    "id": 1081,
+    "name": "Regador"
+  },
+  {
+    "id": 1082,
+    "name": "Bandeira do Orgulho"
+  },
+  {
+    "id": 1083,
+    "name": "Abóbora de Arrepiar"
+  },
+  {
+    "id": 1084,
+    "name": "Sacola de Compras"
+  },
+  {
+    "id": 1085,
+    "name": "DVD Ação"
+  },
+  {
+    "id": 1086,
+    "name": "DVD Terror"
+  },
+  {
+    "id": 1087,
+    "name": "Caderno"
+  },
+  {
+    "id": 1088,
+    "name": "Lápis"
+  },
+  {
+    "id": 1089,
+    "name": "Saco de Salgadinhos Lacrado"
+  },
+  {
+    "id": 108,
+    "name": "Haltere"
+  },
+  {
+    "id": 1090,
+    "name": "Vara de Pescar com Peixe"
+  },
+  {
+    "id": 1091,
+    "name": "Vara de Pescar com uma Bota Velha"
+  },
+  {
+    "id": 1092,
+    "name": "Vara de Pescar com uma Mensagem na Garrafa"
+  },
+  {
+    "id": 1093,
+    "name": "Bandeira Ditch the Label Dourada"
+  },
+  {
+    "id": 1094,
+    "name": "Espada"
+  },
+  {
+    "id": 1095,
+    "name": "Coração"
+  },
+  {
+    "id": 1096,
+    "name": "Celular"
+  },
+  {
+    "id": 1097,
+    "name": "Vasinho com Muda"
+  },
+  {
+    "id": 1098,
+    "name": "Robozinho"
+  },
+  {
+    "id": 1099,
+    "name": "Ursinho Teddy"
+  },
+  {
+    "id": 109,
+    "name": "Hambúrguer"
+  },
+  {
+    "id": 10,
+    "name": "café com leite"
+  },
+  {
+    "id": 1100,
+    "name": "Pato Férias"
+  },
+  {
+    "id": 1101,
+    "name": "Bola de Futebol"
+  },
+  {
+    "id": 1102,
+    "name": "Taco do Diálogo"
+  },
+  {
+    "id": 1103,
+    "name": "Bola de Tênis"
+  },
+  {
+    "id": 1104,
+    "name": "H-Phone"
+  },
+  {
+    "id": 1105,
+    "name": "Microfone DR Sports"
+  },
+  {
+    "id": 1106,
+    "name": "football"
+  },
+  {
+    "id": 1107,
+    "name": "Astral Bow"
+  },
+  {
+    "id": 1108,
+    "name": "Virvontavitsa"
+  },
+  {
+    "id": 110,
+    "name": "Carta"
+  },
+  {
+    "id": 1115,
+    "name": "Chocolate Quente"
+  },
+  {
+    "id": 1116,
+    "name": "Pato Rosa"
+  },
+  {
+    "id": 1117,
+    "name": "Faca"
+  },
+  {
+    "id": 111,
+    "name": "Carangueijo"
+  },
+  {
+    "id": 112,
+    "name": "Pimenta Malagueta"
+  },
+  {
+    "id": 113,
+    "name": "Vitamina Cítrica"
+  },
+  {
+    "id": 114,
+    "name": "Vitamina Detox"
+  },
+  {
+    "id": 115,
+    "name": "Vitamina Framboesa"
+  },
+  {
+    "id": 116,
+    "name": "Limão"
+  },
+  {
+    "id": 117,
+    "name": "Cookie"
+  },
+  {
+    "id": 118,
+    "name": "Ramune Rosa"
+  },
+  {
+    "id": 119,
+    "name": "Ramune Azul"
+  },
+  {
+    "id": 11,
+    "name": "Mocaccino"
+  },
+  {
+    "id": 120,
+    "name": "Raspadinha de Mirtilo"
+  },
+  {
+    "id": 121,
+    "name": "Raspadinha de Morango"
+  },
+  {
+    "id": 122,
+    "name": "Espetinho de Takoyaki"
+  },
+  {
+    "id": 123,
+    "name": "Caldo Forte"
+  },
+  {
+    "id": 124,
+    "name": "Chá Bobba Crepúsculo"
+  },
+  {
+    "id": 125,
+    "name": "Chá Bobba Verde"
+  },
+  {
+    "id": 126,
+    "name": "Chá Bobba Pink"
+  },
+  {
+    "id": 127,
+    "name": "Sorvete de Casquinha"
+  },
+  {
+    "id": 128,
+    "name": "Sorvete de Carvão"
+  },
+  {
+    "id": 129,
+    "name": "Iogurte"
+  },
+  {
+    "id": 12,
+    "name": "Caffè Macchiato"
+  },
+  {
+    "id": 130,
+    "name": "Queijo"
+  },
+  {
+    "id": 131,
+    "name": "Pão"
+  },
+  {
+    "id": 132,
+    "name": "Camarão"
+  },
+  {
+    "id": 133,
+    "name": "Brócolis"
+  },
+  {
+    "id": 134,
+    "name": "Melancia"
+  },
+  {
+    "id": 135,
+    "name": "Donut"
+  },
+  {
+    "id": 136,
+    "name": "Linguiças"
+  },
+  {
+    "id": 137,
+    "name": "Picolé"
+  },
+  {
+    "id": 138,
+    "name": "Saco de Salgadinhos Aberto"
+  },
+  {
+    "id": 13,
+    "name": "Café Expresso"
+  },
+  {
+    "id": 141,
+    "name": "Ovo de Páscoa Cintilante"
+  },
+  {
+    "id": 142,
+    "name": "Bebida Glacial"
+  },
+  {
+    "id": 143,
+    "name": "Banana com Chocolate"
+  },
+  {
+    "id": 144,
+    "name": "Morango com Chocolate"
+  },
+  {
+    "id": 146,
+    "name": "Café Barista"
+  },
+  {
+    "id": 147,
+    "name": "Garrafa de Fanta"
+  },
+  {
+    "id": 148,
+    "name": "Lupa"
+  },
+  {
+    "id": 149,
+    "name": "Café com Chantilly"
+  },
+  {
+    "id": 14,
+    "name": "Café Preto"
+  },
+  {
+    "id": 150,
+    "name": "Dalgona com Estrela"
+  },
+  {
+    "id": 151,
+    "name": "Dalgona com Círculo"
+  },
+  {
+    "id": 152,
+    "name": "Dalgona com Quadrado"
+  },
+  {
+    "id": 153,
+    "name": "Torrada Hello Kitty"
+  },
+  {
+    "id": 154,
+    "name": "Poção Kryptomon Rosa"
+  },
+  {
+    "id": 155,
+    "name": "Refrigerante Bear"
+  },
+  {
+    "id": 159,
+    "name": "Suco de Pêra"
+  },
+  {
+    "id": 15,
+    "name": "Cappuccino"
+  },
+  {
+    "id": 163,
+    "name": "Sorvete Arco-Íris"
+  },
+  {
+    "id": 165,
+    "name": "Palitinho de Marshmallow"
+  },
+  {
+    "id": 166,
+    "name": "Cupcake"
+  },
+  {
+    "id": 167,
+    "name": "Sorvetinho de Baunilha"
+  },
+  {
+    "id": 168,
+    "name": "Batata"
+  },
+  {
+    "id": 169,
+    "name": "Coxinha"
+  },
+  {
+    "id": 16,
+    "name": "Cappuccino"
+  },
+  {
+    "id": 171,
+    "name": "Bolo Pato"
+  },
+  {
+    "id": 172,
+    "name": "Milkshake de Banana"
+  },
+  {
+    "id": 173,
+    "name": "Frappucino Banana Deluxe"
+  },
+  {
+    "id": 17,
+    "name": "Café Java"
+  },
+  {
+    "id": 18,
+    "name": "Água da Torneira"
+  },
+  {
+    "id": 19,
+    "name": "Suco Bubblejuice"
+  },
+  {
+    "id": 1,
+    "name": "Chá Refrescante"
+  },
+  {
+    "id": 20,
+    "name": "Lata de Bubblejuice"
+  },
+  {
+    "id": 21,
+    "name": "Hambúrger"
+  },
+  {
+    "id": 22,
+    "name": "Habbo Limonada"
+  },
+  {
+    "id": 23,
+    "name": "Habbo Beterraba"
+  },
+  {
+    "id": 244,
+    "name": "Celular"
+  },
+  {
+    "id": 24,
+    "name": "Suco de Bolhas de 1978"
+  },
+  {
+    "id": 25,
+    "name": "Poção do Amor"
+  },
+  {
+    "id": 26,
+    "name": "Calippo"
+  },
+  {
+    "id": 27,
+    "name": "Chá Árabe"
+  },
+  {
+    "id": 28,
+    "name": "Saquê"
+  },
+  {
+    "id": 29,
+    "name": "Suco de Tomate"
+  },
+  {
+    "id": 2,
+    "name": "Suco"
+  },
+  {
+    "id": 30,
+    "name": "Líquido Radioativo"
+  },
+  {
+    "id": 31,
+    "name": "Espumante Rosa"
+  },
+  {
+    "id": 32,
+    "name": "Drink de Coco"
+  },
+  {
+    "id": 33,
+    "name": "Refrigerante 711"
+  },
+  {
+    "id": 34,
+    "name": "Peixe"
+  },
+  {
+    "id": 35,
+    "name": "Champanhe"
+  },
+  {
+    "id": 36,
+    "name": "Pêra"
+  },
+  {
+    "id": 37,
+    "name": "Pêssego Suculento"
+  },
+  {
+    "id": 38,
+    "name": "Laranja"
+  },
+  {
+    "id": 39,
+    "name": "Fatia de Queijo"
+  },
+  {
+    "id": 3,
+    "name": "Cenoura"
+  },
+  {
+    "id": 40,
+    "name": "Suco de Laranja"
+  },
+  {
+    "id": 41,
+    "name": "Café Gourmet"
+  },
+  {
+    "id": 42,
+    "name": "Refrigerante de Laranja"
+  },
+  {
+    "id": 43,
+    "name": "Habbo Refri Geladinho"
+  },
+  {
+    "id": 44,
+    "name": "Energético Astrobar"
+  },
+  {
+    "id": 45,
+    "name": "Goma de Mascar Amarela"
+  },
+  {
+    "id": 46,
+    "name": "Goma de Mascar Verde"
+  },
+  {
+    "id": 47,
+    "name": "Goma de Mascar Vermelha"
+  },
+  {
+    "id": 48,
+    "name": "Pirulito"
+  },
+  {
+    "id": 49,
+    "name": "Pote de Iogurte Manchado"
+  },
+  {
+    "id": 4,
+    "name": "Sorvete de Baunilha"
+  },
+  {
+    "id": 50,
+    "name": "Garrafa de Suco de Bolhas"
+  },
+  {
+    "id": 51,
+    "name": "Salgadinho Grefusa"
+  },
+  {
+    "id": 52,
+    "name": "Salgadinho Cheetos"
+  },
+  {
+    "id": 53,
+    "name": "Xícara de Café Expresso"
+  },
+  {
+    "id": 54,
+    "name": "Tigela de Cereais"
+  },
+  {
+    "id": 55,
+    "name": "Garrafa de Pepsi"
+  },
+  {
+    "id": 56,
+    "name": "Salgadinho Cheetos Hot-dog"
+  },
+  {
+    "id": 57,
+    "name": "Refrigerante de Cereja"
+  },
+  {
+    "id": 58,
+    "name": "Sangue fresco"
+  },
+  {
+    "id": 59,
+    "name": "Saco de Moedas"
+  },
+  {
+    "id": 5,
+    "name": "Leite"
+  },
+  {
+    "id": 60,
+    "name": "Castanhas"
+  },
+  {
+    "id": 61,
+    "name": "Garrafinha de Suco de Laranja"
+  },
+  {
+    "id": 62,
+    "name": "Água Envenenada"
+  },
+  {
+    "id": 63,
+    "name": "Saco de Pipocas"
+  },
+  {
+    "id": 64,
+    "name": "Suco de Limão"
+  },
+  {
+    "id": 66,
+    "name": "Milkshake de Banana"
+  },
+  {
+    "id": 67,
+    "name": "Chiclete Azul"
+  },
+  {
+    "id": 68,
+    "name": "Chiclete Rosa"
+  },
+  {
+    "id": 69,
+    "name": "Chiclete Verde"
+  },
+  {
+    "id": 6,
+    "name": "Groselha"
+  },
+  {
+    "id": 70,
+    "name": "Coxa de frango"
+  },
+  {
+    "id": 71,
+    "name": "Torrada"
+  },
+  {
+    "id": 72,
+    "name": "Garrafinha de Suco de Pêssego e Maçã"
+  },
+  {
+    "id": 73,
+    "name": "Eggnog"
+  },
+  {
+    "id": 74,
+    "name": "Cálice Medieval"
+  },
+  {
+    "id": 75,
+    "name": "Sorvete de Morango"
+  },
+  {
+    "id": 76,
+    "name": "Sorvete de Menta"
+  },
+  {
+    "id": 77,
+    "name": "Sorvete de Chocolate"
+  },
+  {
+    "id": 79,
+    "name": "Algodão Doce Rosa"
+  },
+  {
+    "id": 7,
+    "name": "Água"
+  },
+  {
+    "id": 80,
+    "name": "Algodão Doce Azul"
+  },
+  {
+    "id": 81,
+    "name": "Cachorro-quente"
+  },
+  {
+    "id": 82,
+    "name": "Luneta"
+  },
+  {
+    "id": 83,
+    "name": "Maçã Suculenta"
+  },
+  {
+    "id": 84,
+    "name": "Boneco de Biscoito de Gengibre"
+  },
+  {
+    "id": 85,
+    "name": "Americano"
+  },
+  {
+    "id": 86,
+    "name": "Frappuccino"
+  },
+  {
+    "id": 87,
+    "name": "Caneca com Água"
+  },
+  {
+    "id": 88,
+    "name": "Rum"
+  },
+  {
+    "id": 89,
+    "name": "Cupcake"
+  },
+  {
+    "id": 8,
+    "name": "Café"
+  },
+  {
+    "id": 90,
+    "name": "Champanhe Rosé"
+  },
+  {
+    "id": 91,
+    "name": "Chá Oriental"
+  },
+  {
+    "id": 92,
+    "name": "Goma de Mascar Azul"
+  },
+  {
+    "id": 93,
+    "name": "Goma de Mascar Vermelho"
+  },
+  {
+    "id": 94,
+    "name": "Goma de Mascar Rosa"
+  },
+  {
+    "id": 95,
+    "name": "Goma de Mascar Verde"
+  },
+  {
+    "id": 96,
+    "name": "Fatia de Bolo"
+  },
+  {
+    "id": 97,
+    "name": "Croissant"
+  },
+  {
+    "id": 98,
+    "name": "Tomate"
+  },
+  {
+    "id": 99,
+    "name": "Beringela"
+  },
+  {
+    "id": 9,
+    "name": "Café Descafeinado"
+  }
+]

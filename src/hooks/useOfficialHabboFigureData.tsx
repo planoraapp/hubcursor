@@ -16,9 +16,7 @@ export interface OfficialHabboData {
 }
 
 const fetchOfficialHabboData = async (): Promise<OfficialHabboData> => {
-  console.log('🌐 [OfficialHabbo] Fetching official Habbo figuredata...');
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('get-habbo-official-data', {
       body: { hotel: 'com' }
     });
@@ -56,8 +54,7 @@ const fetchOfficialHabboData = async (): Promise<OfficialHabboData> => {
     return transformedData;
     
   } catch (error) {
-    console.error('❌ [OfficialHabbo] Error loading official data:', error);
-    throw error;
+        throw error;
   }
 };
 

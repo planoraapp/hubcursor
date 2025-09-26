@@ -27,9 +27,7 @@ const fetchValidatedBadges = async ({
   badges: ValidatedBadgeItem[];
   metadata: any;
 }> => {
-  console.log(`🎯 [ValidatedBadges] Fetching validated badges: limit=${limit}, search="${search}"`);
-  
-  try {
+    try {
     let query = supabase
       .from('habbo_badges')
       .select('*')
@@ -44,13 +42,10 @@ const fetchValidatedBadges = async ({
     const { data, error, count } = await query;
 
     if (error) {
-      console.error('❌ [ValidatedBadges] Supabase error:', error);
-      throw error;
+            throw error;
     }
 
-    console.log(`✅ [ValidatedBadges] Successfully fetched ${data?.length || 0} validated badges`);
-    
-    // Transform database results to match ValidatedBadgeItem interface
+        // Transform database results to match ValidatedBadgeItem interface
     const transformedBadges: ValidatedBadgeItem[] = (data || []).map(badge => ({
       id: badge.id,
       badge_code: badge.badge_code,
@@ -73,8 +68,7 @@ const fetchValidatedBadges = async ({
     };
     
   } catch (error) {
-    console.error('❌ [ValidatedBadges] Error:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -83,9 +77,7 @@ export const useValidatedBadges = ({
   search = '',
   enabled = true
 }: UseValidatedBadgesProps = {}) => {
-  console.log(`🔧 [useValidatedBadges] Hook: limit=${limit}, search="${search}", enabled=${enabled}`);
-  
-  return useQuery({
+    return useQuery({
     queryKey: ['validated-badges', limit, search],
     queryFn: () => fetchValidatedBadges({ limit, search }),
     enabled,

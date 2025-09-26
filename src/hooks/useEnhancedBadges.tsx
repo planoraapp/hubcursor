@@ -31,9 +31,7 @@ const fetchEnhancedBadges = async ({
   badges: EnhancedBadgeItem[];
   metadata: any;
 }> => {
-  console.log(`🚀 [EnhancedBadges] Buscando badges VERIFICADOS - limit: ${limit}, search: "${search}", category: ${category}`);
-  
-  try {
+    try {
     // Timeout de 15 segundos para evitar travamentos
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Timeout na busca de badges')), 15000);
@@ -46,31 +44,26 @@ const fetchEnhancedBadges = async ({
     const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
     if (error) {
-      console.error('❌ [EnhancedBadges] Erro na função:', error);
-      return {
+            return {
         badges: generateLocalFallbackBadges(category, search),
         metadata: { hasMore: false, error: true, source: 'local-fallback' }
       };
     }
 
     if (!data || !data.badges || !Array.isArray(data.badges)) {
-      console.error('❌ [EnhancedBadges] Formato de resposta inválido:', data);
-      return {
+            return {
         badges: generateLocalFallbackBadges(category, search),
         metadata: { hasMore: false, error: true, source: 'local-fallback' }
       };
     }
 
-    console.log(`✅ [EnhancedBadges] Recebidos ${data.badges.length} badges verificados`);
-    
-    return {
+        return {
       badges: data.badges,
       metadata: data.metadata || { hasMore: false, source: 'verified' }
     };
     
   } catch (error) {
-    console.error('❌ [EnhancedBadges] Erro de rede:', error);
-    return {
+        return {
       badges: generateLocalFallbackBadges(category, search),
       metadata: { hasMore: false, error: true, source: 'network-error' }
     };
@@ -126,9 +119,7 @@ export const useEnhancedBadges = ({
   forceRefresh = false,
   enabled = true
 }: UseEnhancedBadgesProps = {}) => {
-  console.log(`🔧 [useEnhancedBadges] Configuração: limit: ${limit}, search: "${search}", category: ${category}, enabled: ${enabled}`);
-  
-  return useQuery({
+    return useQuery({
     queryKey: ['enhanced-badges-verified', limit, search, category, forceRefresh],
     queryFn: () => fetchEnhancedBadges({ limit, search, category, forceRefresh }),
     enabled,

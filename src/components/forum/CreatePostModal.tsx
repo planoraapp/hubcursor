@@ -51,8 +51,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         .order('name');
 
       if (error) {
-        console.error('Erro ao carregar categorias:', error);
-        return;
+                return;
       }
 
       setCategories(data || []);
@@ -60,8 +59,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({
         setSelectedCategoryId(data[0].id);
       }
     } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
-    }
+          }
   };
 
   const handleSubmit = async () => {

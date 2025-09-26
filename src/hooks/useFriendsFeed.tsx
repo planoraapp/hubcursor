@@ -51,7 +51,7 @@ export const useFriendsFeed = () => {
     isLoading: tickerLoading 
   } = useQuery({
     queryKey: ['hotel-ticker-for-friends', hotelDomain],
-    queryFn: () => habboProxyService.getHotelTicker(hotelDomain),
+    queryFn: () => unifiedHabboService.getHotelTicker(hotelDomain),
     enabled: friends.length > 0 && !!hotelDomain && !friendsLoading,
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
@@ -69,8 +69,7 @@ export const useFriendsFeed = () => {
       return [];
     }
 
-    console.log(`🔍 [useFriendsFeed] Processing ${friends.length} friends with ${realActivities.length} real activities`);
-    console.log(`[useFriendsFeed] Friends list:`, friends.map(f => f.name));
+        console.log(`[useFriendsFeed] Friends list:`, friends.map(f => f.name));
     console.log(`[useFriendsFeed] Real activities:`, realActivities.map(a => ({ name: a.habbo_name, type: a.activity_type, time: a.created_at })));
     
     const friendNameSet = new Set(friends.map(f => f.name.toLowerCase()));
@@ -95,17 +94,14 @@ export const useFriendsFeed = () => {
     const result: FriendActivity[] = Object.entries(realActivityGroups).map(([friendName, activities]) => {
       const friend = friends.find(f => f.name.toLowerCase() === friendName);
       if (!friend) {
-        console.log(`[useFriendsFeed] Friend not found for activities: ${friendName}`);
-        return null;
+                return null;
       }
 
       const sortedActivities = activities.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      console.log(`[useFriendsFeed] Created activity group for ${friend.name} with ${sortedActivities.length} activities`);
-
-      return {
+            return {
         friend,
         activities: sortedActivities,
         lastActivityTime: sortedActivities[0]?.created_at || new Date().toISOString(),
@@ -120,10 +116,8 @@ export const useFriendsFeed = () => {
       return timeB - timeA;
     });
 
-    console.log(`✅ [useFriendsFeed] Final result: ${sortedResult.length} friends with activities`);
-    sortedResult.forEach(fa => {
-      console.log(`  - ${fa.friend.name}: ${fa.activities.length} activities, last: ${fa.lastActivityTime}`);
-    });
+        sortedResult.forEach(fa => {
+          });
     
     return sortedResult.slice(0, 15); // Increased limit to 15 for better visibility
   }, [friends, realActivities]);

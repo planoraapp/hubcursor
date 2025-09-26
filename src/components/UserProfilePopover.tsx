@@ -17,6 +17,7 @@ import { User, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName, getUserBadges, getAvatarUrl, getBadgeUrl } from '../services/habboApi';
 
+import type { HabboData } from '@/types/habbo';
 interface UserProfilePopoverProps {
   children: React.ReactNode;
   side?: 'top' | 'bottom' | 'left' | 'right';
@@ -24,14 +25,7 @@ interface UserProfilePopoverProps {
   sideOffset?: number;
 }
 
-interface HabboData {
-  name: string;
-  figureString: string;
-  motto: string;
-  online: boolean;
-  memberSince: string;
-  profileVisible: boolean;
-}
+
 
 interface HabboBadge {
   code: string;

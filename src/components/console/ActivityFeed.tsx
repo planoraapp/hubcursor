@@ -51,15 +51,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ followedUsers }) => 
     }
 
     try {
-      console.log('🔄 [ActivityFeed] Fetching hotel ticker data...');
-      
-      const response = await supabase.functions.invoke('habbo-widgets-proxy', {
+            const response = await supabase.functions.invoke('habbo-widgets-proxy', {
         body: { username: 'habbohub' } // Using a known user to get ticker data
       });
       
-      console.log('📨 [ActivityFeed] Response:', response);
-      
-      if (response.data?.success && response.data?.activities) {
+            if (response.data?.success && response.data?.activities) {
         const activities = response.data.activities.map((activity: Activity) => ({
           ...activity,
           username: activity.username || 'Usuario',
@@ -75,10 +71,8 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ followedUsers }) => 
         }
         
         setServiceStatus('online');
-        console.log(`✅ [ActivityFeed] Loaded ${grouped.length} activity groups`);
-      } else {
-        console.warn('⚠️ [ActivityFeed] No ticker data found, using mock data');
-        const mockGroups = groupActivitiesByUser(MOCK_ACTIVITIES);
+              } else {
+                const mockGroups = groupActivitiesByUser(MOCK_ACTIVITIES);
         setActivityGroups(mockGroups);
         setServiceStatus('limited');
         setErrorMessage('Usando dados de exemplo. HabboWidgets pode estar indisponível.');
@@ -86,8 +80,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ followedUsers }) => 
       
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('❌ [ActivityFeed] Error fetching ticker:', error);
-      const mockGroups = groupActivitiesByUser(MOCK_ACTIVITIES);
+            const mockGroups = groupActivitiesByUser(MOCK_ACTIVITIES);
       setActivityGroups(mockGroups);
       setServiceStatus('offline');
       setErrorMessage('Feed temporariamente indisponível. Exibindo dados de exemplo.');
@@ -128,8 +121,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ followedUsers }) => 
     if (scrollRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
       if (scrollTop + clientHeight >= scrollHeight - 5 && hasMore && !loading) {
-        console.log('📜 [ActivityFeed] Loading more activities...');
-        setPage(prev => prev + 1);
+                setPage(prev => prev + 1);
         fetchHotelTicker(true);
       }
     }
@@ -140,8 +132,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ followedUsers }) => 
     
     // Auto-refresh every 2 minutes
     const interval = setInterval(() => {
-      console.log('⏰ [ActivityFeed] Auto-refreshing ticker...');
-      fetchHotelTicker();
+            fetchHotelTicker();
     }, 2 * 60 * 1000);
     
     return () => clearInterval(interval);

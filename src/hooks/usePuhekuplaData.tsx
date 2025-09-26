@@ -315,9 +315,7 @@ export const usePuhekuplaClothing = (page = 1, category?: string, search?: strin
   return useQuery<PuhekuplaClothingResponse>({
     queryKey: ['puhekupla-clothing', page, category, search],
     queryFn: async () => {
-      console.log('🔍 [usePuhekuplaClothing] Buscando roupas:', { page, category, search });
-      
-      try {
+            try {
         const { data, error } = await supabase.functions.invoke('puhekupla-proxy', {
           body: { 
             endpoint: 'clothing',
@@ -328,24 +326,16 @@ export const usePuhekuplaClothing = (page = 1, category?: string, search?: strin
         });
 
         if (error) {
-          console.warn('⚠️ [usePuhekuplaClothing] API error, usando dados mock:', error);
-          return getMockClothingData(page, category, search);
+                    return getMockClothingData(page, category, search);
         }
 
         if (data?.success && data?.result?.clothing) {
-          console.log('✅ [usePuhekuplaClothing] API Success:', {
-            count: data.result.clothing.length,
-            category,
-            search
-          });
-          return data;
+                    return data;
         } else {
-          console.warn('⚠️ [usePuhekuplaClothing] API retornou dados inválidos, usando mock');
-          return getMockClothingData(page, category, search);
+                    return getMockClothingData(page, category, search);
         }
       } catch (error) {
-        console.error('❌ [usePuhekuplaClothing] Erro na API:', error);
-        return getMockClothingData(page, category, search);
+                return getMockClothingData(page, category, search);
       }
     },
     staleTime: 5 * 60 * 1000,
@@ -394,15 +384,7 @@ const getMockClothingData = (page = 1, category?: string, search?: string): Puhe
     );
   }
 
-  console.log('📊 [getMockClothingData] Resultados:', {
-    category,
-    search,
-    totalItems: mockClothingData.length,
-    filteredItems: filteredClothing.length,
-    page
-  });
-
-  // Paginação
+    // Paginação
   const itemsPerPage = 50;
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -438,8 +420,7 @@ export const usePuhekuplaBadges = (page = 1, search?: string) => {
         });
 
         if (error) {
-          console.warn('⚠️ [usePuhekuplaBadges] API error, usando dados mock:', error);
-          return getMockBadgeData(page, search);
+                    return getMockBadgeData(page, search);
         }
 
         if (data?.success && data?.result?.badges) {
@@ -448,8 +429,7 @@ export const usePuhekuplaBadges = (page = 1, search?: string) => {
           return getMockBadgeData(page, search);
         }
       } catch (error) {
-        console.error('❌ [usePuhekuplaBadges] Erro na API:', error);
-        return getMockBadgeData(page, search);
+                return getMockBadgeData(page, search);
       }
     },
     staleTime: 5 * 60 * 1000,
@@ -504,8 +484,7 @@ export const usePuhekuplaFurni = (page = 1, category?: string, search?: string) 
         });
 
         if (error) {
-          console.warn('⚠️ [usePuhekuplaFurni] API error, usando dados mock:', error);
-          return getMockFurniData(page, search);
+                    return getMockFurniData(page, search);
         }
 
         if (data?.success && data?.result?.furni) {
@@ -514,8 +493,7 @@ export const usePuhekuplaFurni = (page = 1, category?: string, search?: string) 
           return getMockFurniData(page, search);
         }
       } catch (error) {
-        console.error('❌ [usePuhekuplaFurni] Erro na API:', error);
-        return getMockFurniData(page, search);
+                return getMockFurniData(page, search);
       }
     },
     staleTime: 5 * 60 * 1000,

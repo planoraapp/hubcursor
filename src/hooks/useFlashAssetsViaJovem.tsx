@@ -42,16 +42,12 @@ const FLASH_TO_VIAJOVEM_MAPPING = {
 } as const;
 
 const mapFlashToViaJovem = (flashItems: FlashAssetItem[]): ViaJovemFlashItem[] => {
-  console.log('🔄 [FlashToViaJovem] Iniciando mapeamento melhorado de', flashItems.length, 'itens');
-  
-  const mapped = flashItems
+    const mapped = flashItems
     .map((item, index) => {
       // Usar o novo sistema de categorização melhorado
       const detectedCategory = getCategoryFromSwfName(item.swfName);
       
-      console.log(`📝 [FlashToViaJovem] Item ${index}: ${item.swfName} -> categoria: ${detectedCategory}`);
-      
-      // Extrair figureId de forma mais inteligente
+            // Extrair figureId de forma mais inteligente
       const figureId = extractFigureId(item.swfName, item.figureId);
       
       // Determinar gênero de forma mais precisa
@@ -78,10 +74,7 @@ const mapFlashToViaJovem = (flashItems: FlashAssetItem[]): ViaJovemFlashItem[] =
     return acc;
   }, {} as Record<string, number>);
   
-  console.log('📊 [FlashToViaJovem] Estatísticas por categoria:', categoryStats);
-  console.log('✅ [FlashToViaJovem] Mapeamento melhorado concluído:', mapped.length, 'itens válidos');
-  
-  return mapped;
+      return mapped;
 };
 
 const extractFigureId = (swfName: string, originalFigureId?: string): string => {
@@ -177,9 +170,7 @@ export const useFlashAssetsViaJovem = () => {
   
   useEffect(() => {
     if (flashData && flashData.length > 0) {
-      console.log('🎯 [FlashAssetsViaJovem] Dados recebidos:', flashData.length, 'itens');
-      
-      const mappedItems = mapFlashToViaJovem(flashData);
+            const mappedItems = mapFlashToViaJovem(flashData);
       setViaJovemItems(mappedItems);
       
       // Calcular estatísticas por categoria
@@ -218,13 +209,7 @@ export const useFlashViaJovemCategory = (categoryId: string, gender: 'M' | 'F') 
       );
       setFilteredItems(filtered);
       
-      console.log(`🔍 [FlashViaJovemCategory] Filtro aplicado:`, {
-        categoria: categoryId,
-        genero: gender,
-        totalItens: items.length,
-        itensFiltrados: filtered.length
-      });
-    }
+          }
   }, [items, categoryId, gender]);
   
   return {

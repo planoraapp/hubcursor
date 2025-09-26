@@ -14,9 +14,7 @@ export interface FigureData {
 }
 
 const fetchFigureData = async (): Promise<FigureData> => {
-  console.log('🌐 [FigureData] Carregando dados da Edge Function...');
-  
-  try {
+    try {
     const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/get-habbo-figures', {
       method: 'GET',
       headers: {
@@ -40,21 +38,16 @@ const fetchFigureData = async (): Promise<FigureData> => {
     // Converter formato da Edge Function para o formato esperado
     return data.figureParts;
   } catch (error) {
-    console.error('❌ [FigureData] Erro ao carregar da Edge Function:', error);
-    
-    // Fallback para dados locais se a Edge Function falhar
-    console.log('🔄 [FigureData] Tentando fallback local...');
-    try {
+        // Fallback para dados locais se a Edge Function falhar
+        try {
       const fallbackResponse = await fetch('/figuredata.json');
       if (fallbackResponse.ok) {
         const fallbackData = await fallbackResponse.json();
         const { _metadata, ...figureData } = fallbackData;
-        console.log('✅ [FigureData] Fallback local carregado');
-        return figureData;
+                return figureData;
       }
     } catch (fallbackError) {
-      console.error('❌ [FigureData] Fallback também falhou:', fallbackError);
-    }
+          }
     
     throw error;
   }

@@ -38,9 +38,7 @@ export const ProfileChecker = () => {
     setUserRooms(null);
 
     try {
-      console.log('Buscando usuário:', username);
-      
-      // Buscar usuário por nome
+            // Buscar usuário por nome
       const user = await getUserByName(username.trim());
       
       if (!user) {
@@ -70,10 +68,8 @@ export const ProfileChecker = () => {
       setUserGroups(groups);
       setUserRooms(rooms);
 
-      console.log('Dados do usuário carregados:', { user, badges, friends, groups, rooms });
-    } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
-      setError('Erro ao carregar perfil. Tente novamente mais tarde.');
+          } catch (error) {
+            setError('Erro ao carregar perfil. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }

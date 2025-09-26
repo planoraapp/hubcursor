@@ -30,11 +30,8 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
   const queryResult = useQuery({
     queryKey: ['chronological-feed-activities', currentUserName, hotel, friends.length],
     queryFn: async (): Promise<ChronologicalActivity[]> => {
-      console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Fetching activities for ${currentUserName} with ${friends.length} friends`);
-
-      if (friends.length === 0) {
-        console.log('[🎯 CHRONOLOGICAL ACTIVITIES] No friends found, returning empty array');
-        return [];
+            if (friends.length === 0) {
+                return [];
       }
 
       try {
@@ -46,9 +43,7 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
         // Get friend IDs for the query
         const friendIds = friends.map(f => f.habbo_id || f.id).filter(Boolean).slice(0, 100);
         
-        console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Querying activities for ${friendIds.length} friends`);
-        
-        // Query activities from the last 48 hours
+                // Query activities from the last 48 hours
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
         
@@ -78,18 +73,14 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
           .limit(100);
 
         if (error) {
-          console.error('[🎯 CHRONOLOGICAL ACTIVITIES] Query error:', error);
-          throw error;
+                    throw error;
         }
 
         if (!activities || activities.length === 0) {
-          console.log('[🎯 CHRONOLOGICAL ACTIVITIES] No activities found for friends');
-          return [];
+                    return [];
         }
 
-        console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Found ${activities.length} activities, processing...`);
-        
-        // Process activities and generate summaries
+                // Process activities and generate summaries
         const processedActivities = activities
           .map(activity => {
             // Generate human-readable summary like the example
@@ -239,12 +230,9 @@ export const useChronologicalFeedActivities = (currentUserName: string, hotel: s
           }, [])
           .slice(0, 30); // Limit for display
 
-        console.log(`[🎯 CHRONOLOGICAL ACTIVITIES] Processed ${processedActivities.length} chronological activities`);
-        
-        return processedActivities;
+                return processedActivities;
       } catch (error: any) {
-        console.error('[🎯 CHRONOLOGICAL ACTIVITIES] Fetch failed:', error);
-        throw error;
+                throw error;
       }
     },
     enabled: !!currentUserName && !profileLoading && friends.length > 0,

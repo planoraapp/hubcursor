@@ -32,8 +32,7 @@ const ValidatedBadgeImage = ({
   };
 
   const validateBadge = useCallback(async (badgeCode: string) => {
-    console.log(`🔍 [ValidatedBadgeImage] Validating badge: ${badgeCode}`);
-    setIsValidating(true);
+        setIsValidating(true);
     
     try {
       const { data, error } = await supabase.functions.invoke('habbo-badges-validator', {
@@ -41,22 +40,18 @@ const ValidatedBadgeImage = ({
       });
 
       if (error) {
-        console.error(`❌ [ValidatedBadgeImage] Validation error for ${badgeCode}:`, error);
-        throw error;
+                throw error;
       }
 
       if (data?.success && data?.badge) {
-        console.log(`✅ [ValidatedBadgeImage] Badge ${badgeCode} validated successfully`);
-        setBadgeData(data.badge);
+                setBadgeData(data.badge);
         setHasError(false);
       } else {
-        console.log(`❌ [ValidatedBadgeImage] Badge ${badgeCode} not found`);
-        setHasError(true);
+                setHasError(true);
         setBadgeData(null);
       }
     } catch (error) {
-      console.error(`❌ [ValidatedBadgeImage] Error validating ${badgeCode}:`, error);
-      setHasError(true);
+            setHasError(true);
       setBadgeData(null);
     } finally {
       setIsLoading(false);

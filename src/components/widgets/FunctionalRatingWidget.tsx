@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useToast } from '@/hooks/use-toast';
 
 interface FunctionalRatingWidgetProps {
@@ -21,7 +21,7 @@ export const FunctionalRatingWidget: React.FC<FunctionalRatingWidgetProps> = ({
   const [hoverRating, setHoverRating] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { habboAccount } = useSimpleAuth();
+  const { habboAccount } = useUnifiedAuth();
   const { toast } = useToast();
   
   const isLoggedIn = !!habboAccount;
@@ -52,8 +52,7 @@ export const FunctionalRatingWidget: React.FC<FunctionalRatingWidgetProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar avaliações:', error);
-    }
+          }
   };
 
   const loadUserRating = async () => {

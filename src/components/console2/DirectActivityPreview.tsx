@@ -1,7 +1,6 @@
 import React from 'react';
 import { DirectFriendActivity } from '@/hooks/useFriendsActivitiesDirect';
-import { habboProxyService } from '@/services/habboProxyService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 interface DirectActivityPreviewProps {
   activity: DirectFriendActivity;
 }
@@ -38,10 +37,10 @@ export const DirectActivityPreview: React.FC<DirectActivityPreviewProps> = ({ ac
   // Generate avatar URL with fallback
   const avatarUrl = React.useMemo(() => {
     if (activity.figureString) {
-      return habboProxyService.getAvatarUrl(activity.figureString, 'xs', true);
+      return unifiedHabboService.getAvatarUrl(activity.figureString, 'xs', true);
     }
     // Default fallback figure
-    return habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
+    return unifiedHabboService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
   }, [activity.figureString]);
 
   return (
@@ -53,7 +52,7 @@ export const DirectActivityPreview: React.FC<DirectActivityPreviewProps> = ({ ac
         className="w-8 h-8 rounded-full flex-shrink-0"
         onError={(e) => {
           // Fallback to default avatar if image fails to load
-          e.currentTarget.src = habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
+          e.currentTarget.src = unifiedHabboService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
         }}
       />
       

@@ -54,8 +54,7 @@ export const currentFigureToString = (figure: CurrentFigure): string => {
     .filter(part => part.length > 0)
     .join('.');
   
-  console.log('🎨 [FigureMapper] Generated figure string:', parts);
-  return parts;
+    return parts;
 };
 
 /**
@@ -81,8 +80,7 @@ export const parseFigureString = (figureString: string): CurrentFigure => {
       }
     }
   } catch (error) {
-    console.error('❌ [FigureMapper] Error parsing figure string:', error);
-  }
+      }
   
   return figure;
 };
@@ -125,14 +123,7 @@ export const updateFigureWithItem = (
     [item.category]: newPart
   };
   
-  console.log('🔄 [FigureMapper] Updated figure with item:', {
-    category: item.category,
-    id: newPart.id,
-    colors: newPart.colors,
-    itemName: item.name
-  });
-  
-  return updatedFigure;
+    return updatedFigure;
 };
 
 /**
@@ -145,8 +136,7 @@ export const removeCategoryFromFigure = (
   const updatedFigure = { ...currentFigure };
   delete updatedFigure[category as keyof CurrentFigure];
   
-  console.log('🗑️ [FigureMapper] Removed category from figure:', category);
-  return updatedFigure;
+    return updatedFigure;
 };
 
 /**
@@ -187,8 +177,7 @@ export const generateRandomFigure = (items: HybridClothingItem[]): CurrentFigure
     }
   }
   
-  console.log('🎲 [FigureMapper] Generated random figure:', figure);
-  return figure;
+    return figure;
 };
 
 /**

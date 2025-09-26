@@ -1,0 +1,16 @@
+{
+  "name": "cat",
+  "id": "cat",
+  "sprites": {
+    "idle": {
+      "0": "cat_idle_0.png",
+      "1": "cat_idle_1.png",
+      "2": "cat_idle_2.png",
+      "3": "cat_idle_3.png",
+      "7": "cat_idle_7.png"
+    }
+  },
+  "totalSprites": 5,
+  "status": "organized",
+  "timestamp": "2025-09-03T22:23:03.196Z"
+}

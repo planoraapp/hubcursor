@@ -15,24 +15,18 @@ export interface HabboWidgetsItem {
 }
 
 const fetchHabboWidgetsClothing = async (): Promise<Record<string, HabboWidgetsItem[]>> => {
-  console.log('🌐 [HabboWidgets] Iniciando busca MASSIVA de roupas...');
-  
-  try {
+    try {
     const { data, error } = await supabase.functions.invoke('habbo-widgets-clothing');
     
     if (error) {
-      console.error('❌ [HabboWidgets] Erro na função:', error);
-      throw error;
+            throw error;
     }
     
     if (!data || !Array.isArray(data)) {
-      console.warn('⚠️ [HabboWidgets] Dados inválidos recebidos');
-      return generateMassiveLocalFallback();
+            return generateMassiveLocalFallback();
     }
     
-    console.log(`📊 [HabboWidgets] Recebidos ${data.length} itens MASSIVOS`);
-    
-    // Processar e agrupar os itens
+        // Processar e agrupar os itens
     const groupedItems: Record<string, HabboWidgetsItem[]> = {};
     let processedCount = 0;
     
@@ -78,8 +72,7 @@ const fetchHabboWidgetsClothing = async (): Promise<Record<string, HabboWidgetsI
     return groupedItems;
     
   } catch (error) {
-    console.error('❌ [HabboWidgets] Erro crítico na busca massiva:', error);
-    return generateMassiveLocalFallback();
+        return generateMassiveLocalFallback();
   }
 };
 
@@ -100,7 +93,7 @@ const processRawItem = (rawItem: any): HabboWidgetsItem | null => {
       return null;
     }
     
-    const isHC = rawItem.club === 'HC' || rawItem.club === true;
+    const isHC = rawItem.club === 'HC' || rawItem.club === true || rawItem.club === '2';
     
     return {
       id: rawItem.id || `processed_${rawItem.category}_${rawItem.figureId}`,
@@ -115,8 +108,7 @@ const processRawItem = (rawItem: any): HabboWidgetsItem | null => {
     };
     
   } catch (error) {
-    console.warn('⚠️ [Process] Erro ao processar item:', error.message);
-    return null;
+        return null;
   }
 };
 
@@ -164,9 +156,7 @@ const determineItemRarity = (item: any, isHC: boolean): 'common' | 'rare' | 'sup
 };
 
 const generateMassiveLocalFallback = (): Record<string, HabboWidgetsItem[]> => {
-  console.log('🔄 [MassiveFallback] Gerando fallback MASSIVO local...');
-  
-  // Base MASSIVA expandida com muito mais itens
+    // Base MASSIVA expandida com muito mais itens
   const categories = {
     'ca': { name: 'Bijuterias', ranges: [[6000, 6200], [6300, 6500], [6600, 6800]], baseId: 6000 },
     'cc': { name: 'Casacos', ranges: [[3000, 3150], [3200, 3350], [4200, 4350]], baseId: 3000 },
@@ -208,9 +198,7 @@ const generateMassiveLocalFallback = (): Record<string, HabboWidgetsItem[]> => {
   });
   
   const totalItems = Object.values(fallbackData).reduce((sum, items) => sum + items.length, 0);
-  console.log(`✅ [MassiveFallback] ${totalItems} itens MASSIVOS gerados localmente`);
-  
-  return fallbackData;
+    return fallbackData;
 };
 
 const generateColorPalette = (category: string): string[] => {

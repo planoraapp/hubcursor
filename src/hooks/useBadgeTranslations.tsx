@@ -22,15 +22,12 @@ export const useBadgeTranslation = ({ badgeCode, enabled = true }: UseBadgeTrans
   return useQuery({
     queryKey: ['badge-translation', badgeCode, currentLanguage],
     queryFn: async () => {
-      console.log(`🔍 [useBadgeTranslation] Fetching translation for ${badgeCode} in ${currentLanguage}`);
-      
-      const { data, error } = await supabase.functions.invoke('badge-translations', {
+            const { data, error } = await supabase.functions.invoke('badge-translations', {
         body: { badgeCode, language: currentLanguage }
       });
 
       if (error) {
-        console.error('❌ [useBadgeTranslation] Error:', error);
-        throw error;
+                throw error;
       }
 
       return data;
@@ -59,8 +56,7 @@ export const useBadgeTranslationCache = () => {
         }
       }
     } catch (error) {
-      console.warn('Error reading badge translation cache:', error);
-    }
+          }
     return null;
   };
 
@@ -72,8 +68,7 @@ export const useBadgeTranslationCache = () => {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.warn('Error saving badge translation cache:', error);
-    }
+          }
   };
 
   return { getCachedTranslation, setCachedTranslation };

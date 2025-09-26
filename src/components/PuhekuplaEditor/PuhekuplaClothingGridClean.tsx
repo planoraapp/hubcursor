@@ -113,13 +113,7 @@ const PuhekuplaClothingGridClean: React.FC<PuhekuplaClothingGridCleanProps> = ({
     // Extrair o ID do item do code (remover prefixo de categoria se existir)
     const itemId = item.code.replace(/^[a-z]{2}[-_]?/i, '') || item.guid;
     onItemSelect(itemId);
-    console.log('🎯 [PuhekuplaClothingGrid] Item selecionado:', {
-      name: item.name,
-      code: item.code,
-      extractedId: itemId,
-      category: item.category
-    });
-  };
+      };
 
   const renderColorPalette = (item: PuhekuplaClothing) => {
     if (!item.colors) return null;

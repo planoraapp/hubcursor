@@ -88,17 +88,7 @@ export class PuhekuplaFigureManager {
     item: any,
     colorId: string = '1'
   ): PuhekuplaFigure {
-    console.log('🎨 [PuhekuplaFigureManager] Aplicando item HabboEmotion:', {
-      item: {
-        name: item.name,
-        code: item.code,
-        category: item.category,
-        part: item.part,
-        gender: item.gender
-      },
-      colorId,
-      currentFigure: this.figureToString(currentFigure)
-    });
+        });
 
     // Usar category ou part do item
     let category = item.category || item.part;
@@ -114,8 +104,7 @@ export class PuhekuplaFigureManager {
       if (codeMatch) {
         finalCategory = codeMatch[1].toLowerCase();
       } else {
-        console.warn('❌ [PuhekuplaFigureManager] Could not determine category for item:', item);
-        return currentFigure;
+                return currentFigure;
       }
     }
 
@@ -139,14 +128,7 @@ export class PuhekuplaFigureManager {
       [finalCategory]: newPart
     };
 
-    console.log('✅ [PuhekuplaFigureManager] Item HabboEmotion aplicado:', {
-      category: finalCategory,
-      id: itemId,
-      colors: [colorId],
-      itemName: item.name,
-      itemGender: item.gender,
-      newFigureString: this.figureToString(updatedFigure)
-    });
+        });
 
     return updatedFigure;
   }

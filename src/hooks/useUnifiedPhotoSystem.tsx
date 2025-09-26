@@ -34,12 +34,10 @@ export const useUnifiedPhotoSystem = (
     queryKey: ['unified-photos-api', username, hotel, forceRefresh],
     queryFn: async (): Promise<UnifiedPhoto[]> => {
       if (!username) {
-        console.log('[🔧 UNIFIED PHOTOS] No username provided, returning empty array');
-        return [];
+                return [];
       }
 
-      console.log('%c[🚀 UNIFIED PHOTOS] Using direct API approach', 'background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px;');
-      console.log('[📋 UNIFIED PHOTOS] Parameters:', {
+            console.log('[📋 UNIFIED PHOTOS] Parameters:', {
         username: username.trim(),
         hotel,
         forceRefresh,
@@ -48,9 +46,7 @@ export const useUnifiedPhotoSystem = (
       });
 
       try {
-        console.log('[🌐 UNIFIED PHOTOS] Calling optimized habbo-photos-scraper...');
-        
-        const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
+                const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
           body: { 
             username: username.trim(), 
             hotel: hotel,
@@ -59,8 +55,7 @@ export const useUnifiedPhotoSystem = (
         });
 
         if (error) {
-          console.error('[❌ UNIFIED PHOTOS] Edge function error:', error);
-          throw new Error(error.message || 'Failed to fetch photos from API');
+                    throw new Error(error.message || 'Failed to fetch photos from API');
         }
 
         console.log('[📥 UNIFIED PHOTOS] API response:', {
@@ -82,8 +77,7 @@ export const useUnifiedPhotoSystem = (
             source: 'api' as const
           }));
 
-          console.log('%c[✅ UNIFIED PHOTOS] Successfully processed photos via API', 'background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px;');
-          console.log('[📊 UNIFIED PHOTOS] Final result:', {
+                    console.log('[📊 UNIFIED PHOTOS] Final result:', {
             totalPhotos: unifiedPhotos.length,
             photosWithLikes: unifiedPhotos.filter(p => p.likes > 0).length,
             sources: { api: unifiedPhotos.length }
@@ -91,13 +85,11 @@ export const useUnifiedPhotoSystem = (
 
           return unifiedPhotos;
         } else {
-          console.warn('[⚠️ UNIFIED PHOTOS] Unexpected data format from API');
-          return [];
+                    return [];
         }
 
       } catch (error: any) {
-        console.error('%c[💥 UNIFIED PHOTOS] API error', 'background: #F44336; color: white; padding: 4px 8px; border-radius: 4px;');
-        console.error('[🔍 UNIFIED PHOTOS] Error details:', {
+                console.error('[🔍 UNIFIED PHOTOS] Error details:', {
           message: error.message,
           name: error.name,
           stack: error.stack?.split('\n').slice(0, 3)
@@ -114,8 +106,7 @@ export const useUnifiedPhotoSystem = (
   });
 
   const refreshPhotos = async (force = false) => {
-    console.log('%c[🔄 UNIFIED PHOTOS] Manual refresh triggered', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;');
-    console.log('[📋 UNIFIED PHOTOS] Refresh details:', {
+        console.log('[📋 UNIFIED PHOTOS] Refresh details:', {
       username,
       hotel,
       force,

@@ -41,10 +41,7 @@ interface ActivitiesPage {
 export const useFriendsActivitiesDirect = () => {
   const { habboAccount } = useAuth();
   
-  console.log('🔍 [HOOK START] useFriendsActivitiesDirect initiated');
-  console.log('🔍 [HOOK START] habboAccount:', habboAccount);
-  
-  // Detect user's hotel
+      // Detect user's hotel
   const hotel = React.useMemo(() => {
     const userHotel = habboAccount?.hotel as string | undefined;
     if (!userHotel) return 'br';
@@ -53,9 +50,7 @@ export const useFriendsActivitiesDirect = () => {
     return 'br';
   }, [habboAccount?.hotel]);
 
-  console.log('🔍 [HOOK HOTEL] Detected hotel:', hotel);
-
-  const {
+    const {
     data,
     isLoading,
     fetchNextPage,
@@ -66,23 +61,15 @@ export const useFriendsActivitiesDirect = () => {
   } = useInfiniteQuery({
     queryKey: ['friendsActivitiesDirectAuth', hotel, habboAccount?.habbo_name, 'v4'], // ✅ Versão atualizada
     queryFn: async ({ pageParam = 0 }): Promise<ActivitiesPage> => {
-      console.log('🚀 [QUERY START] Authenticated edge function query initiated');
-      console.log('🚀 [QUERY PARAMS] pageParam:', pageParam);
-      console.log('🚀 [QUERY PARAMS] hotel:', hotel);
-      
-      if (!habboAccount?.habbo_name) {
-        console.log('❌ [QUERY EARLY] User not authenticated');
-        return { activities: [], nextOffset: null, hasMore: false };
+                        if (!habboAccount?.habbo_name) {
+                return { activities: [], nextOffset: null, hasMore: false };
       }
 
       try {
-        console.log('🔗 [EDGE CALL] Invoking habbo-friends-activities-direct with auth...');
-        
-        // ✅ CORREÇÃO: Melhor gerenciamento de sessão
+                // ✅ CORREÇÃO: Melhor gerenciamento de sessão
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.access_token) {
-          console.error('❌ [EDGE ERROR] No valid session found');
-          throw new Error('No valid session found');
+                    throw new Error('No valid session found');
         }
 
         // ✅ CORREÇÃO: Usar nova URL corrigida da Edge Function
@@ -98,12 +85,8 @@ export const useFriendsActivitiesDirect = () => {
           }
         });
 
-        console.log('🔗 [EDGE RESPONSE] Response received:', !!response);
-        console.log('🔗 [EDGE RESPONSE] Error:', error);
-
-        if (error) {
-          console.error('❌ [EDGE ERROR] Function error:', error);
-          return {
+                        if (error) {
+                    return {
             activities: [],
             nextOffset: null,
             hasMore: false
@@ -111,8 +94,7 @@ export const useFriendsActivitiesDirect = () => {
         }
 
         if (!response) {
-          console.error('❌ [EDGE ERROR] Empty response from edge function');
-          return {
+                    return {
             activities: [],
             nextOffset: null,
             hasMore: false
@@ -120,25 +102,19 @@ export const useFriendsActivitiesDirect = () => {
         }
 
         const typedResponse = response as DirectActivityResponse;
-        console.log(`✅ [EDGE SUCCESS] Received ${typedResponse.activities.length} activities`);
-        console.log(`📊 [EDGE METADATA]`, typedResponse.metadata);
-
-        // ✅ CORREÇÃO: Melhor lógica de paginação
+                        // ✅ CORREÇÃO: Melhor lógica de paginação
         const activitiesReceived = typedResponse.activities.length;
         const nextOffset = activitiesReceived === 50 ? pageParam + 50 : null;
         const hasMore = nextOffset !== null;
         
-        console.log(`📄 [PAGINATION] Current offset: ${pageParam}, next offset: ${nextOffset}, has more: ${hasMore}`);
-
-        return {
+                return {
           activities: typedResponse.activities,
           nextOffset,
           hasMore
         };
 
       } catch (functionError) {
-        console.error('❌ [QUERY ERROR] Invocation error:', functionError);
-        return {
+                return {
           activities: [],
           nextOffset: null,
           hasMore: false
@@ -153,8 +129,7 @@ export const useFriendsActivitiesDirect = () => {
     staleTime: 2 * 60 * 1000, // ✅ CORREÇÃO: Cache reduzido para 2 minutos (dados mais frescos)
     gcTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
-      console.log(`🔄 [RETRY] Attempt ${failureCount + 1}, error:`, error);
-      return failureCount < 2;
+            return failureCount < 2;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
     refetchInterval: false,
@@ -174,14 +149,7 @@ export const useFriendsActivitiesDirect = () => {
     is_authenticated: !!habboAccount?.supabase_user_id
   };
 
-  console.log(`📊 [HOOK SUMMARY] ===== FINAL SUMMARY =====`);
-  console.log(`📊 [HOOK SUMMARY] Activities loaded: ${activities.length}`);
-  console.log(`📊 [HOOK SUMMARY] User authenticated: ${!!habboAccount?.supabase_user_id}`);
-  console.log(`📊 [HOOK SUMMARY] Query loading: ${isLoading}`);
-  console.log(`📊 [HOOK SUMMARY] Has error: ${!!error}`);
-  console.log(`📊 [HOOK SUMMARY] Error details:`, error);
-
-  return {
+              return {
     activities,
     isLoading,
     fetchNextPage,

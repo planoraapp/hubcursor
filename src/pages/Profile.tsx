@@ -5,11 +5,11 @@ import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from 'lucide-react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
-  const { habboAccount } = useSimpleAuth();
+  const { habboAccount } = useAuth();
   
   const displayName = username || habboAccount?.habbo_name || 'Usuário';
 
@@ -18,7 +18,10 @@ const Profile: React.FC = () => {
       <div className="min-h-screen flex w-full">
         <CollapsibleAppSidebar />
         <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
+          <main className="flex-1 p-8 min-h-screen" style={{ 
+            backgroundImage: 'url(/assets/bghabbohub.png)',
+            backgroundRepeat: 'repeat'
+          }}>
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8">
                 <div className="flex items-center justify-center gap-3 mb-4">
@@ -54,3 +57,4 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
+

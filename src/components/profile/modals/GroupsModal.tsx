@@ -5,8 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Crown, ExternalLink, Users } from 'lucide-react';
-import { habboProxyService } from '@/services/habboProxyService';
-
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 interface GroupsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -39,7 +38,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
               >
                 <div className="flex items-start gap-3">
                   <img
-                    src={habboProxyService.getBadgeUrl(group.badgeCode)}
+                    src={unifiedHabboService.getBadgeUrl(group.badgeCode)}
                     alt={group.name}
                     className="w-12 h-12 border border-gray-200 rounded bg-white p-1 flex-shrink-0"
                     onError={(e) => {

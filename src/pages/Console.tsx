@@ -2,29 +2,59 @@
 import React from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { TabbedConsole } from '@/components/console/TabbedConsole';
+import { FunctionalConsole } from '@/components/console/FunctionalConsole';
+import { TestConsole } from '@/components/console/TestConsole';
 import { PageBackground } from '@/components/layout/PageBackground';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Monitor } from 'lucide-react';
+import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 
 const Console: React.FC = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, habboAccount } = useAuth();
 
   const openPopupConsole = () => {
-    const popupFeatures = 'width=1200,height=800,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no';
-    window.open('/console-popup', 'ConsolePopup', popupFeatures);
+    // Calcular posição centralizada na tela
+    const width = 1000;
+    const height = 700;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no,directories=no`;
+    
+    const popup = window.open('/console-popup', 'ConsolePopup', popupFeatures);
+    
+    if (!popup) {
+      alert('Popup bloqueado! Por favor, permita popups para este site.');
+      return;
+    }
+    
+    // Focar na janela popup
+    popup.focus();
+    
+    // Listener para comunicação com o popup
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'CONSOLE_POPUP_CLOSED') {
+        window.removeEventListener('message', handleMessage);
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
   };
 
   return (
-    <PageBackground>
-      <SidebarProvider>
-        <div className="min-h-screen flex">
-          <CollapsibleAppSidebar />
-          <SidebarInset className="flex-1">
-            <div className="p-4 flex flex-col items-center">
-              <div className="mb-6 text-center">
-                <h1 className="text-3xl font-bold text-white mb-4 volter-font" 
+    <EnhancedErrorBoundary
+      resetOnPropsChange={true}
+      onError={(error, errorInfo) => {
+              }}
+    >
+      <PageBackground>
+        <SidebarProvider>
+          <div className="min-h-screen flex">
+            <CollapsibleAppSidebar />
+            <SidebarInset className="flex-1 bg-transparent">
+              <div className="p-2 flex flex-col items-center w-full max-w-[375px] ml-12">
+              <div className="mb-4 text-center w-full">
+                <h1 className="text-2xl font-bold text-white mb-4 volter-font" 
                     style={{
                       textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
                     }}>
@@ -33,30 +63,120 @@ const Console: React.FC = () => {
                 <p className="text-white/80 volter-font" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                   Gerencie sua experiência no HabboHub
                 </p>
+                {/* Exemplo de uso do habboAccount */}
+                {habboAccount && (
+                  <div className="mt-2 p-2 bg-white/10 rounded-lg border border-white/20">
+                    <p className="text-white/90 text-sm volter-font">
+                      👤 Logado como: <strong>{habboAccount.habbo_username}</strong>
+                    </p>
+                    <p className="text-white/70 text-xs volter-font">
+                      Hotel: {habboAccount.hotel} | Admin: {habboAccount.is_admin ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Centralized single column console */}
-              <TabbedConsole />
-              
-              {/* Popup button positioned below console */}
-              <div className="mt-4 flex justify-center">
-                <Button
-                  onClick={openPopupConsole}
-                  variant="outline" 
-                  size="lg"
-                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white volter-font px-6 py-3"
-                >
-                  <Monitor className="w-5 h-5 mr-2" />
-                  Abrir Console em Pop-up
-                  <ExternalLink className="w-4 h-4 ml-2" />
-                </Button>
+              {/* Console funcional com dados reais do Habbo */}
+              <div className="w-full max-w-[375px]">
+                <FunctionalConsole />
+                
+                {/* Popup button positioned below console */}
+                <div className="mt-6 flex justify-center">
+                  <button
+                    onClick={openPopupConsole}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    style={{
+                      textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                      fontSize: '16px'
+                    }}
+                  >
+                    Abrir Console em Pop-up
+                  </button>
+                </div>
+
+                {/* Botão temporário para limpar guestbook */}
+                <div className="mt-4 flex justify-center gap-4">
+                  <button
+                    onClick={async () => {
+                      if (window.confirm('Tem certeza que deseja limpar todos os comentários do guestbook (incluindo HabboHub)?')) {
+                        try {
+                                                    // Usar a edge function diretamente
+                          const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/delete-guestbook-comments', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                            },
+                            body: JSON.stringify({
+                              home_owner_user_id: 'hhbr-habbohub-user-id-12345' // ID da home do habbohub
+                            })
+                          });
+                          
+                                                    if (response.ok) {
+                            const result = await response.json();
+                                                        alert('✅ Guestbook limpo com sucesso!');
+                            window.location.reload();
+                          } else {
+                            const error = await response.json();
+                                                        alert(`❌ Erro: ${error.error}`);
+                          }
+                        } catch (error) {
+                                                    alert(`❌ Erro ao limpar guestbook: ${error.message}`);
+                        }
+                      }
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    style={{
+                      textShadow: '1px 1px 0px rgba(0,0,0,0.5)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                      fontSize: '14px'
+                    }}
+                  >
+                    🧹 Limpar Guestbook (Incluindo HabboHub)
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                                            fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/delete-guestbook-comments', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                          home_owner_user_id: 'test'
+                        })
+                      })
+                      .then(response => {
+                                                return response.json();
+                      })
+                      .then(data => {
+                                                alert(`Status: ${data.success ? 'OK' : 'Erro'}\nMensagem: ${data.message || data.error}`);
+                      })
+                      .catch(error => {
+                                                alert(`Erro: ${error.message}`);
+                      });
+                    }}
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    style={{
+                      textShadow: '1px 1px 0px rgba(0,0,0,0.5)',
+                      boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                      fontSize: '14px'
+                    }}
+                  >
+                    🔍 Testar Edge Function
+                  </button>
+                </div>
               </div>
             </div>
           </SidebarInset>
         </div>
       </SidebarProvider>
     </PageBackground>
+    </EnhancedErrorBoundary>
   );
 };
 
 export default Console;
+

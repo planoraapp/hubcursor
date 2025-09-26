@@ -98,9 +98,7 @@ const OptimizedFurniImage = ({
     
     // Filter out failed URLs and remove duplicates
     const uniqueUrls = [...new Set(urls.filter(url => url && !failedSet.has(url)))];
-    console.log(`🖼️ [OptimizedFurniImage] Generated ${uniqueUrls.length} URLs for ${className}`);
-    
-    return uniqueUrls;
+        return uniqueUrls;
   }, []);
 
   // Função auxiliar para cache
@@ -135,8 +133,7 @@ const OptimizedFurniImage = ({
     } else {
       setHasError(true);
       setIsLoading(false);
-      console.log(`💥 [OptimizedFurniImage] All URLs failed for ${className}`);
-    }
+          }
   }, [currentUrlIndex, imageUrls, className]);
 
   const handleImageLoad = useCallback(() => {
@@ -156,8 +153,7 @@ const OptimizedFurniImage = ({
       cache[cacheKey] = successUrl;
       localStorage.setItem('furni-image-cache', JSON.stringify(cache));
     } catch (error) {
-      console.warn('Cache write error:', error);
-    }
+          }
   }, [currentUrlIndex, imageUrls, className, hotel]);
 
   // Carregar cache do localStorage na inicialização
@@ -170,8 +166,7 @@ const OptimizedFurniImage = ({
         }
       });
     } catch (error) {
-      console.warn('Cache read error:', error);
-    }
+          }
   }, []);
 
   // Reset quando className mudar

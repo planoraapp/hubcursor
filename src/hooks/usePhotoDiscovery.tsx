@@ -1,35 +1,44 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useUnifiedPhotos } from './useUnifiedAPI';
 
 export const usePhotoDiscovery = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [username, setUsername] = useState<string>('Beebop');
+  const [hotel, setHotel] = useState<string>('br');
+  
+  const { 
+    data: results, 
+    loading: isLoading, 
+    error, 
+    fetchData: discoverPhotos 
+  } = useUnifiedPhotos({
+    username,
+    hotel,
+    action: 'discover',
+    enabled: false // Don't auto-fetch
+  });
 
-  const discoverPhotos = async (username: string = 'Beebop', hotel: string = 'com.br') => {
-    setIsLoading(true);
+  const discoverPhotosForUser = async (newUsername: string = 'Beebop', newHotel: string = 'br') => {
+    setUsername(newUsername);
+    setHotel(newHotel);
+    
     try {
-      console.log(`[usePhotoDiscovery] Starting advanced discovery for ${username} on ${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-photo-discovery', {
-        body: { username, hotel }
+            await discoverPhotos({
+        username: newUsername,
+        hotel: newHotel,
+        action: 'discover'
       });
 
-      if (error) {
-        console.error('[usePhotoDiscovery] Error:', error);
-        throw new Error(error.message || 'Failed to discover photos');
-      }
-
-      console.log('[usePhotoDiscovery] Discovery results:', data);
-      setResults(data);
-      return data;
+            return results;
       
     } catch (error) {
-      console.error('[usePhotoDiscovery] Error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
+            throw error;
     }
   };
 
-  return { discoverPhotos, isLoading, results };
+  return { 
+    discoverPhotos: discoverPhotosForUser, 
+    isLoading, 
+    results,
+    error 
+  };
 };

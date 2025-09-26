@@ -31,9 +31,7 @@ const fetchMassiveBadges = async ({
   badges: HabboApiBadgeItem[];
   metadata: any;
 }> => {
-  console.log(`🚀 [MassiveBadges] Iniciando busca massiva - limit: ${limit}, search: "${search}", category: ${category}`);
-  
-  try {
+    try {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Timeout na busca massiva de badges')), 30000); // 30 segundos
     });
@@ -45,19 +43,14 @@ const fetchMassiveBadges = async ({
     const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
     if (error) {
-      console.error('❌ [MassiveBadges] Erro na função:', error);
-      throw new Error(`Sistema Massivo Error: ${error.message}`);
+            throw new Error(`Sistema Massivo Error: ${error.message}`);
     }
 
     if (!data || !data.badges || !Array.isArray(data.badges)) {
-      console.error('❌ [MassiveBadges] Formato inválido:', data);
-      throw new Error('Dados do sistema massivo inválidos');
+            throw new Error('Dados do sistema massivo inválidos');
     }
 
-    console.log(`✅ [MassiveBadges] Recebidos ${data.badges.length} badges do sistema massivo`);
-    console.log(`📊 [MassiveBadges] Metadata:`, data.metadata);
-    
-    // Garantir que todos os badges tenham as propriedades necessárias
+            // Garantir que todos os badges tenham as propriedades necessárias
     const processedBadges = data.badges.map((badge: any) => ({
       id: badge.id || `badge_${badge.code}`,
       code: badge.code || 'UNKNOWN',
@@ -81,8 +74,7 @@ const fetchMassiveBadges = async ({
     };
     
   } catch (error) {
-    console.error('❌ [MassiveBadges] Erro:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -93,9 +85,7 @@ export const useHabboApiBadges = ({
   forceRefresh = false,
   enabled = true
 }: UseHabboApiBadgesProps = {}) => {
-  console.log(`🔧 [useMassiveBadges] Configuração: limit: ${limit}, search: "${search}", category: ${category}, enabled: ${enabled}`);
-  
-  return useQuery({
+    return useQuery({
     queryKey: ['massive-badges-system', limit, search, category, forceRefresh],
     queryFn: () => fetchMassiveBadges({ limit, search, category, forceRefresh }),
     enabled,

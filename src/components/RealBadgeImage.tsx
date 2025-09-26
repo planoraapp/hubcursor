@@ -48,22 +48,18 @@ const RealBadgeImage = ({
   ];
 
   const handleImageError = useCallback(() => {
-    console.log(`⚠️ [RealBadge] Falha ao carregar ${code} da URL ${currentUrlIndex + 1}/${realBadgeUrls.length}`);
-    
-    if (currentUrlIndex < realBadgeUrls.length - 1) {
+        if (currentUrlIndex < realBadgeUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
       setImageLoaded(false);
     } else {
-      console.error(`❌ [RealBadge] TODAS as URLs falharam para o badge REAL ${code}`);
-      setHasError(true);
+            setHasError(true);
       setIsLoading(false);
     }
   }, [currentUrlIndex, realBadgeUrls.length, code]);
 
   const handleImageLoad = useCallback(() => {
-    console.log(`✅ [RealBadge] Badge REAL ${code} carregado com sucesso da URL ${currentUrlIndex + 1}`);
-    setIsLoading(false);
+        setIsLoading(false);
     setHasError(false);
     setImageLoaded(true);
     
@@ -78,8 +74,7 @@ const RealBadgeImage = ({
           verified: true
         }));
       } catch (e) {
-        console.warn('Falha ao cachear badge real:', e);
-      }
+              }
     }
   }, [code, realBadgeUrls, currentUrlIndex]);
 
@@ -101,12 +96,10 @@ const RealBadgeImage = ({
           
           if (!isExpired && verified && urlIndex < realBadgeUrls.length) {
             setCurrentUrlIndex(urlIndex);
-            console.log(`💾 [RealBadge] Cache hit para badge real ${code}: URL ${urlIndex + 1}`);
-          }
+                      }
         }
       } catch (e) {
-        console.warn('Cache inválido para badge real', code, e);
-      }
+              }
     }
   }, [code, realBadgeUrls.length]);
 

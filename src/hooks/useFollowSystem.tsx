@@ -83,8 +83,7 @@ export const useFollowSystem = ({ targetHabboId, targetHabboName }: UseFollowSys
         followerHabboName
       });
     } catch (error) {
-      console.error('Error following user:', error);
-    }
+          }
   };
 
   const handleUnfollow = async () => {
@@ -93,8 +92,7 @@ export const useFollowSystem = ({ targetHabboId, targetHabboName }: UseFollowSys
     try {
       await unfollowMutation.mutateAsync(targetHabboId);
     } catch (error) {
-      console.error('Error unfollowing user:', error);
-    }
+          }
   };
 
   return {

@@ -88,26 +88,11 @@ const HabboWidgetsEditor = () => {
     
     const figureString = parts.join('.');
     
-    console.log('🎯 [HabboWidgetsEditor] Generated figure string:', {
-      avatarState,
-      figureString,
-      parts: parts.length
-    });
-    
-    return figureString;
+        return figureString;
   };
 
   const handleItemSelect = (item: UnifiedHabboClothingItem, colorId: string = '1') => {
-    console.log('🎯 [HabboWidgetsEditor] REAL item unified aplicado:', { 
-      item: item.name, 
-      category: item.category, 
-      figureId: item.figureId,
-      colorId,
-      source: item.source,
-      realId: `${item.category}-${item.figureId}-${colorId}`
-    });
-    
-    const itemString = `${item.figureId}-${colorId}`;
+        const itemString = `${item.figureId}-${colorId}`;
     
     setAvatarState(prevState => {
       const newState = {
@@ -115,14 +100,7 @@ const HabboWidgetsEditor = () => {
         [item.category]: itemString
       };
       
-      console.log('🔄 [HabboWidgetsEditor] Avatar state updated:', {
-        category: item.category,
-        oldValue: prevState[item.category as keyof AvatarState],
-        newValue: itemString,
-        newState
-      });
-      
-      return newState;
+            return newState;
     });
 
     setSelectedColor(colorId);
@@ -141,18 +119,11 @@ const HabboWidgetsEditor = () => {
   };
 
   const handleRemoveItem = (category: string) => {
-    console.log('🗑️ [HabboWidgetsEditor] Removendo categoria:', category);
-    
-    setAvatarState(prevState => {
+        setAvatarState(prevState => {
       const newState = { ...prevState };
       delete newState[category as keyof AvatarState];
       
-      console.log('🔄 [HabboWidgetsEditor] Estado após remoção:', {
-        removedCategory: category,
-        newState
-      });
-      
-      return newState;
+            return newState;
     });
     
     toast({
@@ -172,9 +143,7 @@ const HabboWidgetsEditor = () => {
     
     setAvatarState(defaultState);
     
-    console.log('🔄 [HabboWidgetsEditor] Avatar resetado para estado padrão:', defaultState);
-    
-    toast({
+        toast({
       title: "🔄 Avatar resetado",
       description: "Avatar voltou ao estado padrão com IDs reais validados.",
     });

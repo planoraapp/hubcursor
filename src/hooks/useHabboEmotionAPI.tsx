@@ -26,42 +26,18 @@ interface UseHabboEmotionAPIProps {
 }
 
 const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClothing[]> => {
-  console.log(`🌐 [HabboEmotionAPI] Starting fetch with limit: ${limit}`);
-  
-  try {
+    try {
     const apiUrl = `https://api.habboemotion.com/public/clothings/new/${limit}`;
-    console.log(`📡 [HabboEmotionAPI] Making request to: ${apiUrl}`);
-    
-    const response = await fetch(apiUrl);
-    console.log(`📊 [HabboEmotionAPI] Response status: ${response.status}`);
-    
-    if (!response.ok) {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
       throw new Error(`Failed to fetch Habbo clothings: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log(`✅ [HabboEmotionAPI] Raw API response structure:`, {
-      hasResult: !!data.result,
-      hasData: !!data.data,
-      hasClothings: !!data.data?.clothings,
-      clothingsLength: data.data?.clothings?.length,
-      sampleItem: data.data?.clothings?.[0]
-    });
-    
-    if (data && data.data && data.data.clothings && Array.isArray(data.data.clothings)) {
+        if (data && data.data && data.data.clothings && Array.isArray(data.data.clothings)) {
       const clothings = data.data.clothings;
-      console.log(`🎯 [HabboEmotionAPI] Processing ${clothings.length} real items from API`);
-      
-      const mappedClothings = clothings.map((item: any, index: number) => {
-        console.log(`🔄 [HabboEmotionAPI] Processing real item ${index + 1}:`, {
-          id: item.id,
-          code: item.code,
-          part: item.part,
-          gender: item.gender,
-          date: item.date
-        });
-        
-        // Use REAL data from API without fabrication
+            const mappedClothings = clothings.map((item: any, index: number) => {
+                // Use REAL data from API without fabrication
         const realItem: HabboEmotionClothing = {
           id: item.id || (1000 + index),
           name: item.code || `Item ${item.id || index}`, // Use code as name for now
@@ -84,16 +60,13 @@ const fetchHabboClothings = async (limit: number = 200): Promise<HabboEmotionClo
         return realItem;
       }).filter(Boolean);
       
-      console.log(`✅ [HabboEmotionAPI] Successfully processed ${mappedClothings.length} real items`);
-      console.log(`🎨 [HabboEmotionAPI] Sample real items:`, mappedClothings.slice(0, 3));
+            console.log(`🎨 [HabboEmotionAPI] Sample real items:`, mappedClothings.slice(0, 3));
       return mappedClothings;
     } else {
-      console.error('❌ [HabboEmotionAPI] Invalid response format:', data);
-      throw new Error('API returned invalid data format');
+            throw new Error('API returned invalid data format');
     }
   } catch (error) {
-    console.error('❌ [HabboEmotionAPI] Error fetching real data:', error);
-    throw error;
+        throw error;
   }
 };
 
@@ -121,9 +94,7 @@ const determineRarity = (code: string): string => {
 };
 
 export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmotionAPIProps = {}) => {
-  console.log(`🔧 [HabboEmotionAPI] Hook called with limit: ${limit}, enabled: ${enabled}`);
-  
-  const query = useQuery({
+    const query = useQuery({
     queryKey: ['habbo-clothings-real-api', limit],
     queryFn: () => fetchHabboClothings(limit),
     enabled,
@@ -134,12 +105,10 @@ export const useHabboEmotionAPI = ({ limit = 200, enabled = true }: UseHabboEmot
   });
 
   if (query.isSuccess && query.data) {
-    console.log(`🎉 [HabboEmotionAPI] Query success! Processed ${query.data?.length || 0} real items`);
-  }
+      }
 
   if (query.isError) {
-    console.error('💥 [HabboEmotionAPI] Query error:', query.error);
-  }
+      }
 
   return query;
 };

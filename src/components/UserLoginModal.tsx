@@ -17,17 +17,30 @@ export const UserLoginModal = () => {
   const [habboName, setHabboName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { loginWithPassword } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const { login } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async () => {
+    if (!habboName.trim() || !password.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await loginWithPassword(habboName, password);
+      await login(habboName.trim(), password);
       toast({
         title: "Sucesso",
         description: `Bem-vindo de volta, ${habboName}!`
       });
+      setIsOpen(false);
+      setHabboName('');
+      setPassword('');
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -39,45 +52,81 @@ export const UserLoginModal = () => {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          Login
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2"
+        >
+          🔐 Login
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Login</DialogTitle>
+          <DialogTitle className="text-center">🔐 Login HabboHub</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="name" className="text-right font-medium">
-              Habbo Name
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label htmlFor="habbo-name" className="text-sm font-medium">
+              Nome Habbo
             </label>
             <Input
-              id="name"
+              id="habbo-name"
+              placeholder="Digite seu nome Habbo"
               value={habboName}
               onChange={(e) => setHabboName(e.target.value)}
-              className="col-span-3"
+              onKeyPress={handleKeyPress}
+              disabled={isLoading}
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="username" className="text-right font-medium">
-              Password
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium">
+              Senha
             </label>
             <Input
               type="password"
-              id="username"
+              id="password"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="col-span-3"
+              onKeyPress={handleKeyPress}
+              disabled={isLoading}
             />
           </div>
+          
+          <div className="bg-blue-50 p-3 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Contas de teste:</strong><br/>
+              • habbohub (senha: 151092)<br/>
+              • beebop (senha: 290684)
+            </p>
+          </div>
         </div>
-        <Button onClick={handleLogin} disabled={isLoading}>
-          {isLoading ? 'Entrando...' : 'Entrar'}
-        </Button>
+        
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleLogin} 
+            disabled={isLoading || !habboName.trim() || !password.trim()}
+            className="flex-1"
+          >
+            {isLoading ? 'Entrando...' : 'Entrar'}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsOpen(false)}
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

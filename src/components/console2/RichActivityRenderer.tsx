@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DirectFriendActivity } from '@/hooks/useFriendsActivitiesDirect';
-import { habboProxyService } from '@/services/habboProxyService';
+import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { cn } from '@/lib/utils';
 
 interface RichActivityRendererProps {
@@ -53,7 +53,7 @@ const renderActivityThumbnail = (activity: DirectFriendActivity) => {
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/70">Novo visual:</span>
           <img
-            src={habboProxyService.getAvatarUrl(activity.figureString, 'xs', false)}
+            src={unifiedHabboService.getAvatarUrl(activity.figureString, 'xs', false)}
             alt="Novo visual"
             className="w-8 h-8 rounded-lg"
             loading="lazy"
@@ -153,12 +153,12 @@ export const RichActivityRenderer: React.FC<RichActivityRendererProps> = ({
   // Generate avatar URL with fallback
   const avatarUrl = React.useMemo(() => {
     if (avatarError) {
-      return habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
+      return unifiedHabboService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
     }
     if (activity.figureString) {
-      return habboProxyService.getAvatarUrl(activity.figureString, 'xs', true);
+      return unifiedHabboService.getAvatarUrl(activity.figureString, 'xs', true);
     }
-    return habboProxyService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
+    return unifiedHabboService.getAvatarUrl('lg-3023-1332.hr-681-45.hd-180-1.ch-3030-64.ca-1808-62', 'xs', true);
   }, [activity.figureString, avatarError]);
 
   return (

@@ -95,14 +95,7 @@ const RealHabboEditor = () => {
   };
 
   const handleItemSelect = (asset: OfficialHabboAsset, colorId: string = '1') => {
-    console.log('🎯 [RealHabboEditor] Asset oficial aplicado:', { 
-      asset: asset.name, 
-      category: asset.category, 
-      figureId: asset.figureId,
-      colorId 
-    });
-    
-    const itemString = `${asset.figureId}-${colorId}`;
+        const itemString = `${asset.figureId}-${colorId}`;
     
     setAvatarState(prevState => ({
       ...prevState,
@@ -118,9 +111,7 @@ const RealHabboEditor = () => {
   };
 
   const handleRemoveItem = (category: string) => {
-    console.log('🗑️ [RealHabboEditor] Removendo categoria:', category);
-    
-    setAvatarState(prevState => {
+        setAvatarState(prevState => {
       const newState = { ...prevState };
       delete newState[category as keyof AvatarState];
       return newState;

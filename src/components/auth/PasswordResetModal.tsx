@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Check, Info, RefreshCw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useQuickNotification } from '@/hooks/useNotification';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PasswordResetModalProps {
@@ -21,7 +21,7 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ isOpen, 
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
+  const { success, error } = useQuickNotification();
 
   const generateVerificationCode = () => {
     const code = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -34,16 +34,9 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ isOpen, 
       await navigator.clipboard.writeText(verificationCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "Código copiado!",
-        description: "Cole na sua motto do Habbo"
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao copiar",
-        description: "Copie manualmente o código",
-        variant: "destructive"
-      });
+      success('Código copiado!', 'Cole na sua motto do Habbo');
+    } catch (err) {
+      error('Erro ao copiar', 'Copie manualmente o código');
     }
   };
 
@@ -83,8 +76,7 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ isOpen, 
 
       setStep(3);
     } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast({
+            toast({
         title: "Erro",
         description: error.message || 'Erro ao redefinir senha',
         variant: "destructive"

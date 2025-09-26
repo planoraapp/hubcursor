@@ -78,13 +78,10 @@ export const MyAccountColumn: React.FC = () => {
   }
 
   const handleRefreshPhotos = async () => {
-    console.log('%c[🔄 MY ACCOUNT] Manual photo refresh initiated', 'background: #FF9800; color: white; padding: 4px 8px; border-radius: 4px;');
-    try {
+        try {
       await refreshPhotos();
-      console.log('[✅ MY ACCOUNT] Photo refresh completed');
-    } catch (error) {
-      console.error('[❌ MY ACCOUNT] Photo refresh failed:', error);
-    }
+          } catch (error) {
+          }
   };
 
   // Mapear fotos para o formato do PhotoGrid

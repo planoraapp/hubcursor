@@ -20,27 +20,21 @@ export const useS3Photos = (username?: string, hotel: string = 'com.br') => {
     queryFn: async (): Promise<S3Photo[]> => {
       if (!username) return [];
       
-      console.log('[useS3Photos] Fetching S3 photos for:', username, hotel);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
+            const { data, error } = await supabase.functions.invoke('habbo-complete-profile', {
         body: { username: username.trim(), hotel }
       });
 
       if (error) {
-        console.error('[useS3Photos] Error fetching S3 photos:', error);
-        throw new Error(error.message || 'Failed to fetch S3 photos');
+                throw new Error(error.message || 'Failed to fetch S3 photos');
       }
 
       if (data?.error) {
-        console.error('[useS3Photos] API error:', data.error);
-        throw new Error(data.error);
+                throw new Error(data.error);
       }
 
       // Extract photos from complete profile response
       const photos = data?.data?.photos || [];
-      console.log('[useS3Photos] Retrieved S3 photos:', photos);
-
-      // Filter and map S3-sourced photos
+            // Filter and map S3-sourced photos
       const s3Photos: S3Photo[] = photos
         .filter((photo: any) => photo && photo.url && photo.source === 's3_discovery')
         .map((photo: any) => ({
@@ -55,8 +49,7 @@ export const useS3Photos = (username?: string, hotel: string = 'com.br') => {
           source: 's3_discovery' as const
         }));
 
-      console.log('[useS3Photos] Processed S3 photos:', s3Photos.length);
-      return s3Photos;
+            return s3Photos;
     },
     enabled: !!username,
     staleTime: 10 * 60 * 1000, // 10 minutes - S3 photos don't change frequently

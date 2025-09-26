@@ -56,22 +56,18 @@ const HybridBadgeImage = ({
   };
 
   const handleImageError = useCallback(() => {
-    console.log(`❌ [HybridImage] Falha URL ${currentUrlIndex + 1}/${badgeUrls.length} para badge ${code}`);
-    
-    if (currentUrlIndex < badgeUrls.length - 1) {
+        if (currentUrlIndex < badgeUrls.length - 1) {
       setCurrentUrlIndex(prev => prev + 1);
       setIsLoading(true);
       setImageLoaded(false);
     } else {
       setHasError(true);
       setIsLoading(false);
-      console.log(`💥 [HybridImage] Todas URLs falharam para badge ${code}`);
-    }
+          }
   }, [currentUrlIndex, badgeUrls.length, code]);
 
   const handleImageLoad = useCallback(() => {
-    console.log(`✅ [HybridImage] Badge ${code} carregado da URL ${currentUrlIndex + 1}`);
-    setIsLoading(false);
+        setIsLoading(false);
     setHasError(false);
     setImageLoaded(true);
     
@@ -87,8 +83,7 @@ const HybridBadgeImage = ({
           ttl: 2 * 60 * 60 * 1000 // 2 horas
         }));
       } catch (e) {
-        console.warn('Cache write failed:', e);
-      }
+              }
     }
   }, [code, badgeUrls, currentUrlIndex]);
 
@@ -110,12 +105,10 @@ const HybridBadgeImage = ({
           
           if (!isExpired && urlIndex < badgeUrls.length) {
             setCurrentUrlIndex(urlIndex);
-            console.log(`💾 [HybridImage] Cache hit para badge ${code}: URL ${urlIndex + 1}`);
-          }
+                      }
         }
       } catch (e) {
-        console.warn('Cache read failed:', e);
-      }
+              }
     }
   }, [code, badgeUrls.length]);
 

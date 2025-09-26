@@ -8,7 +8,7 @@ export const useOptimizedOnlineUsers = (options?: {
   refreshInterval?: number;
   limit?: number;
 }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = useMemo(() => {
     const userHotel = (habboAccount as any)?.hotel as string | undefined;
@@ -48,3 +48,4 @@ export const useOptimizedOnlineUsers = (options?: {
     lastUpdate: meta?.timestamp
   };
 };
+

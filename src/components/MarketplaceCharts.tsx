@@ -56,9 +56,7 @@ export const MarketplaceCharts = () => {
   const fetchMarketplaceData = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching enhanced marketplace data...');
-      
-      const { data, error } = await supabase.functions.invoke('marketplace-analytics');
+            const { data, error } = await supabase.functions.invoke('marketplace-analytics');
       
       if (error) {
         throw error;
@@ -67,11 +65,9 @@ export const MarketplaceCharts = () => {
       if (data?.items && Array.isArray(data.items)) {
         setItems(data.items);
         setStats(data.stats || stats);
-        console.log(`✅ Loaded ${data.items.length} enhanced market items`);
-      }
+              }
     } catch (error) {
-      console.error('❌ Error fetching enhanced marketplace data:', error);
-      setError('Erro ao carregar dados do marketplace');
+            setError('Erro ao carregar dados do marketplace');
     } finally {
       setLoading(false);
     }

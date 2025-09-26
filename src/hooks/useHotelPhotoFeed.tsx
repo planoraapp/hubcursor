@@ -15,30 +15,23 @@ export const useHotelPhotoFeed = (currentUserName: string, hotel: string = 'br')
   return useQuery({
     queryKey: ['hotel-photo-feed', currentUserName, hotel],
     queryFn: async (): Promise<HotelPhoto[]> => {
-      console.log(`[🔄 HOTEL FEED] Fetching hotel photo feed for ${currentUserName}`);
-
-      try {
+            try {
         // Call edge function to get mixed feed (friends + random users)
         const { data, error } = await supabase.functions.invoke('habbo-hotel-feed', {
           body: { username: currentUserName, hotel }
         });
 
         if (error) {
-          console.error('[❌ HOTEL FEED] Error:', error);
-          throw new Error(error.message || 'Failed to fetch hotel feed');
+                    throw new Error(error.message || 'Failed to fetch hotel feed');
         }
 
         if (data.error) {
-          console.error('[❌ HOTEL FEED] API Error:', data.error);
-          throw new Error(data.error);
+                    throw new Error(data.error);
         }
 
-        console.log(`[✅ HOTEL FEED] Successfully fetched ${data.length} photos from hotel feed`);
-        
-        return data as HotelPhoto[];
+                return data as HotelPhoto[];
       } catch (error: any) {
-        console.error('[❌ HOTEL FEED] Fetch failed:', error);
-        throw error;
+                throw error;
       }
     },
     enabled: !!currentUserName,

@@ -40,12 +40,7 @@ const OfficialClothingThumbnail = ({
   const handleImageError = () => {
     setImageError(true);
     setIsLoading(false);
-    console.error('❌ [OfficialThumbnail] Erro ao carregar:', {
-      asset: asset.name,
-      figureId: asset.figureId,
-      category: asset.category,
-      url: getThumbnailUrl()
-    });
+        });
   };
 
   const thumbnailUrl = getThumbnailUrl();

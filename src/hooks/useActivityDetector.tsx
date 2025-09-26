@@ -20,9 +20,7 @@ export const useActivityDetector = (options: ActivityDetectionOptions = {}) => {
   return useQuery({
     queryKey: ['activity-detector', hotel, limit, user],
     queryFn: async () => {
-      console.log('🔍 [useActivityDetector] DESABILITADO: Edge function obsoleta');
-      
-      // COMENTADO: Edge function habbo-activity-detector não existe mais
+            // COMENTADO: Edge function habbo-activity-detector não existe mais
       /*
       const params = new URLSearchParams({
         hotel,
@@ -35,12 +33,10 @@ export const useActivityDetector = (options: ActivityDetectionOptions = {}) => {
       });
 
       if (error) {
-        console.error('❌ [useActivityDetector] Error:', error);
-        throw new Error(`Activity detection failed: ${error.message}`);
+                throw new Error(`Activity detection failed: ${error.message}`);
       }
 
-      console.log('✅ [useActivityDetector] Detection completed:', data);
-      return data;
+            return data;
       */
       
       // Retorna dados vazios para manter compatibilidade

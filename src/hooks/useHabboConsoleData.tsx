@@ -5,7 +5,7 @@ import { consoleInteractionsService } from '@/services/consoleInteractionsServic
 import { useUnifiedAuth } from './useUnifiedAuth';
 
 export const useHabboConsoleData = (targetUsername?: string) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   const [searchUsername, setSearchUsername] = useState(targetUsername || '');
   const [selectedUser, setSelectedUser] = useState<HabboUser | null>(null);
 
@@ -17,7 +17,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     refetch: refetchProfile 
   } = useQuery({
     queryKey: ['habbo-user-profile', searchUsername],
-    queryFn: () => habboProxyService.getUserProfile(searchUsername),
+    queryFn: () => unifiedHabboService.getUserProfile(searchUsername),
     enabled: !!searchUsername,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2
@@ -29,7 +29,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     isLoading: badgesLoading 
   } = useQuery({
     queryKey: ['habbo-user-badges', searchUsername],
-    queryFn: () => habboProxyService.getUserBadges(searchUsername),
+    queryFn: () => unifiedHabboService.getUserBadges(searchUsername),
     enabled: !!searchUsername && !!userProfile,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -40,7 +40,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     isLoading: photosLoading 
   } = useQuery({
     queryKey: ['habbo-user-photos', searchUsername],
-    queryFn: () => habboProxyService.getUserPhotos(searchUsername),
+    queryFn: () => unifiedHabboService.getUserPhotos(searchUsername),
     enabled: !!searchUsername && !!userProfile,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -51,7 +51,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     isLoading: tickerLoading 
   } = useQuery({
     queryKey: ['habbo-ticker'],
-    queryFn: () => habboProxyService.getHotelTicker(),
+    queryFn: () => unifiedHabboService.getHotelTicker(),
     refetchInterval: 30 * 1000, // 30 seconds
     staleTime: 15 * 1000, // 15 seconds
   });
@@ -126,8 +126,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
       
       return success;
     } catch (error) {
-      console.error('Error toggling like:', error);
-      return false;
+            return false;
     }
   };
 
@@ -148,8 +147,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
       
       return success;
     } catch (error) {
-      console.error('Error adding comment:', error);
-      return false;
+            return false;
     }
   };
 
@@ -163,8 +161,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
       
       return success;
     } catch (error) {
-      console.error('Error deleting comment:', error);
-      return false;
+            return false;
     }
   };
 
@@ -187,8 +184,7 @@ export const useHabboConsoleData = (targetUsername?: string) => {
       
       return success;
     } catch (error) {
-      console.error('Error toggling follow:', error);
-      return false;
+            return false;
     }
   };
 
@@ -250,8 +246,9 @@ export const useHabboConsoleData = (targetUsername?: string) => {
     
     // Utility methods
     getAvatarUrl: (figureString: string, size?: 'xs' | 's' | 'm' | 'l') => 
-      habboProxyService.getAvatarUrl(figureString, size),
+      unifiedHabboService.getAvatarUrl(figureString, size),
     getBadgeUrl: (badgeCode: string) => 
-      habboProxyService.getBadgeUrl(badgeCode),
+      unifiedHabboService.getBadgeUrl(badgeCode),
   };
 };
+

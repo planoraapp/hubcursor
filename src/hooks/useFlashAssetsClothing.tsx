@@ -44,9 +44,7 @@ export const useFlashAssetsClothing = (options: UseFlashAssetsClothingOptions = 
   return useQuery<FlashAssetItem[], Error>({
     queryKey: ['flash-assets-clothing', { limit, category, search, gender }],
     queryFn: async (): Promise<FlashAssetItem[]> => {
-      console.log('🔄 [useFlashAssetsClothing] Fetching Flash Assets from database');
-      
-      const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
+            const { data, error } = await supabase.functions.invoke('flash-assets-clothing', {
         body: {
           limit,
           category,
@@ -56,19 +54,16 @@ export const useFlashAssetsClothing = (options: UseFlashAssetsClothingOptions = 
       });
 
       if (error) {
-        console.error('❌ [useFlashAssetsClothing] Error calling function:', error);
-        throw error;
+                throw error;
       }
 
       const response = data as FlashAssetsResponse;
       
       if (!response || !response.assets) {
-        console.warn('⚠️ [useFlashAssetsClothing] Invalid response format');
-        return [];
+                return [];
       }
 
-      console.log(`✅ [useFlashAssetsClothing] Loaded ${response.assets.length} Flash Assets from database`);
-      return response.assets;
+            return response.assets;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes

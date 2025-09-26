@@ -44,7 +44,7 @@ interface OfficialTickerResponse {
 }
 
 export const useOfficialHotelTicker = (options?: { limit?: number }) => {
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
   
   const hotel = useMemo(() => {
     const userHotel = habboAccount?.hotel;
@@ -63,23 +63,19 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
   } = useQuery({
     queryKey: ['official-hotel-ticker', hotel, limit],
     queryFn: async (): Promise<OfficialTickerResponse> => {
-      console.log(`📡 [useOfficialHotelTicker] Fetching from official ticker for ${hotel}`);
-      
-      const { data, error } = await supabase.functions.invoke('habbo-official-ticker', {
+            const { data, error } = await supabase.functions.invoke('habbo-official-ticker', {
         body: { hotel, limit }
       });
 
       if (error) {
-        console.error(`❌ [useOfficialHotelTicker] Error:`, error);
-        throw new Error(`Failed to fetch official ticker: ${error.message}`);
+                throw new Error(`Failed to fetch official ticker: ${error.message}`);
       }
 
       if (!data || !data.success) {
         throw new Error(data?.message || 'Failed to fetch official ticker data');
       }
 
-      console.log(`✅ [useOfficialHotelTicker] Retrieved ${data.activities?.length || 0} activities`);
-      return data;
+            return data;
     },
     enabled: true,
     refetchInterval: 30 * 1000, // 30 segundos
@@ -103,3 +99,4 @@ export const useOfficialHotelTicker = (options?: { limit?: number }) => {
     refetch
   };
 };
+

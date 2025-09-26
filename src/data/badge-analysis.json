@@ -1,0 +1,1972 @@
+{
+  "totalBadges": 243,
+  "categories": {
+    "ACH": [
+      "ACH_AvatarTags1",
+      "ACH_RegistrationDuration15",
+      "ACH_PetLevelUp9",
+      "ACH_AprilFools12QuestCompleted1",
+      "ACH_BattleBallPlayer19",
+      "ACH_BattleBallQuestCompleted10",
+      "ACH_BattleBallWinner17",
+      "ACH_TagB20",
+      "ACH_PetLover6",
+      "ACH_NinjasNotSpotted3",
+      "ACH_HorseConsecutiveJumpsCount5",
+      "ACH_BaseJumpShield1",
+      "ACH_BaseJumpDaysPlayed1",
+      "ACH_BaseJumpMissile3",
+      "ACH_BaseJumpWins3",
+      "ACH_GuideFeedbackGiver2",
+      "ACH_FireworksCharger10",
+      "ACH_RoomDecoFloor20",
+      "ACH_FreezePlayer17",
+      "ACH_FreezeQuestCompleted10",
+      "ACH_FreezeWinner16",
+      "ACH_RoomDecoFurniTypeCount12",
+      "ACH_GameAuthorExperience16",
+      "ACH_GuideTourTaker2",
+      "ACH_GuideAdvertisementReader1",
+      "ACH_GiftReceiver2",
+      "ACH_VipClub2",
+      "ACH_Name1",
+      "ACH_HabboWayGraduate1",
+      "ACH_Citizenship1",
+      "ACH_HappyHour1",
+      "ACH_RbTagA6",
+      "ACH_HorseQuestCompleted3",
+      "ACH_HorseJumping4",
+      "ACH_PetRespectReceiver10",
+      "ACH_TagC20",
+      "ACH_EsA11",
+      "ACH_SafetyQuizGraduate1",
+      "ACH_TradingPass6",
+      "ACH_FreezePowerUp7",
+      "ACH_AvatarLooks1",
+      "ACH_BattleBallTilesLocked20",
+      "ACH_GuideRequester2",
+      "ACH_TagA5",
+      "ACH_MonsterPlantQuestCompleted1",
+      "ACH_MusicCollector10",
+      "ACH_RoomDecoHoleFurniCount10",
+      "ACH_RespectGiven14",
+      "ACH_GiftGiver3",
+      "ACH_AllTimeHotelPresence20",
+      "ACH_RbBunnyTag10",
+      "ACH_PetRespectGiver10",
+      "ACH_RecyclePlastos1",
+      "ACH_MusicPlayer20",
+      "ACH_Login6",
+      "ACH_RespectEarned10",
+      "ACH_RbTagC20",
+      "ACH_RoomDecoFurniCount20",
+      "ACH_RoomDecoHosting14",
+      "ACH_RoomEntry14",
+      "ACH_GuideGroupMember1",
+      "ACH_SummerQuestCompleted20",
+      "ACH_SkateBoardJump20",
+      "ACH_SkateBoardSlide20",
+      "ACH_FriendListSize12",
+      "ACH_HorseRent5",
+      "ACH_NotesReceived6",
+      "ACH_PetFeeding10",
+      "ACH_TraderPass1",
+      "ACH_GuideEnrollmentLifetime13",
+      "ACH_EmailVerification1",
+      "ACH_Valentines12QuestCompleted10",
+      "ACH_RoomDecoWallpaper20",
+      "ACH_GamePlayerExperience17",
+      "ACH_SnowWarTotalScore25",
+      "ACH_MonsterPlantTreater1",
+      "ACH_Xmas11QuestCompleted10",
+      "ACH_SnowWarWeeklyTopTen1",
+      "ACH_RegistrationDuration20",
+      "ACH_BattleBallPlayer15",
+      "ACH_BattleBallWinner17",
+      "ACH_HorseConsecutiveJumpsCount20",
+      "ACH_TradingPass4",
+      "ACH_Profile_Gimmegimme_2",
+      "ACH_VipHC1",
+      "ACH_BasicClub1",
+      "ACH_Name1",
+      "ACH_HappyHour1",
+      "ACH_Tutorial3",
+      "ACH_HorseJumping5",
+      "ACH_GnomeRespectGiver1",
+      "ACH_Tutorial1",
+      "ACH_TagC11",
+      "ACH_SelfModIgnoreSeen1",
+      "ACH_SafetyQuizGraduate1",
+      "ACH_TradingPass6",
+      "ACH_AvatarLooks1",
+      "ACH_Tutorial2",
+      "ACH_Tutorial5",
+      "ACH_RespectGiven5",
+      "ACH_TradingPass7",
+      "ACH_TradingPass2",
+      "ACH_AllTimeHotelPresence8",
+      "ACH_PetRespectGiver3",
+      "ACH_RespectEarned3",
+      "ACH_TradingPass3",
+      "ACH_RoomEntry6",
+      "ACH_TradingPass5",
+      "ACH_FriendListSize1",
+      "ACH_FriendsMaker_SGCollect_10",
+      "ACH_FriendsMaker6",
+      "ACH_TraderPass1",
+      "ACH_EmailVerification1",
+      "ACH_GamePlayerExperience16",
+      "ACH_RegistrationDuration15",
+      "ACH_BuildersClub1",
+      "ACH_RoomDecoBC10",
+      "ACH_SelfModDoorModeSeen1",
+      "ACH_TradingPass4",
+      "ACH_RoomDecoFurniTypeCount20",
+      "ACH_Profile_Gimmegimme_5",
+      "ACH_Name1",
+      "ACH_HappyHour1",
+      "ACH_Tutorial3",
+      "ACH_RbTagA10",
+      "ACH_Tutorial4",
+      "ACH_Tutorial1",
+      "ACH_TagC6",
+      "ACH_snowBoardBuild5",
+      "ACH_TradingPass6",
+      "ACH_AvatarLooks1",
+      "ACH_Tutorial2",
+      "ACH_TagA10",
+      "ACH_Tutorial5",
+      "ACH_GiftGiver2",
+      "ACH_TradingPass7",
+      "ACH_TradingPass2",
+      "ACH_AllTimeHotelPresence5",
+      "ACH_TradingPass3",
+      "ACH_RoomDecoFurniCount20",
+      "ACH_RoomDecoHosting6",
+      "ACH_RoomEntry2",
+      "ACH_TradingPass5",
+      "ACH_FriendListSize1",
+      "ACH_FriendsMaker_SGCollect_10",
+      "ACH_HabboExplorer1",
+      "ACH_EmailVerification1",
+      "ACH_TradingPass1",
+      "ACH_RegistrationDuration20",
+      "ACH_Profile_Gimmegimme_1",
+      "ACH_VipHC1",
+      "ACH_BasicClub1",
+      "ACH_HappyHour1",
+      "ACH_Tutorial3",
+      "ACH_Tutorial1",
+      "ACH_TradingPass6",
+      "ACH_AvatarLooks1",
+      "ACH_Tutorial2",
+      "ACH_TradingPass7",
+      "ACH_AllTimeHotelPresence4",
+      "ACH_TradingPass3",
+      "ACH_RoomDecoHosting2",
+      "ACH_RoomEntry2",
+      "ACH_Xm10QuestCompleted9",
+      "ACH_FriendListSize1",
+      "ACH_TraderPass1",
+      "ACH_EmailVerification1",
+      "ACH_RegistrationDuration12",
+      "ACH_Name1",
+      "ACH_SafetyQuizGraduate1",
+      "ACH_AvatarLooks1",
+      "ACH_RespectGiven1",
+      "ACH_AllTimeHotelPresence2",
+      "ACH_PetRespectGiver2",
+      "ACH_RoomEntry2",
+      "ACH_FriendListSize2",
+      "ACH_TraderPass1",
+      "ACH_RegistrationDuration8",
+      "ACH_PetLover2",
+      "ACH_AvatarLooks1",
+      "ACH_Motto1",
+      "ACH_RoomEntry1",
+      "ACH_PetFeeding2",
+      "ACH_RegistrationDuration3",
+      "ACH_Name1",
+      "ACH_HappyHour1",
+      "ACH_PetRespectGiver2",
+      "ACH_TraderPass1",
+      "ACH_EmailVerification1",
+      "ACH_RegistrationDuration10",
+      "ACH_AvatarLooks1",
+      "ACH_AllTimeHotelPresence1",
+      "ACH_RoomDecoHosting3",
+      "ACH_RoomEntry1",
+      "ACH_TraderPass1"
+    ],
+    "DNY01": [
+      "DNY01"
+    ],
+    "DRA04": [
+      "DRA04"
+    ],
+    "UK163": [
+      "UK163"
+    ],
+    "AQR03": [
+      "AQR03"
+    ],
+    "AQR04": [
+      "AQR04"
+    ],
+    "UK170": [
+      "UK170"
+    ],
+    "RAR02": [
+      "RAR02"
+    ],
+    "EPS14": [
+      "EPS14"
+    ],
+    "EPS09": [
+      "EPS09"
+    ],
+    "EPS08": [
+      "EPS08"
+    ],
+    "EPS02": [
+      "EPS02"
+    ],
+    "EPS05": [
+      "EPS05"
+    ],
+    "EPS07": [
+      "EPS07"
+    ],
+    "EPS06": [
+      "EPS06"
+    ],
+    "SNK03": [
+      "SNK03"
+    ],
+    "COM66": [
+      "COM66"
+    ],
+    "UK167": [
+      "UK167"
+    ],
+    "UK176": [
+      "UK176"
+    ],
+    "UK175": [
+      "UK175"
+    ],
+    "COC04": [
+      "COC04"
+    ],
+    "SMR01": [
+      "SMR01"
+    ],
+    "RareDemonicDragon": [
+      "RareDemonicDragon"
+    ],
+    "DDC01": [
+      "DDC01"
+    ],
+    "DDC02": [
+      "DDC02"
+    ],
+    "DDC03": [
+      "DDC03"
+    ],
+    "DDC04": [
+      "DDC04"
+    ],
+    "DDC05": [
+      "DDC05"
+    ],
+    "X1115": [
+      "X1115"
+    ],
+    "HOR08": [
+      "HOR08"
+    ],
+    "RADZZ": [
+      "RADZZ"
+    ],
+    "UK157": [
+      "UK157"
+    ],
+    "COK30": [
+      "COK30"
+    ],
+    "COK27": [
+      "COK27"
+    ],
+    "COK23": [
+      "COK23"
+    ],
+    "COK31": [
+      "COK31"
+    ],
+    "AU025": [
+      "AU025"
+    ],
+    "FBC09": [
+      "FBC09"
+    ],
+    "GLO01": [
+      "GLO01"
+    ],
+    "NY124": [
+      "NY124"
+    ],
+    "IT111": [
+      "IT111"
+    ],
+    "SG018": [
+      "SG018"
+    ],
+    "poop1": [
+      "poop1"
+    ],
+    "STU05": [
+      "STU05"
+    ],
+    "HOR05": [
+      "HOR05"
+    ],
+    "DE159": [
+      "DE159"
+    ],
+    "UK162": [
+      "UK162"
+    ],
+    "DK041": [
+      "DK041"
+    ],
+    "NO84": [
+      "NO84"
+    ],
+    "PRV05": [
+      "PRV05"
+    ],
+    "JAD01": [
+      "JAD01"
+    ],
+    "UK161": [
+      "UK161"
+    ],
+    "FBC14": [
+      "FBC14"
+    ],
+    "UK155": [
+      "UK155"
+    ],
+    "DNY03": [
+      "DNY03"
+    ],
+    "COM58": [
+      "COM58"
+    ],
+    "peg01": [
+      "peg01"
+    ],
+    "RAR01": [
+      "RAR01"
+    ],
+    "RTS06": [
+      "RTS06"
+    ],
+    "UK160": [
+      "UK160"
+    ],
+    "COM67": [
+      "COM67"
+    ],
+    "BER01": [
+      "BER01"
+    ],
+    "UK172": [
+      "UK172"
+    ],
+    "TER01": [
+      "TER01"
+    ],
+    "SID01": [
+      "SID01"
+    ],
+    "SAF01": [
+      "SAF01"
+    ],
+    "SAF02": [
+      "SAF02"
+    ],
+    "SAF03": [
+      "SAF03"
+    ],
+    "SAF04": [
+      "SAF04"
+    ],
+    "SAF05": [
+      "SAF05"
+    ],
+    "FRZ06": [
+      "FRZ06"
+    ],
+    "FBC15": [
+      "FBC15"
+    ],
+    "UK174": [
+      "UK174"
+    ],
+    "UK173": [
+      "UK173"
+    ],
+    "X1130": [
+      "X1130"
+    ],
+    "SWB01": [
+      "SWB01"
+    ],
+    "UK156": [
+      "UK156"
+    ],
+    "RTS01": [
+      "RTS01"
+    ],
+    "UK168": [
+      "UK168"
+    ],
+    "UK164": [
+      "UK164"
+    ],
+    "SMR02": [
+      "SMR02"
+    ],
+    "COM65": [
+      "COM65"
+    ],
+    "UK183": [
+      "UK183"
+    ],
+    "WOM01": [
+      "WOM01"
+    ],
+    "SCU03": [
+      "SCU03"
+    ],
+    "UK165": [
+      "UK165"
+    ],
+    "UK166": [
+      "UK166"
+    ],
+    "SCU02": [
+      "SCU02"
+    ],
+    "PET10": [
+      "PET10"
+    ],
+    "HOR13": [
+      "HOR13"
+    ],
+    "COM46": [
+      "COM46"
+    ],
+    "horse": [
+      "horse"
+    ],
+    "UK423": [
+      "UK423"
+    ],
+    "MRG00": [
+      "MRG00",
+      "MRG00"
+    ],
+    "MRG02": [
+      "MRG02"
+    ],
+    "SAF07": [
+      "SAF07"
+    ],
+    "COM76": [
+      "COM76"
+    ],
+    "ITF82": [
+      "ITF82"
+    ],
+    "NFT36": [
+      "NFT36"
+    ],
+    "AND06": [
+      "AND06"
+    ],
+    "MRG01": [
+      "MRG01"
+    ],
+    "AND02": [
+      "AND02"
+    ],
+    "TBLT1": [
+      "TBLT1"
+    ],
+    "XM4": [
+      "XM4"
+    ]
+  },
+  "badges": {
+    "ACH_AvatarTags1": {
+      "name": "5 words of wisdom I",
+      "description": "For tagging yourself with 5 tags.",
+      "code": "ACH_AvatarTags1",
+      "users": 1
+    },
+    "ACH_RegistrationDuration15": {
+      "name": "75 % True Habbo XV",
+      "description": "For being a member of the community for 913 days.",
+      "code": "ACH_RegistrationDuration15",
+      "users": 2
+    },
+    "DNY01": {
+      "name": "A Lucky Lantern",
+      "description": "Good luck for the New Year!",
+      "code": "DNY01",
+      "users": 1
+    },
+    "DRA04": {
+      "name": "A fond farewell to the Dragon",
+      "description": "Comemorating its return in 2024",
+      "code": "DRA04",
+      "users": 1
+    },
+    "UK163": {
+      "name": "Alvin",
+      "description": "I completed the Alvin 3: Chip-Wrecked quiz!",
+      "code": "UK163",
+      "users": 1
+    },
+    "ACH_PetLevelUp9": {
+      "name": "Animal trainer IX",
+      "description": "For increasing your pet's level 200 times.",
+      "code": "ACH_PetLevelUp9",
+      "users": 1
+    },
+    "ACH_AprilFools12QuestCompleted1": {
+      "name": "April fools 2012",
+      "description": "For completing the April fools 2012 quest",
+      "code": "ACH_AprilFools12QuestCompleted1",
+      "users": 1
+    },
+    "AQR03": {
+      "name": "Aquarium 3",
+      "description": "3 of 4",
+      "code": "AQR03",
+      "users": 1
+    },
+    "AQR04": {
+      "name": "Aquarium 4",
+      "description": "4 of 4",
+      "code": "AQR04",
+      "users": 1
+    },
+    "ACH_BattleBallPlayer19": {
+      "name": "Battle Ball player XIX",
+      "description": "For gaining 1659765 participation points in Battle Banzai.",
+      "code": "ACH_BattleBallPlayer19",
+      "users": 1
+    },
+    "ACH_BattleBallQuestCompleted10": {
+      "name": "Battle Banzai quest - Overlord",
+      "description": "For completing 22 Battle Ball quests.",
+      "code": "ACH_BattleBallQuestCompleted10",
+      "users": 1
+    },
+    "ACH_BattleBallWinner17": {
+      "name": "Battle Banzai winner XVII",
+      "description": "For gaining 460615 victory points at Battle Banzai",
+      "code": "ACH_BattleBallWinner17",
+      "users": 2
+    },
+    "UK170": {
+      "name": "Bee",
+      "description": "I tracked down Sean's Grandfather - Journey 2: The Mysterious Island",
+      "code": "UK170",
+      "users": 1
+    },
+    "ACH_TagB20": {
+      "name": "Blades of glory XX",
+      "description": "For getting tagged 1284 times while ice skating.",
+      "code": "ACH_TagB20",
+      "users": 1
+    },
+    "RAR02": {
+      "name": "Blushing Toad",
+      "description": "I found the very Rare Pet Frog. I pretty much rule.",
+      "code": "RAR02",
+      "users": 1
+    },
+    "EPS14": {
+      "name": "ButterBadge",
+      "description": "14-15",
+      "code": "EPS14",
+      "users": 1
+    },
+    "EPS09": {
+      "name": "ButterBadge",
+      "description": "9-15",
+      "code": "EPS09",
+      "users": 1
+    },
+    "EPS08": {
+      "name": "ButterBadge",
+      "description": "8-15",
+      "code": "EPS08",
+      "users": 1
+    },
+    "EPS02": {
+      "name": "ButterBadge",
+      "description": "2-15",
+      "code": "EPS02",
+      "users": 1
+    },
+    "EPS05": {
+      "name": "ButterBadge",
+      "description": "5-15",
+      "code": "EPS05",
+      "users": 1
+    },
+    "EPS07": {
+      "name": "ButterBadge",
+      "description": "7-15",
+      "code": "EPS07",
+      "users": 1
+    },
+    "EPS06": {
+      "name": "ButterBadge",
+      "description": "6-15",
+      "code": "EPS06",
+      "users": 1
+    },
+    "SNK03": {
+      "name": "CNYQUIZIII",
+      "description": "For answering correctly Quiz III",
+      "code": "SNK03",
+      "users": 1
+    },
+    "ACH_PetLover6": {
+      "name": "Can I keep him? VI",
+      "description": "For owning 25 pets.",
+      "code": "ACH_PetLover6",
+      "users": 1
+    },
+    "COM66": {
+      "name": "Champions of Evil",
+      "description": "I was on the winning Team, in support of Kitano and the Serpents of Doom in the battle against Evil. Habboween 2011",
+      "code": "COM66",
+      "users": 1
+    },
+    "UK167": {
+      "name": "ChildLine Christmas Badge",
+      "description": "Happy Christmas and New Year from ChildLine",
+      "code": "UK167",
+      "users": 1
+    },
+    "UK176": {
+      "name": "ChildLine Goup",
+      "description": "I am a member of the ChildLine group",
+      "code": "UK176",
+      "users": 1
+    },
+    "UK175": {
+      "name": "ChildLine Self-harm Awarness",
+      "description": "I correctly answered the ChildLine Self-harm Awareness Quiz!",
+      "code": "UK175",
+      "users": 1
+    },
+    "COC04": {
+      "name": "Coco-Maniac",
+      "description": "Having a hoot at the Coco Resort!",
+      "code": "COC04",
+      "users": 1
+    },
+    "SMR01": {
+      "name": "Crank Up The Tunage 2011",
+      "description": "The Habstep voter!",
+      "code": "SMR01",
+      "users": 1
+    },
+    "RareDemonicDragon": {
+      "name": "Dark Demonic Dragon Master",
+      "description": "I tamed the Dark Demonic Dragon, bask in my aura of awesomeness",
+      "code": "RareDemonicDragon",
+      "users": 1
+    },
+    "DDC01": {
+      "name": "Dragon Dance 1",
+      "description": "Year of the Dragon Art. Part 1 of 5.",
+      "code": "DDC01",
+      "users": 1
+    },
+    "DDC02": {
+      "name": "Dragon Dance 2",
+      "description": "Year of the Dragon Art. Part 2 of 5.",
+      "code": "DDC02",
+      "users": 1
+    },
+    "DDC03": {
+      "name": "Dragon Dance 3",
+      "description": "Year of the Dragon Art. Part 3 of 5.",
+      "code": "DDC03",
+      "users": 1
+    },
+    "DDC04": {
+      "name": "Dragon Dance 4",
+      "description": "Year of the Dragon Art. Part 4 of 5.",
+      "code": "DDC04",
+      "users": 1
+    },
+    "DDC05": {
+      "name": "Dragon Dance 5",
+      "description": "Year of the Dragon Art. Part 5 of 5.",
+      "code": "DDC05",
+      "users": 1
+    },
+    "ACH_NinjasNotSpotted3": {
+      "name": "Dragon Ninja Spotter III",
+      "description": "Almost spotted 111 Dragon Ninjas. Good work!",
+      "code": "ACH_NinjasNotSpotted3",
+      "users": 1
+    },
+    "X1115": {
+      "name": "Epic Xmas Quiz",
+      "description": "Found the hidden Epic Quiz, Xmas 2011.",
+      "code": "X1115",
+      "users": 1
+    },
+    "ACH_HorseConsecutiveJumpsCount5": {
+      "name": "Equestrian V",
+      "description": "For jumping over 10 consecutive obstacles successfully.",
+      "code": "ACH_HorseConsecutiveJumpsCount5",
+      "users": 1
+    },
+    "HOR08": {
+      "name": "Equine health expert",
+      "description": "Skills in horse health care",
+      "code": "HOR08",
+      "users": 1
+    },
+    "RADZZ": {
+      "name": "Event Promoter",
+      "description": "Event Promoter",
+      "code": "RADZZ",
+      "users": 1
+    },
+    "UK157": {
+      "name": "FRANK Question Mark",
+      "description": "I answered the FRANK quiz correctly!",
+      "code": "UK157",
+      "users": 1
+    },
+    "ACH_BaseJumpShield1": {
+      "name": "Fast Food Protector I",
+      "description": "For avoiding 2 missiles in Fast Food",
+      "code": "ACH_BaseJumpShield1",
+      "users": 1
+    },
+    "ACH_BaseJumpDaysPlayed1": {
+      "name": "Fast Food Regular I",
+      "description": "For playing Fast Food on 2 different days",
+      "code": "ACH_BaseJumpDaysPlayed1",
+      "users": 1
+    },
+    "ACH_BaseJumpMissile3": {
+      "name": "Fast Food Rocketeer III",
+      "description": "For launching 10 missiles in Fast Food",
+      "code": "ACH_BaseJumpMissile3",
+      "users": 1
+    },
+    "ACH_BaseJumpWins3": {
+      "name": "Fast Food Winner III",
+      "description": "For winning 10 times in Fast Food",
+      "code": "ACH_BaseJumpWins3",
+      "users": 1
+    },
+    "ACH_GuideFeedbackGiver2": {
+      "name": "Feedback provider II",
+      "description": "For giving feedback to helpers 5 times.",
+      "code": "ACH_GuideFeedbackGiver2",
+      "users": 1
+    },
+    "ACH_FireworksCharger10": {
+      "name": "Firestarter X",
+      "description": "For charging 10920 Pixels into Firework Furni.",
+      "code": "ACH_FireworksCharger10",
+      "users": 1
+    },
+    "ACH_RoomDecoFloor20": {
+      "name": "For more floor score XX",
+      "description": "For changing the floor pattern of your room.",
+      "code": "ACH_RoomDecoFloor20",
+      "users": 1
+    },
+    "COK30": {
+      "name": "Fortune Cookie",
+      "description": "You are born with passion, make good use of it!",
+      "code": "COK30",
+      "users": 1
+    },
+    "COK27": {
+      "name": "Fortune Cookie",
+      "description": "Better a broken heart than no heart at all.",
+      "code": "COK27",
+      "users": 1
+    },
+    "COK23": {
+      "name": "Fortune Cookie",
+      "description": "About time I got out of that Fortune Cookie!",
+      "code": "COK23",
+      "users": 1
+    },
+    "COK31": {
+      "name": "Fortune Cookie 2012",
+      "description": "Gong Xi Fa Cai",
+      "code": "COK31",
+      "users": 1
+    },
+    "ACH_FreezePlayer17": {
+      "name": "Freeze player  XVII",
+      "description": "For gaining 460615 participation points in Freeze.",
+      "code": "ACH_FreezePlayer17",
+      "users": 1
+    },
+    "ACH_FreezeQuestCompleted10": {
+      "name": "Freeze quest X - Overlord",
+      "description": "For completing 29 Freeze quests.",
+      "code": "ACH_FreezeQuestCompleted10",
+      "users": 1
+    },
+    "ACH_FreezeWinner16": {
+      "name": "Freeze winner  XVI",
+      "description": "For gaining 242965 victory points in Freeze",
+      "code": "ACH_FreezeWinner16",
+      "users": 1
+    },
+    "ACH_RoomDecoFurniTypeCount12": {
+      "name": "Furni collector XII",
+      "description": "For building a room with 104 different furni.",
+      "code": "ACH_RoomDecoFurniTypeCount12",
+      "users": 1
+    },
+    "ACH_GameAuthorExperience16": {
+      "name": "Game arcade owner XVI",
+      "description": "For 3250600 Battle Banzai and Freeze participation points collected in your rooms.",
+      "code": "ACH_GameAuthorExperience16",
+      "users": 1
+    },
+    "ACH_GuideTourTaker2": {
+      "name": "Get a tour II",
+      "description": "For spending 5 minutes on tour with a helper.",
+      "code": "ACH_GuideTourTaker2",
+      "users": 1
+    },
+    "AU025": {
+      "name": "Girlfriend Group Member",
+      "description": "Thanks for joining the group!",
+      "code": "AU025",
+      "users": 1
+    },
+    "ACH_GuideAdvertisementReader1": {
+      "name": "Gran Turismo",
+      "description": "For checking out a guided tour.",
+      "code": "ACH_GuideAdvertisementReader1",
+      "users": 1
+    },
+    "ACH_GiftReceiver2": {
+      "name": "Greet me II",
+      "description": "For receiving 5 gifts from other people.",
+      "code": "ACH_GiftReceiver2",
+      "users": 1
+    },
+    "ACH_VipClub2": {
+      "name": "HC Member II",
+      "description": "For 12 months of Habbo Club membership.",
+      "code": "ACH_VipClub2",
+      "users": 1
+    },
+    "FBC09": {
+      "name": "Habbo 2k",
+      "description": "Did you know Habbo was invented in the year 2000?",
+      "code": "FBC09",
+      "users": 1
+    },
+    "ACH_Name1": {
+      "name": "Habbo Name",
+      "description": "Thanks for selecting your Habbo name after registering.",
+      "code": "ACH_Name1",
+      "users": 5
+    },
+    "ACH_HabboWayGraduate1": {
+      "name": "Habbo Way",
+      "description": "For passing the Habbo Way quiz!",
+      "code": "ACH_HabboWayGraduate1",
+      "users": 1
+    },
+    "ACH_Citizenship1": {
+      "name": "Habbo citizen",
+      "description": "For earning your citizenship.",
+      "code": "ACH_Citizenship1",
+      "users": 1
+    },
+    "GLO01": {
+      "name": "Habboween 2012",
+      "description": "Habboween 2012",
+      "code": "GLO01",
+      "users": 1
+    },
+    "NY124": {
+      "name": "Happy 2012!",
+      "description": "I resolve to make it the best year ever!",
+      "code": "NY124",
+      "users": 1
+    },
+    "IT111": {
+      "name": "Happy Thanksgiving 2011",
+      "description": "I've got so much to be thankful for!",
+      "code": "IT111",
+      "users": 1
+    },
+    "ACH_HappyHour1": {
+      "name": "Happy hour",
+      "description": "For logging in during happy hour.",
+      "code": "ACH_HappyHour1",
+      "users": 5
+    },
+    "ACH_RbTagA6": {
+      "name": "Hi, roller VI",
+      "description": "My skating rink has 80 Roller Rink tiles. Oh yeah!",
+      "code": "ACH_RbTagA6",
+      "users": 1
+    },
+    "SG018": {
+      "name": "Honour IP",
+      "description": "Honour Intellectual Property (IP) by supporting originality and making a stand against piracy today!",
+      "code": "SG018",
+      "users": 1
+    },
+    "ACH_HorseQuestCompleted3": {
+      "name": "Horse Quester Level III",
+      "description": "For completing 20 horse quests",
+      "code": "ACH_HorseQuestCompleted3",
+      "users": 1
+    },
+    "ACH_HorseJumping4": {
+      "name": "Horse jumping IV",
+      "description": "For jumping 2500 obstacles successfully.",
+      "code": "ACH_HorseJumping4",
+      "users": 1
+    },
+    "poop1": {
+      "name": "Horse manure",
+      "description": "You're full of it!",
+      "code": "poop1",
+      "users": 1
+    },
+    "ACH_PetRespectReceiver10": {
+      "name": "How cute X",
+      "description": "For having your pets scratched 750 times.",
+      "code": "ACH_PetRespectReceiver10",
+      "users": 1
+    },
+    "STU05": {
+      "name": "I <3 HBC",
+      "description": "I am a fan of the Habbo Broadcasting Channel. November 2011.",
+      "code": "STU05",
+      "users": 1
+    },
+    "HOR05": {
+      "name": "I Have A Horse Voice",
+      "description": "I was able to decipher the horses mad ramblings...",
+      "code": "HOR05",
+      "users": 1
+    },
+    "DE159": {
+      "name": "I Love Anecdotes!",
+      "description": "I love to read anecdotes about Kitano, Neja and Puffin!",
+      "code": "DE159",
+      "users": 1
+    },
+    "UK162": {
+      "name": "I Love Me",
+      "description": "Supporting ChildLine and Anti-bullying week",
+      "code": "UK162",
+      "users": 1
+    },
+    "DK041": {
+      "name": "Ice Skating Champion",
+      "description": "Made it till the end of the never ending skate course!",
+      "code": "DK041",
+      "users": 1
+    },
+    "ACH_TagC20": {
+      "name": "Ice ice baby XX",
+      "description": "For ice skating for 1551 minutes.",
+      "code": "ACH_TagC20",
+      "users": 1
+    },
+    "ACH_EsA11": {
+      "name": "Ice kicking XI",
+      "description": "For freezing 420 Habbos in Freeze.",
+      "code": "ACH_EsA11",
+      "users": 1
+    },
+    "NO84": {
+      "name": "In Memory",
+      "description": "I stand up against terrorism, remembering victims of the Oslo tragedy July 22 2011",
+      "code": "NO84",
+      "users": 1
+    },
+    "PRV05": {
+      "name": "Inventiveness Badge",
+      "description": "This Badge is hidden in the Theatre",
+      "code": "PRV05",
+      "users": 1
+    },
+    "JAD01": {
+      "name": "King of Jade",
+      "description": "Keeper of Zodiac wisdom and a decent cuppa",
+      "code": "JAD01",
+      "users": 1
+    },
+    "UK161": {
+      "name": "Kitty Softpaws",
+      "description": "\"She is a bad kitty\"",
+      "code": "UK161",
+      "users": 1
+    },
+    "ACH_SafetyQuizGraduate1": {
+      "name": "Level I Safety tips",
+      "description": "For passing the Safety quiz!",
+      "code": "ACH_SafetyQuizGraduate1",
+      "users": 3
+    },
+    "ACH_TradingPass6": {
+      "name": "Level jumping",
+      "description": "For reaching avatar level 6.",
+      "code": "ACH_TradingPass6",
+      "users": 4
+    },
+    "ACH_FreezePowerUp7": {
+      "name": "Literally cool VII",
+      "description": "For collecting 2900 Freeze power-ups.",
+      "code": "ACH_FreezePowerUp7",
+      "users": 1
+    },
+    "ACH_AvatarLooks1": {
+      "name": "Looks that kill I",
+      "description": "For changing your look for the first time.",
+      "code": "ACH_AvatarLooks1",
+      "users": 7
+    },
+    "ACH_BattleBallTilesLocked20": {
+      "name": "Lord of the tiles XX",
+      "description": "For locking 282075 tiles in Battle Banzai.",
+      "code": "ACH_BattleBallTilesLocked20",
+      "users": 1
+    },
+    "ACH_GuideRequester2": {
+      "name": "Lost again II",
+      "description": "For making 5 help requests.",
+      "code": "ACH_GuideRequester2",
+      "users": 1
+    },
+    "FBC14": {
+      "name": "MONSTER!",
+      "description": "I found the Monster Plant!",
+      "code": "FBC14",
+      "users": 1
+    },
+    "ACH_TagA5": {
+      "name": "Miracle of ice V",
+      "description": "Let it go and put 60 ice patches in your room.",
+      "code": "ACH_TagA5",
+      "users": 1
+    },
+    "ACH_MonsterPlantQuestCompleted1": {
+      "name": "Monster Plant Quester I",
+      "description": "For completing 3 Monster Plant quests",
+      "code": "ACH_MonsterPlantQuestCompleted1",
+      "users": 1
+    },
+    "UK155": {
+      "name": "Monte Carlo",
+      "description": "I could easily pass as a princess",
+      "code": "UK155",
+      "users": 1
+    },
+    "ACH_MusicCollector10": {
+      "name": "Music collector X",
+      "description": "For purchasing 69 songs.",
+      "code": "ACH_MusicCollector10",
+      "users": 1
+    },
+    "ACH_RoomDecoHoleFurniCount10": {
+      "name": "My hole room X",
+      "description": "For making Swiss cheese by adding 170 floor hole furni.",
+      "code": "ACH_RoomDecoHoleFurniCount10",
+      "users": 1
+    },
+    "DNY03": {
+      "name": "Name That Dragon",
+      "description": "Suggested a name for The Dragon that Spews Fireworks",
+      "code": "DNY03",
+      "users": 1
+    },
+    "COM58": {
+      "name": "Never Ending Stairs Champ",
+      "description": "I came, I climbed, I counted. Champion of the Never Ending Stairs 2011.",
+      "code": "COM58",
+      "users": 1
+    },
+    "ACH_RespectGiven14": {
+      "name": "Nice as pie XIV",
+      "description": "For giving respect 950 times.",
+      "code": "ACH_RespectGiven14",
+      "users": 1
+    },
+    "ACH_GiftGiver3": {
+      "name": "Nice one III",
+      "description": "For buying 14  items as gifts from shop.",
+      "code": "ACH_GiftGiver3",
+      "users": 1
+    },
+    "ACH_AllTimeHotelPresence20": {
+      "name": "Online time XX - Bedrock",
+      "description": "For spending 138240 minutes in the Hotel.",
+      "code": "ACH_AllTimeHotelPresence20",
+      "users": 1
+    },
+    "ACH_RbBunnyTag10": {
+      "name": "Overpatch X",
+      "description": "My Easter grass patch contains 170 Bunny Run Field tiles. Oh yeah!",
+      "code": "ACH_RbBunnyTag10",
+      "users": 1
+    },
+    "peg01": {
+      "name": "Pegasus Rider",
+      "description": "Participated in the Community Challenge",
+      "code": "peg01",
+      "users": 1
+    },
+    "ACH_PetRespectGiver10": {
+      "name": "Pet lover X",
+      "description": "For scratching anyone's pets at least 350 times.",
+      "code": "ACH_PetRespectGiver10",
+      "users": 1
+    },
+    "RAR01": {
+      "name": "Pink Spectre",
+      "description": "I found the very Rare Pet Spider. I pretty much rule.",
+      "code": "RAR01",
+      "users": 1
+    },
+    "ACH_RecyclePlastos1": {
+      "name": "Plasto Recycler  I",
+      "description": "Recycled old Plasto Furni",
+      "code": "ACH_RecyclePlastos1",
+      "users": 1
+    },
+    "RTS06": {
+      "name": "Pop Quiz Badge #1",
+      "description": "Aced a Rule The School Pop Quiz about Pets!",
+      "code": "RTS06",
+      "users": 1
+    },
+    "ACH_MusicPlayer20": {
+      "name": "Pop around the clock XX",
+      "description": "For playing 94605  minutes of music on your jukebox.",
+      "code": "ACH_MusicPlayer20",
+      "users": 1
+    },
+    "UK160": {
+      "name": "Puss",
+      "description": "\"All I need....are the boots\"",
+      "code": "UK160",
+      "users": 1
+    },
+    "COM67": {
+      "name": "Rare Hell Hound",
+      "description": "A member of the order of the Hell Hound Guardians. Inducted Habboween 2011.",
+      "code": "COM67",
+      "users": 1
+    },
+    "BER01": {
+      "name": "Rawr!",
+      "description": "I adopted a Pet Polar Bear during Xmas 2011!",
+      "code": "BER01",
+      "users": 1
+    },
+    "UK172": {
+      "name": "Reach Out For a Friend",
+      "description": "I took part in the Reach Out For a Friend Poll",
+      "code": "UK172",
+      "users": 1
+    },
+    "ACH_Login6": {
+      "name": "Resident VI - On fire",
+      "description": "For logging in 50 days in a row.",
+      "code": "ACH_Login6",
+      "users": 1
+    },
+    "ACH_RespectEarned10": {
+      "name": "Respected Habbo X",
+      "description": "For earning respect 1166 times.",
+      "code": "ACH_RespectEarned10",
+      "users": 1
+    },
+    "ACH_RbTagC20": {
+      "name": "Roller stroller  XX",
+      "description": "For rollerblading for 1551 minutes.",
+      "code": "ACH_RbTagC20",
+      "users": 1
+    },
+    "ACH_RoomDecoFurniCount20": {
+      "name": "Room builder XX",
+      "description": "For building a room with 380 furni.",
+      "code": "ACH_RoomDecoFurniCount20",
+      "users": 2
+    },
+    "ACH_RoomDecoHosting14": {
+      "name": "Room host XIV",
+      "description": "For having visitors spend 75000 minutes in your rooms.",
+      "code": "ACH_RoomDecoHosting14",
+      "users": 1
+    },
+    "ACH_RoomEntry14": {
+      "name": "Room raider XIV",
+      "description": "For 1600 room visits. Omnipresent.",
+      "code": "ACH_RoomEntry14",
+      "users": 1
+    },
+    "TER01": {
+      "name": "Ruff!",
+      "description": "I adopted a Pet Terrier during Xmas 2011!",
+      "code": "TER01",
+      "users": 1
+    },
+    "SID01": {
+      "name": "Safe Internet Day 2013",
+      "description": "Connect safe",
+      "code": "SID01",
+      "users": 1
+    },
+    "SAF01": {
+      "name": "Safety Jeopardy I",
+      "description": "A champion of safety! Day 1 of 5. November 2011.",
+      "code": "SAF01",
+      "users": 1
+    },
+    "SAF02": {
+      "name": "Safety Jeopardy II",
+      "description": "A champion of safety! Day 2 of 5. November 2011.",
+      "code": "SAF02",
+      "users": 1
+    },
+    "SAF03": {
+      "name": "Safety Jeopardy III",
+      "description": "A champion of safety! Day 3 of 5. November 2011.",
+      "code": "SAF03",
+      "users": 1
+    },
+    "SAF04": {
+      "name": "Safety Jeopardy IV",
+      "description": "A champion of safety! Day 4 of 5. November 2011.",
+      "code": "SAF04",
+      "users": 1
+    },
+    "SAF05": {
+      "name": "Safety Jeopardy V",
+      "description": "A champion of safety! Day 5 of 5. November 2011.",
+      "code": "SAF05",
+      "users": 1
+    },
+    "FRZ06": {
+      "name": "Safety Wipeout Master",
+      "description": "Safety Wipeout Badge of Honour - for conquering the Safety Wipeout Challenge. November 2011.",
+      "code": "FRZ06",
+      "users": 1
+    },
+    "ACH_GuideGroupMember1": {
+      "name": "Shed the light",
+      "description": "For joining a Habbo guide group.",
+      "code": "ACH_GuideGroupMember1",
+      "users": 1
+    },
+    "ACH_SummerQuestCompleted20": {
+      "name": "Shell Collector XX",
+      "description": "For completing 5 daily quests.",
+      "code": "ACH_SummerQuestCompleted20",
+      "users": 1
+    },
+    "FBC15": {
+      "name": "Shinobi skills",
+      "description": "I got through the wired maze",
+      "code": "FBC15",
+      "users": 1
+    },
+    "UK174": {
+      "name": "Sims 3 Showtime Microphone",
+      "description": "I beat the Sims 3 Showtime Quiz!",
+      "code": "UK174",
+      "users": 1
+    },
+    "UK173": {
+      "name": "Sims 3 Showtime Wand",
+      "description": "I discovered the four paths to fame!",
+      "code": "UK173",
+      "users": 1
+    },
+    "ACH_SkateBoardJump20": {
+      "name": "Skateboard jumper XX",
+      "description": "For jumping 50000 times on a Skate Rail while wearing the skateboard effect.",
+      "code": "ACH_SkateBoardJump20",
+      "users": 1
+    },
+    "ACH_SkateBoardSlide20": {
+      "name": "Skateboard slider XX",
+      "description": "For sliding 200000 times on a Skate Rail while wearing the skateboard effect.",
+      "code": "ACH_SkateBoardSlide20",
+      "users": 1
+    },
+    "X1130": {
+      "name": "Snow Castle Freeze",
+      "description": "Made it to the winners lounge, Xmas 2011.",
+      "code": "X1130",
+      "users": 1
+    },
+    "SWB01": {
+      "name": "Snowboarding Genius",
+      "description": "Knows all about Snowboarding!",
+      "code": "SWB01",
+      "users": 1
+    },
+    "ACH_FriendListSize12": {
+      "name": "Socializer XII",
+      "description": "For having 800 friends in your friend list.",
+      "code": "ACH_FriendListSize12",
+      "users": 1
+    },
+    "ACH_HorseRent5": {
+      "name": "Stable owner V",
+      "description": "For letting others ride your horse 124 times.",
+      "code": "ACH_HorseRent5",
+      "users": 1
+    },
+    "ACH_NotesReceived6": {
+      "name": "Swamped by stickies VI",
+      "description": "For receiving 137 stickie notes in your rooms.",
+      "code": "ACH_NotesReceived6",
+      "users": 1
+    },
+    "UK156": {
+      "name": "Talk to FRANK",
+      "description": "You can contact FRANK at any time by website, phone, text and email",
+      "code": "UK156",
+      "users": 1
+    },
+    "RTS01": {
+      "name": "The BHF's",
+      "description": "Best Habbo's Forever. We're popular and we Rule the School!",
+      "code": "RTS01",
+      "users": 1
+    },
+    "UK168": {
+      "name": "The Big March 2012",
+      "description": "I joined the virtual march for children's rights",
+      "code": "UK168",
+      "users": 1
+    },
+    "UK164": {
+      "name": "The Chipettes",
+      "description": "I am a member of the Alvin 3: Chip-Wrecked group",
+      "code": "UK164",
+      "users": 1
+    },
+    "SMR02": {
+      "name": "The Look of Lei Badge",
+      "description": "Thanks for entering!",
+      "code": "SMR02",
+      "users": 1
+    },
+    "COM65": {
+      "name": "The Serpents of Doom",
+      "description": "I fight evil side by side with Kitano, Habboween 2011.",
+      "code": "COM65",
+      "users": 1
+    },
+    "UK183": {
+      "name": "The Sims - Katy Perry Sweet Treats",
+      "description": "I beat the The Sims Katy Perry Sweet Treats Quiz!",
+      "code": "UK183",
+      "users": 1
+    },
+    "ACH_PetFeeding10": {
+      "name": "They're eating all my credits! X",
+      "description": "For giving pets 204600 points of food.",
+      "code": "ACH_PetFeeding10",
+      "users": 1
+    },
+    "WOM01": {
+      "name": "Thumb's up Badge",
+      "description": "This Habbo was awarded a 'Thumb's up!'",
+      "code": "WOM01",
+      "users": 1
+    },
+    "ACH_TraderPass1": {
+      "name": "Trading pass I",
+      "description": "Without a trading pass you can't trade: you have to have an account that is 1 day old and you have to verify your email.",
+      "code": "ACH_TraderPass1",
+      "users": 6
+    },
+    "SCU03": {
+      "name": "Treasure Chest Badge",
+      "description": "You found treasure at the bottom of the ocean!",
+      "code": "SCU03",
+      "users": 1
+    },
+    "UK165": {
+      "name": "Treasure Island (Sky 1 HD)",
+      "description": "I found the gold before Long John Silver did!",
+      "code": "UK165",
+      "users": 1
+    },
+    "UK166": {
+      "name": "Treasure Island (Sky 1 HD)",
+      "description": "I correctly answered the Treasure Island Quiz",
+      "code": "UK166",
+      "users": 1
+    },
+    "SCU02": {
+      "name": "Tropical Fish Badge",
+      "description": "You found treasure at the bottom of the ocean!",
+      "code": "SCU02",
+      "users": 1
+    },
+    "ACH_GuideEnrollmentLifetime13": {
+      "name": "True helper XIII",
+      "description": "For being a helper for 548 days.",
+      "code": "ACH_GuideEnrollmentLifetime13",
+      "users": 1
+    },
+    "ACH_EmailVerification1": {
+      "name": "True you",
+      "description": "For verifying your email address. Thanks!",
+      "code": "ACH_EmailVerification1",
+      "users": 5
+    },
+    "PET10": {
+      "name": "Turtle Owner",
+      "description": "Dude! My Turtle rules.... totally.",
+      "code": "PET10",
+      "users": 1
+    },
+    "HOR13": {
+      "name": "Unicorn Poop",
+      "description": "I dung good!",
+      "code": "HOR13",
+      "users": 1
+    },
+    "ACH_Valentines12QuestCompleted10": {
+      "name": "Valentines12QuestCompleted10",
+      "description": "Valentines12QuestCompleted10",
+      "code": "ACH_Valentines12QuestCompleted10",
+      "users": 1
+    },
+    "ACH_RoomDecoWallpaper20": {
+      "name": "Wall me XX",
+      "description": "For changing the wall pattern of your room.",
+      "code": "ACH_RoomDecoWallpaper20",
+      "users": 1
+    },
+    "COM46": {
+      "name": "Wet-Summer-City-Diner",
+      "description": "My Friendship Maze Choices. Show me yours!",
+      "code": "COM46",
+      "users": 1
+    },
+    "ACH_GamePlayerExperience17": {
+      "name": "Winning team XVII",
+      "description": "For gaining 921230 victory points in Battle Banzai and Freeze.",
+      "code": "ACH_GamePlayerExperience17",
+      "users": 1
+    },
+    "ACH_SnowWarTotalScore25": {
+      "name": "Winter warrior XXV",
+      "description": "For gaining 135000 points in SnowStorm.",
+      "code": "ACH_SnowWarTotalScore25",
+      "users": 1
+    },
+    "ACH_MonsterPlantTreater1": {
+      "name": "Would you love a monster plant? I",
+      "description": "For tending to 5 monster plants.",
+      "code": "ACH_MonsterPlantTreater1",
+      "users": 1
+    },
+    "horse": {
+      "name": "Wyld Stallion",
+      "description": "I was one of the first Habbos to adopt a horse!",
+      "code": "horse",
+      "users": 1
+    },
+    "ACH_Xmas11QuestCompleted10": {
+      "name": "Xmas Quester 2011 X",
+      "description": "For completing 10 Xmas quests in 2011",
+      "code": "ACH_Xmas11QuestCompleted10",
+      "users": 1
+    },
+    "ACH_SnowWarWeeklyTopTen1": {
+      "name": "Yeti master I",
+      "description": "For ending up 1 times in SnowStorm weekly leaderboard top 10.",
+      "code": "ACH_SnowWarWeeklyTopTen1",
+      "users": 1
+    },
+    "ACH_RegistrationDuration20": {
+      "name": "100 % True Habbo XX",
+      "description": "For being a member of the community for 1825 days.",
+      "code": "ACH_RegistrationDuration20",
+      "users": 2
+    },
+    "ACH_BattleBallPlayer15": {
+      "name": "Battle Ball player XV",
+      "description": "For gaining 128415 participation points in Battle Banzai.",
+      "code": "ACH_BattleBallPlayer15",
+      "users": 1
+    },
+    "UK423": {
+      "name": "Ditch the Label Infobus Badge",
+      "description": "Thanks for taking part!",
+      "code": "UK423",
+      "users": 1
+    },
+    "ACH_HorseConsecutiveJumpsCount20": {
+      "name": "Equestrian XX",
+      "description": "For jumping over 35 consecutive obstacles successfully.",
+      "code": "ACH_HorseConsecutiveJumpsCount20",
+      "users": 1
+    },
+    "ACH_TradingPass4": {
+      "name": "Friendly one",
+      "description": "For giving 2 star gems to other people.",
+      "code": "ACH_TradingPass4",
+      "users": 2
+    },
+    "MRG00": {
+      "name": "Friendship Bracelet",
+      "description": "A stranger is a friend you have yet to meet!",
+      "code": "MRG00",
+      "users": 2
+    },
+    "ACH_Profile_Gimmegimme_2": {
+      "name": "Gimme gimme II",
+      "description": "For collecting your daily gift 4 times.",
+      "code": "ACH_Profile_Gimmegimme_2",
+      "users": 1
+    },
+    "ACH_VipHC1": {
+      "name": "HC Member I",
+      "description": "For joining the Habbo Club.",
+      "code": "ACH_VipHC1",
+      "users": 2
+    },
+    "ACH_BasicClub1": {
+      "name": "Habbo Club veteran I",
+      "description": "For joining the Habbo Club.",
+      "code": "ACH_BasicClub1",
+      "users": 2
+    },
+    "MRG02": {
+      "name": "Habbo USA",
+      "description": "Remembering my Habbo roots!",
+      "code": "MRG02",
+      "users": 1
+    },
+    "ACH_Tutorial3": {
+      "name": "Hello room",
+      "description": "For typing and sending a chat line.",
+      "code": "ACH_Tutorial3",
+      "users": 3
+    },
+    "ACH_HorseJumping5": {
+      "name": "Horse jumping V",
+      "description": "For jumping 6000 obstacles successfully.",
+      "code": "ACH_HorseJumping5",
+      "users": 1
+    },
+    "ACH_GnomeRespectGiver1": {
+      "name": "I like your gnome I",
+      "description": "For scratching anyone's gnomes 3 times.",
+      "code": "ACH_GnomeRespectGiver1",
+      "users": 1
+    },
+    "ACH_Tutorial1": {
+      "name": "I'm walking here!",
+      "description": "For making your avatar walk around.",
+      "code": "ACH_Tutorial1",
+      "users": 3
+    },
+    "ACH_TagC11": {
+      "name": "Ice ice baby XI",
+      "description": "For ice skating for 381 minutes.",
+      "code": "ACH_TagC11",
+      "users": 1
+    },
+    "ACH_SelfModIgnoreSeen1": {
+      "name": "Ignore",
+      "description": "For being aware of ignore option",
+      "code": "ACH_SelfModIgnoreSeen1",
+      "users": 1
+    },
+    "ACH_Tutorial2": {
+      "name": "Me, myself and I",
+      "description": "For visiting your own profile.",
+      "code": "ACH_Tutorial2",
+      "users": 3
+    },
+    "ACH_Tutorial5": {
+      "name": "Move that furni",
+      "description": "For moving, rotating or picking up furni or putting furni to room.",
+      "code": "ACH_Tutorial5",
+      "users": 2
+    },
+    "ACH_RespectGiven5": {
+      "name": "Nice as pie! V",
+      "description": "For giving respect 40 times.",
+      "code": "ACH_RespectGiven5",
+      "users": 1
+    },
+    "ACH_TradingPass7": {
+      "name": "Nice to meet",
+      "description": "For having 2 friends in your friend list.",
+      "code": "ACH_TradingPass7",
+      "users": 3
+    },
+    "ACH_TradingPass2": {
+      "name": "Noob curiosity",
+      "description": "For spending 120 minutes in the Hotel.",
+      "code": "ACH_TradingPass2",
+      "users": 2
+    },
+    "ACH_AllTimeHotelPresence8": {
+      "name": "Online time VIII - Meso Cyclone",
+      "description": "For spending 2160 minutes in the Hotel.",
+      "code": "ACH_AllTimeHotelPresence8",
+      "users": 1
+    },
+    "SAF07": {
+      "name": "Password Champion",
+      "description": "Given to Habbos with safe and UNIQUE passwords.",
+      "code": "SAF07",
+      "users": 1
+    },
+    "ACH_PetRespectGiver3": {
+      "name": "Pet lover III",
+      "description": "For scratching anyone's pets at least 10 times.",
+      "code": "ACH_PetRespectGiver3",
+      "users": 1
+    },
+    "ACH_RespectEarned3": {
+      "name": "Respected Habbo III",
+      "description": "For earning respect 16 times.",
+      "code": "ACH_RespectEarned3",
+      "users": 1
+    },
+    "ACH_TradingPass3": {
+      "name": "Revisit",
+      "description": "For being a member for 3 days.",
+      "code": "ACH_TradingPass3",
+      "users": 3
+    },
+    "ACH_RoomEntry6": {
+      "name": "Room raider VI",
+      "description": "For 180 room visits. Traveler.",
+      "code": "ACH_RoomEntry6",
+      "users": 1
+    },
+    "ACH_TradingPass5": {
+      "name": "Room raider junior",
+      "description": "For hanging out in 20 rooms that you do not own.",
+      "code": "ACH_TradingPass5",
+      "users": 2
+    },
+    "ACH_FriendListSize1": {
+      "name": "Socializer I",
+      "description": "For having 2 friends in your friend list.",
+      "code": "ACH_FriendListSize1",
+      "users": 3
+    },
+    "ACH_FriendsMaker_SGCollect_10": {
+      "name": "Star gem collector X",
+      "description": "For receiving 2500 star gems from other people.",
+      "code": "ACH_FriendsMaker_SGCollect_10",
+      "users": 2
+    },
+    "ACH_FriendsMaker6": {
+      "name": "Star gem provider VI",
+      "description": "For giving 1600 star gems to other people.",
+      "code": "ACH_FriendsMaker6",
+      "users": 1
+    },
+    "ACH_GamePlayerExperience16": {
+      "name": "Winning team XVI",
+      "description": "For gaining 485930 victory points in Battle Banzai and Freeze.",
+      "code": "ACH_GamePlayerExperience16",
+      "users": 1
+    },
+    "COM76": {
+      "name": "World Kindness Day 2013",
+      "description": "Nice as pie",
+      "code": "COM76",
+      "users": 1
+    },
+    "ITF82": {
+      "name": "Amb 12 Days of Safety - 2021",
+      "description": "On the 12th day of Safety, the Ambs said to me Ambassador Safety Conference 2021 & Happy Holidays",
+      "code": "ITF82",
+      "users": 1
+    },
+    "ACH_BuildersClub1": {
+      "name": "Builders Club member",
+      "description": "For having 1 days of Builders Club membership.",
+      "code": "ACH_BuildersClub1",
+      "users": 1
+    },
+    "ACH_RoomDecoBC10": {
+      "name": "Builders' Club designer X",
+      "description": "For placing 1000 Builders' Club furni.",
+      "code": "ACH_RoomDecoBC10",
+      "users": 1
+    },
+    "ACH_SelfModDoorModeSeen1": {
+      "name": "Door mode",
+      "description": "For switching accessibility in room settings.",
+      "code": "ACH_SelfModDoorModeSeen1",
+      "users": 1
+    },
+    "ACH_RoomDecoFurniTypeCount20": {
+      "name": "Furni collector XX",
+      "description": "For building a room with 384 different furni.",
+      "code": "ACH_RoomDecoFurniTypeCount20",
+      "users": 1
+    },
+    "ACH_Profile_Gimmegimme_5": {
+      "name": "Gimme gimme V",
+      "description": "For collecting your daily gift 14 times.",
+      "code": "ACH_Profile_Gimmegimme_5",
+      "users": 1
+    },
+    "ACH_RbTagA10": {
+      "name": "Hi, roller X",
+      "description": "My skating rink has 170 Roller Rink tiles. Oh yeah!",
+      "code": "ACH_RbTagA10",
+      "users": 1
+    },
+    "ACH_Tutorial4": {
+      "name": "Home sweet home",
+      "description": "For viewing room settings.",
+      "code": "ACH_Tutorial4",
+      "users": 1
+    },
+    "ACH_TagC6": {
+      "name": "Ice ice baby VI",
+      "description": "For ice skating for 81 minutes.",
+      "code": "ACH_TagC6",
+      "users": 1
+    },
+    "ACH_snowBoardBuild5": {
+      "name": "King of the hill V",
+      "description": "My snowboarding hill has 160 Snowboard Patches. Oh yeah!",
+      "code": "ACH_snowBoardBuild5",
+      "users": 1
+    },
+    "ACH_TagA10": {
+      "name": "Miracle of ice X",
+      "description": "You can see my ice rink from outer space!",
+      "code": "ACH_TagA10",
+      "users": 1
+    },
+    "NFT36": {
+      "name": "NFTmas - Team Elf",
+      "description": "Making mischief with the team elves!",
+      "code": "NFT36",
+      "users": 1
+    },
+    "ACH_GiftGiver2": {
+      "name": "Nice one II",
+      "description": "For buying 6  items as gifts from shop.",
+      "code": "ACH_GiftGiver2",
+      "users": 1
+    },
+    "ACH_AllTimeHotelPresence5": {
+      "name": "Online time V - Haze",
+      "description": "For spending 360 minutes in the Hotel.",
+      "code": "ACH_AllTimeHotelPresence5",
+      "users": 1
+    },
+    "ACH_RoomDecoHosting6": {
+      "name": "Room host VI",
+      "description": "For having visitors spend 180 minutes in your rooms.",
+      "code": "ACH_RoomDecoHosting6",
+      "users": 1
+    },
+    "ACH_RoomEntry2": {
+      "name": "Room raider II",
+      "description": "For 20 room visits. Peeker.",
+      "code": "ACH_RoomEntry2",
+      "users": 3
+    },
+    "ACH_HabboExplorer1": {
+      "name": "This is how it works",
+      "description": "For using a furni (hint: double click/tap).",
+      "code": "ACH_HabboExplorer1",
+      "users": 1
+    },
+    "ACH_TradingPass1": {
+      "name": "Tutorial",
+      "description": "For completing tutorial.",
+      "code": "ACH_TradingPass1",
+      "users": 1
+    },
+    "AND06": {
+      "name": "1 Million downloads",
+      "description": "To celebrate and say THANKS!",
+      "code": "AND06",
+      "users": 1
+    },
+    "ACH_Profile_Gimmegimme_1": {
+      "name": "Gimme gimme I",
+      "description": "For collecting your daily gift 2 times.",
+      "code": "ACH_Profile_Gimmegimme_1",
+      "users": 1
+    },
+    "MRG01": {
+      "name": "Habbo Canada",
+      "description": "Remembering my Habbo roots!",
+      "code": "MRG01",
+      "users": 1
+    },
+    "AND02": {
+      "name": "Habbo for Android",
+      "description": "It's about FREAKING time",
+      "code": "AND02",
+      "users": 1
+    },
+    "TBLT1": {
+      "name": "HiPad Early Adopter",
+      "description": "For being one of the first Habbo for iPad users!",
+      "code": "TBLT1",
+      "users": 1
+    },
+    "ACH_AllTimeHotelPresence4": {
+      "name": "Online time IV - Blizzard",
+      "description": "For spending 180 minutes in the Hotel.",
+      "code": "ACH_AllTimeHotelPresence4",
+      "users": 1
+    },
+    "ACH_RoomDecoHosting2": {
+      "name": "Room host II",
+      "description": "For having visitors spend 10 minutes in your rooms.",
+      "code": "ACH_RoomDecoHosting2",
+      "users": 1
+    },
+    "ACH_Xm10QuestCompleted9": {
+      "name": "Snowflake collector IX",
+      "description": "For 4 Snowflake quests completed on this level.",
+      "code": "ACH_Xm10QuestCompleted9",
+      "users": 1
+    },
+    "ACH_RegistrationDuration12": {
+      "name": "60 % True Habbo XII",
+      "description": "For being a member of the community for 365 days.",
+      "code": "ACH_RegistrationDuration12",
+      "users": 1
+    },
+    "ACH_RespectGiven1": {
+      "name": "Nice as pie! I",
+      "description": "For giving respect 2 times.",
+      "code": "ACH_RespectGiven1",
+      "users": 1
+    },
+    "ACH_AllTimeHotelPresence2": {
+      "name": "Online time II - Drizzle",
+      "description": "For spending 60 minutes in the Hotel.",
+      "code": "ACH_AllTimeHotelPresence2",
+      "users": 1
+    },
+    "ACH_PetRespectGiver2": {
+      "name": "Pet lover II",
+      "description": "For scratching anyone's pets at least 5 times.",
+      "code": "ACH_PetRespectGiver2",
+      "users": 2
+    },
+    "ACH_FriendListSize2": {
+      "name": "Socializer II",
+      "description": "For having 10 friends in your friend list.",
+      "code": "ACH_FriendListSize2",
+      "users": 1
+    },
+    "ACH_RegistrationDuration8": {
+      "name": "40 % True Habbo VIII",
+      "description": "For being a member of the community for 112 days.",
+      "code": "ACH_RegistrationDuration8",
+      "users": 1
+    },
+    "ACH_PetLover2": {
+      "name": "Can I keep him? II",
+      "description": "For owning 3 pets.",
+      "code": "ACH_PetLover2",
+      "users": 1
+    },
+    "ACH_Motto1": {
+      "name": "Master of Words I",
+      "description": "For editing your motto for the first time.",
+      "code": "ACH_Motto1",
+      "users": 1
+    },
+    "ACH_RoomEntry1": {
+      "name": "Room raider I",
+      "description": "For 5 room visits. Couch potato.",
+      "code": "ACH_RoomEntry1",
+      "users": 2
+    },
+    "ACH_PetFeeding2": {
+      "name": "They're eating all my credits! II",
+      "description": "For giving pets 600 points of food.",
+      "code": "ACH_PetFeeding2",
+      "users": 1
+    },
+    "XM4": {
+      "name": "Xmas 2006",
+      "description": "Celebrate the Holidays with this 2006 Xmas badge.",
+      "code": "XM4",
+      "users": 1
+    },
+    "ACH_RegistrationDuration3": {
+      "name": "15 % True Habbo III",
+      "description": "For being a member of the community for 10 days.",
+      "code": "ACH_RegistrationDuration3",
+      "users": 1
+    },
+    "ACH_RegistrationDuration10": {
+      "name": "50 % True Habbo X",
+      "description": "For being a member of the community for 224 days.",
+      "code": "ACH_RegistrationDuration10",
+      "users": 1
+    },
+    "ACH_AllTimeHotelPresence1": {
+      "name": "Online time I - Thunderstorm",
+      "description": "For spending 30 minutes in the Hotel.",
+      "code": "ACH_AllTimeHotelPresence1",
+      "users": 1
+    },
+    "ACH_RoomDecoHosting3": {
+      "name": "Room host III",
+      "description": "For having visitors spend 20 minutes in your rooms.",
+      "code": "ACH_RoomDecoHosting3",
+      "users": 1
+    }
+  }
+}

@@ -15,9 +15,7 @@ export const useDailyActivitiesTracker = () => {
     setError(null);
 
     try {
-      console.log(`[📊 TRACKER] Iniciando rastreamento de atividades para ${habboName}`);
-
-      const { data, error: functionError } = await supabase.functions.invoke('habbo-daily-activities-tracker', {
+            const { data, error: functionError } = await supabase.functions.invoke('habbo-daily-activities-tracker', {
         body: {
           user_habbo_name: habboName,
           user_habbo_id: habboId,
@@ -26,23 +24,18 @@ export const useDailyActivitiesTracker = () => {
       });
 
       if (functionError) {
-        console.error('[📊 TRACKER] Erro na função:', functionError);
-        setError(`Erro no rastreamento: ${functionError.message}`);
+                setError(`Erro no rastreamento: ${functionError.message}`);
         return false;
       }
 
-      console.log('[📊 TRACKER] Resultado:', data);
-      
-      if (data?.success) {
-        console.log(`[📊 TRACKER] ✅ Sucesso! ${data.processed} amigos processados, ${data.activities_detected} atividades detectadas`);
-        return true;
+            if (data?.success) {
+                return true;
       } else {
         setError(data?.error || 'Erro desconhecido no rastreamento');
         return false;
       }
     } catch (error: any) {
-      console.error('[📊 TRACKER] Erro geral:', error);
-      setError(error.message);
+            setError(error.message);
       return false;
     } finally {
       setIsTracking(false);

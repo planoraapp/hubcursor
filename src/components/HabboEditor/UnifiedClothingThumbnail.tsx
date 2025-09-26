@@ -79,13 +79,10 @@ const UnifiedClothingThumbnail = ({
   const handleImageLoad = () => {
     setIsLoading(false);
     setImageError(false);
-    console.log('✅ [UnifiedThumbnail] Loaded successfully:', item.name, HABBO_DOMAINS[currentDomainIndex]);
-  };
+      };
 
   const handleImageError = () => {
-    console.log('❌ [UnifiedThumbnail] Error with domain:', HABBO_DOMAINS[currentDomainIndex]);
-    
-    if (currentDomainIndex < HABBO_DOMAINS.length - 1) {
+        if (currentDomainIndex < HABBO_DOMAINS.length - 1) {
       // Tentar próximo domínio
       setCurrentDomainIndex(prev => prev + 1);
       setIsLoading(true);
@@ -93,8 +90,7 @@ const UnifiedClothingThumbnail = ({
       // Todos os domínios falharam
       setImageError(true);
       setIsLoading(false);
-      console.error('❌ [UnifiedThumbnail] All domains failed:', item.name);
-    }
+          }
   };
 
   const thumbnailUrl = generateThumbnailUrl(currentDomainIndex);

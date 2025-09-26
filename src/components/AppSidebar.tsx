@@ -28,7 +28,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -36,7 +36,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const mainItems = [
   { title: "Início", url: "/", icon: Home },
   { title: "Console", url: "/console", icon: LayoutDashboard },
-  { title: "Notícias", url: "/noticias", icon: Newspaper },
+  { title: "Jornal", url: "/journal", icon: Newspaper },
   { title: "Eventos", url: "/eventos", icon: Gamepad2 },
 ];
 
@@ -55,7 +55,7 @@ const toolsItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { habboAccount, logout } = useUnifiedAuth();
+  const { habboAccount, logout } = useAuth();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
@@ -194,7 +194,12 @@ export function AppSidebar() {
                     onClick={handleLogout}
                     className="h-8 w-8 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   >
-                    <LogOut className="h-4 w-4" />
+                    <img 
+                      src="/assets/logout.png" 
+                      alt="Logout" 
+                      className="h-4 w-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -208,3 +213,4 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+

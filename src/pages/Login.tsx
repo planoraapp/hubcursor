@@ -1,168 +1,413 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { User, Key, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { LoginByMotto } from '@/components/auth/LoginByMotto';
+import { HotelSelector } from '@/components/HotelSelector';
+import { getAvailableHotels } from '@/utils/usernameUtils';
+import { Loader2 } from 'lucide-react';
+import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
+import { useQuickNotification } from '@/hooks/useNotification';
 
-const Login = () => {
-  const [habboName, setHabboName] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('password');
-  const { loginWithPassword } = useAuth();
-  const { toast } = useToast();
+export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { habboAccount, isLoggedIn, loading, login } = useAuth();
+  
+  // Estados do formulário
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [selectedHotel, setSelectedHotel] = useState('br');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginMode, setLoginMode] = useState<'senha' | 'motto' | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const { success, error } = useQuickNotification();
 
+  // Lista dos hotéis Habbo
+  const habboHotels = getAvailableHotels();
+
+  // Gerar código de verificação
+  const generateVerificationCode = () => {
+    const randomNum = Math.floor(Math.random() * 90000) + 10000; // 5 dígitos
+    const code = `HUB-${randomNum}`;
+    setVerificationCode(code);
+    return code;
+  };
+
+  // Verificar se já está logado
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/console');
+    }
+  }, [isLoggedIn, navigate]);
+
+  // Função de login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!habboName.trim()) {
-      toast({
-        title: "Erro",
-        description: "Digite seu nome de usuário Habbo",
-        variant: "destructive"
-      });
+    
+    if (!username.trim() || !password.trim()) {
       return;
     }
 
-    if (!password.trim()) {
-      toast({
-        title: "Erro", 
-        description: "Digite sua senha",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setIsLoggingIn(true);
     try {
-      await loginWithPassword(habboName.trim(), password.trim());
-      toast({
-        title: "Sucesso!",
-        description: "Login realizado com sucesso!"
-      });
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: "Erro no login",
-        description: error.message || "Erro ao fazer login",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+      // Salvar país selecionado no localStorage para uso posterior
+      localStorage.setItem('selected_habbo_hotel', selectedHotel);
+      
+      const success = await login(username.trim(), password);
+      if (success) {
+        // O redirecionamento será feito automaticamente pelo useEffect
+      }
+    } catch (error) {
+          } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  const handleMottoLoginSuccess = () => {
-    navigate('/');
-  };
+  if (loading) {
+    return (
+      <EnhancedErrorBoundary>
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <CollapsibleAppSidebar />
+            <SidebarInset className="flex-1">
+              <main 
+                className="flex-1 p-8 bg-repeat min-h-screen flex items-center justify-center" 
+                style={{ 
+                  backgroundImage: 'url(/assets/bghabbohub.png)',
+                  backgroundRepeat: 'repeat',
+                  backgroundPosition: 'center',
+                  backgroundSize: 'auto'
+                }}
+              >
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                  <p className="text-white">Carregando...</p>
+                </div>
+              </main>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </EnhancedErrorBoundary>
+    );
+  }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <CollapsibleAppSidebar />
-        <SidebarInset className="flex-1">
-          <main className="flex-1 p-8 bg-repeat min-h-screen" style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}>
-            <div className="max-w-md mx-auto mt-20">
+    <EnhancedErrorBoundary>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <CollapsibleAppSidebar />
+          <SidebarInset className="flex-1">
+            <main 
+              className="flex-1 p-8 bg-repeat min-h-screen" 
+              style={{ 
+                backgroundImage: 'url(/assets/bghabbohub.png)',
+                backgroundRepeat: 'repeat',
+                backgroundPosition: 'center',
+                backgroundSize: 'auto'
+              }}
+            >
+            <div className="max-w-2xl mx-auto mt-10">
+              {/* Logo do HabboHub */}
               <div className="text-center mb-8">
-                <div className="flex items-center justify-center mb-4">
-                  <img 
-                    src="/assets/habbohub.gif" 
-                    alt="Habbo Hub" 
-                    className="h-16 w-auto"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/assets/habbohub.png";
-                    }}
-                  />
-                </div>
-                <p className="text-lg text-white/90 volter-font drop-shadow">
-                  Entre com sua conta Habbo
-                </p>
+                <img 
+                  src="/assets/hubbeta.gif" 
+                  alt="HabboHub" 
+                  className="mx-auto mb-8"
+                  style={{ 
+                    imageRendering: 'pixelated',
+                    maxWidth: '200px',
+                    height: 'auto'
+                  }}
+                />
               </div>
-              
-              <Card className="bg-white/90 backdrop-blur-sm border-2 border-black">
+
+              {/* Card de Login */}
+              <Card className="bg-white/95 backdrop-blur-sm border-2 border-black">
                 <CardHeader>
-                  <CardTitle className="volter-font text-2xl text-gray-900 text-center">
-                    Entrar na Conta
+                  <CardTitle className="text-center volter-font">
+                    🔐 HabboHub - Login
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="password" className="volter-font flex items-center gap-2">
-                        <Key className="w-4 h-4" />
-                        Por Senha
-                      </TabsTrigger>
-                      <TabsTrigger value="motto" className="volter-font flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" />
-                        Por Motto
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="password" className="mt-4">
-                      <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                          <Label htmlFor="habboName" className="volter-font text-gray-700">
-                            Nome de usuário Habbo
-                          </Label>
-                          <Input
-                            id="habboName"
-                            type="text"
-                            value={habboName}
-                            onChange={(e) => setHabboName(e.target.value)}
-                            placeholder="Digite seu nome Habbo"
-                            className="mt-1"
-                            disabled={isLoading}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="password" className="volter-font text-gray-700">
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    {/* Seleção de País */}
+                    <div>
+                      <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                        {habboHotels.map((hotel) => (
+                          <button
+                            key={hotel.code}
+                            type="button"
+                            onClick={() => setSelectedHotel(hotel.code)}
+                            className={`transition-all duration-200 ${
+                              selectedHotel === hotel.code
+                                ? 'ring-2 ring-blue-500 rounded'
+                                : ''
+                            }`}
+                            style={{ 
+                              background: 'transparent',
+                              border: 'none',
+                              padding: '2px'
+                            }}
+                          >
+                            <img
+                              src={hotel.flag}
+                              alt={hotel.name}
+                              style={{ 
+                                imageRendering: 'pixelated',
+                                background: 'transparent',
+                                height: '28px',
+                                width: 'auto',
+                                display: 'block',
+                                objectFit: 'contain',
+                                objectPosition: 'center'
+                              }}
+                              onError={(e) => {
+                                console.error(`Erro ao carregar bandeira ${hotel.name}:`, hotel.flag);
+                                // Fallback para bandeira local
+                                e.currentTarget.src = `/flags/${hotel.code}.png`;
+                              }}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <div className="text-xs text-gray-500 text-center">
+                        Hotel selecionado: <strong>{habboHotels.find(h => h.code === selectedHotel)?.name}</strong>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nome Habbo
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="Digite seu nome Habbo"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="border-2 border-gray-300 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+
+                    {/* Seleção do modo de login */}
+                    {username.trim() && (
+                      <div>
+                        <div className="flex gap-2 mb-3">
+                          <button
+                            type="button"
+                            onClick={() => setLoginMode('senha')}
+                            className={`flex-1 px-3 py-2 rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4 text-white ${
+                              loginMode === 'senha'
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-gray-400 hover:bg-gray-500'
+                            }`}
+                            style={{ 
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              letterSpacing: '0.3px',
+                              textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px'
+                            }}
+                          >
                             Senha
-                          </Label>
-                          <Input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Digite sua senha"
-                            className="mt-1"
-                            disabled={isLoading}
-                          />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLoginMode('motto');
+                              generateVerificationCode();
+                            }}
+                            className={`flex-1 px-3 py-2 rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4 text-white ${
+                              loginMode === 'motto'
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-gray-400 hover:bg-gray-500'
+                            }`}
+                            style={{ 
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              letterSpacing: '0.3px',
+                              textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px'
+                            }}
+                          >
+                            Motto (Missão)
+                          </button>
                         </div>
-                        <Button 
-                          type="submit" 
-                          className="w-full habbo-button-blue volter-font"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? 'Entrando...' : 'Entrar com Senha'}
-                        </Button>
-                      </form>
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600 volter-font">
-                          Use suas credenciais Habbo para fazer login.
-                        </p>
+
+                        {/* Campo de senha */}
+                        {loginMode === 'senha' && (
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Senha
+                            </label>
+                            <Input
+                              type="password"
+                              placeholder="Digite sua senha"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className="border-2 border-gray-300 focus:border-blue-500"
+                              required
+                            />
+                          </div>
+                        )}
+
+                        {/* Campo de verificação por motto */}
+                        {loginMode === 'motto' && (
+                          <div className="mb-4">
+                            <div className="bg-white p-3 rounded-lg mb-3">
+                              {/* Layout desktop: lado a lado */}
+                              <div className="hidden md:flex md:gap-4 md:items-start">
+                                {/* Lado esquerdo: título e campo */}
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-800 mb-2 volter-font">
+                                    <strong>Código para sua motto:</strong>
+                                  </p>
+                                  <Input
+                                    value={verificationCode}
+                                    readOnly
+                                    className="border-2 border-yellow-300 text-white text-center sidebar-font-option-4"
+                                    style={{ 
+                                      fontSize: '16px',
+                                      fontWeight: 'bold',
+                                      letterSpacing: '0.3px',
+                                      textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                      backgroundImage: 'url(https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/bg_colour_04.gif)',
+                                      backgroundRepeat: 'repeat',
+                                      backgroundSize: 'auto'
+                                    }}
+                                  />
+                                </div>
+                                
+                                {/* Lado direito: botão copiar */}
+                                <div className="flex items-end">
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      try {
+                                        await navigator.clipboard.writeText(verificationCode);
+                                        success('Código copiado!', 'Cole na sua motto do Habbo');
+                                      } catch (err) {
+                                        error('Erro ao copiar', 'Copie manualmente o código');
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors flex items-center justify-center sidebar-font-option-4"
+                                    style={{ 
+                                      fontSize: '16px',
+                                      fontWeight: 'bold',
+                                      letterSpacing: '0.3px',
+                                      textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                      border: '2px solid black',
+                                      imageRendering: 'pixelated'
+                                    }}
+                                  >
+                                    Copiar Código
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Layout mobile: empilhado */}
+                              <div className="md:hidden flex flex-col gap-2">
+                                <p className="text-sm text-gray-800 volter-font">
+                                  <strong>Código para sua motto:</strong>
+                                </p>
+                                <Input
+                                  value={verificationCode}
+                                  readOnly
+                                  className="border-2 border-yellow-300 text-white text-center sidebar-font-option-4"
+                                  style={{ 
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    letterSpacing: '0.3px',
+                                    textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                    backgroundImage: 'url(https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/bg_colour_04.gif)',
+                                    backgroundRepeat: 'repeat',
+                                    backgroundSize: 'auto'
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      await navigator.clipboard.writeText(verificationCode);
+                                      success('Código copiado!', 'Cole na sua motto do Habbo');
+                                    } catch (err) {
+                                      error('Erro ao copiar', 'Copie manualmente o código');
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors flex items-center justify-center sidebar-font-option-4"
+                                  style={{ 
+                                    fontSize: '16px',
+                                    fontWeight: 'bold',
+                                    letterSpacing: '0.3px',
+                                    textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                    border: '2px solid black',
+                                    imageRendering: 'pixelated'
+                                  }}
+                                >
+                                  Copiar Código
+                                </button>
+                              </div>
+
+                              {/* Instruções (sempre abaixo) */}
+                              <p className="text-xs text-gray-600 mt-3 volter-font">
+                                Cole este código em sua motto no Habbo e clique em "Verificar Habbo"
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Botões de ação */}
+                        <div className="space-y-2">
+                          {loginMode === 'senha' && (
+                            <Button
+                              type="submit"
+                              disabled={isLoggingIn || !password.trim()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                            >
+                              {isLoggingIn ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Fazendo login...
+                                </>
+                              ) : (
+                                '🔐 Fazer Login'
+                              )}
+                            </Button>
+                          )}
+
+                          {loginMode === 'motto' && (
+                            <div className="flex justify-center">
+                              <Button
+                                type="button"
+                                onClick={() => setIsVerifying(true)}
+                                disabled={isVerifying}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded transition-colors flex items-center justify-center sidebar-font-option-4"
+                                style={{ 
+                                  fontSize: '16px',
+                                  fontWeight: 'bold',
+                                  letterSpacing: '0.3px',
+                                  textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                  border: '2px solid black',
+                                  imageRendering: 'pixelated'
+                                }}
+                              >
+                                {isVerifying ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Verificando...
+                                  </>
+                                ) : (
+                                  'Verificar Habbo'
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="motto" className="mt-4">
-                      <LoginByMotto onLoginSuccess={handleMottoLoginSuccess} />
-                      <div className="mt-4 text-center">
-                        <p className="text-sm text-muted-foreground volter-font">
-                          Login seguro via verificação de motto no Hotel. Para novos usuários.
-                        </p>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+                    )}
+                  </form>
                 </CardContent>
               </Card>
             </div>
@@ -170,6 +415,7 @@ const Login = () => {
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </EnhancedErrorBoundary>
   );
 };
 

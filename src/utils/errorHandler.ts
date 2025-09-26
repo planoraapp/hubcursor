@@ -17,9 +17,7 @@ class ErrorHandler {
     this.logError(errorMessage, context);
     
     // Console para desenvolvimento
-    console.error(`[${context}] Error:`, error);
-    
-    // Retornar mensagem amigável
+        // Retornar mensagem amigável
     return this.getFriendlyMessage(errorMessage, context);
   }
 
@@ -43,8 +41,7 @@ class ErrorHandler {
     try {
       localStorage.setItem('errorLogs', JSON.stringify(this.logs));
     } catch (e) {
-      console.warn('Não foi possível salvar logs de erro:', e);
-    }
+          }
   }
 
   private static getFriendlyMessage(error: string, context: string): string {
