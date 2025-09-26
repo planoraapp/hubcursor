@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Trophy, Home, Crown } from 'lucide-react';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
+import { useAuth } from '@/hooks/useAuth';
 import { PixelFrame } from './PixelFrame';
-import { BeebopProfile } from './BeebopProfile';
+import { UserProfile } from './BeebopProfile';
 import { cn } from '@/lib/utils';
 
 type TabType = 'account' | 'feed' | 'photos' | 'chat';
@@ -56,7 +57,11 @@ const tabs: TabButton[] = [
 
 export const FunctionalConsole: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('account');
-  const [username, setUsername] = useState('Beebop');
+  const { habboAccount, isLoggedIn } = useAuth();
+  
+  // Usar o username do usuário logado ou 'Beebop' como fallback
+  const username = habboAccount?.habbo_name || 'Beebop';
+  
   const { 
     userData, 
     profileData,
@@ -64,7 +69,7 @@ export const FunctionalConsole: React.FC = () => {
     rooms, 
     groups, 
     friends, 
-    photos,
+    photos, 
     isLoading, 
     error, 
     refreshData 
@@ -73,7 +78,7 @@ export const FunctionalConsole: React.FC = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'account':
-        return <BeebopProfile />;
+        return <UserProfile />;
       case 'feed':
         return <FeedTab badges={badges} rooms={rooms} groups={groups} friends={friends} isLoading={isLoading} />;
       case 'photos':
@@ -81,7 +86,7 @@ export const FunctionalConsole: React.FC = () => {
       case 'chat':
         return <ChatTab friends={friends} isLoading={isLoading} />;
       default:
-        return <BeebopProfile />;
+        return <UserProfile />;
     }
   };
 

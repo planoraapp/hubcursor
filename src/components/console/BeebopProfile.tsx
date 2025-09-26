@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Trophy, Home, Users, UserCheck } from 'lucide-react';
+import { Trophy, Home, Users, UserCheck, Camera, X } from 'lucide-react';
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 import { useAuth } from '@/hooks/useAuth';
 import { BadgesModal } from './modals/BadgesModal';
@@ -9,10 +9,22 @@ import { FriendsModal } from './modals/FriendsModal';
 import { GroupsModal } from './modals/GroupsModal';
 
 
-export const BeebopProfile: React.FC = () => {
+interface UserProfileProps {
+  username?: string;
+}
+
+export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   const [modalStates, setModalStates] = useState({ badges: false, rooms: false, friends: false, groups: false });
-  const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI('Beebop');
+  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const { habboAccount, isLoggedIn } = useAuth();
+  
+  // Usar o username do usuário logado se não for especificado
+  const targetUsername = username || habboAccount?.habbo_name || 'Beebop';
+  
+  const { userData, badges, rooms, groups, friends, photos, isLoading, error, refreshData, refreshBadges, refreshRooms, refreshGroups, refreshFriends } = useHabboPublicAPI(targetUsername);
+
+  // Debug para verificar se as fotos estão sendo carregadas
+  // console.log(`🔍 [DEBUG] UserProfile (${targetUsername}) - photos:`, photos);
 
   // Função para formatar data no formato DD/MM/YYYY
   const formatDate = (dateString: string | null): string => {
@@ -49,6 +61,14 @@ export const BeebopProfile: React.FC = () => {
 
   const closeModal = (modalType: keyof typeof modalStates) => {
     setModalStates(prev => ({ ...prev, [modalType]: false }));
+  };
+
+  const openPhotoModal = (photo: any) => {
+    setSelectedPhoto(photo);
+  };
+
+  const closePhotoModal = () => {
+    setSelectedPhoto(null);
   };
 
   if (isLoading) {
@@ -153,7 +173,7 @@ export const BeebopProfile: React.FC = () => {
             >
               <Trophy className="h-5 w-5 text-yellow-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
-                <div className="text-sm font-medium text-white">{badges.length}</div>
+                <div className="text-sm font-medium text-white">{badges?.length || 0}</div>
                 <div className="text-xs text-white/60">Emblemas</div>
               </div>
             </button>
@@ -164,7 +184,7 @@ export const BeebopProfile: React.FC = () => {
             >
               <Home className="h-5 w-5 text-blue-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
-                <div className="text-sm font-medium text-white">{rooms.length}</div>
+                <div className="text-sm font-medium text-white">{rooms?.length || 0}</div>
                 <div className="text-xs text-white/60">Quartos</div>
               </div>
             </button>
@@ -175,7 +195,7 @@ export const BeebopProfile: React.FC = () => {
             >
               <Users className="h-5 w-5 text-green-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
-                <div className="text-sm font-medium text-white">{friends.length}</div>
+                <div className="text-sm font-medium text-white">{friends?.length || 0}</div>
                 <div className="text-xs text-white/60">Amigos</div>
               </div>
             </button>
@@ -186,7 +206,7 @@ export const BeebopProfile: React.FC = () => {
             >
               <UserCheck className="h-5 w-5 text-purple-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
-                <div className="text-sm font-medium text-white">{groups.length}</div>
+                <div className="text-sm font-medium text-white">{groups?.length || 0}</div>
                 <div className="text-xs text-white/60">Grupos</div>
               </div>
             </button>
@@ -194,7 +214,7 @@ export const BeebopProfile: React.FC = () => {
         </div>
 
         {/* Seção de Emblemas Selecionados */}
-        {badges.length > 0 && (
+        {badges && badges.length > 0 && (
           <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Emblemas em Destaque</h3>
             <div className="grid grid-cols-3 gap-2">
@@ -217,7 +237,7 @@ export const BeebopProfile: React.FC = () => {
         )}
 
         {/* Seção de Quartos Recentes */}
-        {rooms.length > 0 && (
+        {rooms && rooms.length > 0 && (
           <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Quartos Recentes</h3>
             <div className="space-y-2">
@@ -251,21 +271,27 @@ export const BeebopProfile: React.FC = () => {
         )}
 
         {/* Seção de Grupos */}
-        {groups.length > 0 && (
+        {groups && groups.length > 0 && (
           <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Grupos</h3>
             <div className="space-y-2">
               {groups.slice(0, 3).map((group, index) => (
                 <div key={index} className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                  <img
-                    src={`https://images.habbo.com/c_images/album1584/${group.badgeCode}.gif`}
-                    alt={group.name}
-                    className="w-8 h-8"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/assets/group-placeholder.png';
-                    }}
-                  />
+                  <div className="w-8 h-8 flex-shrink-0 bg-gray-600 rounded overflow-hidden">
+                    <img
+                      src={`https://www.habbo.com.br/habbo-imaging/badge/${group.badgeCode}.gif`}
+                      alt={group.name}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="w-full h-full bg-gray-600 rounded flex items-center justify-center text-white text-xs font-bold">G</div>';
+                        }
+                      }}
+                    />
+                  </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-white">{group.name}</p>
                     <p className="text-xs text-white/60">{group.description}</p>
@@ -277,7 +303,7 @@ export const BeebopProfile: React.FC = () => {
         )}
 
         {/* Seção de Amigos */}
-        {friends.length > 0 && (
+        {friends && friends.length > 0 && (
           <div className="p-4 border-t border-white/20">
             <h3 className="text-lg font-semibold text-white mb-4">Amigos Online</h3>
             <div className="grid grid-cols-3 gap-2">
@@ -299,42 +325,48 @@ export const BeebopProfile: React.FC = () => {
           </div>
         )}
 
-        {/* Seção de Fotos - Agora posicionada após Amigos Online */}
-        {photos.length > 0 && (
+        {/* Seção de Fotos Dinâmicas */}
+        {photos && photos.length > 0 && (
           <div className="p-4 border-t border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Fotos ({photos.length})</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.slice(0, 9).map((photo, index) => (
-                <div key={photo.id} className="relative group cursor-pointer">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Camera className="w-5 h-5" />
+              Fotos ({photos?.length || 0})
+            </h3>
+          <div className="grid grid-cols-3 gap-2">
+            {photos?.map((photo, index) => (
+              <div 
+                key={photo.id} 
+                className="relative group cursor-pointer"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                <div className="w-full h-20 bg-gray-700 rounded border border-white/20 overflow-hidden">
                   <img
                     src={photo.url}
                     alt={photo.caption || `Foto ${index + 1}`}
-                    className={`w-full h-20 object-cover rounded border border-white/20 transition-transform group-hover:scale-105 ${
-                      photo.contentWidth > photo.contentHeight ? 'col-span-2' : ''
-                    }`}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = '/assets/photo-placeholder.png';
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = '<div class="w-full h-full bg-gray-700 rounded flex items-center justify-center text-white text-xs">📷</div>';
+                      }
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="text-center text-white text-xs p-2">
-                      <div className="font-medium">{photo.type === 'SELFIE' ? '📸 Selfie' : '📷 Foto'}</div>
-                      {photo.caption && (
-                        <div className="text-white/80 mt-1">{photo.caption}</div>
-                      )}
-                      <div className="text-white/60 mt-1">❤️ {photo.likes}</div>
-                    </div>
+                </div>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded">
+                  <div className="text-center text-white text-xs p-2">
+                    <div className="font-medium">📷 Foto</div>
+                    {photo.caption && (
+                      <div className="text-white/80 mt-1 truncate max-w-20">{photo.caption}</div>
+                    )}
+                    <div className="text-white/60 mt-1">📅 {formatDate(photo.takenOn)}</div>
                   </div>
                 </div>
-              ))}
-            </div>
-            {photos.length > 9 && (
-              <div className="text-center mt-3">
-                <p className="text-white/60 text-sm">+{photos.length - 9} fotos adicionais</p>
               </div>
-            )}
+            ))}
           </div>
+        </div>
         )}
       </Card>
 
@@ -359,7 +391,56 @@ export const BeebopProfile: React.FC = () => {
         isOpen={modalStates.groups} 
         onClose={() => closeModal('groups')} 
       />
+
+      {/* Modal de Foto */}
+      {selectedPhoto && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-white/20 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-white/20 bg-blue-500">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Camera className="w-5 h-5" />
+                {selectedPhoto.type === 'SELFIE' ? '📸 Selfie' : '📷 Foto'}
+              </h3>
+              <button 
+                onClick={closePhotoModal}
+                className="text-white hover:bg-white/20 p-2 rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="text-center">
+                <img
+                  src={selectedPhoto.url}
+                  alt={selectedPhoto.caption || 'Foto'}
+                  className="max-w-full max-h-[60vh] object-contain mx-auto rounded"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<div class="w-full h-60 bg-gray-700 rounded flex items-center justify-center text-white text-lg">📷 Erro ao carregar foto</div>';
+                    }
+                  }}
+                />
+                {selectedPhoto.caption && (
+                  <p className="text-white mt-4 text-lg">{selectedPhoto.caption}</p>
+                )}
+                <div className="flex items-center justify-center gap-4 mt-4 text-white/60">
+                  <span>❤️ {selectedPhoto.likes} curtidas</span>
+                  <span>📅 {formatDate(selectedPhoto.createdAt)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
+};
+
+// Componente específico para Beebop (mantido para compatibilidade)
+export const BeebopProfile: React.FC = () => {
+  return <UserProfile username="Beebop" />;
 };
 

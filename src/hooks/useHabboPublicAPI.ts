@@ -51,13 +51,7 @@ interface HabboFriend {
 interface HabboPhoto {
   id: string;
   url: string;
-  type: 'SELFIE' | 'PHOTO' | 'USER_CREATION';
-  contentWidth: number;
-  contentHeight: number;
-  caption?: string;
-  likes: number;
-  createdAt: string;
-  author: string;
+  takenOn?: string;
 }
 
 interface HabboProfile {
@@ -81,7 +75,7 @@ interface HabboProfile {
 }
 
 export const useHabboPublicAPI = (username: string = 'Beebop', country: string = 'br') => {
-    const [userData, setUserData] = useState<HabboUser | null>(null);
+  const [userData, setUserData] = useState<HabboUser | null>(null);
   const [profileData, setProfileData] = useState<HabboProfile | null>(null);
   const [badges, setBadges] = useState<HabboBadge[]>([]);
   const [rooms, setRooms] = useState<HabboRoom[]>([]);
@@ -112,7 +106,7 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
     try {
       // Usar a documentação oficial da API: GET /api/public/users
       const url = `${API_BASE}/api/public/users?name=${encodeURIComponent(username)}`;
-            const response = await fetch(url, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -120,22 +114,22 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
         },
       });
       
-            if (response.ok) {
+      if (response.ok) {
         const data = await response.json();
-                // Verificar se os dados estão no formato esperado
+        // Verificar se os dados estão no formato esperado
         if (data && data.name && data.figureString) {
           setUserData(data);
           setError(null); // Limpar erro anterior
           return data;
         } else {
-                    throw new Error('Dados do usuário incompletos');
+          throw new Error('Dados do usuário incompletos');
         }
       } else {
         const errorText = await response.text();
-                throw new Error(`Usuário não encontrado: ${response.status}`);
+        throw new Error(`Usuário não encontrado: ${response.status}`);
       }
     } catch (error) {
-            setError(`Erro ao buscar dados do usuário: ${error.message}`);
+      setError(`Erro ao buscar dados do usuário: ${error.message}`);
       setUserData(null); // Limpar dados anteriores
       return null;
     }
@@ -145,36 +139,52 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
   const fetchUserProfile = async (uniqueId: string) => {
     try {
       const response = await fetch(`${API_BASE}/api/public/users/${uniqueId}/profile`);
+      
       if (response.ok) {
         const data = await response.json();
         setProfileData(data);
         
         // Extrair dados do perfil
-        if (data.badges) setBadges(data.badges);
-        if (data.rooms) setRooms(data.rooms);
-        if (data.groups) setGroups(data.groups);
-        if (data.friends) setFriends(data.friends);
+        if (data.badges) {
+          setBadges(data.badges);
+        }
+        if (data.rooms) {
+          setRooms(data.rooms);
+        }
+        if (data.groups) {
+          setGroups(data.groups);
+        }
+        if (data.friends) {
+          setFriends(data.friends);
+        }
+        
+        // Verificar se há fotos no perfil
+        if (data.photos) {
+          setPhotos(data.photos);
+        } else {
+          // Se não há fotos no perfil, tentar buscar individualmente
+          await fetchIndividualData(uniqueId, username);
+        }
         
         return data;
       } else {
         throw new Error('Perfil não encontrado ou não visível');
       }
     } catch (error) {
-            // Se o perfil não estiver disponível, tentar buscar dados individuais
-      await fetchIndividualData(uniqueId);
+      // Se o perfil não estiver disponível, tentar buscar dados individuais
+      await fetchIndividualData(uniqueId, username);
       return null;
     }
   };
 
   // Função para buscar dados individuais quando o perfil não estiver disponível
-  const fetchIndividualData = async (uniqueId: string) => {
+  const fetchIndividualData = async (uniqueId: string, username: string) => {
     try {
-      const [badgesResponse, roomsResponse, groupsResponse, friendsResponse, photosResponse] = await Promise.allSettled([
+      const [badgesResponse, roomsResponse, groupsResponse, friendsResponse] = await Promise.allSettled([
         fetch(`${API_BASE}/api/public/users/${uniqueId}/badges`),
         fetch(`${API_BASE}/api/public/users/${uniqueId}/rooms`),
         fetch(`${API_BASE}/api/public/users/${uniqueId}/groups`),
-        fetch(`${API_BASE}/api/public/users/${uniqueId}/friends`),
-        fetch(`${API_BASE}/api/public/users/${uniqueId}/photos`)
+        fetch(`${API_BASE}/api/public/users/${uniqueId}/friends`)
       ]);
 
       // Processar badges
@@ -201,13 +211,47 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
         setFriends(friendsData);
       }
 
-      // Processar fotos
-      if (photosResponse.status === 'fulfilled' && photosResponse.value.ok) {
-        const photosData = await photosResponse.value.json();
-        setPhotos(photosData);
+      // Tentar diferentes endpoints para fotos
+      try {
+        // Tentar endpoint 1: extradata
+        const photosUrl1 = `${API_BASE}/extradata/public/users/${uniqueId}/photos`;
+        const photosResponse1 = await fetch(photosUrl1);
+        
+        if (photosResponse1.ok) {
+          const photosData = await photosResponse1.json();
+          setPhotos(photosData);
+          return;
+        }
+        
+        // Tentar endpoint 2: api/public
+        const photosUrl2 = `${API_BASE}/api/public/users/${uniqueId}/photos`;
+        const photosResponse2 = await fetch(photosUrl2);
+        
+        if (photosResponse2.ok) {
+          const photosData = await photosResponse2.json();
+          setPhotos(photosData);
+          return;
+        }
+        
+        // Tentar endpoint 3: stories
+        const photosUrl3 = `${API_BASE}/api/public/users/${uniqueId}/stories`;
+        const photosResponse3 = await fetch(photosUrl3);
+        
+        if (photosResponse3.ok) {
+          const photosData = await photosResponse3.json();
+          setPhotos(photosData);
+          return;
+        }
+        
+        setPhotos([]);
+        
+      } catch (photoError) {
+        console.error('Erro ao buscar fotos:', photoError);
+        setPhotos([]);
       }
     } catch (error) {
-          }
+      console.error('Erro ao buscar dados individuais:', error);
+    }
   };
 
   // Função para buscar detalhes de um grupo específico
@@ -218,7 +262,8 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
         return await response.json();
       }
     } catch (error) {
-          }
+      console.error('Erro ao buscar detalhes do grupo:', error);
+    }
     return null;
   };
 
@@ -230,31 +275,32 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
         return await response.json();
       }
     } catch (error) {
-          }
+      console.error('Erro ao buscar detalhes do quarto:', error);
+    }
     return null;
   };
 
   // Função para buscar todos os dados
   const fetchAllData = async (username: string) => {
-        setIsLoading(true);
+    setIsLoading(true);
     setError(null);
     setUserData(null); // Limpar dados anteriores
 
     try {
       // 1. Buscar dados básicos do usuário
-            const userData = await fetchUserData(username);
+      const userData = await fetchUserData(username);
       
       if (userData && userData.uniqueId) {
-                // 2. Buscar perfil completo
+        // 2. Buscar perfil completo
         await fetchUserProfile(userData.uniqueId);
-              } else {
-                setError('Usuário não encontrado');
+      } else {
+        setError('Usuário não encontrado');
       }
     } catch (error) {
-            setError(`Erro ao carregar dados: ${error.message}`);
+      setError(`Erro ao carregar dados: ${error.message}`);
     } finally {
       setIsLoading(false);
-          }
+    }
   };
 
   // Função para atualizar dados específicos
@@ -292,23 +338,55 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
           }
           break;
         case 'photos':
-          const photosResponse = await fetch(`${API_BASE}/api/public/users/${userData.uniqueId}/photos`);
-          if (photosResponse.ok) {
-            const photosData = await photosResponse.json();
-            setPhotos(photosData);
+          try {
+            // Tentar endpoint 1: extradata
+            const photosUrl1 = `${API_BASE}/extradata/public/users/${userData.uniqueId}/photos`;
+            const photosResponse1 = await fetch(photosUrl1);
+            
+            if (photosResponse1.ok) {
+              const photosData = await photosResponse1.json();
+              setPhotos(photosData);
+              return;
+            }
+            
+            // Tentar endpoint 2: api/public
+            const photosUrl2 = `${API_BASE}/api/public/users/${userData.uniqueId}/photos`;
+            const photosResponse2 = await fetch(photosUrl2);
+            
+            if (photosResponse2.ok) {
+              const photosData = await photosResponse2.json();
+              setPhotos(photosData);
+              return;
+            }
+            
+            // Tentar endpoint 3: stories
+            const photosUrl3 = `${API_BASE}/api/public/users/${userData.uniqueId}/stories`;
+            const photosResponse3 = await fetch(photosUrl3);
+            
+            if (photosResponse3.ok) {
+              const photosData = await photosResponse3.json();
+              setPhotos(photosData);
+              return;
+            }
+            
+            setPhotos([]);
+            
+          } catch (photoError) {
+            console.error('Erro ao buscar fotos:', photoError);
+            setPhotos([]);
           }
           break;
       }
     } catch (error) {
-          }
+      console.error('Erro ao atualizar dados específicos:', error);
+    }
   };
 
   // Carregar dados quando o hook for inicializado ou país mudar
   useEffect(() => {
-        if (username) {
-            fetchAllData(username);
-    } else {
-          }
+    if (username) {
+      fetchAllData(username);
+    }
   }, [username, country]);
 
   return {
