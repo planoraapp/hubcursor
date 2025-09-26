@@ -27,7 +27,7 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
           <Camera className="w-5 h-5 text-white/80" />
           <h4 className="text-sm font-medium text-white/80">Carregando fotos...</h4>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="aspect-square bg-white/10 rounded-lg animate-pulse" />
           ))}
@@ -63,9 +63,9 @@ export const PhotosSection: React.FC<PhotosSectionProps> = ({
         </h4>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-3">
         {photos.map((photo) => (
-          <div key={photo.id} className="relative overflow-hidden rounded-lg group aspect-square">
+          <div key={photo.id} className="relative overflow-hidden group aspect-square">
             <img 
               src={photo.imageUrl} 
               alt="Foto Habbo" 

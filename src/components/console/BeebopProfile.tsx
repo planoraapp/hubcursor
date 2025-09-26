@@ -13,9 +13,17 @@ interface UserProfileProps {
   username?: string;
 }
 
+interface Photo {
+  id: string;
+  url: string;
+  caption?: string;
+  timestamp?: string;
+  author?: string;
+}
+
 export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
   const [modalStates, setModalStates] = useState({ badges: false, rooms: false, friends: false, groups: false });
-  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const { habboAccount, isLoggedIn } = useAuth();
   
   // Usar o username do usuário logado se não for especificado
@@ -63,7 +71,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
     setModalStates(prev => ({ ...prev, [modalType]: false }));
   };
 
-  const openPhotoModal = (photo: any) => {
+  const openPhotoModal = (photo: Photo) => {
     setSelectedPhoto(photo);
   };
 
@@ -166,10 +174,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
         {/* Botões de Ação */}
         <div className="p-4">
           <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2">
             <button 
               onClick={() => openModal('badges')} 
-              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black hover:bg-white/10 transition-colors cursor-pointer group"
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <Trophy className="h-5 w-5 text-yellow-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
@@ -180,7 +188,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
             
             <button 
               onClick={() => openModal('rooms')} 
-              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black hover:bg-white/10 transition-colors cursor-pointer group"
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <Home className="h-5 w-5 text-blue-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
@@ -191,7 +199,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
             
             <button 
               onClick={() => openModal('friends')} 
-              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black hover:bg-white/10 transition-colors cursor-pointer group"
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <Users className="h-5 w-5 text-green-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
@@ -202,7 +210,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
             
             <button 
               onClick={() => openModal('groups')} 
-              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent border border-black hover:bg-white/10 transition-colors cursor-pointer group"
+              className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <UserCheck className="h-5 w-5 text-purple-400 group-hover:scale-110 transition-transform" />
               <div className="text-center">
@@ -213,117 +221,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
           </div>
         </div>
 
-        {/* Seção de Emblemas Selecionados */}
-        {badges && badges.length > 0 && (
-          <div className="p-4 border-t border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Emblemas em Destaque</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {badges.slice(0, 6).map((badge, index) => (
-                <div key={index} className="text-center">
-                  <img
-                    src={`https://images.habbo.com/c_images/album1584/${String(badge.code)}.gif`}
-                    alt={badge.name}
-                    className="w-10 h-10 mx-auto mb-2"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/assets/badge-placeholder.png';
-                    }}
-                  />
-                  <p className="text-xs text-white/80 truncate">{badge.name}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Seção de Quartos Recentes */}
-        {rooms && rooms.length > 0 && (
-          <div className="p-4 border-t border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Quartos Recentes</h3>
-            <div className="space-y-2">
-              {rooms.slice(0, 3).map((room, index) => (
-                <div key={room.id} className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                  <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
-                    {room.thumbnailUrl || room.imageUrl ? (
-                      <img
-                        src={room.thumbnailUrl || room.imageUrl}
-                        alt={`Miniatura de ${room.name}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = `https://images.habbo.com/c_images/room_thumbnails/${room.id}.png`;
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-blue-500 rounded flex items-center justify-center text-white text-xs font-bold">
-                        {index + 1}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{room.name}</p>
-                    <p className="text-xs text-white/60 truncate">{room.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Seção de Grupos */}
-        {groups && groups.length > 0 && (
-          <div className="p-4 border-t border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Grupos</h3>
-            <div className="space-y-2">
-              {groups.slice(0, 3).map((group, index) => (
-                <div key={index} className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                  <div className="w-8 h-8 flex-shrink-0 bg-gray-600 rounded overflow-hidden">
-                    <img
-                      src={`https://www.habbo.com.br/habbo-imaging/badge/${group.badgeCode}.gif`}
-                      alt={group.name}
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          parent.innerHTML = '<div class="w-full h-full bg-gray-600 rounded flex items-center justify-center text-white text-xs font-bold">G</div>';
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">{group.name}</p>
-                    <p className="text-xs text-white/60">{group.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Seção de Amigos */}
-        {friends && friends.length > 0 && (
-          <div className="p-4 border-t border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">Amigos Online</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {friends.slice(0, 8).map((friend, index) => (
-                <div key={index} className="text-center">
-                  <img
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${friend.name}&size=s&direction=2&head_direction=3&headonly=1`}
-                    alt={friend.name}
-                    className="w-8 h-8 mx-auto mb-1 rounded"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${friend.name}&size=s&direction=2&head_direction=3&headonly=1`;
-                    }}
-                  />
-                  <p className="text-xs text-white/80 truncate">{friend.name}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Seção de Fotos Dinâmicas */}
         {photos && photos.length > 0 && (
@@ -332,14 +230,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ username }) => {
               <Camera className="w-5 h-5" />
               Fotos ({photos?.length || 0})
             </h3>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3">
             {photos?.map((photo, index) => (
               <div 
                 key={photo.id} 
                 className="relative group cursor-pointer"
                 onClick={() => setSelectedPhoto(photo)}
               >
-                <div className="w-full h-20 bg-gray-700 rounded border border-white/20 overflow-hidden">
+                <div className="w-full h-20 bg-gray-700 overflow-hidden">
                   <img
                     src={photo.url}
                     alt={photo.caption || `Foto ${index + 1}`}

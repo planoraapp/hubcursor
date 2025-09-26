@@ -1,10 +1,26 @@
 import { supabase } from '@/integrations/supabase/client';
 
+interface HabboUserData {
+  uniqueId: string;
+  name: string;
+  figureString: string;
+  motto: string;
+  online: boolean;
+  memberSince: string;
+  profileVisible: boolean;
+}
+
+interface FetchResult {
+  success: boolean;
+  data?: HabboUserData;
+  error?: string;
+}
+
 /**
  * Busca dados reais do usuário habbohub usando o ID correto
  * ID real: hhbr-81b7220d11b7a21997226bf7cfcbad51
  */
-export async function fetchHabbohubRealData(): Promise<{ success: boolean; data?: any; error?: string }> {
+export async function fetchHabbohubRealData(): Promise<FetchResult> {
   try {
         // ID real do habbohub obtido da API oficial do Habbo
     const realHabboId = 'hhbr-81b7220d11b7a21997226bf7cfcbad51';

@@ -6,16 +6,8 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 8080,
-    // Configuração para servir assets estáticos corretamente
-    fs: {
-      allow: ['..']
-    },
-    // Configuração para servir arquivos estáticos
-    middlewareMode: false,
-    // Headers para CORS
-    cors: true
+    port: 3000,
+    open: true
   },
   plugins: [
     react(),

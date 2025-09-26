@@ -59,7 +59,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ photos, className = '' }) 
 
   return (
     <>
-      <div className={`grid grid-cols-3 gap-1 ${className}`}>
+      <div className={`grid grid-cols-3 ${className}`}>
         {sortedPhotos.map((photo) => {
           return <PhotoGridItem key={photo.id} photo={photo} onSelect={setSelectedPhoto} />;
         })}

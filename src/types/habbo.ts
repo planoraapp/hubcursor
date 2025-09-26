@@ -1,6 +1,28 @@
 // Interfaces centralizadas para dados do Habbo
 // Evita duplicação e garante consistência
 
+export interface HabboBadge {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface GuestbookEntry {
+  id: string;
+  message: string;
+  author: string;
+  authorId: string;
+  createdAt: string;
+  habboName?: string;
+}
+
+export interface GuestbookSubmitResult {
+  success: boolean;
+  entry?: GuestbookEntry;
+  error?: string;
+}
+
 export interface HabboData {
   id: string;
   habbo_name: string;
@@ -25,8 +47,8 @@ export interface HabboUser {
   motto: string;
   online: boolean;
   memberSince: string;
-  selectedBadges: any[];
-  badges: any[];
+  selectedBadges: HabboBadge[];
+  badges: HabboBadge[];
   figureString: string;
   profileVisible: boolean;
   uniqueId?: string;
@@ -56,7 +78,7 @@ export interface Widget {
   width: number;
   height: number;
   is_visible: boolean;
-  config?: any;
+  config?: WidgetConfig;
 }
 
 export interface Sticker {
@@ -89,7 +111,7 @@ export interface HomeCanvasProps {
   stickers: Sticker[];
   background: Background;
   habboData: HabboData;
-  guestbook: any[];
+  guestbook: GuestbookEntry[];
   isEditMode: boolean;
   isOwner: boolean;
   currentUser?: { id: string; habbo_name: string };
@@ -103,7 +125,7 @@ export interface HomeCanvasProps {
   onBackgroundChange?: (type: 'color' | 'cover' | 'repeat' | 'image', value: string) => void;
   onStickerAdd?: (stickerId: string, stickerSrc: string, category: string) => void;
   onWidgetAdd?: (widgetType: string) => Promise<boolean>;
-  onGuestbookSubmit?: (message: string) => Promise<any>;
+  onGuestbookSubmit?: (message: string) => Promise<GuestbookSubmitResult>;
   onGuestbookDelete?: (entryId: string) => Promise<void>;
 }
 
@@ -115,7 +137,7 @@ export interface HomeWidgetProps {
   isOwner: boolean;
   onRemove: (widgetId: string) => void;
   onPositionChange: (widgetId: string, x: number, y: number) => void;
-  onUpdateConfig?: (widgetId: string, config: any) => void;
+  onUpdateConfig?: (widgetId: string, config: WidgetConfig) => void;
   onGuestbookSubmit?: (message: string) => Promise<void>;
   onGuestbookDelete?: (entryId: string) => Promise<void>;
   currentUser?: { id: string; habbo_name: string };
