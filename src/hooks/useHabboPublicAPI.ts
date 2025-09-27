@@ -383,11 +383,12 @@ export const useHabboPublicAPI = (username: string = 'Beebop', country: string =
   };
 
   // Carregar dados quando o hook for inicializado ou país mudar
-  useEffect(() => {
-    if (username) {
-      fetchAllData(username);
-    }
-  }, [username, country]);
+  // DESABILITADO TEMPORARIAMENTE para evitar loop infinito
+  // useEffect(() => {
+  //   if (username) {
+  //     fetchAllData(username);
+  //   }
+  // }, [username, country]);
 
   return {
     userData,

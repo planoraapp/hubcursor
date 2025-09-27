@@ -27,8 +27,8 @@ export function CollapsibleAppSidebar() {
   // Verificar se o usuário é admin usando o campo is_admin do banco
   const isAdmin = habboAccount?.is_admin === true;
 
-  // Debug logs
-      console.log('🔍 [CollapsibleAppSidebar] Is admin (from DB):', isAdmin);
+  // Debug logs - REMOVIDO para evitar spam no console
+  // console.log('🔍 [CollapsibleAppSidebar] Is admin (from DB):', isAdmin);
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
@@ -178,41 +178,41 @@ export function CollapsibleAppSidebar() {
 
         <SidebarFooter className="p-4 border-t-2 border-black">
           <div className="space-y-2">
-                         {isLoggedIn && habboAccount ? (
-               <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
-                 <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-2`}>
-                   <img
+            {isLoggedIn && habboAccount ? (
+              <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
+                <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-2`}>
+                  <img
                     src={habboAccount.figure_string ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
                     alt={`Avatar de ${habboAccount.habbo_name}`}
-                     className={`w-16 h-16`}
-                     style={{ 
-                       imageRendering: 'pixelated',
-                       objectFit: 'contain'
-                     }}
-                     onError={(e) => {
-                       const target = e.target as HTMLImageElement;
-                       target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
-                     }}
-                   />
-                    {!isCollapsed && (
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4" />
-                          <span 
-                            className="sidebar-font-option-4 text-white truncate"
-                            style={{
-                              fontSize: '16px',
-                              fontWeight: 'bold',
-                              letterSpacing: '0.3px',
-                              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                            }}
-                          >
-                            {habboAccount.habbo_name}
-                          </span>
-                        </div>
+                    className={`w-16 h-16`}
+                    style={{ 
+                      imageRendering: 'pixelated',
+                      objectFit: 'contain'
+                    }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
+                    }}
+                  />
+                  {!isCollapsed && (
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4" />
+                        <span 
+                          className="sidebar-font-option-4 text-white truncate"
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.3px',
+                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                          }}
+                        >
+                          {habboAccount.habbo_name}
+                        </span>
                       </div>
-                    )}
-                 </div>
+                    </div>
+                  )}
+                </div>
                 {!isCollapsed && (
                   <TooltipProvider>
                     <Tooltip>

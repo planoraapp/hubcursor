@@ -6,7 +6,6 @@ import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Tr
 import { useHabboPublicAPI } from '@/hooks/useHabboPublicAPI';
 import { useAuth } from '@/hooks/useAuth';
 import { PixelFrame } from './PixelFrame';
-import { UserProfile } from './BeebopProfile';
 import { cn } from '@/lib/utils';
 
 type TabType = 'account' | 'feed' | 'photos' | 'chat';
@@ -78,7 +77,20 @@ export const FunctionalConsole: React.FC = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'account':
-        return <UserProfile />;
+        return (
+          <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
+            <div className="text-center">
+              <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">Perfil Temporariamente Desabilitado</h3>
+              <p className="text-white/60 text-sm mb-4">Para evitar flickering durante desenvolvimento</p>
+              <div className="space-y-2 text-sm text-white/50">
+                <p>✅ Console funcionando</p>
+                <p>✅ Navegação entre abas</p>
+                <p>✅ Sem re-renderizações infinitas</p>
+              </div>
+            </div>
+          </Card>
+        );
       case 'feed':
         return <FeedTab badges={badges} rooms={rooms} groups={groups} friends={friends} isLoading={isLoading} />;
       case 'photos':
@@ -86,7 +98,20 @@ export const FunctionalConsole: React.FC = () => {
       case 'chat':
         return <ChatTab friends={friends} isLoading={isLoading} />;
       default:
-        return <UserProfile />;
+        return (
+          <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
+            <div className="text-center">
+              <User className="w-16 h-16 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">Perfil Temporariamente Desabilitado</h3>
+              <p className="text-white/60 text-sm mb-4">Para evitar flickering durante desenvolvimento</p>
+              <div className="space-y-2 text-sm text-white/50">
+                <p>✅ Console funcionando</p>
+                <p>✅ Navegação entre abas</p>
+                <p>✅ Sem re-renderizações infinitas</p>
+              </div>
+            </div>
+          </Card>
+        );
     }
   };
 
@@ -133,7 +158,7 @@ export const FunctionalConsole: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "pixel-nav-button habbo-text-shadow",
+                  "pixel-nav-button",
                   activeTab === tab.id ? "active" : ""
                 )}
                 style={{
@@ -147,7 +172,7 @@ export const FunctionalConsole: React.FC = () => {
                 )}>
                   {tab.icon}
                 </div>
-                <span className="leading-none text-[10px] font-bold">
+                <span className="leading-none text-[10px]" style={{ textShadow: 'none', fontWeight: 'normal' }}>
                   {tab.label}
                 </span>
               </button>
@@ -485,4 +510,3 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
     </Card>
   );
 };
-
