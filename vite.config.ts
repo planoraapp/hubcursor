@@ -7,14 +7,19 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
     host: true,
-    open: true,
+    open: false, // Desabilitar auto-open para acelerar
     cors: true,
     hmr: {
       port: 3000
+    },
+    fs: {
+      allow: ['..']
     }
   },
   plugins: [
-    react(),
+    react({
+      fastRefresh: true
+    }),
   ],
   resolve: {
     alias: {
@@ -27,12 +32,32 @@ export default defineConfig(({ mode }) => ({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name].[hash][extname]'
+        assetFileNames: 'assets/[name].[hash][extname]',
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['lucide-react', '@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js']
+        }
       }
     }
   },
-  // Configuração para servir arquivos estáticos em desenvolvimento
+  // Configuração otimizada para desenvolvimento - performance melhorada
   optimizeDeps: {
-    include: ['react', 'react-dom']
+    include: [
+      'react', 
+      'react-dom',
+      '@tanstack/react-query',
+      'react-router-dom',
+      'lucide-react',
+      '@supabase/supabase-js'
+    ],
+    exclude: [
+      'sonner'
+    ],
+    force: false // Mudado para false para evitar re-optimização desnecessária
+  },
+  // Configurações de performance
+  esbuild: {
+    target: 'esnext'
   }
 }));

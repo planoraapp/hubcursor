@@ -18,12 +18,14 @@ import {
   TrendingUp,
   BarChart3,
   FileText,
-  Palette
+  Palette,
+  Zap
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
 import { useNavigate } from 'react-router-dom';
+import { AnimationGenerator } from '@/components/AnimationGenerator';
 
 interface AdminStats {
   totalUsers: number;
@@ -50,6 +52,7 @@ export const AdminDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAnimationGenerator, setShowAnimationGenerator] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -326,7 +329,32 @@ export const AdminDashboard: React.FC = () => {
             </Button>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              Ferramentas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button
+              onClick={() => setShowAnimationGenerator(!showAnimationGenerator)}
+              variant="outline"
+              className="w-full volter-font"
+            >
+              🎬 Gerador de Animações
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Gerador de Animações */}
+      {showAnimationGenerator && (
+        <div className="mt-8">
+          <AnimationGenerator />
+        </div>
+      )}
 
       {/* Badge de sistema */}
       <div className="flex justify-center">

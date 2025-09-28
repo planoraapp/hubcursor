@@ -14,7 +14,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'br',
     name: 'Brasil',
     domain: 'com.br',
-    flag: '/assets/flagbrazil.png',
+    flag: '/flags/flagbrazil.png',
     apiUrl: 'https://www.habbo.com.br',
     imagingUrl: 'https://www.habbo.com.br/habbo-imaging',
     publicApiUrl: 'https://www.habbo.com.br/api/public'
@@ -23,7 +23,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'com',
     name: 'Internacional',
     domain: 'com',
-    flag: '/assets/flagcom.png',
+    flag: '/flags/flagcom.png',
     apiUrl: 'https://www.habbo.com',
     imagingUrl: 'https://www.habbo.com/habbo-imaging',
     publicApiUrl: 'https://www.habbo.com/api/public'
@@ -32,7 +32,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'es',
     name: 'España',
     domain: 'es',
-    flag: '/assets/flagspain.png',
+    flag: '/flags/flagspain.png',
     apiUrl: 'https://www.habbo.es',
     imagingUrl: 'https://www.habbo.es/habbo-imaging',
     publicApiUrl: 'https://www.habbo.es/api/public'
@@ -41,7 +41,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'fr',
     name: 'France',
     domain: 'fr',
-    flag: '/assets/flagfrance.png',
+    flag: '/flags/flagfrance.png',
     apiUrl: 'https://www.habbo.fr',
     imagingUrl: 'https://www.habbo.fr/habbo-imaging',
     publicApiUrl: 'https://www.habbo.fr/api/public'
@@ -50,7 +50,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'de',
     name: 'Deutschland',
     domain: 'de',
-    flag: '/assets/flagdeus.png',
+    flag: '/flags/flagdeus.png',
     apiUrl: 'https://www.habbo.de',
     imagingUrl: 'https://www.habbo.de/habbo-imaging',
     publicApiUrl: 'https://www.habbo.de/api/public'
@@ -59,7 +59,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'it',
     name: 'Italia',
     domain: 'it',
-    flag: '/assets/flagitaly.png',
+    flag: '/flags/flagitaly.png',
     apiUrl: 'https://www.habbo.it',
     imagingUrl: 'https://www.habbo.it/habbo-imaging',
     publicApiUrl: 'https://www.habbo.it/api/public'
@@ -68,7 +68,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'nl',
     name: 'Nederland',
     domain: 'nl',
-    flag: '/assets/flagnetl.png',
+    flag: '/flags/flagnetl.png',
     apiUrl: 'https://www.habbo.nl',
     imagingUrl: 'https://www.habbo.nl/habbo-imaging',
     publicApiUrl: 'https://www.habbo.nl/api/public'
@@ -77,7 +77,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'fi',
     name: 'Suomi',
     domain: 'fi',
-    flag: '/assets/flafinland.png',
+    flag: '/flags/flafinland.png',
     apiUrl: 'https://www.habbo.fi',
     imagingUrl: 'https://www.habbo.fi/habbo-imaging',
     publicApiUrl: 'https://www.habbo.fi/api/public'
@@ -86,7 +86,7 @@ export const HOTELS_CONFIG: Record<string, HotelConfig> = {
     id: 'tr',
     name: 'Türkiye',
     domain: 'com.tr',
-    flag: '/assets/flagtrky.png',
+    flag: '/flags/flagtrky.png',
     apiUrl: 'https://www.habbo.com.tr',
     imagingUrl: 'https://www.habbo.com.tr/habbo-imaging',
     publicApiUrl: 'https://www.habbo.com.tr/api/public'

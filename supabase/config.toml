@@ -18,3 +18,13 @@ verify_jwt = true
 
 [functions.habbo-daily-activities-tracker]
 verify_jwt = false
+[functions.habbo-complete-profile]
+enabled = true
+verify_jwt = true
+import_map = "./functions/habbo-complete-profile/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/habbo-complete-profile/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/habbo-complete-profile/*.html" ]

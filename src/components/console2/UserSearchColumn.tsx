@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Users, Loader2, User, RefreshCw } from 'lucide-react';
 import { useOptimizedUserDiscovery } from '@/hooks/useOptimizedUserDiscovery';
 import { useUserSearch } from '@/hooks/useUserSearch';
-import { UnifiedProfileView } from '../console/UnifiedProfileView';
+import { ProfileModal } from '@/components/ProfileModal';
 
 export const UserSearchColumn: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,11 +40,18 @@ export const UserSearchColumn: React.FC = () => {
 
   if (selectedUser) {
     return (
-      <UnifiedProfileView
-        habboName={selectedUser}
-        hotel="com.br"
-        onBack={handleBack}
-      />
+      <div className="h-full flex flex-col">
+        <div className="p-2 bg-white/10 rounded mb-2">
+          <Button onClick={handleBack} variant="ghost" size="sm" className="text-white">
+            ← Voltar
+          </Button>
+        </div>
+        <ProfileModal
+          open={true}
+          setOpen={() => setSelectedUser(null)}
+          habboName={selectedUser}
+        />
+      </div>
     );
   }
 

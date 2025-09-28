@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Heart, MessageCircle, Camera } from 'lucide-react';
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
 import { useAuth } from '@/hooks/useAuth';
-import { ConsoleProfileModal } from '@/components/console/ConsoleProfileModal';
+import { ProfileModal } from '@/components/ProfileModal';
 
 export const HotelPhotoFeedColumn: React.FC = () => {
   const { habboAccount } = useAuth();
@@ -132,7 +132,7 @@ export const HotelPhotoFeedColumn: React.FC = () => {
         </CardContent>
       </Card>
 
-      <ConsoleProfileModal
+      <ProfileModal
         open={isModalOpen}
         setOpen={setIsModalOpen}
         habboName={selectedUser}

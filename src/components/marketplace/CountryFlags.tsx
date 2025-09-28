@@ -7,18 +7,18 @@ interface CountryFlagsProps {
 export const CountryFlags = ({ hotelId, className = '' }: CountryFlagsProps) => {
   const getFlagAsset = (hotel: string) => {
     const flagMap: Record<string, string> = {
-      'br': '/assets/flagbrazil.png',
-      'com': '/assets/flagcom.png', 
-      'de': '/assets/flagdeus.png',
-      'es': '/assets/flagspain.png',
-      'fr': '/assets/flagfrance.png',
-      'it': '/assets/flagitaly.png',
-      'nl': '/assets/flagnetl.png',
-      'fi': '/assets/flafinland.png',
-      'tr': '/assets/flagtrky.png'
+      'br': '/flags/flagbrazil.png',
+      'com': '/flags/flagcom.png', 
+      'de': '/flags/flagdeus.png',
+      'es': '/flags/flagspain.png',
+      'fr': '/flags/flagfrance.png',
+      'it': '/flags/flagitaly.png',
+      'nl': '/flags/flagnetl.png',
+      'fi': '/flags/flafinland.png',
+      'tr': '/flags/flagtrky.png'
     };
     
-    return flagMap[hotel] || '/assets/flagcom.png'; // fallback
+    return flagMap[hotel] || '/flags/flagcom.png'; // fallback
   };
 
   return (

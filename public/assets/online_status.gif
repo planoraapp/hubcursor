@@ -1,0 +1,6 @@
+<!-- Online Status GIF - Simple animated green circle -->
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="8" cy="8" r="6" fill="#10B981" stroke="#ffffff" stroke-width="2">
+    <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

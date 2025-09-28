@@ -25,7 +25,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { habboAccount } = useUnifiedAuth();
+  const { habboAccount } = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
