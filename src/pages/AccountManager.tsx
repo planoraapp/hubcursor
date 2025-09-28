@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { RefreshCw, UserPlus, Users, Shield, Globe } from 'lucide-react';
 import { checkSupabaseAccounts, checkSpecificAccount } from '@/utils/checkSupabaseAccounts';
 import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
+import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 interface AccountData {
   id: string;
@@ -100,13 +102,25 @@ export const AccountManager: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset>
+          <main 
+            className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide min-h-screen"
+            style={{ 
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundRepeat: 'repeat',
+              backgroundSize: 'auto'
+            }}
+          >
+            <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 volter-font">
-            Gerenciador de Contas
+          <h1 className="text-3xl font-bold text-white volter-font drop-shadow-lg">
+            👥 Gerenciador de Contas
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-white/90 mt-2 volter-font drop-shadow">
             Gerencie contas do sistema HabboHub
           </p>
         </div>
@@ -116,7 +130,7 @@ export const AccountManager: React.FC = () => {
             onClick={loadAccounts}
             disabled={loading}
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm hover:bg-white/95"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Atualizar
@@ -135,20 +149,20 @@ export const AccountManager: React.FC = () => {
 
       {/* Mensagens de status */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded bg-white/90 backdrop-blur-sm">
           {error}
         </div>
       )}
 
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded bg-white/90 backdrop-blur-sm">
           {successMessage}
         </div>
       )}
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
           <CardContent className="flex items-center p-6">
             <Users className="h-8 w-8 text-blue-600" />
             <div className="ml-4">
@@ -158,7 +172,7 @@ export const AccountManager: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
           <CardContent className="flex items-center p-6">
             <Shield className="h-8 w-8 text-green-600" />
             <div className="ml-4">
@@ -170,7 +184,7 @@ export const AccountManager: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
           <CardContent className="flex items-center p-6">
             <Globe className="h-8 w-8 text-purple-600" />
             <div className="ml-4">
@@ -253,7 +267,7 @@ export const AccountManager: React.FC = () => {
       {/* Ferramentas de teste */}
       <Card>
         <CardHeader>
-          <CardTitle>Ferramentas de Teste</CardTitle>
+          <CardTitle className="volter-font">🔧 Ferramentas de Teste</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
@@ -277,6 +291,10 @@ export const AccountManager: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+            </div>
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 };

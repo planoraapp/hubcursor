@@ -26,6 +26,8 @@ import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
 import { useNavigate } from 'react-router-dom';
 import { AnimationGenerator } from '@/components/AnimationGenerator';
+import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 
 interface AdminStats {
   totalUsers: number;
@@ -144,226 +146,263 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex items-center space-x-2">
-          <RefreshCw className="w-6 h-6 animate-spin" />
-          <span>Carregando dashboard...</span>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <CollapsibleAppSidebar />
+          <SidebarInset>
+            <div 
+              className="flex items-center justify-center min-h-screen"
+              style={{ 
+                backgroundImage: 'url(/assets/bghabbohub.png)',
+                backgroundRepeat: 'repeat',
+                backgroundSize: 'auto'
+              }}
+            >
+              <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+                <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+                <span className="text-gray-700 volter-font">Carregando dashboard...</span>
+              </div>
+            </div>
+          </SidebarInset>
         </div>
-      </div>
+      </SidebarProvider>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 volter-font">
-            Painel Administrativo
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Dashboard do sistema HabboHub
-          </p>
-        </div>
-        
-        <Button
-          onClick={refreshStats}
-          disabled={refreshing}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset>
+          <main 
+            className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide min-h-screen"
+            style={{ 
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundRepeat: 'repeat',
+              backgroundSize: 'auto'
+            }}
+          >
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-white volter-font drop-shadow-lg">
+                    🛡️ Painel Administrativo
+                  </h1>
+                  <p className="text-white/90 mt-2 volter-font drop-shadow">
+                    Dashboard do sistema HabboHub
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={refreshStats}
+                  disabled={refreshing}
+                  variant="outline"
+                  className="flex items-center gap-2 bg-white/90 backdrop-blur-sm hover:bg-white/95"
+                >
+                  <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+              </div>
+
+              {/* Estatísticas principais */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Users className="h-8 w-8 text-blue-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Total de Usuários</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Home className="h-8 w-8 text-green-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Homes Criadas</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalHomes}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Activity className="h-8 w-8 text-purple-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Usuários Ativos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <TrendingUp className="h-8 w-8 text-orange-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Visitas Hoje</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.visitsToday}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Estatísticas de engajamento */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Heart className="h-8 w-8 text-red-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Total de Likes</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalLikes}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <MessageSquare className="h-8 w-8 text-blue-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Comentários</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalComments}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Camera className="h-8 w-8 text-green-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Fotos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalPhotos}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Ações administrativas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 volter-font">
+                      <Users className="w-5 h-5" />
+                      Gerenciamento de Usuários
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      onClick={() => navigate('/admin/accounts')}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      👥 Gerenciar Contas
+                    </Button>
+                    <Button 
+                      onClick={createHabbohubAccountHandler}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      🤖 Criar Conta HabboHub
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 volter-font">
+                      <Home className="w-5 h-5" />
+                      Gerenciamento de Homes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      onClick={() => navigate('/admin/homes')}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      🏠 Gerenciar Homes
+                    </Button>
+                    <Button 
+                      onClick={initializeHomesHandler}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      🔧 Inicializar Homes
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 volter-font">
+                      <Database className="w-5 h-5" />
+                      Sistema
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      onClick={() => navigate('/admin/database')}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      🗄️ Banco de Dados
+                    </Button>
+                    <Button
+                      onClick={() => navigate('/admin/settings')}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      ⚙️ Configurações
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 volter-font">
+                      <Zap className="w-5 h-5" />
+                      Ferramentas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <Button
+                      onClick={() => setShowAnimationGenerator(!showAnimationGenerator)}
+                      variant="outline"
+                      className="w-full volter-font"
+                    >
+                      🎬 Gerador de Animações
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Gerador de Animações */}
+              {showAnimationGenerator && (
+                <div className="mt-8">
+                  <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                    <CardHeader>
+                      <CardTitle className="volter-font">🎬 Gerador de Animações</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <AnimationGenerator />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Badge de sistema */}
+              <div className="flex justify-center">
+                <Badge variant="secondary" className="px-4 py-2 bg-white/90 backdrop-blur-sm border-2 border-black">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Sistema HabboHub v2.0
+                </Badge>
+              </div>
+            </div>
+          </main>
+        </SidebarInset>
       </div>
-
-      {/* Estatísticas principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Users className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total de Usuários</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Home className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Homes Criadas</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalHomes}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Activity className="h-8 w-8 text-purple-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Usuários Ativos</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <TrendingUp className="h-8 w-8 text-orange-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Visitas Hoje</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.visitsToday}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Estatísticas de engajamento */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Heart className="h-8 w-8 text-red-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total de Likes</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalLikes}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <MessageSquare className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Comentários</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalComments}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <Camera className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Fotos</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalPhotos}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Ações administrativas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Gerenciamento de Usuários
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              onClick={() => navigate('/admin/accounts')}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              👥 Gerenciar Contas
-            </Button>
-            <Button 
-              onClick={createHabbohubAccountHandler}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              🤖 Criar Conta HabboHub
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Home className="w-5 h-5" />
-              Gerenciamento de Homes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              onClick={() => navigate('/admin/homes')}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              🏠 Gerenciar Homes
-            </Button>
-            <Button 
-              onClick={initializeHomesHandler}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              🔧 Inicializar Homes
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5" />
-              Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              onClick={() => navigate('/admin/database')}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              🗄️ Banco de Dados
-            </Button>
-            <Button
-              onClick={() => navigate('/admin/settings')}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              ⚙️ Configurações
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5" />
-              Ferramentas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              onClick={() => setShowAnimationGenerator(!showAnimationGenerator)}
-              variant="outline"
-              className="w-full volter-font"
-            >
-              🎬 Gerador de Animações
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Gerador de Animações */}
-      {showAnimationGenerator && (
-        <div className="mt-8">
-          <AnimationGenerator />
-        </div>
-      )}
-
-      {/* Badge de sistema */}
-      <div className="flex justify-center">
-        <Badge variant="secondary" className="px-4 py-2">
-          <Shield className="w-4 h-4 mr-2" />
-          Sistema HabboHub v2.0
-        </Badge>
-      </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
