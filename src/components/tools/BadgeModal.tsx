@@ -19,16 +19,16 @@ interface BadgeModalProps {
 // Lista de países/regiões com bandeiras (será carregada dinamicamente)
 const BADGE_COUNTRIES = [
   { name: 'Todos', flag: null },
-  { name: 'Brasil/Portugal', flag: '/assets/flagbrpt.png' },
-  { name: 'Espanha', flag: '/assets/flagspain.png' },
-  { name: 'França', flag: '/assets/flagfrance.png' },
-  { name: 'Alemanha', flag: '/assets/flagdeus.png' },
-  { name: 'Itália', flag: '/assets/flagitaly.png' },
-  { name: 'Holanda', flag: '/assets/flagnetl.png' },
-  { name: 'Turquia', flag: '/assets/flagtrky.png' },
-  { name: 'Finlândia', flag: '/assets/flafinland.png' },
-  { name: 'Estados Unidos', flag: '/assets/flagcom.png' },
-  { name: 'Reino Unido', flag: '/assets/flagcom.png' }
+  { name: 'Brasil/Portugal', flag: '/flags/flagbrpt.png' },
+  { name: 'Espanha', flag: '/flags/flagspain.png' },
+  { name: 'França', flag: '/flags/flagfrance.png' },
+  { name: 'Alemanha', flag: '/flags/flagdeus.png' },
+  { name: 'Itália', flag: '/flags/flagitaly.png' },
+  { name: 'Holanda', flag: '/flags/flagnetl.png' },
+  { name: 'Turquia', flag: '/flags/flagtrky.png' },
+  { name: 'Finlândia', flag: '/flags/flafinland.png' },
+  { name: 'Estados Unidos', flag: '/flags/flagcom.png' },
+  { name: 'Reino Unido', flag: '/flags/flagcom.png' }
 ];
 
 // Lista de categorias especiais (será carregada dinamicamente)

@@ -17,17 +17,17 @@ import type {
 // Helper function to get country flag PNG from hotel
 const getCountryFlagPng = (hotel: string): string => {
   const hotelFlags: Record<string, string> = {
-    'com.br': '/assets/flagbrazil.png', 'br': '/assets/flagbrazil.png',
-    'com': '/assets/flagcom.png', 'us': '/assets/flagcom.png',
-    'es': '/assets/flagspain.png', 'com.es': '/assets/flagspain.png',
-    'de': '/assets/flagdeus.png', 'com.de': '/assets/flagdeus.png',
-    'fr': '/assets/flagfrance.png', 'com.fr': '/assets/flagfrance.png',
-    'fi': '/assets/flafinland.png', 'com.fi': '/assets/flafinland.png',
-    'it': '/assets/flagitaly.png', 'com.it': '/assets/flagitaly.png',
-    'nl': '/assets/flagnetl.png', 'com.nl': '/assets/flagnetl.png',
-    'com.tr': '/assets/flagtrky.png', 'tr': '/assets/flagtrky.png'
+    'com.br': '/flags/flagbrazil.png', 'br': '/flags/flagbrazil.png',
+    'com': '/flags/flagcom.png', 'us': '/flags/flagcom.png',
+    'es': '/flags/flagspain.png', 'com.es': '/flags/flagspain.png',
+    'de': '/flags/flagdeus.png', 'com.de': '/flags/flagdeus.png',
+    'fr': '/flags/flagfrance.png', 'com.fr': '/flags/flagfrance.png',
+    'fi': '/flags/flafinland.png', 'com.fi': '/flags/flafinland.png',
+    'it': '/flags/flagitaly.png', 'com.it': '/flags/flagitaly.png',
+    'nl': '/flags/flagnetl.png', 'com.nl': '/flags/flagnetl.png',
+    'com.tr': '/flags/flagtrky.png', 'tr': '/flags/flagtrky.png'
   };
-  return hotelFlags[hotel.toLowerCase()] || '/assets/flagcom.png';
+  return hotelFlags[hotel.toLowerCase()] || '/flags/flagcom.png';
 };
 
 // Função para obter URL da skin do Supabase

@@ -24,7 +24,7 @@ export const useSystemHealthMonitor = () => {
     const checkSystemHealth = () => {
       const recommendations: string[] = [];
       
-      const isAuthenticated = !!habboAccount?.supabase_user_id;
+      const isAuthenticated = !!habboAccount?.id;
       const hasHabboAccount = !!habboAccount?.habbo_name;
       
       if (!isAuthenticated) {
@@ -49,10 +49,10 @@ export const useSystemHealthMonitor = () => {
 
     checkSystemHealth();
     
-    // Check health every 30 seconds
-    const interval = setInterval(checkSystemHealth, 30000);
-    
-    return () => clearInterval(interval);
+    // DESABILITADO: Check health every 30 seconds - estava causando re-renderizações
+    // const interval = setInterval(checkSystemHealth, 30000);
+    // 
+    // return () => clearInterval(interval);
   }, [habboAccount]);
 
   const getHealthScore = (): number => {

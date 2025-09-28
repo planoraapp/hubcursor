@@ -23,7 +23,7 @@ export const useUnifiedPhotoSystem = (
   hotel: string = 'br',
   options: UseUnifiedPhotoSystemOptions = {}
 ) => {
-  const { forceRefresh = false, cacheTime = 5 } = options;
+  const { forceRefresh = false, cacheTime = 15 } = options; // Aumentado para 15 minutos
 
   const { 
     data: photos = [], 
@@ -31,19 +31,13 @@ export const useUnifiedPhotoSystem = (
     error, 
     refetch 
   } = useQuery({
-    queryKey: ['unified-photos-api', username, hotel, forceRefresh],
+    queryKey: ['unified-photos-api', username, hotel], // Removido forceRefresh do queryKey
     queryFn: async (): Promise<UnifiedPhoto[]> => {
       if (!username) {
                 return [];
       }
 
-            console.log('[📋 UNIFIED PHOTOS] Parameters:', {
-        username: username.trim(),
-        hotel,
-        forceRefresh,
-        cacheTime,
-        timestamp: new Date().toISOString()
-      });
+            // Logs removidos para evitar flicker
 
       try {
                 const { data, error } = await supabase.functions.invoke('habbo-photos-scraper', {
@@ -58,12 +52,7 @@ export const useUnifiedPhotoSystem = (
                     throw new Error(error.message || 'Failed to fetch photos from API');
         }
 
-        console.log('[📥 UNIFIED PHOTOS] API response:', {
-          success: !error,
-          dataType: typeof data,
-          isArray: Array.isArray(data),
-          dataLength: Array.isArray(data) ? data.length : 'Not an array',
-        });
+        // Logs removidos para evitar flicker
 
         if (data && Array.isArray(data)) {
           const unifiedPhotos: UnifiedPhoto[] = data.map(photo => ({
@@ -77,11 +66,7 @@ export const useUnifiedPhotoSystem = (
             source: 'api' as const
           }));
 
-                    console.log('[📊 UNIFIED PHOTOS] Final result:', {
-            totalPhotos: unifiedPhotos.length,
-            photosWithLikes: unifiedPhotos.filter(p => p.likes > 0).length,
-            sources: { api: unifiedPhotos.length }
-          });
+          // Logs removidos para evitar flicker
 
           return unifiedPhotos;
         } else {
@@ -99,10 +84,12 @@ export const useUnifiedPhotoSystem = (
       }
     },
     enabled: !!username,
-    staleTime: cacheTime * 60 * 1000, // Short cache time - data is always fresh from API
-    gcTime: (cacheTime + 2) * 60 * 1000, // Keep in memory a bit longer
+    staleTime: cacheTime * 60 * 1000, // 15 minutos - muito mais tempo para evitar re-fetches
+    gcTime: (cacheTime + 5) * 60 * 1000, // 20 minutos - manter em memória por mais tempo
     retry: 2,
     retryDelay: 1000,
+    refetchOnWindowFocus: false, // Desabilitar refetch automático no foco da janela
+    refetchOnMount: false, // Desabilitar refetch automático ao montar
   });
 
   const refreshPhotos = async (force = false) => {

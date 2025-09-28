@@ -14,63 +14,63 @@ export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
     name: 'Brasil/Portugal',
     domain: 'ptbr',
     apiUrl: 'https://www.habbo.com.br/api/public',
-    flag: '/assets/flagbrazil.png'
+    flag: '/flags/flagbrazil.png'
   },
   'com': {
     code: 'com',
     name: 'UK e .com',
     domain: 'com',
     apiUrl: 'https://www.habbo.com/api/public',
-    flag: '/assets/flagcom.png'
+    flag: '/flags/flagcom.png'
   },
   'fi': {
     code: 'fi',
     name: 'Finlândia',
     domain: 'fi',
     apiUrl: 'https://www.habbo.fi/api/public',
-    flag: '/assets/flafinland.png'
+    flag: '/flags/flafinland.png'
   },
   'it': {
     code: 'it',
     name: 'Itália',
     domain: 'it',
     apiUrl: 'https://www.habbo.it/api/public',
-    flag: '/assets/flagitaly.png'
+    flag: '/flags/flagitaly.png'
   },
   'de': {
     code: 'de',
     name: 'Alemanha',
     domain: 'de',
     apiUrl: 'https://www.habbo.de/api/public',
-    flag: '/assets/flagdeus.png'
+    flag: '/flags/flagdeus.png'
   },
   'es': {
     code: 'es',
     name: 'Espanha',
     domain: 'es',
     apiUrl: 'https://www.habbo.es/api/public',
-    flag: '/assets/flagspain.png'
+    flag: '/flags/flagspain.png'
   },
   'fr': {
     code: 'fr',
     name: 'França',
     domain: 'fr',
     apiUrl: 'https://www.habbo.fr/api/public',
-    flag: '/assets/flagfrance.png'
+    flag: '/flags/flagfrance.png'
   },
   'nl': {
     code: 'nl',
     name: 'Holanda',
     domain: 'nl',
     apiUrl: 'https://www.habbo.nl/api/public',
-    flag: '/assets/flagnetl.png'
+    flag: '/flags/flagnetl.png'
   },
   'tr': {
     code: 'tr',
     name: 'Turquia',
     domain: 'com.tr',
     apiUrl: 'https://www.habbo.com.tr/api/public',
-    flag: '/assets/flagtrky.png'
+    flag: '/flags/flagtrky.png'
   }
 };
 

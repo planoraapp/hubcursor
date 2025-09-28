@@ -9,8 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { HotelSelector } from '@/components/HotelSelector';
 import { getAvailableHotels } from '@/utils/usernameUtils';
 import { Loader2 } from 'lucide-react';
-import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { useQuickNotification } from '@/hooks/useNotification';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +24,10 @@ export const Login: React.FC = () => {
   const [loginMode, setLoginMode] = useState<'senha' | 'motto' | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [mottoStep, setMottoStep] = useState<'generate' | 'verify' | 'password' | 'complete'>('generate');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
   const { success, error } = useQuickNotification();
 
   // Lista dos hotéis Habbo
@@ -34,6 +38,7 @@ export const Login: React.FC = () => {
     const randomNum = Math.floor(Math.random() * 90000) + 10000; // 5 dígitos
     const code = `HUB-${randomNum}`;
     setVerificationCode(code);
+    setMottoStep('verify');
     return code;
   };
 
@@ -43,6 +48,119 @@ export const Login: React.FC = () => {
       navigate('/console');
     }
   }, [isLoggedIn, navigate]);
+
+  // Função para verificar motto e criar conta
+  const handleVerifyMotto = async () => {
+    if (!username.trim() || !verificationCode.trim()) {
+      error('Erro', 'Preencha todos os campos');
+      return;
+    }
+
+    setIsVerifying(true);
+    
+    try {
+      // Verificar se o usuário existe no Habbo
+      const hotelDomain = selectedHotel === 'br' ? 'com.br' : selectedHotel;
+      const habboApiUrl = `https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`;
+      
+      const habboResponse = await fetch(habboApiUrl);
+      
+      if (!habboResponse.ok) {
+        throw new Error('Usuário não encontrado no Habbo Hotel');
+      }
+
+      const habboData = await habboResponse.json();
+      
+      // Verificar se o código está na motto
+      if (!habboData.motto || !habboData.motto.includes(verificationCode)) {
+        throw new Error(`Código ${verificationCode} não encontrado na sua motto. Verifique se você copiou corretamente.`);
+      }
+
+      // Verificar se usuário já existe
+      const { data: existingAccount } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .eq('habbo_name', username)
+        .single();
+
+      if (existingAccount) {
+        setMottoStep('password');
+        success('Usuário encontrado!', 'Digite uma nova senha para resetar sua conta.');
+      } else {
+        setMottoStep('password');
+        success('Verificação bem-sucedida!', 'Agora crie uma senha para sua conta.');
+      }
+    } catch (error: any) {
+      error('Erro', error.message || 'Erro na verificação');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Função para criar/resetar conta
+  const handleCreateOrResetAccount = async () => {
+    if (!newPassword.trim() || !confirmPassword.trim()) {
+      error('Erro', 'Preencha todos os campos');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      error('Erro', 'As senhas não coincidem');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      error('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setIsCreatingAccount(true);
+    
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('auto-register-via-motto', {
+        body: {
+          habbo_name: username.trim(),
+          verification_code: verificationCode.trim(),
+          new_password: newPassword,
+          hotel: selectedHotel
+        }
+      });
+
+      if (functionError) {
+        throw new Error(functionError.message || 'Erro na criação da conta');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.success) {
+        setMottoStep('complete');
+        success('Sucesso!', 'Conta criada com sucesso! Agora você pode fazer login.');
+        
+        // Reset form após 3 segundos
+        setTimeout(() => {
+          setUsername('');
+          setPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+          setVerificationCode('');
+          setLoginMode(null);
+          setMottoStep('generate');
+        }, 3000);
+      }
+    } catch (error: any) {
+      let errorMessage = error.message || 'Erro na criação da conta';
+      
+      if (errorMessage.includes('já cadastrado')) {
+        errorMessage = 'Este usuário já possui uma conta. Use a opção de login com senha.';
+      }
+      
+      error('Erro', errorMessage);
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
 
   // Função de login
   const handleLogin = async (e: React.FormEvent) => {
@@ -62,47 +180,20 @@ export const Login: React.FC = () => {
         // O redirecionamento será feito automaticamente pelo useEffect
       }
     } catch (error) {
-          } finally {
+      // Erro será tratado pelo hook useAuth
+    } finally {
       setIsLoggingIn(false);
     }
   };
 
   if (loading) {
     return (
-      <EnhancedErrorBoundary>
-        <SidebarProvider>
-          <div className="min-h-screen flex w-full">
-            <CollapsibleAppSidebar />
-            <SidebarInset className="flex-1">
-              <main 
-                className="flex-1 p-8 bg-repeat min-h-screen flex items-center justify-center" 
-                style={{ 
-                  backgroundImage: 'url(/assets/bghabbohub.png)',
-                  backgroundRepeat: 'repeat',
-                  backgroundPosition: 'center',
-                  backgroundSize: 'auto'
-                }}
-              >
-                <div className="text-center">
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-                  <p className="text-white">Carregando...</p>
-                </div>
-              </main>
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </EnhancedErrorBoundary>
-    );
-  }
-
-  return (
-    <EnhancedErrorBoundary>
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
             <main 
-              className="flex-1 p-8 bg-repeat min-h-screen" 
+              className="flex-1 p-8 bg-repeat min-h-screen flex items-center justify-center" 
               style={{ 
                 backgroundImage: 'url(/assets/bghabbohub.png)',
                 backgroundRepeat: 'repeat',
@@ -110,6 +201,31 @@ export const Login: React.FC = () => {
                 backgroundSize: 'auto'
               }}
             >
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+                <p className="text-white">Carregando...</p>
+              </div>
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <CollapsibleAppSidebar />
+        <SidebarInset className="flex-1">
+          <main 
+            className="flex-1 p-8 bg-repeat min-h-screen" 
+            style={{ 
+              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundRepeat: 'repeat',
+              backgroundPosition: 'center',
+              backgroundSize: 'auto'
+            }}
+          >
             <div className="max-w-2xl mx-auto mt-10">
               {/* Logo do HabboHub */}
               <div className="text-center mb-8">
@@ -254,7 +370,7 @@ export const Login: React.FC = () => {
                         )}
 
                         {/* Campo de verificação por motto */}
-                        {loginMode === 'motto' && (
+                        {loginMode === 'motto' && mottoStep !== 'complete' && (
                           <div className="mb-4">
                             <div className="bg-white p-3 rounded-lg mb-3">
                               {/* Layout desktop: lado a lado */}
@@ -358,6 +474,50 @@ export const Login: React.FC = () => {
                           </div>
                         )}
 
+                        {/* Campos de senha para criação/reset de conta */}
+                          {mottoStep === 'password' && (
+                            <div className="mb-4 space-y-3">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Nova Senha (mínimo 6 caracteres)
+                                </label>
+                                <Input
+                                  type="password"
+                                  placeholder="Digite sua nova senha"
+                                  value={newPassword}
+                                  onChange={(e) => setNewPassword(e.target.value)}
+                                  className="border-2 border-gray-300 focus:border-blue-500"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Confirmar Senha
+                                </label>
+                                <Input
+                                  type="password"
+                                  placeholder="Confirme sua nova senha"
+                                  value={confirmPassword}
+                                  onChange={(e) => setConfirmPassword(e.target.value)}
+                                  className="border-2 border-gray-300 focus:border-blue-500"
+                                  required
+                                />
+                              </div>
+                            </div>
+                          )})
+
+                          {/* Mensagem de sucesso */}
+                          {mottoStep === 'complete' && (
+                            <div className="mb-4 p-4 bg-green-100 border border-green-400 rounded">
+                              <p className="text-green-800 text-center font-bold">
+                                ✅ Conta criada com sucesso!
+                              </p>
+                              <p className="text-green-600 text-center text-sm mt-2">
+                                Agora você pode fazer login com seu nome Habbo e a senha escolhida.
+                              </p>
+                            </div>
+                          )}
+
                         {/* Botões de ação */}
                         <div className="space-y-2">
                           {loginMode === 'senha' && (
@@ -373,15 +533,15 @@ export const Login: React.FC = () => {
                                 </>
                               ) : (
                                 '🔐 Fazer Login'
-                              )}
+                              )})
                             </Button>
-                          )}
+                          )})
 
-                          {loginMode === 'motto' && (
+                          {loginMode === 'motto' && mottoStep === 'verify' && (
                             <div className="flex justify-center">
                               <Button
                                 type="button"
-                                onClick={() => setIsVerifying(true)}
+                                onClick={handleVerifyMotto}
                                 disabled={isVerifying}
                                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded transition-colors flex items-center justify-center sidebar-font-option-4"
                                 style={{ 
@@ -400,7 +560,61 @@ export const Login: React.FC = () => {
                                   </>
                                 ) : (
                                   'Verificar Habbo'
-                                )}
+                                )})
+                              </Button>
+                            </div>
+                          )})
+
+                          {loginMode === 'motto' && mottoStep === 'password' && (
+                            <div className="flex justify-center">
+                              <Button
+                                type="button"
+                                onClick={handleCreateOrResetAccount}
+                                disabled={isCreatingAccount || !newPassword.trim() || !confirmPassword.trim()}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition-colors flex items-center justify-center sidebar-font-option-4"
+                                style={{ 
+                                  fontSize: '16px',
+                                  fontWeight: 'bold',
+                                  letterSpacing: '0.3px',
+                                  textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                  border: '2px solid black',
+                                  imageRendering: 'pixelated'
+                                }}
+                              >
+                                {isCreatingAccount ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Criando conta...
+                                  </>
+                                ) : (
+                                  'Criar Conta'
+                                )})
+                              </Button>
+                            </div>
+                          )})
+
+                          {loginMode === 'motto' && mottoStep === 'complete' && (
+                            <div className="flex justify-center">
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  setLoginMode('senha');
+                                  setMottoStep('generate');
+                                  setNewPassword('');
+                                  setConfirmPassword('');
+                                  setVerificationCode('');
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded transition-colors flex items-center justify-center sidebar-font-option-4"
+                                style={{ 
+                                  fontSize: '16px',
+                                  fontWeight: 'bold',
+                                  letterSpacing: '0.3px',
+                                  textShadow: 'black 1px 1px 0px, black -1px -1px 0px, black 1px -1px 0px, black -1px 1px 0px',
+                                  border: '2px solid black',
+                                  imageRendering: 'pixelated'
+                                }}
+                              >
+                                Fazer Login Agora
                               </Button>
                             </div>
                           )}
@@ -415,7 +629,6 @@ export const Login: React.FC = () => {
         </SidebarInset>
       </div>
     </SidebarProvider>
-    </EnhancedErrorBoundary>
   );
 };
 

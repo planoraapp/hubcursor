@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface HabboAccount {
   id: string;
@@ -109,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return true;
     } catch (error) {
-      console.error('Erro no login:', error);
+      logger.error('Erro no login:', error);
       toast({
         title: "Erro no login",
         description: "Erro inesperado ao fazer login",
@@ -138,7 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
     } catch (error) {
-      console.error('Erro no logout:', error);
+      logger.error('Erro no logout:', error);
     } finally {
       setLoading(false);
     }

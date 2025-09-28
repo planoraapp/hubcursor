@@ -1,9 +1,7 @@
 import type { HabboUser } from '@/types/habbo';
+
 // Base URL para Habbo BR API
 const HABBO_API_BASE_URL = 'https://www.habbo.com.br/api/public';
-
->;
-}
 
 export interface HabboRoom {
   id: string;

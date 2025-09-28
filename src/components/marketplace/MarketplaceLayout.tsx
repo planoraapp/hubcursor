@@ -62,15 +62,15 @@ export const MarketplaceLayout = () => {
   const [sortBy, setSortBy] = useState<'price' | 'recent' | 'quantity' | 'ltd'>('price');
 
   const hotels = [
-    { id: 'br', name: 'Habbo.com.br', flag: '/assets/flagbrazil.png' },
-    { id: 'com', name: 'Habbo.com', flag: '/assets/flagcom.png' },
-    { id: 'de', name: 'Habbo.de', flag: '/assets/flagdeus.png' },
-    { id: 'es', name: 'Habbo.es', flag: '/assets/flagspain.png' },
-    { id: 'fr', name: 'Habbo.fr', flag: '/assets/flagfrance.png' },
-    { id: 'it', name: 'Habbo.it', flag: '/assets/flagitaly.png' },
-    { id: 'nl', name: 'Habbo.nl', flag: '/assets/flagnetl.png' },
-    { id: 'fi', name: 'Habbo.fi', flag: '/assets/flafinland.png' },
-    { id: 'tr', name: 'Habbo.com.tr', flag: '/assets/flagtrky.png' },
+    { id: 'br', name: 'Habbo.com.br', flag: '/flags/flagbrazil.png' },
+    { id: 'com', name: 'Habbo.com', flag: '/flags/flagcom.png' },
+    { id: 'de', name: 'Habbo.de', flag: '/flags/flagdeus.png' },
+    { id: 'es', name: 'Habbo.es', flag: '/flags/flagspain.png' },
+    { id: 'fr', name: 'Habbo.fr', flag: '/flags/flagfrance.png' },
+    { id: 'it', name: 'Habbo.it', flag: '/flags/flagitaly.png' },
+    { id: 'nl', name: 'Habbo.nl', flag: '/flags/flagnetl.png' },
+    { id: 'fi', name: 'Habbo.fi', flag: '/flags/flafinland.png' },
+    { id: 'tr', name: 'Habbo.com.tr', flag: '/flags/flagtrky.png' },
   ];
 
   const fetchMarketData = async () => {

@@ -18,39 +18,39 @@ const MarketplaceCategoryBoxes = lazy(() => import('./MarketplaceCategoryBoxes')
 const hotels = [{
   id: 'br',
   name: 'Habbo.com.br',
-  flag: '/assets/flagbrazil.png'
+  flag: '/flags/flagbrazil.png'
 }, {
   id: 'com',
   name: 'Habbo.com',
-  flag: '/assets/flagcom.png'
+  flag: '/flags/flagcom.png'
 }, {
   id: 'de',
   name: 'Habbo.de',
-  flag: '/assets/flagdeus.png'
+  flag: '/flags/flagdeus.png'
 }, {
   id: 'es',
   name: 'Habbo.es',
-  flag: '/assets/flagspain.png'
+  flag: '/flags/flagspain.png'
 }, {
   id: 'fr',
   name: 'Habbo.fr',
-  flag: '/assets/flagfrance.png'
+  flag: '/flags/flagfrance.png'
 }, {
   id: 'it',
   name: 'Habbo.it',
-  flag: '/assets/flagitaly.png'
+  flag: '/flags/flagitaly.png'
 }, {
   id: 'nl',
   name: 'Habbo.nl',
-  flag: '/assets/flagnetl.png'
+  flag: '/flags/flagnetl.png'
 }, {
   id: 'fi',
   name: 'Habbo.fi',
-  flag: '/assets/flafinland.png'
+  flag: '/flags/flafinland.png'
 }, {
   id: 'tr',
   name: 'Habbo.com.tr',
-  flag: '/assets/flagtrky.png'
+  flag: '/flags/flagtrky.png'
 }];
 
 const MarketplaceContent = () => {

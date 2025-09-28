@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { FunctionalConsole } from '@/components/console/FunctionalConsole';
@@ -11,6 +11,7 @@ import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 
 const Console: React.FC = () => {
   const { isLoggedIn, habboAccount } = useAuth();
+  const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   const openPopupConsole = () => {
     // Calcular posição centralizada na tela
@@ -35,11 +36,28 @@ const Console: React.FC = () => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'CONSOLE_POPUP_CLOSED') {
         window.removeEventListener('message', handleMessage);
+        messageHandlerRef.current = null;
       }
     };
     
+    // Limpar listener anterior se existir
+    if (messageHandlerRef.current) {
+      window.removeEventListener('message', messageHandlerRef.current);
+    }
+    
+    messageHandlerRef.current = handleMessage;
     window.addEventListener('message', handleMessage);
   };
+
+  // Cleanup ao desmontar o componente
+  useEffect(() => {
+    return () => {
+      if (messageHandlerRef.current) {
+        window.removeEventListener('message', messageHandlerRef.current);
+        messageHandlerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <EnhancedErrorBoundary

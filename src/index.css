@@ -509,8 +509,7 @@
 /* Pixel Art Console Styles */
 .pixel-frame-outer {
   width: 100%;
-  max-width: 375px;
-  min-width: 320px;
+  max-width: 100%;
   background: #FDCC00;
   box-shadow: inset 0px 0px 0px 1px #FBCC00, inset 0px 0px 0px 2px #FEE100;
   border-radius: 12px;
@@ -569,6 +568,60 @@
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  /* Scrollbar styling */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.pixel-inner-content::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.pixel-inner-content:hover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pixel-inner-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pixel-inner-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.pixel-inner-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Global scrollbar styles for hover-only appearance */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.hover\:scrollbar-thin:hover::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hover\:scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hover\:scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .pixel-nav-button {

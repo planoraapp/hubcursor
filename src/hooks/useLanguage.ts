@@ -295,9 +295,9 @@ export const useLanguage = () => {
 
   const getCurrentFlag = (): string => {
     const flags = {
-      pt: '/assets/flagbrazil.png',
-      en: '/assets/flagcom.png',
-      es: '/assets/flagspain.png'
+      pt: '/flags/flagbrazil.png',
+      en: '/flags/flagcom.png',
+      es: '/flags/flagspain.png'
     };
     return flags[currentLanguage];
   };

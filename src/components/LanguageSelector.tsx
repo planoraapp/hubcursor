@@ -10,9 +10,9 @@ export const LanguageSelector = ({ collapsed = false }: LanguageSelectorProps) =
   const { currentLanguage, changeLanguage } = useLanguage();
 
   const languages = [
-    { code: 'pt', name: 'Português', flag: '/assets/flagbrazil.png' },
-    { code: 'en', name: 'English', flag: '/assets/flagcom.png' },
-    { code: 'es', name: 'Español', flag: '/assets/flagspain.png' },
+    { code: 'pt', name: 'Português', flag: '/flags/flagbrazil.png' },
+    { code: 'en', name: 'English', flag: '/flags/flagcom.png' },
+    { code: 'es', name: 'Español', flag: '/flags/flagspain.png' },
   ];
 
   if (collapsed) {

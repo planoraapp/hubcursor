@@ -1,34 +1,26 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
-    port: 8080,
-<<<<<<< HEAD
-    force: true,
-  },
-  optimizeDeps: {
-    force: true,
-=======
-    // Configuração para servir assets estáticos corretamente
+    port: 3000,
+    host: true,
+    open: false, // Desabilitar auto-open para acelerar
+    cors: true,
+    hmr: {
+      port: 3000
+    },
     fs: {
       allow: ['..']
-    },
-    // Configuração para servir arquivos estáticos
-    middlewareMode: false,
-    // Headers para CORS
-    cors: true
->>>>>>> 123d1852305b7472b51ed4894e129379d643b54b
+    }
   },
   plugins: [
-    react(),
-    // Reabilitar componentTagger em desenvolvimento
-    mode === 'development' && componentTagger(),
-  ].filter(Boolean),
+    react({
+      fastRefresh: true
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -40,12 +32,32 @@ export default defineConfig(({ mode }) => ({
     assetsDir: 'assets',
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name].[hash][extname]'
+        assetFileNames: 'assets/[name].[hash][extname]',
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['lucide-react', '@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js']
+        }
       }
     }
   },
-  // Configuração para servir arquivos estáticos em desenvolvimento
+  // Configuração otimizada para desenvolvimento - performance melhorada
   optimizeDeps: {
-    include: ['react', 'react-dom']
+    include: [
+      'react', 
+      'react-dom',
+      '@tanstack/react-query',
+      'react-router-dom',
+      'lucide-react',
+      '@supabase/supabase-js'
+    ],
+    exclude: [
+      'sonner'
+    ],
+    force: false // Mudado para false para evitar re-optimização desnecessária
+  },
+  // Configurações de performance
+  esbuild: {
+    target: 'esnext'
   }
 }));

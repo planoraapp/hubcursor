@@ -1,15 +1,19 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Home as HomeIcon, Users, MessageSquare, Star } from 'lucide-react';
-import { OpenConsolePopupButton } from '@/components/OpenConsolePopupButton';
-import PageBanner from '@/components/ui/PageBanner';
+import { Users, MessageSquare, Star } from 'lucide-react';
+
+// Temporariamente desabilitar hooks pesados para melhorar performance
+// import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
+// import { useHabboFurniApi } from '@/hooks/useHabboFurniApi';
+// import { useUnifiedClothingAPI } from '@/hooks/useUnifiedClothingAPI';
+// import { useHomeAssets } from '@/hooks/useHomeAssets';
 
 export const Home: React.FC = () => {
+  
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -23,11 +27,21 @@ export const Home: React.FC = () => {
             }}
           >
             <div className="max-w-7xl mx-auto">
-              <PageBanner 
-                title="🏠 HabboHub"
-                subtitle="A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel."
-                backgroundImage="/assets/gcreate_1_1.png"
-              />
+              {/* Simple Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-white mb-4 volter-font"
+                    style={{
+                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
+                    }}>
+                  🏠 HabboHub
+                </h1>
+                <p className="text-xl text-white/90 mb-6 volter-font max-w-3xl mx-auto"
+                   style={{
+                     textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                   }}>
+                  A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel.
+                </p>
+              </div>
 
               {/* Features Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -136,7 +150,6 @@ export const Home: React.FC = () => {
                             letterSpacing: '0.3px'
                           }}>Explorar Console</Button>
                       </Link>
-                      <OpenConsolePopupButton />
                       <Link to="/homes">
                         <Button size="lg" className="habbo-button-green sidebar-font-option-4"
                           style={{
