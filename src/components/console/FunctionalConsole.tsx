@@ -15,6 +15,9 @@ import { RoomsModal } from '@/components/profile/modals/RoomsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
 // import { PhotoModal } from '@/components/profile/modals/PhotoModal'; // Temporariamente removido
 import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
+import { lazy, Suspense } from 'react';
+
+const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 // Temporariamente comentado para acelerar carregamento
 // import { FeedActivityTabbedColumn } from '@/components/console2/FeedActivityTabbedColumn';
 // import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
@@ -166,6 +169,12 @@ export const FunctionalConsole: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('account');
   const [viewingUser, setViewingUser] = useState<string | null>(null); // Estado para usuário sendo visualizado
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null); // Foto selecionada para o modal
+  const [activeModal, setActiveModal] = useState<string | null>(null); // Estado global para modais
+  
+  // Debug logs para rastrear o estado do modal
+  React.useEffect(() => {
+    console.log('🔍 [FunctionalConsole] activeModal state changed:', activeModal);
+  }, [activeModal]);
   // PhotoModal temporariamente removido
   const { habboAccount, isLoggedIn } = useAuth();
   const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
@@ -245,6 +254,8 @@ export const FunctionalConsole: React.FC = () => {
           addComment={addComment}
           habboAccount={habboAccount}
           username={username}
+          activeModal={activeModal}
+          setActiveModal={setActiveModal}
         />;
       case 'feed':
         return <FeedTab 
@@ -265,6 +276,8 @@ export const FunctionalConsole: React.FC = () => {
           addComment={addComment}
           habboAccount={habboAccount}
           username={username}
+          activeModal={activeModal}
+          setActiveModal={setActiveModal}
         />;
       case 'photos':
         return <PhotosTab 
@@ -415,6 +428,39 @@ export const FunctionalConsole: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals Globais */}
+      <BadgesModal 
+        isOpen={activeModal === 'badges'} 
+        onClose={() => setActiveModal(null)}
+        badges={badges || []}
+        userName={userData?.name || 'Usuário'}
+        onNavigateToProfile={navigateToProfile}
+      />
+      
+      <FriendsModal 
+        isOpen={activeModal === 'friends'} 
+        onClose={() => setActiveModal(null)}
+        friends={friends || []}
+        userName={userData?.name || 'Usuário'}
+        onNavigateToProfile={navigateToProfile}
+      />
+      
+      <GroupsModal 
+        isOpen={activeModal === 'groups'} 
+        onClose={() => setActiveModal(null)}
+        groups={groups || []}
+        userName={userData?.name || 'Usuário'}
+        onNavigateToProfile={navigateToProfile}
+      />
+      
+      <RoomsModal 
+        isOpen={activeModal === 'rooms'} 
+        onClose={() => setActiveModal(null)}
+        rooms={rooms || []}
+        userName={userData?.name || 'Usuário'}
+        onNavigateToProfile={navigateToProfile}
+      />
     </div>
   );
 };
@@ -425,9 +471,76 @@ export const FunctionalConsole: React.FC = () => {
 const FeedTab: React.FC<any> = ({ 
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
-  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username
+  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
+  activeModal, setActiveModal
 }) => {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  
+  // Fechar dropdown quando clicar fora
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.country-dropdown')) {
+        setShowCountryDropdown(false);
+      }
+    };
+    
+    if (showCountryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCountryDropdown]);
+  
+  // Mapeamento dos países disponíveis
+  const countries = [
+    { code: 'com', name: 'USA/UK', flag: '/flags/flagcom.png' },
+    { code: 'br', name: 'Brasil/Portugal', flag: '/flags/flagbrazil.png' },
+    { code: 'de', name: 'Alemanha', flag: '/flags/flagdeus.png' },
+    { code: 'fr', name: 'França', flag: '/flags/flagfrance.png' },
+    { code: 'it', name: 'Itália', flag: '/flags/flagitaly.png' },
+    { code: 'es', name: 'Espanha', flag: '/flags/flagspain.png' },
+    { code: 'nl', name: 'Holanda', flag: '/flags/flagnetl.png' },
+    { code: 'tr', name: 'Turquia', flag: '/flags/flagtrky.png' },
+    { code: 'fi', name: 'Finlândia', flag: '/flags/flafinland.png' }
+  ];
+  
+  // Função para buscar usuários
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      // Aqui você pode integrar com a API de busca do Habbo
+      // Por enquanto, vamos simular uma busca
+      console.log('🔍 Buscando usuário:', searchTerm, 'no país:', selectedCountry);
+      
+      // Simular delay da API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock de resultados (substitua pela API real)
+      setSearchResults([
+        {
+          name: searchTerm,
+          motto: 'HUB-XXXXX',
+          online: true,
+          figureString: 'hd-180-1.ch-255-66.lg-285-110.sh-290-62.ha-1012-110.hr-828-61',
+          uniqueId: '12345'
+        }
+      ]);
+    } catch (error) {
+      console.error('Erro na busca:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
   
   // Detectar perfil privado: se não há dados completos ou se explicitamente privado
   const isProfilePrivate = isViewingOtherUser && (
@@ -576,7 +689,10 @@ const FeedTab: React.FC<any> = ({
           <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
           <div className="grid grid-cols-4 gap-1">
             <button 
-              onClick={() => setActiveModal('badges')}
+              onClick={() => {
+                console.log('🔘 [FeedTab] Badges button clicked');
+                setActiveModal('badges');
+              }}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trophy h-5 w-5 text-yellow-400 group-hover:scale-110 transition-transform">
@@ -728,117 +844,164 @@ const FeedTab: React.FC<any> = ({
       <div className="p-4 border-b border-white/10">
         <h3 className="text-lg font-bold">📰 Feed de Atividades</h3>
       </div>
-      <div className="flex-1 p-4 space-y-4">
-        {/* Badges Activity */}
-        {badges.length > 0 && (
-          <div className="bg-white/10 p-4 rounded border border-black">
-            <div className="flex items-start space-x-3">
-              <div className="w-12 h-12 bg-yellow-500 rounded flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-black" />
+      
+      {/* Campo de Busca */}
+      <div className="p-4 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          {/* Campo de busca com dropdown integrado */}
+          <div className="flex-1 relative">
+            <div className="flex items-center bg-white/10 border border-white/20 rounded focus-within:border-white/60 transition-colors h-8">
+              {/* Dropdown de países */}
+              <div className="relative country-dropdown z-10">
+                <button
+                  onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                  className={`flex items-center justify-center transition-colors border-r border-white/20 relative z-20 h-full ${
+                    selectedCountry 
+                      ? 'px-1 min-w-[50px]' 
+                      : 'px-2 min-w-[35px] text-white hover:bg-white/10'
+                  }`}
+                  title={selectedCountry ? countries.find(c => c.code === selectedCountry)?.name : 'Selecionar país'}
+                >
+                  {selectedCountry ? (
+                    <img
+                      src={countries.find(c => c.code === selectedCountry)?.flag}
+                      alt=""
+                      className="w-8 h-5 object-contain"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  ) : (
+                    <span className="text-xs">🌍</span>
+                  )}
+                </button>
+                
+                {/* Dropdown menu */}
+                {showCountryDropdown && (
+                  <div 
+                    className="absolute top-full left-0 mt-1 border border-black rounded-lg shadow-lg z-50 min-w-[160px] overflow-hidden"
+                    style={{
+                      backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+                      backgroundSize: '100% 2px'
+                    }}
+                  >
+                    {/* Borda superior amarela com textura pontilhada */}
+                    <div className="bg-yellow-400 border-b border-black relative overflow-hidden" style={{
+                      backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                      backgroundSize: '8px 8px'
+                    }}>
+                      <div className="pixel-pattern absolute inset-0 opacity-20"></div>
+                      <div className="p-2 relative z-10">
+                        <div className="text-white font-bold text-sm" style={{
+                          textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                        }}>
+                          Selecionar País
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setSelectedCountry(null);
+                          setShowCountryDropdown(false);
+                        }}
+                        className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                      >
+                        <span className="text-sm">🌍 Todos os países</span>
+                      </button>
+                      {countries.map((country) => (
+                        <button
+                          key={country.code}
+                          onClick={() => {
+                            setSelectedCountry(country.code);
+                            setShowCountryDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                        >
+                          <img
+                            src={country.flag}
+                            alt=""
+                            className="w-4 h-4 object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                          />
+                          <span className="text-sm">{country.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-white">Beebop</span>
-                  <span className="text-white/60 text-sm">ganhou {badges.length} emblemas</span>
-                </div>
-                <p className="text-white/80 text-sm mt-1">Novos emblemas conquistados no Habbo!</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {badges.slice(0, 3).map((badge) => (
-                                       <span key={badge.code} className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">
-                     {String(badge.code)}
-                   </span>
-                  ))}
-                </div>
-              </div>
+              
+              {/* Input de texto */}
+              <input
+                type="text"
+                placeholder="Digite o nome do usuário..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="flex-1 px-3 py-1 bg-transparent text-white placeholder-white/50 focus:outline-none text-sm h-full"
+              />
+              
+              {/* Botão de busca integrado */}
+              <button
+                onClick={handleSearch}
+                disabled={isSearching || !searchTerm.trim()}
+                className="px-2 py-1 text-white/60 hover:text-white disabled:text-white/30 transition-colors flex items-center justify-center h-full"
+                title="Buscar"
+              >
+                {isSearching ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Search className="w-3 h-3" />
+                )}
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Rooms Activity */}
-        {rooms.length > 0 && (
-          <div className="bg-white/10 p-4 rounded border border-black">
-            <div className="flex items-start space-x-3">
-              <div className="w-12 h-12 bg-green-500 rounded flex items-center justify-center">
-                <Home className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-white">Beebop</span>
-                  <span className="text-white/60 text-sm">tem {rooms.length} quartos</span>
+        </div>
+        
+        {/* Resultados da busca */}
+        {searchResults.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <h4 className="text-xs font-semibold text-white/80">Resultados da busca:</h4>
+            {searchResults.map((user, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 p-2 bg-white/10 rounded border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
+                onClick={() => onNavigateToProfile(user.name)}
+              >
+                <img
+                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${user.figureString}&size=s`}
+                  alt={user.name}
+                  className="w-6 h-6 rounded"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-white text-sm truncate">{user.name}</div>
+                  <div className="text-xs text-white/60 truncate">{user.motto}</div>
                 </div>
-                <p className="text-white/80 text-sm mt-1">Quartos criados e decorados no Habbo!</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {rooms.slice(0, 2).map((room) => (
-                    <span key={room.id} className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">
-                      {room.name}
-                    </span>
-                  ))}
-                </div>
+                <div className={`w-2 h-2 rounded-full ${user.online ? 'bg-green-500' : 'bg-red-500'}`}></div>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Groups Activity */}
-        {groups.length > 0 && (
-          <div className="bg-white/10 p-4 rounded border border-black">
-            <div className="flex items-start space-x-3">
-              <div className="w-12 h-12 bg-purple-500 rounded flex items-center justify-center">
-                <Crown className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-white">Beebop</span>
-                  <span className="text-white/60 text-sm">participa de {groups.length} grupos</span>
-                </div>
-                <p className="text-white/80 text-sm mt-1">Membro ativo da comunidade Habbo!</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {groups.slice(0, 2).map((group) => (
-                    <span key={group.id} className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">
-                      {group.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Friends Activity */}
-        {friends.length > 0 && (
-          <div className="bg-white/10 p-4 rounded border border-black">
-            <div className="flex items-start space-x-3">
-              <div className="w-12 h-12 bg-pink-500 rounded flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-white">Beebop</span>
-                  <span className="text-white/60 text-sm">tem {friends.length} amigos</span>
-                </div>
-                <p className="text-white/80 text-sm mt-1">Rede social ativa no Habbo!</p>
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {friends.slice(0, 3).map((friend) => (
-                    <span key={friend.uniqueId} className="text-xs bg-pink-500/20 text-pink-300 px-2 py-1 rounded">
-                      {friend.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* No Activity Message */}
-        {badges.length === 0 && rooms.length === 0 && groups.length === 0 && friends.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-white/40 text-sm">
-              <p>Nenhuma atividade disponível</p>
-              <p className="mt-1">O perfil pode estar privado ou não ter conteúdo público</p>
-            </div>
+            ))}
           </div>
         )}
       </div>
+      
+      {/* Feed de Fotos dos Amigos */}
+      <div className="p-4">
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+              <p className="text-white/60">Carregando feed de fotos...</p>
+            </div>
+          </div>
+        }>
+          <FriendsPhotoFeed
+            currentUserName={currentUser || 'Beebop'}
+            hotel={habboAccount?.hotel || 'br'}
+            onNavigateToProfile={onNavigateToProfile}
+          />
+        </Suspense>
+      </div>
+      
     </div>
   );
 };
@@ -1049,9 +1212,9 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
 const AccountTab: React.FC<any> = ({ 
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
-  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username
+  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
+  activeModal, setActiveModal
 }) => {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
   // Detectar perfil privado: se não há dados completos ou se explicitamente privado
   const isProfilePrivate = isViewingOtherUser && (
     !user?.profileVisible || 
@@ -1351,42 +1514,6 @@ const AccountTab: React.FC<any> = ({
           ) : null}
         </div>
       </div>
-
-      {/* Modals */}
-      <BadgesModal 
-        isOpen={activeModal === 'badges'} 
-        onClose={() => setActiveModal(null)}
-        badges={badges || []}
-        userName={user?.name || 'Usuário'}
-        onNavigateToProfile={onNavigateToProfile}
-      />
-      
-      <FriendsModal 
-        isOpen={activeModal === 'friends'} 
-        onClose={() => setActiveModal(null)}
-        friends={friends || []}
-        userName={user?.name || 'Usuário'}
-        onNavigateToProfile={onNavigateToProfile}
-      />
-      
-      <GroupsModal 
-        isOpen={activeModal === 'groups'} 
-        onClose={() => setActiveModal(null)}
-        groups={groups || []}
-        userName={user?.name || 'Usuário'}
-        onNavigateToProfile={onNavigateToProfile}
-      />
-      
-      <RoomsModal 
-        isOpen={activeModal === 'rooms'} 
-        onClose={() => setActiveModal(null)}
-        rooms={rooms || []}
-        userName={user?.name || 'Usuário'}
-        onNavigateToProfile={onNavigateToProfile}
-      />
-      
-      {/* PhotoModal temporariamente removido para correção */}
-      
     </div>
   );
 };
