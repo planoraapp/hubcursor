@@ -20,102 +20,6 @@ import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
 // import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
 // import { HotelPhotoFeedColumn } from '@/components/console2/HotelPhotoFeedColumn';
 
-
-// Componentes de ícones pixelizados no estilo Habbo
-const PixelUserIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Hair - marrom escuro */}
-    <rect x="4" y="2" width="32" height="16" fill="#8B4513" />
-    <rect x="2" y="4" width="6" height="10" fill="#8B4513" />
-    <rect x="32" y="4" width="6" height="10" fill="#8B4513" />
-    
-    {/* Hair highlight */}
-    <rect x="6" y="4" width="28" height="2" fill="#A0522D" />
-    <rect x="8" y="6" width="24" height="2" fill="#A0522D" />
-    
-    {/* Face - tom bege */}
-    <rect x="6" y="8" width="28" height="20" fill="#F5DEB3" />
-    <rect x="4" y="10" width="6" height="16" fill="#F5DEB3" />
-    <rect x="30" y="10" width="6" height="16" fill="#F5DEB3" />
-    
-    {/* Face outline */}
-    <rect x="4" y="8" width="32" height="2" fill="#8B4513" />
-    <rect x="2" y="10" width="2" height="16" fill="#8B4513" />
-    <rect x="36" y="10" width="2" height="16" fill="#8B4513" />
-    <rect x="4" y="28" width="32" height="2" fill="#8B4513" />
-    
-    {/* Eyes - pixels escuros */}
-    <rect x="12" y="14" width="2" height="2" fill="#000000" />
-    <rect x="26" y="14" width="2" height="2" fill="#000000" />
-    
-    {/* Mouth - linha horizontal */}
-    <rect x="14" y="22" width="12" height="2" fill="#8B4513" />
-    
-    {/* Face shadow */}
-    <rect x="22" y="16" width="12" height="10" fill="#E6D3A3" opacity="0.3" />
-    <rect x="24" y="18" width="8" height="8" fill="#E6D3A3" opacity="0.2" />
-    
-    {/* Hair shadow */}
-    <rect x="6" y="14" width="28" height="2" fill="#654321" opacity="0.4" />
-  </svg>
-);
-
-const PixelUsersIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Primeira pessoa */}
-    <rect x="4" y="20" width="10" height="16" fill="#8B4513" />
-    <rect x="6" y="14" width="6" height="8" fill="#F5DEB3" />
-    <rect x="8" y="12" width="2" height="2" fill="#000000" />
-    
-    {/* Segunda pessoa */}
-    <rect x="26" y="20" width="10" height="16" fill="#8B4513" />
-    <rect x="28" y="14" width="6" height="8" fill="#F5DEB3" />
-    <rect x="30" y="12" width="2" height="2" fill="#000000" />
-    
-    {/* Terceira pessoa (menor, atrás) */}
-    <rect x="14" y="24" width="8" height="10" fill="#8B4513" />
-    <rect x="16" y="20" width="4" height="6" fill="#F5DEB3" />
-    <rect x="16" y="18" width="2" height="2" fill="#000000" />
-  </svg>
-);
-
-const PixelSearchIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Lupa */}
-    <rect x="6" y="6" width="16" height="16" fill="none" stroke="#8B4513" strokeWidth="1" />
-    <rect x="20" y="20" width="8" height="2" fill="#8B4513" />
-    <rect x="22" y="22" width="6" height="2" fill="#8B4513" />
-    <rect x="24" y="24" width="2" height="2" fill="#8B4513" />
-  </svg>
-);
-
-const PixelMessageIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Balão de mensagem */}
-    <rect x="4" y="6" width="32" height="18" fill="#F5DEB3" stroke="#8B4513" strokeWidth="1" />
-    
-    {/* Ponta do balão */}
-    <rect x="10" y="24" width="6" height="6" fill="#F5DEB3" />
-    <rect x="12" y="26" width="2" height="2" fill="#F5DEB3" />
-    
-    {/* Linhas de texto */}
-    <rect x="8" y="12" width="24" height="2" fill="#8B4513" />
-    <rect x="8" y="16" width="16" height="2" fill="#8B4513" />
-  </svg>
-);
-
 type TabType = 'account' | 'feed' | 'photos' | 'chat';
 
 interface TabButton {
@@ -131,7 +35,7 @@ const tabs: TabButton[] = [
   {
     id: 'account',
     label: 'My Info',
-    icon: <PixelUserIcon className="w-8 h-8" />,
+    icon: <User className="w-4 h-4" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -139,7 +43,7 @@ const tabs: TabButton[] = [
   {
     id: 'feed',
     label: 'Friends',
-    icon: <PixelUsersIcon className="w-8 h-8" />,
+    icon: <Users className="w-4 h-4" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -147,7 +51,7 @@ const tabs: TabButton[] = [
   {
     id: 'photos',
     label: 'Find',
-    icon: <PixelSearchIcon className="w-8 h-8" />,
+    icon: <Search className="w-4 h-4" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -155,7 +59,7 @@ const tabs: TabButton[] = [
   {
     id: 'chat',
     label: 'Help',
-    icon: <PixelMessageIcon className="w-8 h-8" />,
+    icon: <MessageSquare className="w-4 h-4" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -337,7 +241,14 @@ export const FunctionalConsole: React.FC = () => {
 
         {/* Tab navigation at bottom - now part of external frame */}
         {/* Tab navigation at bottom - Habbo Classic Style */}
-        <div className="relative bg-yellow-400">
+        <div className="relative bg-yellow-400 border-t-2 border-black">
+          {/* Separator lines between buttons */}
+          <div className="absolute left-0 top-0 w-full h-full pointer-events-none">
+            <div className="absolute left-1/4 top-0 w-0.5 h-full bg-[#C38A00]"></div>
+            <div className="absolute left-2/4 top-0 w-0.5 h-full bg-[#C38A00]"></div>
+            <div className="absolute left-3/4 top-0 w-0.5 h-full bg-[#C38A00]"></div>
+            <div className="absolute left-0 bottom-0 w-full h-0.5 bg-[#CA8F00]"></div>
+          </div>
           
           <div className="grid grid-cols-4 gap-0 p-1">
             {tabs.map((tab, index) => (
@@ -353,7 +264,7 @@ export const FunctionalConsole: React.FC = () => {
                 }}
                 className={cn(
                   "relative flex flex-col items-center justify-center p-2 transition-all duration-200",
-                  "border border-[#9C6300]",
+                  "border border-[#9C6300] hover:scale-105 active:scale-95",
                   activeTab === tab.id ? "bg-[#CD9700]" : "bg-[#ECAE00]"
                 )}
                 style={{
@@ -442,20 +353,17 @@ const FeedTab: React.FC<any> = ({
   const isOwnProfile = !isViewingOtherUser || viewingUsername === currentUser;
   if (isLoading) {
     return (
-      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando informações do usuário...</p>
-          </div>
-        </div>
-      </div>
+      <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+        <CardContent className="p-6 text-center overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
+          <Loader2 className="w-8 h-8 text-white/50 mx-auto animate-spin" />
+        </CardContent>
+      </Card>
     );
   }
 
   // Se estiver visualizando outro usuário, mostrar o perfil completo
   if (isViewingOtherUser) {
-    return (
+  return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
         {/* Mensagem para perfil privado */}
         {isProfilePrivate && (
@@ -724,11 +632,11 @@ const FeedTab: React.FC<any> = ({
 
   // Feed normal quando estiver no próprio perfil
   return (
-    <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-      <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">📰 Feed de Atividades</h3>
-      </div>
-      <div className="flex-1 p-4 space-y-4">
+    <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+      <CardHeader>
+        <CardTitle className="text-lg">📰 Feed de Atividades</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
         {/* Badges Activity */}
         {badges.length > 0 && (
           <div className="bg-white/10 p-4 rounded border border-black">
@@ -838,8 +746,8 @@ const FeedTab: React.FC<any> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -847,23 +755,20 @@ const FeedTab: React.FC<any> = ({
 const PhotosTab: React.FC<any> = ({ badges, rooms, photos, isLoading, onNavigateToProfile }) => {
   if (isLoading) {
     return (
-      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando fotos...</p>
-          </div>
-        </div>
-      </div>
+      <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+        <CardContent className="p-6 text-center overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
+          <Loader2 className="w-8 h-8 text-white/50 mx-auto animate-spin" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-      <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">📸 Fotos e Conquistas</h3>
-      </div>
-      <div className="flex-1 p-4 space-y-4">
+    <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+      <CardHeader>
+        <CardTitle className="text-lg">📸 Fotos e Conquistas</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
         {/* Photos Grid */}
         {photos.length > 0 && (
           <div>
@@ -957,8 +862,8 @@ const PhotosTab: React.FC<any> = ({ badges, rooms, photos, isLoading, onNavigate
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -966,23 +871,20 @@ const PhotosTab: React.FC<any> = ({ badges, rooms, photos, isLoading, onNavigate
 const ChatTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => {
   if (isLoading) {
     return (
-      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando amigos...</p>
-          </div>
-        </div>
-      </div>
+      <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+        <CardContent className="p-6 text-center overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
+          <Loader2 className="w-8 h-8 text-white/50 mx-auto animate-spin" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-      <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">💬 Chat</h3>
-      </div>
-      <div className="flex-1 p-4 space-y-3">
+    <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+      <CardHeader>
+        <CardTitle className="text-lg">💬 Chat</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
         {friends.map((friend) => (
           <div 
             key={friend.uniqueId} 
@@ -1005,12 +907,12 @@ const ChatTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => 
               <div className="text-white/60 text-sm">{friend.motto}</div>
             </div>
             <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <MessageSquare className="w-8 h-8" />
+              <MessageSquare className="w-4 h-4" />
             </Button>
           </div>
         ))}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -1019,11 +921,11 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
-    <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-      <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">🔍 Buscar Usuários</h3>
-      </div>
-      <div className="flex-1 p-4 space-y-4">
+    <Card className="bg-transparent text-white border-0 shadow-none h-full overflow-x-hidden">
+      <CardHeader>
+        <CardTitle className="text-lg">🔍 Buscar Usuários</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
         <div className="flex space-x-2">
           <input
             type="text"
@@ -1033,7 +935,7 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
             className="flex-1 px-3 py-2 bg-white/10 border border-black rounded text-white placeholder-white/50"
           />
           <Button className="bg-blue-600 hover:bg-blue-700">
-            <Search className="w-8 h-8" />
+            <Search className="w-4 h-4" />
           </Button>
         </div>
         
@@ -1041,8 +943,8 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
           <p>Busque por usuários do Habbo Hotel</p>
           <p>Digite o nome exato para encontrar</p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
