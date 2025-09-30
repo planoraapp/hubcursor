@@ -31,8 +31,25 @@ export function CollapsibleAppSidebar() {
   console.log('🔍 [CollapsibleAppSidebar] habboAccount:', habboAccount);
   console.log('🔍 [CollapsibleAppSidebar] isAdmin:', isAdmin);
 
+  // Função para remover acentos para compatibilidade com fonte Volter
+  const removeAccents = (text: string) => {
+    return text
+      .replace(/[áàâã]/g, 'a')
+      .replace(/[éê]/g, 'e')
+      .replace(/[í]/g, 'i')
+      .replace(/[óôõ]/g, 'o')
+      .replace(/[ú]/g, 'u')
+      .replace(/[ç]/g, 'c')
+      .replace(/[ÁÀÂÃ]/g, 'A')
+      .replace(/[ÉÊ]/g, 'E')
+      .replace(/[Í]/g, 'I')
+      .replace(/[ÓÔÕ]/g, 'O')
+      .replace(/[Ú]/g, 'U')
+      .replace(/[Ç]/g, 'C');
+  };
+
   const menuItems = [
-    { name: 'Início', path: '/', icon: '/assets/home.png' },
+    { name: 'Inicio', path: '/', icon: '/assets/home.png' },
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
     { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
@@ -50,7 +67,7 @@ export function CollapsibleAppSidebar() {
 
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
     const content = (
-      <Link to={item.path} className="flex items-center gap-3 w-full min-h-[48px]">
+      <Link to={item.path} className="flex items-center gap-2 w-full min-h-[48px]">
         <div className="flex-shrink-0 flex items-center justify-center w-12">
           <img 
             src={item.icon} 
@@ -71,16 +88,18 @@ export function CollapsibleAppSidebar() {
         </div>
         {!isCollapsed && (
           <span 
-            className="sidebar-font-option-4 text-white flex-1 flex items-center"
+            className="text-white flex-1 flex items-center"
             style={{
+              fontFamily: 'Volter',
               fontSize: '16px',
               fontWeight: 'bold',
               letterSpacing: '0.3px',
-              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
-              lineHeight: '1.2'
+              textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black',
+              lineHeight: '1.2',
+              paddingLeft: '2px'
             }}
           >
-            {item.name}
+            {removeAccents(item.name)}
           </span>
         )}
       </Link>
@@ -191,19 +210,21 @@ export function CollapsibleAppSidebar() {
                   </div>
                   {!isCollapsed && (
                     <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4 flex-shrink-0" />
                         <span 
-                          className="sidebar-font-option-4 text-white truncate"
+                          className="text-white truncate"
                           style={{
+                            fontFamily: 'Volter',
                             fontSize: '16px',
                             fontWeight: 'bold',
                             letterSpacing: '0.3px',
-                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
-                            lineHeight: '1.2'
+                            textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black',
+                            lineHeight: '1.2',
+                            paddingLeft: '2px'
                           }}
                         >
-                          {habboAccount.habbo_name}
+                          {removeAccents(habboAccount.habbo_name)}
                         </span>
                       </div>
                     </div>
@@ -215,12 +236,13 @@ export function CollapsibleAppSidebar() {
                       <TooltipTrigger asChild>
                         <button 
                           onClick={logout}
-                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4 min-h-[40px]"
+                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2 min-h-[40px]"
                           style={{
+                            fontFamily: 'Volter',
                             fontSize: '16px',
                             fontWeight: 'bold',
                             letterSpacing: '0.3px',
-                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                            textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black'
                           }}
                         >
                           <img 
@@ -232,7 +254,7 @@ export function CollapsibleAppSidebar() {
                               objectFit: 'contain'
                             }}
                           />
-                          <span>Sair</span>
+                          <span>{removeAccents('Sair')}</span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -247,16 +269,17 @@ export function CollapsibleAppSidebar() {
                 {!isCollapsed ? (
                   <Link to="/login" className="block">
                     <button 
-                      className="bg-blue-600 hover:bg-blue-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4"
+                      className="bg-blue-600 hover:bg-blue-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2"
                       style={{
+                        fontFamily: 'Volter',
                         fontSize: '16px',
                         fontWeight: 'bold',
                         letterSpacing: '0.3px',
-                        textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                        textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black'
                       }}
                     >
                       <User className="w-3 h-3" />
-                      Conectar Conta Habbo
+                      {removeAccents('Conectar Conta Habbo')}
                     </button>
                   </Link>
                 ) : (
@@ -264,7 +287,13 @@ export function CollapsibleAppSidebar() {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Link to="/login">
-                          <button className="bg-blue-600 hover:bg-blue-700 w-full p-3 text-white rounded transition-colors flex items-center justify-center">
+                          <button className="bg-blue-600 hover:bg-blue-700 w-full p-3 text-white rounded transition-colors flex items-center justify-center"
+                            style={{
+                              fontFamily: 'Volter',
+                              fontWeight: 'bold',
+                              textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black'
+                            }}
+                          >
                             <User className="w-4 h-4" />
                           </button>
                         </Link>

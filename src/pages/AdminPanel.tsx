@@ -18,6 +18,7 @@ import {
   Calendar,
   User
 } from 'lucide-react';
+import PageBanner from '@/components/ui/PageBanner';
 
 interface PendingArticle {
   id: string;
@@ -161,17 +162,10 @@ const AdminPanel = () => {
             }}
           >
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-8">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <Users className="w-8 h-8 text-blue-600" />
-                  <h1 className="text-4xl font-bold text-gray-900 volter-font">
-                    Painel de Administração
-                  </h1>
-                </div>
-                <p className="text-lg text-gray-600 volter-font">
-                  Gerencie o conteúdo do Habbo Hub Journal
-                </p>
-              </div>
+              <PageBanner 
+                title="Painel de Administração"
+                subtitle="Gerencie o conteúdo do Habbo Hub Journal"
+              />
 
               <Tabs defaultValue="pending" className="space-y-6">
                 <TabsList className="grid w-full grid-cols-4">

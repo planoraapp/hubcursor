@@ -18,6 +18,7 @@ import { HomesGrid } from '@/components/HomesGrid';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { DebugCacheStatus } from '@/components/DebugCacheStatus';
+import PageBanner from '@/components/ui/PageBanner';
 
 
 
@@ -125,42 +126,35 @@ const Homes: React.FC = () => {
               backgroundRepeat: 'repeat'
             }}>
             <div className="max-w-7xl mx-auto">
+              <PageBanner 
+                title="Habbo Home"
+                subtitle="Explore as homes dos usuários do HabboHub"
+              />
+              
+              {/* Botão Minha Home */}
               <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-white mb-4 volter-font"
-                    style={{
-                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                    }}>
-                  🏠 Habbo Home
-                </h1>
-                <p className="text-lg text-white/90 volter-font drop-shadow">
-                  Explore as homes dos usuários do HabboHub
-                </p>
-                
-                {/* Botão Minha Home */}
-                <div className="mt-4">
-                  {isLoggedIn && habboAccount ? (
-                    <Button 
-                      onClick={() => {
-                        // Gerar nome único com domínio baseado no hotel do usuário
-                        const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
-                        navigate(`/home/${domainUsername}`);
-                      }}
-                      className="habbo-button-green volter-font px-6 py-2"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Ver Minha Home
-                      <Home className="w-4 h-4 ml-2" />
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={() => navigate('/login')}
-                      className="habbo-button-orange volter-font px-6 py-2"
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Fazer Login para Ver Minha Home
-                    </Button>
-                  )}
-                </div>
+                {isLoggedIn && habboAccount ? (
+                  <Button 
+                    onClick={() => {
+                      // Gerar nome único com domínio baseado no hotel do usuário
+                      const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
+                      navigate(`/home/${domainUsername}`);
+                    }}
+                    className="habbo-button-green volter-font px-6 py-2"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Ver Minha Home
+                    <Home className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => navigate('/login')}
+                    className="habbo-button-orange volter-font px-6 py-2"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Fazer Login para Ver Minha Home
+                  </Button>
+                )}
               </div>
 
               <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">

@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, MessageSquare, Star } from 'lucide-react';
+import PageBanner from '@/components/ui/PageBanner';
 
 // Temporariamente desabilitar hooks pesados para melhorar performance
 // import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
@@ -27,21 +28,11 @@ export const Home: React.FC = () => {
             }}
           >
             <div className="max-w-7xl mx-auto">
-              {/* Simple Header */}
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-bold text-white mb-4 volter-font"
-                    style={{
-                      textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                    }}>
-                  🏠 HabboHub
-                </h1>
-                <p className="text-xl text-white/90 mb-6 volter-font max-w-3xl mx-auto"
-                   style={{
-                     textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
-                   }}>
-                  A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel.
-                </p>
-              </div>
+              {/* Banner padrão com fundo de nuvens */}
+              <PageBanner 
+                title="🏠 HabboHub"
+                subtitle="A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel."
+              />
 
               {/* Features Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">

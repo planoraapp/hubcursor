@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import PageBanner from '@/components/ui/PageBanner';
 
 const Profile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
@@ -23,20 +24,10 @@ const Profile: React.FC = () => {
             backgroundRepeat: 'repeat'
           }}>
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-8">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <User className="w-8 h-8 text-white" />
-                  <h1 className="text-4xl font-bold text-white volter-font"
-                      style={{
-                        textShadow: '2px 2px 0px black, -2px -2px 0px black, 2px -2px 0px black, -2px 2px 0px black'
-                      }}>
-                    👤 Perfil de {displayName}
-                  </h1>
-                </div>
-                <p className="text-lg text-white/90 volter-font drop-shadow">
-                  Visualizando informações do perfil
-                </p>
-              </div>
+              <PageBanner 
+                title={`Perfil de ${displayName}`}
+                subtitle="Visualizando informações do perfil"
+              />
               
               <Card className="p-8 text-center bg-white/90 backdrop-blur-sm border-2 border-black">
                 <CardHeader>

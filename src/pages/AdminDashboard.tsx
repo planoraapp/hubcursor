@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimationGenerator } from '@/components/AnimationGenerator';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import HabboFontsDemo from '@/components/HabboFontsDemo';
 
 interface AdminStats {
   totalUsers: number;
@@ -281,57 +282,95 @@ export const AdminDashboard: React.FC = () => {
                 </Card>
               </div>
 
-              {/* Ações administrativas */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Fontes Oficiais do Habbo e Dados dos Usuários */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Box de Fontes */}
+                <HabboFontsDemo />
+                
+                {/* Box de Dados dos Usuários */}
                 <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 volter-font">
                       <Users className="w-5 h-5" />
-                      Gerenciamento de Usuários
+                      Dados dos Usuários
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button
-                      onClick={() => navigate('/admin/accounts')}
-                      variant="outline"
-                      className="w-full volter-font"
-                    >
-                      👥 Gerenciar Contas
-                    </Button>
-                    <Button 
-                      onClick={createHabbohubAccountHandler}
-                      variant="outline"
-                      className="w-full volter-font"
-                    >
-                      🤖 Criar Conta HabboHub
-                    </Button>
-                  </CardContent>
-                </Card>
+                  <CardContent className="space-y-4">
+                    {/* Gráfico de Barras - Usuários por Status */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 volter-font">Usuários por Status</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 volter-font">Online</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div className="bg-green-500 h-2 rounded-full" style={{width: `${(stats.activeUsers / Math.max(stats.totalUsers, 1)) * 100}%`}}></div>
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.activeUsers}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 volter-font">Offline</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div className="bg-gray-500 h-2 rounded-full" style={{width: `${((stats.totalUsers - stats.activeUsers) / Math.max(stats.totalUsers, 1)) * 100}%`}}></div>
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalUsers - stats.activeUsers}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 volter-font">
-                      <Home className="w-5 h-5" />
-                      Gerenciamento de Homes
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button
-                      onClick={() => navigate('/admin/homes')}
-                      variant="outline"
-                      className="w-full volter-font"
-                    >
-                      🏠 Gerenciar Homes
-                    </Button>
-                    <Button 
-                      onClick={initializeHomesHandler}
-                      variant="outline"
-                      className="w-full volter-font"
-                    >
-                      🔧 Inicializar Homes
-                    </Button>
+                    {/* Gráfico de Barras - Engajamento */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-2 volter-font">Engajamento</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 volter-font">Likes</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div className="bg-red-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalLikes / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalLikes}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 volter-font">Comentários</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div className="bg-blue-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalComments / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalComments}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 volter-font">Fotos</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div className="bg-purple-500 h-2 rounded-full" style={{width: `${Math.min((stats.totalPhotos / Math.max(stats.totalUsers, 1)) * 20, 100)}%`}}></div>
+                            </div>
+                            <span className="text-xs font-bold text-gray-800 volter-font">{stats.totalPhotos}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botões de Ação */}
+                    <div className="pt-2 border-t border-gray-200">
+                      <Button
+                        onClick={() => navigate('/admin/accounts')}
+                        variant="outline"
+                        className="w-full volter-font text-xs"
+                      >
+                        👥 Ver Detalhes
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Ações administrativas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                 <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
                   <CardHeader>

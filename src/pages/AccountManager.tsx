@@ -7,6 +7,7 @@ import { checkSupabaseAccounts, checkSpecificAccount } from '@/utils/checkSupaba
 import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import PageBanner from '@/components/ui/PageBanner';
 
 interface AccountData {
   id: string;
@@ -115,37 +116,33 @@ export const AccountManager: React.FC = () => {
             }}
           >
             <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white volter-font drop-shadow-lg">
-            👥 Gerenciador de Contas
-          </h1>
-          <p className="text-white/90 mt-2 volter-font drop-shadow">
-            Gerencie contas do sistema HabboHub
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button
-            onClick={loadAccounts}
-            disabled={loading}
-            variant="outline"
-            className="flex items-center gap-2 bg-white/90 backdrop-blur-sm hover:bg-white/95"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-          
-          <Button
-            onClick={createHabbohubAccount}
-            disabled={loading}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-          >
-            <UserPlus className="w-4 h-4" />
-            Criar HabboHub
-          </Button>
-        </div>
-      </div>
+              <PageBanner 
+                title="Gerenciador de Contas"
+                subtitle="Gerencie contas do sistema HabboHub"
+              />
+              
+              <div className="flex items-center justify-end">
+                <div className="flex gap-2">
+                  <Button
+                    onClick={loadAccounts}
+                    disabled={loading}
+                    variant="outline"
+                    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm hover:bg-white/95"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    Atualizar
+                  </Button>
+                  
+                  <Button
+                    onClick={createHabbohubAccount}
+                    disabled={loading}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Criar HabboHub
+                  </Button>
+                </div>
+              </div>
 
       {/* Mensagens de status */}
       {error && (

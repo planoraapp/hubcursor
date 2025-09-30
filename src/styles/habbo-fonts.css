@@ -1,0 +1,42 @@
+/* Fontes Oficiais do Habbo Hotel */
+
+/* Ubuntu Habbo Oficial */
+@font-face {
+  font-family: 'Ubuntu Habbo Official';
+  src: url('https://images.habbo.com/habbo-web/america/pt/assets/fonts/UbuntuHabbo.2f484259.woff2') format('woff2'),
+       url('https://images.habbo.com/habbo-web/america/pt/assets/fonts/UbuntuHabbo.2af43356.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu Habbo Official';
+  src: url('https://images.habbo.com/habbo-web/america/de/assets/fonts/UbuntuBold-latin.78f61240.woff2') format('woff2'),
+       url('https://images.habbo.com/habbo-web/america/de/assets/fonts/UbuntuBold-latin.d6b93445.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu Condensed Official';
+  src: url('https://images.habbo.com/habbo-web/america/de/assets/fonts/UbuntuCondensed-latin.4c3c2872.woff2') format('woff2'),
+       url('https://images.habbo.com/habbo-web/america/de/assets/fonts/UbuntuCondensed-latin.51eab248.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* Classes CSS para as fontes oficiais */
+.ubuntu-habbo-official {
+  font-family: 'Ubuntu Habbo Official', Arial, sans-serif;
+  font-weight: normal;
+}
+
+.ubuntu-habbo-bold-official {
+  font-family: 'Ubuntu Habbo Official', Arial, sans-serif;
+  font-weight: bold;
+}
+
+.ubuntu-condensed-official {
+  font-family: 'Ubuntu Condensed Official', Arial, sans-serif;
+  font-weight: normal;
+}
