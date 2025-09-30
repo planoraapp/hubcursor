@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AccentFixedText } from '@/components/AccentFixedText';
 import { Newspaper, Send, Users, Calendar, ExternalLink, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface NewsArticle {
@@ -174,9 +175,9 @@ const Journal = () => {
                       style={{ imageRendering: 'pixelated' }}
                     />
                   </div>
-                  <p className="text-lg sm:text-xl text-gray-700" style={{ fontFamily: 'VT323, monospace' }}>
+                  <AccentFixedText className="text-lg sm:text-xl text-gray-700">
                     As últimas notícias direto do Hotel, pelos próprios Habbos!
-                  </p>
+                  </AccentFixedText>
                 </header>
 
                 {/* Navigation Menu */}
@@ -293,13 +294,13 @@ const Journal = () => {
                               />
                             </div>
                           </div>
-                          <p className="text-base sm:text-lg mb-4 leading-relaxed" style={{ fontFamily: 'VT323, monospace' }}>
+                          <AccentFixedText className="text-sm sm:text-base mb-4 leading-relaxed">
                             {newsArticles[0].content}
-                          </p>
+                          </AccentFixedText>
                           <a href="#" className="text-blue-700 hover:underline text-sm sm:text-base">
                             Leia o artigo completo...
                           </a>
-                          <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'VT323, monospace' }}>
+                          <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'Volter' }}>
                             Por: {newsArticles[0].author} - {new Date(newsArticles[0].date).toLocaleDateString('pt-BR')}
                           </p>
                         </section>
@@ -362,13 +363,13 @@ const Journal = () => {
                               />
                             </div>
                           </div>
-                          <p className="text-base sm:text-lg mb-4 leading-relaxed" style={{ fontFamily: 'VT323, monospace' }}>
+                          <AccentFixedText className="text-sm sm:text-base mb-4 leading-relaxed">
                             {newsArticles[1].content}
-                          </p>
+                          </AccentFixedText>
                           <a href="#" className="text-blue-700 hover:underline text-sm sm:text-base">
                             Leia a análise completa...
                           </a>
-                          <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'VT323, monospace' }}>
+                          <p className="text-sm text-gray-500 mt-2" style={{ fontFamily: 'Volter' }}>
                             Por: {newsArticles[1].author} - {new Date(newsArticles[1].date).toLocaleDateString('pt-BR')}
                           </p>
                         </section>
@@ -377,7 +378,7 @@ const Journal = () => {
                       {/* Sidebar (1/3 width) */}
                       <aside className="md:col-span-1 space-y-4">
                         {/* Classifieds */}
-                        <div id="classificados" className="border-2 border-black p-4">
+                        <div id="classificados" className="border border-black p-4">
                           <h3 className="text-xl sm:text-2xl mb-3 font-bold" style={{ 
                             fontFamily: 'Press Start 2P, cursive',
                             textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
@@ -399,10 +400,10 @@ const Journal = () => {
                                       className="w-full h-20 object-cover mb-2"
                                       style={{ imageRendering: 'pixelated' }}
                                     />
-                                    <h4 className="font-bold text-base" style={{ fontFamily: 'VT323, monospace' }}>
+                                    <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
                                       {ad.title}
                                     </h4>
-                                    <p className="text-sm text-gray-600" style={{ fontFamily: 'VT323, monospace' }}>
+                                    <p className="text-sm text-gray-600" style={{ fontFamily: 'Volter' }}>
                                       {ad.price && `Preço: ${ad.price}`}
                                     </p>
                                   </div>
@@ -418,13 +419,13 @@ const Journal = () => {
                                       className="w-full h-32 object-cover"
                                       style={{ imageRendering: 'pixelated' }}
                                     />
-                                    <p className="text-sm" style={{ fontFamily: 'VT323, monospace' }}>{ad.content}</p>
+                                    <p className="text-sm" style={{ fontFamily: 'Volter' }}>{ad.content}</p>
                                     <div className="flex items-center justify-between">
-                                      <span className="text-sm font-bold" style={{ fontFamily: 'VT323, monospace' }}>
+                                      <span style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
                                         Contato: {ad.contact}
                                       </span>
                                       {ad.price && (
-                                        <span className="text-sm font-bold text-green-600" style={{ fontFamily: 'VT323, monospace' }}>
+                                        <span className="text-sm font-bold text-green-600" style={{ fontFamily: 'Volter' }}>
                                           {ad.price}
                                         </span>
                                       )}
@@ -444,7 +445,7 @@ const Journal = () => {
                           }}>
                             Envie Sua Coluna
                           </h3>
-                          <p className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'VT323, monospace' }}>
+                          <p className="text-sm text-gray-700 mb-2" style={{ fontFamily: 'Volter' }}>
                             Quer ver sua coluna publicada?
                           </p>
                           <Button 
@@ -467,60 +468,623 @@ const Journal = () => {
                   {/* Page 2 - Eventos */}
                   {currentPage === 2 && (
                     <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Main Content (2/3 width) */}
+                        <div className="md:col-span-2 space-y-6">
+                          {/* Eventos em Destaque */}
+                          <section id="eventos" className="mb-8">
                       <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
                         fontFamily: 'Press Start 2P, cursive',
                         textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                       }}>
-                        Eventos do Hotel
+                              Eventos em Destaque
                       </h2>
-                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
-                        Página em construção - Eventos especiais do Habbo Hotel serão exibidos aqui.
-                      </p>
+                            
+                            {/* Evento Principal */}
+                            <div className="border border-black p-4 mb-6 rounded-lg">
+                              <div className="flex items-center gap-4 mb-3">
+                                <img 
+                                  src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjDhGLvOEcU_FGqcBTve1JyAoNt4ddcqAqfBMrvY4SF2YhRPDTBZOjReNooP8907PJAViP3-0XmR-_hdbwhRvBt-8h6UCYEnERTxbJgQaqWhGECue1XiP2EsQXuO-s0GN6_8XthY9OmNNM/s1600/ts_fire.gif"
+                                  alt="Evento Principal"
+                                  className="w-16 h-16 object-cover"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                                <div>
+                                  <h3 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    🎉 Festa dos 25 Anos do Habbo Hotel
+                                  </h3>
+                                  <p className="text-sm text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                    Data: 15/01/2025 - 20/01/2025
+                                  </p>
+                                </div>
+                              </div>
+                              <AccentFixedText className="text-sm sm:text-base mb-3">
+                                Celebre conosco os 25 anos do Habbo Hotel! Festa épica na Piscina com brindes exclusivos, 
+                                mobis raros do Furni-Matic e Coroas de Fidelidade para veteranos. Não perca!
+                              </AccentFixedText>
+                              <div className="flex gap-2">
+                                <Badge className="bg-red-500 text-white">Evento Oficial</Badge>
+                                <Badge className="bg-yellow-500 text-black">Brindes Exclusivos</Badge>
+                              </div>
+                            </div>
+
+                            {/* Outros Eventos */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="border border-gray-300 p-3 rounded-md">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <img 
+                                    src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh1ZQwexYD0dHL62sDM9haQACJeCZED1qCMXRVzABKDEhi9X5lUeQCaqerPziBsggI2JI1RRNqLffWln3xPZaoEijGkebyJQ7AdK0PYuaLdAT8pC_tUisNMgFJE99YP8fS54F5hg24s0g/s1600/BR_ts_elections_anarchist.gif"
+                                    alt="Competição"
+                                    className="w-12 h-12 object-cover"
+                                    style={{ imageRendering: 'pixelated' }}
+                                  />
+                                  <div>
+                                    <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                      🏆 Competição de Decoração
+                                    </h4>
+                                    <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                      18/01/2025
+                                    </p>
+                                  </div>
+                                </div>
+                                <AccentFixedText className="text-sm sm:text-base">
+                                  Mostre sua criatividade e concorra a prêmios incríveis!
+                                </AccentFixedText>
+                              </div>
+
+                              <div className="border border-gray-300 p-3 rounded-md">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <img 
+                                    src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhFc-LIforDlqYWAxOgNN8-j8N5PaXYuTmuaIeKOOc18IRGfgsi0NkkWaJsjDfyaC_NePhneoS_w7ZvQMbIZy3KuGtSopEh9lwmT2-uTSDTcmpW-jBaPYbCVYFtFQLMd9rZxtlxYJL7dGMg/s1600/feature_cata_hort_jan18bun5.png"
+                                    alt="Festa"
+                                    className="w-12 h-12 object-cover"
+                                    style={{ imageRendering: 'pixelated' }}
+                                  />
+                                  <div>
+                                    <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                      🎵 Festa na Rádio
+                                    </h4>
+                                    <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                      22/01/2025
+                                    </p>
+                                  </div>
+                                </div>
+                                <AccentFixedText className="text-sm sm:text-base">
+                                  Venha dançar e se divertir com a melhor música do Hotel!
+                                </AccentFixedText>
+                              </div>
+                            </div>
+                          </section>
+
+                          <div className="border-t border-dashed border-gray-500 my-8"></div>
+
+                          {/* Calendário de Eventos */}
+                          <section className="mb-8">
+                            <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Calendário de Eventos
+                            </h2>
+                            <div className="border border-black p-4 rounded-lg">
+                              <div className="grid grid-cols-7 gap-2 mb-4">
+                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                                  <div key={day} style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    {day}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="grid grid-cols-7 gap-2">
+                                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                  <div key={day} style={{ fontFamily: 'Volter' }}>
+                                    {day}
+                                    {day === 15 && <div className="text-xs text-red-600">🎉</div>}
+                                  </div>
+                                ))}
+                              </div>
+                              <p className="text-xs text-gray-600 mt-2" style={{ fontFamily: 'Volter' }}>
+                                Janeiro 2025 - Eventos marcados em vermelho
+                              </p>
+                            </div>
+                          </section>
+                        </div>
+
+                        {/* Sidebar (1/3 width) */}
+                        <aside className="md:col-span-1 space-y-4">
+                          {/* Próximos Eventos */}
+                          <div className="border border-black p-4 rounded-lg">
+                            <h3 className="text-xl sm:text-2xl mb-3 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Próximos Eventos
+                            </h3>
+                            <div className="space-y-3">
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🎨 Workshop de Pixel Art
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  25/01/2025 - 14:00
+                                </p>
+                              </div>
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🏠 Tour das Homes VIP
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  28/01/2025 - 16:00
+                                </p>
+                              </div>
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🎲 Torneio de Jogos
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  30/01/2025 - 18:00
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Eventos Especiais */}
+                          <div className="border border-black p-4 rounded-lg">
+                            <h3 className="text-lg mb-2 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Eventos Especiais
+                            </h3>
+                            <div className="space-y-2">
+                              <div className="p-2 border border-gray-300">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🌟 Aniversário do Hotel
+                                </h4>
+                                <AccentFixedText className="text-sm sm:text-base">
+                                  Celebração especial com brindes únicos!
+                                </AccentFixedText>
+                              </div>
+                              <div className="p-2 border border-gray-300">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🎁 Campanha de Verão
+                                </h4>
+                                <AccentFixedText className="text-sm sm:text-base">
+                                  Novos mobis e decorações temáticas.
+                                </AccentFixedText>
+                              </div>
+                            </div>
+                          </div>
+                        </aside>
+                      </div>
                     </div>
                   )}
 
                   {/* Page 3 - Entrevistas */}
                   {currentPage === 3 && (
                     <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Main Content (2/3 width) */}
+                        <div className="md:col-span-2 space-y-6">
+                          {/* Entrevista Principal */}
+                          <section id="entrevistas" className="mb-8">
                       <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
                         fontFamily: 'Press Start 2P, cursive',
                         textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                       }}>
-                        Entrevistas Exclusivas
+                              Entrevista Exclusiva: Muumiopappa
                       </h2>
-                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
-                        Página em construção - Entrevistas com personalidades do Habbo Hotel serão exibidas aqui.
-                      </p>
+                            
+                            <div className="border-2 border-black p-6">
+                              <div className="flex items-start gap-6 mb-4">
+                                <img 
+                                  src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png"
+                                  alt="Muumiopappa"
+                                  className="w-24 h-24 object-cover"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                                <div className="flex-1">
+                                  <h3 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    🎯 Muumiopappa - Diretor de Produto
+                                  </h3>
+                                  <p className="text-sm text-gray-600 mb-3" style={{ fontFamily: 'Volter' }}>
+                                    Entrevista realizada em 10/01/2025
+                                  </p>
+                                  <div className="flex gap-2 mb-3">
+                                    <Badge className="bg-purple-500 text-white">Staff Oficial</Badge>
+                                    <Badge className="bg-blue-500 text-white">Desenvolvimento</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-4">
+                                <div className="p-4 border border-gray-300">
+                                  <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    Journal Hub: Como você vê o futuro do Habbo Hotel?
+                                  </h4>
+                                  <AccentFixedText className="text-sm sm:text-base">
+                                    "Estamos muito animados com os próximos anos. O Habbo Hotel tem uma comunidade incrível e estamos 
+                                    trabalhando em novas funcionalidades que vão surpreender todos os Habbos. O futuro é brilhante!"
+                                  </AccentFixedText>
+                                </div>
+                                
+                                <div className="p-4 border border-gray-300">
+                                  <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    Journal Hub: Qual foi o momento mais marcante dos 25 anos?
+                                  </h4>
+                                  <AccentFixedText className="text-sm sm:text-base">
+                                    "Ver a comunidade crescer e se conectar através do Hotel é algo mágico. Cada evento, cada amizade 
+                                    formada aqui representa o que torna o Habbo especial."
+                                  </AccentFixedText>
+                                </div>
+                                
+                                <div className="p-4 border border-gray-300">
+                                  <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    Journal Hub: Que mensagem você gostaria de deixar para os Habbos?
+                                  </h4>
+                                  <AccentFixedText className="text-sm sm:text-base">
+                                    "Obrigado por fazerem parte dessa jornada incrível! Continuem sendo criativos, amigáveis e 
+                                    apaixonados pelo Hotel. Vocês são o coração do Habbo!"
+                                  </AccentFixedText>
+                                </div>
+                              </div>
+                            </div>
+                          </section>
+                        </div>
+
+                        {/* Sidebar (1/3 width) */}
+                        <aside className="md:col-span-1 space-y-4">
+                          {/* Próximas Entrevistas */}
+                          <div className="border border-black p-4">
+                            <h3 className="text-xl sm:text-2xl mb-3 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Próximas Entrevistas
+                            </h3>
+                            <div className="space-y-3">
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🎵 DJ Habbo
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  Sobre música e eventos
+                                </p>
+                              </div>
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🏆 Campeão de Trading
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  Estratégias de mercado
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </aside>
+                      </div>
                     </div>
                   )}
 
                   {/* Page 4 - Opinião */}
                   {currentPage === 4 && (
                     <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Main Content (2/3 width) */}
+                        <div className="md:col-span-2 space-y-6">
+                          {/* Artigo Principal */}
+                          <section id="opiniao" className="mb-8">
                       <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
                         fontFamily: 'Press Start 2P, cursive',
                         textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                       }}>
-                        Opinião da Comunidade
+                              Opinião: O Futuro do Trading no Habbo
                       </h2>
-                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
-                        Página em construção - Opiniões e artigos da comunidade serão exibidos aqui.
-                      </p>
+                            
+                            <div className="border-2 border-black p-6">
+                              <div className="flex items-start gap-4 mb-4">
+                                <img 
+                                  src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-1.ch-255-84.lg-275-1408.sh-295-64%2Cs-0.g-1.d-2.h-2.a-0%2C3565e22f0ecd66108595e64551d13483.png"
+                                  alt="Autor"
+                                  className="w-16 h-16 object-cover"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                                <div>
+                                  <h3 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    📊 Por: TraderExpert
+                                  </h3>
+                                  <p className="text-sm text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                    Publicado em 12/01/2025
+                                  </p>
+                                  <div className="flex gap-2 mt-2">
+                                    <Badge className="bg-orange-500 text-white">Análise</Badge>
+                                    <Badge className="bg-blue-500 text-white">Trading</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-4">
+                                <AccentFixedText className="text-sm sm:text-base leading-relaxed">
+                                  O mercado de trading no Habbo Hotel está passando por uma transformação significativa. 
+                                  Com a introdução de novos sistemas de economia e a crescente popularidade dos NFTs, 
+                                  vemos uma evolução que pode mudar completamente como os Habbos interagem com o mercado.
+                                </AccentFixedText>
+                                
+                                <AccentFixedText className="text-sm sm:text-base leading-relaxed">
+                                  A questão central é: estamos preparados para essa mudança? A comunidade precisa se adaptar 
+                                  aos novos tempos, mas sem perder a essência do que torna o trading no Habbo especial - 
+                                  a interação humana e a criatividade.
+                                </AccentFixedText>
+                                
+                                <div className="p-4 border border-gray-300">
+                                  <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    💡 Minha Recomendação:
+                                  </h4>
+                                  <AccentFixedText className="text-sm sm:text-base">
+                                    "Devemos abraçar as mudanças, mas sempre manter o foco na comunidade. 
+                                    O futuro do trading está na colaboração, não na competição."
+                                  </AccentFixedText>
+                                </div>
+                              </div>
+                            </div>
+                          </section>
+
+                          <div className="border-t border-dashed border-gray-500 my-8"></div>
+
+                          {/* Outros Artigos */}
+                          <section className="mb-8">
+                            <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Mais Opiniões
+                            </h2>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                              <div className="border border-gray-300 p-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <img 
+                                    src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png"
+                                    alt="Autor"
+                                    className="w-12 h-12 object-cover"
+                                    style={{ imageRendering: 'pixelated' }}
+                                  />
+                                  <div>
+                                    <h3 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                      🎨 PixelArtLover
+                                    </h3>
+                                    <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                      Sobre Arte Digital
+                                    </p>
+                                  </div>
+                                </div>
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  A Arte Pixelada Nunca Morre
+                                </h4>
+                                <p className="text-sm sm:text-base mb-2" style={{ fontFamily: 'Volter' }}>
+                                  "Em um mundo de gráficos ultra-realistas, a simplicidade do pixel art continua..."
+                                </p>
+                                <Button size="sm" className="text-xs bg-purple-500 hover:bg-purple-600 text-white">
+                                  Ler Artigo Completo
+                                </Button>
+                              </div>
+
+                              <div className="border border-gray-300 p-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <img 
+                                    src="https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-1.ch-255-84.lg-275-1408.sh-295-64%2Cs-0.g-1.d-2.h-2.a-0%2C3565e22f0ecd66108595e64551d13483.png"
+                                    alt="Autor"
+                                    className="w-12 h-12 object-cover"
+                                    style={{ imageRendering: 'pixelated' }}
+                                  />
+                                  <div>
+                                    <h3 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                      🏠 HomeDesigner
+                                    </h3>
+                                    <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                      Sobre Decoração
+                                    </p>
+                                  </div>
+                                </div>
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  Tendências de Decoração 2025
+                                </h4>
+                                <p className="text-sm sm:text-base mb-2" style={{ fontFamily: 'Volter' }}>
+                                  "Os novos mobis estão revolucionando a forma como decoramos nossas homes..."
+                                </p>
+                                <Button size="sm" className="text-xs bg-green-500 hover:bg-green-600 text-white">
+                                  Ler Artigo Completo
+                                </Button>
+                              </div>
+                            </div>
+                          </section>
+                        </div>
+
+                        {/* Sidebar (1/3 width) */}
+                        <aside className="md:col-span-1 space-y-4">
+                          {/* Colunas de Leitores */}
+                          <div className="border border-black p-4">
+                            <h3 className="text-xl sm:text-2xl mb-3 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Colunas de Leitores
+                            </h3>
+                            <div className="space-y-3">
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  💬 Debate da Semana
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  "Qual é o melhor hotel do Habbo?"
+                                </p>
+                              </div>
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  📝 Cartas dos Leitores
+                                </h4>
+                                <AccentFixedText className="text-sm sm:text-base text-gray-600">
+                                  Suas opiniões sobre o Hotel
+                                </AccentFixedText>
+                              </div>
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🎯 Enquete da Semana
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  Vote na sua campanha favorita
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Envie Sua Opinião */}
+                          <div className="border border-black p-4">
+                            <h3 className="text-lg mb-2 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Envie Sua Opinião
+                            </h3>
+                            <p className="text-sm sm:text-base text-gray-700 mb-2" style={{ fontFamily: 'Volter' }}>
+                              Quer compartilhar sua visão sobre o Hotel?
+                            </p>
+                            <Button 
+                              size="sm"
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                            >
+                              Escrever Artigo
+                            </Button>
+                          </div>
+                        </aside>
+                      </div>
                     </div>
                   )}
 
                   {/* Page 5 - Fã Sites */}
                   {currentPage === 5 && (
                     <div className="p-8" style={{ minHeight: '80vh' }}>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Main Content (2/3 width) */}
+                        <div className="md:col-span-2 space-y-6">
+                          {/* Destaque Principal */}
+                          <section id="fansites" className="mb-8">
                       <h2 className="text-2xl sm:text-3xl mb-4 border-b border-gray-500 pb-2 font-bold" style={{ 
                         fontFamily: 'Press Start 2P, cursive',
                         textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
                       }}>
-                        Destaque dos Fã Sites
+                              Destaque: HabboHub - O Portal da Comunidade
                       </h2>
-                      <p className="text-lg" style={{ fontFamily: 'VT323, monospace' }}>
-                        Página em construção - Destaques dos melhores fã sites da comunidade serão exibidos aqui.
-                      </p>
+                            
+                            <div className="border-2 border-black p-6">
+                              <div className="flex items-start gap-6 mb-4">
+                                <img 
+                                  src="/assets/bghabbohub.png"
+                                  alt="HabboHub"
+                                  className="w-24 h-24 object-cover"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                                <div className="flex-1">
+                                  <h3 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                    🌟 HabboHub - Portal Oficial
+                                  </h3>
+                                  <p className="text-sm text-gray-600 mb-3" style={{ fontFamily: 'Volter' }}>
+                                    Lançado em Janeiro 2025
+                                  </p>
+                                  <div className="flex gap-2 mb-3">
+                                    <Badge className="bg-green-500 text-white">Portal Oficial</Badge>
+                                    <Badge className="bg-blue-500 text-white">Ferramentas</Badge>
+                                    <Badge className="bg-purple-500 text-white">Comunidade</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-4">
+                                <AccentFixedText className="text-sm sm:text-base leading-relaxed">
+                                  O HabboHub revolucionou a forma como os Habbos interagem com o Hotel. Com ferramentas exclusivas, 
+                                  sistema de homes personalizadas e integração completa com a comunidade, tornou-se o destino 
+                                  número um para todos os fãs do Habbo Hotel.
+                                </AccentFixedText>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div className="p-3 border border-gray-300">
+                                    <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                      🛠️ Ferramentas Exclusivas
+                                    </h4>
+                                    <ul className="text-xs space-y-1" style={{ fontFamily: 'Volter' }}>
+                                      <li>• Editor de Avatar</li>
+                                      <li>• Catálogo de Hand Items</li>
+                                      <li>• Sistema de Homes</li>
+                                      <li>• Console de Desenvolvimento</li>
+                                    </ul>
+                                  </div>
+                                  
+                                  <div className="p-3 border border-gray-300">
+                                    <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                      📊 Estatísticas
+                                    </h4>
+                                    <ul className="text-xs space-y-1" style={{ fontFamily: 'Volter' }}>
+                                      <li>• 10.000+ Usuários Ativos</li>
+                                      <li>• 5.000+ Homes Criadas</li>
+                                      <li>• 50+ Ferramentas</li>
+                                      <li>• 100% Gratuito</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </section>
+                        </div>
+
+                        {/* Sidebar (1/3 width) */}
+                        <aside className="md:col-span-1 space-y-4">
+                          {/* Novidades da Comunidade */}
+                          <div className="border border-black p-4">
+                            <h3 className="text-xl sm:text-2xl mb-3 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Novidades da Comunidade
+                            </h3>
+                            <div className="space-y-3">
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🆕 Novo Fã Site Lançado
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  TradingHub - Especializado em economia
+                                </p>
+                              </div>
+                              <div className="border border-gray-300 p-2">
+                                <h4 style={{ fontFamily: 'Volter', fontWeight: 'bold' }}>
+                                  🤝 Parceria Oficial
+                                </h4>
+                                <p className="text-sm sm:text-base text-gray-600" style={{ fontFamily: 'Volter' }}>
+                                  HabboHub + Habblindados
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Seja Nosso Parceiro */}
+                          <div className="border border-black p-4">
+                            <h3 className="text-lg mb-2 font-bold" style={{ 
+                              fontFamily: 'Press Start 2P, cursive',
+                              textShadow: '2px 2px 0px rgba(0, 0, 0, 0.2)'
+                            }}>
+                              Seja Nosso Parceiro
+                            </h3>
+                            <p className="text-sm sm:text-base text-gray-700 mb-2" style={{ fontFamily: 'Volter' }}>
+                              Tem um fã site? Quer fazer parte da nossa rede?
+                            </p>
+                            <Button 
+                              size="sm"
+                              className="w-full bg-green-600 hover:bg-green-700 text-white text-xs"
+                            >
+                              Solicitar Parceria
+                            </Button>
+                          </div>
+                        </aside>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -568,7 +1132,7 @@ const Journal = () => {
                 </div>
 
                 {/* Footer */}
-                <footer className="text-center mt-6 pt-6 border-t-2 border-black text-gray-700 text-sm relative" style={{ fontFamily: 'VT323, monospace', zIndex: 5 }}>
+                <footer className="text-center mt-6 pt-6 border-t-2 border-black text-gray-700 text-sm relative" style={{ fontFamily: 'Volter', zIndex: 5 }}>
                   <p>&copy; 2025 Journal Hub. Todos os direitos reservados. Feito com pixel art.</p>
                   <p className="mt-2">Contato: jornal@habbohub.com | Siga-nos nas redes sociais do Habbo!</p>
                   <div className="mt-4">
@@ -576,7 +1140,7 @@ const Journal = () => {
                       variant="outline" 
                       className="text-black border-black hover:bg-black hover:text-white"
                       onClick={() => window.open('/admin-panel', '_blank')}
-                      style={{ fontFamily: 'VT323, monospace' }}
+                      style={{ fontFamily: 'Volter' }}
                     >
                       <Users className="w-4 h-4 mr-2" />
                       Painel de Administração
@@ -596,7 +1160,7 @@ const Journal = () => {
             <DialogTitle>Coluna Enviada!</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm" style={{ fontFamily: 'VT323, monospace' }}>
+            <p className="text-sm" style={{ fontFamily: 'Volter' }}>
               {submissionMessage}
             </p>
             <Button 

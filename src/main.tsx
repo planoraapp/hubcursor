@@ -29,6 +29,8 @@ import Profile from './pages/Profile'
 import NotificationDemo from './pages/NotificationDemo'
 import BeebopHome from './pages/BeebopHome'
 import NotFound from './pages/NotFound'
+import { FontTest } from './components/FontTest'
+import { FontAlternativeTest } from './components/FontAlternativeTest'
 // import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer' // Desativado temporariamente
 import HomeRedirect from './components/HomeRedirect'
 
@@ -115,6 +117,14 @@ const router = createBrowserRouter([
   {
     path: "/ferramentas/alt-codes",
     element: <AltCodesPage />,
+  },
+  {
+    path: "/font-test",
+    element: <FontTest />,
+  },
+  {
+    path: "/font-alternatives",
+    element: <FontAlternativeTest />,
   },
   {
     path: "/tools",

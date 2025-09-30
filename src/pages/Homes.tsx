@@ -17,8 +17,8 @@ import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
 import { HomesGrid } from '@/components/HomesGrid';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
-import { DebugCacheStatus } from '@/components/DebugCacheStatus';
 import PageBanner from '@/components/ui/PageBanner';
+import { AccentFixedText } from '@/components/AccentFixedText';
 
 
 
@@ -117,9 +117,6 @@ const Homes: React.FC = () => {
         <div className="min-h-screen flex w-full">
           <CollapsibleAppSidebar />
           <SidebarInset className="flex-1">
-            {/* Debug Cache Status */}
-            <DebugCacheStatus queryKey={['latest-homes']} label="Últimas Modificadas" />
-            
             
             <main className="flex-1 p-8 min-h-screen" style={{ 
               backgroundImage: 'url(/assets/bghabbohub.png)',
@@ -157,10 +154,15 @@ const Homes: React.FC = () => {
                 )}
               </div>
 
-              <Card className="mb-8 bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
+              <Card className="mb-8 hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
-                  <CardTitle className="text-xl volter-font habbo-text flex items-center gap-2">
-                    <Search className="w-5 h-5" />
+                  <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      letterSpacing: '0.3px'
+                    }}>
+                    <Search className="w-5 h-5 text-white" />
                     Buscar Usuários com Homes
                   </CardTitle>
                 </CardHeader>
@@ -172,19 +174,24 @@ const Homes: React.FC = () => {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      className="flex-1 border-2 border-gray-300 focus:border-purple-500 volter-font"
+                      className="flex-1 border-2 border-gray-300 focus:border-purple-500 volter-body-text"
                     />
                     <Button 
                       onClick={handleSearch}
                       disabled={loading}
-                      className="habbo-button-purple volter-font"
+                      className="habbo-button-purple sidebar-font-option-4"
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.3px'
+                      }}
                     >
                       <Search className="w-4 h-4 mr-2" />
                       {loading ? 'Buscando...' : 'Buscar'}
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mt-2 volter-font">
-                    💡 Dica: Deixe o campo vazio e clique em "Buscar" para ver usuários online com homes descobertas
+                  <p className="text-gray-600 mt-2 volter-body-text">
+                    <AccentFixedText>💡 Dica: Deixe o campo vazio e clique em "Buscar" para ver usuários online com homes descobertas</AccentFixedText>
                   </p>
                 </CardContent>
               </Card>

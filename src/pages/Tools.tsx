@@ -12,6 +12,7 @@ import TraxMachineCompact from '@/components/tools/TraxMachineCompact';
 import TamagotchiCompact from '../components/tools/TamagotchiCompact';
 import PageBanner from '@/components/ui/PageBanner';
 import Room7x7Modal from '@/components/tools/Room7x7Modal';
+import { AccentFixedText } from '@/components/AccentFixedText';
 
 const Tools = () => {
   const navigate = useNavigate();
@@ -51,16 +52,16 @@ const Tools = () => {
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
                       <span className="text-3xl">🤲</span>
                     </div>
-                    <CardTitle className="volter-font text-xl text-gray-900">Catálogo de Handitems</CardTitle>
+                    <CardTitle className="volter-body-text text-xl text-gray-900 font-bold">Catálogo de Handitems</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-gray-600 volter-font mb-4">
-                      Explore todos os itens de mão que os mobis entregam no hotel! Busque, filtre e copie IDs facilmente.
+                    <p className="text-gray-600 volter-body-text mb-4">
+                      <AccentFixedText>Explore todos os itens de mão que os mobis entregam no hotel! Busque, filtre e copie IDs facilmente.</AccentFixedText>
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center mb-4">
-                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Busca Avançada</span>
-                      <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Preview Avatar</span>
-                      <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Copy ID</span>
+                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded volter-body-text">Busca Avançada</span>
+                      <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded volter-body-text">Preview Avatar</span>
+                      <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded volter-body-text">Copy ID</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -74,17 +75,17 @@ const Tools = () => {
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
                       <span className="text-3xl">🎨</span>
                     </div>
-                    <CardTitle className="volter-font text-xl text-gray-900">Editor de Visuais</CardTitle>
+                    <CardTitle className="volter-body-text text-xl text-gray-900 font-bold">Editor de Visuais</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-gray-600 volter-font mb-4">
-                      Crie e personalize seu avatar Habbo com milhares de opções de roupas, acessórios e cores!
+                    <p className="text-gray-600 volter-body-text mb-4">
+                      <AccentFixedText>Crie e personalize seu avatar Habbo com milhares de opções de roupas, acessórios e cores!</AccentFixedText>
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center mb-4">
-                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Preview 3D</span>
-                      <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Download PNG</span>
-                      <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Expressões</span>
-                      <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded volter-font">Ações</span>
+                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded volter-body-text">Preview 3D</span>
+                      <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded volter-body-text">Download PNG</span>
+                      <span className="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded volter-body-text">Expressões</span>
+                      <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded volter-body-text">Ações</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -104,11 +105,11 @@ const Tools = () => {
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-3xl">🏠</span>
                     </div>
-                    <CardTitle className="volter-font text-xl text-gray-900">Sala Isométrica 6x8</CardTitle>
+                    <CardTitle className="volter-body-text text-xl text-gray-900 font-bold">Sala Isométrica 6x8</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-gray-600 volter-font mb-4">
-                      Visualize e interaja com uma sala isométrica no estilo Habbo.
+                    <p className="text-gray-600 volter-body-text mb-4">
+                      <AccentFixedText>Visualize e interaja com uma sala isométrica no estilo Habbo.</AccentFixedText>
                     </p>
                     <div className="flex justify-center">
                       <Room7x7Modal />
@@ -125,17 +126,17 @@ const Tools = () => {
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
                       <span className="text-3xl">🏆</span>
                     </div>
-                    <CardTitle className="volter-font text-xl text-gray-900">Emblemas do Habbo</CardTitle>
+                    <CardTitle className="volter-body-text text-xl text-gray-900 font-bold">Emblemas do Habbo</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-gray-600 volter-font mb-4">
-                      Explore todos os emblemas do Habbo Hotel com busca e categorias.
+                    <p className="text-gray-600 volter-body-text mb-4">
+                      <AccentFixedText>Explore todos os emblemas do Habbo Hotel com busca e categorias.</AccentFixedText>
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center mb-4">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded volter-font">Busca</span>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded volter-font">Categorias</span>
-                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded volter-font">Scroll Infinito</span>
-                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded volter-font">Copy Código</span>
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded volter-body-text">Busca</span>
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded volter-body-text">Categorias</span>
+                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded volter-body-text">Scroll Infinito</span>
+                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded volter-body-text">Copy Código</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -147,11 +148,11 @@ const Tools = () => {
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-3xl">⚡</span>
                     </div>
-                    <CardTitle className="volter-font text-xl text-gray-500">Próximamente</CardTitle>
+                    <CardTitle className="volter-body-text text-xl text-gray-500 font-bold">Próximamente</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="text-gray-400 volter-font">
-                      Aguarde novidades e funcionalidades incríveis!
+                    <p className="text-gray-400 volter-body-text">
+                      <AccentFixedText>Aguarde novidades e funcionalidades incríveis!</AccentFixedText>
                     </p>
                   </CardContent>
                 </Card>

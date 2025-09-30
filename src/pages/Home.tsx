@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, MessageSquare, Star } from 'lucide-react';
 import PageBanner from '@/components/ui/PageBanner';
+import { AccentFixedText } from '@/components/AccentFixedText';
 
 // Temporariamente desabilitar hooks pesados para melhorar performance
 // import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
@@ -50,8 +51,8 @@ export const Home: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <p className="text-gray-600 mb-4 volter-font">
-                      Acesse o console social para ver fotos de amigos, buscar usuários e interagir com a comunidade.
+                    <p className="text-gray-600 mb-4 volter-body-text">
+                      <AccentFixedText>Acesse o console social para ver fotos de amigos, buscar usuários e interagir com a comunidade.</AccentFixedText>
                     </p>
                     <Link to="/console">
                       <Button className="w-full habbo-button-blue sidebar-font-option-4"
@@ -77,8 +78,8 @@ export const Home: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <p className="text-gray-600 mb-4 volter-font">
-                      Explore as homes dos usuários, crie conexões e descubra conteúdos incríveis da comunidade.
+                    <p className="text-gray-600 mb-4 volter-body-text">
+                      <AccentFixedText>Explore as homes dos usuários, crie conexões e descubra conteúdos incríveis da comunidade.</AccentFixedText>
                     </p>
                     <Link to="/homes">
                       <Button className="w-full habbo-button-green sidebar-font-option-4"
@@ -104,8 +105,8 @@ export const Home: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <p className="text-gray-600 mb-4 volter-font">
-                      Descubra e colecione emblemas exclusivos, veja rankings e conquiste seu lugar na comunidade.
+                    <p className="text-gray-600 mb-4 volter-body-text">
+                      <AccentFixedText>Descubra e colecione emblemas exclusivos, veja rankings e conquiste seu lugar na comunidade.</AccentFixedText>
                     </p>
                     <Link to="/emblemas">
                       <Button className="w-full habbo-button-yellow sidebar-font-option-4"
@@ -129,8 +130,8 @@ export const Home: React.FC = () => {
                         }}>
                       Pronto para começar?
                     </h3>
-                    <p className="text-gray-600 mb-6 volter-font">
-                      Explore todas as funcionalidades do HabboHub e conecte-se com a maior comunidade Habbo do Brasil.
+                    <p className="text-gray-600 mb-6 volter-body-text">
+                      <AccentFixedText>Explore todas as funcionalidades do HabboHub e conecte-se com a maior comunidade Habbo do Brasil.</AccentFixedText>
                     </p>
                     <div className="flex gap-4 justify-center flex-wrap">
                       <Link to="/console">

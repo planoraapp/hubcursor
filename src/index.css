@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Condensed:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Century+Gothic:wght@400;700&display=swap');
 @import url('/fonts/volter/volter.css');
 
 @tailwind base;
@@ -141,6 +144,77 @@
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: unset;
   font-smooth: never;
+}
+
+/* Volter Goldfish Normal para corpos de texto */
+.volter-body-text {
+  font-family: 'Volter', 'Habbo Volter', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: normal;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+/* Fontes alternativas com suporte completo a acentos */
+.volter-press-start {
+  font-family: 'Press Start 2P', 'Volter', 'Habbo Volter', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: normal;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+.volter-vt323 {
+  font-family: 'VT323', 'Volter', 'Habbo Volter', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: normal;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  font-smooth: never;
+}
+
+.volter-century-gothic {
+  font-family: 'Century Gothic', 'Volter', 'Habbo Volter', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
+}
+
+/* Correção específica para caracteres acentuados */
+.volter-body-text {
+  font-family: 'Volter', 'Habbo Volter', 'Ubuntu Condensed', Arial, sans-serif;
+}
+
+/* Fallback inteligente: usa Ubuntu Condensed para caracteres que Volter não renderiza bem */
+@font-face {
+  font-family: 'Volter-Fallback';
+  src: local('Ubuntu Condensed'), local('Arial');
+  unicode-range: U+00C0-00FF; /* Todos os caracteres latinos com acentos */
+}
+
+.volter-body-text {
+  font-family: 'Volter', 'Volter-Fallback', 'Habbo Volter', Arial, sans-serif;
 }
 
 .ubuntu-habbo-font {
