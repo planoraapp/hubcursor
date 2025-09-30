@@ -41,6 +41,13 @@ Deno.serve(async (req) => {
     const userData = await userResponse.json();
     const uniqueId = userData.uniqueId;
 
+    console.log('🔍 [Debug] Dados básicos da API:', {
+      name: userData.name,
+      motto: userData.motto,
+      mottoType: typeof userData.motto,
+      mottoLength: userData.motto?.length
+    });
+
     // Fetch all data in parallel
     const [badgesResponse, friendsResponse, groupsResponse, roomsResponse] = await Promise.allSettled([
       fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/badges`, {

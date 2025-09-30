@@ -16,6 +16,8 @@ import { GroupsModal } from '@/components/profile/modals/GroupsModal';
 // import { PhotoModal } from '@/components/profile/modals/PhotoModal'; // Temporariamente removido
 import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
 import { lazy, Suspense } from 'react';
+import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsModal';
+import { PhotoLikesModal } from '@/components/console/modals/PhotoLikesModal';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 // Temporariamente comentado para acelerar carregamento
@@ -119,7 +121,7 @@ const PixelMessageIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-type TabType = 'account' | 'feed' | 'photos' | 'chat';
+type TabType = 'account' | 'friends' | 'chat' | 'photos';
 
 interface TabButton {
   id: TabType;
@@ -140,9 +142,17 @@ const tabs: TabButton[] = [
     activeColor: '#FBCC00'
   },
   {
-    id: 'feed',
+    id: 'friends',
     label: 'Friends',
     icon: <PixelUsersIcon className="w-8 h-8" />,
+    color: '#FDCC00',
+    hoverColor: '#FEE100',
+    activeColor: '#FBCC00'
+  },
+  {
+    id: 'chat',
+    label: 'Chat',
+    icon: <PixelMessageIcon className="w-8 h-8" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -151,14 +161,6 @@ const tabs: TabButton[] = [
     id: 'photos',
     label: 'Find',
     icon: <PixelSearchIcon className="w-8 h-8" />,
-    color: '#FDCC00',
-    hoverColor: '#FEE100',
-    activeColor: '#FBCC00'
-  },
-  {
-    id: 'chat',
-    label: 'Help',
-    icon: <PixelMessageIcon className="w-8 h-8" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -171,10 +173,23 @@ export const FunctionalConsole: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null); // Foto selecionada para o modal
   const [activeModal, setActiveModal] = useState<string | null>(null); // Estado global para modais
   
-  // Debug logs para rastrear o estado do modal
-  React.useEffect(() => {
-    console.log('🔍 [FunctionalConsole] activeModal state changed:', activeModal);
-  }, [activeModal]);
+  // Modal states for photo interactions
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [selectedPhotoForModal, setSelectedPhotoForModal] = useState<any>(null);
+
+  // Modal handlers
+  const handleShowLikesModal = (photo: any) => {
+    setSelectedPhotoForModal(photo);
+    setShowLikesModal(true);
+  };
+
+  const handleShowCommentsModal = (photo: any) => {
+    setSelectedPhotoForModal(photo);
+    setShowCommentsModal(true);
+  };
+  
+  // Modal state tracking
   // PhotoModal temporariamente removido
   const { habboAccount, isLoggedIn } = useAuth();
   const { getPhotoInteractions, toggleLike, addComment } = usePhotoInteractions();
@@ -203,6 +218,49 @@ export const FunctionalConsole: React.FC = () => {
     profileVisible: completeProfile.profileVisible ?? true // Assume público se não especificado
   } : null;
 
+  // Função para formatar datas de forma mais robusta
+  const formatDate = (dateString: string | undefined, includeTime: boolean = false) => {
+    if (!dateString) return 'Data não disponível';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Data inválida';
+      
+      const options: Intl.DateTimeFormatOptions = {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric'
+      };
+      
+      if (includeTime) {
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+      }
+      
+      return date.toLocaleDateString('pt-BR', options);
+    } catch (error) {
+      console.warn('Erro ao formatar data:', dateString, error);
+      return 'Data inválida';
+    }
+  };
+
+  // Debug temporário para verificar dados
+  React.useEffect(() => {
+    if (viewingUser && completeProfile) {
+      console.log('🔍 [Debug] Dados do perfil visitado:', {
+        username: viewingUser,
+        name: completeProfile.name,
+        motto: completeProfile.motto,
+        mottoLength: completeProfile.motto?.length,
+        mottoType: typeof completeProfile.motto,
+        memberSince: completeProfile.memberSince,
+        lastAccessTime: completeProfile.lastAccessTime,
+        online: completeProfile.online,
+        profileVisible: completeProfile.profileVisible
+      });
+    }
+  }, [viewingUser, completeProfile]);
+
   const badges = completeProfile?.data?.badges || [];
   const friends = completeProfile?.data?.friends || [];
   const rooms = completeProfile?.data?.rooms || [];
@@ -213,14 +271,17 @@ export const FunctionalConsole: React.FC = () => {
   
   // Função para navegar para perfil de outro usuário
   const navigateToProfile = (targetUsername: string) => {
-    console.log('🔄 [FunctionalConsole] Navegando para perfil:', targetUsername);
     setViewingUser(targetUsername);
-    setActiveTab('feed'); // Vai para a aba Friends ao ver perfil de outro usuário
+    setActiveTab('friends'); // Vai para a aba Friends ao ver perfil de outro usuário
+    
+    // Fecha qualquer modal que esteja aberto
+    if (activeModal) {
+      setActiveModal(null);
+    }
   };
 
   // Função para voltar ao próprio perfil
   const backToMyProfile = () => {
-    console.log('🔙 [FunctionalConsole] Voltando para perfil próprio');
     setViewingUser(null);
     setActiveTab('account');
   };
@@ -257,7 +318,7 @@ export const FunctionalConsole: React.FC = () => {
           activeModal={activeModal}
           setActiveModal={setActiveModal}
         />;
-      case 'feed':
+      case 'friends':
         return <FeedTab 
           user={userData}
           badges={badges} 
@@ -278,18 +339,20 @@ export const FunctionalConsole: React.FC = () => {
           username={username}
           activeModal={activeModal}
           setActiveModal={setActiveModal}
+          handleShowLikesModal={handleShowLikesModal}
+          handleShowCommentsModal={handleShowCommentsModal}
+        />;
+      case 'chat':
+        return <FriendsTab 
+          friends={friends} 
+          isLoading={isLoadingData}
+          onNavigateToProfile={navigateToProfile}
         />;
       case 'photos':
         return <PhotosTab 
           badges={badges} 
           rooms={rooms} 
           photos={photos} 
-          isLoading={isLoading}
-          onNavigateToProfile={navigateToProfile}
-        />;
-      case 'chat':
-        return <ChatTab 
-          friends={friends} 
           isLoading={isLoading}
           onNavigateToProfile={navigateToProfile}
         />;
@@ -330,7 +393,7 @@ export const FunctionalConsole: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto ml-12 h-[calc(100vh-12rem)] w-full max-w-full overflow-x-hidden">
+    <div className="mx-auto h-[calc(100vh-12rem)] w-full max-w-full overflow-x-hidden">
       <div className="pixel-frame-outer h-full max-w-full">
         <div className="pixel-header-bar">
           <div className="pixel-title">
@@ -346,6 +409,41 @@ export const FunctionalConsole: React.FC = () => {
               {renderTabContent()}
             </div>
           </div>
+          
+          {/* Photo modals rendered at console level */}
+          {selectedPhotoForModal && (
+            <>
+              <PhotoLikesModal
+                likes={[]} // TODO: Get actual likes data
+                isOpen={showLikesModal}
+                onClose={() => {
+                  setShowLikesModal(false);
+                  setSelectedPhotoForModal(null);
+                }}
+              />
+              
+              <PhotoCommentsModal
+                comments={[]} // TODO: Get actual comments data
+                isOpen={showCommentsModal}
+                onClose={() => {
+                  setShowCommentsModal(false);
+                  setSelectedPhotoForModal(null);
+                }}
+                onAddComment={(comment) => {
+                  // TODO: Implement add comment
+                  console.log('Add comment:', comment);
+                }}
+                onDeleteComment={(commentId) => {
+                  // TODO: Implement delete comment
+                  console.log('Delete comment:', commentId);
+                }}
+                canDeleteComment={(comment) => {
+                  // TODO: Implement permission check
+                  return false;
+                }}
+              />
+            </>
+          )}
         </div>
 
         {/* Tab navigation at bottom - now part of external frame */}
@@ -360,6 +458,10 @@ export const FunctionalConsole: React.FC = () => {
                   if (tab.id === 'account' && viewingUser) {
                     // Se clicou em "My Info" e está visualizando outro usuário, volta ao próprio perfil
                     backToMyProfile();
+                  } else if (tab.id === 'friends' && viewingUser) {
+                    // Se clicou em "Friends" e está visualizando outro usuário, volta ao feed normal
+                    setViewingUser(null);
+                    setActiveTab('friends');
                   } else {
                     setActiveTab(tab.id);
                   }
@@ -472,7 +574,7 @@ const FeedTab: React.FC<any> = ({
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
   getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
-  activeModal, setActiveModal
+  activeModal, setActiveModal, handleShowLikesModal, handleShowCommentsModal
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -519,7 +621,6 @@ const FeedTab: React.FC<any> = ({
     try {
       // Aqui você pode integrar com a API de busca do Habbo
       // Por enquanto, vamos simular uma busca
-      console.log('🔍 Buscando usuário:', searchTerm, 'no país:', selectedCountry);
       
       // Simular delay da API
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -535,7 +636,7 @@ const FeedTab: React.FC<any> = ({
         }
       ]);
     } catch (error) {
-      console.error('Erro na busca:', error);
+      // Error handled silently
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -600,8 +701,13 @@ const FeedTab: React.FC<any> = ({
                   `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
                 }
                 alt={`Avatar de ${user?.name || 'Beebop'}`}
-                className="h-32 w-auto object-contain"
+                className="h-28 w-auto object-contain"
                 style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  // Fallback para busca por nome se o figure_string falhar
+                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
+                }}
               />
               {/* Ícone de online/offline */}
               <div className="absolute bottom-0 right-0">
@@ -630,7 +736,9 @@ const FeedTab: React.FC<any> = ({
             
             <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
-              <p className="text-white/70 italic mb-4 truncate">"{user?.motto || 'HUB-ACTI1'}"</p>
+              <p className="text-white/70 italic mb-4 truncate">
+                "{user?.motto && user.motto.trim() ? user.motto : 'null'}"
+              </p>
               
               <div className="space-y-1 text-sm text-white/60">
                 <div className="flex items-center gap-2 min-w-0">
@@ -647,13 +755,15 @@ const FeedTab: React.FC<any> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-medium text-nowrap">Online em:</span>
+                  <span className="font-medium text-nowrap">Último acesso:</span>
                   <span className="truncate">
                     {user?.lastWebAccess ? 
                       new Date(user.lastWebAccess).toLocaleDateString('pt-BR', {
                         day: '2-digit',
                         month: '2-digit', 
-                        year: 'numeric'
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
                       }) : 
                       'Data não disponível'
                     }
@@ -842,7 +952,7 @@ const FeedTab: React.FC<any> = ({
   return (
     <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
       <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">📰 Feed de Atividades</h3>
+        <h3 className="text-lg font-bold">📸 Feed de Fotos dos Amigos</h3>
       </div>
       
       {/* Campo de Busca */}
@@ -985,7 +1095,7 @@ const FeedTab: React.FC<any> = ({
       </div>
       
       {/* Feed de Fotos dos Amigos */}
-      <div className="p-4">
+      <div className="py-4 relative">
         <Suspense fallback={
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -998,6 +1108,8 @@ const FeedTab: React.FC<any> = ({
             currentUserName={currentUser || 'Beebop'}
             hotel={habboAccount?.hotel || 'br'}
             onNavigateToProfile={onNavigateToProfile}
+            onShowLikesModal={handleShowLikesModal}
+            onShowCommentsModal={handleShowCommentsModal}
           />
         </Suspense>
       </div>
@@ -1125,8 +1237,8 @@ const PhotosTab: React.FC<any> = ({ badges, rooms, photos, isLoading, onNavigate
   );
 };
 
-// Componente da aba Chat
-const ChatTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => {
+// Componente da aba Friends
+const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => {
   if (isLoading) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
@@ -1143,35 +1255,62 @@ const ChatTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => 
   return (
     <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
       <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">💬 Chat</h3>
+        <h3 className="text-lg font-bold">💬 Chat com Amigos</h3>
+        <p className="text-sm text-white/60 mt-1">{friends.length} amigos</p>
       </div>
       <div className="flex-1 p-4 space-y-3">
-        {friends.map((friend) => (
-          <div 
-            key={friend.uniqueId} 
-            className="flex items-center space-x-3 p-3 bg-white/10 rounded border border-black hover:bg-white/20 transition-colors cursor-pointer"
-            onClick={() => onNavigateToProfile(friend.name)}
-          >
-            <div className="relative">
-              <img 
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${friend.name}&size=s`}
-                alt={friend.name}
-                className="w-10 h-10 rounded"
-              />
-              <div className={cn(
-                "absolute -bottom-1 -right-1 w-3 h-3 border border-black rounded-full",
-                friend.online ? "bg-green-500" : "bg-red-500"
-              )}></div>
+        {friends.length > 0 ? (
+          friends.map((friend) => (
+            <div 
+              key={friend.uniqueId} 
+              className="flex items-center space-x-3 p-3 bg-white/10 rounded border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
+              onClick={() => onNavigateToProfile(friend.name)}
+            >
+              <div className="relative flex-shrink-0">
+                <div className="w-12 h-12 overflow-hidden">
+                  <img 
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${friend.name}&size=l&direction=2&head_direction=3&headonly=1`}
+                    alt={friend.name}
+                    className="w-full h-full object-cover"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${friend.name}&size=l&direction=2&head_direction=3&headonly=1`;
+                    }}
+                  />
+                </div>
+                <div className={cn(
+                  "absolute -bottom-1 -right-1 w-3 h-3 border border-white rounded-full",
+                  friend.online ? "bg-green-500" : "bg-red-500"
+                )}></div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-white truncate">{friend.name}</div>
+                <div className="text-white/60 text-sm truncate">"{friend.motto}"</div>
+                <div className="text-white/40 text-xs">
+                  {friend.online ? '🟢 Online' : '🔴 Offline'}
+                </div>
+              </div>
+              <button 
+                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNavigateToProfile(friend.name);
+                }}
+              >
+                Ver Perfil
+              </button>
             </div>
-            <div className="flex-1">
-              <div className="font-bold text-white">{friend.name}</div>
-              <div className="text-white/60 text-sm">{friend.motto}</div>
-            </div>
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <MessageSquare className="w-8 h-8" />
-            </Button>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-white/60">
+            <div className="text-4xl mb-4">👥</div>
+            <h4 className="text-lg font-semibold mb-2">Nenhum amigo encontrado</h4>
+            <p className="text-sm text-center">
+              Você ainda não tem amigos adicionados ou seus amigos não estão visíveis.
+            </p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -1280,7 +1419,8 @@ const AccountTab: React.FC<any> = ({
                 `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
               }
               alt={`Avatar de ${user?.name || 'Beebop'}`}
-              className="h-32 w-auto object-contain"
+              className="h-28 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 // Fallback para busca por nome se o figure_string falhar

@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, Trophy, Users, Home, Crown, UserPlus, UserCheck, Ca
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useFollowProfile } from '@/hooks/useFollowProfile';
-import { useOptimizedPhotos } from '@/hooks/useOptimizedPhotos';
+import { useUnifiedPhotoSystem } from '@/hooks/useUnifiedPhotoSystem';
 import { PhotoGrid } from '@/components/console/PhotoGrid';
 import { PhotoLikesModal } from '@/components/shared/PhotoLikesModal';
 import { PhotoCommentsModal } from '@/components/shared/PhotoCommentsModal';
@@ -36,10 +36,10 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
   // Get photos
   const { 
     photos, 
-    photoCount, 
+    photoCount,
     isLoading: photosLoading, 
-    refreshPhotos
-  } = useOptimizedPhotos(username, habboUser?.hotel || 'br');
+    refetch: refreshPhotos
+  } = useUnifiedPhotoSystem(username, habboUser?.hotel || 'br');
 
   // Follow system
   const {

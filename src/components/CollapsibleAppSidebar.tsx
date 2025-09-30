@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, LogOut, User, Shield } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CountryFlags } from '@/components/marketplace/CountryFlags';
 
@@ -27,19 +27,16 @@ export function CollapsibleAppSidebar() {
   // Verificar se o usuário é admin usando o campo is_admin do banco
   const isAdmin = habboAccount?.is_admin === true;
 
-  // Debug logs - REMOVIDO para evitar spam no console
-  // console.log('🔍 [CollapsibleAppSidebar] Is admin (from DB):', isAdmin);
+  // Debug temporário para verificar status de admin
+  console.log('🔍 [CollapsibleAppSidebar] habboAccount:', habboAccount);
+  console.log('🔍 [CollapsibleAppSidebar] isAdmin:', isAdmin);
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
     { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
-    { name: 'Emblemas', path: '/emblemas', icon: '/assets/emblemas.png' },
-    { name: 'Catálogo', path: '/catalogo', icon: '/assets/Carrinho.png' },
     { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/ferramentas.png' },
-    { name: 'Eventos', path: '/eventos', icon: '/assets/eventos.png' },
-    { name: 'Mercado', path: '/mercado', icon: '/assets/Diamante.png' },
   ];
 
   // Adicionar menu de admin se o usuário for admin
@@ -47,44 +44,40 @@ export function CollapsibleAppSidebar() {
     menuItems.push({ 
       name: 'Admin', 
       path: '/admin', 
-      icon: '/assets/shield.png' 
+      icon: '/assets/1044__-IT.png' 
     });
   }
 
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
     const content = (
-      <Link to={item.path} className="flex items-center gap-3 w-full">
-        {item.name === 'Admin' ? (
-          <Shield className="w-9 h-9 text-yellow-500" />
-        ) : (
+      <Link to={item.path} className="flex items-center gap-3 w-full min-h-[48px]">
+        <div className="flex-shrink-0 flex items-center justify-center w-12">
           <img 
             src={item.icon} 
             alt={item.name}
-            className={`flex-shrink-0`}
+            className="object-contain"
             style={{ 
               imageRendering: 'pixelated',
-              objectFit: 'contain',
               width: 'auto',
               height: 'auto',
               maxWidth: '48px',
-              maxHeight: '48px',
-              minWidth: '24px',
-              minHeight: '24px'
+              maxHeight: '48px'
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
             }}
           />
-        )}
+        </div>
         {!isCollapsed && (
           <span 
-            className="sidebar-font-option-4 text-white"
+            className="sidebar-font-option-4 text-white flex-1 flex items-center"
             style={{
               fontSize: '16px',
               fontWeight: 'bold',
               letterSpacing: '0.3px',
-              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+              textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
+              lineHeight: '1.2'
             }}
           >
             {item.name}
@@ -101,7 +94,7 @@ export function CollapsibleAppSidebar() {
               <SidebarMenuButton 
                 asChild
                 isActive={location.pathname === item.path}
-                className="w-full justify-center px-2 py-2 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors"
+                className="w-full justify-center px-2 py-3 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors min-h-[48px]"
               >
                 {content}
               </SidebarMenuButton>
@@ -118,7 +111,7 @@ export function CollapsibleAppSidebar() {
       <SidebarMenuButton 
         asChild
         isActive={location.pathname === item.path}
-        className="w-full justify-start px-3 py-2 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors"
+        className="w-full justify-start px-3 py-3 hover:bg-yellow-200/50 data-[active=true]:bg-yellow-300/70 transition-colors min-h-[48px]"
       >
         {content}
       </SidebarMenuButton>
@@ -132,7 +125,7 @@ export function CollapsibleAppSidebar() {
           <div className="w-full flex justify-center items-center">
             {isCollapsed ? (
               <img 
-                src="/assets/hubbeta.gif" 
+                src="/assets/hub.gif" 
                 alt="Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ 
@@ -141,7 +134,7 @@ export function CollapsibleAppSidebar() {
                 }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/assets/hub.gif";
+                  target.src = "/assets/hubbeta.gif";
                 }}
               />
             ) : (
@@ -165,7 +158,7 @@ export function CollapsibleAppSidebar() {
         <SidebarContent className="px-2 pt-2">
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-2">
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <MenuItem item={item} />
@@ -180,31 +173,34 @@ export function CollapsibleAppSidebar() {
           <div className="space-y-2">
             {isLoggedIn && habboAccount ? (
               <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
-                <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-2`}>
-                  <img
-                    src={habboAccount.figure_string ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
-                    alt={`Avatar de ${habboAccount.habbo_name}`}
-                    className={`w-16 h-16`}
-                    style={{ 
-                      imageRendering: 'pixelated',
-                      objectFit: 'contain'
-                    }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
-                    }}
-                  />
+                <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-3`}>
+                  <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
+                    <img
+                      src={habboAccount.figure_string ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
+                      alt={`Avatar de ${habboAccount.habbo_name}`}
+                      className="w-16 h-16 object-contain"
+                      style={{ 
+                        imageRendering: 'pixelated',
+                        objectFit: 'contain'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
+                      }}
+                    />
+                  </div>
                   {!isCollapsed && (
-                    <div className="flex flex-col">
+                    <div className="flex flex-col flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4" />
+                        <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4 flex-shrink-0" />
                         <span 
                           className="sidebar-font-option-4 text-white truncate"
                           style={{
                             fontSize: '16px',
                             fontWeight: 'bold',
                             letterSpacing: '0.3px',
-                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
+                            textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black',
+                            lineHeight: '1.2'
                           }}
                         >
                           {habboAccount.habbo_name}
@@ -219,7 +215,7 @@ export function CollapsibleAppSidebar() {
                       <TooltipTrigger asChild>
                         <button 
                           onClick={logout}
-                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-1.5 text-white rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4"
+                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2 sidebar-font-option-4 min-h-[40px]"
                           style={{
                             fontSize: '16px',
                             fontWeight: 'bold',
@@ -230,13 +226,13 @@ export function CollapsibleAppSidebar() {
                           <img 
                             src="/assets/logout.png" 
                             alt="Logout" 
-                            className="w-3 h-3"
+                            className="w-4 h-4 flex-shrink-0"
                             style={{ 
                               imageRendering: 'pixelated',
                               objectFit: 'contain'
                             }}
                           />
-                          Sair
+                          <span>Sair</span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>

@@ -21,14 +21,10 @@ import Journal from './pages/Journal'
 import AdminPanel from './pages/AdminPanel'
 import AdminDashboard from './pages/AdminDashboard'
 import { AccountManager } from './pages/AccountManager'
-import Emblemas from './pages/Emblemas'
-import Catalogo from './pages/Catalogo'
 import Tools from './pages/Tools'
 import HanditemCatalog from './pages/HanditemCatalog'
 import AvatarEditor from './pages/AvatarEditor'
 import AltCodesPage from './pages/AltCodes'
-import Eventos from './pages/Eventos'
-import Mercado from './pages/Mercado'
 import Profile from './pages/Profile'
 import NotificationDemo from './pages/NotificationDemo'
 import BeebopHome from './pages/BeebopHome'
@@ -105,14 +101,6 @@ const router = createBrowserRouter([
     element: <AccountManager />,
   },
   {
-    path: "/emblemas",
-    element: <Emblemas />,
-  },
-  {
-    path: "/catalogo",
-    element: <Catalogo />,
-  },
-  {
     path: "/ferramentas",
     element: <Tools />,
   },
@@ -131,14 +119,6 @@ const router = createBrowserRouter([
   {
     path: "/tools",
     element: <Tools />,
-  },
-  {
-    path: "/eventos",
-    element: <Eventos />,
-  },
-  {
-    path: "/mercado",
-    element: <Mercado />,
   },
   {
     path: "/profile/:username",

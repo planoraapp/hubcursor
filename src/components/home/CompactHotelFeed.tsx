@@ -5,15 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Activity, Hotel, RefreshCw, Wifi, Archive, ExternalLink, Trophy, Camera, UserPlus, MessageSquare, Heart } from 'lucide-react';
 import { useHotelActivities } from '@/hooks/useHotelActivities';
-import { useUserFigures } from '@/hooks/useUserFigures';
 import { unifiedHabboService } from '@/services/unifiedHabboService';
 import { Link } from 'react-router-dom';
 
 export const CompactHotelFeed: React.FC = () => {
   const { aggregatedActivities, isLoading, hotel, metadata, refetch } = useHotelActivities();
-  
-  const usernames = aggregatedActivities.slice(0, 6).map(group => group.username);
-  const { figureMap } = useUserFigures(usernames);
 
   const getSourceIcon = () => {
     switch (metadata.source) {

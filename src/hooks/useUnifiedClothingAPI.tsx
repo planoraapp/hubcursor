@@ -1,8 +1,4 @@
-
-import { useQuery } from '@tanstack/react-query';
 import { useFlashAssetsClothing } from './useFlashAssetsClothing';
-import { useHabboEmotionClothing } from './useHabboEmotionClothing';
-import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 
 export interface UnifiedClothingItem {
@@ -14,7 +10,7 @@ export interface UnifiedClothingItem {
   colors: string[];
   imageUrl: string;
   club: 'HC' | 'FREE';
-  source: 'flash-assets' | 'habbo-emotion' | 'unified-api' | 'cache';
+  source: 'flash-assets' | 'cache';
 }
 
 interface UseUnifiedClothingOptions {
@@ -27,117 +23,32 @@ interface UseUnifiedClothingOptions {
 export const useUnifiedClothingAPI = (options: UseUnifiedClothingOptions = {}) => {
   const { limit = 500, category = 'all', search = '', gender = 'U' } = options;
 
-  // Primeira prioridade: Flash Assets via Supabase
+  // Usar apenas Flash Assets (fonte principal)
   const { 
-    data: flashAssets = [], 
-    isLoading: flashLoading,
-    error: flashError 
+    data: clothingItems = [], 
+    isLoading,
+    error 
   } = useFlashAssetsClothing({ limit, category, search, gender });
 
-  // Segunda prioridade: HabboEmotion
-  const { 
-    data: habboEmotionItems = [], 
-    isLoading: emotionLoading,
-    error: emotionError 
-  } = useHabboEmotionClothing(limit, category, gender);
-
-  // Terceira prioridade: API Unificada
-  const { 
-    data: unifiedItems = [], 
-    isLoading: unifiedLoading,
-    error: unifiedError 
-  } = useQuery({
-    queryKey: ['unified-clothing', { limit, category, gender, search }],
-    queryFn: async () => {
-            const { data, error } = await supabase.functions.invoke('habbo-unified-api', {
-        body: { 
-          endpoint: 'clothing',
-          action: 'search',
-          params: { limit, category, gender, search }
-        }
-      });
-
-      if (error) {
-                throw error;
-      }
-
-            return data?.clothing || [];
-    },
-    enabled: flashAssets.length === 0 && habboEmotionItems.length === 0,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  // Processar e unificar os dados
+  // Processar dados unificados
   const unifiedData = useMemo(() => {
-                    let result: UnifiedClothingItem[] = [];
-
-    // Prioridade 1: Flash Assets
-    if (flashAssets.length > 0) {
-      result = flashAssets.map(item => ({
-        id: item.id,
-        name: item.name,
-        category: item.category,
-        gender: item.gender,
-        figureId: item.figureId,
-        colors: item.colors,
-        imageUrl: item.imageUrl,
-        club: item.club === 'HC' ? 'HC' : 'FREE',
-        source: 'flash-assets' as const
-      }));
-            return result;
-    }
-
-    // Prioridade 2: HabboEmotion
-    if (habboEmotionItems.length > 0) {
-      result = habboEmotionItems.map(item => ({
-        id: item.id.toString(),
-        name: item.name,
-        category: item.category,
-        gender: item.gender,
-        figureId: item.code || item.id.toString(),
-        colors: item.colors,
-        imageUrl: item.imageUrl,
-        club: item.club === 'HC' ? 'HC' : 'FREE',
-        source: 'habbo-emotion' as const
-      }));
-            return result;
-    }
-
-    // Prioridade 3: Edge Function
-    if (unifiedItems.length > 0) {
-      result = unifiedItems.map((item: any) => ({
-        id: item.item_id?.toString() || item.id,
-        name: item.code || item.name || 'Item',
-        category: item.part || item.category || 'ch',
-        gender: (item.gender || 'U') as 'M' | 'F' | 'U',
-        figureId: item.item_id?.toString() || item.id,
-        colors: item.colors || ['1', '2', '3'],
-        imageUrl: item.image_url || '',
-        club: item.club === 'HC' ? 'HC' : 'FREE',
-        source: 'unified-api' as const
-      }));
-            return result;
-    }
-
-        return [];
-  }, [flashAssets, habboEmotionItems, unifiedItems]);
-
-  const isLoading = flashLoading || emotionLoading || unifiedLoading;
-  const error = flashError || emotionError || unifiedError;
+    return clothingItems.map((item: any) => ({
+      id: item.id || item.figureId,
+      name: item.name,
+      category: item.category || 'unknown',
+      gender: item.gender || 'U',
+      figureId: item.figureId,
+      colors: item.colors || [],
+      imageUrl: item.imageUrl,
+      club: item.club || 'FREE',
+      source: 'flash-assets' as const
+    }));
+  }, [clothingItems]);
 
   return {
     data: unifiedData,
     isLoading,
     error,
-    source: unifiedData.length > 0 ? unifiedData[0].source : null,
-    stats: {
-      flashAssets: flashAssets.length,
-      habboEmotion: habboEmotionItems.length,
-      unifiedApi: unifiedItems.length,
-      total: unifiedData.length
-    }
+    count: unifiedData.length
   };
 };
-
-// Export alias for backward compatibility
-export const useUnifiedClothing = useUnifiedClothingAPI;

@@ -1,6 +1,5 @@
-﻿import React from "react";
+﻿import React, { useState } from "react";
 import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
-import { usePhotoInteractions } from "@/hooks/usePhotoInteractions";
 import { FriendsPhotoCard } from "./FriendsPhotoCard";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
@@ -8,12 +7,16 @@ interface FriendsPhotoFeedProps {
   currentUserName: string;
   hotel: string;
   onNavigateToProfile: (username: string) => void;
+  onShowLikesModal?: (photo: any) => void;
+  onShowCommentsModal?: (photo: any) => void;
 }
 
 export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   currentUserName,
   hotel,
-  onNavigateToProfile
+  onNavigateToProfile,
+  onShowLikesModal,
+  onShowCommentsModal
 }) => {
   const {
     data: photos,
@@ -21,16 +24,6 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
     error,
     refetch
   } = useFriendsPhotos(currentUserName, hotel);
-
-  const { toggleLike, addComment } = usePhotoInteractions();
-
-  const handleLike = (photoId: string) => {
-    toggleLike(photoId, currentUserName);
-  };
-
-  const handleComment = async (photoId: string, comment: string) => {
-    addComment(photoId, comment, currentUserName);
-  };
 
   const handleRetry = () => {
     refetch();
@@ -77,31 +70,35 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Header do feed */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-white">
-          📸 Feed de Fotos dos Amigos
-        </h3>
-        <div className="text-sm text-white/60">
-          {photos.length} fotos
-        </div>
-      </div>
+      return (
+        <div className="space-y-4 relative">
+          {/* Header do feed */}
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-lg font-bold text-white">
+              📸 Feed de Fotos dos Amigos
+            </h3>
+            <div className="text-sm text-white/60">
+              {photos.length} fotos
+            </div>
+          </div>
 
-      {/* Lista de fotos */}
-      <div className="space-y-4">
-        {photos.map((photo) => (
-          <FriendsPhotoCard
-            key={photo.id}
-            photo={photo}
-            currentUser={currentUserName}
-            onNavigateToProfile={onNavigateToProfile}
-            onLike={handleLike}
-            onComment={handleComment}
-          />
-        ))}
-      </div>
-    </div>
-  );
+          {/* Lista de fotos */}
+          <div className="space-y-4">
+            {photos.map((photo) => (
+              <FriendsPhotoCard
+                key={photo.id}
+                photo={photo}
+                currentUser={currentUserName}
+                onNavigateToProfile={onNavigateToProfile}
+                onLike={() => {}} // Não usado mais - curtidas são gerenciadas internamente
+                onComment={() => {}} // Não usado mais - comentários são gerenciados internamente
+                showLikesModal={false}
+                setShowLikesModal={() => onShowLikesModal?.(photo)}
+                showCommentsModal={false}
+                setShowCommentsModal={() => onShowCommentsModal?.(photo)}
+              />
+            ))}
+          </div>
+        </div>
+      );
 };

@@ -37,18 +37,15 @@ const mainItems = [
   { title: "Início", url: "/", icon: Home },
   { title: "Console", url: "/console", icon: LayoutDashboard },
   { title: "Jornal", url: "/journal", icon: Newspaper },
-  { title: "Eventos", url: "/eventos", icon: Gamepad2 },
 ];
 
 const communityItems = [
   { title: "Marketplace", url: "/marketplace", icon: ShoppingBag },
   { title: "Fórum", url: "/forum", icon: MessageSquare },
-  { title: "Emblemas", url: "/emblemas", icon: Image },
 ];
 
 const toolsItems = [
   { title: "Ferramentas", url: "/ferramentas", icon: Cog },
-  { title: "Catálogo", url: "/catalogo", icon: LayoutDashboard },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 

@@ -73,7 +73,7 @@ export async function fetchHabbohubRealData(): Promise<FetchResult> {
         const achievementsData = await achievementsResponse.json();
                 habboData.achievements = achievementsData;
       } else {
-        console.log('⚠️ [FETCH-REAL] Conquistas não disponíveis (404)');
+        // Achievements not available (404)
         habboData.achievements = [];
       }
       
@@ -118,7 +118,7 @@ export async function createHabbohubWithRealData(): Promise<{ success: boolean; 
       .eq('hotel', 'br');
 
     if (deleteError) {
-      console.log('⚠️ [CREATE-REAL] Erro ao limpar conta (pode não existir):', deleteError.message);
+      // Error clearing account (may not exist)
     } else {
           }
 

@@ -28,11 +28,7 @@ export function NewAppSidebar() {
     { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
     { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
-    { name: 'Emblemas', path: '/emblemas', icon: '/assets/emblemas.png' },
-    { name: 'Catálogo', path: '/catalogo', icon: '/assets/Carrinho.png' },
     { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/ferramentas.png' },
-    { name: 'Eventos', path: '/eventos', icon: '/assets/eventos.png' },
-    { name: 'Mercado', path: '/mercado', icon: '/assets/Diamante.png' },
   ];
 
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
