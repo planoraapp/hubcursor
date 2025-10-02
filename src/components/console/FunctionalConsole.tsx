@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Trophy, Home, Crown, Camera, Heart, MessageCircle } from 'lucide-react';
+import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Trophy, Home, Crown, Camera, Heart, MessageCircle, Globe } from 'lucide-react';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useUnifiedPhotoSystem } from '@/hooks/useUnifiedPhotoSystem';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,6 +20,8 @@ import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsMod
 import { PhotoLikesModal } from '@/components/console/modals/PhotoLikesModal';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
+const FindPhotoFeedColumn = lazy(() => import('@/components/console2/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
+const GlobalPhotoFeedColumn = lazy(() => import('@/components/console2/GlobalPhotoFeedColumn').then(module => ({ default: module.GlobalPhotoFeedColumn })));
 // Temporariamente comentado para acelerar carregamento
 // import { FeedActivityTabbedColumn } from '@/components/console2/FeedActivityTabbedColumn';
 // import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
@@ -103,6 +105,24 @@ const PixelSearchIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const PixelGlobeIcon = ({ className }: { className?: string }) => (
+  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
+    {/* Background */}
+    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
+    
+    {/* Globo */}
+    <rect x="4" y="8" width="32" height="24" fill="none" stroke="#8B4513" strokeWidth="2" />
+    <rect x="8" y="4" width="24" height="32" fill="none" stroke="#8B4513" strokeWidth="2" />
+    
+    {/* Linhas do globo */}
+    <rect x="20" y="8" width="2" height="24" fill="#8B4513" />
+    <rect x="4" y="20" width="32" height="2" fill="#8B4513" />
+    
+    {/* Base */}
+    <rect x="12" y="32" width="16" height="4" fill="#8B4513" />
+  </svg>
+);
+
 const PixelMessageIcon = ({ className }: { className?: string }) => (
   <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
     {/* Background */}
@@ -159,8 +179,8 @@ const tabs: TabButton[] = [
   },
   {
     id: 'photos',
-    label: 'Find',
-    icon: <PixelSearchIcon className="w-8 h-8" />,
+    label: 'Photos',
+    icon: <PixelGlobeIcon className="w-8 h-8" />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -350,11 +370,7 @@ export const FunctionalConsole: React.FC = () => {
         />;
       case 'photos':
         return <PhotosTab 
-          badges={badges} 
-          rooms={rooms} 
-          photos={photos} 
           isLoading={isLoading}
-          onNavigateToProfile={navigateToProfile}
         />;
       default:
         return (
@@ -1118,121 +1134,20 @@ const FeedTab: React.FC<any> = ({
   );
 };
 
-// Componente da aba Fotos
-const PhotosTab: React.FC<any> = ({ badges, rooms, photos, isLoading, onNavigateToProfile }) => {
-  if (isLoading) {
-    return (
-      <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
+// Componente da aba Photos (Feed Global)
+const PhotosTab: React.FC<any> = ({ isLoading }) => {
+  return (
+    <div className="h-full">
+      <Suspense fallback={
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando fotos...</p>
+            <p className="text-white/60">Carregando feed global...</p>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-      <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">📸 Fotos e Conquistas</h3>
-      </div>
-      <div className="flex-1 p-4 space-y-4">
-        {/* Photos Grid */}
-        {photos.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">Fotos ({photos.length})</h4>
-            <div className="grid grid-cols-4 gap-2">
-              {photos.map((photo) => (
-                <div key={photo.id} className="relative group cursor-pointer">
-                  <img 
-                    src={photo.url} 
-                    alt={photo.caption || 'Foto'} 
-                    className="w-full h-24 object-cover rounded border border-black"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="text-center text-white text-xs p-2">
-                      <div className="font-medium">{photo.type === 'SELFIE' ? '📸 Selfie' : '📷 Foto'}</div>
-                      {photo.caption && (
-                        <div className="text-white/80">{photo.caption}</div>
-                      )}
-                      <div className="text-white/60 mt-1">❤️ {photo.likes}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Badges Grid */}
-        {badges.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">Emblemas Conquistados ({badges.length})</h4>
-            <div className="grid grid-cols-4 gap-2">
-              {badges.map((badge) => (
-                <div key={badge.code} className="relative group cursor-pointer">
-                  <div className="w-full h-24 bg-yellow-500 rounded border border-black flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-black">{String(badge.code)}</div>
-                      <div className="text-xs text-black/80 font-medium">{badge.name}</div>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="text-center text-white text-xs p-2">
-                      <div className="font-medium">{badge.name}</div>
-                      <div className="text-white/80">{badge.description}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Rooms Grid */}
-        {rooms.length > 0 && (
-          <div>
-            <h4 className="text-sm font-medium text-white/80 mb-3">Quartos Criados ({rooms.length})</h4>
-            <div className="grid grid-cols-3 gap-2">
-              {rooms.map((room) => (
-                <div key={room.id} className="relative group cursor-pointer">
-                  <div className="w-full h-24 bg-green-500/20 rounded border border-black flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-white">{room.name}</div>
-                      <div className="text-xs text-white/60">{room.description}</div>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div className="text-center text-white text-xs p-2">
-                      <div className="font-medium">{room.name}</div>
-                      <div className="text-white/80">{room.description}</div>
-                      <div className="text-white/60 mt-1">
-                        ⭐ {room.rating} • {room.maximumVisitors} usuários
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* No Content Message */}
-        {badges.length === 0 && rooms.length === 0 && photos.length === 0 && (
-          <div className="text-center py-8">
-            <div className="text-white/40 text-sm">
-              <p>Nenhum conteúdo disponível</p>
-              <p className="mt-1">O perfil pode estar privado ou não ter conteúdo público</p>
-            </div>
-          </div>
-        )}
-      </div>
+      }>
+        <GlobalPhotoFeedColumn hotel="br" />
+      </Suspense>
     </div>
   );
 };

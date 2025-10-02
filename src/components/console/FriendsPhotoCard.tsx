@@ -147,24 +147,26 @@ export const FriendsPhotoCard: React.FC<FriendsPhotoCardProps> = ({
           {/* Ações (curtir, comentar, compartilhar) - posicionadas abaixo da foto */}
           <div className="px-1 py-2 bg-transparent">
             <div className="flex items-center gap-4">
-            <button
-              onClick={handleLike}
-              disabled={isTogglingLike}
-              className={`flex items-center gap-2 transition-colors ${
-                userLiked ? 'text-red-500' : 'text-white/60 hover:text-red-500'
-              }`}
-            >
-              <Heart className={`w-6 h-6 ${userLiked ? 'fill-current' : ''}`} />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLike}
+                disabled={isTogglingLike}
+                className={`flex items-center gap-2 transition-colors ${
+                  userLiked ? 'text-red-500' : 'text-white/60 hover:text-red-500'
+                }`}
+              >
+                <Heart className={`w-6 h-6 ${userLiked ? 'fill-current' : ''}`} />
+              </button>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowLikesModal(true);
                 }}
-                className="text-sm font-medium hover:underline"
+                className="text-sm font-medium hover:underline text-white/60 hover:text-white"
               >
                 {likesCount}
               </button>
-            </button>
+            </div>
               
             <button
               onClick={() => setShowCommentsModal(true)}

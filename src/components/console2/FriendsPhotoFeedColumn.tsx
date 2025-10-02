@@ -1,47 +1,66 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera, RefreshCw, Users, Heart, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
+import { useFriendsPhotosInfinite } from '@/hooks/useFriendsPhotosInfinite';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { PhotoModal } from '../console/PhotoModal';
+import { EnhancedPhotoCard } from './EnhancedPhotoCard';
+import { EnhancedPhoto } from '@/types/habbo';
 
 export const FriendsPhotoFeedColumn: React.FC = () => {
   const { habboAccount } = useMyConsoleProfile();
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   
   const { 
-    data: friendsPhotos = [], 
+    photos: friendsPhotos = [], 
     isLoading, 
     error, 
-    refetch 
-  } = useFriendsPhotos(
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    clearCache
+  } = useFriendsPhotosInfinite(
     habboAccount?.habbo_name || '',
     (habboAccount as any)?.hotel || 'br'
   );
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString.split('/').reverse().join('-'));
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    
-    if (minutes < 1) return 'agora mesmo';
-    if (minutes < 60) return `${minutes}m atrás`;
-    if (minutes < 1440) return `${Math.floor(minutes / 60)}h atrás`;
-    return `${Math.floor(minutes / 1440)}d atrás`;
-  };
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const handleRefresh = useCallback(() => {
+    clearCache();
+  }, [clearCache]);
 
   const handlePhotoClick = (photo: any) => {
     setSelectedPhoto({
       id: photo.id,
       imageUrl: photo.imageUrl,
       date: photo.date,
-      likes: photo.likes
+      likes: photo.likes,
+      caption: photo.caption,
+      roomName: photo.roomName
     });
   };
 
@@ -80,7 +99,7 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => refetch()}
+                onClick={handleRefresh}
                 disabled={isLoading}
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -115,7 +134,7 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
                   <p className="font-medium">Erro ao carregar feed</p>
                   <p className="text-sm">{error.message}</p>
                 </div>
-                <Button variant="outline" onClick={() => refetch()}>
+                <Button variant="outline" onClick={handleRefresh}>
                   Tentar novamente
                 </Button>
               </div>
@@ -133,59 +152,68 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
 
             {friendsPhotos.length > 0 && (
               <div className="space-y-6">
-                {friendsPhotos.map((photo) => (
-                  <div key={`${photo.userName}-${photo.id}`} className="p-3 border-t border-dashed border-white/20 first:border-t-0 space-y-3">
-                    {/* Header do post */}
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={photo.userAvatar}
-                        alt={photo.userName}
-                        className="w-8 h-8 rounded-full border border-border"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://placehold.co/32x32/4B5563/FFFFFF?text=${photo.userName[0]}`;
-                        }}
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{photo.userName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {formatTimeAgo(photo.date)}
-                        </div>
-                      </div>
-                    </div>
+                {friendsPhotos.map((photo, index) => {
+                  // Convert to EnhancedPhoto format
+                  const enhancedPhoto: EnhancedPhoto = {
+                    id: photo.id || `photo-${index}`,
+                    photo_id: photo.photo_id || photo.id || `photo-${index}`,
+                    userName: photo.userName,
+                    imageUrl: photo.imageUrl,
+                    date: photo.date, // Already formatted by the hook
+                    likes: [],
+                    likesCount: photo.likes || 0,
+                    userLiked: false,
+                    type: 'PHOTO', // Default type, could be enhanced based on photo data
+                    caption: photo.caption,
+                    roomName: photo.roomName
+                  };
 
-                    {/* Foto */}
-                    <div 
-                      className="relative aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer group"
-                      onClick={() => handlePhotoClick(photo)}
-                    >
-                      <img
-                        src={photo.imageUrl}
-                        alt={`Foto de ${photo.userName}`}
-                        className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://placehold.co/300x300/4B5563/FFFFFF?text=Foto+Não+Disponível`;
+                  return (
+                    <div key={`${photo.userName}-${photo.id}`} className="p-3 border-t border-dashed border-white/20 first:border-t-0">
+                      <EnhancedPhotoCard
+                        photo={enhancedPhoto}
+                        onUserClick={(userName) => {
+                          // Handle user click - could open profile modal
+                          console.log('User clicked:', userName);
                         }}
+                        onLikesClick={(photoId) => {
+                          // Handle likes click - could open likes modal
+                          console.log('Likes clicked for photo:', photoId);
+                        }}
+                        onCommentsClick={(photoId) => {
+                          // Handle comments click - could open comments modal
+                          console.log('Comments clicked for photo:', photoId);
+                        }}
+                        showDivider={index < friendsPhotos.length - 1}
                       />
-                      
-                      {/* Overlay com likes */}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                        <div className="flex items-center gap-1 text-white text-sm font-medium">
-                          <Heart className="w-4 h-4 fill-white" />
-                          <span>{photo.likes}</span>
-                        </div>
-                      </div>
                     </div>
+                  );
+                })}
 
-                    {/* Footer com likes */}
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Heart className="w-4 h-4 text-red-500" />
-                        <span>{photo.likes} curtidas</span>
+                {/* Infinite scroll sentinel */}
+                {hasNextPage && (
+                  <div ref={sentinelRef} className="flex justify-center py-4">
+                    {isFetchingNextPage ? (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Carregando mais fotos...</span>
                       </div>
+                    ) : (
+                      <div className="text-muted-foreground text-sm">
+                        Role para baixo para carregar mais
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* End of feed indicator */}
+                {!hasNextPage && friendsPhotos.length > 0 && (
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    <div className="border-t border-dashed border-white/20 pt-4">
+                      Você viu todas as fotos dos amigos!
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </ScrollArea>

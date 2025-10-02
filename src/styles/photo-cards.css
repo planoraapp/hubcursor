@@ -1,0 +1,122 @@
+/* Estilos para cards de foto baseados no site oficial do Habbo */
+
+.card__image {
+  @apply w-full h-auto object-contain rounded-lg;
+}
+
+.card__image--selfie {
+  @apply aspect-square;
+}
+
+.card__image--photo {
+  @apply aspect-square;
+}
+
+.card__image--wide {
+  @apply aspect-video;
+}
+
+.card__image--tall {
+  @apply aspect-[3/4];
+}
+
+/* Estilos para avatares dos usuários que curtiram */
+.like__users {
+  @apply absolute bottom-full left-0 mb-2 bg-black/90 backdrop-blur-sm rounded-lg p-3 min-w-[200px] z-50;
+}
+
+.like__user {
+  @apply flex items-center gap-2 py-1;
+}
+
+.like__user .avatar {
+  @apply w-6 h-6 rounded-full overflow-hidden;
+}
+
+.like__user .avatar__image {
+  @apply w-full h-full object-cover;
+}
+
+.like__user .avatar__title {
+  @apply text-xs text-white font-medium;
+}
+
+.like__more {
+  @apply text-xs text-white/60 mt-2;
+}
+
+/* Estilos para o ícone de curtida */
+.like__icon {
+  @apply w-4 h-4;
+}
+
+.like__icon.icon--like {
+  @apply text-red-500 fill-red-500;
+}
+
+/* Estilos para o contador de curtidas */
+.like__count {
+  @apply text-sm font-medium;
+}
+
+/* Estilos para ações do card */
+.card__actions {
+  @apply flex items-center gap-4 px-1;
+}
+
+.card__meta {
+  @apply flex items-center justify-between px-1;
+}
+
+.card__date {
+  @apply text-xs text-white/60;
+}
+
+/* Estilos para o criador do card */
+.card__creator {
+  @apply flex items-center gap-2 px-1;
+}
+
+/* Estilos para o link do card */
+.card__link {
+  @apply block;
+}
+
+.card__image__aligner {
+  @apply relative;
+}
+
+/* Estilos para diferentes tipos de conteúdo */
+.card__content {
+  @apply space-y-3;
+}
+
+/* Estilos para hover effects */
+.card:hover .card__image {
+  @apply transform scale-[1.02] transition-transform duration-200;
+}
+
+/* Estilos para loading states */
+.card__loading {
+  @apply animate-pulse bg-white/10 rounded-lg;
+}
+
+/* Estilos para estados de erro */
+.card__error {
+  @apply bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .card__image--wide {
+    @apply aspect-square;
+  }
+  
+  .card__image--tall {
+    @apply aspect-square;
+  }
+  
+  .like__users {
+    @apply min-w-[150px] p-2;
+  }
+}

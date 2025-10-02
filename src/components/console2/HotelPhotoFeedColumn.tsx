@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Heart, MessageCircle, Camera } from 'lucide-react';
+import { Loader2, RefreshCw, Camera } from 'lucide-react';
 import { useFriendsPhotos } from '@/hooks/useFriendsPhotos';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileModal } from '@/components/ProfileModal';
+import { EnhancedPhotoCard } from './EnhancedPhotoCard';
+import { EnhancedPhoto } from '@/types/habbo';
 
 export const HotelPhotoFeedColumn: React.FC = () => {
   const { habboAccount } = useAuth();
@@ -61,65 +63,40 @@ export const HotelPhotoFeedColumn: React.FC = () => {
               <Loader2 className="w-8 h-8 animate-spin text-white/60" />
             </div>
           ) : friendsPhotos.length > 0 ? (
-            friendsPhotos.map((photo, index) => (
-              <div key={photo.id || index} className="bg-white/5 p-4 border border-dashed border-white/10 rounded-lg hover:bg-white/10 hover:border-white/20 transition-all duration-200 space-y-3">
-                {/* User Info - Avatar sem borda circular */}
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 flex-shrink-0">
-                    <img
-                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`}
-                      alt={`Avatar de ${photo.userName}`}
-                      className="w-full h-full object-contain bg-transparent"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${photo.userName}&size=s&direction=2&head_direction=3&headonly=1`;
-                      }}
-                    />
-                  </div>
-                  <button
-                    onClick={() => handleUserClick(photo.userName)}
-                    className="text-white font-semibold hover:text-blue-300 transition-colors"
-                  >
-                    {photo.userName}
-                  </button>
-                  <span className="text-white/60 text-xs ml-auto">
-                    {photo.date}
-                  </span>
-                </div>
+            friendsPhotos.map((photo, index) => {
+              // Convert to EnhancedPhoto format
+              const enhancedPhoto: EnhancedPhoto = {
+                id: photo.id || `photo-${index}`,
+                photo_id: photo.id || `photo-${index}`,
+                userName: photo.userName,
+                imageUrl: photo.imageUrl,
+                date: photo.date,
+                likes: [],
+                likesCount: photo.likes || 0,
+                userLiked: false,
+                type: 'PHOTO', // Default type, could be enhanced based on photo data
+                caption: photo.caption,
+                roomName: photo.roomName
+              };
 
-                {/* Photo */}
-                <div className="relative">
-                  <img
-                    src={photo.imageUrl}
-                    alt={`Foto de ${photo.userName}`}
-                    className="w-full h-auto object-contain rounded-lg"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
+              return (
+                <div key={photo.id || index} className="bg-white/5 p-4 border border-dashed border-white/10 rounded-lg hover:bg-white/10 hover:border-white/20 transition-all duration-200">
+                  <EnhancedPhotoCard
+                    photo={enhancedPhoto}
+                    onUserClick={handleUserClick}
+                    onLikesClick={(photoId) => {
+                      // Handle likes click - could open likes modal
+                      console.log('Likes clicked for photo:', photoId);
                     }}
+                    onCommentsClick={(photoId) => {
+                      // Handle comments click - could open comments modal
+                      console.log('Comments clicked for photo:', photoId);
+                    }}
+                    showDivider={index < friendsPhotos.length - 1}
                   />
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-4">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-white/80 hover:text-red-400 hover:bg-white/10 p-2"
-                  >
-                    <Heart className="w-4 h-4 mr-1" />
-                    {photo.likes}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-white/80 hover:text-white hover:bg-white/10 p-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-center py-8">
               <Camera className="w-12 h-12 mx-auto mb-4 text-white/40" />

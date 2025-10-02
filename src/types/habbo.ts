@@ -142,3 +142,42 @@ export interface HomeWidgetProps {
   onGuestbookDelete?: (entryId: string) => Promise<void>;
   currentUser?: { id: string; habbo_name: string };
 }
+
+// Tipos para sistema de fotos aprimorado
+export type PhotoType = 'SELFIE' | 'PHOTO' | 'USER_CREATION';
+
+export interface PhotoLike {
+  id: string;
+  user_id: string;
+  habbo_name: string;
+  created_at: string;
+}
+
+export interface EnhancedPhoto {
+  id: string;
+  photo_id: string;
+  userName: string;
+  imageUrl: string;
+  date: string;
+  likes: PhotoLike[];
+  likesCount: number;
+  userLiked: boolean;
+  type: PhotoType;
+  contentWidth?: number;
+  contentHeight?: number;
+  caption?: string;
+  roomName?: string;
+  s3_url?: string;
+  preview_url?: string;
+  taken_date?: string;
+  photo_type?: string;
+}
+
+export interface PhotoCardProps {
+  photo: EnhancedPhoto;
+  onUserClick: (userName: string) => void;
+  onLikesClick: (photoId: string) => void;
+  onCommentsClick: (photoId: string) => void;
+  showDivider?: boolean;
+  className?: string;
+}

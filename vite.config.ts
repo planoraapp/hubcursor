@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // Configuração otimizada para desenvolvimento - performance melhorada
+  // Configuração simplificada para evitar problemas de otimização
   optimizeDeps: {
     include: [
       'react', 
@@ -52,9 +52,12 @@ export default defineConfig(({ mode }) => ({
       '@supabase/supabase-js'
     ],
     exclude: [
-      'sonner'
+      'sonner',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-select', 
+      '@radix-ui/react-avatar'
     ],
-    force: false // Mudado para false para evitar re-optimização desnecessária
+    force: false // Desabilitar força para evitar problemas
   },
   // Configurações de performance
   esbuild: {

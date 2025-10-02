@@ -3,6 +3,7 @@ import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { PhotoLike } from '@/types/habbo';
 
 export const usePhotoLikes = (photoId: string) => {
   const { habboAccount } = useAuth();
@@ -11,7 +12,7 @@ export const usePhotoLikes = (photoId: string) => {
   // Get likes for a photo
   const { data: likes = [], isLoading: likesLoading } = useQuery({
     queryKey: ['photo-likes', photoId],
-    queryFn: async () => {
+    queryFn: async (): Promise<PhotoLike[]> => {
       const { data, error } = await supabase
         .from('photo_likes')
         .select('id, user_id, habbo_name, created_at')
