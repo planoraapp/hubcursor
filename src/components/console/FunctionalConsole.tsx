@@ -209,17 +209,7 @@ export const FunctionalConsole: React.FC = () => {
   // Debug temporário para verificar dados
   React.useEffect(() => {
     if (viewingUser && completeProfile) {
-      console.log('🔍 [Debug] Dados do perfil visitado:', {
-        username: viewingUser,
-        name: completeProfile.name,
-        motto: completeProfile.motto,
-        mottoLength: completeProfile.motto?.length,
-        mottoType: typeof completeProfile.motto,
-        memberSince: completeProfile.memberSince,
-        lastAccessTime: completeProfile.lastAccessTime,
-        online: completeProfile.online,
-        profileVisible: completeProfile.profileVisible
-      });
+      // Debug info removed for production
     }
   }, [viewingUser, completeProfile]);
 
@@ -413,11 +403,11 @@ export const FunctionalConsole: React.FC = () => {
                 }}
                 onAddComment={(comment) => {
                   // TODO: Implement add comment
-                  console.log('Add comment:', comment);
+                  // Comment functionality removed for production
                 }}
                 onDeleteComment={(commentId) => {
                   // TODO: Implement delete comment
-                  console.log('Delete comment:', commentId);
+                  // Delete functionality removed for production
                 }}
                 canDeleteComment={(comment) => {
                   // TODO: Implement permission check
@@ -774,23 +764,19 @@ const FeedTab: React.FC<any> = ({
 
         {/* Ações Rápidas */}
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
           <div className="grid grid-cols-4 gap-1">
             <button 
               onClick={() => {
-                console.log('🔘 [FeedTab] Badges button clicked');
                 setActiveModal('badges');
               }}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trophy h-5 w-5 text-yellow-400 group-hover:scale-110 transition-transform">
-                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                <path d="M4 22h16"></path>
-                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-              </svg>
+              <img 
+                src="/assets/console/badgestab-icon.png" 
+                alt="Emblemas" 
+                className="max-h-none w-auto object-contain" 
+                style={{ imageRendering: 'pixelated', transform: 'scale(1.5)' }}
+              />
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : badges.length}
@@ -803,10 +789,12 @@ const FeedTab: React.FC<any> = ({
               onClick={() => setActiveModal('rooms')}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-house h-5 w-5 text-blue-400 group-hover:scale-110 transition-transform">
-                <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
-                <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              </svg>
+              <img 
+                src="/assets/console/roomstab-icon.png" 
+                alt="Quartos" 
+                className="h-8 w-auto object-contain" 
+                style={{ imageRendering: 'pixelated' }}
+              />
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : rooms.length}
@@ -819,12 +807,12 @@ const FeedTab: React.FC<any> = ({
               onClick={() => setActiveModal('friends')}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-green-400 group-hover:scale-110 transition-transform">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
+              <img 
+                src="/assets/console/friendstab-icon.png" 
+                alt="Amigos" 
+                className="h-8 w-auto object-contain" 
+                style={{ imageRendering: 'pixelated' }}
+              />
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : friends.length}
@@ -837,11 +825,12 @@ const FeedTab: React.FC<any> = ({
               onClick={() => setActiveModal('groups')}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-check h-5 w-5 text-purple-400 group-hover:scale-110 transition-transform">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <polyline points="16 11 18 13 22 9"></polyline>
-              </svg>
+              <img 
+                src="/assets/console/groupstab-icon.png" 
+                alt="Grupos" 
+                className="h-8 w-auto object-contain" 
+                style={{ imageRendering: 'pixelated' }}
+              />
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : groups.length}
@@ -1570,20 +1559,17 @@ const AccountTab: React.FC<any> = ({
 
       {/* Ações Rápidas */}
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
         <div className="grid grid-cols-4 gap-1">
           <button 
             onClick={() => setActiveModal('badges')}
             className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trophy h-5 w-5 text-yellow-400 group-hover:scale-110 transition-transform">
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-              <path d="M4 22h16"></path>
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-            </svg>
+            <img 
+              src="/assets/console/badgestab-icon.png" 
+              alt="Emblemas" 
+              className="max-h-none w-auto object-contain" 
+              style={{ imageRendering: 'pixelated', transform: 'scale(1.5)' }}
+            />
             <div className="text-center">
               <div className="text-sm font-medium text-white">
                 {isProfilePrivate ? '0' : badges.length}
@@ -1596,10 +1582,12 @@ const AccountTab: React.FC<any> = ({
             onClick={() => setActiveModal('rooms')}
             className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-house h-5 w-5 text-blue-400 group-hover:scale-110 transition-transform">
-              <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path>
-              <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            </svg>
+            <img 
+              src="/assets/console/roomstab-icon.png" 
+              alt="Quartos" 
+              className="h-8 w-auto object-contain" 
+              style={{ imageRendering: 'pixelated' }}
+            />
             <div className="text-center">
               <div className="text-sm font-medium text-white">
                 {isProfilePrivate ? '0' : rooms.length}
@@ -1612,12 +1600,12 @@ const AccountTab: React.FC<any> = ({
             onClick={() => setActiveModal('friends')}
             className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users h-5 w-5 text-green-400 group-hover:scale-110 transition-transform">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
+            <img 
+              src="/assets/console/friendstab-icon.png" 
+              alt="Amigos" 
+              className="h-8 w-auto object-contain" 
+              style={{ imageRendering: 'pixelated' }}
+            />
             <div className="text-center">
               <div className="text-sm font-medium text-white">
                 {isProfilePrivate ? '0' : friends.length}
@@ -1630,11 +1618,12 @@ const AccountTab: React.FC<any> = ({
             onClick={() => setActiveModal('groups')}
             className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-check h-5 w-5 text-purple-400 group-hover:scale-110 transition-transform">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <polyline points="16 11 18 13 22 9"></polyline>
-            </svg>
+            <img 
+              src="/assets/console/groupstab-icon.png" 
+              alt="Grupos" 
+              className="h-8 w-auto object-contain" 
+              style={{ imageRendering: 'pixelated' }}
+            />
             <div className="text-center">
               <div className="text-sm font-medium text-white">
                 {isProfilePrivate ? '0' : groups.length}

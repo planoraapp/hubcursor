@@ -42,13 +42,9 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleLikesClick = (photoId: string) => {
-    console.log('Likes clicked for photo:', photoId);
-  };
+  const handleLikesClick = (photoId: string) => {};
 
-  const handleCommentsClick = (photoId: string) => {
-    console.log('Comments clicked for photo:', photoId);
-  };
+  const handleCommentsClick = (photoId: string) => {};
 
   return (
     <>

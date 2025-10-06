@@ -289,7 +289,7 @@ export const useHabboHomeV2 = (username: string) => {
         
         // Para usuários fictícios (habbohub, beebop), buscar dados do Supabase primeiro
         if (basicHabboInfo.id.startsWith('hhbr-') && supabase) {
-          console.log('🔍 Buscando dados do Supabase para usuário fictício...');
+          // Searching Supabase data for fictional user
           
           try {
             // Buscar background do Supabase
@@ -300,10 +300,10 @@ export const useHabboHomeV2 = (username: string) => {
               .single();
             
             if (!bgError && supabaseBg) {
-              console.log('✅ Background encontrado no Supabase:', supabaseBg);
+              // Background found in Supabase
               setBackground(supabaseBg);
             } else {
-              console.log('⚠️ Background não encontrado no Supabase, usando localStorage');
+              // Background not found in Supabase, using localStorage
               setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
             }
           } catch (error) {
@@ -1645,14 +1645,9 @@ export const useHabboHomeV2 = (username: string) => {
           
           if (supabaseError) {
             console.error('❌ Erro ao salvar background no Supabase:', supabaseError);
-          } else {
-            console.log('✅ Background salvo no Supabase com sucesso!');
-          }
+          } else {}
           
-          // Invalidar cache para atualizar os cards
-          console.log('🔄 Invalidando cache do latest-homes após mudança de background');
-          
-          // Invalidação mais agressiva - usar a chave correta
+          // Invalidar cache para atualizar os cards// Invalidação mais agressiva - usar a chave correta
           await queryClient.removeQueries({ queryKey: ['latest-homes-optimized'] });
           await queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
           await queryClient.refetchQueries({ queryKey: ['latest-homes-optimized'] });
@@ -1693,14 +1688,7 @@ export const useHabboHomeV2 = (username: string) => {
       if (error) {
         console.error('❌ Erro ao salvar background no Supabase:', error);
         return;
-      }
-      
-      console.log('✅ Background salvo no Supabase com sucesso!');
-
-      // Invalidar cache para atualizar os cards
-      console.log('🔄 Invalidando cache do latest-homes após mudança de background');
-      
-      // Invalidação mais agressiva - usar a chave correta
+      }// Invalidar cache para atualizar os cards// Invalidação mais agressiva - usar a chave correta
       await queryClient.removeQueries({ queryKey: ['latest-homes-optimized'] });
       await queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
       await queryClient.refetchQueries({ queryKey: ['latest-homes-optimized'] });
@@ -1935,4 +1923,5 @@ export const useHabboHomeV2 = (username: string) => {
     }
   };
 };
+
 

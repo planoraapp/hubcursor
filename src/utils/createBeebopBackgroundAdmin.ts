@@ -11,18 +11,14 @@ export async function createBeebopBackgroundAdmin(): Promise<{ success: boolean;
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Limpar background existente se houver
-    console.log('🧹 [CREATE-BEEBOP-BG-ADMIN] Limpando background Beebop existente...');
-    const { error: deleteError } = await supabase
+    // 1. Limpar background existente se houverconst { error: deleteError } = await supabase
       .from('user_home_backgrounds')
       .delete()
       .eq('user_id', '00000000-0000-0000-0000-000000000002');
 
     if (deleteError) {
       console.log('⚠️ [CREATE-BEEBOP-BG-ADMIN] Erro ao limpar background (pode não existir):', deleteError.message);
-    } else {
-      console.log('✅ [CREATE-BEEBOP-BG-ADMIN] Background Beebop limpo com sucesso!');
-    }
+    } else {}
 
     // 2. Inserir o novo background
     const backgroundData = {
@@ -44,10 +40,7 @@ export async function createBeebopBackgroundAdmin(): Promise<{ success: boolean;
         success: false,
         message: `Erro ao criar background Beebop: ${createError.message}`
       };
-    }
-
-    console.log('✅ [CREATE-BEEBOP-BG-ADMIN] Background Beebop criado com sucesso!');
-    return {
+    }return {
       success: true,
       message: 'Background Beebop criado com sucesso!',
       background: newBackground
@@ -60,3 +53,4 @@ export async function createBeebopBackgroundAdmin(): Promise<{ success: boolean;
     };
   }
 }
+

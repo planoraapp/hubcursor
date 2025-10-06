@@ -42,17 +42,9 @@ export const GlobalFeedExample: React.FC = () => {
     cache.set('example-data', { photos: photos.slice(0, 5) });
     
     // Obter dados do cache
-    const cachedData = cache.get('example-data');
-    console.log('Dados do cache:', cachedData);
-    
-    // Verificar se existe no cache
-    const exists = cache.has('example-data');
-    console.log('Existe no cache:', exists);
-    
-    // Obter estatísticas do cache
-    const cacheStats = cache.getStats();
-    console.log('Estatísticas do cache:', cacheStats);
-  };
+    const cachedData = cache.get('example-data');// Verificar se existe no cache
+    const exists = cache.has('example-data');// Obter estatísticas do cache
+    const cacheStats = cache.getStats();};
 
   // Exemplo de formatação de timestamps
   const formatExampleTimestamps = () => {
@@ -65,9 +57,7 @@ export const GlobalFeedExample: React.FC = () => {
     ];
 
     examples.forEach((date, index) => {
-      const formatted = formatHabboTimestamp(date);
-      console.log(`Exemplo ${index + 1}:`, formatted);
-    });
+      const formatted = formatHabboTimestamp(date);});
   };
 
   return (
@@ -266,3 +256,4 @@ const formatted = formatHabboTimestamp(timestamp);
     </div>
   );
 };
+

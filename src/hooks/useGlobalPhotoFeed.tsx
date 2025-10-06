@@ -39,10 +39,7 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
   }, [hotel, cacheTime]);
 
   // Função para buscar fotos usando Supabase Function (como funcionava antes)
-  const fetchGlobalPhotos = useCallback(async (currentCursor?: string): Promise<GlobalPhotoFeedData> => {
-    console.log('[🌍 GLOBAL FEED] Fetching photos using Supabase function:', { cursor: currentCursor, limit, hotel });
-
-    try {
+  const fetchGlobalPhotos = useCallback(async (currentCursor?: string): Promise<GlobalPhotoFeedData> => {try {
       const startIndex = currentCursor ? parseInt(currentCursor) : 0;
       const endIndex = startIndex + limit - 1;
 
@@ -69,20 +66,10 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
           totalCount: 0,
           cursor: currentCursor || '0'
         };
-      }
-
-      console.log(`[🌍 GLOBAL FEED] Found ${data.photos?.length || 0} photos from Supabase function`);
-      console.log(`[🌍 GLOBAL FEED] Full response data:`, data);
-      
-      // Debug: verificar usuários únicos
+      }// Debug: verificar usuários únicos
       if (data.photos && data.photos.length > 0) {
         const uniqueUsers = [...new Set(data.photos.map((p: any) => p.userName))];
-        console.log(`[🌍 GLOBAL FEED] Unique users found: ${uniqueUsers.join(', ')}`);
-        console.log(`[🌍 GLOBAL FEED] Total unique users: ${uniqueUsers.length}`);
-        
-        // Debug: verificar se há mais fotos no banco (sem filtro de hotel)
-        console.log(`[🌍 GLOBAL FEED] Checking if there are more photos in database...`);
-      }
+        console.log(`[🌍 GLOBAL FEED] Unique users found: ${uniqueUsers.join(', ')}`);// Debug: verificar se há mais fotos no banco (sem filtro de hotel)}
 
       return {
         photos: data.photos || [],
@@ -195,9 +182,7 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
             setAllPhotos(parsed.photos);
             if (parsed.cursor !== '0') {
               setCursor(parsed.cursor);
-            }
-            console.log('[🌍 GLOBAL FEED] Loaded from cache:', parsed.photos.length, 'photos');
-          }
+            }}
         }
       } catch (error) {
         console.warn('[🌍 GLOBAL FEED] Cache load failed:', error);

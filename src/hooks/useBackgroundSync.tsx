@@ -22,10 +22,7 @@ export const useBackgroundSync = () => {
 
   useEffect(() => {
     const syncBackgrounds = async () => {
-      try {
-        console.log('🔄 Sincronizando backgrounds dos usuários...');
-        
-        // Buscar backgrounds dos usuários principais
+      try {// Buscar backgrounds dos usuários principais
         const { data: backgrounds, error } = await supabase
           .from('user_home_backgrounds')
           .select(`
@@ -69,9 +66,7 @@ export const useBackgroundSync = () => {
             }
           });
 
-          setSyncData(syncData);
-          console.log('✅ Backgrounds sincronizados:', syncData);
-        }
+          setSyncData(syncData);}
       } catch (error) {
         console.error('❌ Erro ao sincronizar backgrounds:', error);
       } finally {
@@ -89,3 +84,4 @@ export const useBackgroundSync = () => {
 
   return { syncData, isLoading };
 };
+

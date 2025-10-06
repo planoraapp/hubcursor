@@ -98,19 +98,13 @@ export const PhotoFeedExample: React.FC = () => {
     }
   ];
 
-  const handleUserClick = (userName: string) => {
-    console.log('Usuário clicado:', userName);
-    // Aqui você pode abrir um modal de perfil ou navegar para a página do usuário
+  const handleUserClick = (userName: string) => {// Aqui você pode abrir um modal de perfil ou navegar para a página do usuário
   };
 
-  const handleLikesClick = (photoId: string) => {
-    console.log('Curtidas clicadas para foto:', photoId);
-    // Aqui você pode abrir o modal de curtidas
+  const handleLikesClick = (photoId: string) => {// Aqui você pode abrir o modal de curtidas
   };
 
-  const handleCommentsClick = (photoId: string) => {
-    console.log('Comentários clicados para foto:', photoId);
-    // Aqui você pode abrir o modal de comentários
+  const handleCommentsClick = (photoId: string) => {// Aqui você pode abrir o modal de comentários
   };
 
   return (
@@ -144,3 +138,4 @@ export const PhotoFeedExample: React.FC = () => {
     </div>
   );
 };
+

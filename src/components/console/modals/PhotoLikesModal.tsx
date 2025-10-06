@@ -15,20 +15,46 @@ interface PhotoLikesModalProps {
 }
 
 export const PhotoLikesModal: React.FC<PhotoLikesModalProps> = ({ likes, isOpen, onClose }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-gray-900 border border-black rounded-t-lg w-full max-h-[70vh] overflow-hidden z-50 transform transition-transform duration-300 ease-out">
-        <div className="flex items-center justify-between p-4 border-b border-black bg-yellow-400">
-          <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: '#2B2300' }}>
-            <Heart className="w-5 h-5" />
+    <div 
+      className={`absolute inset-0 z-50 flex items-end justify-center transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      onClick={handleBackdropClick}
+    >
+      {/* Overlay escuro */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      
+      {/* Modal que desliza de baixo para cima */}
+      <div className={`relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl transform transition-all duration-300 ease-out max-h-[50vh] flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
+          <h3 className="text-sm font-bold flex items-center gap-2 text-white" style={{
+            textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+          }}>
+            <Heart className="w-5 h-5 text-white" />
             Curtidas ({likes.length})
           </h3>
-          <Button onClick={onClose} variant="ghost" size="sm" style={{ color: '#2B2300' }} className="hover:bg-black/20">
+          <Button onClick={onClose} variant="ghost" size="sm" className="text-white hover:bg-white/20 rounded-full p-2">
             <X className="w-5 h-5" />
           </Button>
         </div>
-        <div className="p-4 overflow-y-auto max-h-[55vh]">
+        <div className="flex-1 overflow-y-auto p-4">
           {likes.length > 0 ? (
             <div className="space-y-3">
               {likes.map((like) => (
@@ -61,6 +87,7 @@ export const PhotoLikesModal: React.FC<PhotoLikesModalProps> = ({ likes, isOpen,
             </div>
           )}
         </div>
+      </div>
     </div>
   );
 };

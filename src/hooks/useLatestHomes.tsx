@@ -20,10 +20,7 @@ export const useLatestHomes = () => {
   const { realUsers } = useRealHabboData();
   
   // Função para buscar dados das homes
-  const fetchLatestHomesData = async (): Promise<LatestHomeData[]> => {
-    console.log('🔍 [useLatestHomes] Buscando dados das homes...');
-    
-    // Buscar mudanças em TODAS as tabelas relacionadas ao canvas
+  const fetchLatestHomesData = async (): Promise<LatestHomeData[]> => {// Buscar mudanças em TODAS as tabelas relacionadas ao canvas
     const [
       { data: updatedLayouts, error: layoutError },
       { data: updatedBackgrounds, error: backgroundError },
@@ -93,9 +90,7 @@ export const useLatestHomes = () => {
     // Buscar dados adicionais para enriquecer
     const userIds = latestUniqueHomes.map(home => home.user_id);
     
-    if (userIds.length === 0) {
-      console.log('📭 Nenhuma home encontrada');
-      return [];
+    if (userIds.length === 0) {return [];
     }
 
     // Buscar contas dos usuários
@@ -168,14 +163,10 @@ export const useLatestHomes = () => {
     { delay: 300, maxWait: 2000 }
   );
 
-  const invalidateLatestHomes = () => {
-    console.log('🔄 [useLatestHomes] Invalidando cache...');
-    queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
+  const invalidateLatestHomes = () => {queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
   };
 
-  const forceRefreshLatestHomes = async () => {
-    console.log('🔄 [useLatestHomes] Forçando refresh...');
-    await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
+  const forceRefreshLatestHomes = async () => {await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
     await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
   };
 

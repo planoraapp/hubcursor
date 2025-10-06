@@ -74,21 +74,27 @@ export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
 
   return (
     <div 
-      className={`absolute bottom-16 left-4 right-4 z-40 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`absolute inset-0 z-50 flex items-end justify-center transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={handleBackdropClick}
     >
-      <div className={`w-full bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl transform transition-all duration-300 ease-out max-h-[50vh] flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+      {/* Overlay escuro */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      
+      {/* Modal que desliza de baixo para cima */}
+      <div className={`relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl transform transition-all duration-300 ease-out max-h-[50vh] flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
         {/* Header melhorado */}
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900">
-            <MessageCircle className="w-5 h-5" />
+          <h3 className="text-sm font-bold flex items-center gap-2 text-white" style={{
+            textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+          }}>
+            <MessageCircle className="w-5 h-5 text-white" />
             Comentários ({comments.length})
           </h3>
           <Button 
             onClick={onClose} 
             variant="ghost" 
             size="sm" 
-            className="text-gray-900 hover:bg-gray-900/20 rounded-full p-2"
+            className="text-white hover:bg-white/20 rounded-full p-2"
           >
             <X className="w-5 h-5" />
           </Button>

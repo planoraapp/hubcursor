@@ -27,11 +27,7 @@ export function CollapsibleAppSidebar() {
   // Verificar se o usuário é admin usando o campo is_admin do banco
   const isAdmin = habboAccount?.is_admin === true;
 
-  // Debug temporário para verificar status de admin
-  console.log('🔍 [CollapsibleAppSidebar] habboAccount:', habboAccount);
-  console.log('🔍 [CollapsibleAppSidebar] isAdmin:', isAdmin);
-
-  // Função para remover acentos para compatibilidade com fonte Volter
+  // Debug temporário para verificar status de admin// Função para remover acentos para compatibilidade com fonte Volter
   const removeAccents = (text: string) => {
     return text
       .replace(/[áàâã]/g, 'a')

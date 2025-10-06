@@ -82,25 +82,25 @@ const Console: React.FC = () => {
                   subtitle="Gerencie sua experiência no HabboHub"
                 />
                 
-                {/* Console e botão centralizados com largura fixa */}
-                <div className="flex justify-center mt-8">
+                {/* Console e botão lado a lado */}
+                <div className="flex justify-center mt-8 gap-6">
                   <div className="w-full max-w-[375px]">
                     <FunctionalConsole />
-                    
-                    {/* Popup button positioned below console */}
-                    <div className="mt-6 flex justify-center">
-                      <button
-                        onClick={openPopupConsole}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                        style={{
-                          textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
-                          boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
-                          fontSize: '16px'
-                        }}
-                      >
-                        Abrir Console em Pop-up
-                      </button>
-                    </div>
+                  </div>
+                  
+                  {/* Popup button positioned to the right of console */}
+                  <div className="flex items-start pt-4">
+                    <button
+                      onClick={openPopupConsole}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-6 py-3 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                      style={{
+                        textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
+                        boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Abrir Console em Pop-up
+                    </button>
                   </div>
                 </div>
               </div>

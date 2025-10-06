@@ -120,7 +120,7 @@ export const ClubItemsDisplay = () => {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [loading, contextLoading]);
+  }, [loading, contextLoading, fetchRealClubPrices]); // Adicionada dependência da função
 
   if (contextLoading || loading) {
     return (

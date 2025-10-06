@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarketplaceItemsList } from './MarketplaceItemsList';
 import { MarketplaceCategoryBoxes } from './MarketplaceCategoryBoxes';
@@ -141,21 +141,26 @@ export const MarketplaceLayout = () => {
       }
     }, 10 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [loading, selectedHotel, searchTerm, selectedCategory, sortBy]);
+  }, [loading]); // Removidas dependências desnecessárias
 
-  const maioresOfertas = [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
-  const maisVendidosHoje = [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
-  const melhoresNegocios = [...items].filter(item => item.currentPrice < 300 && item.rarity !== 'common').slice(0, 10);
-  const altasDeHoje = [...items].filter(item => item.trend === 'up').sort((a, b) => 
-    parseFloat(b.changePercent) - parseFloat(a.changePercent)
-  ).slice(0, 10);
-  
-  const ltdItems = [...items].filter(item => 
-    item.className.toLowerCase().includes('ltd') || 
-    item.rarity === 'legendary' ||
-    item.name.toLowerCase().includes('ltd') ||
-    item.currentPrice > 1000
-  ).sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
+  // Memoizar operações pesadas de filtro e ordenação
+  const { maioresOfertas, maisVendidosHoje, melhoresNegocios, altasDeHoje, ltdItems } = useMemo(() => {
+    const maioresOfertas = [...items].sort((a, b) => (b.soldItems || b.volume || 0) - (a.soldItems || a.volume || 0)).slice(0, 10);
+    const maisVendidosHoje = [...items].filter(item => item.trend === 'up' && (item.soldItems || item.volume || 0) > 5).slice(0, 10);
+    const melhoresNegocios = [...items].filter(item => item.currentPrice < 300 && item.rarity !== 'common').slice(0, 10);
+    const altasDeHoje = [...items].filter(item => item.trend === 'up').sort((a, b) => 
+      parseFloat(b.changePercent) - parseFloat(a.changePercent)
+    ).slice(0, 10);
+    
+    const ltdItems = [...items].filter(item => 
+      item.className.toLowerCase().includes('ltd') || 
+      item.rarity === 'legendary' ||
+      item.name.toLowerCase().includes('ltd') ||
+      item.currentPrice > 1000
+    ).sort((a, b) => b.currentPrice - a.currentPrice).slice(0, 10);
+
+    return { maioresOfertas, maisVendidosHoje, melhoresNegocios, altasDeHoje, ltdItems };
+  }, [items]);
 
   if (error && items.length === 0) {
     return (

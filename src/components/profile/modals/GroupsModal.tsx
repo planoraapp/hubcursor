@@ -32,21 +32,13 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
       return groupDetails.get(groupId);
     }
 
-    try {
-      console.log(`🔍 BUSCA COMPLETA: Analisando grupo ${groupId} com todas as APIs disponíveis`);
-      
-      let ownerInfo = null;
+    try {let ownerInfo = null;
       let groupData = null;
       let membersData = null;
       let roomData = null;
       
       // 1. PRIMEIRO: Buscar detalhes do grupo via API pública
-      try {
-        console.log(`📋 1. Buscando detalhes do grupo...`);
-        groupData = await getGroupDetails(groupId);
-        console.log(`📋 Dados do grupo:`, groupData);
-        
-        // Verificar se a API retorna informações do dono diretamente
+      try {groupData = await getGroupDetails(groupId);// Verificar se a API retorna informações do dono diretamente
         if (groupData?.ownerName) {
           ownerInfo = {
             ownerName: groupData.ownerName,
@@ -54,23 +46,14 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
             roomName: groupData.name,
             source: 'group_api_direct',
             confirmed: true
-          };
-          console.log(`👑 Dono encontrado via API do grupo:`, ownerInfo);
-        } else {
+          };} else {
           console.log(`❌ API do grupo não retorna ownerName. Campos disponíveis:`, Object.keys(groupData || {}));
         }
-      } catch (error) {
-        console.log(`❌ Erro ao buscar grupo:`, error);
-      }
+      } catch (error) {}
       
       // 2. SEGUNDO: Buscar membros do grupo para identificar o dono
       if (!ownerInfo) {
-        try {
-          console.log(`👥 2. Buscando membros do grupo...`);
-          membersData = await getGroupMembers(groupId);
-          console.log(`👥 Membros encontrados:`, membersData);
-          
-          if (membersData && membersData.length > 0) {
+        try {membersData = await getGroupMembers(groupId);if (membersData && membersData.length > 0) {
             // Procurar por um membro que seja dono usando múltiplos critérios
             const ownerMember = membersData.find(member => 
               member.isOwner === true || 
@@ -85,10 +68,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
             );
             
             // Se não encontrou com critérios padrão, tentar outras estratégias
-            if (!ownerMember && membersData.length > 0) {
-              console.log(`🔍 Tentando estratégias alternativas para identificar dono...`);
-              
-              // Estratégia 1: Primeiro membro pode ser o dono
+            if (!ownerMember && membersData.length > 0) {// Estratégia 1: Primeiro membro pode ser o dono
               const firstMember = membersData[0];
               console.log(`🔍 Primeiro membro (possível dono):`, firstMember);
               
@@ -100,14 +80,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                 m.username?.toLowerCase().includes('beebop')
               );
               
-              if (beebopMember) {
-                console.log(`🔍 Membro Beebop encontrado:`, beebopMember);
-                console.log(`🔍 Campos do Beebop:`, Object.keys(beebopMember));
-                console.log(`🔍 Beebop isAdmin:`, beebopMember.isAdmin);
-                console.log(`🔍 Beebop admin:`, beebopMember.admin);
-                console.log(`🔍 Beebop role:`, beebopMember.role);
-                
-                // Se Beebop é admin, pode ser o dono
+              if (beebopMember) {console.log(`🔍 Campos do Beebop:`, Object.keys(beebopMember));// Se Beebop é admin, pode ser o dono
                 if (beebopMember.isAdmin || beebopMember.admin || beebopMember.role === 'ADMIN') {
                   ownerInfo = {
                     ownerName: beebopMember.name || beebopMember.username,
@@ -117,9 +90,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                     confirmed: true
                   };
                   console.log(`👑 Beebop identificado como dono (é admin):`, ownerInfo);
-                } else {
-                  console.log(`❓ Beebop não é admin neste grupo`);
-                }
+                } else {}
               }
             }
             
@@ -130,11 +101,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                 roomName: groupData?.name || 'Quarto do grupo',
                 source: 'group_members',
                 confirmed: true
-              };
-              console.log(`👑 Dono encontrado via membros:`, ownerInfo);
-            } else {
-              console.log(`❓ Nenhum membro identificado como dono`);
-              console.log(`📊 Roles dos membros:`, membersData.map(m => ({ name: m.name, role: m.role, isOwner: m.isOwner })));
+              };} else {console.log(`📊 Roles dos membros:`, membersData.map(m => ({ name: m.name, role: m.role, isOwner: m.isOwner })));
               console.log(`🔍 Primeiros 5 membros detalhados:`, membersData.slice(0, 5).map(m => ({ 
                 name: m.name, 
                 username: m.username,
@@ -147,51 +114,33 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
               })));
               
               // Expandir o primeiro membro completamente para ver todos os campos
-              if (membersData.length > 0) {
-                console.log(`🔍 PRIMEIRO MEMBRO COMPLETO:`, membersData[0]);
-              }
+              if (membersData.length > 0) {}
             }
           }
-        } catch (error) {
-          console.log(`❌ Erro ao buscar membros:`, error);
-        }
+        } catch (error) {}
       }
       
       // 3. TERCEIRO: Buscar detalhes do quarto associado ao grupo
       if (!ownerInfo && roomId) {
-        try {
-          console.log(`🏠 3. Buscando detalhes do quarto ${roomId}...`);
-          roomData = await getRoomDetails(roomId);
-          console.log(`🏠 Dados do quarto:`, roomData);
-          
-          if (roomData?.ownerName) {
+        try {roomData = await getRoomDetails(roomId);if (roomData?.ownerName) {
             ownerInfo = {
               ownerName: roomData.ownerName,
               ownerUniqueId: roomData.ownerUniqueId,
               roomName: roomData.name,
               source: 'room_api',
               confirmed: true
-            };
-            console.log(`👑 Dono encontrado via API do quarto:`, ownerInfo);
-          }
-        } catch (error) {
-          console.log(`❌ Erro ao buscar quarto:`, error);
-        }
+            };}
+        } catch (error) {}
       }
       
       // 4. QUARTO: Buscar perfil do usuário atual para verificar se é dono
       if (!ownerInfo) {
-        try {
-          console.log(`👤 4. Verificando se ${userName} é o dono...`);
-          
-          // Buscar perfil do usuário atual
+        try {// Buscar perfil do usuário atual
           const userUrl = `https://www.habbo.com.br/api/public/users?name=${userName}`;
           const userResponse = await fetch(userUrl);
           
           if (userResponse.ok) {
-            const userData = await userResponse.json();
-            console.log(`👤 Dados do usuário ${userName}:`, userData);
-            console.log(`👤 Campos disponíveis no usuário:`, Object.keys(userData));
+            const userData = await userResponse.json();console.log(`👤 Campos disponíveis no usuário:`, Object.keys(userData));
             
             // Verificar se o usuário tem grupos onde é dono
             if (userData.groups) {
@@ -215,35 +164,20 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                   roomName: groupData?.name || 'Quarto do grupo',
                   source: 'user_groups',
                   confirmed: true
-                };
-                console.log(`👑 ${userName} é dono do grupo:`, ownerInfo);
-              } else {
-                console.log(`❓ ${userName} não é dono do grupo ${groupId}`);
-              }
-            } else {
-              console.log(`❌ Usuário ${userName} não tem grupos ou campo groups não existe`);
-            }
+                };} else {}
+            } else {}
           }
-        } catch (error) {
-          console.log(`❌ Erro ao verificar usuário:`, error);
-        }
+        } catch (error) {}
       }
       
       // 5. QUINTO: Buscar no Supabase como fallback final
       if (!ownerInfo) {
-        try {
-          console.log(`🗄️ 5. Buscando no Supabase como fallback...`);
-          
-          // Buscar por qualquer relação possível
+        try {// Buscar por qualquer relação possível
           const { data: supabaseData, error: supabaseError } = await supabase
             .from('habbo_rooms')
             .select('*')
             .or(`name.ilike.%${groupData?.name}%,habbo_group_id.eq.${groupId}`)
-            .limit(5);
-          
-          console.log(`🗄️ Dados do Supabase:`, supabaseData);
-          
-          if (supabaseData && supabaseData.length > 0) {
+            .limit(5);if (supabaseData && supabaseData.length > 0) {
             const room = supabaseData[0];
             if (room.owner_name) {
               ownerInfo = {
@@ -252,13 +186,9 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                 roomName: room.name,
                 source: 'supabase',
                 confirmed: true
-              };
-              console.log(`👑 Dono encontrado via Supabase:`, ownerInfo);
-            }
+              };}
           }
-        } catch (error) {
-          console.log(`❌ Erro ao buscar no Supabase:`, error);
-        }
+        } catch (error) {}
       }
       
       // Se não encontrou dono, marcar como não identificado
@@ -269,9 +199,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
           roomName: groupData?.name || 'Quarto do grupo',
           source: 'not_found',
           confirmed: false
-        };
-        console.log(`❓ Dono não identificado após todas as tentativas`);
-      }
+        };}
 
       const enhancedDetails = {
         ...groupData,
@@ -281,10 +209,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
         searchAttempted: true,
         hasRoomId: !!roomId,
         apiNote: 'Busca completa realizada com todas as APIs disponíveis'
-      };
-      
-      console.log(`✅ RESULTADO FINAL:`, enhancedDetails);
-      setGroupDetails(prev => new Map(prev).set(groupId, enhancedDetails));
+      };setGroupDetails(prev => new Map(prev).set(groupId, enhancedDetails));
       return enhancedDetails;
       
     } catch (error) {
@@ -323,10 +248,10 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
         }}>
           <div className="pixel-pattern absolute inset-0 opacity-20"></div>
           <DialogHeader className="p-4 relative z-10">
-            <DialogTitle className="flex items-center gap-2 text-black font-bold volter-font" style={{
-              textShadow: '1px 1px 0px rgba(0,0,0,0.3)'
+            <DialogTitle className="flex items-center gap-2 text-white font-bold text-sm" style={{
+              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
             }}>
-              <Crown className="w-5 h-5 text-black" />
+              <Crown className="w-5 h-5 text-white" />
               Grupos de {userName} ({groups.length})
             </DialogTitle>
           </DialogHeader>

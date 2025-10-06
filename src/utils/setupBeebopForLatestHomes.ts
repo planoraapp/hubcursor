@@ -6,10 +6,7 @@ import { createBeebopBackground } from './createBeebopBackground';
  * Cria a conta e o background no banco de dados
  */
 export async function setupBeebopForLatestHomes(): Promise<{ success: boolean; message: string; details?: any }> {
-  try {
-    console.log('🚀 [SETUP-BEEBOP] Iniciando configuração do Beebop para últimas homes...');
-
-    // 1. Criar conta do Beebop
+  try {// 1. Criar conta do Beebop
     const accountResult = await createBeebopAccount();
     if (!accountResult.success) {
       return {
@@ -25,10 +22,7 @@ export async function setupBeebopForLatestHomes(): Promise<{ success: boolean; m
         success: false,
         message: `Erro ao criar background: ${backgroundResult.message}`
       };
-    }
-
-    console.log('✅ [SETUP-BEEBOP] Beebop configurado com sucesso para últimas homes!');
-    return {
+    }return {
       success: true,
       message: 'Beebop configurado com sucesso para aparecer nas últimas homes modificadas!',
       details: {
@@ -44,3 +38,4 @@ export async function setupBeebopForLatestHomes(): Promise<{ success: boolean; m
     };
   }
 }
+

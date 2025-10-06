@@ -40,9 +40,7 @@ export const useTimestampCache = <T>(options: CacheOptions = {}) => {
             }
           });
           
-          setCache(cacheMap);
-          console.log('[🗄️ CACHE] Loaded from localStorage:', cacheMap.size, 'items');
-        }
+          setCache(cacheMap);}
       } catch (error) {
         console.warn('[🗄️ CACHE] Failed to load from localStorage:', error);
       }
@@ -73,9 +71,7 @@ export const useTimestampCache = <T>(options: CacheOptions = {}) => {
         }
       });
       
-      if (cleaned.size !== prev.size) {
-        console.log('[🗄️ CACHE] Cleaned expired items:', prev.size - cleaned.size);
-      }
+      if (cleaned.size !== prev.size) {}
       
       return cleaned;
     });
@@ -114,24 +110,17 @@ export const useTimestampCache = <T>(options: CacheOptions = {}) => {
   const get = useCallback((key: string): T | null => {
     const item = cache.get(key);
     
-    if (!item) {
-      console.log('[🗄️ CACHE] Miss:', key);
-      return null;
+    if (!item) {return null;
     }
 
     // Verificar se expirou
-    if (new Date(item.expiresAt) <= new Date()) {
-      console.log('[🗄️ CACHE] Expired:', key);
-      setCache(prev => {
+    if (new Date(item.expiresAt) <= new Date()) {setCache(prev => {
         const newCache = new Map(prev);
         newCache.delete(key);
         return newCache;
       });
       return null;
-    }
-
-    console.log('[🗄️ CACHE] Hit:', key);
-    return item.data;
+    }return item.data;
   }, [cache]);
 
   // Verificar se item existe e é válido
@@ -148,18 +137,14 @@ export const useTimestampCache = <T>(options: CacheOptions = {}) => {
       const newCache = new Map(prev);
       newCache.delete(key);
       return newCache;
-    });
-    console.log('[🗄️ CACHE] Removed:', key);
-  }, []);
+    });}, []);
 
   // Limpar todo o cache
   const clear = useCallback(() => {
     setCache(new Map());
     if (enablePersistence) {
       localStorage.removeItem('timestamp-cache');
-    }
-    console.log('[🗄️ CACHE] Cleared all');
-  }, [enablePersistence]);
+    }}, [enablePersistence]);
 
   // Obter estatísticas do cache
   const getStats = useCallback(() => {
@@ -226,3 +211,4 @@ export const useTimestampCache = <T>(options: CacheOptions = {}) => {
     size: cache.size
   };
 };
+

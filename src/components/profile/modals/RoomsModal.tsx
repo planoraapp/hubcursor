@@ -74,10 +74,10 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
         }}>
           <div className="pixel-pattern absolute inset-0 opacity-20"></div>
           <DialogHeader className="p-4 relative z-10">
-            <DialogTitle className="flex items-center gap-2 text-black font-bold volter-font" style={{
-              textShadow: '1px 1px 0px rgba(0,0,0,0.3)'
+            <DialogTitle className="flex items-center gap-2 text-white font-bold text-sm" style={{
+              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
             }}>
-              <Home className="w-5 h-5 text-black" />
+              <Home className="w-5 h-5 text-white" />
               Quartos de {userName} ({rooms.length})
             </DialogTitle>
           </DialogHeader>

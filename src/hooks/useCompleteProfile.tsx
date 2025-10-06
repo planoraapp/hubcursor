@@ -82,9 +82,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
           };
         }
 
-        // Fallback: usar API direta do Habbo
-        console.log('🔄 [useCompleteProfile] Fallback para API direta...');
-        const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+        // Fallback: usar API direta do Habboconst hotelDomain = hotel === 'br' ? 'com.br' : hotel;
         
         const userResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`, {
           headers: {
@@ -98,11 +96,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         }
 
         const userData = await userResponse.json();
-        const uniqueId = userData.uniqueId;
-
-        console.log('✅ [useCompleteProfile] Dados básicos carregados:', { name: userData.name, uniqueId });
-
-        // Buscar dados adicionais em paralelo
+        const uniqueId = userData.uniqueId;// Buscar dados adicionais em paralelo
         const [badgesResponse, friendsResponse, groupsResponse, roomsResponse] = await Promise.allSettled([
           fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/badges`, {
             headers: { 'Accept': 'application/json' }
@@ -121,16 +115,7 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         const badges = badgesResponse.status === 'fulfilled' ? await badgesResponse.value.json().catch(() => []) : [];
         const friends = friendsResponse.status === 'fulfilled' ? await friendsResponse.value.json().catch(() => []) : [];
         const groups = groupsResponse.status === 'fulfilled' ? await groupsResponse.value.json().catch(() => []) : [];
-        const rooms = roomsResponse.status === 'fulfilled' ? await roomsResponse.value.json().catch(() => []) : [];
-
-        console.log('✅ [useCompleteProfile] Dados completos carregados via API direta:', {
-          badges: badges.length,
-          friends: friends.length,
-          groups: groups.length,
-          rooms: rooms.length
-        });
-
-        return {
+        const rooms = roomsResponse.status === 'fulfilled' ? await roomsResponse.value.json().catch(() => []) : [];return {
           uniqueId: userData.uniqueId,
           name: userData.name,
           figureString: userData.figureString,
@@ -171,3 +156,4 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
     refetchOnWindowFocus: false,
   });
 };
+

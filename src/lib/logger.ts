@@ -7,9 +7,7 @@ const isDevelopment = import.meta.env.DEV;
 
 export const logger = {
   log: (...args: any[]) => {
-    if (isDevelopment) {
-      console.log(...args);
-    }
+    if (isDevelopment) {}
   },
   
   error: (...args: any[]) => {
@@ -41,3 +39,4 @@ export const devLog = logger.log;
 export const devWarn = logger.warn;
 export const devDebug = logger.debug;
 export const devInfo = logger.info;
+

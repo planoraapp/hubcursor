@@ -109,13 +109,37 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
               
               {/* Popover de Likes */}
               {showLikesPopover && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/90 border border-white/20 rounded-lg shadow-xl max-w-xs w-full max-h-64">
-                  <div className="p-3 border-b border-white/10">
-                    <h3 className="text-white font-semibold text-sm">Curtidas</h3>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                    <div className="p-4 text-center text-white/60 text-sm">
-                      Sistema de curtidas em desenvolvimento
+                <div className="absolute inset-0 z-50 flex items-end justify-center">
+                  {/* Overlay escuro */}
+                  <div 
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => setShowLikesPopover(false)}
+                  ></div>
+                  
+                  {/* Modal que desliza de baixo para cima */}
+                  <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out">
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
+                      <h3 className="text-sm font-bold text-white" style={{
+                        textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                      }}>
+                        Curtidas
+                      </h3>
+                      <button 
+                        onClick={() => setShowLikesPopover(false)}
+                        className="text-white hover:bg-white/20 rounded-full p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* Conteúdo */}
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <div className="text-center text-white/60 text-sm">
+                        Sistema de curtidas em desenvolvimento
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -123,13 +147,37 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
               
               {/* Popover de Comentários */}
               {showCommentsPopover && (
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/90 border border-white/20 rounded-lg shadow-xl max-w-xs w-full max-h-64">
-                  <div className="p-3 border-b border-white/10">
-                    <h3 className="text-white font-semibold text-sm">Comentários</h3>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-                    <div className="p-4 text-center text-white/60 text-sm">
-                      Sistema de comentários em desenvolvimento
+                <div className="absolute inset-0 z-50 flex items-end justify-center">
+                  {/* Overlay escuro */}
+                  <div 
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={() => setShowCommentsPopover(false)}
+                  ></div>
+                  
+                  {/* Modal que desliza de baixo para cima */}
+                  <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out">
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
+                      <h3 className="text-sm font-bold text-white" style={{
+                        textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                      }}>
+                        Comentários
+                      </h3>
+                      <button 
+                        onClick={() => setShowCommentsPopover(false)}
+                        className="text-white hover:bg-white/20 rounded-full p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* Conteúdo */}
+                    <div className="flex-1 overflow-y-auto p-4">
+                      <div className="text-center text-white/60 text-sm">
+                        Sistema de comentários em desenvolvimento
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -197,7 +245,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
       {/* Overlay para fechar popovers */}
       {(showLikesPopover || showCommentsPopover) && (
         <div 
-          className="fixed inset-0 z-40 bg-transparent"
+          className="absolute inset-0 z-40 bg-transparent"
           onClick={() => {
             setShowLikesPopover(false);
             setShowCommentsPopover(false);

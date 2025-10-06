@@ -2,10 +2,7 @@
  * Cria a conta Beebop usando edge function para contornar RLS
  */
 export async function createBeebopAccountEdgeFunction(): Promise<{ success: boolean; message: string; account?: any }> {
-  try {
-    console.log('🚀 [CREATE-BEEBOP-EDGE] Iniciando criação via edge function...');
-
-    const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/setup-beebop-admin', {
+  try {const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/setup-beebop-admin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,10 +21,7 @@ export async function createBeebopAccountEdgeFunction(): Promise<{ success: bool
       };
     }
 
-    const result = await response.json();
-    console.log('✅ [CREATE-BEEBOP-EDGE] Conta Beebop criada com sucesso via edge function!');
-    
-    return {
+    const result = await response.json();return {
       success: true,
       message: 'Conta Beebop criada com sucesso via edge function!',
       account: result.account
@@ -40,3 +34,4 @@ export async function createBeebopAccountEdgeFunction(): Promise<{ success: bool
     };
   }
 }
+

@@ -49,9 +49,7 @@ export const UserVerification: React.FC<UserVerificationProps> = ({
         // Usuário encontrado, gerar código de verificação
         const code = generateVerificationCode();
         setVerificationStep('code');
-        console.log(`✅ Usuário encontrado: ${userData.name} (${userData.uniqueId})`);
-        console.log(`🔑 Código de verificação: ${code}`);
-      } else {
+        console.log(`✅ Usuário encontrado: ${userData.name} (${userData.uniqueId})`);} else {
         onVerificationError('Usuário não encontrado no Habbo. Verifique o nome e hotel selecionado.');
       }
     } catch (error) {
@@ -83,9 +81,7 @@ export const UserVerification: React.FC<UserVerificationProps> = ({
           hotel: selectedHotel,
           verificationCode,
           verifiedAt: new Date().toISOString()
-        });
-        console.log(`🎉 Verificação bem-sucedida para ${userData.name}!`);
-      } else {
+        });} else {
         onVerificationError('Código não encontrado na motto. Certifique-se de que você colocou o código exato na sua motto e aguarde alguns segundos.');
       }
     } catch (error) {
@@ -205,3 +201,4 @@ export const UserVerification: React.FC<UserVerificationProps> = ({
     </div>
   );
 };
+

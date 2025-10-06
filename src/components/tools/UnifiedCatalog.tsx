@@ -482,18 +482,12 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   };
 
   // Copiar ID do handitem para a área de transferência
-  const copyHanditemId = async (handitem: HabboHanditem) => {
-    console.log('🔄 Tentando copiar ID:', handitem.id, handitem.name);
-    const textToCopy = handitem.id.toString();
+  const copyHanditemId = async (handitem: HabboHanditem) => {const textToCopy = handitem.id.toString();
     
     try {
       // Verificar se navigator existe e tem clipboard
-      if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
-        console.log('✅ Usando API moderna do clipboard');
-        await navigator.clipboard.writeText(textToCopy);
-      } else {
-        console.log('⚠️ Usando fallback do execCommand');
-        // Fallback para navegadores mais antigos ou contextos não seguros
+      if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {await navigator.clipboard.writeText(textToCopy);
+      } else {// Fallback para navegadores mais antigos ou contextos não seguros
         const textArea = document.createElement('textarea');
         textArea.value = textToCopy;
         textArea.style.position = 'fixed';
@@ -509,10 +503,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
         if (!successful) {
           throw new Error('execCommand failed');
         }
-      }
-      
-      console.log('✅ ID copiado com sucesso!');
-      toast({
+      }toast({
         title: "ID copiado!",
         description: `${handitem.name} (ID: ${handitem.id}) copiado para a área de transferência`,
       });
@@ -659,3 +650,4 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     </div>
   );
 };
+

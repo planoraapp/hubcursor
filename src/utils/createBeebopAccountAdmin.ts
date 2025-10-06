@@ -11,9 +11,7 @@ export async function createBeebopAccountAdmin(): Promise<{ success: boolean; me
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Limpar conta existente se houver
-    console.log('🧹 [CREATE-BEEBOP-ADMIN] Limpando conta Beebop existente...');
-    const { error: deleteError } = await supabase
+    // 1. Limpar conta existente se houverconst { error: deleteError } = await supabase
       .from('habbo_accounts')
       .delete()
       .eq('habbo_name', 'Beebop')
@@ -21,9 +19,7 @@ export async function createBeebopAccountAdmin(): Promise<{ success: boolean; me
 
     if (deleteError) {
       console.log('⚠️ [CREATE-BEEBOP-ADMIN] Erro ao limpar conta (pode não existir):', deleteError.message);
-    } else {
-      console.log('✅ [CREATE-BEEBOP-ADMIN] Conta Beebop limpa com sucesso!');
-    }
+    } else {}
 
     // 2. Inserir nova conta
     const accountData = {
@@ -48,10 +44,7 @@ export async function createBeebopAccountAdmin(): Promise<{ success: boolean; me
         success: false,
         message: `Erro ao criar conta Beebop: ${createError.message}`
       };
-    }
-
-    console.log('✅ [CREATE-BEEBOP-ADMIN] Conta Beebop criada com sucesso!');
-    return {
+    }return {
       success: true,
       message: 'Conta Beebop criada com sucesso!',
       account: newAccount
@@ -64,3 +57,4 @@ export async function createBeebopAccountAdmin(): Promise<{ success: boolean; me
     };
   }
 }
+

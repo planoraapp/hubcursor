@@ -2,10 +2,7 @@
  * Configura Beebop para aparecer nas últimas homes modificadas usando edge function
  */
 export async function setupBeebopForLatestHomesEdgeFunction(): Promise<{ success: boolean; message: string; details?: any }> {
-  try {
-    console.log('🚀 [SETUP-BEEBOP-EDGE] Iniciando configuração do Beebop via edge function...');
-
-    // 1. Criar conta do Beebop
+  try {// 1. Criar conta do Beebop
     const accountResponse = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/setup-beebop-admin', {
       method: 'POST',
       headers: {
@@ -47,10 +44,7 @@ export async function setupBeebopForLatestHomesEdgeFunction(): Promise<{ success
       };
     }
 
-    const backgroundResult = await backgroundResponse.json();
-
-    console.log('✅ [SETUP-BEEBOP-EDGE] Beebop configurado com sucesso via edge function!');
-    return {
+    const backgroundResult = await backgroundResponse.json();return {
       success: true,
       message: 'Beebop configurado com sucesso para aparecer nas últimas homes modificadas!',
       details: {
@@ -66,3 +60,4 @@ export async function setupBeebopForLatestHomesEdgeFunction(): Promise<{ success
     };
   }
 }
+

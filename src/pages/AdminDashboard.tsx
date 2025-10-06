@@ -156,9 +156,7 @@ export const AdminDashboard: React.FC = () => {
         alert('Beebop configurado com sucesso para aparecer nas últimas homes!');
         await loadStats();
       } else {
-        // Fallback para método admin
-        console.log('Edge function falhou, tentando método admin...');
-        const fallbackResult = await setupBeebopForLatestHomesAdmin();
+        // Fallback para método adminconst fallbackResult = await setupBeebopForLatestHomesAdmin();
         if (fallbackResult.success) {
           alert('Beebop configurado com sucesso para aparecer nas últimas homes!');
           await loadStats();

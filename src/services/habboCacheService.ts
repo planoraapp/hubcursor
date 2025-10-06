@@ -69,9 +69,7 @@ class HabboCacheService {
     for (const [key, expiry] of this.ttl.entries()) {
       if (now >= expiry) {
         this.cache.delete(key);
-        this.ttl.delete(key);
-        console.log(`🗑️ Cleaned expired cache: ${key}`);
-      }
+        this.ttl.delete(key);}
     }
   }
   
@@ -114,9 +112,7 @@ class HabboCacheService {
     }
     
     // Verificar se já há uma requisição em andamento
-    if (this.requestQueue.has(cacheKey)) {
-      console.log(`⏳ Waiting for existing request: ${cacheKey}`);
-      return this.requestQueue.get(cacheKey)!;
+    if (this.requestQueue.has(cacheKey)) {return this.requestQueue.get(cacheKey)!;
     }
     
     // Fazer nova requisição
@@ -192,9 +188,7 @@ class HabboCacheService {
   clearAllCache(): void {
     this.cache.clear();
     this.ttl.clear();
-    this.requestQueue.clear();
-    console.log('🧹 All cache cleared');
-  }
+    this.requestQueue.clear();}
 }
 
 // Instância singleton
@@ -204,3 +198,4 @@ export const habboCacheService = new HabboCacheService();
 setInterval(() => {
   habboCacheService.cleanExpiredCache();
 }, 5 * 60 * 1000);
+

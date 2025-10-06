@@ -5,9 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export async function createBeebopAccount(): Promise<{ success: boolean; message: string; account?: any }> {
   try {
-    // 1. Limpar conta existente se houver
-    console.log('🧹 [CREATE-BEEBOP] Limpando conta Beebop existente...');
-    const { error: deleteError } = await supabase
+    // 1. Limpar conta existente se houverconst { error: deleteError } = await supabase
       .from('habbo_accounts')
       .delete()
       .eq('habbo_name', 'Beebop')
@@ -15,9 +13,7 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
 
     if (deleteError) {
       console.log('⚠️ [CREATE-BEEBOP] Erro ao limpar conta (pode não existir):', deleteError.message);
-    } else {
-      console.log('✅ [CREATE-BEEBOP] Conta Beebop limpa com sucesso!');
-    }
+    } else {}
 
     // 2. Buscar dados do usuário Beebop na API oficial do Habbo Brasil
     const habboApiUrl = 'https://www.habbo.com.br/api/public/users?name=Beebop';
@@ -45,9 +41,7 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
           useDefaultData = true;
         }
       }
-    } catch (fetchError) {
-      console.log('⚠️ [CREATE-BEEBOP] Erro ao buscar dados da API:', fetchError);
-      useDefaultData = true;
+    } catch (fetchError) {useDefaultData = true;
     }
 
     // 3. Preparar dados da conta
@@ -89,10 +83,7 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
         success: false,
         message: `Erro ao criar conta Beebop: ${createError.message}`
       };
-    }
-
-    console.log('✅ [CREATE-BEEBOP] Conta Beebop criada com sucesso!');
-    return {
+    }return {
       success: true,
       message: `Conta Beebop criada com sucesso! ${useDefaultData ? '(dados padrão - conta privada)' : '(dados reais)'}`,
       account: newAccount
@@ -105,3 +96,4 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
     };
   }
 }
+

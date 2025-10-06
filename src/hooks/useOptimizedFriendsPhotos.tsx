@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -47,11 +47,7 @@ export const useOptimizedFriendsPhotos = (
 
       if (!data || data.error) {
         return { photos: [], hasMore: false, nextOffset: 0 };
-      }
-
-      console.log(`[âœ… OPTIMIZED FRIENDS PHOTOS] Successfully fetched ${data.photos?.length || 0} photos`);
-
-      return {
+      }return {
         photos: data.photos || [],
         hasMore: data.hasMore || false,
         nextOffset: data.nextOffset || 0
@@ -87,7 +83,7 @@ export const useInfiniteFriendsPhotos = (currentUserName: string, hotel: string 
         // Primeira carga - substituir lista
         setAllPhotos(data.photos);
       } else {
-        // Carregamento adicional - adicionar Ã  lista
+        // Carregamento adicional - adicionar à lista
         setAllPhotos(prev => [...prev, ...data.photos]);
       }
       setHasMore(data.hasMore);
@@ -119,3 +115,4 @@ export const useInfiniteFriendsPhotos = (currentUserName: string, hotel: string 
     reset
   };
 };
+

@@ -117,11 +117,7 @@ export const useFriendsPhotosInfinite = (
 
       if (!data || data.error) {
         return { photos: [], hasMore: false, nextOffset: 0 };
-      }
-
-      console.log(`[✅ FRIENDS PHOTOS INFINITE] Successfully fetched ${data.photos?.length || 0} photos at offset ${pageParam}`);
-      
-      // Process and format photos
+      }// Process and format photos
       const photos: FriendPhoto[] = (data.photos || [])
         .filter(photo => photo.imageUrl && photo.userName && photo.timestamp)
         .map(photo => ({
@@ -157,9 +153,7 @@ export const useFriendsPhotosInfinite = (
         const cacheAge = now - cached.updatedAt;
         const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
         
-        if (cacheAge > maxCacheAge) {
-          console.log('[🔄 CACHE] Cache is too old, clearing...');
-          clearCache(currentUserName, hotel);
+        if (cacheAge > maxCacheAge) {clearCache(currentUserName, hotel);
           return undefined;
         }
         
@@ -171,9 +165,7 @@ export const useFriendsPhotosInfinite = (
           })
         );
         
-        if (hasOldPhotos) {
-          console.log('[🔄 CACHE] Cached photos are too old, clearing...');
-          clearCache(currentUserName, hotel);
+        if (hasOldPhotos) {clearCache(currentUserName, hotel);
           return undefined;
         }
         

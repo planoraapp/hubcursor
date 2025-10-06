@@ -5,18 +5,14 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export async function createBeebopBackground(): Promise<{ success: boolean; message: string; background?: any }> {
   try {
-    // 1. Limpar background existente se houver
-    console.log('🧹 [CREATE-BEEBOP-BG] Limpando background Beebop existente...');
-    const { error: deleteError } = await supabase
+    // 1. Limpar background existente se houverconst { error: deleteError } = await supabase
       .from('user_home_backgrounds')
       .delete()
       .eq('user_id', '00000000-0000-0000-0000-000000000002'); // UUID do Beebop
 
     if (deleteError) {
       console.log('⚠️ [CREATE-BEEBOP-BG] Erro ao limpar background (pode não existir):', deleteError.message);
-    } else {
-      console.log('✅ [CREATE-BEEBOP-BG] Background Beebop limpo com sucesso!');
-    }
+    } else {}
 
     // 2. Inserir o novo background
     const backgroundData = {
@@ -38,10 +34,7 @@ export async function createBeebopBackground(): Promise<{ success: boolean; mess
         success: false,
         message: `Erro ao criar background Beebop: ${createError.message}`
       };
-    }
-
-    console.log('✅ [CREATE-BEEBOP-BG] Background Beebop criado com sucesso!');
-    return {
+    }return {
       success: true,
       message: 'Background Beebop criado com sucesso!',
       background: newBackground
@@ -54,3 +47,4 @@ export async function createBeebopBackground(): Promise<{ success: boolean; mess
     };
   }
 }
+
