@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
  */
 export async function createBeebopAccount(): Promise<{ success: boolean; message: string; account?: any }> {
   try {
-    // 1. Limpar conta existente se houverconst { error: deleteError } = await supabase
+    // 1. Limpar conta existente se houver
+    const { error: deleteError } = await supabase
       .from('habbo_accounts')
       .delete()
       .eq('habbo_name', 'Beebop')

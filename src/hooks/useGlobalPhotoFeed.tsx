@@ -66,10 +66,15 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
           totalCount: 0,
           cursor: currentCursor || '0'
         };
-      }// Debug: verificar usuários únicos
+      }
+      
+      // Debug: verificar usuários únicos
       if (data.photos && data.photos.length > 0) {
         const uniqueUsers = [...new Set(data.photos.map((p: any) => p.userName))];
-        console.log(`[🌍 GLOBAL FEED] Unique users found: ${uniqueUsers.join(', ')}`);// Debug: verificar se há mais fotos no banco (sem filtro de hotel)}
+        console.log(`[🌍 GLOBAL FEED] Unique users found: ${uniqueUsers.join(', ')}`);
+      }
+      
+      // Debug: verificar se há mais fotos no banco (sem filtro de hotel)
 
       return {
         photos: data.photos || [],
