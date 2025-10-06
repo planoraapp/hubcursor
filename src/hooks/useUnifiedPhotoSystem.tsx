@@ -23,7 +23,7 @@ export const useUnifiedPhotoSystem = (
   hotel: string = 'br',
   options: UseUnifiedPhotoSystemOptions = {}
 ) => {
-  const { forceRefresh = false, cacheTime = 15 } = options; // Aumentado para 15 minutos
+  const { forceRefresh = false, cacheTime = 5 } = options; // Reduzido para 5 minutos
 
   const { 
     data: photos = [], 

@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
     host: true,
-    open: false, // Desabilitar auto-open para acelerar
+    open: false,
     cors: true,
     hmr: {
       port: 3000
@@ -26,7 +26,6 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Configuração para assets públicos
   publicDir: 'public',
   build: {
     assetsDir: 'assets',
@@ -41,26 +40,17 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // Configuração simplificada para evitar problemas de otimização
+  // Configuração simplificada para desenvolvimento
   optimizeDeps: {
     include: [
       'react', 
       'react-dom',
       '@tanstack/react-query',
-      'react-router-dom',
-      'lucide-react',
-      '@supabase/supabase-js'
-    ],
-    exclude: [
-      'sonner',
-      '@radix-ui/react-popover',
-      '@radix-ui/react-select', 
-      '@radix-ui/react-avatar'
-    ],
-    force: false // Desabilitar força para evitar problemas
+      'react-router-dom'
+    ]
   },
   // Configurações de performance
-  esbuild: {
-    target: 'esnext'
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(mode)
   }
 }));

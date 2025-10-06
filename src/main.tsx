@@ -31,7 +31,8 @@ import BeebopHome from './pages/BeebopHome'
 import NotFound from './pages/NotFound'
 import { FontTest } from './components/FontTest'
 import { FontAlternativeTest } from './components/FontAlternativeTest'
-// import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer' // Desativado temporariamente
+import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer'
+import { useBeebopAccountInitializer } from './hooks/useBeebopAccountInitializer'
 import HomeRedirect from './components/HomeRedirect'
 
 // QueryClient otimizado para performance
@@ -185,13 +186,20 @@ const AppWithNotifications = () => {
   );
 };
 
+const AppWithInitializers = () => {
+  useDailyActivitiesInitializer();
+  useBeebopAccountInitializer();
+  
+  return <AppWithNotifications />;
+};
+
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationProvider>
-          <AppWithNotifications />
+          <AppWithInitializers />
         </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
