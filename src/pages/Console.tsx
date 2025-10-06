@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { FunctionalConsole } from '@/components/console/FunctionalConsole';
+import PopupConsole from '@/components/console/PopupConsole';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
@@ -86,7 +86,7 @@ const Console: React.FC = () => {
                 <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start gap-8 mt-8">
                   {/* Console à esquerda */}
                   <div className="w-full max-w-[375px] mx-auto lg:mx-0">
-                    <FunctionalConsole />
+                    <PopupConsole />
                   </div>
                   
                   {/* Botão à direita no desktop, centralizado no mobile */}
