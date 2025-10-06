@@ -8,93 +8,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from "sonner";
 
 const ConsolePopup: React.FC = () => {
-  const { isLoggedIn, login } = useAuth();
-  const [loginForm, setLoginForm] = useState({ habboName: '', password: '' });
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoggedIn, habboAccount } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Communicate with parent window
   useEffect(() => {
-    const notifyParent = () => {
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({ type: 'CONSOLE_POPUP_OPENED' }, '*');
+    // Simular carregamento inicial
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listener para mensagens do parent window
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'CLOSE_POPUP') {
+        window.close();
       }
     };
-    
-    notifyParent();
-    
-    // Notify on auth state changes
-    const authChangeTimer = setInterval(() => {
-      if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({ 
-          type: 'AUTH_STATE_CHANGE', 
-          isLoggedIn 
-        }, '*');
-      }
-    }, 1000);
 
-    return () => {
-      clearInterval(authChangeTimer);
-      if (window.opener && !window.opener.closed) {
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Função para notificar o parent window que o popup foi fechado
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (window.opener) {
         window.opener.postMessage({ type: 'CONSOLE_POPUP_CLOSED' }, '*');
       }
     };
-  }, [isLoggedIn]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loginForm.habboName || !loginForm.password) {
-      toast.error('Preencha todos os campos');
-      return;
-    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
-    setIsLoading(true);
-    try {
-      const success = await login(loginForm.habboName, loginForm.password);
-      if (success) {
-        toast.success('Login realizado com sucesso!');
-      } else {
-        toast.error('Erro ao fazer login');
-      }
-    } catch (error) {
-      toast.error('Erro inesperado ao fazer login');
-    } finally {
-      setIsLoading(false);
+  // Função para lidar com o fechamento do popup
+  const handleClosePopup = () => {
+    if (window.opener) {
+      window.opener.postMessage({ type: 'CONSOLE_POPUP_CLOSED' }, '*');
     }
+    window.close();
   };
 
   // Sempre mostrar o console, mesmo sem login
   // O console pode funcionar sem autenticação
 
   return (
-    <div className="w-full h-auto min-h-screen bg-gradient-to-b from-blue-600 to-blue-800 p-4">
-      <div className="w-full max-w-md mx-auto">
-        {/* Header do popup */}
-        <div className="bg-white/10 backdrop-blur-sm border-b border-white/20 p-3 flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-3">
-            <img 
-              src="/assets/bghabbohub.png" 
-              alt="HabboHub" 
-              className="h-8 w-auto"
-              style={{ imageRendering: 'pixelated' }}
-            />
-            <h1 className="text-white font-bold volter-font text-lg" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
-              Console HabboHub
-            </h1>
-          </div>
-          <button
-            onClick={() => window.close()}
-            className="text-white/70 hover:text-white text-2xl font-bold"
-            title="Fechar"
-          >
-            ×
-          </button>
-        </div>
-        
-        {/* Console com dimensões exatas */}
-        <div className="w-full">
-          <FunctionalConsole />
-        </div>
-      </div>
+    <div 
+      className="min-h-screen w-full flex items-center justify-center"
+      style={{
+        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundRepeat: 'repeat',
+        backgroundSize: 'auto'
+      }}
+    >
+      <FunctionalConsole />
     </div>
   );
 };

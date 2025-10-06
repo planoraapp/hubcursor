@@ -119,7 +119,15 @@ export const FindPhotoFeedColumn: React.FC = () => {
     return (
       <div className="space-y-4 relative">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-lg font-bold text-white">🌍 Feed Global da Comunidade</h3>
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <img
+              src="/assets/console/hotelfilter.png"
+              alt="Filtro"
+              className="h-5 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            Feed Global da Comunidade
+          </h3>
           <div className="text-sm text-white/60">Carregando...</div>
         </div>
         <div className="space-y-4">
@@ -148,7 +156,15 @@ export const FindPhotoFeedColumn: React.FC = () => {
     return (
       <div className="space-y-4 relative">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-lg font-bold text-white">🌍 Feed Global da Comunidade</h3>
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <img
+              src="/assets/console/hotelfilter.png"
+              alt="Filtro"
+              className="h-5 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            Feed Global da Comunidade
+          </h3>
           <div className="text-sm text-white/60">Erro</div>
         </div>
         <div className="text-center py-8 space-y-3">
@@ -172,7 +188,15 @@ export const FindPhotoFeedColumn: React.FC = () => {
     return (
       <div className="space-y-4 relative">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-lg font-bold text-white">🌍 Feed Global da Comunidade</h3>
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <img
+              src="/assets/console/hotelfilter.png"
+              alt="Filtro"
+              className="h-5 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            Feed Global da Comunidade
+          </h3>
           <div className="text-sm text-white/60">0 fotos</div>
         </div>
         <div className="text-center py-8 space-y-3">
@@ -190,7 +214,15 @@ export const FindPhotoFeedColumn: React.FC = () => {
     <>
       <div className="space-y-4 relative">
         <div className="flex items-center justify-between px-2">
-          <h3 className="text-lg font-bold text-white">🌍 Feed Global da Comunidade</h3>
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <img
+              src="/assets/console/hotelfilter.png"
+              alt="Filtro"
+              className="h-5 w-auto object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            Feed Global da Comunidade
+          </h3>
           <div className="text-sm text-white/60">{filteredPhotos.length} fotos</div>
         </div>
         

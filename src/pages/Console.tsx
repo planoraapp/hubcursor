@@ -13,13 +13,13 @@ const Console: React.FC = () => {
   const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   const openPopupConsole = () => {
-    // Calcular posição centralizada na tela
-    const width = 1000;
-    const height = 700;
+    // Calcular posição centralizada na tela com dimensões adequadas para o console
+    const width = 400; // Largura com margem para bordas da janela
+    const height = 850; // Altura com margem para bordas da janela
     const left = (screen.width - width) / 2;
     const top = (screen.height - height) / 2;
     
-    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no,directories=no`;
+    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=yes,menubar=no,toolbar=no,location=no,status=no,directories=no`;
     
     const popup = window.open('/console-popup', 'ConsolePopup', popupFeatures);
     

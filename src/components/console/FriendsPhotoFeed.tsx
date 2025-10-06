@@ -74,9 +74,6 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
             <h3 className="text-lg font-bold text-white">
               📸 Feed de Fotos dos Amigos
             </h3>
-            <div className="text-sm text-white/60">
-              {photos.length} fotos
-            </div>
           </div>
 
           {/* Lista de fotos */}

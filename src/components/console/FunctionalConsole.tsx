@@ -1,5 +1,5 @@
 // Versão corrigida - cache atualizado - v2
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,6 @@ import { FriendsModal } from '@/components/profile/modals/FriendsModal';
 import { RoomsModal } from '@/components/profile/modals/RoomsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
 import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
-import { lazy, Suspense } from 'react';
 import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsModal';
 import { PhotoLikesModal } from '@/components/console/modals/PhotoLikesModal';
 import { IndividualPhotoView } from '@/components/console2/IndividualPhotoView';
@@ -26,6 +25,21 @@ const GlobalPhotoFeedColumn = lazy(() => import('@/components/console2/GlobalPho
 
 // Componentes de ícones pixelizados no estilo Habbo
 
+// Função para mapear hotel para flag
+const getHotelFlag = (hotel?: string) => {
+  const hotelFlags: { [key: string]: string } = {
+    'com': '/flags/flagcom.png',      // USA/UK
+    'br': '/flags/flagbrazil.png',    // Brasil/Portugal
+    'de': '/flags/flagdeus.png',      // Alemanha
+    'fr': '/flags/flagfrance.png',    // França
+    'it': '/flags/flagitaly.png',     // Itália
+    'es': '/flags/flagspain.png',     // Espanha
+    'nl': '/flags/flagnetl.png',      // Holanda
+    'tr': '/flags/flagtrky.png',      // Turquia
+    'fi': '/flags/flafinland.png',    // Finlândia
+  };
+  return hotelFlags[hotel || ''] || '/flags/flagcom.png'; // Default para com
+};
 
 const PixelSearchIcon = ({ className }: { className?: string }) => (
   <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
@@ -39,25 +53,6 @@ const PixelSearchIcon = ({ className }: { className?: string }) => (
     <rect x="24" y="24" width="2" height="2" fill="#8B4513" />
   </svg>
 );
-
-const PixelGlobeIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Globo */}
-    <rect x="4" y="8" width="32" height="24" fill="none" stroke="#8B4513" strokeWidth="2" />
-    <rect x="8" y="4" width="24" height="32" fill="none" stroke="#8B4513" strokeWidth="2" />
-    
-    {/* Linhas do globo */}
-    <rect x="20" y="8" width="2" height="24" fill="#8B4513" />
-    <rect x="4" y="20" width="32" height="2" fill="#8B4513" />
-    
-    {/* Base */}
-    <rect x="12" y="32" width="16" height="4" fill="#8B4513" />
-  </svg>
-);
-
 
 type TabType = 'account' | 'friends' | 'chat' | 'photos' | 'photo';
 
@@ -74,7 +69,7 @@ const tabs: TabButton[] = [
   {
     id: 'account',
     label: 'My Info',
-    icon: <img src="/assets/my-info.png" alt="My Info" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    icon: <img src="/assets/console/my-info.png" alt="My Info" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -82,7 +77,7 @@ const tabs: TabButton[] = [
   {
     id: 'friends',
     label: 'Friends',
-    icon: <img src="/assets/friends-icon.png" alt="Friends" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    icon: <img src="/assets/console/friends-icon.png" alt="Friends" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -90,7 +85,7 @@ const tabs: TabButton[] = [
   {
     id: 'chat',
     label: 'Chat',
-    icon: <img src="/assets/chat-icon.png" alt="Chat" className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    icon: <img src="/assets/console/chat-icon.png" alt="Chat" className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -98,7 +93,7 @@ const tabs: TabButton[] = [
   {
     id: 'photos',
     label: 'Photos',
-    icon: <PixelGlobeIcon className="w-8 h-8" />,
+    icon: <img src="/assets/console/photos-icon.png" alt="Photos" className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -324,7 +319,7 @@ export const FunctionalConsole: React.FC = () => {
         return selectedIndividualPhoto ? (
           <IndividualPhotoView
             photo={selectedIndividualPhoto}
-            userName={userData?.name || userData?.habbo_name || currentUser || 'Usuário'}
+            userName={userData?.name || currentUser || 'Usuário'}
             onBack={handleBackFromPhoto}
             onUserClick={() => {}}
           />
@@ -380,7 +375,7 @@ export const FunctionalConsole: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto h-[calc(100vh-12rem)] w-full max-w-full overflow-x-hidden">
+    <div className="mx-auto h-[750px] w-[375px] overflow-x-hidden">
       <div className="pixel-frame-outer h-full max-w-full">
         <div className="pixel-header-bar">
           <div className="pixel-title">
@@ -696,27 +691,22 @@ const FeedTab: React.FC<any> = ({
                   target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
                 }}
               />
+              
+              {/* Ícones de país e online/offline - canto superior direito */}
+              <div className="absolute top-0 right-0 flex items-center gap-1">
+                {/* Flag do país */}
+                <img
+                  src={getHotelFlag(user?.hotel)}
+                  alt=""
+                  className="h-6 w-auto object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+              />
               {/* Ícone de online/offline */}
-              <div className="absolute bottom-0 right-0">
                 <img 
                   src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
                   alt={user?.online ? 'Online' : 'Offline'}
-                  style={{ 
-                    imageRendering: 'pixelated',
-                    width: 'auto',
-                    height: 'auto',
-                    maxWidth: '38px',
-                    maxHeight: '38px'
-                  }}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    // Fallback para círculo colorido se o GIF não carregar
-                    target.style.display = 'none';
-                    const fallbackDiv = document.createElement('div');
-                    fallbackDiv.className = `w-9 h-9 rounded-full border-2 border-white shadow-lg ${user?.online ? 'bg-green-500' : 'bg-red-500'}`;
-                    fallbackDiv.style.boxShadow = 'rgba(0, 0, 0, 0.3) 0px 0px 0px 1px inset, rgba(255, 255, 255, 0.8) 0px 0px 0px 1px';
-                    target.parentNode?.appendChild(fallbackDiv);
-                  }}
+                  className="h-6 w-auto object-contain"
+                  style={{ imageRendering: 'pixelated' }}
                 />
               </div>
             </div>
@@ -727,7 +717,7 @@ const FeedTab: React.FC<any> = ({
                 "{user?.motto && user.motto.trim() ? user.motto : 'null'}"
               </p>
               
-              <div className="space-y-1 text-sm text-white/60">
+              <div className="space-y-1 text-xs text-white/60">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium text-nowrap">Criado em:</span>
                   <span className="truncate">
@@ -757,6 +747,7 @@ const FeedTab: React.FC<any> = ({
                   </span>
                 </div>
               </div>
+              
             </div>
           </div>
         </div>
@@ -938,9 +929,6 @@ const FeedTab: React.FC<any> = ({
   // Feed normal quando estiver no próprio perfil
   return (
     <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-      <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">📸 Feed de Fotos dos Amigos</h3>
-      </div>
       
       {/* Campo de Busca */}
       <div className="p-4 border-b border-white/10">
@@ -963,18 +951,23 @@ const FeedTab: React.FC<any> = ({
                     <img
                       src={countries.find(c => c.code === selectedCountry)?.flag}
                       alt=""
-                      className="w-8 h-5 object-contain"
+                      className="h-5 w-auto object-contain"
                       style={{ imageRendering: 'pixelated' }}
                     />
                   ) : (
-                    <span className="text-xs">🌍</span>
+                    <img
+                      src="/assets/console/hotelfilter.png"
+                      alt="Filtro"
+                      className="h-6 w-auto object-contain"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   )}
                 </button>
                 
                 {/* Dropdown menu */}
                 {showCountryDropdown && (
                   <div 
-                    className="absolute top-full left-0 mt-1 border border-black rounded-lg shadow-lg z-50 min-w-[160px] overflow-hidden"
+                    className="absolute top-full left-0 mt-1 border border-black rounded-lg shadow-lg z-50 min-w-[200px] overflow-hidden"
                     style={{
                       backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
                       backgroundSize: '100% 2px'
@@ -1001,9 +994,15 @@ const FeedTab: React.FC<any> = ({
                           setSelectedCountry(null);
                           setShowCountryDropdown(false);
                         }}
-                        className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                        className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
                       >
-                        <span className="text-sm">🌍 Todos os países</span>
+                        <img
+                          src="/assets/console/hotelfilter.png"
+                          alt="Filtro"
+                          className="h-6 w-auto object-contain mr-2"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                        <span className="text-sm">Todos os países</span>
                       </button>
                       {countries.map((country) => (
                         <button
@@ -1012,14 +1011,16 @@ const FeedTab: React.FC<any> = ({
                             setSelectedCountry(country.code);
                             setShowCountryDropdown(false);
                           }}
-                          className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center gap-2 transition-colors"
+                          className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
                         >
+                          <div className="w-10 h-8 flex items-center justify-center mr-2">
                           <img
                             src={country.flag}
                             alt=""
-                            className="w-4 h-4 object-contain"
+                              className="h-8 w-auto object-contain"
                             style={{ imageRendering: 'pixelated' }}
                           />
+                          </div>
                           <span className="text-sm">{country.name}</span>
                         </button>
                       ))}
@@ -1105,6 +1106,44 @@ const FeedTab: React.FC<any> = ({
 
 // Componente da aba Photos (Feed Global)
 const PhotosTab: React.FC<any> = ({ isLoading }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const countries = [
+    { code: 'com', name: 'USA/UK', flag: '/flags/flagcom.png' },
+    { code: 'br', name: 'Brasil/Portugal', flag: '/flags/flagbrazil.png' },
+    { code: 'de', name: 'Alemanha', flag: '/flags/flagdeus.png' },
+    { code: 'fr', name: 'França', flag: '/flags/flagfrance.png' },
+    { code: 'it', name: 'Itália', flag: '/flags/flagitaly.png' },
+    { code: 'es', name: 'Espanha', flag: '/flags/flagspain.png' },
+    { code: 'nl', name: 'Holanda', flag: '/flags/flagnetl.png' },
+    { code: 'tr', name: 'Turquia', flag: '/flags/flagtrky.png' },
+    { code: 'fi', name: 'Finlândia', flag: '/flags/flafinland.png' },
+  ];
+
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    
+    setIsSearching(true);
+    
+    // Simular busca
+    setTimeout(() => {
+      setSearchResults([
+        {
+          id: 1,
+          name: searchTerm,
+          hotel: selectedCountry || 'br',
+          online: Math.random() > 0.5,
+          motto: 'Motto do usuário'
+        }
+      ]);
+      setIsSearching(false);
+    }, 1000);
+  };
+
   return (
     <div className="h-full">
       <Suspense fallback={
@@ -1115,7 +1154,150 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
           </div>
         </div>
       }>
-        <GlobalPhotoFeedColumn hotel="br" />
+        <div className="space-y-4 relative">
+          {/* Campo de Busca */}
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              {/* Campo de busca com dropdown integrado */}
+              <div className="flex-1 relative">
+                <div className="flex items-center bg-white/10 border border-white/20 rounded focus-within:border-white/60 transition-colors h-8">
+                  {/* Dropdown de países */}
+                  <div className="relative country-dropdown z-10">
+                    <button
+                      onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                      className={`flex items-center justify-center transition-colors border-r border-white/20 relative z-20 h-full ${
+                        selectedCountry 
+                          ? 'px-1 min-w-[50px]' 
+                          : 'px-2 min-w-[35px] text-white hover:bg-white/10'
+                      }`}
+                      title={selectedCountry ? countries.find(c => c.code === selectedCountry)?.name : 'Selecionar país'}
+                    >
+                      {selectedCountry ? (
+                        <img
+                          src={countries.find(c => c.code === selectedCountry)?.flag}
+                          alt=""
+                          className="h-5 w-auto object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                      ) : (
+                        <img
+                          src="/assets/console/hotelfilter.png"
+                          alt="Filtro"
+                          className="h-6 w-auto object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                      )}
+                    </button>
+                    
+                    {/* Dropdown menu */}
+                    {showCountryDropdown && (
+                      <div 
+                        className="absolute top-full left-0 mt-1 border border-black rounded-lg shadow-lg z-50 min-w-[200px] overflow-hidden"
+                        style={{
+                          backgroundImage: 'repeating-linear-gradient(0deg, #333333, #333333 1px, #222222 1px, #222222 2px)',
+                          backgroundSize: '100% 2px'
+                        }}
+                      >
+                        {/* Borda superior amarela com textura pontilhada */}
+                        <div className="bg-yellow-400 border-b border-black relative overflow-hidden" style={{
+                          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+                          backgroundSize: '8px 8px'
+                        }}>
+                          <div className="pixel-pattern absolute inset-0 opacity-20"></div>
+                          <div className="p-2 relative z-10">
+                            <div className="text-white font-bold text-sm" style={{
+                              textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+                            }}>
+                              Selecionar País
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              setSelectedCountry(null);
+                              setShowCountryDropdown(false);
+                            }}
+                            className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
+                          >
+                            <img
+                              src="/assets/console/hotelfilter.png"
+                              alt="Filtro"
+                              className="h-6 w-auto object-contain mr-2"
+                              style={{ imageRendering: 'pixelated' }}
+                            />
+                            <span className="text-sm">Todos os países</span>
+                          </button>
+                          {countries.map((country) => (
+                            <button
+                              key={country.code}
+                              onClick={() => {
+                                setSelectedCountry(country.code);
+                                setShowCountryDropdown(false);
+                              }}
+                              className="w-full px-3 py-2 text-left text-white hover:bg-white/10 flex items-center transition-colors"
+                            >
+                              <div className="w-10 h-8 flex items-center justify-center mr-2">
+                                <img
+                                  src={country.flag}
+                                  alt=""
+                                  className="h-8 w-auto object-contain"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                              </div>
+                              <span className="text-sm">{country.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Input de texto */}
+                  <input
+                    type="text"
+                    placeholder="Digite o nome do usuário..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    className="flex-1 px-3 py-1 bg-transparent text-white placeholder-white/50 focus:outline-none text-sm h-full"
+                  />
+                  
+                  {/* Botão de busca integrado */}
+                  <button
+                    onClick={handleSearch}
+                    disabled={isSearching || !searchTerm.trim()}
+                    className="px-2 py-1 text-white/60 hover:text-white disabled:text-white/30 transition-colors flex items-center justify-center h-full"
+                    title="Buscar"
+                  >
+                    {isSearching ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Search className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Título do feed */}
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <img
+                src="/assets/console/hotelfilter.png"
+                alt="Filtro"
+                className="h-5 w-auto object-contain"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              Feed do Hotel
+            </h3>
+          </div>
+
+          {/* Feed de fotos */}
+          <GlobalPhotoFeedColumn hotel={selectedCountry || 'br'} />
+        </div>
       </Suspense>
     </div>
   );
@@ -1139,7 +1321,7 @@ const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) 
   return (
     <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
       <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">💬 Chat com Amigos</h3>
+        <h3 className="text-lg font-bold">Feed de Amigos</h3>
         <p className="text-sm text-white/60 mt-1">{friends.length} amigos</p>
       </div>
       <div className="flex-1 p-4 space-y-3">
@@ -1311,35 +1493,13 @@ const AccountTab: React.FC<any> = ({
                 target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
               }}
             />
-            <div className="absolute bottom-0 right-0">
-              <img 
-                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
-                alt={user?.online ? 'Online' : 'Offline'}
-                style={{ 
-                  imageRendering: 'pixelated',
-                  width: 'auto',
-                  height: 'auto',
-                  maxWidth: '38px',
-                  maxHeight: '38px'
-                }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  // Fallback para círculo colorido se o GIF não carregar
-                  target.style.display = 'none';
-                  const fallbackDiv = document.createElement('div');
-                  fallbackDiv.className = `w-9 h-9 rounded-full border-2 border-white shadow-lg ${user?.online ? 'bg-green-500' : 'bg-red-500'}`;
-                  fallbackDiv.style.boxShadow = 'rgba(0, 0, 0, 0.3) 0px 0px 0px 1px inset, rgba(255, 255, 255, 0.8) 0px 0px 0px 1px';
-                  target.parentNode?.appendChild(fallbackDiv);
-                }}
-              />
-            </div>
           </div>
           
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
             <p className="text-white/70 italic mb-4 truncate">"{user?.motto || 'HUB-ACTI1'}"</p>
             
-            <div className="space-y-1 text-sm text-white/60">
+            <div className="space-y-1 text-xs text-white/60">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-medium text-nowrap">Criado em:</span>
                 <span className="truncate">
@@ -1365,7 +1525,24 @@ const AccountTab: React.FC<any> = ({
                     'Data não disponível'
                   }
                 </span>
+                <div className="flex items-center gap-1 ml-2">
+                  {/* Flag do país */}
+                  <img
+                    src={getHotelFlag(user?.hotel)}
+                    alt=""
+                    className="h-4 w-auto object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  {/* Ícone de online/offline */}
+                  <img 
+                    src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
+                    alt={user?.online ? 'Online' : 'Offline'}
+                    className="h-4 w-auto object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
               </div>
+              </div>
+              
             </div>
           </div>
         </div>

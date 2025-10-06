@@ -74,8 +74,14 @@ export const GlobalFeedExample: React.FC = () => {
     <div className="space-y-6">
       {/* Título */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          🌍 Feed Global Cronológico
+        <h1 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-3">
+          <img
+            src="/assets/console/hotelfilter.png"
+            alt="Filtro"
+            className="h-8 w-auto object-contain"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          Feed Global Cronológico
         </h1>
         <p className="text-white/60">
           Sistema completo de feed com cache inteligente e paginação
