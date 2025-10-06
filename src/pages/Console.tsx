@@ -13,13 +13,13 @@ const Console: React.FC = () => {
   const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   const openPopupConsole = () => {
-    // Calcular posição centralizada na tela com dimensões adequadas para o console
-    const width = 400; // Largura com margem para bordas da janela
-    const height = 850; // Altura com margem para bordas da janela
+    // Dimensões de smartphone (iPhone 6/7/8) - mantendo suas alterações locais
+    const width = 375;
+    const height = 667;
     const left = (screen.width - width) / 2;
     const top = (screen.height - height) / 2;
     
-    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=yes,menubar=no,toolbar=no,location=no,status=no,directories=no`;
+    const popupFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=no,menubar=no,toolbar=no,location=no,status=no,directories=no`;
     
     const popup = window.open('/console-popup', 'ConsolePopup', popupFeatures);
     
@@ -82,25 +82,26 @@ const Console: React.FC = () => {
                   subtitle="Gerencie sua experiência no HabboHub"
                 />
                 
-                {/* Console e botão centralizados com largura fixa */}
-                <div className="flex justify-center mt-8">
-                  <div className="w-full max-w-[375px]">
+                {/* Console e botão lado a lado para desktop */}
+                <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start gap-8 mt-8">
+                  {/* Console à esquerda */}
+                  <div className="w-full max-w-[375px] mx-auto lg:mx-0">
                     <FunctionalConsole />
-                    
-                    {/* Popup button positioned below console */}
-                    <div className="mt-6 flex justify-center">
-                      <button
-                        onClick={openPopupConsole}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                        style={{
-                          textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
-                          boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
-                          fontSize: '16px'
-                        }}
-                      >
-                        Abrir Console em Pop-up
-                      </button>
-                    </div>
+                  </div>
+                  
+                  {/* Botão à direita no desktop, centralizado no mobile */}
+                  <div className="flex justify-center lg:justify-start lg:items-start lg:pt-4">
+                    <button
+                      onClick={openPopupConsole}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold volter-font px-8 py-4 rounded-lg border-2 border-black shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                      style={{
+                        textShadow: '1px 1px 0px rgba(255,255,255,0.5)',
+                        boxShadow: '4px 4px 0px rgba(0,0,0,0.3)',
+                        fontSize: '16px'
+                      }}
+                    >
+                      Abrir Console em Pop-up
+                    </button>
                   </div>
                 </div>
               </div>

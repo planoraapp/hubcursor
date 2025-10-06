@@ -50,10 +50,16 @@ export const OpenConsolePopupButton: React.FC = () => {
       return;
     }
 
+    // Dimensões de smartphone (iPhone 6/7/8)
+    const width = 375;
+    const height = 667;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
     const popup = window.open(
       '/console-popup',
       'HabboHubConsole',
-      'width=420,height=650,scrollbars=no,resizable=yes,status=no,directories=no,toolbar=no,menubar=no'
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=no,resizable=no,status=no,directories=no,toolbar=no,menubar=no`
     );
 
     if (popup) {

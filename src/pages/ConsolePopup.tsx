@@ -1,24 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { FunctionalConsole } from '@/components/console/FunctionalConsole';
-import { PageBackground } from '@/components/layout/PageBackground';
+import React, { useState, useEffect, Suspense } from 'react';
+import PopupConsole from '@/components/console/PopupConsole';
+import ConsoleDebug from '@/components/console/ConsoleDebug';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from "sonner";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/hooks/useAuth';
+import { NotificationProvider } from '@/hooks/useNotification';
+import { Toaster } from '@/components/ui/toaster';
+import { Loader2 } from 'lucide-react';
 
-const ConsolePopup: React.FC = () => {
-  const { isLoggedIn, habboAccount } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+// QueryClient otimizado para o popup
+const popupQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      gcTime: 10 * 60 * 1000, // 10 minutos
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      networkMode: 'online',
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'online',
+    },
+  },
+});
 
-  useEffect(() => {
-    // Simular carregamento inicial
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, []);
+const ConsolePopupContent: React.FC = () => {
+  const { isLoggedIn } = useAuth();
 
   // Listener para mensagens do parent window
   useEffect(() => {
@@ -44,28 +54,45 @@ const ConsolePopup: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // Função para lidar com o fechamento do popup
-  const handleClosePopup = () => {
-    if (window.opener) {
-      window.opener.postMessage({ type: 'CONSOLE_POPUP_CLOSED' }, '*');
-    }
-    window.close();
-  };
-
-  // Sempre mostrar o console, mesmo sem login
-  // O console pode funcionar sem autenticação
-
   return (
     <div 
-      className="min-h-screen w-full flex items-center justify-center"
-      style={{
+      className="w-full h-screen overflow-hidden"
+      style={{ 
         backgroundImage: 'url(/assets/bghabbohub.png)',
         backgroundRepeat: 'repeat',
         backgroundSize: 'auto'
       }}
     >
-      <FunctionalConsole />
+      {/* Debug info */}
+      <ConsoleDebug />
+      
+      {/* Console em tela cheia com dimensões de smartphone */}
+      <div className="w-full h-full">
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-white mx-auto mb-4" />
+              <p className="text-white text-sm">Carregando console...</p>
+            </div>
+          </div>
+        }>
+          <PopupConsole />
+        </Suspense>
+      </div>
     </div>
+  );
+};
+
+const ConsolePopup: React.FC = () => {
+  return (
+    <QueryClientProvider client={popupQueryClient}>
+      <AuthProvider>
+        <NotificationProvider>
+          <ConsolePopupContent />
+          <Toaster />
+        </NotificationProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

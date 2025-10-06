@@ -24,7 +24,7 @@ export const useGlobalPhotoFeed = (options: UseGlobalPhotoFeedOptions = {}) => {
     limit = 20,
     hotel = 'com.br',
     enableCache = true,
-    cacheTime = 5 * 24 * 60 // 5 dias em minutos (5 * 24 * 60 = 7200 minutos)
+    cacheTime = 30 // Reduzido para 30 minutos para melhor performance
   } = options;
 
   const [cursor, setCursor] = useState<string | undefined>();
