@@ -1,22 +1,19 @@
 ﻿import React, { useState } from "react";
 import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
-import { FriendsPhotoCard } from "./FriendsPhotoCard";
+import { EnhancedPhotoCard } from "@/components/console2/EnhancedPhotoCard";
+import { EnhancedPhoto } from "@/types/habbo";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 
 interface FriendsPhotoFeedProps {
   currentUserName: string;
   hotel: string;
   onNavigateToProfile: (username: string) => void;
-  onShowLikesModal?: (photo: any) => void;
-  onShowCommentsModal?: (photo: any) => void;
 }
 
 export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   currentUserName,
   hotel,
-  onNavigateToProfile,
-  onShowLikesModal,
-  onShowCommentsModal
+  onNavigateToProfile
 }) => {
   const {
     data: photos,
@@ -84,18 +81,26 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
 
           {/* Lista de fotos */}
           <div className="space-y-4">
-            {photos.map((photo) => (
-              <FriendsPhotoCard
+            {photos.map((photo, index) => (
+              <EnhancedPhotoCard
                 key={photo.id}
-                photo={photo}
-                currentUser={currentUserName}
-                onNavigateToProfile={onNavigateToProfile}
-                onLike={() => {}} // Não usado mais - curtidas são gerenciadas internamente
-                onComment={() => {}} // Não usado mais - comentários são gerenciados internamente
-                showLikesModal={false}
-                setShowLikesModal={() => onShowLikesModal?.(photo)}
-                showCommentsModal={false}
-                setShowCommentsModal={() => onShowCommentsModal?.(photo)}
+                photo={{
+                  id: photo.id,
+                  photo_id: photo.id,
+                  userName: photo.userName,
+                  imageUrl: photo.imageUrl,
+                  date: photo.date,
+                  likes: [],
+                  likesCount: photo.likes,
+                  userLiked: false,
+                  type: 'PHOTO' as const,
+                  caption: '',
+                  roomName: ''
+                } as EnhancedPhoto}
+                onUserClick={onNavigateToProfile}
+                onLikesClick={() => {}}
+                onCommentsClick={() => {}}
+                showDivider={index < photos.length - 1}
               />
             ))}
           </div>

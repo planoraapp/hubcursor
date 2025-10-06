@@ -18,6 +18,7 @@ import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
 import { lazy, Suspense } from 'react';
 import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsModal';
 import { PhotoLikesModal } from '@/components/console/modals/PhotoLikesModal';
+import { IndividualPhotoView } from '@/components/console2/IndividualPhotoView';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 const FindPhotoFeedColumn = lazy(() => import('@/components/console2/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
@@ -141,7 +142,7 @@ const PixelMessageIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-type TabType = 'account' | 'friends' | 'chat' | 'photos';
+type TabType = 'account' | 'friends' | 'chat' | 'photos' | 'photo';
 
 interface TabButton {
   id: TabType;
@@ -197,6 +198,8 @@ export const FunctionalConsole: React.FC = () => {
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPhotoForModal, setSelectedPhotoForModal] = useState<any>(null);
+  
+
 
   // Modal handlers
   const handleShowLikesModal = (photo: any) => {
@@ -208,6 +211,33 @@ export const FunctionalConsole: React.FC = () => {
     setSelectedPhotoForModal(photo);
     setShowCommentsModal(true);
   };
+
+  // Estados para navegação de fotos individuais
+  const [selectedIndividualPhoto, setSelectedIndividualPhoto] = useState<{
+    id: string;
+    imageUrl: string;
+    date: string;
+    likes: number;
+  } | null>(null);
+
+  // Handlers para navegação de fotos individuais
+  const handlePhotoClick = (photo: any, index: number) => {
+    const photoId = photo.id || `photo-${index}`;
+    
+    setSelectedIndividualPhoto({
+      id: photoId,
+      imageUrl: photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
+      date: photo.date || new Date().toLocaleDateString('pt-BR'),
+      likes: photo.likes || 0
+    });
+    setActiveTab('photo'); // Ativa a aba 'photo'
+  };
+
+  const handleBackFromPhoto = () => {
+    setActiveTab('account'); // Volta para a aba account
+    setSelectedIndividualPhoto(null);
+  };
+
   
   // Modal state tracking
   // PhotoModal temporariamente removido
@@ -337,6 +367,7 @@ export const FunctionalConsole: React.FC = () => {
           username={username}
           activeModal={activeModal}
           setActiveModal={setActiveModal}
+          handlePhotoClick={handlePhotoClick}
         />;
       case 'friends':
         return <FeedTab 
@@ -372,6 +403,29 @@ export const FunctionalConsole: React.FC = () => {
         return <PhotosTab 
           isLoading={isLoading}
         />;
+      case 'photo':
+        return selectedIndividualPhoto ? (
+          <IndividualPhotoView
+            photo={selectedIndividualPhoto}
+            userName={userData?.name || userData?.habbo_name || currentUser || 'Usuário'}
+            onBack={handleBackFromPhoto}
+            onUserClick={() => {}}
+          />
+        ) : (
+          <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
+            <div className="text-center">
+              <Camera className="w-16 h-16 text-white/40 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-white mb-2">Nenhuma foto selecionada</h3>
+              <p className="text-white/60 text-sm mb-4">Volte ao perfil para selecionar uma foto</p>
+              <Button 
+                onClick={handleBackFromPhoto}
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+              >
+                Voltar ao Perfil
+              </Button>
+            </div>
+          </Card>
+        );
       default:
         return (
           <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
@@ -1124,8 +1178,6 @@ const FeedTab: React.FC<any> = ({
             currentUserName={currentUser || 'Beebop'}
             hotel={habboAccount?.hotel || 'br'}
             onNavigateToProfile={onNavigateToProfile}
-            onShowLikesModal={handleShowLikesModal}
-            onShowCommentsModal={handleShowCommentsModal}
           />
         </Suspense>
       </div>
@@ -1267,7 +1319,7 @@ const AccountTab: React.FC<any> = ({
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
   getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
-  activeModal, setActiveModal
+  activeModal, setActiveModal, handlePhotoClick
 }) => {
   // Detectar perfil privado: se não há dados completos ou se explicitamente privado
   const isProfilePrivate = isViewingOtherUser && (
@@ -1520,16 +1572,7 @@ const AccountTab: React.FC<any> = ({
                 <div 
                   key={photoId} 
                   className="relative group cursor-pointer"
-                  onClick={() => {
-                    setSelectedPhoto({
-                      id: photoId,
-                      url: photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
-                      likes: interactions.likes,
-                      comments: interactions.comments,
-                      isLiked: interactions.isLiked
-                    });
-                    // Modal temporariamente desabilitado
-                  }}
+                  onClick={() => handlePhotoClick(photo, index)}
                 >
                   <div className="w-full aspect-square bg-gray-700 overflow-hidden">
                 <img 
