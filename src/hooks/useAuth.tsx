@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 
 interface HabboAccount {
   id: string;
+  supabase_user_id: string;
   habbo_name: string;
   habbo_id: string;
   figure_string: string;
@@ -90,6 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // 3. Salvar sessão no localStorage
       const sessionData = {
         id: habboAccount.id,
+        supabase_user_id: habboAccount.supabase_user_id,
         habbo_name: habboAccount.habbo_name,
         habbo_id: habboAccount.habbo_id,
         figure_string: habboAccount.figure_string,

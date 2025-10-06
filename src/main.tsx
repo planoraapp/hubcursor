@@ -1,4 +1,3 @@
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
@@ -24,7 +23,8 @@ import { AccountManager } from './pages/AccountManager'
 import Tools from './pages/Tools'
 import HanditemCatalog from './pages/HanditemCatalog'
 import AvatarEditor from './pages/AvatarEditor'
-import AltCodesPage from './pages/AltCodes'
+import AltCodesPage from './pages/AltCodes' // CORRIGIDO: Import adicionado
+
 import Profile from './pages/Profile'
 import NotificationDemo from './pages/NotificationDemo'
 import BeebopHome from './pages/BeebopHome'
@@ -34,7 +34,24 @@ import { FontAlternativeTest } from './components/FontAlternativeTest'
 // import { useDailyActivitiesInitializer } from './hooks/useDailyActivitiesInitializer' // Desativado temporariamente
 import HomeRedirect from './components/HomeRedirect'
 
-const queryClient = new QueryClient()
+// QueryClient otimizado para performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      gcTime: 10 * 60 * 1000, // 10 minutos
+      retry: 1, // Reduzir tentativas
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false, // Evitar refetch desnecessário
+      networkMode: 'online', // Só executar quando online
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'online',
+    },
+  },
+})
 
 const router = createBrowserRouter([
   {
@@ -135,7 +152,7 @@ const router = createBrowserRouter([
     element: <Profile />,
   },
   {
-    path: "/profile",
+    path: "/profile/:username/:hotel",
     element: <Profile />,
   },
   {
@@ -143,41 +160,29 @@ const router = createBrowserRouter([
     element: <NotificationDemo />,
   },
   {
-    path: "/beebop",
+    path: "/beebop-home",
     element: <BeebopHome />,
   },
   {
     path: "*",
     element: <NotFound />,
   },
-])
+]);
 
-const AppWithInitializers = () => {
-  // useDailyActivitiesInitializer(); // Desativado temporariamente
+// Componente principal com notificações
+const AppWithNotifications = () => {
+  const { notifications, addNotification, removeNotification } = useNotification();
+
   return (
     <>
       <RouterProvider router={router} />
+      <NotificationContainer 
+        notifications={notifications}
+        onRemove={removeNotification}
+      />
       <Toaster />
     </>
   );
-};
-
-const AppWithNotifications = () => {
-  return (
-    <NotificationProvider>
-      <AppWithInitializers />
-      <NotificationWrapper />
-    </NotificationProvider>
-  );
-};
-
-const NotificationWrapper = () => {
-  const { notifications, removeNotification } = useNotification();
-  
-  return <NotificationContainer 
-    notifications={notifications} 
-    onClose={removeNotification} 
-  />;
 };
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
@@ -185,7 +190,9 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppWithNotifications />
+        <NotificationProvider>
+          <AppWithNotifications />
+        </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>

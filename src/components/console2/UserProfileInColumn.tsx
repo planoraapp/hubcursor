@@ -15,6 +15,7 @@ import { FriendsModal } from '@/components/profile/modals/FriendsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
 import { RoomsModal } from '@/components/profile/modals/RoomsModal';
 import { CountryFlag } from '@/components/shared/CountryFlag';
+import { IndividualPhotoView } from './IndividualPhotoView';
 
 interface UserProfileInColumnProps {
   username: string;
@@ -24,6 +25,13 @@ interface UserProfileInColumnProps {
 
 export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ username, onBack, onStartConversation }) => {
   const [activeModal, setActiveModal] = useState<'badges' | 'friends' | 'groups' | 'rooms' | null>(null);
+  const [currentView, setCurrentView] = useState<'profile' | 'photo'>('profile');
+  const [selectedPhoto, setSelectedPhoto] = useState<{
+    id: string;
+    imageUrl: string;
+    date: string;
+    likes: number;
+  } | null>(null);
   
   const { habboUser, avatarUrl, isLoading } = useUserProfile(username);
   
@@ -52,6 +60,23 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
     targetHabboId: habboUser?.habbo_id,
     targetHabboName: habboUser?.habbo_name || username
   });
+
+  // Handle photo click - abre nova sub-aba
+  const handlePhotoClick = (photo: { id: string; imageUrl: string; date: string; likes: number }) => {
+    setSelectedPhoto(photo);
+    setCurrentView('photo');
+  };
+
+  // Handle back from photo view
+  const handleBackFromPhoto = () => {
+    setCurrentView('profile');
+    setSelectedPhoto(null);
+  };
+
+  // Handle back from profile
+  const handleBackFromProfile = () => {
+    onBack();
+  };
 
   if (isLoading || profileLoading) {
     return (
@@ -86,6 +111,18 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
     );
   }
 
+  // Se estamos na visualização de foto individual
+  if (currentView === 'photo' && selectedPhoto) {
+    return (
+      <IndividualPhotoView
+        photo={selectedPhoto}
+        userName={habboUser?.habbo_name || username}
+        onBack={handleBackFromPhoto}
+        onUserClick={() => {}}
+      />
+    );
+  }
+
   // Map photos for PhotoGrid
   const photoGridData = photos.map(photo => ({
     id: photo.id,
@@ -100,7 +137,7 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
       <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center gap-3 mb-2">
           <Button 
-            onClick={onBack}
+            onClick={handleBackFromProfile}
             size="sm"
             variant="ghost" 
             className="text-white/80 hover:text-white hover:bg-white/10 p-2"
@@ -274,7 +311,10 @@ export const UserProfileInColumn: React.FC<UserProfileInColumnProps> = ({ userna
             <h4 className="text-sm font-medium text-white/80 mb-3">
               Fotos ({photos.length})
             </h4>
-            <PhotoGrid photos={photoGridData} />
+            <PhotoGrid 
+              photos={photoGridData} 
+              onPhotoClick={handlePhotoClick}
+            />
           </div>
         )}
 

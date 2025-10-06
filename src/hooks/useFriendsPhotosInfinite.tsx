@@ -79,11 +79,16 @@ const clearCache = (username: string, hotel: string): void => {
   }
 };
 
-export const useFriendsPhotosInfinite = (currentUserName: string, hotel: string = 'br') => {
-  // Get complete profile to access friends list
+export const useFriendsPhotosInfinite = (
+  currentUserName: string, 
+  hotel: string = 'br',
+  enabled: boolean = true // NOVO: Parâmetro para controlar se deve carregar
+) => {
+  // Get complete profile to access friends list - OTIMIZADO
   const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(
     currentUserName, 
-    hotel === 'br' ? 'com.br' : hotel
+    hotel === 'br' ? 'com.br' : hotel,
+    enabled // Só carrega se enabled for true
   );
 
   const queryResult = useInfiniteQuery({
@@ -135,16 +140,43 @@ export const useFriendsPhotosInfinite = (currentUserName: string, hotel: string 
       return lastPage.hasMore ? lastPage.nextOffset : undefined;
     },
     initialPageParam: 0,
-    enabled: !!currentUserName && !profileLoading,
+    enabled: enabled && !!currentUserName && !profileLoading, // OTIMIZADO: só executa se enabled for true
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: 2,
-    // Hydrate from cache on mount
+    // Hydrate from cache on mount - OTIMIZADO
     initialData: () => {
+      if (!enabled) return undefined; // Não carrega cache se não está habilitado
+      
       const cached = getCachedData(currentUserName, hotel);
       if (cached && cached.pages.length > 0) {
+        // Check if cached data is too old (more than 24 hours)
+        const now = Date.now();
+        const cacheAge = now - cached.updatedAt;
+        const maxCacheAge = 24 * 60 * 60 * 1000; // 24 hours
+        
+        if (cacheAge > maxCacheAge) {
+          console.log('[🔄 CACHE] Cache is too old, clearing...');
+          clearCache(currentUserName, hotel);
+          return undefined;
+        }
+        
+        // Check if cached photos are too old (more than 7 days)
+        const hasOldPhotos = cached.pages.some(page => 
+          page.some(photo => {
+            const photoAge = now - photo.timestamp;
+            return photoAge > 7 * 24 * 60 * 60 * 1000; // 7 days
+          })
+        );
+        
+        if (hasOldPhotos) {
+          console.log('[🔄 CACHE] Cached photos are too old, clearing...');
+          clearCache(currentUserName, hotel);
+          return undefined;
+        }
+        
         return {
           pages: cached.pages,
           pageParams: Array.from({ length: cached.pages.length }, (_, i) => i * 50)
@@ -154,8 +186,10 @@ export const useFriendsPhotosInfinite = (currentUserName: string, hotel: string 
     }
   });
 
-  // Update cache when new data arrives
+  // Update cache when new data arrives - OTIMIZADO
   React.useEffect(() => {
+    if (!enabled) return; // Só atualiza cache se habilitado
+    
     if (queryResult.data?.pages) {
       const cacheData: CacheData = {
         pages: queryResult.data.pages,
@@ -164,7 +198,7 @@ export const useFriendsPhotosInfinite = (currentUserName: string, hotel: string 
       };
       setCachedData(currentUserName, hotel, cacheData);
     }
-  }, [queryResult.data, currentUserName, hotel]);
+  }, [queryResult.data, currentUserName, hotel, enabled]);
 
   // Flatten and deduplicate photos across all pages
   const allPhotos = React.useMemo(() => {

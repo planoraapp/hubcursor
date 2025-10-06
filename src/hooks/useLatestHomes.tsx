@@ -150,19 +150,14 @@ export const useLatestHomes = () => {
       };
     });
 
-    // Priorizar dados do banco sobre dados hardcoded
-    // Filtrar realUsers para não incluir usuários que já têm dados reais no banco
-    const userIdsFromDB = enrichedHomes.map(home => home.user_id);
-    const filteredRealUsers = realUsers.filter(user => !userIdsFromDB.includes(user.user_id));
-    const allHomes = [...enrichedHomes, ...filteredRealUsers];
-    
-    // Remover duplicatas baseado no user_id
-    const uniqueHomes = allHomes.filter((home, index, self) => 
-      index === self.findIndex(h => h.user_id === home.user_id)
+    // Filtrar apenas homes de usuários cadastrados na tabela habbo_accounts
+    const registeredUserIds = accounts?.map(acc => acc.supabase_user_id) || [];
+    const filteredHomes = enrichedHomes.filter(home => 
+      registeredUserIds.includes(home.user_id)
     );
     
     // Ordenar por updated_at (mais recentes primeiro)
-    return uniqueHomes.sort((a, b) => 
+    return filteredHomes.sort((a, b) => 
       new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
   };
@@ -339,19 +334,14 @@ export const useLatestHomes = () => {
         };
       });
 
-      // Priorizar dados do banco sobre dados hardcoded
-      // Filtrar realUsers para não incluir usuários que já têm dados reais no banco
-      const userIdsFromDB = enrichedHomes.map(home => home.user_id);
-      const filteredRealUsers = realUsers.filter(user => !userIdsFromDB.includes(user.user_id));
-      const allHomes = [...enrichedHomes, ...filteredRealUsers];
-      
-      // Remover duplicatas baseado no user_id
-      const uniqueHomes = allHomes.filter((home, index, self) => 
-        index === self.findIndex(h => h.user_id === home.user_id)
+      // Filtrar apenas homes de usuários cadastrados na tabela habbo_accounts
+      const registeredUserIds = accounts?.map(acc => acc.supabase_user_id) || [];
+      const filteredHomes = enrichedHomes.filter(home => 
+        registeredUserIds.includes(home.user_id)
       );
       
       // Ordenar por updated_at (mais recentes primeiro)
-      return uniqueHomes.sort((a, b) => 
+      return filteredHomes.sort((a, b) => 
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
     },

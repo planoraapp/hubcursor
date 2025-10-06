@@ -13,7 +13,6 @@ import { BadgesModal } from '@/components/profile/modals/BadgesModal';
 import { FriendsModal } from '@/components/profile/modals/FriendsModal';
 import { RoomsModal } from '@/components/profile/modals/RoomsModal';
 import { GroupsModal } from '@/components/profile/modals/GroupsModal';
-// import { PhotoModal } from '@/components/profile/modals/PhotoModal'; // Temporariamente removido
 import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
 import { lazy, Suspense } from 'react';
 import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsModal';
@@ -23,75 +22,10 @@ import { IndividualPhotoView } from '@/components/console2/IndividualPhotoView';
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 const FindPhotoFeedColumn = lazy(() => import('@/components/console2/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
 const GlobalPhotoFeedColumn = lazy(() => import('@/components/console2/GlobalPhotoFeedColumn').then(module => ({ default: module.GlobalPhotoFeedColumn })));
-// Temporariamente comentado para acelerar carregamento
-// import { FeedActivityTabbedColumn } from '@/components/console2/FeedActivityTabbedColumn';
-// import { UserSearchColumn } from '@/components/console2/UserSearchColumn';
-// import { HotelPhotoFeedColumn } from '@/components/console2/HotelPhotoFeedColumn';
 
 
 // Componentes de ícones pixelizados no estilo Habbo
-const PixelUserIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Hair - marrom escuro */}
-    <rect x="4" y="2" width="32" height="16" fill="#8B4513" />
-    <rect x="2" y="4" width="6" height="10" fill="#8B4513" />
-    <rect x="32" y="4" width="6" height="10" fill="#8B4513" />
-    
-    {/* Hair highlight */}
-    <rect x="6" y="4" width="28" height="2" fill="#A0522D" />
-    <rect x="8" y="6" width="24" height="2" fill="#A0522D" />
-    
-    {/* Face - tom bege */}
-    <rect x="6" y="8" width="28" height="20" fill="#F5DEB3" />
-    <rect x="4" y="10" width="6" height="16" fill="#F5DEB3" />
-    <rect x="30" y="10" width="6" height="16" fill="#F5DEB3" />
-    
-    {/* Face outline */}
-    <rect x="4" y="8" width="32" height="2" fill="#8B4513" />
-    <rect x="2" y="10" width="2" height="16" fill="#8B4513" />
-    <rect x="36" y="10" width="2" height="16" fill="#8B4513" />
-    <rect x="4" y="28" width="32" height="2" fill="#8B4513" />
-    
-    {/* Eyes - pixels escuros */}
-    <rect x="12" y="14" width="2" height="2" fill="#000000" />
-    <rect x="26" y="14" width="2" height="2" fill="#000000" />
-    
-    {/* Mouth - linha horizontal */}
-    <rect x="14" y="22" width="12" height="2" fill="#8B4513" />
-    
-    {/* Face shadow */}
-    <rect x="22" y="16" width="12" height="10" fill="#E6D3A3" opacity="0.3" />
-    <rect x="24" y="18" width="8" height="8" fill="#E6D3A3" opacity="0.2" />
-    
-    {/* Hair shadow */}
-    <rect x="6" y="14" width="28" height="2" fill="#654321" opacity="0.4" />
-  </svg>
-);
 
-const PixelUsersIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Primeira pessoa */}
-    <rect x="4" y="20" width="10" height="16" fill="#8B4513" />
-    <rect x="6" y="14" width="6" height="8" fill="#F5DEB3" />
-    <rect x="8" y="12" width="2" height="2" fill="#000000" />
-    
-    {/* Segunda pessoa */}
-    <rect x="26" y="20" width="10" height="16" fill="#8B4513" />
-    <rect x="28" y="14" width="6" height="8" fill="#F5DEB3" />
-    <rect x="30" y="12" width="2" height="2" fill="#000000" />
-    
-    {/* Terceira pessoa (menor, atrás) */}
-    <rect x="14" y="24" width="8" height="10" fill="#8B4513" />
-    <rect x="16" y="20" width="4" height="6" fill="#F5DEB3" />
-    <rect x="16" y="18" width="2" height="2" fill="#000000" />
-  </svg>
-);
 
 const PixelSearchIcon = ({ className }: { className?: string }) => (
   <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
@@ -124,23 +58,6 @@ const PixelGlobeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const PixelMessageIcon = ({ className }: { className?: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" className={className} style={{ imageRendering: 'pixelated' }}>
-    {/* Background */}
-    <rect x="0" y="0" width="40" height="40" fill="#ECAE00" />
-    
-    {/* Balão de mensagem */}
-    <rect x="4" y="6" width="32" height="18" fill="#F5DEB3" stroke="#8B4513" strokeWidth="1" />
-    
-    {/* Ponta do balão */}
-    <rect x="10" y="24" width="6" height="6" fill="#F5DEB3" />
-    <rect x="12" y="26" width="2" height="2" fill="#F5DEB3" />
-    
-    {/* Linhas de texto */}
-    <rect x="8" y="12" width="24" height="2" fill="#8B4513" />
-    <rect x="8" y="16" width="16" height="2" fill="#8B4513" />
-  </svg>
-);
 
 type TabType = 'account' | 'friends' | 'chat' | 'photos' | 'photo';
 
@@ -157,7 +74,7 @@ const tabs: TabButton[] = [
   {
     id: 'account',
     label: 'My Info',
-    icon: <PixelUserIcon className="w-8 h-8" />,
+    icon: <img src="/assets/my-info.png" alt="My Info" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -165,7 +82,7 @@ const tabs: TabButton[] = [
   {
     id: 'friends',
     label: 'Friends',
-    icon: <PixelUsersIcon className="w-8 h-8" />,
+    icon: <img src="/assets/friends-icon.png" alt="Friends" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -173,7 +90,7 @@ const tabs: TabButton[] = [
   {
     id: 'chat',
     label: 'Chat',
-    icon: <PixelMessageIcon className="w-8 h-8" />,
+    icon: <img src="/assets/chat-icon.png" alt="Chat" className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'

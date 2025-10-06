@@ -1652,10 +1652,14 @@ export const useHabboHomeV2 = (username: string) => {
           // Invalidar cache para atualizar os cards
           console.log('🔄 Invalidando cache do latest-homes após mudança de background');
           
-          // Invalidação mais agressiva
+          // Invalidação mais agressiva - usar a chave correta
+          await queryClient.removeQueries({ queryKey: ['latest-homes-optimized'] });
+          await queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
+          await queryClient.refetchQueries({ queryKey: ['latest-homes-optimized'] });
+          
+          // Também invalidar fallback para compatibilidade
           await queryClient.removeQueries({ queryKey: ['latest-homes'] });
           await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
-          await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
           
           // Também invalidar outros caches relacionados
           await queryClient.removeQueries({ queryKey: ['most-visited-homes'] });
@@ -1696,10 +1700,14 @@ export const useHabboHomeV2 = (username: string) => {
       // Invalidar cache para atualizar os cards
       console.log('🔄 Invalidando cache do latest-homes após mudança de background');
       
-      // Invalidação mais agressiva
+      // Invalidação mais agressiva - usar a chave correta
+      await queryClient.removeQueries({ queryKey: ['latest-homes-optimized'] });
+      await queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
+      await queryClient.refetchQueries({ queryKey: ['latest-homes-optimized'] });
+      
+      // Também invalidar fallback para compatibilidade
       await queryClient.removeQueries({ queryKey: ['latest-homes'] });
       await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
-      await queryClient.refetchQueries({ queryKey: ['latest-homes'] });
       
       // Também invalidar outros caches relacionados
       await queryClient.removeQueries({ queryKey: ['most-visited-homes'] });

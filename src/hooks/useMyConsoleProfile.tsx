@@ -10,7 +10,7 @@ export const useMyConsoleProfile = () => {
     return hotel === 'br' ? 'com.br' : (hotel || 'com.br');
   };
 
-  // Fetch my profile data
+  // Fetch my profile data - OTIMIZADO: só carrega quando necessário
   const { 
     data: myProfile, 
     isLoading: profileLoading, 
@@ -25,12 +25,15 @@ export const useMyConsoleProfile = () => {
       const apiHotel = getApiHotel(habboAccount.hotel);
       return await unifiedHabboService.getUserProfile(habboAccount.habbo_name, apiHotel);
     },
-    enabled: !!habboAccount?.habbo_name && !!habboAccount?.hotel,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: 2,
+    enabled: !!habboAccount?.habbo_name && !!habboAccount?.hotel && isLoggedIn, // Só executa se logado
+    staleTime: 5 * 60 * 1000, // 5 minutos (aumentado de 2)
+    gcTime: 15 * 60 * 1000, // 15 minutos
+    retry: 1, // Reduzido de 2
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
-  // Fetch my photos
+  // Fetch my photos - OTIMIZADO: lazy loading
   const { 
     data: photos = [], 
     isLoading: photosLoading 
@@ -44,17 +47,22 @@ export const useMyConsoleProfile = () => {
       const apiHotel = getApiHotel(habboAccount.hotel);
       return await unifiedHabboService.getUserPhotos(habboAccount.habbo_name, apiHotel);
     },
-    enabled: !!habboAccount?.habbo_name && !!habboAccount?.hotel,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    enabled: !!habboAccount?.habbo_name && !!habboAccount?.hotel && isLoggedIn, // Só executa se logado
+    staleTime: 10 * 60 * 1000, // 10 minutos (aumentado de 5)
+    gcTime: 30 * 60 * 1000, // 30 minutos
+    retry: 1, // Reduzido
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   return {
     myProfile,
     photos,
-    isLoading: profileLoading || photosLoading,
-    error: profileError,
+    profileLoading,
+    photosLoading,
+    profileError,
+    habboAccount,
     isLoggedIn,
-    habboAccount
+    isLoading: profileLoading || photosLoading
   };
 };

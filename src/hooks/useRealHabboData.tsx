@@ -27,7 +27,7 @@ const REAL_HABBO_DATA = {
     admin: false,
     background: {
       type: 'image',
-      value: '/assets/bghabbohub.png'
+      value: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_bathroom_tile.gif'
     }
   }
 };

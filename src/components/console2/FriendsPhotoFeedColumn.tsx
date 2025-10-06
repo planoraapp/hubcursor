@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera, RefreshCw, Users, Heart, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,11 +10,25 @@ import { PhotoModal } from '../console/PhotoModal';
 import { EnhancedPhotoCard } from './EnhancedPhotoCard';
 import { EnhancedPhoto } from '@/types/habbo';
 
-export const FriendsPhotoFeedColumn: React.FC = () => {
+// Componente de loading otimizado
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="text-center">
+      <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
+      <p className="text-white/60">Carregando feed de fotos...</p>
+    </div>
+  </div>
+);
+
+// Componente principal otimizado
+const FriendsPhotoFeedContent: React.FC = () => {
   const { habboAccount } = useMyConsoleProfile();
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  
+  // Só carrega fotos se há conta habbo válida
+  const shouldLoadPhotos = !!habboAccount?.habbo_name && !!habboAccount?.hotel;
   
   const { 
     photos: friendsPhotos = [], 
@@ -28,11 +41,14 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
     clearCache
   } = useFriendsPhotosInfinite(
     habboAccount?.habbo_name || '',
-    (habboAccount as any)?.hotel || 'br'
+    (habboAccount as any)?.hotel || 'br',
+    shouldLoadPhotos // Parâmetro para controlar se deve carregar
   );
 
-  // IntersectionObserver for infinite scroll
+  // IntersectionObserver for infinite scroll - OTIMIZADO
   useEffect(() => {
+    if (!shouldLoadPhotos) return; // Só ativa se deve carregar fotos
+    
     const sentinel = sentinelRef.current;
     if (!sentinel || !hasNextPage || isFetchingNextPage) return;
 
@@ -47,36 +63,40 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, shouldLoadPhotos]);
 
   const handleRefresh = useCallback(() => {
     clearCache();
-  }, [clearCache]);
+    refetch();
+  }, [clearCache, refetch]);
 
-  const handlePhotoClick = (photo: any) => {
-    setSelectedPhoto({
-      id: photo.id,
-      imageUrl: photo.imageUrl,
-      date: photo.date,
-      likes: photo.likes,
-      caption: photo.caption,
-      roomName: photo.roomName
-    });
-  };
+  const handlePhotoClick = useCallback((photo: any) => {
+    setSelectedPhoto(photo);
+  }, []);
 
-  if (!habboAccount) {
+  const handleCloseModal = useCallback(() => {
+    setSelectedPhoto(null);
+  }, []);
+
+  // Se não há conta habbo, mostra mensagem informativa
+  if (!shouldLoadPhotos) {
     return (
-      <Card className="h-full flex flex-col">
-        <CardHeader className="pb-3">
+      <Card className="bg-[#4A5568] text-white border-0 h-full flex flex-col overflow-hidden backdrop-blur-sm">
+        <CardHeader className="border-b border-dashed border-white/20 pb-3 flex-shrink-0">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="w-5 h-5 text-blue-500" />
-            Feed dos Amigos
+            <Camera className="w-5 h-5" />
+            Feed de Amigos
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Faça login para ver o feed dos amigos</p>
+        <CardContent className="flex-1 min-h-0 overflow-hidden p-4">
+          <div className="text-center py-12">
+            <Users className="w-16 h-16 text-white/40 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white/80 mb-2">
+              Faça login para ver fotos dos seus amigos
+            </h3>
+            <p className="text-white/60">
+              Conecte sua conta do Habbo para acessar o feed de fotos dos seus amigos.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -85,148 +105,120 @@ export const FriendsPhotoFeedColumn: React.FC = () => {
 
   return (
     <>
-      <Card className="bg-[#4A5568] text-white border-none h-full flex flex-col">
-        <CardHeader className="border-b border-dashed border-white/20 pb-3">
+      <Card className="bg-[#4A5568] text-white border-0 h-full flex flex-col overflow-hidden backdrop-blur-sm">
+        <CardHeader className="border-b border-dashed border-white/20 pb-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="w-5 h-5 text-blue-500" />
-              Feed dos Amigos
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-blue-500/10 text-blue-700 border-blue-200">
-                {friendsPhotos.length} fotos
+              <Camera className="w-5 h-5" />
+              Feed de Amigos
+              <Badge variant="secondary" className="ml-2">
+                {friendsPhotos.length}
               </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
+            </CardTitle>
+            
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="text-white/80 hover:text-white hover:bg-white/10"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+            </Button>
           </div>
         </CardHeader>
-
-        <CardContent className="flex-1 min-h-0">
-          <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
-            {isLoading && (
-              <div className="space-y-4">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-muted rounded-full" />
-                      <div className="flex-1 space-y-1">
-                        <div className="h-3 bg-muted rounded w-24" />
-                        <div className="h-2 bg-muted rounded w-16" />
-                      </div>
-                    </div>
-                    <div className="aspect-square bg-muted rounded-lg mb-4" />
+        
+        <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
+          <ScrollArea ref={scrollAreaRef} className="h-full">
+            <div className="p-4 space-y-4">
+              {isLoading && friendsPhotos.length === 0 ? (
+                <LoadingSpinner />
+              ) : error ? (
+                <div className="text-center py-8 space-y-3">
+                  <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
+                  <div className="text-white/80">
+                    <p className="font-medium">Erro ao carregar feed</p>
+                    <p className="text-sm text-white/60">{error.message}</p>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {error && (
-              <div className="text-center py-8 space-y-3">
-                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div className="text-muted-foreground">
-                  <p className="font-medium">Erro ao carregar feed</p>
-                  <p className="text-sm">{error.message}</p>
+                  <Button variant="outline" onClick={handleRefresh}>
+                    Tentar novamente
+                  </Button>
                 </div>
-                <Button variant="outline" onClick={handleRefresh}>
-                  Tentar novamente
-                </Button>
-              </div>
-            )}
-
-            {!isLoading && !error && friendsPhotos.length === 0 && (
-              <div className="text-center py-8 space-y-3">
-                <Camera className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div className="text-muted-foreground">
-                  <p className="font-medium">Nenhuma foto encontrada</p>
-                  <p className="text-sm">Seus amigos ainda não compartilharam fotos</p>
+              ) : friendsPhotos.length === 0 ? (
+                <div className="text-center py-8 space-y-3">
+                  <Camera className="w-12 h-12 text-white/40 mx-auto" />
+                  <div className="text-white/60">
+                    <p className="font-medium">Nenhuma foto encontrada</p>
+                    <p className="text-sm">Seus amigos ainda não postaram fotos</p>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {friendsPhotos.length > 0 && (
-              <div className="space-y-6">
-                {friendsPhotos.map((photo, index) => {
-                  // Convert to EnhancedPhoto format
-                  const enhancedPhoto: EnhancedPhoto = {
-                    id: photo.id || `photo-${index}`,
-                    photo_id: photo.photo_id || photo.id || `photo-${index}`,
-                    userName: photo.userName,
-                    imageUrl: photo.imageUrl,
-                    date: photo.date, // Already formatted by the hook
-                    likes: [],
-                    likesCount: photo.likes || 0,
-                    userLiked: false,
-                    type: 'PHOTO', // Default type, could be enhanced based on photo data
-                    caption: photo.caption,
-                    roomName: photo.roomName
-                  };
-
-                  return (
-                    <div key={`${photo.userName}-${photo.id}`} className="p-3 border-t border-dashed border-white/20 first:border-t-0">
-                      <EnhancedPhotoCard
-                        photo={enhancedPhoto}
-                        onUserClick={(userName) => {
-                          // Handle user click - could open profile modal
-                          console.log('User clicked:', userName);
-                        }}
-                        onLikesClick={(photoId) => {
-                          // Handle likes click - could open likes modal
-                          console.log('Likes clicked for photo:', photoId);
-                        }}
-                        onCommentsClick={(photoId) => {
-                          // Handle comments click - could open comments modal
-                          console.log('Comments clicked for photo:', photoId);
-                        }}
-                        showDivider={index < friendsPhotos.length - 1}
-                      />
-                    </div>
-                  );
-                })}
-
-                {/* Infinite scroll sentinel */}
-                {hasNextPage && (
-                  <div ref={sentinelRef} className="flex justify-center py-4">
-                    {isFetchingNextPage ? (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Carregando mais fotos...</span>
+              ) : (
+                <>
+                  {/* Lista de fotos */}
+                  <div className="space-y-4">
+                    {friendsPhotos.map((photo, index) => (
+                      <div 
+                        key={`${photo.id}-${index}`} 
+                        className="bg-white/5 p-4 border border-dashed border-white/10 rounded-lg hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                      >
+                        <EnhancedPhotoCard
+                          photo={photo as EnhancedPhoto}
+                          onUserClick={() => {}}
+                          onLikesClick={() => {}}
+                          onCommentsClick={() => {}}
+                          showDivider={index < friendsPhotos.length - 1}
+                        />
                       </div>
-                    ) : (
-                      <div className="text-muted-foreground text-sm">
-                        Role para baixo para carregar mais
-                      </div>
-                    )}
+                    ))}
                   </div>
-                )}
 
-                {/* End of feed indicator */}
-                {!hasNextPage && friendsPhotos.length > 0 && (
-                  <div className="text-center py-4 text-muted-foreground text-sm">
-                    <div className="border-t border-dashed border-white/20 pt-4">
-                      Você viu todas as fotos dos amigos!
+                  {/* Sentinel para infinite scroll */}
+                  <div ref={sentinelRef} className="h-4" />
+
+                  {/* Loading mais fotos */}
+                  {isFetchingNextPage && (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-6 h-6 animate-spin text-white/60" />
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {/* Fim do feed */}
+                  {!hasNextPage && friendsPhotos.length > 0 && (
+                    <div className="text-center py-4 text-white/40 text-sm">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-8 h-px bg-white/20"></div>
+                        <span>Fim do feed</span>
+                        <div className="w-8 h-px bg-white/20"></div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </ScrollArea>
         </CardContent>
       </Card>
 
+      {/* Modal de foto */}
       {selectedPhoto && (
         <PhotoModal
-          isOpen={!!selectedPhoto}
-          onClose={() => setSelectedPhoto(null)}
           photo={selectedPhoto}
+          onClose={handleCloseModal}
         />
       )}
     </>
+  );
+};
+
+// Componente principal com Suspense
+export const FriendsPhotoFeedColumn: React.FC = () => {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <FriendsPhotoFeedContent />
+    </Suspense>
   );
 };
