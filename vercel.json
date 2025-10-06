@@ -1,4 +1,12 @@
 {
+<<<<<<< HEAD
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev"
+}
+=======
   "rewrites": [
     {
       "source": "/(.*)",
@@ -17,3 +25,4 @@
     }
   ]
 }
+>>>>>>> 123d1852305b7472b51ed4894e129379d643b54b

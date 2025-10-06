@@ -1515,6 +1515,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       sync_logs: {
         Row: {
           completed_at: string | null
@@ -1944,6 +1971,51 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          habbo_avatar: string | null
+          habbo_motto: string | null
+          habbo_username: string
+          id: string
+          is_admin: boolean | null
+          is_verified: boolean | null
+          last_login: string | null
+          password_hash: string | null
+          supabase_user_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          habbo_avatar?: string | null
+          habbo_motto?: string | null
+          habbo_username: string
+          id?: string
+          is_admin?: boolean | null
+          is_verified?: boolean | null
+          last_login?: string | null
+          password_hash?: string | null
+          supabase_user_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          habbo_avatar?: string | null
+          habbo_motto?: string | null
+          habbo_username?: string
+          id?: string
+          is_admin?: boolean | null
+          is_verified?: boolean | null
+          last_login?: string | null
+          password_hash?: string | null
+          supabase_user_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2056,6 +2128,14 @@ export type Database = {
           tags: Json
         }[]
       }
+      get_user_friends_list: {
+        Args: { user_uuid: string }
+        Returns: {
+          friend_figure: string
+          friend_id: string
+          friend_name: string
+        }[]
+      }
       habbo_sync_all: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2083,6 +2163,10 @@ export type Database = {
       initialize_user_home_complete: {
         Args: { user_habbo_name: string; user_uuid: string }
         Returns: undefined
+      }
+      insert_habbo_account_via_service: {
+        Args: { account_data: Json }
+        Returns: string
       }
       log_sync_activity: {
         Args: {
@@ -2112,6 +2196,15 @@ export type Database = {
       }
       restart_stalled_queue_processing: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      store_friend_activity: {
+        Args: {
+          p_activity_details: Json
+          p_activity_type: string
+          p_friend_name: string
+          p_user_id: string
+        }
         Returns: string
       }
       store_friend_photos: {
@@ -2166,6 +2259,10 @@ export type Database = {
       validate_habbo_token: {
         Args: { p_habbo_token: string; p_user_id: string }
         Returns: boolean
+      }
+      verify_habbo_user_exists: {
+        Args: { habbo_name_param: string; hotel_param?: string }
+        Returns: Json
       }
     }
     Enums: {
