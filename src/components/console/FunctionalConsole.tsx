@@ -110,6 +110,11 @@ export const FunctionalConsole: React.FC = () => {
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPhotoForModal, setSelectedPhotoForModal] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [bodyDirection, setBodyDirection] = useState(2);
+  const [headDirection, setHeadDirection] = useState(3);
+  const [hiddenPhotos, setHiddenPhotos] = useState<string[]>([]);
+  const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
   
 
 
@@ -1407,7 +1412,9 @@ const AccountTab: React.FC<any> = ({
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
   getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
-  activeModal, setActiveModal, handlePhotoClick
+  activeModal, setActiveModal, handlePhotoClick,
+  isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
+  hiddenPhotos, togglePhotoVisibility, showAllPhotosModal, setShowAllPhotosModal
 }) => {
   // Detectar perfil privado: se não há dados completos ou se explicitamente privado
   const isProfilePrivate = isViewingOtherUser && (
@@ -1557,8 +1564,29 @@ const AccountTab: React.FC<any> = ({
         </div>
       </div>
 
+      {/* Botões de Interação Social */}
+      <div className="px-4">
+        {isOwnProfile ? (
+          <button onClick={toggleEditMode} className="w-full py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+            {isEditMode ? 'Salvar Alterações' : 'Editar Perfil'}
+          </button>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            <button className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
+              Seguir
+            </button>
+            <button className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+              Mensagem
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Ações Rápidas */}
-      <div className="p-4">
+      <div className="p-3">
         <div className="grid grid-cols-4 gap-1">
           <button 
             onClick={() => setActiveModal('badges')}

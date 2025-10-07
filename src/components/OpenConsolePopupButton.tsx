@@ -50,9 +50,9 @@ export const OpenConsolePopupButton: React.FC = () => {
       return;
     }
 
-    // Dimensões de smartphone (iPhone 6/7/8)
-    const width = 375;
-    const height = 667;
+    // Dimensões exatas do console: 375x750 + margem para bordas da janela
+    const width = 395; // 375px console + 20px para bordas
+    const height = 870; // 750px console + 120px para bordas e barra de título
     const left = (screen.width - width) / 2;
     const top = (screen.height - height) / 2;
     

@@ -1,6 +1,5 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import PopupConsole from '@/components/console/PopupConsole';
-import ConsoleDebug from '@/components/console/ConsoleDebug';
 import { useAuth } from '@/hooks/useAuth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -63,9 +62,6 @@ const ConsolePopupContent: React.FC = () => {
         backgroundSize: 'auto'
       }}
     >
-      {/* Debug info */}
-      <ConsoleDebug />
-      
       {/* Console em tela cheia com dimensões de smartphone */}
       <div className="w-full h-full">
         <Suspense fallback={
