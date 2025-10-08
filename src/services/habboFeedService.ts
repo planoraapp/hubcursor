@@ -152,62 +152,10 @@ class HabboFeedService {
     return null;
   }
 
-  async ensureTrackedAndSynced(payload: { habbo_name: string; habbo_id: string; hotel: string }): Promise<any> {
-        // COMENTADO: Edge function habbo-ensure-tracked não existe mais
-    /*
-    try {
-      const { data, error } = await supabase.functions.invoke('habbo-ensure-tracked', {
-        body: payload,
-      });
-      if (error) {
-                return null;
-      }
-      return data;
-    } catch (error) {
-            return null;
-    }
-    */
-    
-    return null;
-  }
-
-  async discoverAndSyncOnlineUsers(hotel: string, limit: number = 50): Promise<any> {
-        // COMENTADO: Edge function habbo-discover-online não existe mais
-    /*
-    try {
-      const { data, error } = await supabase.functions.invoke('habbo-discover-online', {
-        body: { hotel, limit },
-      });
-      if (error) {
-                return null;
-      }
-      return data;
-    } catch (error) {
-            return null;
-    }
-    */
-    
-    return null;
-  }
-
-  async triggerBatchSync(hotel: string): Promise<any> {
-        // COMENTADO: Edge function habbo-sync-batch não existe mais
-    /*
-    try {
-      const { data, error } = await supabase.functions.invoke('habbo-sync-batch', {
-        body: { hotel },
-      });
-      if (error) {
-                return null;
-      }
-      return data;
-    } catch (error) {
-            return null;
-    }
-    */
-    
-    return null;
-  }
+  // Funções removidas (edge functions obsoletas):
+  // - ensureTrackedAndSynced (habbo-ensure-tracked não existe mais)
+  // - discoverAndSyncOnlineUsers (habbo-discover-online não existe mais)
+  // - triggerBatchSync (habbo-sync-batch não existe mais)
 
   // Métodos utilitários mantidos funcionando (não dependem de edge functions)
   getAvatarUrl(figureString: string, size: 'xs' | 's' | 'm' | 'l' | 'b' = 'm', headOnly: boolean = false): string {

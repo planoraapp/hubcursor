@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { Search, Send, MoreVertical, AlertCircle, Ban, Flag, ChevronLeft, X } from 'lucide-react';
 import { useChat, Conversation } from '@/hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,7 +25,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     blockUser,
     unblockUser,
     reportMessage,
-    setCurrentChat
+    deleteConversation,
+    setCurrentChat,
+    setConversations
   } = useChat();
 
   const [newMessage, setNewMessage] = useState('');
@@ -37,6 +39,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
   const [showSecurityWarning, setShowSecurityWarning] = useState(true);
   const [speakingAvatar, setSpeakingAvatar] = useState<string | null>(null);
   const [currentGesture, setCurrentGesture] = useState<string>('nrm');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll para o final quando novas mensagens chegarem
@@ -84,8 +87,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     const user = await findUserByName(habboName);
     
     if (!user) {
-      alert('⚠️ O usuário ainda não se cadastrou, que tal convidá-lo? :)');
+      alert('⚠️ O usuário ainda não se cadastrou no HabboHub, que tal convidá-lo? :)');
       return false;
+    }
+    
+    // Verificar se a conversa já existe
+    const existingConv = conversations.find(c => c.userId === user.id);
+    
+    // Se não existe, criar uma nova entrada na lista de conversas
+    if (!existingConv) {
+      setConversations(prev => [
+        {
+          userId: user.id,
+          username: user.habbo_name,
+          figureString: user.figure_string,
+          lastMessage: '',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0,
+          isOnline: (user as any).is_online || false
+        },
+        ...prev
+      ]);
     }
     
     setCurrentChat(user.id);
@@ -151,7 +173,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
   };
 
   return (
-    <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
+    <div className="relative rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-hidden">
       {/* Campo de busca - apenas quando não está em uma conversa */}
       {!currentChat && (
         <div className="p-3 border-b border-white/20">
@@ -172,16 +194,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
         /* Lista de conversas */
         <div className="flex-1 overflow-y-auto scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
           {filteredConversations.length > 0 ? (
-            <div className="space-y-1">
-              {filteredConversations.map((conv) => (
-                <div
-                  key={conv.userId}
-                  onClick={() => {
-                    setCurrentChat(conv.userId);
-                    fetchMessages(conv.userId);
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
-                >
+            <div>
+              {filteredConversations.map((conv, index) => (
+                <div key={conv.userId}>
+                  {/* Linha tracejada divisória (exceto na primeira conversa) */}
+                  {index > 0 && (
+                    <div className="border-t border-dashed border-white/20 my-2"></div>
+                  )}
+                  
+                  <div
+                    onClick={() => {
+                      setCurrentChat(conv.userId);
+                      fetchMessages(conv.userId);
+                    }}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
+                  >
                   {/* Avatar - Apenas cabeça */}
                   <div className="relative flex-shrink-0">
                     <img
@@ -211,6 +238,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                       {conv.unreadCount}
                     </div>
                   )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -312,6 +340,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                     <Ban className="w-4 h-4" />
                     {isUserBlocked ? 'Desbloquear' : 'Bloquear Usuário'}
                   </button>
+                  <div className="border-t border-white/10 my-1"></div>
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(true);
+                      setShowActionsMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-white/10 rounded flex items-center gap-2 text-red-600"
+                  >
+                    <X className="w-4 h-4" />
+                    Deletar Conversa
+                  </button>
                 </div>
               )}
             </div>
@@ -340,8 +379,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                     {/* Avatar - Apenas cabeça */}
                     <div className="relative flex-shrink-0 self-end">
                       <img
-                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${isOwn ? (habboAccount?.habbo_name || 'Beebop') : selectedConversation?.username}&size=l&direction=${isOwn ? 4 : 2}&head_direction=${isOwn ? 4 : 2}&headonly=1&gesture=${speakingAvatar === (isOwn ? 'user' : 'friend') ? currentGesture : 'nrm'}`}
-                        alt={isOwn ? 'YOU' : selectedConversation?.username}
+                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${isOwn ? habboAccount?.habbo_name : selectedConversation?.username}&size=l&direction=${isOwn ? 4 : 2}&head_direction=${isOwn ? 4 : 2}&headonly=1&gesture=${speakingAvatar === (isOwn ? 'user' : 'friend') ? currentGesture : 'nrm'}`}
+                        alt={isOwn ? habboAccount?.habbo_name : selectedConversation?.username}
                         className="w-14 h-14 object-cover transition-transform duration-100"
                         style={{ imageRendering: 'pixelated' }}
                       />
@@ -434,8 +473,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
 
       {/* Modal de denúncia */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md p-4 border border-white/20">
+        <div className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md p-4 border border-white/20 shadow-xl">
             <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
               <Flag className="w-5 h-5 text-amber-400" />
               Denunciar Mensagem
@@ -475,6 +514,46 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
             <p className="text-xs text-white/40 mt-3 text-center">
               ⚠️ Denúncias falsas podem resultar em punições
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteModal && (
+        <div className="absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] rounded-lg w-full max-w-md p-6 border border-white/20 shadow-xl">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+              Deletar Conversa
+            </h3>
+            
+            <p className="text-sm text-white/80 mb-2">
+              Tem certeza que deseja deletar toda a conversa com <span className="font-bold text-white">{selectedConversation?.username}</span>?
+            </p>
+            
+            <p className="text-sm text-red-400 mb-6">
+              ⚠️ Esta ação é permanente e não pode ser desfeita. Todas as mensagens serão apagadas do sistema.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (currentChat) {
+                    deleteConversation(currentChat);
+                  }
+                  setShowDeleteModal(false);
+                }}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-white font-medium"
+              >
+                Deletar Conversa
+              </button>
+            </div>
           </div>
         </div>
       )}

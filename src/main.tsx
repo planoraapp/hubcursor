@@ -31,8 +31,9 @@ import BeebopHome from './pages/BeebopHome'
 import NotFound from './pages/NotFound'
 import { FontTest } from './components/FontTest'
 import { FontAlternativeTest } from './components/FontAlternativeTest'
-import { useBeebopAccountInitializer } from './hooks/useBeebopAccountInitializer'
 import HomeRedirect from './components/HomeRedirect'
+import './utils/cleanupOldMessages' // Expor função de limpeza globalmente
+import './utils/forceCleanupOldMessages' // Expor função de limpeza forçada globalmente
 
 // QueryClient otimizado para performance
 const queryClient = new QueryClient({
@@ -185,18 +186,12 @@ const AppWithNotifications = () => {
   );
 };
 
-const AppWithInitializers = () => {
-  useBeebopAccountInitializer();
-  
-  return <AppWithNotifications />;
-};
-
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 root.render(
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <NotificationProvider>
-        <AppWithInitializers />
+        <AppWithNotifications />
       </NotificationProvider>
     </AuthProvider>
   </QueryClientProvider>

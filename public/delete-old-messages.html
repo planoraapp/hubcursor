@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Limpar Mensagens Antigas</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #dc2626;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗑️ Limpar Mensagens Antigas do Chat</h1>
+    <p>Este script vai deletar mensagens com UUIDs antigos (que não são Beebop ou Habbohub)</p>
+    
+    <button onclick="cleanupMessages()">Deletar Mensagens Antigas</button>
+    
+    <div id="result"></div>
+
+    <script type="module">
+        // Importar supabase do seu projeto
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        
+        const SUPABASE_URL = 'https://wueccgeizznjmjgmuscy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1ZWNjZ2Vpenpuam1qZ211c2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY4MTI2MTQsImV4cCI6MjA1MjM4ODYxNH0.xo9aELpCg-p3zCIr6G78wqTKg-RfmUC67k3_sUTJIE8';
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        window.cleanupMessages = async function() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Processando...\n\n';
+            
+            try {
+                // 1. Buscar IDs válidos (Beebop e Habbohub)
+                resultDiv.innerHTML += '🔍 Buscando IDs corretos...\n';
+                
+                const { data: accounts, error: accountsError } = await supabase
+                    .from('habbo_accounts')
+                    .select('id, supabase_user_id, habbo_name')
+                    .in('habbo_name', ['Beebop', 'habbohub']);
+                
+                if (accountsError) {
+                    resultDiv.innerHTML += '❌ Erro: ' + accountsError.message + '\n';
+                    return;
+                }
+                
+                resultDiv.innerHTML += '✅ Contas encontradas:\n';
+                accounts.forEach(acc => {
+                    resultDiv.innerHTML += `   - ${acc.habbo_name}: ${acc.supabase_user_id}\n`;
+                });
+                
+                const validIds = accounts.map(acc => acc.supabase_user_id);
+                
+                // 2. Buscar mensagens inválidas
+                resultDiv.innerHTML += '\n🔍 Buscando mensagens inválidas...\n';
+                
+                const { data: allMessages, error: messagesError } = await supabase
+                    .from('chat_messages')
+                    .select('*');
+                
+                if (messagesError) {
+                    resultDiv.innerHTML += '❌ Erro: ' + messagesError.message + '\n';
+                    return;
+                }
+                
+                const invalidMessages = allMessages.filter(msg => 
+                    !validIds.includes(msg.sender_id) || !validIds.includes(msg.receiver_id)
+                );
+                
+                resultDiv.innerHTML += `📊 Total de mensagens: ${allMessages.length}\n`;
+                resultDiv.innerHTML += `🗑️  Mensagens inválidas: ${invalidMessages.length}\n`;
+                
+                if (invalidMessages.length === 0) {
+                    resultDiv.innerHTML += '\n✅ Nenhuma mensagem inválida encontrada!\n';
+                    return;
+                }
+                
+                // 3. Deletar mensagens inválidas
+                resultDiv.innerHTML += '\n🗑️  Deletando mensagens inválidas...\n';
+                
+                for (const msg of invalidMessages) {
+                    const { error: deleteError } = await supabase
+                        .from('chat_messages')
+                        .delete()
+                        .eq('id', msg.id);
+                    
+                    if (deleteError) {
+                        resultDiv.innerHTML += `❌ Erro ao deletar ${msg.id}: ${deleteError.message}\n`;
+                    } else {
+                        resultDiv.innerHTML += `✅ Deletada mensagem ${msg.id}\n`;
+                    }
+                }
+                
+                resultDiv.innerHTML += '\n✅ Limpeza concluída! Recarregue a página do chat.\n';
+                
+            } catch (error) {
+                resultDiv.innerHTML += '❌ Erro: ' + error.message + '\n';
+            }
+        };
+    </script>
+</body>
+</html>
+

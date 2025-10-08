@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { rateLimiter, RATE_LIMITS } from '@/utils/rateLimiter';
 
 export interface ChatMessage {
   id: string;
@@ -27,9 +28,6 @@ export interface Conversation {
 export const useChat = () => {
   const { habboAccount } = useAuth();
   const userId = habboAccount?.supabase_user_id;
-  
-  console.log('🔑 User ID sendo usado no chat:', userId);
-  console.log('📋 Habbo Account completo:', habboAccount);
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentChat, setCurrentChat] = useState<string | null>(null);
@@ -83,29 +81,40 @@ export const useChat = () => {
       // Buscar dados dos usuários (nomes do Habbo)
       const userIds = Array.from(conversationsMap.keys());
       
-      if (userIds.length > 0) {
-        try {
-          const { data: habboData, error: habboError } = await supabase
-            .from('habbo_accounts')
-            .select('id, habbo_name, figure_string, is_online')
-            .in('id', userIds);
+       if (userIds.length > 0) {
+         try {
+           const { data: habboData, error: habboError } = await supabase
+             .from('habbo_accounts')
+             .select('id, supabase_user_id, habbo_name, figure_string, is_online')
+             .in('supabase_user_id', userIds);
+ 
+           if (!habboError && habboData) {
+             // Criar Set de IDs válidos
+             const validUserIds = new Set(habboData.map((habbo) => habbo.supabase_user_id));
+             
+             // Atualizar dados dos usuários válidos
+             habboData.forEach((habbo) => {
+               const conv = conversationsMap.get(habbo.supabase_user_id);
+               if (conv) {
+                 conv.username = habbo.habbo_name;
+                 conv.figureString = habbo.figure_string;
+                 conv.isOnline = habbo.is_online;
+               }
+             });
+             
+             // Remover conversas de usuários que não existem mais
+             userIds.forEach((userId) => {
+               if (!validUserIds.has(userId)) {
+                 conversationsMap.delete(userId);
+               }
+             });
+           }
+         } catch (error) {
+           console.error('Error fetching Habbo data:', error);
+         }
+       }
 
-          if (!habboError && habboData) {
-            habboData.forEach((habbo) => {
-              const conv = conversationsMap.get(habbo.id);
-              if (conv) {
-                conv.username = habbo.habbo_name;
-                conv.figureString = habbo.figure_string;
-                conv.isOnline = habbo.is_online;
-              }
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching Habbo data:', error);
-        }
-      }
-
-      setConversations(Array.from(conversationsMap.values()));
+       setConversations(Array.from(conversationsMap.values()));
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
@@ -138,12 +147,36 @@ export const useChat = () => {
         .eq('sender_id', otherUserId)
         .is('read_at', null);
 
-      // Atualizar apenas a conversa atual (não todas)
-      setConversations(prev => prev.map(conv => 
-        conv.userId === otherUserId 
-          ? { ...conv, unreadCount: 0 } 
-          : conv
-      ));
+      // Buscar dados completos do usuário se ainda não tiver
+      const conversation = conversations.find(c => c.userId === otherUserId);
+      if (!conversation || !conversation.figureString) {
+        const { data: userData } = await supabase
+          .from('habbo_accounts')
+          .select('habbo_name, figure_string, is_online')
+          .eq('supabase_user_id', otherUserId)
+          .single();
+        
+        if (userData) {
+          setConversations(prev => prev.map(conv => 
+            conv.userId === otherUserId 
+              ? { 
+                  ...conv, 
+                  username: userData.habbo_name,
+                  figureString: userData.figure_string,
+                  isOnline: userData.is_online,
+                  unreadCount: 0 
+                } 
+              : conv
+          ));
+        }
+      } else {
+        // Apenas atualizar contador de não lidas
+        setConversations(prev => prev.map(conv => 
+          conv.userId === otherUserId 
+            ? { ...conv, unreadCount: 0 } 
+            : conv
+        ));
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -152,24 +185,38 @@ export const useChat = () => {
   };
 
   // Buscar ID de usuário por nome do Habbo
-  const findUserByName = async (habboName: string): Promise<{ id: string; habbo_name: string; figure_string?: string } | null> => {
+  const findUserByName = async (habboName: string): Promise<{ id: string; habbo_name: string; figure_string?: string; is_online?: boolean } | null> => {
     try {
       const { data, error } = await supabase
         .from('habbo_accounts')
-        .select('id, habbo_name, figure_string, is_online')
-        .ilike('habbo_name', habboName)
+        .select('id, supabase_user_id, habbo_name, figure_string, is_online')
+        .eq('habbo_name', habboName)
         .single();
 
-      if (error) return null;
-      return data;
+      if (error) {
+        console.error('Error finding user by name:', error);
+        return null;
+      }
+      // Retornar o supabase_user_id como 'id' para compatibilidade
+      return data ? { ...data, id: data.supabase_user_id } : null;
     } catch (error) {
+      console.error('Exception finding user:', error);
       return null;
     }
   };
 
-  // Enviar mensagem
+  // Enviar mensagem com rate limiting
   const sendMessage = async (receiverId: string, message: string) => {
     if (!userId || !message.trim()) return;
+
+    // Verificar rate limit
+    const limitKey = `chat_message_${userId}`;
+    const limitCheck = rateLimiter.checkLimit(limitKey, RATE_LIMITS.CHAT_MESSAGE);
+    
+    if (!limitCheck.allowed) {
+      alert(limitCheck.message);
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -189,9 +236,18 @@ export const useChat = () => {
     }
   };
 
-  // Bloquear usuário - OTIMIZADO com lazy loading
+  // Bloquear usuário - OTIMIZADO com lazy loading e rate limiting
   const blockUser = async (blockedId: string) => {
     if (!userId) return;
+
+    // Verificar rate limit
+    const limitKey = `user_block_${userId}`;
+    const limitCheck = rateLimiter.checkLimit(limitKey, RATE_LIMITS.USER_BLOCK);
+    
+    if (!limitCheck.allowed) {
+      alert(limitCheck.message);
+      return;
+    }
 
     try {
       // Buscar bloqueados se ainda não foi carregado
@@ -234,9 +290,18 @@ export const useChat = () => {
     }
   };
 
-  // Denunciar mensagem
+  // Denunciar mensagem com rate limiting
   const reportMessage = async (messageId: string, reason: string) => {
     if (!userId) return;
+
+    // Verificar rate limit
+    const limitKey = `report_message_${userId}`;
+    const limitCheck = rateLimiter.checkLimit(limitKey, RATE_LIMITS.REPORT_MESSAGE);
+    
+    if (!limitCheck.allowed) {
+      alert(limitCheck.message);
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -249,7 +314,7 @@ export const useChat = () => {
 
       if (error) throw error;
 
-      alert('Mensagem denunciada com sucesso. Nossa equipe irá revisar.');
+      alert('✅ Mensagem denunciada com sucesso. Nossa equipe irá revisar.');
     } catch (error) {
       console.error('Error reporting message:', error);
     }
@@ -270,6 +335,46 @@ export const useChat = () => {
       }
     } catch (error) {
       console.error('Error deleting message:', error);
+    }
+  };
+
+  // Deletar conversa inteira (hard delete - apenas para admin/alpha)
+  const deleteConversation = async (otherUserId: string) => {
+    if (!userId) return;
+
+    try {
+      // Buscar todas as mensagens da conversa
+      const { data: messagesToDelete, error: fetchError } = await supabase
+        .from('chat_messages')
+        .select('id')
+        .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${userId})`);
+
+      if (fetchError) {
+        console.error('❌ Erro ao buscar mensagens:', fetchError);
+        throw fetchError;
+      }
+
+      // Deletar todas as mensagens encontradas
+      if (messagesToDelete && messagesToDelete.length > 0) {
+        for (const msg of messagesToDelete) {
+          const { error: deleteError } = await supabase
+            .from('chat_messages')
+            .delete()
+            .eq('id', msg.id);
+
+          if (deleteError) {
+            console.error('❌ Erro ao deletar mensagem:', msg.id, deleteError);
+          }
+        }
+      }
+
+      // Remover conversa da lista local e fechar chat
+      setConversations(prev => prev.filter(conv => conv.userId !== otherUserId));
+      setCurrentChat(null);
+      setMessages([]);
+      
+    } catch (error) {
+      console.error('❌ Error deleting conversation:', error);
     }
   };
 
@@ -371,7 +476,9 @@ export const useChat = () => {
     unblockUser,
     reportMessage,
     deleteMessage,
+    deleteConversation,
     setCurrentChat,
+    setConversations,
   };
 };
 
