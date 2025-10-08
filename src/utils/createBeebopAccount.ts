@@ -50,6 +50,7 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
     
     if (useDefaultData || !habboData) {
       accountData = {
+        id: '9f4ff5bd-f57f-4b52-93c8-3fc4e6382e28', // ID fixo para Beebop
         habbo_name: 'Beebop',
         hotel: 'br',
         habbo_id: 'hhbr-00e6988dddeb5a1838658c854d62fe49', // ID do useRealHabboData
@@ -57,10 +58,11 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
         motto: 'HUB-ACTI1',
         is_admin: false,
         is_online: false,
-        supabase_user_id: '00000000-0000-0000-0000-000000000002' // UUID fixo para Beebop
+        supabase_user_id: '9f4ff5bd-f57f-4b52-93c8-3fc4e6382e28' // Mesmo que o ID para compatibilidade
       };
     } else {
       accountData = {
+        id: '9f4ff5bd-f57f-4b52-93c8-3fc4e6382e28', // ID fixo para Beebop
         habbo_name: 'Beebop',
         hotel: 'br',
         habbo_id: habboData.uniqueId || 'hhbr-00e6988dddeb5a1838658c854d62fe49',
@@ -68,7 +70,7 @@ export async function createBeebopAccount(): Promise<{ success: boolean; message
         motto: habboData.motto || 'HUB-ACTI1',
         is_admin: false,
         is_online: false,
-        supabase_user_id: '00000000-0000-0000-0000-000000000002'
+        supabase_user_id: '9f4ff5bd-f57f-4b52-93c8-3fc4e6382e28' // Mesmo que o ID para compatibilidade
       };
     }
 

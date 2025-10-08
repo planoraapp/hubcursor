@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -26,7 +26,10 @@ export interface Conversation {
 
 export const useChat = () => {
   const { habboAccount } = useAuth();
-  const userId = habboAccount?.id;
+  const userId = habboAccount?.supabase_user_id;
+  
+  console.log('🔑 User ID sendo usado no chat:', userId);
+  console.log('📋 Habbo Account completo:', habboAccount);
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentChat, setCurrentChat] = useState<string | null>(null);
@@ -34,8 +37,8 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
 
-  // Buscar conversas do usuário
-  const fetchConversations = async () => {
+  // Buscar conversas do usuário - MEMOIZADO
+  const fetchConversations = useCallback(async () => {
     if (!userId) return;
 
     try {
@@ -82,19 +85,21 @@ export const useChat = () => {
       
       if (userIds.length > 0) {
         try {
-          const { data: habboData } = await supabase
+          const { data: habboData, error: habboError } = await supabase
             .from('habbo_accounts')
             .select('id, habbo_name, figure_string, is_online')
             .in('id', userIds);
 
-          habboData?.forEach((habbo) => {
-            const conv = conversationsMap.get(habbo.id);
-            if (conv) {
-              conv.username = habbo.habbo_name;
-              conv.figureString = habbo.figure_string;
-              conv.isOnline = habbo.is_online;
-            }
-          });
+          if (!habboError && habboData) {
+            habboData.forEach((habbo) => {
+              const conv = conversationsMap.get(habbo.id);
+              if (conv) {
+                conv.username = habbo.habbo_name;
+                conv.figureString = habbo.figure_string;
+                conv.isOnline = habbo.is_online;
+              }
+            });
+          }
         } catch (error) {
           console.error('Error fetching Habbo data:', error);
         }
@@ -106,7 +111,7 @@ export const useChat = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
 
   // Buscar mensagens de uma conversa específica
   const fetchMessages = async (otherUserId: string) => {
@@ -133,8 +138,12 @@ export const useChat = () => {
         .eq('sender_id', otherUserId)
         .is('read_at', null);
 
-      // Atualizar lista de conversas
-      await fetchConversations();
+      // Atualizar apenas a conversa atual (não todas)
+      setConversations(prev => prev.map(conv => 
+        conv.userId === otherUserId 
+          ? { ...conv, unreadCount: 0 } 
+          : conv
+      ));
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -180,11 +189,16 @@ export const useChat = () => {
     }
   };
 
-  // Bloquear usuário
+  // Bloquear usuário - OTIMIZADO com lazy loading
   const blockUser = async (blockedId: string) => {
     if (!userId) return;
 
     try {
+      // Buscar bloqueados se ainda não foi carregado
+      if (blockedUsers.length === 0) {
+        await fetchBlockedUsers();
+      }
+
       const { error } = await supabase
         .from('user_blocks')
         .insert({
@@ -277,78 +291,16 @@ export const useChat = () => {
     }
   };
 
-  // Enviar mensagem de boas-vindas para novos usuários (apenas uma vez)
-  const [welcomeSent, setWelcomeSent] = useState(false);
-  
-  const sendWelcomeMessage = async () => {
-    if (!userId || welcomeSent) return;
-
-    try {
-      // Verificar se já tem mensagens
-      const { data: existingMessages } = await supabase
-        .from('chat_messages')
-        .select('id')
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-        .limit(1);
-
-      if (existingMessages && existingMessages.length > 0) {
-        setWelcomeSent(true);
-        return;
-      }
-
-      // Buscar ID do habbohub
-      const { data: habbohub } = await supabase
-        .from('habbo_accounts')
-        .select('id')
-        .ilike('habbo_name', 'habbohub')
-        .single();
-
-      if (!habbohub) {
-        setWelcomeSent(true);
-        return;
-      }
-
-      // Criar mensagem de boas-vindas
-      const welcomeMessage = `🎉 Olá! Bem-vindo ao HabboHub!
-
-Aqui você pode:
-✨ Editar seu perfil e rotacionar seu avatar
-📸 Gerenciar suas fotos (ocultar/restaurar)
-👥 Buscar e seguir amigos
-💬 Conversar com outros usuários cadastrados
-
-Explore o console e aproveite! Se precisar de ajuda, estou aqui. 😊`;
-
-      await supabase
-        .from('chat_messages')
-        .insert({
-          sender_id: habbohub.id,
-          receiver_id: userId,
-          message: welcomeMessage
-        });
-
-      setWelcomeSent(true);
-      
-      // Recarregar conversas para mostrar a mensagem
-      await fetchConversations();
-
-    } catch (error) {
-      setWelcomeSent(true);
-      console.log('Could not send welcome message');
-    }
-  };
-
-  // Carregar dados iniciais
+  // Carregar dados iniciais - OTIMIZADO
   useEffect(() => {
     if (userId) {
+      // Apenas carregar conversas inicialmente
       fetchConversations();
-      fetchBlockedUsers();
-      // Enviar mensagem de boas-vindas se for novo usuário
-      sendWelcomeMessage();
+      // Buscar bloqueados será lazy (apenas quando necessário)
     }
   }, [userId]);
 
-  // Subscription para novas mensagens em tempo real
+  // Subscription para novas mensagens em tempo real - OTIMIZADO
   useEffect(() => {
     if (!userId) return;
 
@@ -362,13 +314,39 @@ Explore o console e aproveite! Se precisar de ajuda, estou aqui. 😊`;
           table: 'chat_messages',
           filter: `receiver_id=eq.${userId}`,
         },
-        (payload) => {
-          // Recarregar conversas quando receber nova mensagem
-          fetchConversations();
+        async (payload) => {
+          const newMessage = payload.new as ChatMessage;
           
-          // Se estiver na conversa atual, recarregar mensagens
-          if (currentChat && payload.new.sender_id === currentChat) {
-            fetchMessages(currentChat);
+          // Se estiver na conversa atual, adicionar mensagem diretamente
+          if (currentChat && newMessage.sender_id === currentChat) {
+            setMessages(prev => [...prev, newMessage]);
+            
+            // Marcar como lida automaticamente
+            await supabase
+              .from('chat_messages')
+              .update({ read_at: new Date().toISOString() })
+              .eq('id', newMessage.id);
+          } else {
+            // Atualizar contador de não lidas da conversa
+            setConversations(prev => {
+              const exists = prev.find(c => c.userId === newMessage.sender_id);
+              if (exists) {
+                return prev.map(conv => 
+                  conv.userId === newMessage.sender_id
+                    ? { 
+                        ...conv, 
+                        lastMessage: newMessage.message,
+                        lastMessageTime: newMessage.created_at,
+                        unreadCount: conv.unreadCount + 1 
+                      }
+                    : conv
+                );
+              } else {
+                // Nova conversa - buscar dados do usuário
+                fetchConversations();
+                return prev;
+              }
+            });
           }
         }
       )

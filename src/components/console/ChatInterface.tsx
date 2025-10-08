@@ -11,7 +11,7 @@ interface ChatInterfaceProps {
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigateToProfile }) => {
   const { habboAccount } = useAuth();
-  const userId = habboAccount?.id;
+  const userId = habboAccount?.supabase_user_id;
   
   const { 
     conversations, 
@@ -35,12 +35,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
   const [reportReason, setReportReason] = useState('');
   const [reportingMessageId, setReportingMessageId] = useState<string | null>(null);
   const [showSecurityWarning, setShowSecurityWarning] = useState(true);
+  const [speakingAvatar, setSpeakingAvatar] = useState<string | null>(null);
+  const [currentGesture, setCurrentGesture] = useState<string>('nrm');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll para o final quando novas mensagens chegarem
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Animação de fala quando nova mensagem é recebida
+  const previousMessagesLength = useRef(messages.length);
+  useEffect(() => {
+    if (messages.length > previousMessagesLength.current) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.sender_id !== userId && currentChat) {
+        // Ativar animação de fala para o remetente
+        startSpeakingAnimation('friend');
+      }
+    }
+    previousMessagesLength.current = messages.length;
+  }, [messages, userId, currentChat]);
 
   // Usar apenas dados reais - sem mocks
   const displayConversations = conversations;
@@ -86,9 +101,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
     };
   }, [findUserByName]);
 
+  const startSpeakingAnimation = (avatarType: 'user' | 'friend') => {
+    setSpeakingAvatar(avatarType);
+    
+    // Alternar entre 'spk' e 'nrm' para simular movimento da boca
+    const interval = setInterval(() => {
+      setCurrentGesture(prev => prev === 'spk' ? 'nrm' : 'spk');
+    }, 300); // Muda a cada 300ms
+    
+    setTimeout(() => {
+      clearInterval(interval);
+      setSpeakingAvatar(null);
+      setCurrentGesture('nrm');
+    }, 2000);
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentChat) return;
     
+    startSpeakingAnimation('user');
     await sendMessage(currentChat, newMessage);
     setNewMessage('');
   };
@@ -151,16 +182,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                   }}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 cursor-pointer transition-colors relative"
                 >
-                  {/* Avatar */}
+                  {/* Avatar - Apenas cabeça */}
                   <div className="relative flex-shrink-0">
                     <img
-                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${conv.username}&size=m&direction=2&head_direction=3&headonly=1`}
+                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${conv.username}&size=l&direction=2&head_direction=2&headonly=1`}
                       alt={conv.username}
-                      className="w-12 h-12 object-contain"
+                      className="w-20 h-20 object-cover"
                       style={{ imageRendering: 'pixelated' }}
                     />
                     <div className={cn(
-                      "absolute -bottom-1 -right-1 w-3 h-3 border border-white rounded-full",
+                      "absolute bottom-0 right-0 w-4 h-4 border-2 border-[#1a1a1a] rounded-full",
                       conv.isOnline ? "bg-green-500" : "bg-gray-500"
                     )}></div>
                   </div>
@@ -196,22 +227,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
         /* Área de conversa ativa */
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header da conversa */}
-          <div className="p-2 border-b border-white/20 flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="p-2 border-b border-white/20 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <button
                 onClick={() => setCurrentChat(null)}
-                className="p-1 hover:bg-white/10 rounded"
+                className="p-1 hover:bg-white/10 rounded flex-shrink-0"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <img
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${selectedConversation?.username}&size=m&direction=2&head_direction=3&headonly=1`}
-                alt={selectedConversation?.username}
-                className="w-8 h-8 object-contain cursor-pointer"
-                style={{ imageRendering: 'pixelated' }}
-                onClick={() => onNavigateToProfile(selectedConversation?.username || '')}
-              />
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0">
                 <div className="font-bold text-white truncate cursor-pointer" onClick={() => onNavigateToProfile(selectedConversation?.username || '')}>
                   {selectedConversation?.username}
                 </div>
@@ -221,7 +245,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
               </div>
             </div>
 
-            {/* Menu de ações */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Avatar à direita - Figurestring do perfil (foco no rosto) */}
+              <div 
+                className="relative cursor-pointer overflow-hidden" 
+                style={{ height: '48px', width: '64px' }}
+                onClick={() => onNavigateToProfile(selectedConversation?.username || '')}
+              >
+                <img
+                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?${selectedConversation?.figureString ? `figure=${selectedConversation.figureString}` : `user=${selectedConversation?.username}`}&size=m&direction=2&head_direction=3&action=std`}
+                  alt={`Avatar de ${selectedConversation?.username}`}
+                  className="absolute"
+                  style={{ 
+                    height: '75px',
+                    width: '64px',
+                    top: '0',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    objectFit: 'none',
+                    imageRendering: 'pixelated'
+                  }}
+                />
+              </div>
+
+              {/* Menu de ações */}
             <div className="relative">
               <button
                 onClick={() => setShowActionsMenu(!showActionsMenu)}
@@ -268,6 +315,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                 </div>
               )}
             </div>
+            </div>
           </div>
 
           {/* Área de mensagens */}
@@ -289,21 +337,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
 
                 return (
                   <div key={msg.id} className={cn("flex gap-2 w-full", isOwn ? "flex-row-reverse" : "flex-row")}>
-                    {/* Avatar */}
-                    <img
-                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${isOwn ? (habboAccount?.habbo_name || 'Beebop') : selectedConversation?.username}&size=m&direction=${isOwn ? 7 : 1}&head_direction=${isOwn ? 7 : 1}&headonly=1`}
-                      alt={isOwn ? 'YOU' : selectedConversation?.username}
-                      className="w-8 h-8 object-contain flex-shrink-0 self-end"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
+                    {/* Avatar - Apenas cabeça */}
+                    <div className="relative flex-shrink-0 self-end">
+                      <img
+                        src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${isOwn ? (habboAccount?.habbo_name || 'Beebop') : selectedConversation?.username}&size=l&direction=${isOwn ? 4 : 2}&head_direction=${isOwn ? 4 : 2}&headonly=1&gesture=${speakingAvatar === (isOwn ? 'user' : 'friend') ? currentGesture : 'nrm'}`}
+                        alt={isOwn ? 'YOU' : selectedConversation?.username}
+                        className="w-14 h-14 object-cover transition-transform duration-100"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    </div>
 
                     {/* Balão de mensagem e timestamp */}
                     <div className={cn("flex flex-col flex-1", isOwn ? "items-end" : "items-start")}>
                       <div className="relative w-full">
                         <div
                           className={cn(
-                            "relative px-3 py-2 rounded-lg text-sm break-words whitespace-pre-wrap",
-                            isOwn ? "bg-white text-gray-800" : "bg-white text-gray-800"
+                            "relative px-3 py-2 rounded-lg text-sm break-all whitespace-pre-wrap text-black",
+                            isOwn ? "bg-white" : "bg-white"
                           )}
                         >
                           {msg.message}
@@ -311,7 +361,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
                           {/* Triângulo do balão */}
                           <div
                             className={cn(
-                              "absolute top-1 w-0 h-0",
+                              "absolute bottom-2 w-0 h-0",
                               isOwn
                                 ? "right-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[5px] border-l-white translate-x-full"
                                 : "left-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-r-[5px] border-r-white -translate-x-full"
