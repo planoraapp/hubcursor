@@ -1,4 +1,3 @@
-// Versão corrigida - cache atualizado - v2
 import React, { useState, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +16,7 @@ import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
 import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsModal';
 import { PhotoLikesModal } from '@/components/console/modals/PhotoLikesModal';
 import { IndividualPhotoView } from '@/components/console2/IndividualPhotoView';
+import { ChatInterface } from '@/components/console/ChatInterface';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
 const FindPhotoFeedColumn = lazy(() => import('@/components/console2/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
@@ -114,9 +114,6 @@ export const FunctionalConsole: React.FC = () => {
   const [bodyDirection, setBodyDirection] = useState(2);
   const [headDirection, setHeadDirection] = useState(3);
   const [hiddenPhotos, setHiddenPhotos] = useState<string[]>([]);
-  const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
-  
-
 
   // Modal handlers
   const handleShowLikesModal = (photo: any) => {
@@ -127,6 +124,44 @@ export const FunctionalConsole: React.FC = () => {
   const handleShowCommentsModal = (photo: any) => {
     setSelectedPhotoForModal(photo);
     setShowCommentsModal(true);
+  };
+
+  // Edit mode handlers
+  const toggleEditMode = () => {
+    setIsEditMode(!isEditMode);
+  };
+
+  const rotateBody = () => {
+    setBodyDirection((prev) => (prev + 1) % 8);
+    // Ajustar cabeça se diferença for maior que 2
+    setHeadDirection((prevHead) => {
+      const newBody = (bodyDirection + 1) % 8;
+      const diff = Math.abs(newBody - prevHead);
+      if (diff > 2 && diff < 6) {
+        return newBody;
+      }
+      return prevHead;
+    });
+  };
+
+  const rotateHead = () => {
+    setHeadDirection((prevHead) => {
+      const newHead = (prevHead + 1) % 8;
+      const diff = Math.abs(bodyDirection - newHead);
+      // Só permitir rotação se diferença for menor ou igual a 2
+      if (diff <= 2 || diff >= 6) {
+        return newHead;
+      }
+      return prevHead;
+    });
+  };
+
+  const togglePhotoVisibility = (photoId: string) => {
+    setHiddenPhotos((prev) =>
+      prev.includes(photoId)
+        ? prev.filter((id) => id !== photoId)
+        : [...prev, photoId]
+    );
   };
 
   // Estados para navegação de fotos individuais
@@ -275,6 +310,16 @@ export const FunctionalConsole: React.FC = () => {
           activeModal={activeModal}
           setActiveModal={setActiveModal}
           handlePhotoClick={handlePhotoClick}
+          isEditMode={isEditMode}
+          toggleEditMode={toggleEditMode}
+          bodyDirection={bodyDirection}
+          headDirection={headDirection}
+          rotateBody={rotateBody}
+          rotateHead={rotateHead}
+          hiddenPhotos={hiddenPhotos}
+          togglePhotoVisibility={togglePhotoVisibility}
+          setActiveTab={setActiveTab}
+          viewingUser={viewingUser}
         />;
       case 'friends':
         return <FeedTab 
@@ -298,12 +343,21 @@ export const FunctionalConsole: React.FC = () => {
           activeModal={activeModal}
           setActiveModal={setActiveModal}
           handleShowLikesModal={handleShowLikesModal}
+          isEditMode={isEditMode}
+          toggleEditMode={toggleEditMode}
+          bodyDirection={bodyDirection}
+          headDirection={headDirection}
+          rotateBody={rotateBody}
+          rotateHead={rotateHead}
+          hiddenPhotos={hiddenPhotos}
+          togglePhotoVisibility={togglePhotoVisibility}
           handleShowCommentsModal={handleShowCommentsModal}
+          setActiveTab={setActiveTab}
+          viewingUser={viewingUser}
         />;
       case 'chat':
-        return <FriendsTab 
-          friends={friends} 
-          isLoading={isLoadingData}
+        return <ChatInterface 
+          friends={friends}
           onNavigateToProfile={navigateToProfile}
         />;
       case 'photos':
@@ -550,8 +604,10 @@ export const FunctionalConsole: React.FC = () => {
 const FeedTab: React.FC<any> = ({ 
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
-  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
-  activeModal, setActiveModal, handleShowLikesModal, handleShowCommentsModal
+  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username, setActiveTab,
+  activeModal, setActiveModal, handleShowLikesModal, handleShowCommentsModal,
+  isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
+  hiddenPhotos, togglePhotoVisibility, viewingUser
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -669,46 +725,44 @@ const FeedTab: React.FC<any> = ({
         )}
         
         {/* Header do usuário com borda inferior */}
-        <div className="p-4 border-b border-white/20">
-          <div className="flex items-start gap-4">
-            <div className="relative flex-shrink-0">
-              <img 
-                src={user?.figure_string ? 
-                  `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(user.figure_string)}&size=m&direction=2&head_direction=3` :
-                  `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
-                }
-                alt={`Avatar de ${user?.name || 'Beebop'}`}
-                className="h-28 w-auto object-contain"
-                style={{ imageRendering: 'pixelated' }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  // Fallback para busca por nome se o figure_string falhar
-                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
-                }}
-              />
-              
-              {/* Ícones de país e online/offline - canto superior direito */}
-              <div className="absolute top-0 right-0 flex items-center gap-1">
-                {/* Flag do país */}
-                <img
-                  src={getHotelFlag(user?.hotel)}
-                  alt=""
-                  className="h-6 w-auto object-contain"
-                  style={{ imageRendering: 'pixelated' }}
-              />
-              {/* Ícone de online/offline */}
+        <div className="p-4 border-b border-white/20 relative">
+          {/* Bandeira no extremo superior direito */}
+          <img 
+            src={getHotelFlag(user?.hotel)} 
+            alt="" 
+            className="absolute top-2 right-2 w-auto object-contain" 
+            style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none' }} 
+          />
+          
+          <div className="flex gap-4">
+            <div className="flex flex-col items-center gap-1">
+              <div className="relative flex-shrink-0">
                 <img 
-                  src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
-                  alt={user?.online ? 'Online' : 'Offline'}
-                  className="h-6 w-auto object-contain"
+                  src={user?.figure_string ? 
+                    `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(user.figure_string)}&size=m&direction=2&head_direction=3` :
+                    `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
+                  }
+                  alt={`Avatar de ${user?.name || 'Beebop'}`}
+                  className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}
+                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
+                  }}
                 />
               </div>
+              {/* Status centralizado abaixo do avatar */}
+              <img 
+                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
+                alt={user?.online ? 'Online' : 'Offline'}
+                className="h-4 w-auto object-contain"
+                style={{ imageRendering: 'pixelated' }}
+              />
             </div>
             
             <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
-              <p className="text-white/70 italic mb-4 truncate">
+              <p className="text-white/70 italic mb-4 line-clamp-2">
                 "{user?.motto && user.motto.trim() ? user.motto : 'null'}"
               </p>
               
@@ -733,16 +787,13 @@ const FeedTab: React.FC<any> = ({
                       new Date(user.lastWebAccess).toLocaleDateString('pt-BR', {
                         day: '2-digit',
                         month: '2-digit', 
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        year: 'numeric'
                       }) : 
                       'Data não disponível'
                     }
                   </span>
                 </div>
               </div>
-              
             </div>
           </div>
         </div>
@@ -752,7 +803,7 @@ const FeedTab: React.FC<any> = ({
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-lg font-semibold text-white">
-                {isProfilePrivate ? '0' : (photos?.length || 0)}
+                {isProfilePrivate ? '0' : ((photos || []).filter((photo, index) => !(hiddenPhotos || []).includes(photo.id || `photo-${index}`)).length)}
               </div>
               <div className="text-xs text-white/60">Fotos</div>
             </div>
@@ -767,26 +818,63 @@ const FeedTab: React.FC<any> = ({
           </div>
         </div>
 
+        {/* Botões de Interação Social */}
+        <div className="px-4">
+          {isOwnProfile ? (
+            <button onClick={toggleEditMode} className="w-full py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+              {isEditMode ? 'Salvar Alterações' : 'Editar Perfil'}
+            </button>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => {
+                  if (viewingUser) {
+                    alert(`🚀 Função "Seguir" será implementada em breve! Por enquanto, adicione ${viewingUser} aos seus amigos no Habbo Hotel.`);
+                  }
+                }}
+                className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
+                Seguir
+              </button>
+              <button 
+                onClick={async () => {
+                  setActiveTab('chat');
+                  // Aguardar um pouco para garantir que o componente Chat foi montado
+                  setTimeout(async () => {
+                    if ((window as any).startChatWith && viewingUser) {
+                      await (window as any).startChatWith(viewingUser);
+                    }
+                  }, 100);
+                }}
+                className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+                Mensagem
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Ações Rápidas */}
         <div className="p-4">
           <div className="grid grid-cols-4 gap-1">
             <button 
-              onClick={() => {
-                setActiveModal('badges');
-              }}
+              onClick={() => setActiveModal('friends')}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <img 
-                src="/assets/console/badgestab-icon.png" 
-                alt="Emblemas" 
-                className="max-h-none w-auto object-contain" 
-                style={{ imageRendering: 'pixelated', transform: 'scale(1.5)' }}
+                src="/assets/console/friendstab-icon.png" 
+                alt="Amigos" 
+                className="h-8 w-auto object-contain" 
+                style={{ imageRendering: 'pixelated' }}
               />
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
-                  {isProfilePrivate ? '0' : badges.length}
+                  {isProfilePrivate ? '0' : friends.length}
                 </div>
-                <div className="text-xs text-white/60">Emblemas</div>
+                <div className="text-xs text-white/60">Amigos</div>
               </div>
             </button>
             
@@ -809,20 +897,22 @@ const FeedTab: React.FC<any> = ({
             </button>
             
             <button 
-              onClick={() => setActiveModal('friends')}
+              onClick={() => {
+                setActiveModal('badges');
+              }}
               className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
             >
               <img 
-                src="/assets/console/friendstab-icon.png" 
-                alt="Amigos" 
-                className="h-8 w-auto object-contain" 
-                style={{ imageRendering: 'pixelated' }}
+                src="/assets/console/badgestab-icon.png" 
+                alt="Emblemas" 
+                className="max-h-none w-auto object-contain" 
+                style={{ imageRendering: 'pixelated', transform: 'scale(1.5)' }}
               />
               <div className="text-center">
                 <div className="text-sm font-medium text-white">
-                  {isProfilePrivate ? '0' : friends.length}
+                  {isProfilePrivate ? '0' : badges.length}
                 </div>
-                <div className="text-xs text-white/60">Amigos</div>
+                <div className="text-xs text-white/60">Emblemas</div>
               </div>
             </button>
             
@@ -862,20 +952,22 @@ const FeedTab: React.FC<any> = ({
               photos.map((photo, index) => {
                 const photoId = photo.id || `photo-${index}`;
                 const interactions = getPhotoInteractions(photoId);
+                const isHidden = (hiddenPhotos || []).includes(photoId);
                 
                 return (
                   <div 
                     key={photoId} 
-                    className="relative group cursor-pointer"
+                    className={`relative group cursor-pointer ${isHidden ? 'opacity-30' : ''}`}
                     onClick={() => {
-                      setSelectedPhoto({
-                        id: photoId,
-                        url: photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
-                        likes: interactions.likes,
-                        comments: interactions.comments,
-                        isLiked: interactions.isLiked
-                      });
-                      // Modal temporariamente desabilitado
+                      if (!isEditMode) {
+                        setSelectedPhoto({
+                          id: photoId,
+                          url: photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`,
+                          likes: interactions.likes,
+                          comments: interactions.comments,
+                          isLiked: interactions.isLiked
+                        });
+                      }
                     }}
                   >
                     <div className="w-full aspect-square bg-gray-700 overflow-hidden">
@@ -888,6 +980,15 @@ const FeedTab: React.FC<any> = ({
                           target.src = `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`;
                         }}
                       />
+                      {isEditMode && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); togglePhotoVisibility(photoId); }}
+                          className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600/90 text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
+                          title={isHidden ? "Mostrar Foto" : "Ocultar Foto"}
+                        >
+                          {isHidden ? '+' : 'X'}
+                        </button>
+                      )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
                           <div className="flex items-center justify-between">
@@ -1411,10 +1512,10 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
 const AccountTab: React.FC<any> = ({ 
   user, badges, rooms, groups, friends, photos, isLoading, 
   onNavigateToProfile, isViewingOtherUser, viewingUsername, currentUser,
-  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username,
+  getPhotoInteractions, setSelectedPhoto, toggleLike, addComment, habboAccount, username, setActiveTab,
   activeModal, setActiveModal, handlePhotoClick,
   isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
-  hiddenPhotos, togglePhotoVisibility, showAllPhotosModal, setShowAllPhotosModal
+  hiddenPhotos, togglePhotoVisibility, viewingUser
 }) => {
   // Detectar perfil privado: se não há dados completos ou se explicitamente privado
   const isProfilePrivate = isViewingOtherUser && (
@@ -1472,28 +1573,47 @@ const AccountTab: React.FC<any> = ({
       )}
       
       {/* Header do usuário com borda inferior */}
-      <div className="p-4 border-b border-white/20">
-        <div className="flex items-start gap-4">
-          <div className="relative flex-shrink-0">
+      <div className="p-4 border-b border-white/20 relative">
+        {/* Bandeira no extremo superior direito */}
+        <img 
+          src={getHotelFlag(user?.hotel)} 
+          alt="" 
+          className="absolute top-2 right-2 w-auto object-contain" 
+          style={{ imageRendering: 'pixelated', height: 'auto', maxHeight: 'none' }} 
+        />
+        
+        <div className="flex gap-4">
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative flex-shrink-0">
+              <img 
+                src={user?.figure_string ? 
+                  `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(user.figure_string)}&size=m&direction=2&head_direction=3` :
+                  `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
+                }
+                alt={`Avatar de ${user?.name || 'Beebop'}`}
+                className="h-28 w-auto object-contain"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  // Fallback para busca por nome se o figure_string falhar
+                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
+                }}
+              />
+            </div>
+            {/* Status centralizado abaixo do avatar */}
             <img 
-              src={user?.figure_string ? 
-                `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(user.figure_string)}&size=m&direction=2&head_direction=3` :
-                `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
-              }
-              alt={`Avatar de ${user?.name || 'Beebop'}`}
-              className="h-28 w-auto object-contain"
+              src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
+              alt={user?.online ? 'Online' : 'Offline'}
+              className="h-4 w-auto object-contain"
               style={{ imageRendering: 'pixelated' }}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                // Fallback para busca por nome se o figure_string falhar
-                target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
-              }}
             />
           </div>
           
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold text-white mb-2 truncate">{user?.name || 'Beebop'}</h2>
-            <p className="text-white/70 italic mb-4 truncate">"{user?.motto || 'HUB-ACTI1'}"</p>
+            <p className="text-white/70 italic mb-4 line-clamp-2">
+              "{user?.motto || 'HUB-ACTI1'}"
+            </p>
             
             <div className="space-y-1 text-xs text-white/60">
               <div className="flex items-center gap-2 min-w-0">
@@ -1510,7 +1630,7 @@ const AccountTab: React.FC<any> = ({
                 </span>
               </div>
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-medium text-nowrap">Online em:</span>
+                <span className="font-medium text-nowrap">Último acesso:</span>
                 <span className="truncate">
                   {user?.lastWebAccess ? 
                     new Date(user.lastWebAccess).toLocaleDateString('pt-BR', {
@@ -1521,24 +1641,7 @@ const AccountTab: React.FC<any> = ({
                     'Data não disponível'
                   }
                 </span>
-                <div className="flex items-center gap-1 ml-2">
-                  {/* Flag do país */}
-                  <img
-                    src={getHotelFlag(user?.hotel)}
-                    alt=""
-                    className="h-4 w-auto object-contain"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                  {/* Ícone de online/offline */}
-                  <img 
-                    src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
-                    alt={user?.online ? 'Online' : 'Offline'}
-                    className="h-4 w-auto object-contain"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
               </div>
-              </div>
-              
             </div>
           </div>
         </div>
@@ -1573,11 +1676,29 @@ const AccountTab: React.FC<any> = ({
           </button>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            <button className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
+            <button 
+              onClick={() => {
+                if (viewingUser) {
+                  alert(`🚀 Função "Seguir" será implementada em breve! Por enquanto, adicione ${viewingUser} aos seus amigos no Habbo Hotel.`);
+                }
+              }}
+              className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
               Seguir
             </button>
-            <button className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
+            <button 
+              onClick={async () => {
+                setActiveTab('chat');
+                // Aguardar um pouco para garantir que o componente Chat foi montado
+                setTimeout(async () => {
+                  if ((window as any).startChatWith && viewingUser) {
+                    await (window as any).startChatWith(viewingUser);
+                  }
+                }, 100);
+              }}
+              className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
               Mensagem
             </button>
@@ -1589,20 +1710,20 @@ const AccountTab: React.FC<any> = ({
       <div className="p-3">
         <div className="grid grid-cols-4 gap-1">
           <button 
-            onClick={() => setActiveModal('badges')}
+            onClick={() => setActiveModal('friends')}
             className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
           >
             <img 
-              src="/assets/console/badgestab-icon.png" 
-              alt="Emblemas" 
-              className="max-h-none w-auto object-contain" 
-              style={{ imageRendering: 'pixelated', transform: 'scale(1.5)' }}
+              src="/assets/console/friendstab-icon.png" 
+              alt="Amigos" 
+              className="h-8 w-auto object-contain" 
+              style={{ imageRendering: 'pixelated' }}
             />
             <div className="text-center">
               <div className="text-sm font-medium text-white">
-                {isProfilePrivate ? '0' : badges.length}
+                {isProfilePrivate ? '0' : friends.length}
               </div>
-              <div className="text-xs text-white/60">Emblemas</div>
+              <div className="text-xs text-white/60">Amigos</div>
             </div>
           </button>
           
@@ -1625,20 +1746,20 @@ const AccountTab: React.FC<any> = ({
           </button>
           
           <button 
-            onClick={() => setActiveModal('friends')}
+            onClick={() => setActiveModal('badges')}
             className="flex flex-col items-center justify-center gap-2 p-3 bg-transparent hover:bg-white/10 transition-colors cursor-pointer group"
           >
             <img 
-              src="/assets/console/friendstab-icon.png" 
-              alt="Amigos" 
-              className="h-8 w-auto object-contain" 
-              style={{ imageRendering: 'pixelated' }}
+              src="/assets/console/badgestab-icon.png" 
+              alt="Emblemas" 
+              className="max-h-none w-auto object-contain" 
+              style={{ imageRendering: 'pixelated', transform: 'scale(1.5)' }}
             />
             <div className="text-center">
               <div className="text-sm font-medium text-white">
-                {isProfilePrivate ? '0' : friends.length}
+                {isProfilePrivate ? '0' : badges.length}
               </div>
-              <div className="text-xs text-white/60">Amigos</div>
+              <div className="text-xs text-white/60">Emblemas</div>
             </div>
           </button>
           
@@ -1670,47 +1791,70 @@ const AccountTab: React.FC<any> = ({
             <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
             <circle cx="12" cy="13" r="3"></circle>
           </svg>
-            Fotos ({isProfilePrivate ? '0' : (photos?.length || 0)})
+          Fotos ({isProfilePrivate ? '0' : ((photos || []).filter((photo, index) => !(hiddenPhotos || []).includes(photo.id || `photo-${index}`)).length)})
         </h3>
         </div>
         <div className="grid grid-cols-3 gap-1">
           {!isProfilePrivate && photos?.length > 0 ? (
-            photos.map((photo, index) => {
-              const photoId = photo.id || `photo-${index}`;
-              const interactions = getPhotoInteractions(photoId);
+            photos
+              .filter((photo, index) => {
+                const photoId = photo.id || `photo-${index}`;
+                const isHidden = (hiddenPhotos || []).includes(photoId);
+                // Em modo de edição, mostra todas; fora dele, só as visíveis
+                return isEditMode || !isHidden;
+              })
+              .map((photo, index) => {
+                const photoId = photo.id || `photo-${index}`;
+                const isHidden = (hiddenPhotos || []).includes(photoId);
+                const interactions = getPhotoInteractions(photoId);
               
-              return (
-                <div 
-                  key={photoId} 
-                  className="relative group cursor-pointer"
-                  onClick={() => handlePhotoClick(photo, index)}
-                >
+                return (
+                  <div 
+                    key={photoId} 
+                    className={`relative group cursor-pointer ${isEditMode && isHidden ? 'opacity-30' : ''}`}
+                    onClick={() => !isEditMode && handlePhotoClick(photo, index)}
+                  >
                   <div className="w-full aspect-square bg-gray-700 overflow-hidden">
                 <img 
                   src={photo.imageUrl || photo.url || `https://habbo-stories-content.s3.amazonaws.com/servercamera/purchased/hhbr/p-464837-${1755308009079 + index}.png`} 
                   alt={photo.caption || `Foto ${index + 1}`} 
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = '/placeholder.svg';
                   }}
                 />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
-                              <Heart className="w-3 h-3 text-white" />
-                              <span className="text-xs text-white">{interactions.likes}</span>
-                            </div>
-                            <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
-                              <MessageCircle className="w-3 h-3 text-white" />
-                              <span className="text-xs text-white">{interactions.comments.length}</span>
+                    {isEditMode && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); togglePhotoVisibility(photoId); }}
+                        className={`absolute top-1 right-1 z-10 text-white p-1 rounded-full text-xs flex items-center justify-center w-6 h-6 transition-all ${
+                          isHidden 
+                            ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
+                            : 'bg-red-500/80 hover:bg-red-600 hover:scale-110'
+                        }`}
+                        title={isHidden ? "Restaurar Foto" : "Ocultar Foto"}
+                      >
+                        {isHidden ? '↺' : 'X'}
+                      </button>
+                    )}
+                    {!isEditMode && (
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-2 left-2 right-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
+                                <Heart className="w-3 h-3 text-white" />
+                                <span className="text-xs text-white">{interactions.likes}</span>
+                              </div>
+                              <div className="flex items-center gap-1 bg-black/60 px-2 py-1 rounded">
+                                <MessageCircle className="w-3 h-3 text-white" />
+                                <span className="text-xs text-white">{interactions.comments.length}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               );
@@ -1727,5 +1871,5 @@ const AccountTab: React.FC<any> = ({
   );
 };
 
-// Arquivo corrigido - PhotoModal temporariamente removido para resolver erro de cache
+export default FunctionalConsole;
 

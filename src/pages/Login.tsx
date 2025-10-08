@@ -90,8 +90,8 @@ export const Login: React.FC = () => {
         setMottoStep('password');
         success('Verificação bem-sucedida!', 'Agora crie uma senha para sua conta.');
       }
-    } catch (error: any) {
-      error('Erro', error.message || 'Erro na verificação');
+    } catch (err: any) {
+      error('Erro', err.message || 'Erro na verificação');
     } finally {
       setIsVerifying(false);
     }
@@ -149,8 +149,8 @@ export const Login: React.FC = () => {
           setMottoStep('generate');
         }, 3000);
       }
-    } catch (error: any) {
-      let errorMessage = error.message || 'Erro na criação da conta';
+    } catch (err: any) {
+      let errorMessage = err.message || 'Erro na criação da conta';
       
       if (errorMessage.includes('já cadastrado')) {
         errorMessage = 'Este usuário já possui uma conta. Use a opção de login com senha.';
@@ -533,9 +533,9 @@ export const Login: React.FC = () => {
                                 </>
                               ) : (
                                 '🔐 Fazer Login'
-                              )})
+                              )}
                             </Button>
-                          )})
+                          )}
 
                           {loginMode === 'motto' && mottoStep === 'verify' && (
                             <div className="flex justify-center">
