@@ -18,6 +18,11 @@ export const HomeCard: React.FC<HomeCardProps> = ({
   onHomeClick
 }) => {
   const handleClick = () => {
+    console.log('🖱️ HomeCard clicado:', { 
+      user_id: home.user_id, 
+      habbo_name: home.habbo_name, 
+      hotel: home.hotel 
+    });
     onHomeClick(home.user_id, home.habbo_name, home.hotel);
   };
 

@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Star, Home, Clock } from 'lucide-react';
+import { generateUniqueUsername } from '@/utils/usernameUtils';
 
 interface LatestHomeData {
   user_id: string;
   habbo_name?: string;
+  hotel?: string;
   updated_at: string;
   background_type?: string;
   background_value?: string;
@@ -24,7 +26,10 @@ export const HomePreviewCard: React.FC<HomePreviewCardProps> = ({ home }) => {
 
   const handleClick = () => {
     if (home.habbo_name) {
-      navigate(`/homes/${home.habbo_name}`);
+      // Gerar nome único com prefixo do hotel (ptbr-SkyFalls, com-SkyFalls, etc)
+      const hotel = home.hotel || 'br';
+      const domainUsername = generateUniqueUsername(home.habbo_name, hotel);
+      navigate(`/home/${domainUsername}`);
     }
   };
 

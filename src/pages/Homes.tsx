@@ -99,11 +99,16 @@ const Homes: React.FC = () => {
   const filteredUsers = users.filter((user) => user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleHomeClick = (userId: string, habboName?: string, hotel?: string) => {
+    console.log('🏠 handleHomeClick chamado:', { userId, habboName, hotel });
+    
     if (habboName) {
       // Gerar nome único com domínio baseado no hotel
       const selectedHotel = hotel || 'br';
       const domainUsername = generateUniqueUsername(habboName, selectedHotel);
+      console.log('🔗 Navegando para:', `/home/${domainUsername}`);
       navigate(`/home/${domainUsername}`);
+    } else {
+      console.warn('⚠️ habboName está vazio, não pode navegar');
     }
   };
 
@@ -133,8 +138,13 @@ const Homes: React.FC = () => {
                 {isLoggedIn && habboAccount ? (
                   <Button 
                     onClick={() => {
+                      console.log('🏠 Botão "Ver Minha Home" clicado');
+                      console.log('📝 Dados da conta:', habboAccount);
+                      
                       // Gerar nome único com domínio baseado no hotel do usuário
                       const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
+                      console.log('🔗 URL gerada:', `/home/${domainUsername}`);
+                      
                       navigate(`/home/${domainUsername}`);
                     }}
                     className="habbo-button-green volter-font px-6 py-2"

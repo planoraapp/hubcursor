@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
 import { StarRating } from '@/components/ui/star-rating';
+import { generateUniqueUsername } from '@/utils/usernameUtils';
 
 // Funções auxiliares para processar background (mesma lógica do HomeCard)
 const getHomeBackgroundUrl = (home: any) => {
@@ -103,9 +104,12 @@ export const LatestHomesCards: React.FC = () => {
     return null;
   }
 
-  const handleHomeClick = (userId: string, habboName?: string) => {
+  const handleHomeClick = (userId: string, habboName?: string, hotel?: string) => {
     if (habboName) {
-      window.open(`/home/${habboName}`, '_blank');
+      // Gerar nome único com prefixo do hotel
+      const selectedHotel = hotel || 'br';
+      const domainUsername = generateUniqueUsername(habboName, selectedHotel);
+      window.open(`/home/${domainUsername}`, '_blank');
     }
   };
 
@@ -115,7 +119,7 @@ export const LatestHomesCards: React.FC = () => {
         <Card 
           key={home.user_id} 
           className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border-2 hover:border-blue-300"
-          onClick={() => handleHomeClick(home.user_id, home.habbo_name)}
+          onClick={() => handleHomeClick(home.user_id, home.habbo_name, home.hotel)}
         >
           <CardContent className="p-3">
             {/* Home Preview Miniature */}

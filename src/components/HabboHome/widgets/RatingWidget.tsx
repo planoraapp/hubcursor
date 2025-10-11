@@ -92,40 +92,42 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
 
   if (loading) {
     return (
-      <div className={`flex flex-col items-center p-3 bg-white rounded-md volter-font min-h-[120px] w-64 justify-center ${className}`}>
-        <div className="text-sm text-gray-500 volter-font">Carregando avaliações...</div>
+      <div className={`flex flex-col items-center justify-center p-3 bg-white rounded-md volter-font ${className}`}
+           style={{ width: '200px', height: '180px' }}>
+        <div className="text-xs text-gray-500 volter-font">Carregando...</div>
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col items-center p-3 bg-white rounded-md volter-font min-h-[120px] w-48 ${className}`}>
-      {/* Média no topo */}
-      <div className="text-2xl font-bold text-black mb-2 volter-font">
+    <div className={`flex flex-col items-center justify-center p-3 bg-white rounded-md volter-font ${className}`}
+         style={{ width: '200px', height: '180px' }}>
+      {/* Média */}
+      <div className="text-3xl font-bold text-black mb-1 volter-font">
         {averageRating > 0 ? averageRating.toFixed(1) : '—'}
       </div>
       
-      {/* Estrelas centralizadas */}
+      {/* Estrelas */}
       <div className="mb-2">
         <StarRating
           rating={habboAccount ? userRating : averageRating}
           onRate={habboAccount ? handleRate : undefined}
           readonly={!habboAccount}
-          size="lg"
+          size="md"
         />
       </div>
       
-      {/* Contador de avaliações */}
+      {/* Contador */}
       <div className="text-xs text-gray-600 text-center volter-font">
         {totalRatings === 0 
-          ? 'Nenhuma avaliação' 
-          : `${totalRatings} ${totalRatings === 1 ? 'avaliação' : 'avaliações'}`
+          ? 'Sem avaliações' 
+          : `${totalRatings} ${totalRatings === 1 ? 'voto' : 'votos'}`
         }
       </div>
       
       {!habboAccount && (
-        <div className="text-xs text-gray-500 mt-2 text-center volter-font">
-          Faça login para avaliar
+        <div className="text-[10px] text-gray-500 mt-1 text-center volter-font">
+          Login para avaliar
         </div>
       )}
     </div>

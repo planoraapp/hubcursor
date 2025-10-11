@@ -8,6 +8,7 @@ import { CalendarDays, Home, MessageSquare } from 'lucide-react';
 import { getUserByName } from '../services/habboApi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { generateUniqueUsername } from '@/utils/usernameUtils';
 
 interface UserProfileModalProps {
   open: boolean;
@@ -46,7 +47,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   }, [open, habboName]);
 
   const handleGoToHome = () => {
-    navigate(`/homes/${habboName}`);
+    // Gerar nome único com prefixo do hotel
+    const hotel = userData?.hotel || 'br';
+    const domainUsername = generateUniqueUsername(habboName, hotel);
+    navigate(`/home/${domainUsername}`);
     setOpen(false);
   };
 

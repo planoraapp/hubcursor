@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Save, CheckCircle } from 'lucide-react';
-import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
+import { useHabboHome } from '@/hooks/useHabboHome';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
@@ -24,11 +24,18 @@ const HabboHomeV2: React.FC = () => {
   const { habboAccount } = useAuth();
 
   // Extrair nome original e hotel do username da URL
-  const originalUsername = urlUsername ? extractOriginalUsername(urlUsername) : '';
+  const originalUsername = urlUsername ? extractOriginalUsername(urlUsername) : 'habbohub';
   const hotelFromUsername = urlUsername ? extractHotelFromUsername(urlUsername) : 'br';
   
-  const hotel = searchParams.get('hotel') || hotelFromUsername;
+  const hotel = searchParams.get('hotel') || hotelFromUsername || 'br';
   const hotelConfig = getHotelConfig(hotel);
+
+  // Redirecionar se não houver username válido na URL
+  React.useEffect(() => {
+    if (!urlUsername) {
+      navigate('/home/ptbr-habbohub', { replace: true });
+    }
+  }, [urlUsername, navigate]);
 
   // Estados para controlar os modais de edição
   const [showAssetsModal, setShowAssetsModal] = useState(false);
@@ -51,6 +58,7 @@ const HabboHomeV2: React.FC = () => {
     updateStickerPosition,
     addSticker,
     removeSticker,
+    bringToFront,
     updateBackground,
     addWidget,
     removeWidget,
@@ -59,10 +67,10 @@ const HabboHomeV2: React.FC = () => {
     clearAllGuestbookEntries,
     reloadData,
     saveChanges
-  } = useHabboHomeV2(originalUsername);
+  } = useHabboHome(originalUsername, hotel);
 
     const handleStickerAdd = async (stickerId: string, stickerSrc: string, category: string) => {
-        // O hook useHabboHomeV2 já define a posição no canto superior esquerdo (20, 20)
+        // O hook useHabboHome já define a posição no canto superior esquerdo (20, 20)
     // Então não precisamos passar x e y aqui
     await addSticker(stickerId, 0, 0, stickerSrc, category);
   };
@@ -348,6 +356,7 @@ const HabboHomeV2: React.FC = () => {
             onWidgetPositionChange={updateWidgetPosition}
             onStickerPositionChange={updateStickerPosition}
             onStickerRemove={removeSticker}
+            onStickerBringToFront={bringToFront}
             onWidgetRemove={removeWidget}
             onOpenAssetsModal={handleOpenAssetsModal}
             onToggleEditMode={() => setIsEditMode(!isEditMode)}

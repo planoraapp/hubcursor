@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, Save, CheckCircle, Star, Gem, Calendar, Trophy } from 'lucide-react';
-import { useHabboHomeV2 } from '@/hooks/useHabboHomeV2';
+import { useHabboHome } from '@/hooks/useHabboHome';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { HomeCanvas } from '@/components/HabboHome/HomeCanvas';
@@ -22,7 +22,7 @@ const BeebopHome: React.FC = () => {
   const { success } = useQuickNotification();
   const { habboAccount } = useAuth();
 
-  // Usar o hook useHabboHomeV2 para buscar dados reais do Beebop
+  // Usar o hook useHabboHome para buscar dados reais do Beebop
   const {
     widgets,
     stickers,
@@ -48,7 +48,7 @@ const BeebopHome: React.FC = () => {
     clearAllGuestbookEntries,
     reloadData,
     saveChanges
-  } = useHabboHomeV2('Beebop');
+  } = useHabboHome('Beebop', 'br');
 
   // Estados para controlar os modais de edição
   const [showAssetsModal, setShowAssetsModal] = useState(false);

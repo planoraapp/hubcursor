@@ -69,11 +69,19 @@ export const AssetSelector: React.FC<AssetSelectorProps> = ({
                 return;
       }
 
-            const assetsWithUrls = (data || []).map((asset) => ({
-        ...asset,
-        url: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`,
-        src: `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`
-      }));
+            const assetsWithUrls = (data || []).map((asset) => {
+        // Tentar usar assets locais primeiro, fallback para supabase.co
+        const isSticker = asset.file_path.startsWith('stickers/');
+        const localPath = isSticker ? `/assets/home/${asset.file_path}` : null;
+        const remotePath = `https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/${asset.file_path}`;
+        
+        return {
+          ...asset,
+          url: localPath || remotePath,
+          src: localPath || remotePath,
+          fallbackUrl: remotePath // Guardar URL remota como fallback
+        };
+      });
 
       setAllAssets(assetsWithUrls);
       setDisplayedCount(100);

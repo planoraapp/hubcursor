@@ -1,0 +1,28 @@
+# 🚀 Assets Pesados - Recomendação de Gitignore
+# 
+# Para melhor performance do Git e CI/CD, considere adicionar ao .gitignore:
+#
+# IMPORTANTE: Antes de adicionar ao .gitignore, faça backup desses assets
+# em um CDN ou storage externo (AWS S3, Cloudflare R2, etc)
+
+# Handitems (28.640 arquivos - ~500MB+)
+# public/handitems/dcr/
+# public/handitems/images/
+
+# Pet Sprites (8.954 arquivos - ~200MB+)
+# public/assets/pets-sprites/
+
+# ⚠️ ATENÇÃO: Descomente as linhas acima apenas APÓS migrar para CDN
+#
+# Passos recomendados:
+# 1. Fazer upload dos assets para CDN
+# 2. Atualizar URLs no código para apontar para CDN
+# 3. Adicionar ao .gitignore
+# 4. Manter apenas assets essenciais no repositório
+#
+# Benefícios:
+# ✅ Clone do repo ~700MB mais rápido
+# ✅ CI/CD builds mais rápidos
+# ✅ Menor uso de banda do Git
+# ✅ Melhor cache do CDN para usuários finais
+

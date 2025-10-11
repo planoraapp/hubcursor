@@ -14,6 +14,15 @@ export default defineConfig(({ mode }) => ({
     },
     fs: {
       allow: ['..']
+    },
+    // OTIMIZAÇÃO: Não assistir arquivos estáticos pesados
+    watch: {
+      ignored: [
+        '**/public/handitems/**',
+        '**/public/assets/pets-sprites/**',
+        '**/node_modules/**',
+        '**/.git/**'
+      ]
     }
   },
   plugins: [
@@ -40,17 +49,23 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // Configuração simplificada para desenvolvimento
+  // OTIMIZAÇÃO: Configuração para desenvolvimento
   optimizeDeps: {
     include: [
       'react', 
       'react-dom',
       '@tanstack/react-query',
       'react-router-dom'
-    ]
+    ],
+    // Forçar pré-bundling de dependências pesadas
+    force: false,
+    // Não escanear node_modules desnecessariamente
+    entries: ['./src/main.tsx']
   },
-  // Configurações de performance
+  // OTIMIZAÇÃO: Configurações de performance
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode)
-  }
+  },
+  // OTIMIZAÇÃO: Cache agressivo em desenvolvimento
+  cacheDir: '.vite'
 }));

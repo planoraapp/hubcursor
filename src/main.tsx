@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -9,31 +9,44 @@ import { NotificationContainer } from '@/components/ui/notification'
 import './index.css'
 import './styles/widget-skins.css'
 
-// Import pages
-import Console from './pages/Console'
-import ConsolePopup from './pages/ConsolePopup'
-import HabboHomeV2 from './pages/HabboHomeV2'
+// ⚡ OTIMIZAÇÃO: Importar apenas páginas críticas diretamente
 import Home from './pages/Home'
-import Homes from './pages/Homes'
 import Login from './pages/Login'
-import Journal from './pages/Journal'
-import AdminPanel from './pages/AdminPanel'
-import AdminDashboard from './pages/AdminDashboard'
-import { AccountManager } from './pages/AccountManager'
-import Tools from './pages/Tools'
-import HanditemCatalog from './pages/HanditemCatalog'
-import AvatarEditor from './pages/AvatarEditor'
-import AltCodesPage from './pages/AltCodes' // CORRIGIDO: Import adicionado
-
-import Profile from './pages/Profile'
-import NotificationDemo from './pages/NotificationDemo'
-import BeebopHome from './pages/BeebopHome'
 import NotFound from './pages/NotFound'
-import { FontTest } from './components/FontTest'
-import { FontAlternativeTest } from './components/FontAlternativeTest'
-import HomeRedirect from './components/HomeRedirect'
-import './utils/cleanupOldMessages' // Expor função de limpeza globalmente
-import './utils/forceCleanupOldMessages' // Expor função de limpeza forçada globalmente
+
+// 🚀 LAZY LOADING: Páginas não-críticas carregam sob demanda
+const Console = lazy(() => import('./pages/Console'))
+const ConsolePopup = lazy(() => import('./pages/ConsolePopup'))
+const HabboHomeV2 = lazy(() => import('./pages/HabboHomeV2'))
+const Homes = lazy(() => import('./pages/Homes'))
+const Journal = lazy(() => import('./pages/Journal'))
+const AdminPanel = lazy(() => import('./pages/AdminPanel'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const AccountManager = lazy(() => import('./pages/AccountManager').then(m => ({ default: m.AccountManager })))
+const Tools = lazy(() => import('./pages/Tools'))
+const HanditemCatalog = lazy(() => import('./pages/HanditemCatalog'))
+const AvatarEditor = lazy(() => import('./pages/AvatarEditor'))
+const AltCodesPage = lazy(() => import('./pages/AltCodes'))
+const Profile = lazy(() => import('./pages/Profile'))
+const NotificationDemo = lazy(() => import('./pages/NotificationDemo'))
+const BeebopHome = lazy(() => import('./pages/BeebopHome'))
+const FontTest = lazy(() => import('./components/FontTest').then(m => ({ default: m.FontTest })))
+const FontAlternativeTest = lazy(() => import('./components/FontAlternativeTest').then(m => ({ default: m.FontAlternativeTest })))
+const HomeRedirect = lazy(() => import('./components/HomeRedirect'))
+
+// Utilitários de limpeza (não afetam loading)
+import './utils/cleanupOldMessages'
+import './utils/forceCleanupOldMessages'
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[#f0f0f0]">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-500"></div>
+      <p className="mt-4 text-gray-600 volter-font">Carregando...</p>
+    </div>
+  </div>
+)
 
 // QueryClient otimizado para performance
 const queryClient = new QueryClient({
@@ -54,6 +67,13 @@ const queryClient = new QueryClient({
   },
 })
 
+// Helper to wrap lazy components with Suspense
+const withSuspense = (Component: React.LazyExoticComponent<any>) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+)
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -61,11 +81,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/console",
-    element: <Console />,
+    element: withSuspense(Console),
   },
   {
     path: "/console-popup",
-    element: <ConsolePopup />,
+    element: withSuspense(ConsolePopup),
   },
   {
     path: "/login",
@@ -81,11 +101,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/home",
-    element: <Homes />,
+    element: withSuspense(Homes),
   },
   {
     path: "/home/:username",
-    element: <HabboHomeV2 />,
+    element: withSuspense(HabboHomeV2),
   },
   // Redirect from old /homes routes for backward compatibility
   {
@@ -94,75 +114,75 @@ const router = createBrowserRouter([
   },
   {
     path: "/homes/:username",
-    element: <HomeRedirect />,
+    element: withSuspense(HomeRedirect),
   },
   {
     path: "/enhanced-home/:username",
-    element: <HabboHomeV2 />,
+    element: withSuspense(HabboHomeV2),
   },
   {
     path: "/noticias",
-    element: <Journal />,
+    element: withSuspense(Journal),
   },
   {
     path: "/journal",
-    element: <Journal />,
+    element: withSuspense(Journal),
   },
   {
     path: "/admin-panel",
-    element: <AdminPanel />,
+    element: withSuspense(AdminPanel),
   },
   {
     path: "/admin",
-    element: <AdminDashboard />,
+    element: withSuspense(AdminDashboard),
   },
   {
     path: "/admin/accounts",
-    element: <AccountManager />,
+    element: withSuspense(AccountManager),
   },
   {
     path: "/ferramentas",
-    element: <Tools />,
+    element: withSuspense(Tools),
   },
   {
     path: "/ferramentas/handitems",
-    element: <HanditemCatalog />,
+    element: withSuspense(HanditemCatalog),
   },
   {
     path: "/ferramentas/avatar-editor",
-    element: <AvatarEditor />,
+    element: withSuspense(AvatarEditor),
   },
   {
     path: "/ferramentas/alt-codes",
-    element: <AltCodesPage />,
+    element: withSuspense(AltCodesPage),
   },
   {
     path: "/font-test",
-    element: <FontTest />,
+    element: withSuspense(FontTest),
   },
   {
     path: "/font-alternatives",
-    element: <FontAlternativeTest />,
+    element: withSuspense(FontAlternativeTest),
   },
   {
     path: "/tools",
-    element: <Tools />,
+    element: withSuspense(Tools),
   },
   {
     path: "/profile/:username",
-    element: <Profile />,
+    element: withSuspense(Profile),
   },
   {
     path: "/profile/:username/:hotel",
-    element: <Profile />,
+    element: withSuspense(Profile),
   },
   {
     path: "/notification-demo",
-    element: <NotificationDemo />,
+    element: withSuspense(NotificationDemo),
   },
   {
     path: "/beebop-home",
-    element: <BeebopHome />,
+    element: withSuspense(BeebopHome),
   },
   {
     path: "*",

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { unifiedHabboService } from '@/services/unifiedHabboService';
-import { habboFeedService } from '@/services/habboFeedService';
+import { habboProxyService } from '@/services/habboProxyService';
 
 interface HabboUserData {
   supabase_user_id: string;
@@ -68,7 +68,7 @@ export const useUserProfile = (username: string) => {
   // Ensure user tracking
   useEffect(() => {
     if (habboUser?.habbo_id && habboUser?.habbo_name && habboUser?.hotel) {
-      habboFeedService.ensureTrackedAndSynced({
+      habboProxyService.ensureTrackedAndSynced({
         habbo_name: habboUser.habbo_name,
         habbo_id: habboUser.habbo_id,
         hotel: habboUser.hotel,

@@ -12,7 +12,7 @@ interface RateLimitConfig {
 interface RateLimitEntry {
   count: number;
   firstAttempt: number;
-  blocked Until?: number;
+  blockedUntil?: number;
 }
 
 class RateLimiter {

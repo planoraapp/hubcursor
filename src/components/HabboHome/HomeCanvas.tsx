@@ -24,6 +24,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   onWidgetPositionChange,
   onStickerPositionChange,
   onStickerRemove,
+  onStickerBringToFront,
   onWidgetRemove,
   onOpenAssetsModal,
   onToggleEditMode,
@@ -40,7 +41,20 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   const isLargeBackground = (bgValue: string): boolean => {
     // Exceções: sempre usar repeat (tratar como pequenos)
     const alwaysRepeatPatterns = [
-      'papel', 'pattern', 'texture', 'tile'
+      'papel', 'pattern', 'texture', 'tile', 
+      '28.gif', 'bg_colour_04.gif',           // Padrões específicos
+      'bg_image_submarine.gif',               // Padrão específico
+      'bg_colour_',                           // Padrões de cor (geralmente pequenos)
+      'bg_image_',                            // Backgrounds de imagem pequenos
+      'bubble.gif',                           // Padrão específico
+      'email_bg.gif',                         // Padrão específico
+      'metal.gif',                            // Padrão específico
+      'repeat_',                              // Explícito para repeat
+      'small_',                               // Explícito para pequeno
+      'mini_',                                // Explícito para mini
+      'wallpaper_small_',                     // Wallpapers pequenos
+      'bg_simple_',                           // Backgrounds simples
+      'bg_basic_'                             // Backgrounds básicos
     ];
     if (alwaysRepeatPatterns.some(pattern => bgValue.toLowerCase().includes(pattern.toLowerCase()))) {
       return false; // Força repeat
@@ -137,12 +151,13 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
     <div className="flex justify-center">
       <div 
         data-canvas="true"
-        className={`relative rounded-lg overflow-hidden shadow-2xl ${
-          isEditMode ? 'border-4 border-dashed border-blue-400' : 'border-2 border-gray-300'
-        }`}
+        className="relative rounded-lg overflow-hidden shadow-2xl"
         style={{
           width: isMobile ? '768px' : '1080px',
           height: isMobile ? '1280px' : '1800px',
+          border: isEditMode ? '2px dashed #000000' : '2px solid #d1d5db',
+          outline: isEditMode ? '2px solid #000000' : 'none',
+          outlineOffset: '0px',
           ...backgroundStyle
         }}
       >
@@ -225,6 +240,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
             isOwner={isOwner}
             onPositionChange={onStickerPositionChange}
             onRemove={onStickerRemove}
+            onBringToFront={onStickerBringToFront}
           />
         ))}
 

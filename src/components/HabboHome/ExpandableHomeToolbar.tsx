@@ -19,6 +19,33 @@ const WIDGETS = [
   { id: 'rating', name: 'Avaliações', description: 'Sistema de like/dislike da home', icon: '⭐' },
 ];
 
+// Função para detectar wallpapers pequenos que devem ser repetidos
+const isSmallRepeatableWallpaper = (wallpaperName: string): boolean => {
+  const smallPatterns = [
+    '28.gif',                    // Padrão específico
+    'bg_colour_04.gif',         // Padrão específico
+    'bg_image_submarine.gif',   // Padrão específico
+    'bg_colour_',               // Padrões de cor (geralmente pequenos)
+    'bg_image_',                // Backgrounds de imagem pequenos
+    'bubble.gif',               // Padrão específico
+    'email_bg.gif',             // Padrão específico
+    'metal.gif',                // Padrão específico
+    'pattern_',                 // Padrões texturais
+    'texture_',                 // Texturas pequenas
+    'tile_',                    // Azulejos/padrões
+    'repeat_',                  // Explícito para repeat
+    'small_',                   // Explícito para pequeno
+    'mini_',                    // Explícito para mini
+    'bg_',                      // Backgrounds simples
+    'wallpaper_small_',         // Wallpapers pequenos
+    'bg_simple_',               // Backgrounds simples
+    'bg_basic_',                // Backgrounds básicos
+  ];
+  
+  const lowerName = wallpaperName.toLowerCase();
+  return smallPatterns.some(pattern => lowerName.includes(pattern.toLowerCase()));
+};
+
 
 export const ExpandableHomeToolbar: React.FC<ExpandableHomeToolbarProps> = ({
   onBackgroundChange,
@@ -166,7 +193,14 @@ export const ExpandableHomeToolbar: React.FC<ExpandableHomeToolbarProps> = ({
                           onClick={() => handleBackgroundSelect(bg)}
                           className="p-2 hover:bg-gray-100 transition-colors"
                         >
-                          <div className="w-full h-20 bg-cover bg-center" style={{ backgroundImage: `url(${bg.url})` }} />
+                          <div 
+                            className="w-full h-20 bg-center" 
+                            style={{ 
+                              backgroundImage: `url(${bg.url})`,
+                              backgroundSize: isSmallRepeatableWallpaper(bg.name) ? 'auto' : 'cover',
+                              backgroundRepeat: isSmallRepeatableWallpaper(bg.name) ? 'repeat' : 'no-repeat'
+                            }} 
+                          />
                         </button>
                       ))
                     )}

@@ -10,11 +10,9 @@ export interface HabboBadge {
 
 export interface GuestbookEntry {
   id: string;
+  author_habbo_name: string;
   message: string;
-  author: string;
-  authorId: string;
-  createdAt: string;
-  habboName?: string;
+  created_at: string;
 }
 
 export interface GuestbookSubmitResult {
@@ -25,6 +23,7 @@ export interface GuestbookSubmitResult {
 
 export interface HabboData {
   id: string;
+  supabase_user_id: string;
   habbo_name: string;
   habbo_id: string;
   hotel: string;
@@ -98,13 +97,6 @@ export interface Background {
   background_value: string;
 }
 
-export interface GuestbookEntry {
-  id: string;
-  author_habbo_name: string;
-  message: string;
-  created_at: string;
-}
-
 // Tipos para props de componentes
 export interface HomeCanvasProps {
   widgets: Widget[];
@@ -118,6 +110,7 @@ export interface HomeCanvasProps {
   onWidgetPositionChange: (widgetId: string, x: number, y: number) => void;
   onStickerPositionChange: (stickerId: string, x: number, y: number) => void;
   onStickerRemove: (stickerId: string) => void;
+  onStickerBringToFront?: (stickerId: string) => void;
   onWidgetRemove?: (widgetId: string) => void;
   onOpenAssetsModal?: (type: 'stickers' | 'widgets' | 'backgrounds') => void;
   onToggleEditMode?: () => void;

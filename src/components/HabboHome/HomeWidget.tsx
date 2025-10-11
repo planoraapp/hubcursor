@@ -169,7 +169,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
         // Debug logs removidos para produção
         
         const hotel = habboData.hotel === 'br' ? 'com.br' : (habboData.hotel || 'com.br');
-        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=4&gesture=sml&size=l`;
+        const avatarUrl = `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${habboData.habbo_name}&action=std&direction=4&head_direction=4&gesture=sml&size=m`;
         const flagUrl = getCountryFlagPng(habboData.hotel);
         
         // Formatar data do memberSince (apenas dados reais)
@@ -207,85 +207,86 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
         };
 
         return (
-          <div className="relative">
+          <div 
+            className="widget w_skin_defaultskin relative"
+            style={{
+              width: '400px',
+              height: '200px'
+            }}
+          >
+            {/* Widget Body */}
+            <div className="widget-body w-full h-full">
+              <div className="widget-content flex items-center gap-4 p-6 h-full">
+                {/* Informações do Usuário - Lado Esquerdo */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  {/* Nome do usuário com bandeira */}
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={flagUrl}
+                      alt="Bandeira do país"
+                      className="w-9 h-6 object-contain"
+                    />
+                    <h3 className="text-xl font-bold text-gray-900 truncate volter-font">
+                      {habboData.habbo_name}
+                    </h3>
+                  </div>
 
-            <div className="flex items-start gap-4 p-6 h-full" style={{ 
-              minWidth: widget.config?.profileSize?.width || '280px', 
-              maxWidth: widget.config?.profileSize?.width || '350px',
-              minHeight: widget.config?.profileSize?.height || '180px'
-            }}>
-              {/* Informações do Usuário - Lado Esquerdo */}
-              <div className="flex-1 min-w-0">
-              <div className="space-y-3">
-                {/* Nome do usuário com bandeira */}
-                <div className="flex items-center gap-1">
-                  <img
-                    src={flagUrl}
-                    alt="Bandeira do país"
-                    className="w-9 h-6 object-contain"
-                  />
-                  <h3 className="text-xl font-bold text-gray-900 truncate volter-font">
-                    {habboData.habbo_name}
-                  </h3>
-                </div>
+                  {/* Motto - 2 linhas permitidas */}
+                  <div>
+                    <p className="text-sm text-gray-600 italic volter-font line-clamp-2 leading-tight">
+                      "{habboData.motto || 'Sem motto definido'}"
+                    </p>
+                  </div>
 
-                {/* Motto */}
-                <div>
-                  <p className="text-sm text-gray-600 italic volter-font">
-                    "{habboData.motto || 'Sem motto definido'}"
-                  </p>
-                </div>
-
-                {/* Status online/offline com GIFs */}
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={habboData.is_online 
-                      ? "https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif"
-                      : "https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif"
-                    }
-                    alt={habboData.is_online ? "Online" : "Offline"}
-                    onLoad={() => {
-                                          }}
-                    onError={(e) => {
-                                            // Fallback para o ícone original se o GIF falhar
-                      const target = e.currentTarget;
-                      target.style.display = 'none';
-                      const parent = target.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `
-                          <div class="w-2 h-2 rounded-full ${habboData.is_online ? 'bg-green-500' : 'bg-gray-400'}"></div>
-                          <span class="text-sm font-medium volter-font ${habboData.is_online ? 'text-green-600' : 'text-gray-500'}">
-                            ${habboData.is_online ? 'Online' : 'Offline'}
-                          </span>
-                        `;
+                  {/* Status online/offline com GIFs */}
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={habboData.is_online 
+                        ? "https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif"
+                        : "https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif"
                       }
+                      alt={habboData.is_online ? "Online" : "Offline"}
+                      className="w-16 h-4 object-contain"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        // Fallback para ícone simples se GIF falhar
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="w-2 h-2 rounded-full ${habboData.is_online ? 'bg-green-500' : 'bg-gray-400'}"></div>
+                            <span class="text-xs font-medium volter-font ${habboData.is_online ? 'text-green-600' : 'text-gray-500'}">
+                              ${habboData.is_online ? 'Online' : 'Offline'}
+                            </span>
+                          `;
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Data de criação */}
+                  <div>
+                    <p className="text-[10px] text-gray-600 volter-font">
+                      <span className="font-medium">Membro desde:</span>{' '}
+                      {formatMemberSince(habboData.member_since || '')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Avatar do Habbo - Lado Direito */}
+                <div className="flex-shrink-0">
+                  <img
+                    src={avatarUrl}
+                    alt={`Avatar de ${habboData.habbo_name}`}
+                    className="w-16 h-28 object-contain"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&size=m&direction=4&head_direction=4&action=std&gesture=std`;
                     }}
                   />
                 </div>
-
-                {/* Data de criação */}
-                <div>
-                  <p className="text-[9px] text-gray-600 volter-font">
-                    <span className="font-medium">Membro desde:</span>{' '}
-                    {formatMemberSince(habboData.memberSince || '')}
-                  </p>
-                </div>
               </div>
-            </div>
-
-            {/* Avatar do Habbo - Lado Direito */}
-            <div className="flex-shrink-0">
-              <div className="relative">
-                <img
-                  src={avatarUrl}
-                  alt={`Avatar de ${habboData.habbo_name}`}
-                  className="w-24 h-32 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&size=l&direction=4&head_direction=4&action=std&gesture=std`;
-                  }}
-                />
-              </div>
-            </div>
             </div>
           </div>
         );
@@ -293,54 +294,33 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'guestbook':
         return (
           <div 
-            className="widget w_skin_defaultskin relative w-full h-full"
-            style={getGuestbookSkinStyle(widget)}
+            className="widget w_skin_defaultskin relative flex flex-col"
+            style={{
+              ...getGuestbookSkinStyle(widget),
+              width: '350px',
+              height: '400px'
+            }}
           >
             {/* Widget Corner - Cabeçalho */}
-            <div className="widget-corner">
+            <div className="widget-corner flex-shrink-0">
               <div className="widget-headline relative px-3 py-2">
                 <h3 className="volter-font font-bold text-black text-sm m-0">
                   Guestbook ({guestbook.length})
                 </h3>
-                
-                {/* Botões de controle (apenas em modo de edição) */}
-                {isEditMode && (
-                  <>
-                    <button 
-                      className="remove-widget-btn absolute top-1 right-6 cursor-pointer text-red-500 hover:text-red-700 text-xs"
-                      style={{ width: '12px', height: '12px' }}
-                      title="Remove widget"
-                    >
-                      ×
-                    </button>
-                    <button 
-                      className="edit-widget-btn absolute top-1 right-1 cursor-pointer text-blue-500 hover:text-blue-700 text-xs"
-                      style={{ width: '12px', height: '12px' }}
-                      title="Edit widget"
-                    >
-                      ✎
-                    </button>
-                  </>
-                )}
               </div>
             </div>
 
-            {/* Widget Body - Conteúdo */}
-            <div className="widget-body flex-1">
+            {/* Widget Body - Conteúdo Principal */}
+            <div className="widget-body flex-1 flex flex-col relative">
+              {/* Área de Comentários - Scrollável */}
               <div 
-                className="widget-content guestbook-content flex flex-col h-full" 
-                style={{ width: '100%', height: '100%' }}
+                className="guestbook-content flex-1 overflow-y-auto" 
+                style={{ 
+                  padding: '8px',
+                  minHeight: 0, // Importante para flex funcionar
+                  paddingBottom: '60px' // Espaço para o footer fixo
+                }}
               >
-                {/* Lista de comentários */}
-                <div 
-                  className="guestbook-list flex-1" 
-                  style={{ 
-                    width: '100%', 
-                    height: '250px', 
-                    overflowY: 'auto',
-                    padding: '8px'
-                  }}
-                >
                   {guestbook.length === 0 ? (
                     <div style={{ textAlign: 'center', color: '#666', paddingTop: '20px' }}>
                       <p className="volter-font text-sm">No comments yet.</p>
@@ -379,7 +359,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                                   {entry.author_habbo_name}
                                 </a>
                                 <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-500 volter-font">
+                                  <span className="volter-font text-gray-500" style={{ fontSize: '10px' }}>
                                     {new Date(entry.created_at).toLocaleDateString('pt-BR', {
                                       day: '2-digit',
                                       month: '2-digit',
@@ -395,10 +375,21 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                                           handleGuestbookDelete(entry.id);
                                         }
                                       }}
-                                      className="text-red-500 hover:text-red-700 text-xs px-1 py-0.5 rounded hover:bg-red-50 volter-font"
+                                      className="group relative w-5 h-5 flex items-center justify-center"
                                       title="Excluir comentário"
                                     >
-                                      ×
+                                      <img 
+                                        src="/assets/deletetrash.gif" 
+                                        alt="Excluir"
+                                        className="max-w-full max-h-full opacity-70 group-hover:opacity-100 transition-opacity duration-200 object-contain"
+                                        style={{ imageRendering: 'pixelated' }}
+                                        onMouseOver={(e) => {
+                                          e.currentTarget.src = '/assets/deletetrash1.gif';
+                                        }}
+                                        onMouseOut={(e) => {
+                                          e.currentTarget.src = '/assets/deletetrash.gif';
+                                        }}
+                                      />
                                     </button>
                                   )}
                                 </div>
@@ -415,49 +406,55 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                   )}
                 </div>
 
-                {/* Footer com botão de adicionar comentário */}
-                <div 
-                  className="guestbook-footer flex-shrink-0" 
-                  style={{ padding: '8px' }}
-                >
-                  {currentUser ? (
-                    <div className="flex gap-2 items-end">
-                      <Textarea
-                        placeholder="Add Comment..."
-                        value={newMessage}
-                        onChange={(e) => {
-                          setNewMessage(e.target.value);
-                          const textarea = e.target;
-                          textarea.style.height = 'auto';
-                          textarea.style.height = Math.min(textarea.scrollHeight, 50) + 'px';
-                        }}
-                        className="text-xs resize-none flex-1 min-h-[28px] max-h-[50px] overflow-y-auto volter-font border-gray-300"
-                        rows={1}
-                        disabled={isSubmitting}
-                        style={{ 
-                          height: '28px',
-                          lineHeight: '1.2',
-                          fontSize: '11px'
-                        }}
-                      />
-                      <Button 
-                        size="sm" 
-                        className="volter-font h-[28px] w-[28px] p-0 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-xs"
-                        disabled={!newMessage.trim() || isSubmitting}
-                        onClick={handleGuestbookSubmit}
-                        title={isSubmitting ? 'Enviando...' : 'Add Comment'}
-                      >
-                        {isSubmitting ? '⏳' : '📤'}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="volter-font text-xs text-gray-500">
-                        Faça login para comentar
-                      </p>
-                    </div>
-                  )}
-                </div>
+              {/* Footer FIXO na borda inferior do widget */}
+              <div 
+                className="guestbook-footer border-t border-gray-200 bg-white flex-shrink-0" 
+                style={{ 
+                  padding: '8px',
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 10
+                }}
+              >
+                {currentUser ? (
+                  <div className="flex gap-2 items-end">
+                    <Textarea
+                      placeholder="Add Comment..."
+                      value={newMessage}
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                        const textarea = e.target;
+                        textarea.style.height = 'auto';
+                        textarea.style.height = Math.min(textarea.scrollHeight, 50) + 'px';
+                      }}
+                      className="text-xs resize-none flex-1 min-h-[28px] max-h-[50px] overflow-y-auto volter-font border-gray-300"
+                      rows={1}
+                      disabled={isSubmitting}
+                      style={{ 
+                        height: '28px',
+                        lineHeight: '1.2',
+                        fontSize: '11px'
+                      }}
+                    />
+                    <Button 
+                      size="sm" 
+                      className="volter-font h-[28px] w-[28px] p-0 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-xs"
+                      disabled={!newMessage.trim() || isSubmitting}
+                      onClick={handleGuestbookSubmit}
+                      title={isSubmitting ? 'Enviando...' : 'Add Comment'}
+                    >
+                      {isSubmitting ? '⏳' : '📤'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="volter-font text-xs text-gray-500">
+                      Faça login para comentar
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -482,23 +479,21 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
     }
   };
 
-  // Calcular o tamanho real do widget baseado no tipo
+  // Tamanhos padronizados por tipo de widget
   const getWidgetSize = () => {
-    if (widget.widget_type === 'profile') {
-      return {
-        width: widget.config?.profileSize?.width || '350px',
-        height: widget.config?.profileSize?.height || '189px'
-      };
-    }
-    if (widget.widget_type === 'guestbook') {
-      return {
-        width: '350px',
-        height: '400px'
-      };
-    }
-    return {
-      width: widget.width,
-      height: widget.height
+    const standardSizes: Record<string, { width: string; height: string }> = {
+      profile: { width: '400px', height: '200px' },
+      avatar: { width: '400px', height: '200px' },
+      usercard: { width: '400px', height: '200px' },
+      guestbook: { width: '350px', height: '400px' },
+      rating: { width: '200px', height: '180px' },
+      badges: { width: '300px', height: '200px' },
+      friends: { width: '300px', height: '300px' }
+    };
+    
+    return standardSizes[widget.widget_type] || {
+      width: `${widget.width}px`,
+      height: `${widget.height}px`
     };
   };
 
@@ -528,10 +523,15 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
             e.stopPropagation();
             onRemove(widget.id);
           }}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full text-sm flex items-center justify-center shadow-lg z-30 border-2 border-white"
+          className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center transition-all z-30 opacity-50 hover:opacity-100"
           title="Remover Widget"
         >
-          ×
+          <img 
+            src="/assets/Xis3.png" 
+            alt="Remover" 
+            className="w-full h-full object-contain"
+            style={{ imageRendering: 'pixelated' }}
+          />
         </button>
       )}
 

@@ -10,6 +10,7 @@ interface HomeStickerProps {
   onRemove: (stickerId: string) => void;
   onStickerUpdate?: (stickerId: string, updates: Partial<Sticker>) => void;
   onSelectionChange?: (stickerId: string | null) => void;
+  onBringToFront?: (stickerId: string) => void;
 }
 
 export const HomeSticker: React.FC<HomeStickerProps> = ({
@@ -19,11 +20,13 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
   onPositionChange,
   onRemove,
   onStickerUpdate,
-  onSelectionChange
+  onSelectionChange,
+  onBringToFront
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: sticker.x, elementY: sticker.y });
   const [isSelected, setIsSelected] = useState(false);
+  const [isSmallSticker, setIsSmallSticker] = useState(false);
   const stickerRef = useRef<HTMLDivElement>(null);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -51,7 +54,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       elementY: sticker.y
     });
 
-      }, [isEditMode, isOwner, sticker.x, sticker.y, sticker.sticker_id]);
+      }, [isEditMode, isOwner, sticker.x, sticker.y]);
 
   const handleRemove = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,6 +84,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
 
   React.useEffect(() => {
     let animationId: number;
+    let hasMoved = false;
     
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
@@ -88,6 +92,14 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         animationId = requestAnimationFrame(() => {
           const deltaX = e.clientX - dragStart.x;
           const deltaY = e.clientY - dragStart.y;
+          
+          // Trazer para frente na primeira vez que mover
+          if (!hasMoved && (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)) {
+            hasMoved = true;
+            if (onBringToFront) {
+              onBringToFront(sticker.id);
+            }
+          }
           
           // Obter as dimensões reais do canvas
           const canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
@@ -125,7 +137,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       document.body.style.userSelect = 'auto';
       document.body.style.cursor = 'auto';
     };
-  }, [isDragging, dragStart, onPositionChange, sticker]);
+  }, [isDragging, dragStart, onPositionChange, sticker, onBringToFront]);
 
   const containerStyle = {
     left: sticker.x,
@@ -143,7 +155,7 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       data-sticker-id={sticker.id}
       className={`absolute pointer-events-auto select-none ${
         isEditMode && isOwner
-          ? 'cursor-move ring-1 ring-blue-300 ring-opacity-50 rounded' 
+          ? 'cursor-move' 
           : 'cursor-default'
       }`}
       style={containerStyle}
@@ -169,6 +181,8 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
         }}
         onLoad={(e) => {
           const img = e.target as HTMLImageElement;
+          // Verificar se o sticker é pequeno (menor que 40x40)
+          setIsSmallSticker(img.naturalWidth < 40 && img.naturalHeight < 40);
                   }}
       />
       
@@ -176,10 +190,21 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
       {isEditMode && isOwner && (
         <button
           onClick={handleRemove}
-          className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition-colors flex items-center justify-center shadow-lg z-20 border-2 border-white"
+          className="absolute transition-all z-20 opacity-50 hover:opacity-100"
+          style={{ 
+            top: isSmallSticker ? '-6px' : '-2px', 
+            right: isSmallSticker ? '-6px' : '-2px',
+            width: '16px',
+            height: '16px'
+          }}
           title="Remover Sticker"
         >
-          ×
+          <img 
+            src="/assets/Xis3.png" 
+            alt="Remover" 
+            className="w-full h-full object-contain"
+            style={{ imageRendering: 'pixelated' }}
+          />
         </button>
       )}
 

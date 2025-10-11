@@ -264,130 +264,49 @@ export const useHabboHomeV2 = (username: string) => {
                   }
       }
 
-      // Para usuários fictícios, verificar localStorage primeiro
-      if (username.toLowerCase() === 'habbohub' || username.toLowerCase() === 'beebop') {
-        const savedData = loadLocalHomeData(username);
-        
-        // Configurar dados básicos do usuário
-        const basicHabboInfo: HabboData = {
-          id: username.toLowerCase() === 'habbohub' ? 'hhbr-81b7220d11b7a21997226bf7cfcbad51' : 'hhbr-00e6988dddeb5a1838658c854d62fe49',
-          habbo_name: username,
-          habbo_id: username.toLowerCase() === 'habbohub' ? 'hhbr-81b7220d11b7a21997226bf7cfcbad51' : 'hhbr-00e6988dddeb5a1838658c854d62fe49',
-          hotel: 'br',
-          motto: username.toLowerCase() === 'habbohub' ? 'HUB-QQ797' : 'Desenvolvedor e Designer do HabboHub',
-          figure_string: username.toLowerCase() === 'habbohub' ? 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408' : 'hd-190-7.ch-3030-66.lg-275-82.sh-290-80.hr-3811-61',
-          is_online: username.toLowerCase() === 'habbohub' ? false : true,
-          member_since: username.toLowerCase() === 'habbohub' ? '' : '2024'
-        };
-        
-        setHabboData(basicHabboInfo);
-        
-        // Definir como proprietário se o usuário logado for o mesmo (extraindo nome do Habbo)
-        const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
-        const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
-        setIsOwner(currentUserIsOwner);
-        
-        // Para usuários fictícios (habbohub, beebop), buscar dados do Supabase primeiro
-        if (basicHabboInfo.id.startsWith('hhbr-') && supabase) {
-          // Searching Supabase data for fictional user
-          
-          try {
-            // Buscar background do Supabase
-            const { data: supabaseBg, error: bgError } = await supabase
-              .from('user_home_backgrounds')
-              .select('background_type, background_value')
-              .eq('user_id', basicHabboInfo.id)
-              .single();
-            
-            if (!bgError && supabaseBg) {
-              // Background found in Supabase
-              setBackground(supabaseBg);
-            } else {
-              // Background not found in Supabase, using localStorage
-              setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
-            }
-          } catch (error) {
-            console.error('❌ Erro ao buscar dados do Supabase:', error);
-            setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
-          }
-        } else {
-          // Para outros usuários, usar localStorage
-          setBackground(savedData?.background || { background_type: 'image', background_value: '/assets/bghabbohub.png' });
-        }
-        
-        if (savedData) {
-          // Carregar dados salvos e garantir que há um card de perfil
-          const savedWidgets = savedData.widgets || [];
-          const widgetsWithProfile = ensureProfileCard(savedWidgets, basicHabboInfo.id);
-          
-          setWidgets(widgetsWithProfile);
-          setStickers(savedData.stickers || []);
-          setGuestbook(savedData.guestbook || []);
-          
-          console.log('✅ Dados carregados do localStorage:', {
-            widgets: widgetsWithProfile.length,
-            stickers: (savedData.stickers || []).length,
-            guestbook: (savedData.guestbook || []).length,
-            lastSaved: savedData.lastSaved
-          });
-          
-          setLoading(false);
-          return;
-        } else {
-          // Se não há dados salvos, criar widgets padrão com card de perfil
-                    const defaultWidgets = [
-            {
-              id: `profile-${basicHabboInfo.id}`,
-              widget_type: 'profile',
-              x: 20,
-              y: 20,
-              z_index: 1,
-              width: 350,
-              height: 180,
-              is_visible: true,
-              config: {
-                profileSize: {
-                  width: '350px',
-                  height: '180px'
-                }
-              }
-            }
-          ];
-          
-          setWidgets(defaultWidgets);
-          setStickers([]);
-          setBackground({ background_type: 'image', background_value: '/assets/bghabbohub.png' });
-          setGuestbook([]);
-          
-          setLoading(false);
-          return;
-        }
-      }
-
       // Verificar se Supabase está disponível
       if (!supabase) {
-                // Se for habbohub, usar dados reais
-        if (username.toLowerCase() === 'habbohub') {
-                    // Usar dados reais do habbohub
-          const realHabboInfo: HabboData = {
-            id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
-            habbo_name: 'habbohub',
-            habbo_id: 'hhbr-81b7220d11b7a21997226bf7cfcbad51',
-            hotel: 'br',
-            motto: 'HUB-QQ797',
-            figure_string: 'hr-829-45.hd-208-1.ch-3022-90-91.lg-275-82.sh-3524-66-1408.wa-3661-66-1408',
-            is_online: false,
-            member_since: '2024-01-01T00:00:00.000Z'
-          };
-          
-          setHabboData(realHabboInfo);
-          
-          // Definir como proprietário se o usuário logado for habbohub
-          const currentUserHabboName = habboAccount?.habbo_name?.split('-').pop()?.toLowerCase();
-          const currentUserIsOwner = currentUserHabboName === username.toLowerCase();
-          setIsOwner(currentUserIsOwner);
-          
-                    return;
+        console.error('❌ Supabase não disponível');
+        setLoading(false);
+        return;
+      }
+
+      // Buscar dados do usuário no Supabase (TODOS os usuários, incluindo habbohub e beebop)
+      const { data: habboAccountData, error: accountError } = await supabase
+        .from('habbo_accounts')
+        .select('*')
+        .ilike('habbo_name', username)
+        .single();
+
+      if (accountError || !habboAccountData) {
+        console.error('❌ Usuário não encontrado:', accountError);
+        setLoading(false);
+        return;
+      }
+
+      // Configurar dados do usuário
+      const userHabboData: HabboData = {
+        id: habboAccountData.supabase_user_id,
+        habbo_name: habboAccountData.habbo_name,
+        habbo_id: habboAccountData.habbo_id,
+        hotel: habboAccountData.hotel || 'br',
+        motto: habboAccountData.motto || '',
+        figure_string: habboAccountData.figure_string || '',
+        is_online: habboAccountData.is_online || false,
+        member_since: habboAccountData.created_at || ''
+      };
+
+      setHabboData(userHabboData);
+
+      // Verificar se é proprietário
+      const currentUserIsOwner = habboAccount?.habbo_name?.toLowerCase() === username.toLowerCase();
+      setIsOwner(currentUserIsOwner);
+      
+      console.log('🔍 Verificação de proprietário:', {
+        currentUser: habboAccount?.habbo_name,
+        targetUser: username,
+        isOwner: currentUserIsOwner
+      });
           
           // Criar widgets padrão fictícios para habbohub
           const defaultWidgets: Widget[] = [
@@ -1081,39 +1000,27 @@ export const useHabboHomeV2 = (username: string) => {
 
   // Função de salvamento automático com debounce
   const saveChanges = useCallback(async () => {
-    if (!isOwner || !habboData) return;
+    console.log('🔍 saveChanges chamado:', { isOwner, hasHabboData: !!habboData });
+    
+    if (!isOwner || !habboData) {
+      console.warn('⚠️ Não é proprietário ou sem dados do Habbo');
+      return;
+    }
     
     const changes = pendingChangesRef.current;
-    if (!changes.widgets && !changes.stickers && !changes.background && !changes.guestbook) return;
+    console.log('📦 Mudanças pendentes:', changes);
+    
+    if (!changes.widgets && !changes.stickers && !changes.background && !changes.guestbook) {
+      console.log('ℹ️ Nenhuma mudança pendente para salvar');
+      return;
+    }
 
     setIsSaving(true);
     try {
-            // Para usuários fictícios (habbohub, beebop), salvar no localStorage
-      if (habboData.id.startsWith('hhbr-')) {
-                const storageKey = `habbohub_home_${habboData.habbo_name.toLowerCase()}`;
-        
-        // Preparar dados para persistência
-        const homeData = {
-          widgets: changes.widgets || widgets,
-          stickers: changes.stickers || stickers,
-          background: changes.background || background,
-          guestbook: changes.guestbook || guestbook,
-          lastSaved: new Date().toISOString()
-        };
-        
-        // Salvar no localStorage
-                        localStorage.setItem(storageKey, JSON.stringify(homeData));
-        
-        // Verificar se foi salvo corretamente
-        const savedData = localStorage.getItem(storageKey);
-                setLastSaved(new Date());
-        pendingChangesRef.current = {};
-                return;
-      }
-
-      // Para usuários reais, salvar no Supabase
+      // Todos os usuários salvam no Supabase
       if (!supabase) {
-                return;
+        console.error('❌ Supabase não disponível');
+        return;
       }
 
       // Salvar widgets se houver mudanças
@@ -1164,13 +1071,18 @@ export const useHabboHomeV2 = (username: string) => {
 
   // Função para agendar salvamento com debounce
   const scheduleSave = useCallback(() => {
-  // Agendando salvamento automático
+    console.log('⏰ Salvamento agendado em 2 segundos...', {
+      pendingChanges: Object.keys(pendingChangesRef.current),
+      isOwner,
+      habboName: habboData?.habbo_name
+    });
     
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
     
     saveTimeoutRef.current = setTimeout(() => {
+      console.log('💾 Executando saveChanges...');
       saveChanges();
     }, 2000); // Salvar após 2 segundos de inatividade
   }, [saveChanges, isOwner, habboData]);
@@ -1246,32 +1158,10 @@ export const useHabboHomeV2 = (username: string) => {
       const centerX = 20;
       const centerY = 20;
       
-      // Para usuários fictícios, apenas atualizar estado local
-      if (habboData.id.startsWith('hhbr-')) {
-                const newSticker: Sticker = {
-          id: `sticker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          sticker_id: stickerId,
-          x: centerX,
-          y: centerY,
-          z_index: nextZ,
-          scale: 1.0,
-          rotation: 0,
-          sticker_src: stickerSrc,
-          category: category || 'outros'
-        };
-        
-        const updatedStickers = [...stickers, newSticker];
-        setStickers(updatedStickers);
-        
-        // Adicionar às mudanças pendentes
-        pendingChangesRef.current.stickers = updatedStickers;
-        scheduleSave();
-        
-                return true;
-      }
-      
+      // Todos os usuários salvam no Supabase
       if (!supabase) {
-                return false;
+        console.error('❌ Supabase não disponível');
+        return false;
       }
       
       const payload = {
@@ -1342,18 +1232,7 @@ export const useHabboHomeV2 = (username: string) => {
     if (!isOwner || !habboData) return;
 
     try {
-      // Para usuários fictícios, apenas atualizar estado local
-      if (habboData.id.startsWith('hhbr-')) {
-        const updatedStickers = stickers.filter(sticker => sticker.id !== stickerId);
-        setStickers(updatedStickers);
-        
-        // Adicionar às mudanças pendentes
-        pendingChangesRef.current.stickers = updatedStickers;
-        scheduleSave();
-        
-                return;
-      }
-
+      // Todos os usuários deletam do Supabase
       await supabase
         .from('user_stickers')
         .delete()
@@ -1363,11 +1242,10 @@ export const useHabboHomeV2 = (username: string) => {
       const updatedStickers = stickers.filter(sticker => sticker.id !== stickerId);
       setStickers(updatedStickers);
       
-      // Adicionar às mudanças pendentes
-      pendingChangesRef.current.stickers = updatedStickers;
-      scheduleSave();
+      console.log(`✅ Sticker ${stickerId} removido. Total restante: ${updatedStickers.length}`);
     } catch (error) {
-          }
+      console.error('❌ Erro ao remover sticker:', error);
+    }
   };
 
   const addWidget = async (widgetType: string): Promise<boolean> => {
@@ -1380,30 +1258,14 @@ export const useHabboHomeV2 = (username: string) => {
     
     const existingWidget = widgets.find(w => w.widget_type === widgetType);
     if (existingWidget) {
-            // Mover widget existente para o canto superior esquerdo (50, 50)
+      // Mover widget existente para o canto superior esquerdo (50, 50)
       const newX = 50;
       const newY = 50;
       
-      // Para usuários fictícios, apenas atualizar estado local
-      if (habboData.id.startsWith('hhbr-')) {
-                const updatedWidgets = widgets.map(widget => 
-          widget.id === existingWidget.id 
-            ? { ...widget, x: newX, y: newY, is_visible: true }
-            : widget
-        );
-        setWidgets(updatedWidgets);
-        
-        // Adicionar às mudanças pendentes
-        pendingChangesRef.current.widgets = updatedWidgets;
-        scheduleSave();
-        
-        console.log(`✅ Widget ${widgetType} movido para posição (${newX}, ${newY})`);
-        return true;
-      }
-      
       try {
         if (!supabase) {
-                    return false;
+          console.error('❌ Supabase não disponível');
+          return false;
         }
         
         // Atualizar posição no banco de dados
@@ -1412,14 +1274,15 @@ export const useHabboHomeV2 = (username: string) => {
           .update({ 
             x: newX, 
             y: newY,
-            is_visible: true, // Garantir que está visível
+            is_visible: true,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingWidget.id)
           .eq('user_id', habboData.id);
 
         if (error) {
-                    return false;
+          console.error('❌ Erro ao atualizar widget:', error);
+          return false;
         }
 
         // Atualizar estado local
@@ -1434,26 +1297,9 @@ export const useHabboHomeV2 = (username: string) => {
         console.log(`✅ Widget ${widgetType} movido para posição (${newX}, ${newY})`);
         return true;
       } catch (error) {
-                return false;
+        console.error('❌ Erro ao mover widget:', error);
+        return false;
       }
-    }
-
-    // Para usuários fictícios, criar widget localmente
-    if (habboData.id.startsWith('hhbr-')) {
-            const newWidget: Widget = {
-        id: `widget-${widgetType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        widget_type: widgetType,
-        x: 50,
-        y: 50,
-        z_index: Math.max(0, ...widgets.map(w => w.z_index || 0)) + 1,
-        width: 200,
-        height: 100,
-        is_visible: true,
-        config: {}
-      };
-      
-      setWidgets(prev => [...prev, newWidget]);
-            return true;
     }
 
     // Verificar se há widget oculto no banco de dados
@@ -1564,26 +1410,15 @@ export const useHabboHomeV2 = (username: string) => {
     if (!isOwner || !habboData) return;
 
     try {
-            // Find the widget to check its type
+      // Find the widget to check its type
       const widget = widgets.find(w => w.id === widgetId);
       if (!widget) {
-                return;
-      }
-
-      // Para usuários fictícios, apenas atualizar estado local
-      if (habboData.id.startsWith('hhbr-')) {
-        const updatedWidgets = widgets.filter(w => w.id !== widgetId);
-        setWidgets(updatedWidgets);
-        
-        // Adicionar às mudanças pendentes
-        pendingChangesRef.current.widgets = updatedWidgets;
-        scheduleSave();
-        
-                return;
+        return;
       }
 
       if (!supabase) {
-                return;
+        console.error('❌ Supabase não disponível');
+        return;
       }
 
       // Remove widget completely from database
@@ -1594,24 +1429,23 @@ export const useHabboHomeV2 = (username: string) => {
         .eq('user_id', habboData.id);
 
       if (error) {
-                return;
+        console.error('❌ Erro ao remover widget:', error);
+        return;
       }
 
       // Update local state
       const updatedWidgets = widgets.filter(widget => widget.id !== widgetId);
       setWidgets(updatedWidgets);
       
-      // Adicionar às mudanças pendentes
-      pendingChangesRef.current.widgets = updatedWidgets;
-      scheduleSave();
-      
-          } catch (error) {
-          }
+      console.log(`✅ Widget ${widgetId} removido`);
+    } catch (error) {
+      console.error('❌ Erro ao remover widget:', error);
+    }
   };
 
   const updateBackground = async (bgType: 'color' | 'cover' | 'repeat' | 'image', bgValue: string) => {
     if (!isOwner || !habboData) {
-            return;
+      return;
     }
 
     try {
@@ -1622,89 +1456,42 @@ export const useHabboHomeV2 = (username: string) => {
       };
       setBackground(newBackground);
 
-      // Para usuários fictícios (habbohub, beebop), salvar também no Supabase
-      if (habboData.id.startsWith('hhbr-')) {
-        // Salvar no localStorage para persistência local
-        pendingChangesRef.current.background = newBackground;
-        scheduleSave();
-        
-        // Também salvar no Supabase para que apareça nos cards da página /homes
-        if (supabase) {
-          const supabaseUserId = getSupabaseUserId(habboData.id);
+      // TODOS os usuários salvam via edge function (bypass RLS)
+      try {
+        const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/sync-home-assets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'update_background',
+            habbo_name: username,
+            background: {
+              type: bgType,
+              value: bgValue
+            }
+          })
+        });
+
+        if (response.ok) {
+          console.log('✅ Background salvo via edge function para todos os cards');
           
-          const { error: supabaseError } = await supabase
-            .from('user_home_backgrounds')
-            .upsert({
-              user_id: supabaseUserId,
-              background_type: bgType,
-              background_value: bgValue,
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'user_id'
-            });
-          
-          if (supabaseError) {
-            console.error('❌ Erro ao salvar background no Supabase:', supabaseError);
-          } else {}
-          
-          // Invalidar cache para atualizar os cards// Invalidação mais agressiva - usar a chave correta
-          await queryClient.removeQueries({ queryKey: ['latest-homes-optimized'] });
+          // Invalidar cache para atualizar os cards
           await queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
-          await queryClient.refetchQueries({ queryKey: ['latest-homes-optimized'] });
-          
-          // Também invalidar fallback para compatibilidade
-          await queryClient.removeQueries({ queryKey: ['latest-homes'] });
           await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
-          
-          // Também invalidar outros caches relacionados
-          await queryClient.removeQueries({ queryKey: ['most-visited-homes'] });
-          await queryClient.removeQueries({ queryKey: ['top-rated-homes'] });
           await queryClient.invalidateQueries({ queryKey: ['most-visited-homes'] });
           await queryClient.invalidateQueries({ queryKey: ['top-rated-homes'] });
+        } else {
+          const error = await response.json();
+          console.warn('⚠️ Edge function falhou:', error);
         }
-        
-        return;
-      }
-
-      // Para usuários reais, salvar apenas no Supabase
-      if (!supabase) {
-                return;
+      } catch (edgeFunctionError) {
+        console.error('❌ Erro ao chamar edge function:', edgeFunctionError);
       }
       
-      const supabaseUserId = getSupabaseUserId(habboData.id);
-      
-      const { data, error } = await supabase
-        .from('user_home_backgrounds')
-        .upsert({
-          user_id: supabaseUserId,
-          background_type: bgType,
-          background_value: bgValue,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        })
-        .select();
-
-      if (error) {
-        console.error('❌ Erro ao salvar background no Supabase:', error);
-        return;
-      }// Invalidar cache para atualizar os cards// Invalidação mais agressiva - usar a chave correta
-      await queryClient.removeQueries({ queryKey: ['latest-homes-optimized'] });
-      await queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
-      await queryClient.refetchQueries({ queryKey: ['latest-homes-optimized'] });
-      
-      // Também invalidar fallback para compatibilidade
-      await queryClient.removeQueries({ queryKey: ['latest-homes'] });
-      await queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
-      
-      // Também invalidar outros caches relacionados
-      await queryClient.removeQueries({ queryKey: ['most-visited-homes'] });
-      await queryClient.removeQueries({ queryKey: ['top-rated-homes'] });
-      await queryClient.invalidateQueries({ queryKey: ['most-visited-homes'] });
-      await queryClient.invalidateQueries({ queryKey: ['top-rated-homes'] });
-      
-          } catch (error) {
-          }
+    } catch (error) {
+      console.error('❌ Erro ao atualizar background:', error);
+    }
   };
 
   useEffect(() => {
@@ -1720,33 +1507,7 @@ export const useHabboHomeV2 = (username: string) => {
     }
 
     try {
-      // Para usuários fictícios, criar entrada local
-      if (habboData.id.startsWith('hhbr-')) {
-                const newEntry = {
-          id: `guestbook-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          home_owner_user_id: habboData.id,
-          author_user_id: habboAccount.id,
-          author_habbo_name: habboAccount.habbo_name,
-          message: message.trim(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          moderation_status: 'approved',
-          author_look: '',
-          author_hotel: 'br'
-        };
-        
-        // Atualizar estado local
-        const updatedGuestbook = [newEntry, ...guestbook];
-        setGuestbook(updatedGuestbook);
-        
-        // Adicionar às mudanças pendentes
-        pendingChangesRef.current.guestbook = updatedGuestbook;
-        scheduleSave();
-        
-                return newEntry;
-      }
-
-      // Para usuários reais, inserir no Supabase
+      // Todos os usuários inserem no Supabase
       const { data, error } = await supabase
         .from('guestbook_entries')
         .insert({
@@ -1773,25 +1534,12 @@ export const useHabboHomeV2 = (username: string) => {
 
   // Função para deletar mensagem do guestbook
   const deleteGuestbookMessage = async (entryId: string) => {
-        if (!habboAccount) {
-            throw new Error('Usuário não autenticado');
+    if (!habboAccount) {
+      throw new Error('Usuário não autenticado');
     }
 
     try {
-      // Para usuários fictícios, deletar localmente
-      if (habboData?.id.startsWith('hhbr-')) {
-                // Atualizar estado local
-        const updatedGuestbook = guestbook.filter(entry => entry.id !== entryId);
-        setGuestbook(updatedGuestbook);
-        
-        // Adicionar às mudanças pendentes
-        pendingChangesRef.current.guestbook = updatedGuestbook;
-        scheduleSave();
-        
-                return;
-      }
-
-            // Primeiro, vamos verificar se o comentário existe e suas permissões
+      // Primeiro, vamos verificar se o comentário existe e suas permissões
       const { data: existingEntry, error: fetchError } = await supabase
         .from('guestbook_entries')
         .select('*')

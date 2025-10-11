@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { habboFeedService } from '@/services/habboFeedService';
-import { useUnifiedAuth } from './useUnifiedAuth';
+import { habboProxyService } from '@/services/habboProxyService';
+import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useInitializeUserFeed = () => {
@@ -18,7 +18,7 @@ export const useInitializeUserFeed = () => {
 
       try {
                 // Garantir que o próprio usuário está sendo rastreado
-        await habboFeedService.ensureTrackedAndSynced({
+        await habboProxyService.ensureTrackedAndSynced({
           habbo_name: habboAccount.habbo_name,
           habbo_id: habboAccount.habbo_id,
           hotel: habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel
@@ -35,12 +35,10 @@ export const useInitializeUserFeed = () => {
                   } else {
                   }
 
-        // Descobrir usuários online baseado no hotel do usuário
-        const hotel = habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel;
-        await habboFeedService.discoverAndSyncOnlineUsers(hotel, 50);
-
-        // Sincronizar dados em lote para ter conteúdo inicial
-        await habboFeedService.triggerBatchSync(hotel);
+        // COMENTADO: Funções não existem mais no habboFeedService
+        // const hotel = habboAccount.hotel === 'br' ? 'com.br' : habboAccount.hotel;
+        // await habboProxyService.discoverAndSyncOnlineUsers(hotel, 50);
+        // await habboProxyService.triggerBatchSync(hotel);
 
               } catch (error) {
               } finally {
