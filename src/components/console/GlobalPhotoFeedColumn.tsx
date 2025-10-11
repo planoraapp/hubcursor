@@ -6,7 +6,7 @@ import {
   Camera
 } from 'lucide-react';
 import { useGlobalPhotoFeed } from '@/hooks/useGlobalPhotoFeed';
-import { EnhancedPhotoCard } from './EnhancedPhotoCard';
+import { EnhancedPhotoCard } from '@/components/console/EnhancedPhotoCard';
 import { ProfileModal } from '@/components/ProfileModal';
 
 interface GlobalPhotoFeedColumnProps {

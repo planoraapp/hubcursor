@@ -184,64 +184,65 @@ const TamagotchiCompact = () => {
   return (
     <div className="tamagotchi-frame-outer">
       <div className="tamagotchi-header-bar">
-        <div className="tamagotchi-title"> Tamagotchi Habbo</div>
-        <div className="tamagotchi-pattern"></div>
+        <div className="tamagotchi-title">🐾 Tamagotchi Habbo</div>
       </div>
       
       {/* Preview do Pet */}
       <div className="tamagotchi-inner-content">
         <div className="tamagotchi-pet-display">
-          <div 
-            className="w-16 h-16 mx-auto mb-2 cursor-pointer hover:scale-110 transition-transform"
-            onClick={rotatePet}
-            title={`Clique para rotacionar (direção atual: ${currentDirection}) - Direções: ${Object.keys(currentPetData.spriteUrls || {}).join(', ')}`}
-          >
-            {/* Pet Image ou Emoji com Rotação */}
-            {!shouldUseSprite() ? (
-              <div 
-                className="text-4xl flex items-center justify-center w-full h-full"
-                style={getPetRotationStyle()}
-              >
-                {currentPetData.emoji}
-              </div>
-            ) : (
-              <img
-                src={getPetImage()}
-                alt={currentPetData.name}
-                className="w-full h-full object-contain"
-                onError={() => {
-                  console.log('❌ [Tamagotchi] Erro ao carregar sprite:', getPetImage());
-                  setImageError(true);
-                }}
-                onLoad={() => {
-                                  }}
-                style={{ imageRendering: 'pixelated' }} // Para manter qualidade pixel art
-              />
-            )}
+          <div className="flex-grow flex flex-col items-center justify-center">
+            <div 
+              className="w-16 h-16 mx-auto mb-2 cursor-pointer hover:scale-110 transition-transform"
+              onClick={rotatePet}
+              title={`Clique para rotacionar (direção atual: ${currentDirection}) - Direções: ${Object.keys(currentPetData.spriteUrls || {}).join(', ')}`}
+            >
+              {/* Pet Image ou Emoji com Rotação */}
+              {!shouldUseSprite() ? (
+                <div 
+                  className="text-4xl flex items-center justify-center w-full h-full"
+                  style={getPetRotationStyle()}
+                >
+                  {currentPetData.emoji}
+                </div>
+              ) : (
+                <img
+                  src={getPetImage()}
+                  alt={currentPetData.name}
+                  className="w-full h-full object-contain"
+                  onError={() => {
+                    console.log('❌ [Tamagotchi] Erro ao carregar sprite:', getPetImage());
+                    setImageError(true);
+                  }}
+                  onLoad={() => {
+                                    }}
+                  style={{ imageRendering: 'pixelated' }} // Para manter qualidade pixel art
+                />
+              )}
+            </div>
+            
+            {/* Pet Name */}
+            <div className="volter-font text-sm font-semibold text-white mb-2">
+              {currentPetData.name}
+            </div>
           </div>
           
-          {/* Pet Name */}
-          <div className="volter-font text-sm font-semibold text-gray-700 mb-2">
-            {currentPetData.name}
-          </div>
-          
-          {/* Mini Stats */}
-          <div className="grid grid-cols-3 gap-1 text-xs">
+          {/* Mini Stats - fixados na parte inferior */}
+          <div className="grid grid-cols-3 gap-1 text-xs mt-auto">
             <div className="text-center">
-              <div className="text-red-600">🍽️</div>
-              <div className={`volter-font ${hunger < 30 ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+              <div className="text-red-400">🍽️</div>
+              <div className={`volter-font ${hunger < 30 ? 'text-red-400 font-bold' : 'text-white'}`}>
                 {Math.round(hunger)}%
               </div>
             </div>
             <div className="text-center">
-              <div className="text-blue-600">⚡</div>
-              <div className={`volter-font ${energy < 30 ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+              <div className="text-blue-400">⚡</div>
+              <div className={`volter-font ${energy < 30 ? 'text-red-400 font-bold' : 'text-white'}`}>
                 {Math.round(energy)}%
               </div>
             </div>
             <div className="text-center">
-              <div className="text-yellow-600">😊</div>
-              <div className={`volter-font ${happiness < 30 ? 'text-red-600 font-bold' : 'text-gray-600'}`}>
+              <div className="text-yellow-400">😊</div>
+              <div className={`volter-font ${happiness < 30 ? 'text-red-400 font-bold' : 'text-white'}`}>
                 {Math.round(happiness)}%
               </div>
             </div>
@@ -294,17 +295,18 @@ const TamagotchiCompact = () => {
 
       {/* Modal com o Tamagotchi completo */}
       <Dialog open={isModalOpen} onOpenChange={closeModal}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="volter-font text-xl text-center">
-              Tamagotchi Habbo - {currentPetData.name}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 border-0">
+          <div className="tamagotchi-modal-frame">
+            <div className="tamagotchi-modal-header">
+              <div className="tamagotchi-modal-title">
+                🐾 Tamagotchi Habbo - {currentPetData.name}
+              </div>
+            </div>
+            
+            <div className="tamagotchi-modal-content space-y-4">
             {/* Pet Display */}
-            <div className="bg-gradient-to-b from-slate-700 to-slate-800 rounded-lg p-6 text-center">
-              <div className="bg-slate-600 rounded-lg p-4 mb-4">
+            <div className="rounded-lg p-6 text-center">
+              <div className="bg-slate-600/50 rounded-lg p-4 mb-4">
                 {/* Pet Selector */}
                 <div className="mb-4">
                   <label className="block text-white text-sm volter-font mb-2">Escolha seu pet:</label>
@@ -356,8 +358,8 @@ const TamagotchiCompact = () => {
                 
                 {/* Stats */}
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center text-white text-sm">
-                    <span className="volter-font">Fome:</span>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="volter-font text-white">Fome:</span>
                     <div className="flex-1 mx-2">
                       <div className="w-full bg-slate-700 rounded-full h-2">
                         <div 
@@ -369,11 +371,11 @@ const TamagotchiCompact = () => {
                         />
                       </div>
                     </div>
-                    <span className="volter-font text-xs">{Math.round(hunger)}%</span>
+                    <span className="volter-font text-xs text-white">{Math.round(hunger)}%</span>
                   </div>
                   
-                  <div className="flex justify-between items-center text-white text-sm">
-                    <span className="volter-font">Energia:</span>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="volter-font text-white">Energia:</span>
                     <div className="flex-1 mx-2">
                       <div className="w-full bg-slate-700 rounded-full h-2">
                         <div 
@@ -385,11 +387,11 @@ const TamagotchiCompact = () => {
                         />
                       </div>
                     </div>
-                    <span className="volter-font text-xs">{Math.round(energy)}%</span>
+                    <span className="volter-font text-xs text-white">{Math.round(energy)}%</span>
                   </div>
                   
-                  <div className="flex justify-between items-center text-white text-sm">
-                    <span className="volter-font">Felicidade:</span>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="volter-font text-white">Felicidade:</span>
                     <div className="flex-1 mx-2">
                       <div className="w-full bg-slate-700 rounded-full h-2">
                         <div 
@@ -401,12 +403,12 @@ const TamagotchiCompact = () => {
                         />
                       </div>
                     </div>
-                    <span className="volter-font text-xs">{Math.round(happiness)}%</span>
+                    <span className="volter-font text-xs text-white">{Math.round(happiness)}%</span>
                   </div>
                   
-                  <div className="flex justify-between items-center text-white text-sm">
-                    <span className="volter-font">Idade:</span>
-                    <span className="volter-font">{age} dias</span>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="volter-font text-white">Idade:</span>
+                    <span className="volter-font text-white">{age} dias</span>
                   </div>
                 </div>
               </div>
@@ -456,15 +458,15 @@ const TamagotchiCompact = () => {
             </div>
             
             {/* Info */}
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <div className="volter-font text-xs text-gray-600 text-center space-y-1">
+            <div className="bg-blue-900/30 p-3 rounded-lg border border-blue-500/30">
+              <div className="volter-font text-xs text-blue-100 text-center space-y-1">
                 <p><strong>🎮 Como jogar:</strong></p>
-                <p>• Clique no pet para rotacioná-lo (8 direções como no Habbo)</p>
+                <p>• Clique no pet para rotacioná-lo</p>
                 <p>• Use os botões para cuidar do seu pet</p>
                 <p>• Mantenha as barras sempre altas!</p>
                 <p>• Os stats diminuem automaticamente com o tempo</p>
-                <p><strong>🐒 Pets:</strong> Imagens reais baixadas do Habbo!</p>
               </div>
+            </div>
             </div>
           </div>
         </DialogContent>

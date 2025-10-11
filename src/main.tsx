@@ -17,7 +17,7 @@ import NotFound from './pages/NotFound'
 // 🚀 LAZY LOADING: Páginas não-críticas carregam sob demanda
 const Console = lazy(() => import('./pages/Console'))
 const ConsolePopup = lazy(() => import('./pages/ConsolePopup'))
-const HabboHomeV2 = lazy(() => import('./pages/HabboHomeV2'))
+const HabboHome = lazy(() => import('./pages/HabboHome'))
 const Homes = lazy(() => import('./pages/Homes'))
 const Journal = lazy(() => import('./pages/Journal'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
@@ -29,7 +29,7 @@ const AvatarEditor = lazy(() => import('./pages/AvatarEditor'))
 const AltCodesPage = lazy(() => import('./pages/AltCodes'))
 const Profile = lazy(() => import('./pages/Profile'))
 const NotificationDemo = lazy(() => import('./pages/NotificationDemo'))
-const BeebopHome = lazy(() => import('./pages/BeebopHome'))
+const HubHome = lazy(() => import('./pages/HubHome'))
 const FontTest = lazy(() => import('./components/FontTest').then(m => ({ default: m.FontTest })))
 const FontAlternativeTest = lazy(() => import('./components/FontAlternativeTest').then(m => ({ default: m.FontAlternativeTest })))
 const HomeRedirect = lazy(() => import('./components/HomeRedirect'))
@@ -105,7 +105,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/home/:username",
-    element: withSuspense(HabboHomeV2),
+    element: withSuspense(HabboHome),
   },
   // Redirect from old /homes routes for backward compatibility
   {
@@ -118,7 +118,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/enhanced-home/:username",
-    element: withSuspense(HabboHomeV2),
+    element: withSuspense(HabboHome),
   },
   {
     path: "/noticias",
@@ -181,8 +181,8 @@ const router = createBrowserRouter([
     element: withSuspense(NotificationDemo),
   },
   {
-    path: "/beebop-home",
-    element: withSuspense(BeebopHome),
+    path: "/hub-home",
+    element: withSuspense(HubHome),
   },
   {
     path: "*",

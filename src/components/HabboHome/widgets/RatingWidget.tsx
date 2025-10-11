@@ -102,13 +102,19 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
   return (
     <div className={`flex flex-col items-center justify-center p-3 bg-white rounded-md volter-font ${className}`}
          style={{ width: '200px', height: '180px' }}>
-      {/* Média */}
-      <div className="text-3xl font-bold text-black mb-1 volter-font">
-        {averageRating > 0 ? averageRating.toFixed(1) : '—'}
+      {/* Média com fonte Volter Goldfish */}
+      <div 
+        className="text-2xl font-bold mb-2 volter-goldfish-font"
+        style={{
+          color: 'white',
+          textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000'
+        }}
+      >
+        {averageRating.toFixed(1)}
       </div>
       
-      {/* Estrelas */}
-      <div className="mb-2">
+      {/* Estrelas - mostra média mas permite votar se logado */}
+      <div className="mb-3">
         <StarRating
           rating={habboAccount ? userRating : averageRating}
           onRate={habboAccount ? handleRate : undefined}
@@ -117,7 +123,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
         />
       </div>
       
-      {/* Contador */}
+      {/* Contador de votos */}
       <div className="text-xs text-gray-600 text-center volter-font">
         {totalRatings === 0 
           ? 'Sem avaliações' 
@@ -126,7 +132,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       </div>
       
       {!habboAccount && (
-        <div className="text-[10px] text-gray-500 mt-1 text-center volter-font">
+        <div className="text-[10px] text-gray-500 mt-2 text-center volter-font">
           Login para avaliar
         </div>
       )}

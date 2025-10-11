@@ -16,7 +16,7 @@ import { HotelTag } from '@/components/HotelTag';
 import { extractOriginalUsername, extractHotelFromUsername, getHotelConfig } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 
-const HabboHomeV2: React.FC = () => {
+const HabboHome: React.FC = () => {
   const { username: urlUsername } = useParams<{ username: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -425,4 +425,5 @@ const HabboHomeV2: React.FC = () => {
   );
 };
 
-export default HabboHomeV2;
+export default HabboHome;
+

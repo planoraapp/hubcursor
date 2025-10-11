@@ -1,6 +1,6 @@
 ﻿import React, { useState } from "react";
 import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
-import { EnhancedPhotoCard } from "@/components/console2/EnhancedPhotoCard";
+import { EnhancedPhotoCard } from "@/components/console/EnhancedPhotoCard";
 import { EnhancedPhoto } from "@/types/habbo";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 

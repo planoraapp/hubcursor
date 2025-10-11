@@ -845,3 +845,116 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Safari and Chrome */
 }
+
+/* Tamagotchi Frame Styles - Versão Azul da moldura do console */
+.tamagotchi-frame-outer {
+  width: 100%;
+  max-width: 100%;
+  background: #3B82F6; /* blue-500 */
+  box-shadow: inset 0px 0px 0px 1px #60A5FA, inset 0px 0px 0px 2px #93C5FD;
+  border-radius: 12px;
+  border: 1px solid #000000;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tamagotchi-header-bar {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.tamagotchi-title {
+  font-family: 'Ubuntu Condensed', sans-serif;
+  color: #1E3A8A; /* blue-900 */
+  font-size: 11px;
+  font-weight: bold;
+  user-select: none;
+  flex-shrink: 0;
+  margin: 0 auto;
+  text-align: center;
+  width: 100%;
+}
+
+.tamagotchi-pattern {
+  flex-grow: 1;
+  min-height: 15px;
+  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAAECAYAAABLLYUHAAAAM0lEQVQYV2P8fYbhP4t8B8OfhxUMjGcXMfzX02JguHSNgYHx/+uO/yBRkCwjSBlIFCQLAFXCFXD0jQEvAAAAAElFTkSuQmCC') repeat;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.tamagotchi-inner-content {
+  flex-grow: 1;
+  border-radius: 8px;
+  background: repeating-linear-gradient(0deg, #313131, #535353 2px, #313131 2px);
+  box-shadow: inset 0px 0px 0px 1px black, inset 0 25px 0 -15px rgba(0, 0, 0, 0.45), inset 25px 0px 0 -15px rgba(0, 0, 0, 0.45), inset 0 -10px 0 -5px rgba(0, 0, 0, 0.45);
+  color: white;
+  padding: 15px;
+  border-top: 2px solid #1E40AF; /* blue-800 */
+  border-left: 1px solid #1D4ED8; /* blue-700 */
+  border-right: 1px solid #DBEAFE; /* blue-100 */
+  border-bottom: 1px solid #DBEAFE;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tamagotchi-pet-display {
+  text-align: center;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
+}
+
+/* Tamagotchi Modal Frame - versão azul para modal */
+.tamagotchi-modal-frame {
+  background: #3B82F6;
+  box-shadow: inset 0px 0px 0px 1px #60A5FA, inset 0px 0px 0px 2px #93C5FD;
+  border-radius: 12px;
+  border: 1px solid #000000;
+  padding: 10px;
+}
+
+.tamagotchi-modal-header {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1E40AF;
+}
+
+.tamagotchi-modal-title {
+  font-family: 'Ubuntu Condensed', sans-serif;
+  color: #1E3A8A;
+  font-size: 14px;
+  font-weight: bold;
+  user-select: none;
+  flex-shrink: 0;
+  margin: 0 auto;
+  text-align: center;
+  width: 100%;
+}
+
+.tamagotchi-modal-content {
+  border-radius: 8px;
+  background: repeating-linear-gradient(0deg, #313131, #535353 2px, #313131 2px);
+  box-shadow: inset 0px 0px 0px 1px black;
+  color: white;
+  padding: 20px;
+  border-top: 2px solid #1E40AF;
+  border-left: 1px solid #1D4ED8;
+  border-right: 1px solid #DBEAFE;
+  border-bottom: 1px solid #DBEAFE;
+}

@@ -411,7 +411,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
         .from('user_home_widgets')
         .delete()
         .eq('id', widgetId)
-        .eq('user_id', habboData.id);
+        .eq('user_id', habboData.supabase_user_id);
 
       if (error) {
         console.error('❌ Erro ao remover widget:', error);
@@ -485,7 +485,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
         .from('user_stickers')
         .delete()
         .eq('id', stickerId)
-        .eq('user_id', habboData.id);
+        .eq('user_id', habboData.supabase_user_id);
 
       if (error) {
         console.error('❌ Erro ao remover sticker:', error);
@@ -499,8 +499,8 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
     }
   };
 
-  const bringToFront = (stickerId: string) => {
-    if (!isOwner) return;
+  const bringToFront = useCallback((stickerId: string) => {
+    if (!isOwner || !habboData) return;
 
     const sticker = stickers.find(s => s.id === stickerId);
     if (!sticker) return;
@@ -512,14 +512,16 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
       const newZ = maxZ + 1;
       
       // Atualizar estado local imediatamente
-      setStickers(prev => prev.map(s => 
-        s.id === stickerId ? { ...s, z_index: newZ } : s
-      ));
-
-      // Salvar no banco em background
-      debouncedSave({ stickers: [{ ...sticker, z_index: newZ }] });
+      setStickers(prev => {
+        const updated = prev.map(s => 
+          s.id === stickerId ? { ...s, z_index: newZ } : s
+        );
+        pendingChangesRef.current.stickers = updated;
+        scheduleSave();
+        return updated;
+      });
     }
-  };
+  }, [isOwner, habboData, stickers, widgets, scheduleSave]);
 
   // ============================================
   // BACKGROUND

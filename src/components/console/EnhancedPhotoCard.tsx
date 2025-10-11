@@ -344,3 +344,4 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     </div>
   );
 };
+

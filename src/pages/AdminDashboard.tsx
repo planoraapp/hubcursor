@@ -24,9 +24,6 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
-import { setupBeebopForLatestHomes } from '@/utils/setupBeebopForLatestHomes';
-import { setupBeebopForLatestHomesAdmin } from '@/utils/setupBeebopForLatestHomesAdmin';
-import { setupBeebopForLatestHomesEdgeFunction } from '@/utils/setupBeebopForLatestHomesEdgeFunction';
 import { useNavigate } from 'react-router-dom';
 import { AnimationGenerator } from '@/components/AnimationGenerator';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
@@ -148,26 +145,6 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const setupBeebopHandler = async () => {
-    try {
-      // Tentar primeiro com edge function
-      const result = await setupBeebopForLatestHomesEdgeFunction();
-      if (result.success) {
-        alert('Beebop configurado com sucesso para aparecer nas últimas homes!');
-        await loadStats();
-      } else {
-        // Fallback para método adminconst fallbackResult = await setupBeebopForLatestHomesAdmin();
-        if (fallbackResult.success) {
-          alert('Beebop configurado com sucesso para aparecer nas últimas homes!');
-          await loadStats();
-        } else {
-          alert(`Erro ao configurar Beebop: ${fallbackResult.message}`);
-        }
-      }
-    } catch (error) {
-            alert('Erro ao configurar Beebop');
-    }
-  };
 
   if (loading) {
     return (
@@ -435,13 +412,6 @@ export const AdminDashboard: React.FC = () => {
                       className="w-full volter-font"
                     >
                       🎬 Gerador de Animações
-                    </Button>
-                    <Button
-                      onClick={setupBeebopHandler}
-                      variant="outline"
-                      className="w-full volter-font"
-                    >
-                      🏠 Configurar Beebop para Últimas Homes
                     </Button>
                   </CardContent>
                 </Card>

@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFriendsPhotosInfinite } from '@/hooks/useFriendsPhotosInfinite';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { PhotoModal } from '../console/PhotoModal';
-import { EnhancedPhotoCard } from './EnhancedPhotoCard';
+import { EnhancedPhotoCard } from '@/components/console/EnhancedPhotoCard';
 import { EnhancedPhoto } from '@/types/habbo';
 
 // Componente de loading otimizado

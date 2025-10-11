@@ -16,13 +16,13 @@ import { HotelTag } from '@/components/HotelTag';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { useQuickNotification } from '@/hooks/useNotification';
 
-const BeebopHome: React.FC = () => {
+const HubHome: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { success } = useQuickNotification();
   const { habboAccount } = useAuth();
 
-  // Usar o hook useHabboHome para buscar dados reais do Beebop
+  // Usar o hook useHabboHome para buscar dados reais
   const {
     widgets,
     stickers,
@@ -106,7 +106,7 @@ const BeebopHome: React.FC = () => {
         <Card className="bg-white/90 backdrop-blur-sm p-8">
           <div className="flex items-center space-x-4">
             <Loader2 className="w-8 h-8 animate-spin text-yellow-600" />
-            <span className="text-lg">Carregando dados do Beebop...</span>
+            <span className="text-lg">Carregando dados da Hub Home...</span>
           </div>
         </Card>
       </div>
@@ -120,7 +120,7 @@ const BeebopHome: React.FC = () => {
         <Card className="bg-white/90 backdrop-blur-sm p-8">
           <div className="text-center">
             <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar dados</h2>
-            <p className="text-gray-600">Não foi possível carregar os dados do Beebop.</p>
+            <p className="text-gray-600">Não foi possível carregar os dados da Hub Home.</p>
             <Button onClick={() => navigate(-1)} className="mt-4">
               Voltar
             </Button>
@@ -373,4 +373,5 @@ const BeebopHome: React.FC = () => {
   );
 };
 
-export default BeebopHome;
+export default HubHome;
+

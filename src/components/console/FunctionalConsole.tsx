@@ -15,12 +15,12 @@ import { GroupsModal } from '@/components/profile/modals/GroupsModal';
 import { usePhotoInteractions } from '@/hooks/usePhotoInteractions';
 import { PhotoCommentsModal } from '@/components/console/modals/PhotoCommentsModal';
 import { PhotoLikesModal } from '@/components/console/modals/PhotoLikesModal';
-import { IndividualPhotoView } from '@/components/console2/IndividualPhotoView';
+import { IndividualPhotoView } from '@/components/console/IndividualPhotoView';
 import { ChatInterface } from '@/components/console/ChatInterface';
 
 const FriendsPhotoFeed = lazy(() => import('./FriendsPhotoFeed').then(module => ({ default: module.FriendsPhotoFeed })));
-const FindPhotoFeedColumn = lazy(() => import('@/components/console2/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
-const GlobalPhotoFeedColumn = lazy(() => import('@/components/console2/GlobalPhotoFeedColumn').then(module => ({ default: module.GlobalPhotoFeedColumn })));
+const FindPhotoFeedColumn = lazy(() => import('@/components/console/FindPhotoFeedColumn').then(module => ({ default: module.FindPhotoFeedColumn })));
+const GlobalPhotoFeedColumn = lazy(() => import('@/components/console/GlobalPhotoFeedColumn').then(module => ({ default: module.GlobalPhotoFeedColumn })));
 
 
 // Componentes de ícones pixelizados no estilo Habbo
