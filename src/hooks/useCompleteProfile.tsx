@@ -82,7 +82,8 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
           };
         }
 
-        // Fallback: usar API direta do Habboconst hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+        // Fallback: usar API direta do Habbo
+        const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
         
         const userResponse = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(username)}`, {
           headers: {
@@ -96,7 +97,9 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         }
 
         const userData = await userResponse.json();
-        const uniqueId = userData.uniqueId;// Buscar dados adicionais em paralelo
+        const uniqueId = userData.uniqueId;
+        
+        // Buscar dados adicionais em paralelo
         const [badgesResponse, friendsResponse, groupsResponse, roomsResponse] = await Promise.allSettled([
           fetch(`https://www.habbo.${hotelDomain}/api/public/users/${uniqueId}/badges`, {
             headers: { 'Accept': 'application/json' }

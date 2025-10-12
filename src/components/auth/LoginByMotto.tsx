@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Copy, CheckCircle2, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LoginByMottoProps {
   onLoginSuccess?: () => void;
@@ -24,7 +24,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
   const [hotel, setHotel] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { loginWithPassword } = useUnifiedAuth();
+  const { login } = useAuth();
 
   const handleGenerateCode = async () => {
     if (!habboName.trim()) {
@@ -39,27 +39,31 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
     setIsGeneratingCode(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
-        body: {
-          habbo_name: habboName.trim(),
-          action: 'generate'
-        }
-      });
-
-      if (error) throw error;
-
-      if (data.error) {
-        throw new Error(data.error);
+      // Gerar código localmente
+      const randomNum = Math.floor(Math.random() * 90000) + 10000;
+      const code = `HUB-${randomNum}`;
+      
+      // Buscar dados do Habbo
+      const response = await fetch(`https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(habboName.trim())}`);
+      
+      if (!response.ok) {
+        throw new Error('Usuário não encontrado no Habbo');
+      }
+      
+      const data = await response.json();
+      
+      if (!data || !data.name) {
+        throw new Error('Usuário não encontrado no Habbo');
       }
 
-      setVerificationCode(data.verification_code);
-      setHabboData(data.habbo_data);
-      setHotel(data.hotel);
+      setVerificationCode(code);
+      setHabboData(data);
+      setHotel('br');
       setStep('verify');
       
       toast({
         title: "Código Gerado!",
-        description: `Código de verificação: ${data.verification_code}`,
+        description: `Código de verificação: ${code}`,
       });
     } catch (error: any) {
       console.error('❌ Error generating code:', error);
@@ -88,44 +92,27 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
     try {
       console.log('🔍 [VERIFY] Starting verification for:', habboName, 'with code:', verificationCode);
       
-      const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
-        body: {
-          habbo_name: habboName.trim(),
-          verification_code: verificationCode,
-          action: 'verify'
-        }
+      // Buscar dados atualizados do Habbo
+      const response = await fetch(`https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(habboName.trim())}`);
+      
+      if (!response.ok) {
+        throw new Error('Usuário não encontrado no Habbo');
+      }
+      
+      const data = await response.json();
+      
+      // Verificar se o código está na motto
+      if (!data.motto || !data.motto.includes(verificationCode)) {
+        throw new Error(`Código ${verificationCode} não encontrado na sua missão. Verifique se você copiou corretamente.`);
+      }
+
+      console.log('✅ [VERIFY] Verification successful');
+      setHabboData(data);
+      setStep('password');
+      toast({
+        title: "Código Verificado!",
+        description: "Agora crie uma senha de 6 caracteres para sua conta.",
       });
-
-      console.log('📡 [VERIFY] Edge function response:', { data, error });
-
-      if (error) {
-        console.error('❌ [VERIFY] Supabase function error:', error);
-        let errorMessage = 'Erro ao verificar código';
-        
-        if (error.message) {
-          errorMessage = error.message;
-        } else if (typeof error === 'string') {
-          errorMessage = error;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      if (data.error) {
-        console.log('❌ [VERIFY] Function returned error:', data.error);
-        throw new Error(data.error);
-      }
-
-      if (data.verified || data.success) {
-        console.log('✅ [VERIFY] Verification successful:', data);
-        setStep('password');
-        toast({
-          title: "Código Verificado!",
-          description: "Agora crie uma senha de 6 caracteres para sua conta.",
-        });
-      } else {
-        throw new Error("Verificação falhou - resposta inesperada do servidor");
-      }
     } catch (error: any) {
       console.error('❌ [VERIFY] Caught exception:', error);
       let errorMessage = error.message || 'Erro ao verificar código. Tente novamente.';
@@ -197,7 +184,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
       // Auto-login após registro/redefinição
       setTimeout(async () => {
         try {
-          await loginWithPassword(habboName.trim(), password);
+          await login(habboName.trim(), password);
           if (onLoginSuccess) {
             onLoginSuccess();
           }

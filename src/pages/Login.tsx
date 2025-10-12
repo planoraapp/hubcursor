@@ -76,12 +76,14 @@ export const Login: React.FC = () => {
         throw new Error(`Código ${verificationCode} não encontrado na sua motto. Verifique se você copiou corretamente.`);
       }
 
-      // Verificar se usuário já existe
-      const { data: existingAccount } = await supabase
+      // Verificar se usuário já existe (case-insensitive)
+      const { data: existingAccounts } = await supabase
         .from('habbo_accounts')
         .select('*')
-        .eq('habbo_name', username)
-        .single();
+        .ilike('habbo_name', username)
+        .limit(1);
+      
+      const existingAccount = existingAccounts?.[0];
 
       if (existingAccount) {
         setMottoStep('password');
@@ -117,37 +119,52 @@ export const Login: React.FC = () => {
     setIsCreatingAccount(true);
     
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('auto-register-via-motto', {
+      console.log('🚀 [LOGIN] Chamando habbo-register-login com:', {
+        habbo_name: username.trim(),
+        verification_code: verificationCode.trim(),
+        hotel: selectedHotel,
+        password_length: newPassword.length
+      });
+
+      const { data, error: functionError } = await supabase.functions.invoke('habbo-complete-auth', {
         body: {
+          action: 'register',
           habbo_name: username.trim(),
           verification_code: verificationCode.trim(),
-          new_password: newPassword,
+          password: newPassword,
           hotel: selectedHotel
         }
       });
 
+      console.log('📡 [LOGIN] Resposta da Edge Function:', { data, error: functionError });
+      console.log('📊 [LOGIN] Data completo:', JSON.stringify(data, null, 2));
+      console.log('⚠️ [LOGIN] Error completo:', JSON.stringify(functionError, null, 2));
+
       if (functionError) {
-        throw new Error(functionError.message || 'Erro na criação da conta');
+        console.error('❌ [LOGIN] Erro da Edge Function:', functionError);
+        console.error('❌ [LOGIN] Data do erro:', data);
+        throw new Error(data?.error || functionError.message || 'Erro na criação da conta');
       }
 
       if (data?.error) {
+        console.error('❌ [LOGIN] Erro nos dados:', data.error);
+        console.error('❌ [LOGIN] Detalhes:', data.details);
         throw new Error(data.error);
       }
 
       if (data?.success) {
         setMottoStep('complete');
-        success('Sucesso!', 'Conta criada com sucesso! Agora você pode fazer login.');
+        success('Sucesso!', data.message || 'Conta criada com sucesso!');
         
-        // Reset form após 3 segundos
-        setTimeout(() => {
-          setUsername('');
-          setPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setVerificationCode('');
-          setLoginMode(null);
-          setMottoStep('generate');
-        }, 3000);
+        // Auto-login com a senha que o usuário definiu
+        setTimeout(async () => {
+          const loginSuccess = await login(username.trim(), newPassword);
+          if (loginSuccess) {
+            // Redireciona automaticamente
+          } else {
+            success('Conta criada!', `Faça login com nome: ${username} e sua senha`);
+          }
+        }, 1500);
       }
     } catch (err: any) {
       let errorMessage = err.message || 'Erro na criação da conta';

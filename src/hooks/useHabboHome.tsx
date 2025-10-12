@@ -166,7 +166,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
       } else {
         // Se não tem widgets, criar um widget profile padrão padronizado
         const defaultProfileWidget: Widget = {
-          id: `profile-${userId}`,
+          id: crypto.randomUUID(),
           widget_type: 'profile',
           x: 20,
           y: 20,

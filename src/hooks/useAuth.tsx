@@ -57,38 +57,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       
-      // 1. Buscar conta no Supabase
-      const { data: habboAccount, error: accountError } = await supabase
-        .from('habbo_accounts')
-        .select('*')
-        .eq('habbo_name', username)
-        .single();
-
-      if (accountError || !habboAccount) {
-        toast({
-          title: "Erro no login",
-          description: "Usuário não encontrado",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // 2. Fazer login no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: `${habboAccount.habbo_id}@habbohub.com`,
-        password: password
+      // Login via Edge Function
+      const { data, error: functionError } = await supabase.functions.invoke('habbo-complete-auth', {
+        body: {
+          action: 'login',
+          habbo_name: username.trim(),
+          password: password
+        }
       });
 
-      if (authError) {
+      if (functionError || !data?.success) {
         toast({
           title: "Erro no login",
-          description: "Senha incorreta",
+          description: data?.error || "Usuário não encontrado ou senha incorreta",
           variant: "destructive"
         });
         return false;
       }
 
-      // 3. Salvar sessão no localStorage
+      const habboAccount = data.account;
+
+      // Salvar sessão no localStorage
       const sessionData = {
         id: habboAccount.id,
         supabase_user_id: habboAccount.supabase_user_id,
@@ -127,9 +116,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async (): Promise<void> => {
     try {
       setLoading(true);
-      
-      // Fazer logout no Supabase Auth
-      await supabase.auth.signOut();
       
       // Limpar sessão local
       localStorage.removeItem('habbohub_session');

@@ -64,3 +64,8 @@ site-*.html
 # Supabase local files
 .supabase/
 .vercel
+
+# Scripts with sensitive keys
+scripts/delete-duplicate-account.cjs
+scripts/check-and-unify-accounts.cjs
+scripts/fix-home-rls.mjs
