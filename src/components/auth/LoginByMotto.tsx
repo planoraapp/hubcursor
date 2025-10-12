@@ -39,12 +39,16 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
     setIsGeneratingCode(true);
     
     try {
-      // Gerar código localmente
-      const randomNum = Math.floor(Math.random() * 90000) + 10000;
-      const code = `HUB-${randomNum}`;
+      // Gerar código localmente (formato HUB#XXXX com letras/números)
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = 'HUB#';
+      for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
       
-      // Buscar dados do Habbo
-      const response = await fetch(`https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(habboName.trim())}`);
+      // Buscar dados do Habbo (usar hotel selecionado)
+      const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+      const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(habboName.trim())}`);
       
       if (!response.ok) {
         throw new Error('Usuário não encontrado no Habbo');
@@ -92,8 +96,9 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
     try {
       console.log('🔍 [VERIFY] Starting verification for:', habboName, 'with code:', verificationCode);
       
-      // Buscar dados atualizados do Habbo
-      const response = await fetch(`https://www.habbo.com.br/api/public/users?name=${encodeURIComponent(habboName.trim())}`);
+      // Buscar dados atualizados do Habbo (usar hotel selecionado)
+      const hotelDomain = hotel === 'br' ? 'com.br' : hotel;
+      const response = await fetch(`https://www.habbo.${hotelDomain}/api/public/users?name=${encodeURIComponent(habboName.trim())}`);
       
       if (!response.ok) {
         throw new Error('Usuário não encontrado no Habbo');

@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
       const habboData = await habboResponse.json()
       
-      // Verificar código
+      // Verificar código (formato HUB#XXXX)
       if (!habboData.motto?.includes(verification_code)) {
         return new Response(
           JSON.stringify({ error: 'Código não encontrado na missão' }),
@@ -60,37 +60,34 @@ Deno.serve(async (req) => {
       // Verificar se existe
       const { data: existing } = await supabase
         .from('habbo_accounts')
-        .select('id')
+        .select('*')
         .ilike('habbo_name', habbo_name)
         .limit(1)
-        .single()
 
       let result
-      if (existing) {
-        // Atualizar
-        console.log(`[AUTH] Updating existing account: ${existing.id}`)
+      if (existing && existing.length > 0) {
+        // RESET DE SENHA: Apenas atualizar a senha (usuário já existe)
+        console.log(`[AUTH] Resetting password for existing account: ${existing[0].id}`)
         result = await supabase
           .from('habbo_accounts')
           .update({
-            habbo_name: habboData.name,
-            figure_string: habboData.figureString,
-            motto: habboData.motto,
-            password_hash: passwordHash
+            password_hash: passwordHash,
+            updated_at: new Date().toISOString()
           })
-          .eq('id', existing.id)
+          .eq('id', existing[0].id)
           .select()
         
-        console.log(`[AUTH] Update result:`, result.error ? 'ERROR' : 'SUCCESS')
+        console.log(`[AUTH] Password reset result:`, result.error ? 'ERROR' : 'SUCCESS')
         if (result.error) {
-          console.error('[AUTH] Update error details:', JSON.stringify(result.error, null, 2))
+          console.error('[AUTH] Password reset error details:', JSON.stringify(result.error, null, 2))
         }
       } else {
-        // Criar
+        // NOVA CONTA: Criar conta completa
         console.log(`[AUTH] Creating new account`)
         const newAccount = {
           supabase_user_id: crypto.randomUUID(),
           habbo_name: habboData.name,
-          habbo_id: habboData.uniqueId,
+          habbo_id: `hhbr-${habboData.uniqueId}`,
           hotel,
           figure_string: habboData.figureString,
           motto: habboData.motto,
@@ -123,7 +120,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: existing ? 'Senha redefinida!' : 'Conta criada!',
+          message: (existing && existing.length > 0) ? 'Senha redefinida com sucesso!' : 'Conta criada com sucesso!',
           account: result.data[0]
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

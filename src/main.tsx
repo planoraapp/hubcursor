@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/hooks/useAuth'
 import { NotificationProvider, useNotification } from '@/hooks/useNotification'
 import { NotificationContainer } from '@/components/ui/notification'
+import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import './styles/widget-skins.css'
 
@@ -212,6 +213,7 @@ root.render(
     <AuthProvider>
       <NotificationProvider>
         <AppWithNotifications />
+        <Analytics />
       </NotificationProvider>
     </AuthProvider>
   </QueryClientProvider>
