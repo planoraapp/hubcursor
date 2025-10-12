@@ -191,6 +191,8 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
       setTimeout(async () => {
         try {
           await login(habboName.trim(), password);
+          // Atualizar conta para pegar dados mais recentes (incluindo figure_string)
+          await refreshAccount();
           if (onLoginSuccess) {
             onLoginSuccess();
           }
