@@ -46,16 +46,17 @@ VITE_CLOUDFLARE_WORKERS_AI_KEY=your_key_here
 
 #### **Tabelas Principais**
 
-**habbo_accounts** - Contas de usuários
+**habbo_accounts** - Contas de usuários ⭐ ATUALIZADO
 ```typescript
 {
   id: UUID,
-  supabase_user_id: UUID, // Foreign Key para auth.users
-  habbo_id: string,        // Formato: hhbr-{timestamp}
-  habbo_name: string,      // Nome no Habbo
+  supabase_user_id: UUID,  // UUID único (não mais foreign key)
+  habbo_id: string,        // Formato: hhbr-{uniqueId} da API oficial
+  habbo_name: string,      // Nome no Habbo (case-sensitive)
   figure_string: string,   // Visual do avatar
   motto: string,           // Frase do perfil
   hotel: string,           // Hotel (br, com, es, etc)
+  password_hash: text,     // SHA-256 hash da senha (apenas novas contas)
   is_admin: boolean,
   is_online: boolean,
   created_at: timestamp,
@@ -172,11 +173,66 @@ O Console é o coração do HabboHub, oferecendo um hub central para interaçõe
 - **Avatares**: `image-rendering: pixelated` para estilo retrô
 - **Divisores**: Linhas tracejadas brancas com opacidade (`border-white/20`)
 
-### **2. Sistema de Autenticação**
-- Login via verificação de motto (HUB-XXXXX)
-- Filtragem por país
-- Senha de 6 caracteres para acesso futuro
-- Contas admin: habbohub, Beebop
+### **2. Sistema de Autenticação** ⭐ ATUALIZADO (Out/2025)
+
+#### **Arquitetura Híbrida**
+O sistema suporta dois tipos de contas:
+- **Contas novas** (pós-Out/2025): `habbo_accounts.password_hash` (SHA-256)
+- **Contas antigas** (pré-Out/2025): `auth.users` (bcrypt) - Beebop, habbohub, SkyFalls
+
+#### **Registro de Novos Usuários (Via Motto)**
+
+**Fluxo:**
+1. Usuário digita nome do Habbo + seleciona hotel
+2. Sistema busca na API pública: `https://www.habbo.{hotel}/api/public/users?name={habbo_name}`
+3. Gera código de verificação: `HUB-XXXXX` (5 dígitos aleatórios)
+4. Usuário coloca o código na **missão** do Habbo
+5. Sistema verifica se o código está presente via API
+6. Usuário define senha (mínimo 6 caracteres)
+7. Sistema cria conta:
+   - `habbo_name`: nome exato da API (case-sensitive)
+   - `habbo_id`: `hhbr-{uniqueId}` da API oficial
+   - `password_hash`: SHA-256(`senha` + `habbohub-secure-salt-2025`)
+   - `supabase_user_id`: UUID gerado por `crypto.randomUUID()`
+   - `hotel`: `br`, `com`, `es`, etc (não normalizar para `.com.br`)
+
+**Edge Function:** `habbo-complete-auth`
+- **Ação:** `register`
+- **Body:** `{action, habbo_name, verification_code, password, hotel}`
+- **Resposta:** `{success, message, account}`
+
+#### **Login de Usuários**
+
+**Sistema Híbrido:**
+```javascript
+if (account.password_hash) {
+  // Conta nova: verificar SHA-256
+  hashSenha = SHA256(senha + salt)
+  if (hashSenha === account.password_hash) → Login OK
+} else {
+  // Conta antiga: tentar auth.users (bcrypt)
+  email = `hhbr-${habbo_name}@habbohub.com`
+  supabase.auth.signInWithPassword(email, senha)
+}
+```
+
+**Edge Function:** `habbo-complete-auth`
+- **Ação:** `login`
+- **Body:** `{action, habbo_name, password}`
+- **Resposta:** `{success, account}`
+
+#### **Reset de Senha**
+- Mesmo fluxo de registro via motto
+- Detecta usuário existente
+- Atualiza `password_hash` sem perder dados
+- Mantém `habbo_id` (uniqueId) intacto
+
+#### **RLS (Row Level Security)**
+Todas as tabelas sociais permitem `anon` + `authenticated`:
+- `chat_messages`: enviar e receber mensagens
+- `guestbook_entries`: livro de visitas
+- `user_home_ratings`: avaliar homes
+- `photo_likes`, `photo_comments`: curtir e comentar
 
 ### **3. Sistema de Homes**
 - Backgrounds personalizáveis

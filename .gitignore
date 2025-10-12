@@ -69,3 +69,7 @@ site-*.html
 scripts/delete-duplicate-account.cjs
 scripts/check-and-unify-accounts.cjs
 scripts/fix-home-rls.mjs
+scripts/reset-skyfalls-password.mjs
+scripts/check-skyfalls-account.mjs
+scripts/*password*.mjs
+scripts/*admin*.mjs
