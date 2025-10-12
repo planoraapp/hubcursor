@@ -24,7 +24,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
   const [hotel, setHotel] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
-  const { login } = useAuth();
+  const { login, refreshAccount } = useAuth();
 
   const handleGenerateCode = async () => {
     if (!habboName.trim()) {
@@ -160,12 +160,13 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
         password_length: password.length
       });
 
-      const { data, error } = await supabase.functions.invoke('verify-and-register-via-motto', {
+      const { data, error } = await supabase.functions.invoke('habbo-complete-auth', {
         body: {
+          action: 'register',
           habbo_name: habboName.trim(),
           verification_code: verificationCode,
           password: password,
-          action: 'complete'
+          hotel: hotel
         }
       });
 

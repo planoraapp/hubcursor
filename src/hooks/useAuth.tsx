@@ -22,6 +22,7 @@ interface AuthContextType {
   loading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,6 +114,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const refreshAccount = async (): Promise<void> => {
+    try {
+      const sessionData = localStorage.getItem('habbohub_session');
+      if (sessionData && habboAccount) {
+        // Buscar dados atualizados do banco
+        const { data, error } = await supabase
+          .from('habbo_accounts')
+          .select('*')
+          .eq('habbo_name', habboAccount.habbo_name)
+          .eq('hotel', habboAccount.hotel)
+          .single();
+
+        if (data && !error) {
+          // Atualizar localStorage e contexto
+          const updatedSessionData = {
+            id: data.id,
+            supabase_user_id: data.supabase_user_id,
+            habbo_name: data.habbo_name,
+            habbo_id: data.habbo_id,
+            figure_string: data.figure_string,
+            motto: data.motto,
+            hotel: data.hotel,
+            is_admin: data.is_admin,
+            created_at: data.created_at,
+            updated_at: data.updated_at
+          };
+          
+          localStorage.setItem('habbohub_session', JSON.stringify(updatedSessionData));
+          setHabboAccount(updatedSessionData);
+          
+          logger.info('✅ Conta atualizada:', data.habbo_name);
+        }
+      }
+    } catch (error) {
+      logger.error('Erro ao atualizar conta:', error);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       setLoading(true);
@@ -139,7 +178,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isLoggedIn,
       loading,
       login,
-      logout
+      logout,
+      refreshAccount
     }}>
       {children}
     </AuthContext.Provider>
