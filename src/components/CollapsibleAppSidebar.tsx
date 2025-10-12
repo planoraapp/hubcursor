@@ -200,7 +200,9 @@ export function CollapsibleAppSidebar() {
                       }}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
+                        target.src = habboAccount.figure_string 
+                          ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1`
+                          : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
                       }}
                     />
                   </div>
