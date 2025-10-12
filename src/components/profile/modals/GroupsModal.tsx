@@ -265,7 +265,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
         }}>
           <div className="relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-              {groups.map((group) => {
+              {Array.isArray(groups) ? groups.map((group) => {
                 const badgeUrls = getGroupBadgeUrls(group.badgeCode);
                 return (
                   <Popover key={group.id} open={selectedGroup?.id === group.id} onOpenChange={async (open) => {
@@ -432,10 +432,10 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
                     </PopoverContent>
                   </Popover>
                 );
-              })}
+              }) : null}
             </div>
             
-            {groups.length === 0 && (
+            {(!Array.isArray(groups) || groups.length === 0) && (
               <div className="text-center text-white/60 py-8">
                 <Crown className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>Nenhum grupo encontrado</p>

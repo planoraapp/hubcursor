@@ -53,7 +53,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ photos, onPhotoClick }) =>
             <img
               src={photo.imageUrl}
               alt={`Foto ${photo.id}`}
-              className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
+              className="w-full h-full object-contain transition-transform duration-200 group-hover:scale-110"
               onError={(e) => {
                 e.currentTarget.src = 'https://placehold.co/150x150/4B5563/FFFFFF?text=Foto+Não+Disponível';
               }}

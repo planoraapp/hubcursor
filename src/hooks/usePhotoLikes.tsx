@@ -36,6 +36,19 @@ export const usePhotoLikes = (photoId: string) => {
         throw new Error('Usuário não autenticado');
       }
 
+      // Verificar se já curtiu antes de tentar inserir
+      const { data: existingLike } = await supabase
+        .from('photo_likes')
+        .select('id')
+        .eq('photo_id', photoId)
+        .eq('user_id', habboAccount.supabase_user_id)
+        .single();
+
+      if (existingLike) {
+        // Já curtiu, não fazer nada
+        return;
+      }
+
       const { error } = await supabase
         .from('photo_likes')
         .insert({
@@ -44,14 +57,19 @@ export const usePhotoLikes = (photoId: string) => {
           habbo_name: habboAccount.habbo_name
         });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photo-likes', photoId] });
-      toast.success('Foto curtida!');
     },
     onError: (error: any) => {
-            toast.error('Erro ao curtir foto');
+      console.error('Erro ao curtir foto:', error);
+      // Não mostrar toast de erro para duplicação
+      if (!error.message?.includes('duplicate') && error.code !== '23505') {
+        toast.error('Erro ao curtir foto');
+      }
     }
   });
 

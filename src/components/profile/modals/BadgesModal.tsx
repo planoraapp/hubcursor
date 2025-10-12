@@ -70,7 +70,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
         }}>
           <div className="relative z-10">
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4 p-4">
-              {badges.map((badge, index) => {
+              {Array.isArray(badges) ? badges.map((badge, index) => {
                 const badgeUrls = getBadgeUrls(badge.code);
                 return (
                   <Popover key={`${badge.code}-${index}`} open={selectedBadge?.code === badge.code} onOpenChange={(open) => {
@@ -156,10 +156,10 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                     </PopoverContent>
                   </Popover>
                 );
-              })}
+              }) : null}
             </div>
             
-            {badges.length === 0 && (
+            {(!Array.isArray(badges) || badges.length === 0) && (
               <div className="text-center text-white/60 py-8">
                 <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>Nenhum emblema encontrado</p>

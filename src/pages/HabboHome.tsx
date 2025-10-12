@@ -15,6 +15,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { HotelTag } from '@/components/HotelTag';
 import { extractOriginalUsername, extractHotelFromUsername, getHotelConfig } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
+import { CanonicalUrlRedirect } from '@/components/CanonicalUrlRedirect';
 
 const HabboHome: React.FC = () => {
   const { username: urlUsername } = useParams<{ username: string }>();
@@ -403,7 +404,8 @@ const HabboHome: React.FC = () => {
       onError={(error, errorInfo) => {
               }}
     >
-      {isMobile ? (
+      <CanonicalUrlRedirect>
+        {isMobile ? (
         <MobileLayout
           menuItems={mobileMenuItems}
           onItemClick={handleMobileItemClick}
@@ -421,6 +423,7 @@ const HabboHome: React.FC = () => {
           </div>
         </SidebarProvider>
       )}
+      </CanonicalUrlRedirect>
     </EnhancedErrorBoundary>
   );
 };

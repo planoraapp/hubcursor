@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -14,15 +13,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
 import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
+import { useMyHomeData } from '@/hooks/useMyHomeData';
 import { HomesGrid } from '@/components/HomesGrid';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
+import { HotelTag } from '@/components/HotelTag';
 import { AccentFixedText } from '@/components/AccentFixedText';
 
-
-
 import type { HabboUser } from '@/types/habbo';
+
 const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -30,6 +30,7 @@ const Homes: React.FC = () => {
   const { data: latestHomes, isLoading: loadingLatest, refetch: refetchLatest } = useLatestHomes();
   const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
   const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
+  const { myHomeData, isLoading: myHomeLoading } = useMyHomeData();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<HabboUser[]>([]);
@@ -112,6 +113,87 @@ const Homes: React.FC = () => {
     }
   };
 
+  // Função para gerar o background da home (similar aos outros cards)
+  const getHomeBackgroundUrl = (homeData: any) => {
+    if (!homeData?.background_value) return null;
+    
+    // Detectar automaticamente se é uma URL de imagem
+    const isImageUrl = homeData.background_value.startsWith('http') || 
+                      homeData.background_value.startsWith('/') ||
+                      homeData.background_value.includes('.gif') ||
+                      homeData.background_value.includes('.png') ||
+                      homeData.background_value.includes('.jpg') ||
+                      homeData.background_value.includes('.jpeg') ||
+                      homeData.background_value.includes('.webp');
+    
+    // Se for uma URL de imagem, usar diretamente
+    if (isImageUrl) {
+      return `url(${homeData.background_value})`;
+    }
+    
+    // Se for uma cor hexadecimal
+    if (homeData.background_value.startsWith('#')) {
+      return `linear-gradient(135deg, ${homeData.background_value} 0%, ${homeData.background_value}dd 100%)`;
+    }
+    
+    // Se for um nome de background (como "bghabbohub"), tentar construir a URL
+    if (homeData.background_value === 'bghabbohub') {
+      return `url(/assets/bghabbohub.png)`;
+    }
+    
+    // Fallback para o tipo definido
+    switch (homeData.background_type) {
+      case 'image':
+        return `url(${homeData.background_value})`;
+      case 'color':
+        return `linear-gradient(135deg, ${homeData.background_value} 0%, ${homeData.background_value}dd 100%)`;
+      case 'repeat':
+        return `url(${homeData.background_value})`;
+      case 'cover':
+        return `url(${homeData.background_value})`;
+      case 'default':
+        // Para tipo "default", tentar construir a URL baseada no valor
+        if (homeData.background_value === 'bghabbohub') {
+          return `url(/assets/bghabbohub.png)`;
+        }
+        return `url(/assets/${homeData.background_value}.png)`;
+      default:
+        return null;
+    }
+  };
+
+  // Determinar cor de fundo baseada no tipo de background
+  const getBackgroundColor = (homeData: any) => {
+    if (homeData?.background_value?.startsWith('#')) {
+      return homeData.background_value;
+    }
+    if (homeData?.background_type === 'color' && homeData.background_value) {
+      return homeData.background_value;
+    }
+    return '#c7d2dc'; // Cor padrão
+  };
+
+  // Determinar configurações de background baseadas no tipo
+  const getBackgroundSettings = (homeData: any) => {
+    switch (homeData?.background_type) {
+      case 'repeat':
+        return {
+          backgroundSize: 'auto',
+          backgroundRepeat: 'repeat'
+        };
+      case 'cover':
+        return {
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        };
+      default:
+        return {
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat'
+        };
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -134,12 +216,12 @@ const Homes: React.FC = () => {
               />
               
               {/* Busca e Minha Home */}
-              <div className="flex gap-6 mb-8 items-start">
+              <div className="flex gap-6 mb-8 items-stretch">
                 {/* Minicard Minha Home ou Login */}
                 {isLoggedIn && habboAccount ? (
                   <div className="flex-shrink-0">
                     <Card 
-                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-48"
+                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-64 h-full relative overflow-hidden"
                       onClick={() => {
                         console.log('🏠 Minicard "Ver Minha Home" clicado');
                         console.log('📝 Dados da conta:', habboAccount);
@@ -150,75 +232,108 @@ const Homes: React.FC = () => {
                         navigate(`/home/${domainUsername}`);
                       }}
                     >
-                      <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-b-2 border-black p-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={habboAccount.figure_string 
-                              ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=s&direction=2&head_direction=3&headonly=1`
-                              : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`
-                            }
-                            alt={`Avatar de ${habboAccount.habbo_name}`}
-                            className="w-8 h-8 object-contain"
-                            style={{ imageRendering: 'pixelated' }}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = habboAccount.figure_string 
-                                ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=s&direction=2&head_direction=3&headonly=1`
-                                : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
-                            }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-white truncate volter-font">
-                              {habboAccount.habbo_name}
-                            </h4>
+                      {/* Background da Home - usando dados reais */}
+                      <div 
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: getHomeBackgroundUrl(myHomeData),
+                          backgroundColor: getBackgroundColor(myHomeData),
+                          backgroundSize: getBackgroundSettings(myHomeData).backgroundSize,
+                          backgroundRepeat: getBackgroundSettings(myHomeData).backgroundRepeat,
+                          backgroundPosition: 'center'
+                        }}
+                      />
+                      
+                      {/* Overlay escuro para legibilidade */}
+                      <div className="absolute inset-0 bg-black/30" />
+                      
+                      {/* Avatar grande no canto inferior direito - usando figurestring atualizada */}
+                      <div className="absolute inset-0 flex items-end justify-end p-3">
+                        <img
+                          src={myHomeData?.figure_string || habboAccount.figure_string
+                            ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${myHomeData?.figure_string || habboAccount.figure_string}&size=l&direction=2&head_direction=3&gesture=sml&action=std`
+                            : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&gesture=sml&action=std`
+                          }
+                          alt={`Avatar de ${habboAccount.habbo_name}`}
+                          className="h-full w-auto object-contain"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = myHomeData?.figure_string || habboAccount.figure_string
+                              ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${myHomeData?.figure_string || habboAccount.figure_string}&size=l&direction=2&head_direction=3&gesture=sml&action=std`
+                              : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&gesture=sml&action=std`;
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Conteúdo do card */}
+                      <div className="relative z-10 p-4 h-full flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-bold text-white text-lg volter-font drop-shadow-lg">
+                            {habboAccount.habbo_name}
+                          </h4>
+                          <div className="mt-1">
                             <HotelTag hotel={habboAccount.hotel} />
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
-                            <Home className="w-4 h-4" />
-                            <span className="text-sm font-semibold volter-font">Minha Home</span>
+                        
+                        <div className="mt-auto">
+                          <div className="flex items-center gap-2 text-white drop-shadow-lg">
+                            <Home className="w-5 h-5" />
+                            <span className="font-semibold volter-font">Minha Home</span>
                           </div>
-                          <p className="text-xs text-gray-600 volter-font">Clique para visitar</p>
+                          <p className="text-xs text-white/80 volter-font drop-shadow-lg mt-1">
+                            Clique para visitar
+                          </p>
                         </div>
-                      </CardContent>
+                      </div>
                     </Card>
                   </div>
                 ) : (
                   <div className="flex-shrink-0">
                     <Card 
-                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-48"
+                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-64 h-full relative overflow-hidden"
                       onClick={() => navigate('/login')}
                     >
-                      <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-b-2 border-black p-4">
-                        <div className="flex items-center gap-3">
-                          <User className="w-8 h-8 text-white" />
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm text-white truncate volter-font">
-                              Fazer Login
-                            </h4>
-                            <p className="text-xs text-orange-100 volter-font">Acesse sua conta</p>
-                          </div>
+                      {/* Background padrão para não logado */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-red-500 to-pink-600 opacity-20" />
+                      
+                      {/* Overlay escuro */}
+                      <div className="absolute inset-0 bg-black/30" />
+                      
+                      {/* Ícone de login no canto inferior direito */}
+                      <div className="absolute inset-0 flex items-end justify-end p-3">
+                        <User className="w-16 h-16 text-white/80 drop-shadow-lg" />
+                      </div>
+                      
+                      {/* Conteúdo do card */}
+                      <div className="relative z-10 p-4 h-full flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-bold text-white text-lg volter-font drop-shadow-lg">
+                            Fazer Login
+                          </h4>
+                          <p className="text-xs text-white/80 volter-font drop-shadow-lg mt-1">
+                            Acesse sua conta
+                          </p>
                         </div>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 text-orange-600 mb-2">
-                            <Home className="w-4 h-4" />
-                            <span className="text-sm font-semibold volter-font">Minha Home</span>
+                        
+                        <div className="mt-auto">
+                          <div className="flex items-center gap-2 text-white drop-shadow-lg">
+                            <Home className="w-5 h-5" />
+                            <span className="font-semibold volter-font">Minha Home</span>
                           </div>
-                          <p className="text-xs text-gray-600 volter-font">Login necessário</p>
+                          <p className="text-xs text-white/80 volter-font drop-shadow-lg mt-1">
+                            Login necessário
+                          </p>
                         </div>
-                      </CardContent>
+                      </div>
                     </Card>
                   </div>
                 )}
 
                 {/* Campo de Busca */}
                 <div className="flex-1">
-                  <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
+                  <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black h-full">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
                   <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
                     style={{
@@ -230,33 +345,35 @@ const Homes: React.FC = () => {
                     Buscar Usuários com Homes
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
-                    <Input
-                      type="text"
-                      placeholder="Digite o nome do usuário Habbo ou deixe vazio para ver usuários online..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                      className="flex-1 border-2 border-gray-300 focus:border-purple-500 volter-body-text"
-                    />
-                    <Button 
-                      onClick={handleSearch}
-                      disabled={loading}
-                      className="habbo-button-purple sidebar-font-option-4"
-                      style={{
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.3px'
-                      }}
-                    >
-                      <Search className="w-4 h-4 mr-2" />
-                      {loading ? 'Buscando...' : 'Buscar'}
-                    </Button>
+                <CardContent className="p-6 h-full flex flex-col justify-between">
+                  <div>
+                    <div className="flex gap-4">
+                      <Input
+                        type="text"
+                        placeholder="Digite o nome do usuário Habbo ou deixe vazio para ver usuários online..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="flex-1 border-2 border-gray-300 focus:border-purple-500 volter-body-text"
+                      />
+                      <Button 
+                        onClick={handleSearch}
+                        disabled={loading}
+                        className="habbo-button-purple sidebar-font-option-4"
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          letterSpacing: '0.3px'
+                        }}
+                      >
+                        <Search className="w-4 h-4 mr-2" />
+                        {loading ? 'Buscando...' : 'Buscar'}
+                      </Button>
+                    </div>
+                    <p className="text-gray-600 mt-2 volter-body-text">
+                      <AccentFixedText>💡 Dica: Deixe o campo vazio e clique em "Buscar" para ver usuários online com homes descobertas</AccentFixedText>
+                    </p>
                   </div>
-                  <p className="text-gray-600 mt-2 volter-body-text">
-                    <AccentFixedText>💡 Dica: Deixe o campo vazio e clique em "Buscar" para ver usuários online com homes descobertas</AccentFixedText>
-                  </p>
                 </CardContent>
               </Card>
                 </div>
@@ -386,4 +503,3 @@ const Homes: React.FC = () => {
 };
 
 export default Homes;
-

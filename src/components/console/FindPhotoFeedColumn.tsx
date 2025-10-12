@@ -1,10 +1,13 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, RefreshCw, Search, Heart, Loader2, AlertCircle, Globe, MessageCircle, Ellipsis } from 'lucide-react';
+import { Camera, RefreshCw, Search, Heart, Loader2, AlertCircle, Globe, MessageCircle, Ellipsis, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGlobalPhotos } from '@/hooks/useGlobalPhotos';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
+import { useCommentRateLimit } from '@/hooks/useCommentRateLimit';
+import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commentValidation';
 import { PhotoModal } from '../console/PhotoModal';
+import { toast } from 'sonner';
 
 export const FindPhotoFeedColumn: React.FC = () => {
   const { habboAccount } = useMyConsoleProfile();
@@ -13,8 +16,13 @@ export const FindPhotoFeedColumn: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [allPhotos, setAllPhotos] = useState<any[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  
+  // Rate limiting para comentários
+  const { checkCanComment, recordComment } = useCommentRateLimit();
   
   const { 
     data: globalPhotos = [], 
@@ -95,6 +103,52 @@ export const FindPhotoFeedColumn: React.FC = () => {
     if (minutes < 43200) return `há ${Math.floor(minutes / 10080)} semanas`;
     if (minutes < 525600) return `há ${Math.floor(minutes / 43200)} meses`;
     return `há ${Math.floor(minutes / 525600)} anos`;
+  };
+  
+  /**
+   * Enviar comentário com validação e rate limiting
+   */
+  const handleSubmitComment = async (photoId: string) => {
+    if (!habboAccount) {
+      toast.error('Você precisa estar logado para comentar');
+      return;
+    }
+    
+    // Verificar rate limit
+    const rateLimitStatus = checkCanComment(photoId);
+    if (!rateLimitStatus.canComment) {
+      toast.error(rateLimitStatus.error || 'Você está comentando muito rápido');
+      return;
+    }
+
+    // Validar comentário
+    const validation = validateComment(commentText);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Comentário inválido');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const sanitized = sanitizeComment(commentText);
+      
+      // TODO: Implementar envio ao banco de dados
+      console.log('📝 Enviando comentário:', { photoId, text: sanitized });
+      
+      // Registrar ação para rate limiting
+      recordComment(photoId);
+      
+      // Limpar campo
+      setCommentText('');
+      toast.success('Comentário enviado!');
+      
+    } catch (error: any) {
+      console.error('Erro ao enviar comentário:', error);
+      toast.error('Erro ao enviar comentário');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePhotoClick = (photo: any) => {
@@ -285,7 +339,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
                   <img
                     src={photo.imageUrl}
                     alt={`Foto de ${photo.userName}`}
-                    className="w-full h-auto object-cover cursor-pointer"
+                    className="w-full h-auto object-contain cursor-pointer"
                     onClick={() => handlePhotoClick(photo)}
                     onError={(e) => {
                       e.currentTarget.src = `https://placehold.co/400x400/4B5563/FFFFFF?text=Foto+Não+Disponível`;
@@ -312,10 +366,18 @@ export const FindPhotoFeedColumn: React.FC = () => {
 
                 {/* Campo de comentário */}
                 <div className="px-1 py-2 bg-transparent">
-                  <form className="flex items-center gap-2">
+                  <form className="flex items-center gap-2" onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSubmitComment(photo.id || photo.photo_id);
+                  }}>
                     <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
                       <img
-                        src={habboAccount?.habbo_name ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=4&head_direction=2&headonly=1` : 'https://placehold.co/40x40/4B5563/FFFFFF?text=?'}
+                        src={habboAccount?.figure_string 
+                          ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
+                          : habboAccount?.habbo_name 
+                            ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=4&head_direction=2&headonly=1` 
+                            : 'https://placehold.co/40x40/4B5563/FFFFFF?text=?'
+                        }
                         alt={habboAccount?.habbo_name || 'Usuário'}
                         className="w-full h-full object-cover"
                         style={{ imageRendering: 'pixelated' }}
@@ -328,8 +390,31 @@ export const FindPhotoFeedColumn: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Adicione um comentário..."
-                        className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        maxLength={COMMENT_CONFIG.MAX_LENGTH}
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm disabled:opacity-50"
                       />
+                      
+                      {/* Botão de enviar - só aparece quando há texto */}
+                      {commentText.trim() && (
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Enviar comentário"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      )}
+                      
+                      {/* Contador de caracteres */}
+                      {commentText.length > COMMENT_CONFIG.MAX_LENGTH * 0.8 && (
+                        <div className="absolute -bottom-5 right-0 text-xs text-white/60">
+                          {commentText.length}/{COMMENT_CONFIG.MAX_LENGTH}
+                        </div>
+                      )}
                     </div>
                   </form>
                 </div>

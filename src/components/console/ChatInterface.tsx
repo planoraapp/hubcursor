@@ -433,7 +433,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
             <div className="px-3 py-1.5 bg-blue-500/10 border-t border-blue-500/20 relative">
               <p className="text-xs text-blue-200/80 flex items-center gap-2 pr-6">
                 <AlertCircle className="w-3 h-3 flex-shrink-0" />
-                Todas as mensagens ficam registradas para sua segurança. Denúncias são analisadas pela moderação.
+                Todas as mensagens ficam registradas para sua segurança. Denúncias são analisadas pela moderação. Não divulgue informações pessoais.
               </p>
               <button
                 onClick={() => setShowSecurityWarning(false)}

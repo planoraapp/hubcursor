@@ -141,6 +141,7 @@ export type PhotoType = 'SELFIE' | 'PHOTO' | 'USER_CREATION';
 
 export interface PhotoLike {
   id: string;
+  photo_id: string;
   user_id: string;
   habbo_name: string;
   created_at: string;

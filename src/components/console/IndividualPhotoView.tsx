@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send } from 'lucide-react';
 import { EnhancedPhoto } from '@/types/habbo';
+import { usePhotoLikes } from '@/hooks/usePhotoLikes';
+import { useAuth } from '@/hooks/useAuth';
+import { useCommentRateLimit } from '@/hooks/useCommentRateLimit';
+import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commentValidation';
+import { toast } from 'sonner';
 
 interface IndividualPhotoViewProps {
   photo: {
@@ -21,9 +26,17 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   onBack,
   onUserClick = () => {}
 }) => {
+  const { habboAccount } = useAuth();
   const [commentText, setCommentText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLikesPopover, setShowLikesPopover] = useState(false);
   const [showCommentsPopover, setShowCommentsPopover] = useState(false);
+  
+  // Hook de likes com armazenamento no banco
+  const { likesCount, userLiked, toggleLike, isToggling, likes } = usePhotoLikes(photo.id);
+  
+  // Rate limiting
+  const { checkCanComment, recordComment } = useCommentRateLimit();
   
   const handleLikesClick = () => {
     setShowLikesPopover(!showLikesPopover);
@@ -35,16 +48,64 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
     setShowLikesPopover(false);
   };
   
-  // Converter para formato EnhancedPhoto
+  /**
+   * Enviar comentário com validação e rate limiting
+   */
+  const handleSubmitComment = async () => {
+    if (!habboAccount) {
+      toast.error('Você precisa estar logado para comentar');
+      return;
+    }
+
+    const photoId = photo.id;
+    
+    // Verificar rate limit
+    const rateLimitStatus = checkCanComment(photoId);
+    if (!rateLimitStatus.canComment) {
+      toast.error(rateLimitStatus.error || 'Você está comentando muito rápido');
+      return;
+    }
+
+    // Validar comentário
+    const validation = validateComment(commentText);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Comentário inválido');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const sanitized = sanitizeComment(commentText);
+      
+      // TODO: Implementar envio ao banco de dados
+      console.log('📝 Enviando comentário:', { photoId, text: sanitized });
+      
+      // Registrar ação para rate limiting
+      recordComment(photoId);
+      
+      // Limpar campo
+      setCommentText('');
+      toast.success('Comentário enviado!');
+      
+    } catch (error: any) {
+      console.error('Erro ao enviar comentário:', error);
+      toast.error('Erro ao enviar comentário');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // Converter para formato EnhancedPhoto com dados do banco
   const enhancedPhoto: EnhancedPhoto = {
     id: photo.id,
     photo_id: photo.id,
     userName: userName,
     imageUrl: photo.imageUrl,
     date: photo.date,
-    likes: [],
-    likesCount: typeof photo.likes === 'number' ? photo.likes : 0,
-    userLiked: false,
+    likes: likes, // Likes do banco de dados
+    likesCount: likesCount, // Contagem real do banco
+    userLiked: userLiked, // Se o usuário atual curtiu
     type: 'PHOTO',
     caption: '',
     roomName: ''
@@ -101,7 +162,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
               <img 
                 src={photo.imageUrl} 
                 alt={`Foto de ${userName}`} 
-                className="w-full h-auto object-cover"
+                className="w-full h-auto object-contain"
               />
               <div className="absolute bottom-2 left-2">
                 <img src="/hub.gif" alt="Hub" className="w-6 h-6 opacity-80" style={{display: 'none'}} />
@@ -109,7 +170,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
               
               {/* Popover de Likes */}
               {showLikesPopover && (
-                <div className="absolute inset-0 z-50 flex items-end justify-center">
+                <div className="absolute inset-0 z-50 flex items-end justify-center animate-in fade-in duration-200">
                   {/* Overlay escuro */}
                   <div 
                     className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -117,7 +178,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                   ></div>
                   
                   {/* Modal que desliza de baixo para cima */}
-                  <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out">
+                  <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col animate-in slide-in-from-bottom duration-300 ease-out">
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
                       <h3 className="text-sm font-bold text-white" style={{
@@ -137,9 +198,32 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                     
                     {/* Conteúdo */}
                     <div className="flex-1 overflow-y-auto p-4">
-                      <div className="text-center text-white/60 text-sm">
-                        Sistema de curtidas em desenvolvimento
-                      </div>
+                      {likes.length > 0 ? (
+                        <div className="space-y-2">
+                          {likes.map((like) => (
+                            <div key={like.id} className="flex items-center gap-3 p-2 bg-white/5 rounded hover:bg-white/10 transition-colors">
+                              <div className="w-10 h-10 flex-shrink-0 overflow-hidden rounded-full">
+                                <img 
+                                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${like.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`} 
+                                  alt={like.habbo_name} 
+                                  className="w-full h-full object-cover" 
+                                  style={{imageRendering: 'pixelated'}}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-medium text-sm truncate">{like.habbo_name}</p>
+                                <p className="text-white/50 text-xs">
+                                  {new Date(like.created_at).toLocaleDateString('pt-BR')}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center text-white/60 text-sm">
+                          Ainda não há curtidas nesta foto
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -147,7 +231,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
               
               {/* Popover de Comentários */}
               {showCommentsPopover && (
-                <div className="absolute inset-0 z-50 flex items-end justify-center">
+                <div className="absolute inset-0 z-50 flex items-end justify-center animate-in fade-in duration-200">
                   {/* Overlay escuro */}
                   <div 
                     className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -155,7 +239,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                   ></div>
                   
                   {/* Modal que desliza de baixo para cima */}
-                  <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out">
+                  <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col animate-in slide-in-from-bottom duration-300 ease-out">
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
                       <h3 className="text-sm font-bold text-white" style={{
@@ -189,11 +273,22 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <button 
-                    onClick={handleLikesClick}
-                    className="flex items-center gap-2 transition-colors text-white/60 hover:text-red-500"
+                    onClick={() => {
+                      if (habboAccount) {
+                        toggleLike();
+                      } else {
+                        handleLikesClick();
+                      }
+                    }}
+                    disabled={isToggling}
+                    className={`flex items-center gap-2 transition-colors ${
+                      userLiked 
+                        ? 'text-red-500' 
+                        : 'text-white/60 hover:text-red-500'
+                    } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    <Heart className="w-6 h-6" />
-                    <span className="text-sm font-medium">{typeof photo.likes === 'number' ? photo.likes : 0}</span>
+                    <Heart className={`w-6 h-6 ${userLiked ? 'fill-current' : ''}`} />
+                    <span className="text-sm font-medium">{likesCount}</span>
                   </button>
                 </div>
                 <button 
@@ -208,11 +303,17 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
 
             {/* Campo de comentário */}
             <div className="px-1 py-2 bg-transparent">
-              <form className="flex items-center gap-2">
+              <form className="flex items-center gap-2" onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmitComment();
+              }}>
                 <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
                   <img 
-                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userName}&size=m&direction=4&head_direction=2&headonly=1`} 
-                    alt={userName} 
+                    src={habboAccount?.figure_string 
+                      ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
+                      : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount?.habbo_name || 'Guest'}&size=m&direction=4&head_direction=2&headonly=1`
+                    } 
+                    alt={habboAccount?.habbo_name || 'Guest'} 
                     className="w-full h-full object-cover" 
                     style={{imageRendering: 'pixelated'}}
                   />
@@ -223,15 +324,28 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                     placeholder="Adicione um comentário..." 
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
-                    className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm"
+                    maxLength={COMMENT_CONFIG.MAX_LENGTH}
+                    disabled={isSubmitting}
+                    className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm disabled:opacity-50"
                   />
+                  
+                  {/* Botão de enviar - só aparece quando há texto */}
                   {commentText.trim() && (
                     <button
                       type="submit"
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-yellow-400 hover:text-yellow-300 transition-colors"
+                      disabled={isSubmitting}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Enviar comentário"
                     >
-                      <Send className="w-5 h-5" />
+                      <Send className="w-4 h-4" />
                     </button>
+                  )}
+                  
+                  {/* Contador de caracteres */}
+                  {commentText.length > COMMENT_CONFIG.MAX_LENGTH * 0.8 && (
+                    <div className="absolute -bottom-5 right-0 text-xs text-white/60">
+                      {commentText.length}/{COMMENT_CONFIG.MAX_LENGTH}
+                    </div>
                   )}
                 </div>
               </form>

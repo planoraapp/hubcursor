@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, User, Calendar, MapPin, MoreHorizontal } from 'lucide-react';
+import { Heart, MessageCircle, User, Calendar, MapPin, MoreHorizontal, Send } from 'lucide-react';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
 import { usePhotoComments } from '@/hooks/usePhotoComments';
+import { useAuth } from '@/hooks/useAuth';
+import { useCommentRateLimit } from '@/hooks/useCommentRateLimit';
+import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commentValidation';
 import { PhotoCardProps, PhotoType } from '@/types/habbo';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   photo,
@@ -14,17 +18,70 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   showDivider = false,
   className = ''
 }) => {
+  const { habboAccount } = useAuth();
   const [showLikesPopover, setShowLikesPopover] = useState(false);
   const [showCommentsPopover, setShowCommentsPopover] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Rate limiting
+  const { checkCanComment, recordComment } = useCommentRateLimit();
   
   const handleLikesClick = () => {
     setShowLikesPopover(!showLikesPopover);
-    setShowCommentsPopover(false);
   };
   
   const handleCommentsClick = () => {
-    setShowCommentsPopover(!showCommentsPopover);
+    onCommentsClick();
     setShowLikesPopover(false);
+  };
+  
+  /**
+   * Enviar comentário com validação e rate limiting
+   */
+  const handleSubmitComment = async () => {
+    if (!habboAccount) {
+      toast.error('Você precisa estar logado para comentar');
+      return;
+    }
+
+    const photoId = photo.photo_id || photo.id;
+    
+    // Verificar rate limit
+    const rateLimitStatus = checkCanComment(photoId);
+    if (!rateLimitStatus.canComment) {
+      toast.error(rateLimitStatus.error || 'Você está comentando muito rápido');
+      return;
+    }
+
+    // Validar comentário
+    const validation = validateComment(commentText);
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Comentário inválido');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const sanitized = sanitizeComment(commentText);
+      
+      // TODO: Implementar envio ao banco de dados via usePhotoComments
+      await addComment(sanitized);
+      
+      // Registrar ação para rate limiting
+      recordComment(photoId);
+      
+      // Limpar campo
+      setCommentText('');
+      toast.success('Comentário enviado!');
+      
+    } catch (error: any) {
+      console.error('Erro ao enviar comentário:', error);
+      toast.error('Erro ao enviar comentário');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const { 
@@ -37,7 +94,9 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
 
   const { 
     commentsCount, 
-    lastTwoComments 
+    lastTwoComments,
+    addComment,
+    isAddingComment
   } = usePhotoComments(photo.photo_id);
 
   const getAvatarUrl = (userName: string) => {
@@ -122,7 +181,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
         <img
           src={photo.imageUrl}
           alt={`Foto de ${photo.userName}`}
-          className="w-full h-auto object-cover"
+          className="w-full h-auto object-contain"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = '/placeholder.svg';
@@ -179,44 +238,6 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
           </div>
         )}
         
-        {/* Popover de Comentários */}
-      {showCommentsPopover && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          {/* Overlay escuro */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowCommentsPopover(false)}
-          ></div>
-
-          {/* Modal que desliza de baixo para cima do viewport do console */}
-          <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[50vh] flex flex-col transform transition-all duration-300 ease-out mb-20">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
-                <h3 className="text-sm font-bold text-white" style={{
-                  textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
-                }}>
-                  Comentários
-                </h3>
-                <button 
-                  onClick={() => setShowCommentsPopover(false)}
-                  className="text-white hover:bg-white/20 rounded-full p-1"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Conteúdo */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="text-center text-white/60 text-sm">
-                  Sistema de comentários em desenvolvimento
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Caption and Room */}
       {(photo.caption || photo.roomName) && (
@@ -300,17 +321,25 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
 
       {/* Campo para novo comentário - sempre visível */}
       <div className="px-1 py-2 bg-transparent">
-        <form className="flex items-center gap-2">
+        <form className="flex items-center gap-2" onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmitComment();
+        }}>
           {/* Avatar do usuário logado */}
           <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
             <img
-              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=Beebop&size=m&direction=4&head_direction=2&headonly=1`}
-              alt="Beebop"
+              src={habboAccount?.figure_string 
+                ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
+                : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount?.habbo_name || 'Guest'}&size=m&direction=4&head_direction=2&headonly=1`
+              }
+              alt={habboAccount?.habbo_name || 'Guest'}
               className="w-full h-full object-cover"
               style={{ imageRendering: 'pixelated' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=Beebop&size=m&direction=4&head_direction=2&headonly=1`;
+                target.src = habboAccount?.figure_string
+                  ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
+                  : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount?.habbo_name || 'Guest'}&size=m&direction=4&head_direction=2&headonly=1`;
               }}
             />
           </div>
@@ -320,8 +349,35 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
             <input
               type="text"
               placeholder="Adicione um comentário..."
-              className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              maxLength={COMMENT_CONFIG.MAX_LENGTH}
+              disabled={isSubmitting}
+              className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm disabled:opacity-50"
             />
+            
+            {/* Botão de enviar - só aparece quando há texto */}
+            {commentText.trim() && (
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Enviar comentário"
+              >
+                <img 
+                  src="/assets/write.png" 
+                  alt="Enviar comentário" 
+                  className="w-4 h-4" 
+                />
+              </button>
+            )}
+            
+            {/* Contador de caracteres */}
+            {commentText.length > COMMENT_CONFIG.MAX_LENGTH * 0.8 && (
+              <div className="absolute -bottom-5 right-0 text-xs text-white/60">
+                {commentText.length}/{COMMENT_CONFIG.MAX_LENGTH}
+              </div>
+            )}
           </div>
         </form>
       </div>
@@ -341,6 +397,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
           }}
         />
       )}
+      </div>
     </div>
   );
 };

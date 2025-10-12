@@ -91,7 +91,7 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
         }}>
           <div className="relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-              {rooms.map((room) => {
+              {Array.isArray(rooms) ? rooms.map((room) => {
                 const thumbnailUrls = getRoomThumbnailUrls(room.id);
                 const isCopied = copiedRoomId === room.id;
                 
@@ -279,10 +279,10 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
                     </PopoverContent>
                   </Popover>
                 );
-              })}
+              }) : null}
             </div>
             
-            {rooms.length === 0 && (
+            {(!Array.isArray(rooms) || rooms.length === 0) && (
               <div className="text-center text-white/60 py-8">
                 <Home className="w-16 h-16 mx-auto mb-4 opacity-50" />
                 <p>Nenhum quarto encontrado</p>

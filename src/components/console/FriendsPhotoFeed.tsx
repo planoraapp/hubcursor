@@ -3,6 +3,134 @@ import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
 import { EnhancedPhotoCard } from "@/components/console/EnhancedPhotoCard";
 import { EnhancedPhoto } from "@/types/habbo";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { usePhotoComments } from "@/hooks/usePhotoComments";
+import { useAuth } from "@/hooks/useAuth";
+
+// Componente do Modal de Comentários
+interface CommentsModalProps {
+  photo: EnhancedPhoto;
+  onClose: () => void;
+}
+
+const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
+  const { habboAccount } = useAuth();
+  const { 
+    lastTwoComments,
+    addComment,
+    isAddingComment
+  } = usePhotoComments(photo.photo_id);
+
+  const [commentText, setCommentText] = useState('');
+
+  const getAvatarUrl = (userName: string) => {
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userName)}&size=s&direction=2&head_direction=3&headonly=1`;
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (commentText.trim() && !isAddingComment) {
+      await addComment(commentText.trim());
+      setCommentText('');
+    }
+  };
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-yellow-400 to-yellow-300 border-b-2 border-yellow-500 rounded-t-xl">
+        <h3 className="text-sm font-bold text-white" style={{
+          textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
+        }}>
+          Comentários
+        </h3>
+        <button 
+          onClick={onClose}
+          className="text-white hover:bg-white/20 rounded-full p-1"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      {/* Conteúdo */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {lastTwoComments && lastTwoComments.length > 0 ? (
+          <div className="space-y-3">
+            {lastTwoComments.map((comment) => (
+              <div key={comment.id} className="flex items-start gap-3">
+                <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+                  <img
+                    src={getAvatarUrl(comment.habbo_name)}
+                    alt={comment.habbo_name}
+                    className="w-full h-full object-cover"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold text-white">
+                      {comment.habbo_name}
+                    </span>
+                    <span className="text-xs text-white/60">
+                      {new Date(comment.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-white/90">{comment.comment_text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-white/60 text-sm">
+            Nenhum comentário ainda
+          </div>
+        )}
+      </div>
+
+      {/* Campo de comentário */}
+      {habboAccount && (
+        <div className="p-4 border-t border-white/20">
+          <form onSubmit={handleSubmitComment} className="flex items-center gap-2">
+            <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+              <img
+                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`}
+                alt={habboAccount.habbo_name}
+                className="w-full h-full object-cover"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Adicione um comentário..."
+                maxLength={500}
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="w-full px-3 py-2 pr-10 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:border-yellow-400 text-sm disabled:opacity-50"
+                disabled={isAddingComment}
+              />
+              {commentText.trim() && (
+                <button
+                  type="submit"
+                  disabled={isAddingComment}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Enviar comentário"
+                >
+                  <img 
+                    src="/assets/write.png" 
+                    alt="Enviar comentário" 
+                    className="w-4 h-4" 
+                  />
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
+    </>
+  );
+};
 
 interface FriendsPhotoFeedProps {
   currentUserName: string;
@@ -21,6 +149,9 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
     error,
     refetch
   } = useFriendsPhotos(currentUserName, hotel);
+
+  const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
+  const { habboAccount } = useAuth();
 
   const handleRetry = () => {
     refetch();
@@ -68,7 +199,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   }
 
       return (
-        <div className="space-y-4 relative">
+        <div className="space-y-4 relative overflow-hidden">
           {/* Header do feed */}
           <div className="flex items-center justify-between px-2">
             <h3 className="text-lg font-bold text-white">
@@ -96,11 +227,36 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                 } as EnhancedPhoto}
                 onUserClick={onNavigateToProfile}
                 onLikesClick={() => {}}
-                onCommentsClick={() => {}}
+                onCommentsClick={() => setCommentsModalPhoto({
+                  id: photo.id,
+                  photo_id: photo.id,
+                  userName: photo.userName,
+                  imageUrl: photo.imageUrl,
+                  date: photo.date,
+                  likes: [],
+                  likesCount: photo.likes,
+                  userLiked: false,
+                  type: 'PHOTO' as const,
+                  caption: '',
+                  roomName: ''
+                } as EnhancedPhoto)}
                 showDivider={index < photos.length - 1}
               />
             ))}
           </div>
+
+          {/* Modal de Comentários - Desliza de baixo para cima */}
+          {commentsModalPhoto && (
+            <div className="absolute inset-0 z-50 flex items-end justify-center">
+              {/* Modal que desliza de baixo para cima */}
+              <div className="relative w-full max-w-md mx-4 bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-yellow-400 rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col transform transition-all duration-300 ease-out">
+                <CommentsModal
+                  photo={commentsModalPhoto}
+                  onClose={() => setCommentsModalPhoto(null)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       );
 };

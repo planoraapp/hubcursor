@@ -9,6 +9,7 @@ import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { WelcomeCommentBadge } from './WelcomeCommentBadge';
 
 import type { GuestbookEntry } from '@/types/habbo';
 interface FunctionalGuestbookWidgetProps {
@@ -23,6 +24,30 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Função para gerar comentário de boas-vindas personalizado
+  const generateWelcomeComment = (): GuestbookEntry => {
+    const welcomeMessages = [
+      `Olá ${homeOwnerName}! 🎉 Bem-vindo(a) ao HabboHub! Esta é sua nova home. Divirta-se personalizando e explorando!`,
+      `Ei ${homeOwnerName}! 👋 Seja bem-vindo(a) ao HabboHub! Sua home está incrível! Continue assim!`,
+      `Oi ${homeOwnerName}! 🌟 Que legal ver você aqui no HabboHub! Sua home está ficando linda!`,
+      `Hey ${homeOwnerName}! 🎊 Bem-vindo(a) ao HabboHub! Adorei sua home, está muito criativa!`,
+      `Olá ${homeOwnerName}! ✨ Seja bem-vindo(a) ao HabboHub! Sua home está fantástica!`
+    ];
+    
+    const randomMessage = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+    
+    return {
+      id: 'welcome-habbohub',
+      home_owner_user_id: homeOwnerUserId,
+      author_user_id: null,
+      author_habbo_name: 'habbohub',
+      message: randomMessage,
+      moderation_status: 'approved',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  };
   
   const { habboAccount } = useUnifiedAuth();
   const { toast } = useToast();
@@ -45,7 +70,29 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
         .limit(10);
 
       if (!error && data) {
-        setEntries(data);
+        // Verificar se há comentários antigos (sem regionalização)
+        const hasOldComments = data.some(entry => {
+          // Comentários antigos não têm hotel no nome ou são de antes da implementação da regionalização
+          const isOldFormat = !entry.author_habbo_name?.includes('-') || 
+                             entry.author_habbo_name === 'habbohub' ||
+                             entry.created_at < '2025-01-01'; // Data aproximada da implementação
+          return isOldFormat;
+        });
+
+        // Verificar se já existe comentário de boas-vindas do habbohub
+        const hasWelcomeComment = data.some(entry => 
+          entry.author_habbo_name === 'habbohub' && 
+          entry.message?.includes('Bem-vindo')
+        );
+        
+        // Se há comentários antigos e não há comentário de boas-vindas, adicionar
+        if (hasOldComments && !hasWelcomeComment) {
+          // Adicionar comentário de boas-vindas no início da lista
+          const welcomeComment = generateWelcomeComment();
+          setEntries([welcomeComment, ...data]);
+        } else {
+          setEntries(data);
+        }
       }
     } catch (error) {
           }
@@ -128,11 +175,24 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
           <ScrollArea className="flex-1 pr-2">
             <div className="space-y-2">
               {entries.length > 0 ? (
-                entries.map((entry) => (
-                  <div key={entry.id} className="bg-muted/50 p-2 rounded-lg border relative">
+                entries.map((entry) => {
+                  const isHabbohubWelcome = entry.author_habbo_name === 'habbohub' && entry.message?.includes('Bem-vindo');
+                  
+                  return (
+                  <div key={entry.id} className={`p-2 rounded-lg border relative ${
+                    isHabbohubWelcome 
+                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 shadow-sm' 
+                      : 'bg-muted/50'
+                  }`}>
+                    <WelcomeCommentBadge isVisible={isHabbohubWelcome} />
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-xs text-primary volter-font font-semibold">
+                      <span className={`text-xs volter-font font-semibold ${
+                        isHabbohubWelcome 
+                          ? 'text-blue-600' 
+                          : 'text-primary'
+                      }`}>
                         {entry.author_habbo_name}
+                        {isHabbohubWelcome && <span className="ml-1 text-xs">👑</span>}
                       </span>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground volter-font">
@@ -141,7 +201,7 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
                             locale: ptBR 
                           })}
                         </span>
-                        {canDeleteEntry(entry) && (
+                        {canDeleteEntry(entry) && !isHabbohubWelcome && (
                           <button
                             onClick={() => handleDelete(entry.id, entry.author_user_id)}
                             className="h-6 w-6 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10 rounded"
@@ -151,11 +211,16 @@ export const FunctionalGuestbookWidget: React.FC<FunctionalGuestbookWidgetProps>
                         )}
                       </div>
                     </div>
-                    <p className="text-sm text-foreground volter-font break-words">
+                    <p className={`text-sm volter-font break-words ${
+                      isHabbohubWelcome 
+                        ? 'text-blue-700 font-medium' 
+                        : 'text-foreground'
+                    }`}>
                       {entry.message}
                     </p>
                   </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-4">
                   <p className="text-sm text-muted-foreground volter-font">

@@ -79,7 +79,10 @@ export const HOTEL_CONFIGS: Record<string, HotelConfig> = {
  * Formato: hotel-nome (ex: ptbr-Beebop, com-admin, fi-user123)
  */
 export function generateUniqueUsername(username: string, hotel: string): string {
-  const hotelConfig = HOTEL_CONFIGS[hotel];
+  // Normalizar hotel para evitar inconsistências
+  const normalizedHotel = hotel === 'ptbr' ? 'br' : hotel;
+  
+  const hotelConfig = HOTEL_CONFIGS[normalizedHotel];
   if (!hotelConfig) {
         return `ptbr-${username}`; // Preservar capitalização original
   }
@@ -116,7 +119,7 @@ export function extractHotelFromUsername(domainUsername: string): string {
   // Encontrar o hotel correspondente ao domínio
   for (const [hotelCode, config] of Object.entries(HOTEL_CONFIGS)) {
     if (config.domain === domain) {
-      return hotelCode;
+      return hotelCode; // Retorna 'br', 'com', etc.
     }
   }
   

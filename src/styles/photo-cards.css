@@ -2,6 +2,10 @@
 
 .card__image {
   @apply w-full h-auto object-contain rounded-lg;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  max-width: 100%;
+  height: auto;
 }
 
 .card__image--selfie {

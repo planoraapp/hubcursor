@@ -58,7 +58,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
           }}>
             <div className="relative z-10">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-4">
-                {friends.map((friend) => (
+                {Array.isArray(friends) ? friends.map((friend) => (
                   <div 
                     key={friend.uniqueId}
                     className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
@@ -110,10 +110,10 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                       </p>
                     </div>
                   </div>
-                ))}
+                )) : null}
               </div>
               
-              {friends.length === 0 && (
+              {(!Array.isArray(friends) || friends.length === 0) && (
                 <div className="text-center text-white/60 py-8">
                   <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p>Nenhum amigo encontrado</p>
