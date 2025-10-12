@@ -133,38 +133,92 @@ const Homes: React.FC = () => {
                 subtitle="Explore as homes dos usuários do HabboHub"
               />
               
-              {/* Botão Minha Home */}
-              <div className="text-center mb-8">
+              {/* Busca e Minha Home */}
+              <div className="flex gap-6 mb-8 items-start">
+                {/* Minicard Minha Home ou Login */}
                 {isLoggedIn && habboAccount ? (
-                  <Button 
-                    onClick={() => {
-                      console.log('🏠 Botão "Ver Minha Home" clicado');
-                      console.log('📝 Dados da conta:', habboAccount);
-                      
-                      // Gerar nome único com domínio baseado no hotel do usuário
-                      const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
-                      console.log('🔗 URL gerada:', `/home/${domainUsername}`);
-                      
-                      navigate(`/home/${domainUsername}`);
-                    }}
-                    className="habbo-button-green volter-font px-6 py-2"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Ver Minha Home
-                    <Home className="w-4 h-4 ml-2" />
-                  </Button>
+                  <div className="flex-shrink-0">
+                    <Card 
+                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-48"
+                      onClick={() => {
+                        console.log('🏠 Minicard "Ver Minha Home" clicado');
+                        console.log('📝 Dados da conta:', habboAccount);
+                        
+                        const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
+                        console.log('🔗 URL gerada:', `/home/${domainUsername}`);
+                        
+                        navigate(`/home/${domainUsername}`);
+                      }}
+                    >
+                      <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-b-2 border-black p-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={habboAccount.figure_string 
+                              ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=s&direction=2&head_direction=3&headonly=1`
+                              : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`
+                            }
+                            alt={`Avatar de ${habboAccount.habbo_name}`}
+                            className="w-8 h-8 object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = habboAccount.figure_string 
+                                ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=s&direction=2&head_direction=3&headonly=1`
+                                : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-white truncate volter-font">
+                              {habboAccount.habbo_name}
+                            </h4>
+                            <HotelTag hotel={habboAccount.hotel} />
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-2 text-green-600 mb-2">
+                            <Home className="w-4 h-4" />
+                            <span className="text-sm font-semibold volter-font">Minha Home</span>
+                          </div>
+                          <p className="text-xs text-gray-600 volter-font">Clique para visitar</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 ) : (
-                  <Button 
-                    onClick={() => navigate('/login')}
-                    className="habbo-button-orange volter-font px-6 py-2"
-                  >
-                    <User className="w-4 h-4 mr-2" />
-                    Fazer Login para Ver Minha Home
-                  </Button>
+                  <div className="flex-shrink-0">
+                    <Card 
+                      className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-48"
+                      onClick={() => navigate('/login')}
+                    >
+                      <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-b-2 border-black p-4">
+                        <div className="flex items-center gap-3">
+                          <User className="w-8 h-8 text-white" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-white truncate volter-font">
+                              Fazer Login
+                            </h4>
+                            <p className="text-xs text-orange-100 volter-font">Acesse sua conta</p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-2 text-orange-600 mb-2">
+                            <Home className="w-4 h-4" />
+                            <span className="text-sm font-semibold volter-font">Minha Home</span>
+                          </div>
+                          <p className="text-xs text-gray-600 volter-font">Login necessário</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
-              </div>
 
-              <Card className="mb-8 hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
+                {/* Campo de Busca */}
+                <div className="flex-1">
+                  <Card className="hover:shadow-lg transition-shadow bg-white/95 backdrop-blur-sm border-2 border-black">
                 <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-b-2 border-black">
                   <CardTitle className="flex items-center gap-2 sidebar-font-option-4 text-white"
                     style={{
@@ -205,6 +259,8 @@ const Homes: React.FC = () => {
                   </p>
                 </CardContent>
               </Card>
+                </div>
+              </div>
 
               {/* Grids de Homes */}
               <HomesGrid
