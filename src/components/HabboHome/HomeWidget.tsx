@@ -107,8 +107,22 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
   }, [onGuestbookDelete, currentUser, isOwner]);
 
   const canDeleteEntry = useCallback((entry: GuestbookEntry) => {
-    if (!currentUser) return false;
-    return isOwner || entry.author_habbo_name === currentUser.habbo_name;
+    if (!currentUser) {
+      console.log('🗑️ canDeleteEntry: currentUser não encontrado');
+      return false;
+    }
+    
+    const canDelete = isOwner || entry.author_habbo_name === currentUser.habbo_name;
+    
+    console.log('🗑️ canDeleteEntry:', {
+      entryAuthor: entry.author_habbo_name,
+      currentUserName: currentUser.habbo_name,
+      isOwner,
+      canDelete,
+      match: entry.author_habbo_name === currentUser.habbo_name
+    });
+    
+    return canDelete;
   }, [currentUser, isOwner]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -311,14 +325,13 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
             </div>
 
             {/* Widget Body - Conteúdo Principal */}
-            <div className="widget-body flex-1 flex flex-col relative">
+            <div className="widget-body flex-1 flex flex-col relative overflow-hidden" style={{ paddingBottom: '60px' }}>
               {/* Área de Comentários - Scrollável */}
               <div 
-                className="guestbook-content flex-1 overflow-y-auto" 
+                className="guestbook-content absolute inset-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" 
                 style={{ 
                   padding: '8px',
-                  minHeight: 0, // Importante para flex funcionar
-                  paddingBottom: '60px' // Espaço para o footer fixo
+                  paddingBottom: '68px'
                 }}
               >
                   {guestbook.length === 0 ? (
@@ -463,7 +476,7 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
       case 'rating':
         return (
           <RatingWidget
-            homeOwnerId={habboData.id}
+            homeOwnerId={habboData.supabase_user_id}
             className="w-full h-full"
           />
         );

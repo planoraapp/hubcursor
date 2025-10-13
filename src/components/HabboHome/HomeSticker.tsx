@@ -11,6 +11,7 @@ interface HomeStickerProps {
   onStickerUpdate?: (stickerId: string, updates: Partial<Sticker>) => void;
   onSelectionChange?: (stickerId: string | null) => void;
   onBringToFront?: (stickerId: string) => void;
+  onSendToBack?: (stickerId: string) => void;
 }
 
 export const HomeSticker: React.FC<HomeStickerProps> = ({
@@ -21,7 +22,8 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
   onRemove,
   onStickerUpdate,
   onSelectionChange,
-  onBringToFront
+  onBringToFront,
+  onSendToBack
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, elementX: sticker.x, elementY: sticker.y });
@@ -61,6 +63,22 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     e.stopPropagation();
     onRemove(sticker.id);
   }, [sticker.id, onRemove]);
+
+  const handleBringToFront = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onBringToFront) {
+      onBringToFront(sticker.id);
+    }
+  }, [sticker.id, onBringToFront]);
+
+  const handleSendToBack = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onSendToBack) {
+      onSendToBack(sticker.id);
+    }
+  }, [sticker.id, onSendToBack]);
 
   // Handle click outside to deselect
   React.useEffect(() => {
@@ -147,8 +165,6 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
     opacity: isDragging ? 0.8 : 1
   };
 
-  console.log(`🎯 Renderizando sticker ${sticker.sticker_id} em posição (${sticker.x}, ${sticker.y}) com src: ${sticker.sticker_src}`);
-
   return (
     <div
       ref={stickerRef}
@@ -186,26 +202,58 @@ export const HomeSticker: React.FC<HomeStickerProps> = ({
                   }}
       />
       
-      {/* Botão de Remoção - Sempre visível em modo de edição, sobreposto */}
+      {/* Botões de Controle - Sempre visíveis em modo de edição */}
       {isEditMode && isOwner && (
-        <button
-          onClick={handleRemove}
-          className="absolute transition-all z-20 opacity-50 hover:opacity-100"
-          style={{ 
-            top: isSmallSticker ? '-6px' : '-2px', 
-            right: isSmallSticker ? '-6px' : '-2px',
-            width: '16px',
-            height: '16px'
-          }}
-          title="Remover Sticker"
-        >
-          <img 
-            src="/assets/Xis3.png" 
-            alt="Remover" 
-            className="w-full h-full object-contain"
-            style={{ imageRendering: 'pixelated' }}
-          />
-        </button>
+        <div className="absolute transition-all z-20" style={{ 
+          top: isSmallSticker ? '-6px' : '-2px', 
+          right: isSmallSticker ? '-6px' : '-2px',
+          display: 'flex',
+          gap: '4px'
+        }}>
+          {/* Botão Enviar para Trás */}
+          <button
+            onClick={handleSendToBack}
+            className="opacity-50 hover:opacity-100 transition-opacity bg-blue-500 rounded-sm flex items-center justify-center"
+            style={{ 
+              width: '16px',
+              height: '16px'
+            }}
+            title="Enviar para Trás"
+          >
+            <span className="text-white text-xs font-bold" style={{ fontSize: '10px', lineHeight: '1' }}>↓</span>
+          </button>
+
+          {/* Botão Trazer para Frente */}
+          <button
+            onClick={handleBringToFront}
+            className="opacity-50 hover:opacity-100 transition-opacity bg-green-500 rounded-sm flex items-center justify-center"
+            style={{ 
+              width: '16px',
+              height: '16px'
+            }}
+            title="Trazer para Frente"
+          >
+            <span className="text-white text-xs font-bold" style={{ fontSize: '10px', lineHeight: '1' }}>↑</span>
+          </button>
+
+          {/* Botão Remover */}
+          <button
+            onClick={handleRemove}
+            className="opacity-50 hover:opacity-100 transition-opacity"
+            style={{ 
+              width: '16px',
+              height: '16px'
+            }}
+            title="Remover Sticker"
+          >
+            <img 
+              src="/assets/Xis3.png" 
+              alt="Remover" 
+              className="w-full h-full object-contain"
+              style={{ imageRendering: 'pixelated' }}
+            />
+          </button>
+        </div>
       )}
 
       {isDragging && (

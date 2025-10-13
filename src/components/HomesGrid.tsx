@@ -52,8 +52,8 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
   if (isLoading) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-white mb-4 volter-font" 
-            style={{ textShadow: '2px 2px 0px black' }}>
+        <h2 className="text-xl font-bold text-white mb-4 volter-goldfish-font" 
+            style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
           {title}
         </h2>
         <div className="flex justify-center py-8">
@@ -67,8 +67,8 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
   if (error || !homes || homes.length === 0) {
     return (
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-white mb-4 volter-font" 
-            style={{ textShadow: '2px 2px 0px black' }}>
+        <h2 className="text-xl font-bold text-white mb-4 volter-goldfish-font" 
+            style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
           {title}
         </h2>
         <div className="text-center py-8">
@@ -81,8 +81,8 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white volter-font" 
-            style={{ textShadow: '2px 2px 0px black' }}>
+        <h2 className="text-xl font-bold text-white volter-goldfish-font" 
+            style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
           {title}
         </h2>
         

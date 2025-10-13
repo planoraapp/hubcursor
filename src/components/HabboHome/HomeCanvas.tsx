@@ -25,6 +25,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
   onStickerPositionChange,
   onStickerRemove,
   onStickerBringToFront,
+  onStickerSendToBack,
   onWidgetRemove,
   onOpenAssetsModal,
   onToggleEditMode,
@@ -241,6 +242,7 @@ export const HomeCanvas: React.FC<HomeCanvasProps> = ({
             onPositionChange={onStickerPositionChange}
             onRemove={onStickerRemove}
             onBringToFront={onStickerBringToFront}
+            onSendToBack={onStickerSendToBack}
           />
         ))}
 

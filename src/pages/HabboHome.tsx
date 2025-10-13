@@ -60,6 +60,7 @@ const HabboHome: React.FC = () => {
     addSticker,
     removeSticker,
     bringToFront,
+    sendToBack,
     updateBackground,
     addWidget,
     removeWidget,
@@ -353,11 +354,12 @@ const HabboHome: React.FC = () => {
             guestbook={guestbook}
             isEditMode={isEditMode}
             isOwner={isOwner}
-            currentUser={habboAccount ? { id: habboAccount.id, habbo_name: habboAccount.habbo_username } : null}
+            currentUser={habboAccount ? { id: habboAccount.id, habbo_name: habboAccount.habbo_name } : null}
             onWidgetPositionChange={updateWidgetPosition}
             onStickerPositionChange={updateStickerPosition}
             onStickerRemove={removeSticker}
             onStickerBringToFront={bringToFront}
+            onStickerSendToBack={sendToBack}
             onWidgetRemove={removeWidget}
             onOpenAssetsModal={handleOpenAssetsModal}
             onToggleEditMode={() => setIsEditMode(!isEditMode)}

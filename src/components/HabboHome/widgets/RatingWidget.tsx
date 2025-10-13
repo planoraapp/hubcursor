@@ -28,9 +28,12 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
       setLoading(true);
             // Verificar se homeOwnerId é válido
       if (!homeOwnerId || homeOwnerId === 'undefined') {
+        console.warn('⭐ homeOwnerId inválido:', homeOwnerId);
                 setLoading(false);
         return;
       }
+
+      console.log('⭐ Carregando avaliações para home:', homeOwnerId);
 
       // Carregar todas as avaliações para calcular média
       const { data: allRatings, error: allError } = await supabase
@@ -39,6 +42,7 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
         .eq('home_owner_user_id', homeOwnerId);
 
       if (allError) {
+        console.error('⭐ Erro ao carregar avaliações:', allError);
               } else if (allRatings) {
         const ratings = allRatings.map(r => r.rating);
         const avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
@@ -50,44 +54,81 @@ export const RatingWidget: React.FC<RatingWidgetProps> = ({
 
       // Carregar avaliação do usuário atual se logado
       if (habboAccount && habboAccount.supabase_user_id) {
+        console.log('⭐ Buscando avaliação do usuário:', {
+          homeOwnerId,
+          ratingUserId: habboAccount.supabase_user_id
+        });
+
         const { data: userRatingData, error: userError } = await supabase
           .from('user_home_ratings')
           .select('rating')
           .eq('home_owner_user_id', homeOwnerId)
           .eq('rating_user_id', habboAccount.supabase_user_id)
-          .single();
+          .maybeSingle();
 
-        if (!userError && userRatingData) {
+        if (userError) {
+          console.error('⭐ Erro ao buscar avaliação do usuário:', userError);
+        } else if (userRatingData) {
           setUserRating(userRatingData.rating);
-                  }
+          console.log('⭐ Avaliação do usuário encontrada:', userRatingData.rating);
+        } else {
+          console.log('⭐ Usuário ainda não avaliou esta home');
+        }
       }
     } catch (error) {
+      console.error('⭐ Erro geral ao carregar avaliações:', error);
           } finally {
       setLoading(false);
     }
   };
 
   const handleRate = async (rating: number) => {
-    if (!habboAccount) {
-            return;
+    if (!habboAccount || !habboAccount.supabase_user_id) {
+      console.warn('⭐ Usuário não autenticado ou sem supabase_user_id:', habboAccount);
+      return;
+    }
+
+    // Não permitir que o usuário avalie sua própria home
+    if (habboAccount.supabase_user_id === homeOwnerId) {
+      console.warn('⭐ Usuário não pode avaliar sua própria home');
+      return;
     }
 
     try {
-            const { error } = await supabase
+      console.log('⭐ Enviando avaliação:', {
+        home_owner_user_id: homeOwnerId,
+        rating_user_id: habboAccount.supabase_user_id,
+        rating,
+        habbo_name: habboAccount.habbo_name
+      });
+
+      const { data, error } = await supabase
         .from('user_home_ratings')
         .upsert({
           home_owner_user_id: homeOwnerId,
           rating_user_id: habboAccount.supabase_user_id,
-          rating
-        });
+          rating,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'rating_user_id,home_owner_user_id'
+        })
+        .select();
 
-      if (!error) {
+      if (error) {
+        console.error('❌ Erro ao salvar avaliação:', {
+          error,
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
+      } else {
         setUserRating(rating);
         await loadRatings(); // Recarregar para atualizar média
-              } else {
-              }
+        console.log('✅ Avaliação salva com sucesso!', data);
+      }
     } catch (error) {
-          }
+      console.error('❌ Erro ao avaliar:', error);
+    }
   };
 
   if (loading) {

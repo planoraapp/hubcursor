@@ -152,7 +152,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
 
       // 5. Processar widgets
       if (widgetsData && widgetsData.length > 0) {
-        setWidgets(widgetsData.map(w => ({
+        const processedWidgets = widgetsData.map(w => ({
           id: w.id,
           widget_type: w.widget_type,
           x: w.x,
@@ -162,7 +162,8 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
           height: w.height,
           is_visible: w.is_visible,
           config: w.config
-        })));
+        }));
+        setWidgets(processedWidgets);
       } else {
         // Se não tem widgets, criar um widget profile padrão padronizado
         const defaultProfileWidget: Widget = {
@@ -181,7 +182,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
 
       // 6. Processar stickers
       if (stickersData && stickersData.length > 0) {
-        setStickers(stickersData.map(s => ({
+        const processedStickers = stickersData.map(s => ({
           id: s.id,
           sticker_id: s.sticker_id,
           x: s.x,
@@ -191,7 +192,10 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
           rotation: s.rotation || 0,
           sticker_src: s.sticker_src,
           category: s.category || 'outros'
-        })));
+        }));
+        setStickers(processedStickers);
+      } else {
+        setStickers([]);
       }
 
       // 7. Processar background
@@ -406,6 +410,13 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
   const removeWidget = async (widgetId: string) => {
     if (!isOwner || !habboData || !supabase) return;
 
+    // Verificar se é um widget de perfil
+    const widgetToRemove = widgets.find(w => w.id === widgetId);
+    if (widgetToRemove?.widget_type === 'profile') {
+      console.warn('⚠️ O widget de perfil não pode ser removido');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('user_home_widgets')
@@ -480,20 +491,32 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
   const removeSticker = async (stickerId: string) => {
     if (!isOwner || !habboData || !supabase) return;
 
+    console.log('🗑️ Tentando remover sticker:', {
+      stickerId,
+      userId: habboData.supabase_user_id
+    });
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_stickers')
         .delete()
         .eq('id', stickerId)
-        .eq('user_id', habboData.supabase_user_id);
+        .eq('user_id', habboData.supabase_user_id)
+        .select();
 
       if (error) {
         console.error('❌ Erro ao remover sticker:', error);
         return;
       }
 
+      console.log('✅ Sticker removido do banco:', data);
       setStickers(prev => prev.filter(s => s.id !== stickerId));
-      console.log(`✅ Sticker ${stickerId} removido`);
+      
+      // Invalidar cache
+      queryClient.invalidateQueries({ queryKey: ['latest-homes-optimized'] });
+      queryClient.invalidateQueries({ queryKey: ['latest-homes'] });
+      
+      console.log(`✅ Sticker ${stickerId} removido do estado local`);
     } catch (error) {
       console.error('❌ Erro ao remover sticker:', error);
     }
@@ -511,6 +534,13 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
     if (sticker.z_index !== maxZ) {
       const newZ = maxZ + 1;
       
+      console.log(`⬆️ Trazendo sticker para frente:`, {
+        stickerId,
+        oldZ: sticker.z_index,
+        newZ,
+        maxZ
+      });
+      
       // Atualizar estado local imediatamente
       setStickers(prev => {
         const updated = prev.map(s => 
@@ -520,8 +550,43 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
         scheduleSave();
         return updated;
       });
+    } else {
+      console.log(`⬆️ Sticker já está na frente (z-index: ${sticker.z_index})`);
     }
   }, [isOwner, habboData, stickers, widgets, scheduleSave]);
+
+  const sendToBack = useCallback((stickerId: string) => {
+    if (!isOwner || !habboData) return;
+
+    const sticker = stickers.find(s => s.id === stickerId);
+    if (!sticker) return;
+
+    const minZ = Math.min(1, ...stickers.map(s => s.z_index || 1));
+    
+    // Só atualizar se não for já o menor z-index
+    if (sticker.z_index !== minZ) {
+      const newZ = Math.max(1, minZ - 1); // Mínimo 1 para ficar acima do background
+      
+      console.log(`⬇️ Enviando sticker para trás:`, {
+        stickerId,
+        oldZ: sticker.z_index,
+        newZ,
+        minZ
+      });
+      
+      // Atualizar estado local imediatamente
+      setStickers(prev => {
+        const updated = prev.map(s => 
+          s.id === stickerId ? { ...s, z_index: newZ } : s
+        );
+        pendingChangesRef.current.stickers = updated;
+        scheduleSave();
+        return updated;
+      });
+    } else {
+      console.log(`⬇️ Sticker já está atrás (z-index: ${sticker.z_index})`);
+    }
+  }, [isOwner, habboData, stickers, scheduleSave]);
 
   // ============================================
   // BACKGROUND
@@ -717,6 +782,7 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
     addSticker,
     removeSticker,
     bringToFront,
+    sendToBack,
     updateBackground,
     addWidget,
     removeWidget,

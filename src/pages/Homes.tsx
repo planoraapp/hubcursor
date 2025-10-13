@@ -15,6 +15,7 @@ import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
 import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
 import { useMyHomeData } from '@/hooks/useMyHomeData';
 import { HomesGrid } from '@/components/HomesGrid';
+import { HomeCard } from '@/components/HomeCard';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
@@ -71,24 +72,84 @@ const Homes: React.FC = () => {
       setLoading(true);
       setSearchInitiated(true);
 
-      const { data, error } = await supabase
+      // Buscar usuários com homes configuradas
+      const { data: accountsData, error: accountsError } = await supabase
+        .from('habbo_accounts')
+        .select('supabase_user_id, habbo_name, hotel')
+        .ilike('habbo_name', `%${searchTerm}%`)
+        .limit(50);
+
+      if (accountsError) {
+        console.error('Erro ao buscar contas:', accountsError);
+      }
+
+      // Buscar backgrounds para os usuários encontrados
+      let homesData: any[] = [];
+      if (accountsData && accountsData.length > 0) {
+        const userIds = accountsData.map(acc => acc.supabase_user_id).filter(Boolean);
+        
+        if (userIds.length > 0) {
+          const { data: backgroundsData, error: backgroundsError } = await supabase
+            .from('user_home_backgrounds')
+            .select('*')
+            .in('user_id', userIds)
+            .order('updated_at', { ascending: false });
+
+          if (!backgroundsError && backgroundsData) {
+            // Combinar dados de accounts com backgrounds
+            homesData = backgroundsData.map(bg => {
+              const account = accountsData.find(acc => acc.supabase_user_id === bg.user_id);
+              return {
+                ...bg,
+                habbo_name: account?.habbo_name,
+                hotel: account?.hotel
+              };
+            });
+          }
+        }
+      }
+
+      // Também buscar em discovered_users para casos sem home configurada
+      const { data: usersData, error: usersError } = await supabase
         .from('discovered_users')
         .select('*')
         .ilike('habbo_name', `%${searchTerm}%`)
         .order('habbo_name', { ascending: true })
         .limit(50);
 
-      if (error) {
+      if (accountsError && usersError) {
         toast({
           title: "Erro ao buscar usuários",
-          description: error.message,
+          description: "Ocorreu um erro na busca",
           variant: "destructive"
         });
         setLoading(false);
         return;
       }
 
-      setUsers(data || []);
+      // Combinar resultados, priorizando quem tem home configurada
+      const combinedResults = [
+        ...(homesData || []).map((home: any) => ({
+          habbo_name: home.habbo_name,
+          hotel: home.hotel || 'br',
+          is_online: false,
+          has_home: true,
+          background_type: home.background_type,
+          background_value: home.background_value,
+          updated_at: home.updated_at,
+          user_id: home.user_id
+        })),
+        ...(usersData || []).filter((user: any) => 
+          !(accountsData || []).some((acc: any) => 
+            acc.habbo_name === user.habbo_name
+          )
+        ).map((user: any) => ({
+          ...user,
+          has_home: false
+        }))
+      ];
+
+      setUsers(combinedResults);
       setLoading(false);
     } else {
       // Se não há termo de busca, mostra usuários online
@@ -405,9 +466,29 @@ const Homes: React.FC = () => {
                 onHomeClick={handleHomeClick}
               />
 
-              {searchInitiated && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredUsers.map((user) => (
+              {searchInitiated && filteredUsers.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold text-white mb-4 volter-goldfish-font" 
+                      style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
+                    🔍 Resultados da Busca ({filteredUsers.length})
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredUsers.map((user, index) => (
+                    user.has_home && user.background_value ? (
+                      <HomeCard
+                        key={`${user.habbo_name}-${index}`}
+                        home={{
+                          user_id: user.habbo_name,
+                          habbo_name: user.habbo_name,
+                          hotel: user.hotel,
+                          updated_at: user.updated_at,
+                          background_type: user.background_type,
+                          background_value: user.background_value
+                        }}
+                        onHomeClick={handleHomeClick}
+                      />
+                    ) : (
                     <Card key={user.id} className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105">
                       <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-b-2 border-black p-4">
                         <div className="flex items-center gap-3">
@@ -475,7 +556,9 @@ const Homes: React.FC = () => {
                         </Button>
                       </CardContent>
                     </Card>
+                    )
                   ))}
+                  </div>
                 </div>
               )}
 

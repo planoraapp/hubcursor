@@ -111,6 +111,7 @@ export interface HomeCanvasProps {
   onStickerPositionChange: (stickerId: string, x: number, y: number) => void;
   onStickerRemove: (stickerId: string) => void;
   onStickerBringToFront?: (stickerId: string) => void;
+  onStickerSendToBack?: (stickerId: string) => void;
   onWidgetRemove?: (widgetId: string) => void;
   onOpenAssetsModal?: (type: 'stickers' | 'widgets' | 'backgrounds') => void;
   onToggleEditMode?: () => void;

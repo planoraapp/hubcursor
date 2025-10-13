@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createHabbohubAccountDirect } from '@/utils/createHabbohubAccountDirect';
 import { initializeAllMissingHomes } from '@/utils/initializeUserHome';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { AnimationGenerator } from '@/components/AnimationGenerator';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -33,25 +34,39 @@ import HabboFontsDemo from '@/components/HabboFontsDemo';
 interface AdminStats {
   totalUsers: number;
   totalHomes: number;
-  totalBadges: number;
-  activeUsers: number;
-  totalLikes: number;
-  totalComments: number;
+  totalWidgets: number;
+  totalStickers: number;
+  totalPhotoLikes: number;
+  totalPhotoComments: number;
   totalPhotos: number;
-  visitsToday: number;
+  totalGuestbookEntries: number;
+  totalHomeRatings: number;
+  averageHomeRating: number;
 }
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { habboAccount } = useAuth();
+  
+  // Verificar se é o admin (apenas habbohub)
+  useEffect(() => {
+    if (!habboAccount || habboAccount.habbo_name !== 'habbohub') {
+      console.warn('⚠️ Acesso negado ao painel admin');
+      navigate('/');
+    }
+  }, [habboAccount, navigate]);
+
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalHomes: 0,
-    totalBadges: 0,
-    activeUsers: 0,
-    totalLikes: 0,
-    totalComments: 0,
+    totalWidgets: 0,
+    totalStickers: 0,
+    totalPhotoLikes: 0,
+    totalPhotoComments: 0,
     totalPhotos: 0,
-    visitsToday: 0
+    totalGuestbookEntries: 0,
+    totalHomeRatings: 0,
+    averageHomeRating: 0
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,52 +80,63 @@ export const AdminDashboard: React.FC = () => {
     try {
       setLoading(true);
 
-      // Carregar estatísticas em paralelo
+      // Carregar estatísticas em paralelo das tabelas reais
       const [
         usersResult,
         homesResult,
-        badgesResult,
-        likesResult,
-        commentsResult,
+        widgetsResult,
+        stickersResult,
+        photoLikesResult,
+        photoCommentsResult,
         photosResult,
-        visitsResult
+        guestbookResult,
+        ratingsResult,
+        ratingsDataResult
       ] = await Promise.all([
         supabase.from('habbo_accounts').select('*', { count: 'exact', head: true }),
-        supabase.from('user_homes').select('*', { count: 'exact', head: true }),
-        supabase.from('user_badges').select('*', { count: 'exact', head: true }),
-        supabase.from('home_likes').select('*', { count: 'exact', head: true }),
-        supabase.from('home_comments').select('*', { count: 'exact', head: true }),
-        supabase.from('home_photos').select('*', { count: 'exact', head: true }),
-        supabase.from('home_visits').select('*', { count: 'exact', head: true })
-          .gte('visited_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+        supabase.from('user_home_backgrounds').select('*', { count: 'exact', head: true }),
+        supabase.from('user_home_widgets').select('*', { count: 'exact', head: true }),
+        supabase.from('user_stickers').select('*', { count: 'exact', head: true }),
+        supabase.from('photo_likes').select('*', { count: 'exact', head: true }),
+        supabase.from('photo_comments').select('*', { count: 'exact', head: true }),
+        supabase.from('photos').select('*', { count: 'exact', head: true }),
+        supabase.from('guestbook_entries').select('*', { count: 'exact', head: true }),
+        supabase.from('user_home_ratings').select('*', { count: 'exact', head: true }),
+        supabase.from('user_home_ratings').select('rating')
       ]);
 
       const totalUsers = usersResult.count || 0;
       const totalHomes = homesResult.count || 0;
-      const totalBadges = badgesResult.count || 0;
-      const totalLikes = likesResult.count || 0;
-      const totalComments = commentsResult.count || 0;
+      const totalWidgets = widgetsResult.count || 0;
+      const totalStickers = stickersResult.count || 0;
+      const totalPhotoLikes = photoLikesResult.count || 0;
+      const totalPhotoComments = photoCommentsResult.count || 0;
       const totalPhotos = photosResult.count || 0;
-      const visitsToday = visitsResult.count || 0;
+      const totalGuestbookEntries = guestbookResult.count || 0;
+      const totalHomeRatings = ratingsResult.count || 0;
 
-      // Usuários ativos (logados nas últimas 24 horas)
-      const { count: activeUsers } = await supabase
-        .from('habbo_accounts')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_seen_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+      // Calcular média de avaliações
+      let averageHomeRating = 0;
+      if (ratingsDataResult.data && ratingsDataResult.data.length > 0) {
+        const sum = ratingsDataResult.data.reduce((acc, r) => acc + r.rating, 0);
+        averageHomeRating = sum / ratingsDataResult.data.length;
+      }
 
       setStats({
         totalUsers,
         totalHomes,
-        totalBadges,
-        activeUsers: activeUsers || 0,
-        totalLikes,
-        totalComments,
+        totalWidgets,
+        totalStickers,
+        totalPhotoLikes,
+        totalPhotoComments,
         totalPhotos,
-        visitsToday: visitsToday || 0
+        totalGuestbookEntries,
+        totalHomeRatings,
+        averageHomeRating: Math.round(averageHomeRating * 10) / 10
       });
     } catch (error) {
-          } finally {
+      console.error('Erro ao carregar estatísticas:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -251,13 +277,13 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               {/* Estatísticas de engajamento */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
                   <CardContent className="flex items-center p-6">
                     <Heart className="h-8 w-8 text-red-600" />
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600 volter-font">Total de Likes</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalLikes}</p>
+                      <p className="text-sm font-medium text-gray-600 volter-font">Likes em Fotos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalPhotoLikes}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -266,18 +292,52 @@ export const AdminDashboard: React.FC = () => {
                   <CardContent className="flex items-center p-6">
                     <MessageSquare className="h-8 w-8 text-blue-600" />
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600 volter-font">Comentários</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalComments}</p>
+                      <p className="text-sm font-medium text-gray-600 volter-font">Comentários em Fotos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalPhotoComments}</p>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
                   <CardContent className="flex items-center p-6">
-                    <Camera className="h-8 w-8 text-green-600" />
+                    <FileText className="h-8 w-8 text-purple-600" />
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600 volter-font">Fotos</p>
-                      <p className="text-2xl font-bold text-gray-900">{stats.totalPhotos}</p>
+                      <p className="text-sm font-medium text-gray-600 volter-font">Guestbook</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalGuestbookEntries}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <TrendingUp className="h-8 w-8 text-yellow-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Avaliações</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalHomeRatings}</p>
+                      <p className="text-xs text-gray-500">Média: {stats.averageHomeRating.toFixed(1)} ⭐</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Estatísticas de customização */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Palette className="h-8 w-8 text-pink-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Widgets Criados</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalWidgets}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-white/90 backdrop-blur-sm border-2 border-black shadow-xl">
+                  <CardContent className="flex items-center p-6">
+                    <Zap className="h-8 w-8 text-cyan-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600 volter-font">Stickers Adicionados</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalStickers}</p>
                     </div>
                   </CardContent>
                 </Card>
