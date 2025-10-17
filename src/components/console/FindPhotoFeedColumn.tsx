@@ -372,17 +372,15 @@ export const FindPhotoFeedColumn: React.FC = () => {
                   }}>
                     <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
                       <img
-                        src={habboAccount?.figure_string 
-                          ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
-                          : habboAccount?.habbo_name 
-                            ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=4&head_direction=2&headonly=1` 
-                            : 'https://placehold.co/40x40/4B5563/FFFFFF?text=?'
+                        src={habboAccount?.habbo_name
+                          ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=2&headonly=1`
+                          : `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`
                         }
                         alt={habboAccount?.habbo_name || 'Usuário'}
                         className="w-full h-full object-cover"
                         style={{ imageRendering: 'pixelated' }}
                         onError={(e) => {
-                          e.currentTarget.src = 'https://placehold.co/40x40/4B5563/FFFFFF?text=?';
+                          e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`;
                         }}
                       />
                     </div>

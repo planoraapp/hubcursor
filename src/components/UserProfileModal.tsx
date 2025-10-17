@@ -78,7 +78,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="flex flex-col items-center space-y-4 p-4">
             <Avatar className="h-24 w-24 border-2 border-gray-900">
               <AvatarImage 
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${userData.figureString}&size=l&direction=2&head_direction=2&gesture=sml`} 
+                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userData.name}&size=l&direction=2&head_direction=2&gesture=sml`} 
                 alt={userData.name} 
               />
               <AvatarFallback className="text-lg font-bold bg-blue-100">

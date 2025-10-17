@@ -65,8 +65,8 @@ const HubHome: React.FC = () => {
   };
 
   // Função para obter URL do avatar
-  const getAvatarUrl = (figureString: string) => {
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(figureString)}&direction=3&head_direction=3&size=l`;
+  const getAvatarUrl = (username: string) => {
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(username)}&direction=2&head_direction=2&size=l`;
   };
 
   // Função para formatar data
@@ -139,7 +139,7 @@ const HubHome: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <img
-                  src={getAvatarUrl(habboData.figure_string || '')}
+                  src={getAvatarUrl(habboData.habbo_name)}
                   alt={`Avatar de ${habboData.habbo_name}`}
                   className="w-16 h-16 rounded-lg border-2 border-yellow-400"
                 />

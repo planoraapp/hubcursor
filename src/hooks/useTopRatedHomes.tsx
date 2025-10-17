@@ -82,7 +82,13 @@ export const useTopRatedHomes = () => {
         };
       });
 
-            return enrichedHomes;
+      // Filtrar apenas homes de usuários cadastrados na tabela habbo_accounts
+      const registeredUserIds = accounts?.map(acc => acc.supabase_user_id) || [];
+      const filteredHomes = enrichedHomes.filter(home => 
+        registeredUserIds.includes(home.user_id)
+      );
+
+      return filteredHomes;
     },
     staleTime: 1000 * 60 * 10, // 10 minutes
     gcTime: 1000 * 60 * 30, // 30 minutes

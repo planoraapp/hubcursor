@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HomeCard } from './HomeCard';
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HomeData {
@@ -22,6 +22,7 @@ interface HomesGridProps {
   error: any;
   showVisits?: boolean;
   onHomeClick: (userId: string, habboName?: string, hotel?: string) => void;
+  initialDisplayCount?: number;
 }
 
 export const HomesGrid: React.FC<HomesGridProps> = ({
@@ -30,9 +31,15 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
   isLoading,
   error,
   showVisits = false,
-  onHomeClick
+  onHomeClick,
+  initialDisplayCount = 8
 }) => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Determinar quantas homes mostrar
+  const displayedHomes = isExpanded ? homes : homes.slice(0, initialDisplayCount);
+  const hasMore = homes.length > initialDisplayCount;
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -117,7 +124,7 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
           WebkitScrollbar: { display: 'none' }
         }}
       >
-        {homes.map((home) => (
+        {displayedHomes.map((home) => (
           <HomeCard
             key={home.user_id}
             home={home}
@@ -126,6 +133,28 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
           />
         ))}
       </div>
+
+      {/* Botão Ver Mais */}
+      {hasMore && (
+        <div className="flex justify-center mt-4">
+          <Button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="habbo-button-blue volter-font"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="w-4 h-4 mr-2" />
+                Ver Menos
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4 mr-2" />
+                Ver Mais ({homes.length - initialDisplayCount} homes)
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

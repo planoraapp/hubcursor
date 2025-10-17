@@ -280,17 +280,13 @@ export const FunctionalConsole: React.FC = () => {
             <div className="flex flex-col items-center gap-1">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={user?.figure_string ? 
-                    `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(user.figure_string)}&size=m&direction=2&head_direction=3` :
-                    `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
-                  }
+                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=2`}
                   alt={`Avatar de ${user?.name || 'Beebop'}`}
                   className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    // Fallback para busca por nome se o figure_string falhar
-                    target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
+                    target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2`;
                   }}
                 />
               </div>
@@ -1120,16 +1116,13 @@ const FeedTab: React.FC<any> = ({
             <div className="flex flex-col items-center gap-1">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={user?.figure_string ? 
-                    `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${encodeURIComponent(user.figure_string)}&size=m&direction=2&head_direction=3` :
-                    `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`
-                  }
+                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=2`}
                   alt={`Avatar de ${user?.name || 'Beebop'}`}
                   className="h-28 w-auto object-contain"
                   style={{ imageRendering: 'pixelated' }}
                   onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user?.name || 'Beebop'}&size=m&direction=2&head_direction=3`;
+                    target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2`;
                   }}
                 />
               </div>

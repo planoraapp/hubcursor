@@ -191,7 +191,7 @@ export function CollapsibleAppSidebar() {
                 <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-3`}>
                   <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
                     <img
-                      src={habboAccount.figure_string ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1` : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
+                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
                       alt={`Avatar de ${habboAccount.habbo_name}`}
                       className="w-16 h-16 object-contain"
                       style={{ 
@@ -200,9 +200,7 @@ export function CollapsibleAppSidebar() {
                       }}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = habboAccount.figure_string 
-                          ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=2&head_direction=3&headonly=1`
-                          : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
+                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
                       }}
                     />
                   </div>

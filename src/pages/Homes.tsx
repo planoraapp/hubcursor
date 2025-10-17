@@ -37,6 +37,7 @@ const Homes: React.FC = () => {
   const [users, setUsers] = useState<HabboUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchInitiated, setSearchInitiated] = useState(false);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
 
   const fetchUsers = async () => {
@@ -161,16 +162,11 @@ const Homes: React.FC = () => {
   const filteredUsers = users.filter((user) => user.habbo_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleHomeClick = (userId: string, habboName?: string, hotel?: string) => {
-    console.log('🏠 handleHomeClick chamado:', { userId, habboName, hotel });
-    
     if (habboName) {
       // Gerar nome único com domínio baseado no hotel
       const selectedHotel = hotel || 'br';
       const domainUsername = generateUniqueUsername(habboName, selectedHotel);
-      console.log('🔗 Navegando para:', `/home/${domainUsername}`);
       navigate(`/home/${domainUsername}`);
-    } else {
-      console.warn('⚠️ habboName está vazio, não pode navegar');
     }
   };
 
@@ -255,6 +251,93 @@ const Homes: React.FC = () => {
     }
   };
 
+  // Debounce para busca em tempo real
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // Aguarda 500ms após parar de digitar
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Busca automática quando o termo debounced muda
+  useEffect(() => {
+    const performSearch = async () => {
+      if (debouncedSearchTerm.trim().length >= 2) {
+        setLoading(true);
+        setSearchInitiated(true);
+
+        // Buscar usuários com homes configuradas (apenas com background)
+        const { data: accountsData, error: accountsError } = await supabase
+          .from('habbo_accounts')
+          .select('supabase_user_id, habbo_name, hotel')
+          .ilike('habbo_name', `%${debouncedSearchTerm}%`)
+          .limit(50);
+
+        if (accountsError) {
+          console.error('Erro ao buscar contas:', accountsError);
+          toast({
+            title: "Erro ao buscar usuários",
+            description: "Ocorreu um erro na busca",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Buscar backgrounds para os usuários encontrados
+        let homesData: any[] = [];
+        if (accountsData && accountsData.length > 0) {
+          const userIds = accountsData.map(acc => acc.supabase_user_id).filter(Boolean);
+          
+          if (userIds.length > 0) {
+            const { data: backgroundsData, error: backgroundsError } = await supabase
+              .from('user_home_backgrounds')
+              .select('*')
+              .in('user_id', userIds)
+              .order('updated_at', { ascending: false });
+
+            if (!backgroundsError && backgroundsData && backgroundsData.length > 0) {
+              // Combinar dados de accounts com backgrounds
+              homesData = backgroundsData.map(bg => {
+                const account = accountsData.find(acc => acc.supabase_user_id === bg.user_id);
+                return {
+                  ...bg,
+                  habbo_name: account?.habbo_name,
+                  hotel: account?.hotel
+                };
+              });
+            }
+          }
+        }
+
+        // Filtrar apenas homes com background configurado
+        const validHomes = homesData
+          .filter(home => home.background_value) // Apenas com background
+          .map((home: any) => ({
+            id: home.user_id,
+            habbo_name: home.habbo_name,
+            hotel: home.hotel || 'br',
+            is_online: false,
+            has_home: true,
+            background_type: home.background_type,
+            background_value: home.background_value,
+            updated_at: home.updated_at,
+            user_id: home.user_id
+          }));
+
+        setUsers(validHomes);
+        setLoading(false);
+      } else if (debouncedSearchTerm.trim().length === 0 && searchInitiated) {
+        // Limpar resultados se a busca for apagada
+        setUsers([]);
+        setSearchInitiated(false);
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearchTerm]);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -284,12 +367,7 @@ const Homes: React.FC = () => {
                     <Card 
                       className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer w-64 h-full relative overflow-hidden"
                       onClick={() => {
-                        console.log('🏠 Minicard "Ver Minha Home" clicado');
-                        console.log('📝 Dados da conta:', habboAccount);
-                        
                         const domainUsername = generateUniqueUsername(habboAccount.habbo_name, habboAccount.hotel);
-                        console.log('🔗 URL gerada:', `/home/${domainUsername}`);
-                        
                         navigate(`/home/${domainUsername}`);
                       }}
                     >
@@ -308,21 +386,16 @@ const Homes: React.FC = () => {
                       {/* Overlay escuro para legibilidade */}
                       <div className="absolute inset-0 bg-black/30" />
                       
-                      {/* Avatar grande no canto inferior direito - usando figurestring atualizada */}
+                      {/* Avatar grande no canto inferior direito - sempre busca size=l pela API */}
                       <div className="absolute inset-0 flex items-end justify-end p-3">
                         <img
-                          src={myHomeData?.figure_string || habboAccount.figure_string
-                            ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${myHomeData?.figure_string || habboAccount.figure_string}&size=l&direction=2&head_direction=3&gesture=sml&action=std`
-                            : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&gesture=sml&action=std`
-                          }
+                          src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&gesture=sml&action=std`}
                           alt={`Avatar de ${habboAccount.habbo_name}`}
                           className="h-full w-auto object-contain"
                           style={{ imageRendering: 'pixelated' }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = myHomeData?.figure_string || habboAccount.figure_string
-                              ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${myHomeData?.figure_string || habboAccount.figure_string}&size=l&direction=2&head_direction=3&gesture=sml&action=std`
-                              : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&gesture=sml&action=std`;
+                            target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=l&direction=2&head_direction=3&gesture=sml&action=std`;
                           }}
                         />
                       </div>
@@ -409,14 +482,21 @@ const Homes: React.FC = () => {
                 <CardContent className="p-6 h-full flex flex-col justify-between">
                   <div>
                     <div className="flex gap-4">
-                      <Input
-                        type="text"
-                        placeholder="Digite o nome do usuário Habbo ou deixe vazio para ver usuários online..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                        className="flex-1 border-2 border-gray-300 focus:border-purple-500 volter-body-text"
-                      />
+                      <div className="relative flex-1">
+                        <Input
+                          type="text"
+                          placeholder="Digite o nome do usuário Habbo (busca automática)..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                          className="border-2 border-gray-300 focus:border-purple-500 volter-body-text pr-10"
+                        />
+                        {loading && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-500 border-t-transparent"></div>
+                          </div>
+                        )}
+                      </div>
                       <Button 
                         onClick={handleSearch}
                         disabled={loading}
@@ -432,13 +512,54 @@ const Homes: React.FC = () => {
                       </Button>
                     </div>
                     <p className="text-gray-600 mt-2 volter-body-text">
-                      <AccentFixedText>💡 Dica: Deixe o campo vazio e clique em "Buscar" para ver usuários online com homes descobertas</AccentFixedText>
+                      <AccentFixedText>💡 Dica: Digite pelo menos 2 caracteres para buscar automaticamente. A busca mostra homes cadastradas e perfis descobertos.</AccentFixedText>
                     </p>
                   </div>
                 </CardContent>
               </Card>
                 </div>
               </div>
+
+              {/* Resultados da Busca - Movido para cima */}
+              {searchInitiated && filteredUsers.length > 0 && (
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold text-white mb-4 volter-goldfish-font" 
+                      style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
+                    🔍 Resultados da Busca ({filteredUsers.length})
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredUsers.map((user, index) => (
+                      <HomeCard
+                        key={`${user.habbo_name}-${index}`}
+                        home={{
+                          user_id: user.habbo_name,
+                          habbo_name: user.habbo_name,
+                          hotel: user.hotel,
+                          updated_at: user.updated_at,
+                          background_type: user.background_type,
+                          background_value: user.background_value
+                        }}
+                        onHomeClick={handleHomeClick}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {searchInitiated && filteredUsers.length === 0 && !loading && (
+                <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black mb-8">
+                  <CardContent className="p-8 text-center">
+                    <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-700 mb-2 volter-font">
+                      Nenhum usuário encontrado
+                    </h3>
+                    <p className="text-gray-600 volter-font">
+                      Tente buscar por um nome diferente ou deixe o campo vazio para ver usuários online.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Grids de Homes */}
               <HomesGrid
@@ -465,116 +586,6 @@ const Homes: React.FC = () => {
                 showVisits={true}
                 onHomeClick={handleHomeClick}
               />
-
-              {searchInitiated && filteredUsers.length > 0 && (
-                <div className="mb-8">
-                  <h2 className="text-xl font-bold text-white mb-4 volter-goldfish-font" 
-                      style={{ textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0px 2px 0px #000, 0px -2px 0px #000, 2px 0px 0px #000, -2px 0px 0px #000' }}>
-                    🔍 Resultados da Busca ({filteredUsers.length})
-                  </h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredUsers.map((user, index) => (
-                    user.has_home && user.background_value ? (
-                      <HomeCard
-                        key={`${user.habbo_name}-${index}`}
-                        home={{
-                          user_id: user.habbo_name,
-                          habbo_name: user.habbo_name,
-                          hotel: user.hotel,
-                          updated_at: user.updated_at,
-                          background_type: user.background_type,
-                          background_value: user.background_value
-                        }}
-                        onHomeClick={handleHomeClick}
-                      />
-                    ) : (
-                    <Card key={user.id} className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black hover:shadow-xl transition-all duration-300 hover:scale-105">
-                      <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-b-2 border-black p-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
-                            alt={`Avatar de ${user.habbo_name}`}
-                            className="w-12 h-12 object-contain bg-white/20 rounded border border-white/30"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${user.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
-                            }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg volter-font habbo-text truncate">
-                              {user.habbo_name}
-                            </CardTitle>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge className={`text-sm volter-font ${user.is_online ? 'bg-green-500' : 'bg-gray-500'}`}>
-                                {user.is_online ? 'Online' : 'Offline'}
-                              </Badge>
-                              <Badge className="bg-white/20 text-white text-sm volter-font">
-                                {user.hotel?.toUpperCase() || 'BR'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      
-                      <CardContent className="p-4 space-y-3">
-                        {user.motto && (
-                          <div className="flex items-start gap-2">
-                            <Star className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                            <p className="text-sm text-gray-700 volter-font italic">
-                              "{user.motto}"
-                            </p>
-                          </div>
-                        )}
-                        
-                        {user.created_at && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm text-gray-600 volter-font">
-                              Descoberto em: {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-red-500" />
-                          <span className="text-xs text-gray-600 volter-font">
-                            Hotel: {user.hotel?.toUpperCase() || 'Brasil'}
-                          </span>
-                        </div>
-                        
-                        <Button 
-                          onClick={() => {
-                            const domainUsername = generateUniqueUsername(user.habbo_name, user.hotel);
-                            navigate(`/home/${domainUsername}`);
-                          }}
-                          className="w-full habbo-button-blue volter-font"
-                        >
-                          <Home className="w-4 h-4 mr-2" />
-                          Ver Home
-                          <ExternalLink className="w-4 h-4 ml-2" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                    )
-                  ))}
-                  </div>
-                </div>
-              )}
-
-              {searchInitiated && filteredUsers.length === 0 && !loading && (
-                <Card className="bg-white/95 backdrop-blur-sm shadow-lg border-2 border-black">
-                  <CardContent className="p-8 text-center">
-                    <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-gray-700 mb-2 volter-font">
-                      Nenhum usuário encontrado
-                    </h3>
-                    <p className="text-gray-600 volter-font">
-                      Tente buscar por um nome diferente ou deixe o campo vazio para ver usuários online.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
             </div>
             </main>
           </SidebarInset>

@@ -60,10 +60,14 @@ const SimpleConsole: React.FC = () => {
                 {habboAccount ? (
                   <>
                     <img 
-                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure}&size=m&direction=2&head_direction=3`}
+                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.name}&size=m&direction=2&head_direction=2`}
                       alt={`Avatar de ${habboAccount.name}`}
                       className="h-28 w-auto object-contain"
                       style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2`;
+                      }}
                     />
                     <div className="absolute bottom-0 right-0">
                       <img 

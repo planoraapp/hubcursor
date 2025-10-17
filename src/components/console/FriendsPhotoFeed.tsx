@@ -94,10 +94,17 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
           <form onSubmit={handleSubmitComment} className="flex items-center gap-2">
             <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
               <img
-                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`}
+                src={habboAccount?.habbo_name
+                  ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=2&headonly=1`
+                  : `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`
+                }
                 alt={habboAccount.habbo_name}
                 className="w-full h-full object-cover"
                 style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`;
+                }}
               />
             </div>
             <div className="flex-1 relative">

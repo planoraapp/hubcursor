@@ -23,8 +23,8 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
 }) => {
   const { data: profile, isLoading, error } = useCompleteProfile(habboName, hotel);
 
-  const getAvatarUrl = (figureString: string) => {
-    return `https://www.habbo.${hotel}/habbo-imaging/avatarimage?figure=${figureString}&size=l&direction=2&head_direction=3&action=std`;
+  const getAvatarUrl = (username: string) => {
+    return `https://www.habbo.${hotel}/habbo-imaging/avatarimage?user=${username}&size=l&direction=2&head_direction=2&action=std`;
   };
 
   if (!isOpen) return null;
@@ -78,7 +78,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                 <div className="flex-shrink-0">
                   <div className="relative">
                     <img
-                      src={getAvatarUrl(profile.figureString)}
+                      src={getAvatarUrl(profile.name)}
                       alt={profile.name}
                       className="h-32 w-auto object-contain"
                       onError={(e) => {

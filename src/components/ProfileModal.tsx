@@ -45,7 +45,7 @@ export const ProfileModal = ({ open, setOpen, habboName }: { open: boolean, setO
         ) : userData ? (
           <div className="flex flex-col items-center space-y-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${userData.figureString}&size=l&direction=2&head_direction=2&gesture=sml`} alt={userData.name} />
+              <AvatarImage src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${userData.name}&size=l&direction=2&head_direction=2&gesture=sml`} alt={userData.name} />
               <AvatarFallback>{userData.name.substring(0, 2)}</AvatarFallback>
             </Avatar>
             <h2>{userData.name}</h2>

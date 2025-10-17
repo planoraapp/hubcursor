@@ -142,17 +142,12 @@ export function NewAppSidebar() {
               <div className={`text-center ${isCollapsed ? 'px-1' : ''}`}>
                 <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-center gap-2'} mb-2`}>
                   <img
-                    src={habboAccount.figure_string 
-                      ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=s&direction=2&head_direction=3&headonly=1`
-                      : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`
-                    }
+                    src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`}
                     alt={`Avatar de ${habboAccount.habbo_name}`}
                     className={`object-contain ${isCollapsed ? 'w-12 h-12' : 'w-8 h-8'}`}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = habboAccount.figure_string 
-                        ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=s&direction=2&head_direction=3&headonly=1`
-                        : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
+                      target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=s&direction=2&head_direction=3&headonly=1`;
                     }}
                   />
                   {!isCollapsed && (

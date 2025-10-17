@@ -23,8 +23,8 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
 }) => {
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
 
-  const getAvatarUrl = (figureString: string) => {
-    return `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${figureString}&size=m&direction=2&head_direction=3&action=std`;
+  const getAvatarUrl = (username: string) => {
+    return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=m&direction=2&head_direction=2&action=std`;
   };
 
   return (
@@ -73,7 +73,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                     <div className="relative">
                       <div className="w-16 h-16 overflow-hidden flex items-center justify-center">
                         <img
-                          src={getAvatarUrl(friend.figureString)}
+                          src={getAvatarUrl(friend.name)}
                           alt={friend.name}
                           className="w-full h-full object-contain object-top"
                           style={{ 

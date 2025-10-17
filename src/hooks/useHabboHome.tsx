@@ -207,7 +207,44 @@ export const useHabboHome = (username: string, hotel: string = 'br') => {
         setBackground(bg);
         console.log('🎨 Background carregado:', bg);
       } else {
-        console.log('⚠️ Nenhum background encontrado no banco, usando padrão');
+        console.log('⚠️ Nenhum background encontrado no banco, criando background padrão');
+        
+        // Criar background padrão se não existir
+        if (isOwner && habboData) {
+          const defaultBackground = {
+            background_type: 'repeat' as 'repeat',
+            background_value: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_pattern_clouds.gif'
+          };
+          
+          setBackground(defaultBackground);
+          
+          // Salvar background padrão no banco via edge function
+          try {
+            const response = await fetch('https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/sync-home-assets', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'update_background',
+                habbo_name: username,
+                background: {
+                  type: 'repeat',
+                  value: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_pattern_clouds.gif',
+                  hotel: hotel
+                }
+              })
+            });
+
+            if (response.ok) {
+              console.log('✅ Background padrão criado automaticamente');
+            } else {
+              console.error('❌ Erro ao criar background padrão');
+            }
+          } catch (error) {
+            console.error('❌ Erro ao criar background padrão:', error);
+          }
+        }
       }
 
       // 8. Processar guestbook

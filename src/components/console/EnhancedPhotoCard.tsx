@@ -293,7 +293,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
               {recentLikers.slice(0, 5).map((like, index) => (
                 <div
                   key={like.id}
-                  className="w-6 h-6 rounded-full border-2 border-background overflow-hidden"
+                  className="w-6 h-6 overflow-hidden"
                   style={{ zIndex: 5 - index }}
                 >
                   <img
@@ -328,18 +328,16 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
           {/* Avatar do usuário logado */}
           <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
             <img
-              src={habboAccount?.figure_string 
-                ? `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
-                : `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount?.habbo_name || 'Guest'}&size=m&direction=4&head_direction=2&headonly=1`
+              src={habboAccount?.habbo_name
+                ? `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=2&headonly=1`
+                : `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`
               }
               alt={habboAccount?.habbo_name || 'Guest'}
               className="w-full h-full object-cover"
               style={{ imageRendering: 'pixelated' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = habboAccount?.figure_string
-                  ? `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboAccount.figure_string}&size=m&direction=4&head_direction=2&headonly=1`
-                  : `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount?.habbo_name || 'Guest'}&size=m&direction=4&head_direction=2&headonly=1`;
+                target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hr-100-7-.hd-190-7-.ch-210-66-.lg-270-82-.sh-290-80-&size=m&direction=2&head_direction=2&headonly=1`;
               }}
             />
           </div>

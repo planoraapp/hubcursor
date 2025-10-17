@@ -255,42 +255,18 @@ const HabboHome: React.FC = () => {
             {/* Overlay para melhor legibilidade do texto */}
             <div className="absolute inset-0 bg-black/15"></div>
             <div className="relative z-10 flex items-center gap-4 text-white">
-              {/* Avatar do usuário (tamanho real, sobrepondo a borda) */}
+              {/* Avatar do usuário (tamanho real, sobrepondo a borda) - sempre busca pela API */}
               <div className="flex-shrink-0 relative" style={{ marginLeft: '-6px', marginTop: '20px' }}>
-             {habboData?.figure_string ? (
-               <img
-                 src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${habboData.figure_string}&size=m&direction=2&head_direction=2&gesture=sml`}
-                 alt={`Avatar de ${habboData.habbo_name || originalUsername}`}
-                 className="object-contain"
-                 style={{ imageRendering: 'pixelated' }}
-                 onError={(e) => {
-                   const target = e.target as HTMLImageElement;
-                   target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?figure=${habboData.figure_string}&size=m&direction=2&head_direction=2&gesture=sml`;
-                 }}
-               />
-             ) : habboData?.habbo_name ? (
-               <img
-                 src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData.habbo_name}&size=m&direction=2&head_direction=2&gesture=sml`}
-                 alt={`Avatar de ${habboData.habbo_name}`}
-                 className="object-contain"
-                 style={{ imageRendering: 'pixelated' }}
-                 onError={(e) => {
-                   const target = e.target as HTMLImageElement;
-                   target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboData.habbo_name}&size=m&direction=2&head_direction=2&gesture=sml`;
-                 }}
-               />
-             ) : (
-               <img
-                 src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${originalUsername}&size=m&direction=2&head_direction=2&gesture=sml`}
-                 alt={`Avatar de ${originalUsername}`}
-                 className="object-contain"
-                 style={{ imageRendering: 'pixelated' }}
-                 onError={(e) => {
-                   const target = e.target as HTMLImageElement;
-                   target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${originalUsername}&size=m&direction=2&head_direction=2&gesture=sml`;
-                 }}
-               />
-             )}
+                <img
+                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboData?.habbo_name || originalUsername}&size=m&direction=2&head_direction=2&gesture=sml`}
+                  alt={`Avatar de ${habboData?.habbo_name || originalUsername}`}
+                  className="object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboData?.habbo_name || originalUsername}&size=m&direction=2&head_direction=2&gesture=sml`;
+                  }}
+                />
               </div>
               
               {/* Texto do título */}

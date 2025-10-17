@@ -345,18 +345,18 @@ export const HomeWidget: React.FC<HomeWidgetProps> = ({
                         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                         .slice(0, 15)
                         .map((entry) => (
-                        <div key={entry.id} className="guestbook-entry p-2 border-b border-gray-200 last:border-b-0">
-                          <div className="flex gap-2 items-start">
+                        <div key={entry.id} className="guestbook-entry py-2 px-1 border-b border-gray-200 last:border-b-0">
+                          <div className="flex gap-3 items-start">
                             {/* Avatar */}
                             <div className="flex-shrink-0">
                               <img
-                                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s&headonly=1`}
+                                src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l&headonly=1`}
                                 alt={entry.author_habbo_name}
-                                className="w-6 h-6 rounded object-contain"
+                                className="w-16 h-16 object-contain"
                                 style={{ imageRendering: 'pixelated' }}
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=3&gesture=sml&size=s`;
+                                  target.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${entry.author_habbo_name}&action=std&direction=2&head_direction=2&gesture=sml&size=l`;
                                 }}
                               />
                             </div>

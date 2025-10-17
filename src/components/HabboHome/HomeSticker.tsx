@@ -1,7 +1,16 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 
 import type { Sticker } from '@/types/habbo';
+
+// ⚡ DEBUG otimizado - logs apenas em desenvolvimento
+const DEBUG = import.meta.env.DEV;
+let logCount = 0;
+const debugLog = (...args: any[]) => {
+  if (DEBUG && logCount++ % 100 === 0) { // Log apenas a cada 100 renders
+    console.log(...args);
+  }
+};
 interface HomeStickerProps {
   sticker: Sticker;
   isEditMode: boolean;

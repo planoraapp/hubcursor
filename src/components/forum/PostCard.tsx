@@ -31,7 +31,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onLike, currentUserId 
         <div className="flex items-start gap-4">
           <Avatar className="w-12 h-12 border-2 border-gray-300">
             <AvatarImage 
-              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-61.ch-210-66.lg-280-110.sh-305-62&size=m&direction=2&head_direction=2&gesture=sml`}
+              src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${post.author_habbo_name}&size=m&direction=2&head_direction=2&gesture=sml`}
               alt={post.author_habbo_name}
             />
             <AvatarFallback className="bg-blue-100 text-blue-600 font-bold">
