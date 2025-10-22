@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, MessageSquare, Star } from 'lucide-react';
 import PageBanner from '@/components/ui/PageBanner';
 import { AccentFixedText } from '@/components/AccentFixedText';
+import { useI18n } from '@/contexts/I18nContext';
 
 // Temporariamente desabilitar hooks pesados para melhorar performance
 // import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
@@ -15,6 +16,7 @@ import { AccentFixedText } from '@/components/AccentFixedText';
 // import { useHomeAssets } from '@/hooks/useHomeAssets';
 
 export const Home: React.FC = () => {
+  const { t } = useI18n();
   
   return (
     <SidebarProvider>
@@ -32,7 +34,7 @@ export const Home: React.FC = () => {
               {/* Banner padrão com fundo de nuvens */}
               <PageBanner 
                 title="🏠 HabboHub"
-                subtitle="A plataforma definitiva para a comunidade Habbo. Conecte-se, explore e compartilhe sua paixão pelo Habbo Hotel."
+                subtitle={t('pages.home.subtitle')}
               />
 
               {/* Features Grid */}
@@ -47,12 +49,12 @@ export const Home: React.FC = () => {
                         textShadow: '1px 1px 0px black, -1px -1px 0px black, 1px -1px 0px black, -1px 1px 0px black'
                       }}>
                       <Users className="w-5 h-5 text-white" />
-                      Console Social
+                      {t('pages.home.console.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <p className="text-gray-600 mb-4 volter-body-text">
-                      <AccentFixedText>Acesse o console social para ver fotos de amigos, buscar usuários e interagir com a comunidade.</AccentFixedText>
+                      <AccentFixedText>{t('pages.home.console.description')}</AccentFixedText>
                     </p>
                     <Link to="/console">
                       <Button className="w-full habbo-button-blue sidebar-font-option-4"
@@ -60,7 +62,7 @@ export const Home: React.FC = () => {
                           fontSize: '16px',
                           fontWeight: 'bold',
                           letterSpacing: '0.3px'
-                        }}>Acessar Console</Button>
+                        }}>{t('pages.home.console.button')}</Button>
                     </Link>
                   </CardContent>
                 </Card>
@@ -74,12 +76,12 @@ export const Home: React.FC = () => {
                         letterSpacing: '0.3px'
                       }}>
                       <MessageSquare className="w-5 h-5 text-white" />
-                      Habbo Homes
+                      {t('pages.home.homes.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <p className="text-gray-600 mb-4 volter-body-text">
-                      <AccentFixedText>Explore as homes dos usuários, crie conexões e descubra conteúdos incríveis da comunidade.</AccentFixedText>
+                      <AccentFixedText>{t('pages.home.homes.description')}</AccentFixedText>
                     </p>
                     <Link to="/homes">
                       <Button className="w-full habbo-button-green sidebar-font-option-4"
@@ -87,7 +89,7 @@ export const Home: React.FC = () => {
                           fontSize: '16px',
                           fontWeight: 'bold',
                           letterSpacing: '0.3px'
-                        }}>Ver Homes</Button>
+                        }}>{t('pages.home.homes.button')}</Button>
                     </Link>
                   </CardContent>
                 </Card>
@@ -101,12 +103,12 @@ export const Home: React.FC = () => {
                         letterSpacing: '0.3px'
                       }}>
                       <Star className="w-5 h-5 text-white" />
-                      Emblemas
+                      {t('pages.home.tools.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <p className="text-gray-600 mb-4 volter-body-text">
-                      <AccentFixedText>Descubra e colecione emblemas exclusivos, veja rankings e conquiste seu lugar na comunidade.</AccentFixedText>
+                      <AccentFixedText>{t('pages.home.tools.description')}</AccentFixedText>
                     </p>
                     <Link to="/emblemas">
                       <Button className="w-full habbo-button-yellow sidebar-font-option-4"
@@ -114,7 +116,7 @@ export const Home: React.FC = () => {
                           fontSize: '16px',
                           fontWeight: 'bold',
                           letterSpacing: '0.3px'
-                        }}>Ver Emblemas</Button>
+                        }}>{t('pages.home.tools.button')}</Button>
                     </Link>
                   </CardContent>
                 </Card>

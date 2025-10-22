@@ -167,8 +167,8 @@ export function NewAppSidebar() {
                           <img 
                             src="/assets/logout.png" 
                             alt="Logout" 
-                            className="w-3 h-3"
-                            style={{ imageRendering: 'pixelated' }}
+                            className="w-7 h-7"
+                            style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
                           />
                           Sair
                         </button>

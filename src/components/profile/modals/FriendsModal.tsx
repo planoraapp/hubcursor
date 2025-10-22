@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Users } from 'lucide-react';
 import { UserProfileModal } from '@/components/UserProfileModal';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface FriendsModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
   userName,
   onNavigateToProfile
 }) => {
+  const { t } = useI18n();
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
 
   const getAvatarUrl = (username: string) => {
@@ -45,7 +47,7 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                 textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
               }}>
                 <Users className="w-5 h-5 text-white" />
-                Amigos de {userName} ({friends.length})
+                {t('pages.console.friendsOf', { username: userName, count: friends.length })}
               </DialogTitle>
             </DialogHeader>
           </div>

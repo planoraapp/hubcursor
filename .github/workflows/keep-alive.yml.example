@@ -1,0 +1,106 @@
+# 🔄 GitHub Actions - Supabase Keep-Alive (ALTERNATIVA)
+#
+# Este é um arquivo de exemplo caso você queira usar GitHub Actions
+# ao invés do Vercel Cron Jobs.
+#
+# Para ativar:
+# 1. Renomeie este arquivo para: .github/workflows/keep-alive.yml
+# 2. Adicione o secret SUPABASE_ANON_KEY no GitHub:
+#    - Vá em: Settings > Secrets and variables > Actions
+#    - Click em "New repository secret"
+#    - Name: SUPABASE_ANON_KEY
+#    - Value: sua chave anon do Supabase
+# 3. Commit e push para o repositório
+
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Executa todos os dias às 3 AM UTC
+    # Formato: "minuto hora dia mês dia-da-semana"
+    - cron: '0 3 * * *'
+  
+  # Permite execução manual via GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Ping Supabase Services
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📊 Check Database Health
+        run: |
+          echo "🔍 Checking Supabase database..."
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+            -X GET "https://wueccgeizznjmjgmuscy.supabase.co/rest/v1/habbo_accounts?limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json")
+          
+          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
+          
+          if [ "$http_status" = "200" ]; then
+            echo "✅ Database is healthy (HTTP $http_status)"
+          else
+            echo "⚠️ Database returned HTTP $http_status"
+          fi
+
+      - name: 🌍 Ping Global Feed Function
+        run: |
+          echo "🔍 Pinging global feed Edge Function..."
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+            -X POST "https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-global-feed" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"hotel":"br","limit":5}')
+          
+          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
+          
+          if [ "$http_status" = "200" ]; then
+            echo "✅ Global feed function is healthy (HTTP $http_status)"
+          else
+            echo "⚠️ Global feed function returned HTTP $http_status"
+          fi
+
+      - name: 👤 Ping Profile Function
+        run: |
+          echo "🔍 Pinging profile Edge Function..."
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+            -X POST "https://wueccgeizznjmjgmuscy.supabase.co/functions/v1/habbo-complete-profile" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -d '{"hotel":"br","habbo_name":"test"}')
+          
+          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
+          
+          # Profile pode retornar 404 se usuário não existe, mas isso indica que a função está ativa
+          if [ "$http_status" -lt "500" ]; then
+            echo "✅ Profile function is healthy (HTTP $http_status)"
+          else
+            echo "⚠️ Profile function returned HTTP $http_status"
+          fi
+
+      - name: 🔐 Check Auth System
+        run: |
+          echo "🔍 Checking authentication system..."
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+            -X GET "https://wueccgeizznjmjgmuscy.supabase.co/auth/v1/health" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          
+          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
+          
+          if [ "$http_status" = "200" ]; then
+            echo "✅ Auth system is healthy (HTTP $http_status)"
+          else
+            echo "⚠️ Auth system returned HTTP $http_status"
+          fi
+
+      - name: 📝 Summary
+        run: |
+          echo "════════════════════════════════════════"
+          echo "🎉 Keep-alive routine completed!"
+          echo "📅 Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "⏰ Next run: Tomorrow at 3:00 AM UTC"
+          echo "════════════════════════════════════════"
+

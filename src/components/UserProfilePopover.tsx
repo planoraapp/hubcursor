@@ -16,6 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { User, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName, getUserBadges, getAvatarUrl, getBadgeUrl } from '../services/habboApi';
+import { useI18n } from '@/contexts/I18nContext';
+import { useBadgeTranslation } from '@/hooks/useBadgeTranslations';
 
 import type { HabboData } from '@/types/habbo';
 interface UserProfilePopoverProps {
@@ -33,6 +35,35 @@ interface HabboBadge {
   description: string;
 }
 
+// Componente individual para cada badge com tradução
+const BadgeItem: React.FC<{ badge: HabboBadge }> = ({ badge }) => {
+  const { data: translationData } = useBadgeTranslation({ 
+    badgeCode: badge.code 
+  });
+
+  // Usar tradução se disponível
+  const displayName = translationData?.success ? translationData.translation.name : badge.name;
+  const displayDescription = translationData?.success 
+    ? translationData.translation.description || `Badge ${badge.code}` 
+    : badge.description;
+
+  return (
+    <div 
+      className="relative group cursor-help"
+      title={`${displayName}: ${displayDescription}`}
+    >
+      <img
+        src={getBadgeUrl(badge.code)}
+        alt={displayName}
+        className="w-8 h-8 border border-amber-200 rounded bg-white p-0.5"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+    </div>
+  );
+};
+
 export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({ 
   children, 
   side = 'right', 
@@ -40,6 +71,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
   sideOffset = 8 
 }) => {
   const { isLoggedIn, habboAccount, logout } = useAuth();
+  const { t } = useI18n();
   const [habboData, setHabboData] = useState<HabboData | null>(null);
   const [badges, setBadges] = useState<HabboBadge[]>([]);
   const [loading, setLoading] = useState(false);
@@ -156,31 +188,18 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
         
         <PopoverBody className="space-y-3">
           {loading ? (
-            <div className="text-center text-sm text-gray-600">Carregando...</div>
+            <div className="text-center text-sm text-gray-600">{t('messages.loading')}</div>
           ) : (
             <>
               {badges.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-gray-800 volter-font mb-2">
-                    Emblemas ({badges.length})
+                    {t('pages.console.badges')} ({badges.length})
                   </h4>
                   <div className="max-h-32 overflow-y-auto">
                     <div className="grid grid-cols-6 gap-1">
                       {badges.map((badge) => (
-                        <div 
-                          key={badge.code} 
-                          className="relative group cursor-help"
-                          title={`${badge.name}: ${badge.description}`}
-                        >
-                          <img
-                            src={getBadgeUrl(badge.code)}
-                            alt={badge.name}
-                            className="w-8 h-8 border border-amber-200 rounded bg-white p-0.5"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
+                        <BadgeItem key={badge.code} badge={badge} />
                       ))}
                     </div>
                   </div>

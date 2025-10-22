@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface Photo {
   id: string;
@@ -15,6 +16,7 @@ interface ProfilePhotosProps {
 }
 
 export const ProfilePhotos: React.FC<ProfilePhotosProps> = ({ photos, habboName }) => {
+  const { t } = useI18n();
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-2 border-black">
       <CardHeader>
@@ -46,7 +48,7 @@ export const ProfilePhotos: React.FC<ProfilePhotosProps> = ({ photos, habboName 
         ) : (
           <div className="text-center text-gray-500 py-8">
             <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>Nenhuma foto encontrada</p>
+            <p>{t('pages.console.noPhotos')}</p>
             <p className="text-sm mt-2">Fotos não disponíveis publicamente</p>
           </div>
         )}

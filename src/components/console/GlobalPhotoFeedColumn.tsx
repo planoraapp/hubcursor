@@ -70,7 +70,7 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
                 <div className="text-center py-8 space-y-3">
                   <Camera className="w-12 h-12 text-white/40 mx-auto" />
                   <div className="text-white/60">
-                    <p className="font-medium">Nenhuma foto encontrada</p>
+                    <p className="font-medium">{t('pages.console.noPhotos')}</p>
                     <p className="text-sm">O feed global está vazio no momento</p>
                   </div>
                 </div>

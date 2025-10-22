@@ -261,22 +261,26 @@
 @font-face {
   font-family: 'Habbo Ubuntu';
   src: url('https://alynva.surge.sh/fonts/2_class_30_Ubuntu.otf');
+  font-display: swap; /* Não bloquear renderização enquanto carrega */
 }
 
 @font-face {
   font-family: 'Habbo Ubuntu Condensed';
   src: url('https://alynva.surge.sh/fonts/11_class_49_Ubuntu.otf');
+  font-display: swap; /* Não bloquear renderização enquanto carrega */
 }
 
 @font-face {
   font-family: 'Habbo Volter';
   src: url('https://alynva.surge.sh/fonts/1052_class_1740_Volter.otf');
+  font-display: swap; /* Não bloquear renderização enquanto carrega */
 }
 
 @font-face {
   font-family: 'Habbo Volter';
   src: url('https://alynva.surge.sh/fonts/728_class_1739_Volter Bold.otf');
   font-weight: bold;
+  font-display: swap; /* Não bloquear renderização enquanto carrega */
 }
 
 /* Font Utility Classes */

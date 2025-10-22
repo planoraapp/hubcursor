@@ -152,8 +152,8 @@ const FriendsPhotoFeedContent: React.FC = () => {
                 <div className="text-center py-8 space-y-3">
                   <Camera className="w-12 h-12 text-white/40 mx-auto" />
                   <div className="text-white/60">
-                    <p className="font-medium">Nenhuma foto encontrada</p>
-                    <p className="text-sm">Seus amigos ainda não postaram fotos</p>
+                    <p className="font-medium">{t('pages.console.noPhotos')}</p>
+                    <p className="text-sm">{t('pages.console.noPhotosDescription')}</p>
                   </div>
                 </div>
               ) : (

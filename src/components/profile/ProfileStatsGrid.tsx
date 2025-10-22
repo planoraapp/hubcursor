@@ -15,6 +15,7 @@ import { FriendsModal } from './modals/FriendsModal';
 import { GroupsModal } from './modals/GroupsModal';
 import { RoomsModal } from './modals/RoomsModal';
 import { ActivityModal } from './modals/ActivityModal';
+import { useI18n } from '@/contexts/I18nContext';
 import type { CompleteProfile } from '@/hooks/useCompleteProfile';
 
 interface ProfileStatsGridProps {
@@ -25,13 +26,14 @@ interface ProfileStatsGridProps {
 type ModalType = 'badges' | 'friends' | 'groups' | 'rooms' | 'activity' | null;
 
 export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ profile, className = '' }) => {
+  const { t } = useI18n();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   // Filtrar apenas os stats que queremos mostrar
   const stats = [
     {
       id: 'badges',
-      label: 'Emblemas',
+      label: t('pages.console.badges'),
       value: profile.stats.badgesCount,
       icon: Trophy,
       color: 'bg-gradient-to-r from-blue-400 to-blue-600',
@@ -39,7 +41,7 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ profile, cla
     },
     {
       id: 'friends',
-      label: 'Amigos',
+      label: t('pages.console.friends'),
       value: profile.stats.friendsCount,
       icon: Users,
       color: 'bg-gradient-to-r from-green-400 to-green-600',
@@ -47,7 +49,7 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ profile, cla
     },
     {
       id: 'groups',
-      label: 'Grupos',
+      label: t('pages.console.groups'),
       value: profile.stats.groupsCount,
       icon: Crown,
       color: 'bg-gradient-to-r from-red-400 to-red-600',
@@ -55,7 +57,7 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ profile, cla
     },
     {
       id: 'rooms',
-      label: 'Quartos',
+      label: t('pages.console.rooms'),
       value: profile.stats.roomsCount,
       icon: Home,
       color: 'bg-gradient-to-r from-indigo-400 to-indigo-600',
@@ -63,7 +65,7 @@ export const ProfileStatsGrid: React.FC<ProfileStatsGridProps> = ({ profile, cla
     },
     {
       id: 'ticker',
-      label: 'Habbo Ticker',
+      label: t('pages.console.habboTicker'),
       value: profile.stats.habboTickerCount,
       icon: Activity,
       color: 'bg-gradient-to-r from-orange-400 to-orange-600',

@@ -13,14 +13,17 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { CountryFlags } from '@/components/marketplace/CountryFlags';
+import { HabboUserPanel } from '@/components/HabboUserPanel';
 
 export function CollapsibleAppSidebar() {
   const location = useLocation();
   const { habboAccount, isLoggedIn, logout } = useAuth();
+  const { t } = useI18n();
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
@@ -45,29 +48,30 @@ export function CollapsibleAppSidebar() {
   };
 
   const menuItems = [
-    { name: 'Inicio', path: '/', icon: '/assets/home.png' },
-    { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
-    { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
-    { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
-    { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/ferramentas.png' },
+    { nameKey: 'nav.home', path: '/', icon: '/assets/home.png' },
+    { nameKey: 'nav.console', path: '/console', icon: '/assets/consoleoff.gif' },
+    { nameKey: 'nav.homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
+    { nameKey: 'nav.journal', path: '/journal', icon: '/assets/news.png' },
+    { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/ferramentas.png' },
   ];
 
   // Adicionar menu de admin se o usuário for admin
   if (isAdmin) {
     menuItems.push({ 
-      name: 'Admin', 
+      nameKey: 'nav.admin', 
       path: '/admin', 
       icon: '/assets/1044__-IT.png' 
     });
   }
 
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
+    const translatedName = t(item.nameKey);
     const content = (
       <Link to={item.path} className="flex items-center gap-2 w-full min-h-[48px]">
         <div className="flex-shrink-0 flex items-center justify-center w-12">
           <img 
             src={item.icon} 
-            alt={item.name}
+            alt={translatedName}
             className="object-contain"
             style={{ 
               imageRendering: 'pixelated',
@@ -95,7 +99,7 @@ export function CollapsibleAppSidebar() {
               paddingLeft: '2px'
             }}
           >
-            {removeAccents(item.name)}
+            {removeAccents(translatedName)}
           </span>
         )}
       </Link>
@@ -115,7 +119,7 @@ export function CollapsibleAppSidebar() {
               </SidebarMenuButton>
             </TooltipTrigger>
             <TooltipContent side="right">
-              <p>{item.name}</p>
+              <p>{translatedName}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -184,82 +188,10 @@ export function CollapsibleAppSidebar() {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="p-4 border-t-2 border-black">
-          <div className="space-y-2">
+        <SidebarFooter className={`border-t-2 border-black ${isCollapsed ? 'p-1 gap-0' : 'p-3.5 gap-2'}`}>
+          <div className={isCollapsed ? 'space-y-0' : 'space-y-2.5'}>
             {isLoggedIn && habboAccount ? (
-              <div className={`${isCollapsed ? 'px-1 text-center' : 'text-left'}`}>
-                <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start gap-3'} mb-3`}>
-                  <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center">
-                    <img
-                      src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`}
-                      alt={`Avatar de ${habboAccount.habbo_name}`}
-                      className="w-16 h-16 object-contain"
-                      style={{ 
-                        imageRendering: 'pixelated',
-                        objectFit: 'contain'
-                      }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://habbo-imaging.s3.amazonaws.com/avatarimage?user=${habboAccount.habbo_name}&size=m&direction=2&head_direction=3&headonly=1`;
-                      }}
-                    />
-                  </div>
-                  {!isCollapsed && (
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <CountryFlags hotelId={habboAccount.hotel || 'br'} className="w-3 h-4 flex-shrink-0" />
-                        <span 
-                          className="text-white truncate"
-                          style={{
-                            fontFamily: 'Volter',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            letterSpacing: '0.3px',
-                            textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black',
-                            lineHeight: '1.2',
-                            paddingLeft: '2px'
-                          }}
-                        >
-                          {removeAccents(habboAccount.habbo_name)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {!isCollapsed && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button 
-                          onClick={logout}
-                          className="bg-red-600 hover:bg-red-700 w-full px-3 py-2 text-white rounded transition-colors flex items-center justify-center gap-2 min-h-[40px]"
-                          style={{
-                            fontFamily: 'Volter',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            letterSpacing: '0.3px',
-                            textShadow: '-1.5px 0 black, 0 1.5px black, 1.5px 0 black, 0 -1.5px black'
-                          }}
-                        >
-                          <img 
-                            src="/assets/logout.png" 
-                            alt="Logout" 
-                            className="w-4 h-4 flex-shrink-0"
-                            style={{ 
-                              imageRendering: 'pixelated',
-                              objectFit: 'contain'
-                            }}
-                          />
-                          <span>{removeAccents('Sair')}</span>
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Desconectar conta Habbo</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
+              <HabboUserPanel />
             ) : (
               <div className="space-y-2">
                 {!isCollapsed ? (
@@ -275,7 +207,7 @@ export function CollapsibleAppSidebar() {
                       }}
                     >
                       <User className="w-3 h-3" />
-                      {removeAccents('Conectar Conta Habbo')}
+                      {removeAccents(t('nav.login'))}
                     </button>
                   </Link>
                 ) : (
@@ -295,7 +227,7 @@ export function CollapsibleAppSidebar() {
                         </Link>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p>Fazer Login</p>
+                        <p>{t('nav.login')}</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

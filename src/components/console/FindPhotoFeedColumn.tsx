@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGlobalPhotos } from '@/hooks/useGlobalPhotos';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
+import { useI18n } from '@/contexts/I18nContext';
 import { useCommentRateLimit } from '@/hooks/useCommentRateLimit';
 import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commentValidation';
 import { PhotoModal } from '../console/PhotoModal';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 
 export const FindPhotoFeedColumn: React.FC = () => {
   const { habboAccount } = useMyConsoleProfile();
+  const { t } = useI18n();
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -256,8 +258,8 @@ export const FindPhotoFeedColumn: React.FC = () => {
         <div className="text-center py-8 space-y-3">
           <Camera className="w-12 h-12 text-muted-foreground mx-auto" />
           <div className="text-muted-foreground">
-            <p className="font-medium">Nenhuma foto encontrada</p>
-            <p className="text-sm">Ainda não há fotos da comunidade</p>
+            <p className="font-medium">{t('pages.console.noPhotos')}</p>
+            <p className="text-sm">{t('pages.console.noCommunityPhotos')}</p>
           </div>
         </div>
       </div>
@@ -286,7 +288,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
             <Input
               type="text"
-              placeholder="Buscar por usuário, legenda ou sala..."
+              placeholder={t('pages.console.searchUser')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-yellow-400"
@@ -299,7 +301,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
             <div className="text-center py-8 space-y-3">
               <Search className="w-12 h-12 text-muted-foreground mx-auto" />
               <div className="text-muted-foreground">
-                <p className="font-medium">Nenhuma foto encontrada</p>
+                <p className="font-medium">{t('pages.console.noPhotos')}</p>
                 <p className="text-sm">Tente buscar por outro termo</p>
               </div>
             </div>
@@ -387,7 +389,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
                     <div className="flex-1 relative">
                       <input
                         type="text"
-                        placeholder="Adicione um comentário..."
+                        placeholder={t('pages.console.addComment')}
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
                         maxLength={COMMENT_CONFIG.MAX_LENGTH}
@@ -401,7 +403,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
                           type="submit"
                           disabled={isSubmitting}
                           className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Enviar comentário"
+                          title={t('pages.console.sendComment')}
                         >
                           <Send className="w-4 h-4" />
                         </button>

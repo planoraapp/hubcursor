@@ -99,7 +99,7 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
             variant="outline"
             size="sm"
             onClick={() => scroll('left')}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            className="bg-black/20 border-white/40 text-white hover:bg-black/40 hover:border-white/60 shadow-lg"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -107,7 +107,7 @@ export const HomesGrid: React.FC<HomesGridProps> = ({
             variant="outline"
             size="sm"
             onClick={() => scroll('right')}
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            className="bg-black/20 border-white/40 text-white hover:bg-black/40 hover:border-white/60 shadow-lg"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>

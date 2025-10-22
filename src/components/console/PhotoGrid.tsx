@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PhotoModal } from './PhotoModal';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface Photo {
   id: string;
@@ -14,6 +15,7 @@ interface PhotoGridProps {
 }
 
 export const PhotoGrid: React.FC<PhotoGridProps> = ({ photos, onPhotoClick }) => {
+  const { t } = useI18n();
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -36,7 +38,7 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({ photos, onPhotoClick }) =>
   if (photos.length === 0) {
     return (
       <div className="text-center text-white/60 py-4">
-        <p className="text-sm">Nenhuma foto disponível</p>
+        <p className="text-sm">{t('pages.console.noPhotoAvailable')}</p>
       </div>
     );
   }

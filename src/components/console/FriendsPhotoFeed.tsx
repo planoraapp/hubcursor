@@ -5,6 +5,7 @@ import { EnhancedPhoto } from "@/types/habbo";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { usePhotoComments } from "@/hooks/usePhotoComments";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/contexts/I18nContext";
 
 // Componente do Modal de Comentários
 interface CommentsModalProps {
@@ -14,6 +15,7 @@ interface CommentsModalProps {
 
 const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
   const { habboAccount } = useAuth();
+  const { t } = useI18n();
   const { 
     lastTwoComments,
     addComment,
@@ -110,7 +112,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Adicione um comentário..."
+                placeholder={t('pages.console.addComment')}
                 maxLength={500}
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
@@ -122,11 +124,11 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
                   type="submit"
                   disabled={isAddingComment}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Enviar comentário"
+                  title={t('pages.console.sendComment')}
                 >
                   <img 
                     src="/assets/write.png" 
-                    alt="Enviar comentário" 
+                    alt={t('pages.console.sendComment')} 
                     className="w-4 h-4" 
                   />
                 </button>
@@ -150,6 +152,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   hotel,
   onNavigateToProfile
 }) => {
+  const { t } = useI18n();
   const {
     data: photos,
     isLoading,
@@ -169,7 +172,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-          <p className="text-white/60">Carregando fotos dos amigos...</p>
+          <p className="text-white/60">{t('pages.console.loadingPhotos')}</p>
         </div>
       </div>
     );
@@ -180,13 +183,13 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
-          <p className="text-white/60 mb-4">Erro ao carregar fotos dos amigos</p>
+          <p className="text-white/60 mb-4">{t('pages.console.errorLoadingPhotos')}</p>
           <button
             onClick={handleRetry}
             className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded transition-colors flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
-            Tentar novamente
+            {t('pages.console.tryAgain')}
           </button>
         </div>
       </div>
@@ -198,8 +201,8 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="text-4xl mb-4">📷</div>
-          <p className="text-white/60 mb-2">Nenhuma foto encontrada</p>
-          <p className="text-white/40 text-sm">Seus amigos ainda não postaram fotos</p>
+          <p className="text-white/60 mb-2">{t('pages.console.noPhotos')}</p>
+          <p className="text-white/40 text-sm">{t('pages.console.noPhotosDescription')}</p>
         </div>
       </div>
     );
@@ -210,7 +213,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
           {/* Header do feed */}
           <div className="flex items-center justify-between px-2">
             <h3 className="text-lg font-bold text-white">
-              📸 Feed de Fotos dos Amigos
+              {t('pages.console.feedTitle')}
             </h3>
           </div>
 

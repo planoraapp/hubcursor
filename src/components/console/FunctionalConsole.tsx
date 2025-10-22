@@ -6,6 +6,7 @@ import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Tr
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useUnifiedPhotoSystem } from '@/hooks/useUnifiedPhotoSystem';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { PixelFrame } from './PixelFrame';
 import { cn } from '@/lib/utils';
 import { BadgesModal } from '@/components/profile/modals/BadgesModal';
@@ -67,35 +68,35 @@ interface TabButton {
   activeColor: string;
 }
 
-const tabs: TabButton[] = [
+const getTabs = (t: (key: string) => string): TabButton[] => [
   {
     id: 'account',
-    label: 'My Info',
-    icon: <img src="/assets/console/my-info.png" alt="My Info" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    label: t('pages.console.myInfo'),
+    icon: <img src="/assets/console/my-info.png" alt={t('pages.console.myInfo')} className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
   },
   {
     id: 'friends',
-    label: 'Friends',
-    icon: <img src="/assets/console/friends-icon.png" alt="Friends" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    label: t('pages.console.friends'),
+    icon: <img src="/assets/console/friends-icon.png" alt={t('pages.console.friends')} className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
   },
   {
     id: 'chat',
-    label: 'Chat',
-    icon: <img src="/assets/console/chat-icon.png" alt="Chat" className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    label: t('pages.console.chat'),
+    icon: <img src="/assets/console/chat-icon.png" alt={t('pages.console.chat')} className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
   },
   {
     id: 'photos',
-    label: 'Photos',
-    icon: <img src="/assets/console/photos-icon.png" alt="Photos" className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
+    label: t('pages.console.photos'),
+    icon: <img src="/assets/console/photos-icon.png" alt={t('pages.console.photos')} className="h-8 w-auto" style={{ imageRendering: 'pixelated' }} />,
     color: '#FDCC00',
     hoverColor: '#FEE100',
     activeColor: '#FBCC00'
@@ -103,6 +104,7 @@ const tabs: TabButton[] = [
 ];
 
 export const FunctionalConsole: React.FC = () => {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabType>('account');
   const [viewingUser, setViewingUser] = useState<string | null>(null); // Estado para usuário sendo visualizado
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null); // Foto selecionada para o modal
@@ -229,7 +231,7 @@ export const FunctionalConsole: React.FC = () => {
           <CardContent className="flex items-center justify-center h-full overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent overflow-y-auto">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-              <p className="text-white/60">Carregando informações do usuário...</p>
+              <p className="text-white/60">{t('pages.console.loadingUser')}</p>
             </div>
           </CardContent>
         </Card>
@@ -307,7 +309,7 @@ export const FunctionalConsole: React.FC = () => {
               
               <div className="space-y-1 text-xs text-white/60">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-medium text-nowrap">Criado em:</span>
+                  <span className="font-medium text-nowrap">{t('pages.console.createdAt')}</span>
                   <span className="truncate">
                     {user?.memberSince ? 
                       new Date(user.memberSince).toLocaleDateString('pt-BR', {
@@ -320,7 +322,7 @@ export const FunctionalConsole: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-medium text-nowrap">Último acesso:</span>
+                  <span className="font-medium text-nowrap">{t('pages.console.lastAccess')}</span>
                   <span className="truncate">
                     {user?.lastWebAccess ? 
                       new Date(user.lastWebAccess).toLocaleDateString('pt-BR', {
@@ -344,15 +346,15 @@ export const FunctionalConsole: React.FC = () => {
               <div className="text-lg font-semibold text-white">
                 {isProfilePrivate ? '0' : (photos?.length || 0)}
               </div>
-              <div className="text-xs text-white/60">Fotos</div>
+              <div className="text-xs text-white/60">{t('pages.console.photos')}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-semibold text-white">0</div>
-              <div className="text-xs text-white/60">Seguidores</div>
+              <div className="text-xs text-white/60">{t('pages.console.followers')}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-semibold text-white">0</div>
-              <div className="text-xs text-white/60">Seguindo</div>
+              <div className="text-xs text-white/60">{t('pages.console.following')}</div>
             </div>
           </div>
         </div>
@@ -362,20 +364,20 @@ export const FunctionalConsole: React.FC = () => {
           {isOwnProfile ? (
             <button onClick={toggleEditMode} className="w-full py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-              {isEditMode ? 'Salvar Alterações' : 'Editar Perfil'}
+              {isEditMode ? t('pages.console.saveChanges') : t('pages.console.editProfile')}
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <button 
                 onClick={() => {
                   if (viewingUser) {
-                    alert(`🚀 Função "Seguir" será implementada em breve! Por enquanto, adicione ${viewingUser} aos seus amigos no Habbo Hotel.`);
+                    alert(t('pages.console.followFunctionComingSoon', { username: viewingUser }));
                   }
                 }}
                 className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
-                Seguir
+                {t('pages.console.follow')}
               </button>
               <button 
                 onClick={async () => {
@@ -390,7 +392,7 @@ export const FunctionalConsole: React.FC = () => {
                 className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
-                Mensagem
+                {t('pages.console.message')}
               </button>
             </div>
           )}
@@ -413,7 +415,7 @@ export const FunctionalConsole: React.FC = () => {
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : friends.length}
                 </div>
-                <div className="text-xs text-white/60">Amigos</div>
+                <div className="text-xs text-white/60">{t('pages.console.friends')}</div>
               </div>
             </button>
             
@@ -431,7 +433,7 @@ export const FunctionalConsole: React.FC = () => {
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : rooms.length}
                 </div>
-                <div className="text-xs text-white/60">Quartos</div>
+                <div className="text-xs text-white/60">{t('pages.console.rooms')}</div>
               </div>
             </button>
             
@@ -449,7 +451,7 @@ export const FunctionalConsole: React.FC = () => {
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : badges.length}
                 </div>
-                <div className="text-xs text-white/60">Emblemas</div>
+                <div className="text-xs text-white/60">{t('pages.console.badges')}</div>
               </div>
             </button>
             
@@ -467,7 +469,7 @@ export const FunctionalConsole: React.FC = () => {
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : groups.length}
                 </div>
-                <div className="text-xs text-white/60">Grupos</div>
+                <div className="text-xs text-white/60">{t('pages.console.groups')}</div>
               </div>
             </button>
           </div>
@@ -481,7 +483,7 @@ export const FunctionalConsole: React.FC = () => {
               <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
               <circle cx="12" cy="13" r="3"></circle>
             </svg>
-            Fotos ({isProfilePrivate ? '0' : ((photos || []).filter((photo, index) => !(hiddenPhotos || []).includes(photo.id || `photo-${index}`)).length)})
+            {t('pages.console.photosWithCount', { count: isProfilePrivate ? '0' : ((photos || []).filter((photo, index) => !(hiddenPhotos || []).includes(photo.id || `photo-${index}`)).length) })}
           </h3>
           </div>
           <div className="grid grid-cols-3 gap-1">
@@ -528,7 +530,7 @@ export const FunctionalConsole: React.FC = () => {
                               ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
                               : 'bg-red-500/80 hover:bg-red-600 hover:scale-110'
                           }`}
-                          title={isHidden ? "Restaurar Foto" : "Ocultar Foto"}
+                          title={isHidden ? t('pages.console.restorePhoto') : t('pages.console.hidePhoto')}
                         >
                           {isHidden ? '↺' : 'X'}
                         </button>
@@ -558,7 +560,7 @@ export const FunctionalConsole: React.FC = () => {
             ) : !isProfilePrivate && hasNoPhotos ? (
               <div className="col-span-3 flex flex-col items-center justify-center py-8 text-white/60">
                 <div className="text-4xl mb-2">📷</div>
-                <p className="text-sm">O usuário não tem fotos :(</p>
+                <p className="text-sm">{t('pages.console.userHasNoPhotos')}</p>
               </div>
             ) : null}
           </div>
@@ -754,8 +756,8 @@ export const FunctionalConsole: React.FC = () => {
           <Card className="bg-transparent text-white border-0 shadow-none h-full flex items-center justify-center">
             <div className="text-center">
               <Camera className="w-16 h-16 text-white/40 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Nenhuma foto selecionada</h3>
-              <p className="text-white/60 text-sm mb-4">Volte ao perfil para selecionar uma foto</p>
+              <h3 className="text-lg font-bold text-white mb-2">{t('pages.console.noPhotoSelected')}</h3>
+              <p className="text-white/60 text-sm mb-4">{t('buttons.back')}</p>
               <Button 
                 onClick={handleBackFromPhoto}
                 className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
@@ -860,7 +862,7 @@ export const FunctionalConsole: React.FC = () => {
         <div className="relative bg-yellow-400">
           
           <div className="grid grid-cols-4 gap-0 p-1">
-            {tabs.map((tab, index) => (
+            {getTabs(t).map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => {
@@ -987,6 +989,7 @@ const FeedTab: React.FC<any> = ({
   isEditMode, toggleEditMode, bodyDirection, headDirection, rotateBody, rotateHead,
   hiddenPhotos, togglePhotoVisibility, viewingUser
 }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -1071,7 +1074,7 @@ const FeedTab: React.FC<any> = ({
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando informações do usuário...</p>
+            <p className="text-white/60">{t('pages.console.loadingUser')}</p>
           </div>
         </div>
       </div>
@@ -1143,7 +1146,7 @@ const FeedTab: React.FC<any> = ({
               
               <div className="space-y-1 text-xs text-white/60">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-medium text-nowrap">Criado em:</span>
+                  <span className="font-medium text-nowrap">{t('pages.console.createdAt')}</span>
                   <span className="truncate">
                     {user?.memberSince ? 
                       new Date(user.memberSince).toLocaleDateString('pt-BR', {
@@ -1156,7 +1159,7 @@ const FeedTab: React.FC<any> = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-medium text-nowrap">Último acesso:</span>
+                  <span className="font-medium text-nowrap">{t('pages.console.lastAccess')}</span>
                   <span className="truncate">
                     {user?.lastWebAccess ? 
                       new Date(user.lastWebAccess).toLocaleDateString('pt-BR', {
@@ -1180,15 +1183,15 @@ const FeedTab: React.FC<any> = ({
               <div className="text-lg font-semibold text-white">
                 {isProfilePrivate ? '0' : ((photos || []).filter((photo, index) => !(hiddenPhotos || []).includes(photo.id || `photo-${index}`)).length)}
               </div>
-              <div className="text-xs text-white/60">Fotos</div>
+              <div className="text-xs text-white/60">{t('pages.console.photos')}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-semibold text-white">0</div>
-              <div className="text-xs text-white/60">Seguidores</div>
+              <div className="text-xs text-white/60">{t('pages.console.followers')}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-semibold text-white">0</div>
-              <div className="text-xs text-white/60">Seguindo</div>
+              <div className="text-xs text-white/60">{t('pages.console.following')}</div>
             </div>
           </div>
         </div>
@@ -1198,20 +1201,20 @@ const FeedTab: React.FC<any> = ({
           {isOwnProfile ? (
             <button onClick={toggleEditMode} className="w-full py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-              {isEditMode ? 'Salvar Alterações' : 'Editar Perfil'}
+              {isEditMode ? t('pages.console.saveChanges') : t('pages.console.editProfile')}
             </button>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <button 
                 onClick={() => {
                   if (viewingUser) {
-                    alert(`🚀 Função "Seguir" será implementada em breve! Por enquanto, adicione ${viewingUser} aos seus amigos no Habbo Hotel.`);
+                    alert(t('pages.console.followFunctionComingSoon', { username: viewingUser }));
                   }
                 }}
                 className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>
-                Seguir
+                {t('pages.console.follow')}
               </button>
               <button 
                 onClick={async () => {
@@ -1226,7 +1229,7 @@ const FeedTab: React.FC<any> = ({
                 className="py-1 bg-transparent border border-white/30 hover:bg-white text-white hover:text-gray-800 font-semibold text-xs rounded-lg transition-colors flex items-center justify-center gap-2 text-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
-                Mensagem
+                {t('pages.console.message')}
               </button>
             </div>
           )}
@@ -1249,7 +1252,7 @@ const FeedTab: React.FC<any> = ({
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : friends.length}
                 </div>
-                <div className="text-xs text-white/60">Amigos</div>
+                <div className="text-xs text-white/60">{t('pages.console.friends')}</div>
               </div>
             </button>
             
@@ -1267,7 +1270,7 @@ const FeedTab: React.FC<any> = ({
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : rooms.length}
                 </div>
-                <div className="text-xs text-white/60">Quartos</div>
+                <div className="text-xs text-white/60">{t('pages.console.rooms')}</div>
               </div>
             </button>
             
@@ -1287,7 +1290,7 @@ const FeedTab: React.FC<any> = ({
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : badges.length}
                 </div>
-                <div className="text-xs text-white/60">Emblemas</div>
+                <div className="text-xs text-white/60">{t('pages.console.badges')}</div>
               </div>
             </button>
             
@@ -1305,7 +1308,7 @@ const FeedTab: React.FC<any> = ({
                 <div className="text-sm font-medium text-white">
                   {isProfilePrivate ? '0' : groups.length}
                 </div>
-                <div className="text-xs text-white/60">Grupos</div>
+                <div className="text-xs text-white/60">{t('pages.console.groups')}</div>
               </div>
             </button>
           </div>
@@ -1319,7 +1322,7 @@ const FeedTab: React.FC<any> = ({
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
                 <circle cx="12" cy="13" r="3"></circle>
               </svg>
-              Fotos ({isProfilePrivate ? '0' : (photos?.length || 0)})
+              {t('pages.console.photosWithCount', { count: isProfilePrivate ? '0' : (photos?.length || 0) })}
             </h3>
           </div>
           <div className="grid grid-cols-3 gap-1">
@@ -1354,7 +1357,7 @@ const FeedTab: React.FC<any> = ({
                         <button 
                           onClick={(e) => { e.stopPropagation(); togglePhotoVisibility(photoId); }}
                           className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600/90 text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
-                          title={isHidden ? "Mostrar Foto" : "Ocultar Foto"}
+                          title={isHidden ? t('pages.console.showPhoto') : t('pages.console.hidePhoto')}
                         >
                           {isHidden ? '+' : 'X'}
                         </button>
@@ -1380,7 +1383,7 @@ const FeedTab: React.FC<any> = ({
             ) : !isProfilePrivate && hasNoPhotos ? (
               <div className="col-span-3 flex flex-col items-center justify-center py-8 text-white/60">
                 <div className="text-4xl mb-2">📷</div>
-                <p className="text-sm">O usuário não tem fotos :(</p>
+                <p className="text-sm">{t('pages.console.userHasNoPhotos')}</p>
               </div>
             ) : null}
           </div>
@@ -1495,7 +1498,7 @@ const FeedTab: React.FC<any> = ({
               {/* Input de texto */}
               <input
                 type="text"
-                placeholder="Digite o nome do usuário..."
+                placeholder={t('pages.console.searchUser')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -1551,7 +1554,7 @@ const FeedTab: React.FC<any> = ({
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-              <p className="text-white/60">Carregando feed de fotos...</p>
+              <p className="text-white/60">{t('pages.console.loadingFeed')}</p>
             </div>
           </div>
         }>
@@ -1569,6 +1572,7 @@ const FeedTab: React.FC<any> = ({
 
 // Componente da aba Photos (Feed Global)
 const PhotosTab: React.FC<any> = ({ isLoading }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -1613,7 +1617,7 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando feed global...</p>
+            <p className="text-white/60">{t('pages.console.loadingGlobalFeed')}</p>
           </div>
         </div>
       }>
@@ -1720,7 +1724,7 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
                   {/* Input de texto */}
                   <input
                     type="text"
-                    placeholder="Digite o nome do usuário..."
+                    placeholder={t('pages.console.searchUser')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -1768,13 +1772,14 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
 
 // Componente da aba Friends
 const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) => {
+  const { t } = useI18n();
   if (isLoading) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-white/60 mx-auto mb-4" />
-            <p className="text-white/60">Carregando amigos...</p>
+            <p className="text-white/60">{t('pages.console.loadingFriends')}</p>
           </div>
         </div>
       </div>
@@ -1784,8 +1789,8 @@ const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) 
   return (
     <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
       <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">Feed de Amigos</h3>
-        <p className="text-sm text-white/60 mt-1">{friends.length} amigos</p>
+        <h3 className="text-lg font-bold">{t('pages.console.friendsFeed')}</h3>
+        <p className="text-sm text-white/60 mt-1">{t('pages.console.friendsCount', { count: friends.length })}</p>
       </div>
       <div className="flex-1 p-4 space-y-3">
         {friends.length > 0 ? (
@@ -1836,7 +1841,7 @@ const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) 
             <div className="text-4xl mb-4">👥</div>
             <h4 className="text-lg font-semibold mb-2">Nenhum amigo encontrado</h4>
             <p className="text-sm text-center">
-              Você ainda não tem amigos adicionados ou seus amigos não estão visíveis.
+              {t('pages.console.noFriends')}
             </p>
           </div>
         )}
@@ -1847,18 +1852,19 @@ const FriendsTab: React.FC<any> = ({ friends, isLoading, onNavigateToProfile }) 
 
 // Componente da aba Buscar
 const SearchTab: React.FC<any> = ({ onStartConversation }) => {
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
       <div className="p-4 border-b border-white/10">
-        <h3 className="text-lg font-bold">🔍 Buscar Usuários</h3>
+        <h3 className="text-lg font-bold">{t('pages.console.searchUsers')}</h3>
       </div>
       <div className="flex-1 p-4 space-y-4">
         <div className="flex space-x-2">
           <input
             type="text"
-            placeholder="Digite o nome do usuário..."
+            placeholder={t('pages.console.searchUser')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 px-3 py-2 bg-white/10 border border-black rounded text-white placeholder-white/50"

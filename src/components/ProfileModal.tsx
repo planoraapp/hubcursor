@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '../hooks/useAuth';
 import { getUserByName } from '../services/habboApi';
+import { useI18n } from '@/contexts/I18nContext';
 
 export const ProfileModal = ({ open, setOpen, habboName }: { open: boolean, setOpen: (open: boolean) => void, habboName: string }) => {
+  const { t } = useI18n();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { user, habboAccount } = useAuth();
@@ -40,7 +42,7 @@ export const ProfileModal = ({ open, setOpen, habboName }: { open: boolean, setO
         </DialogHeader>
         {loading ? (
           <div className="flex justify-center items-center h-48">
-            <p>Carregando...</p>
+            <p>{t('messages.loading')}</p>
           </div>
         ) : userData ? (
           <div className="flex flex-col items-center space-y-4">
@@ -54,8 +56,8 @@ export const ProfileModal = ({ open, setOpen, habboName }: { open: boolean, setO
               Nível: {userData.profileVisibility}
             </Badge>
             <div className="flex space-x-2">
-              <Button variant="outline">Seguir</Button>
-              <Button>Enviar Mensagem</Button>
+              <Button variant="outline">{t('pages.console.follow')}</Button>
+              <Button>{t('pages.console.message')}</Button>
             </div>
           </div>
         ) : (

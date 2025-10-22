@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useLanguage } from './useLanguage';
+import { useI18n } from '@/contexts/I18nContext';
 
 export interface BadgeTranslation {
   code: string;
@@ -17,13 +17,13 @@ interface UseBadgeTranslationProps {
 }
 
 export const useBadgeTranslation = ({ badgeCode, enabled = true }: UseBadgeTranslationProps) => {
-  const { currentLanguage } = useLanguage();
+  const { language } = useI18n();
 
   return useQuery({
-    queryKey: ['badge-translation', badgeCode, currentLanguage],
+    queryKey: ['badge-translation', badgeCode, language],
     queryFn: async () => {
             const { data, error } = await supabase.functions.invoke('badge-translations', {
-        body: { badgeCode, language: currentLanguage }
+        body: { badgeCode, language: language }
       });
 
       if (error) {
@@ -42,11 +42,11 @@ export const useBadgeTranslation = ({ badgeCode, enabled = true }: UseBadgeTrans
 
 // Hook para cache local de traduções comuns
 export const useBadgeTranslationCache = () => {
-  const { currentLanguage } = useLanguage();
+  const { language } = useI18n();
 
   const getCachedTranslation = (badgeCode: string): BadgeTranslation | null => {
     try {
-      const cacheKey = `badge_translation_${badgeCode}_${currentLanguage}`;
+      const cacheKey = `badge_translation_${badgeCode}_${language}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -62,7 +62,7 @@ export const useBadgeTranslationCache = () => {
 
   const setCachedTranslation = (badgeCode: string, translation: BadgeTranslation) => {
     try {
-      const cacheKey = `badge_translation_${badgeCode}_${currentLanguage}`;
+      const cacheKey = `badge_translation_${badgeCode}_${language}`;
       localStorage.setItem(cacheKey, JSON.stringify({
         data: translation,
         timestamp: Date.now()

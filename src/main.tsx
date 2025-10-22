@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from '@/hooks/useAuth'
+import { I18nProvider } from '@/contexts/I18nContext'
 import { NotificationProvider, useNotification } from '@/hooks/useNotification'
 import { NotificationContainer } from '@/components/ui/notification'
 import { Analytics } from '@vercel/analytics/react'
@@ -210,11 +211,13 @@ const AppWithNotifications = () => {
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 root.render(
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <NotificationProvider>
-        <AppWithNotifications />
-        <Analytics />
-      </NotificationProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <AppWithNotifications />
+          <Analytics />
+        </NotificationProvider>
+      </AuthProvider>
+    </I18nProvider>
   </QueryClientProvider>
 )

@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { X, Star } from 'lucide-react';
 import IntelligentBadgeImage from './IntelligentBadgeImage';
 import { useBadgeTranslation } from '../hooks/useBadgeTranslations';
-import { useLanguage } from '../hooks/useLanguage';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface BadgeItem {
   id: string;
@@ -21,7 +21,7 @@ interface MobileBadgeModalProps {
 }
 
 export const MobileBadgeModal = ({ badge, onClose }: MobileBadgeModalProps) => {
-  const { t } = useLanguage();
+  const { t } = useI18n();
   
   // Buscar tradução do emblema
   const { data: translationData, isLoading: translationLoading } = useBadgeTranslation({ 

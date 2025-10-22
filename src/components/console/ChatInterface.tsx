@@ -438,7 +438,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
               <button
                 onClick={() => setShowSecurityWarning(false)}
                 className="absolute top-1/2 right-2 transform -translate-y-1/2 p-1 hover:bg-white/10 rounded text-blue-200/60 hover:text-blue-200"
-                title="Fechar aviso"
+                title={t('buttons.close')}
               >
                 <X className="w-3 h-3" />
               </button>
@@ -487,7 +487,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigat
             <textarea
               value={reportReason}
               onChange={(e) => setReportReason(e.target.value)}
-              placeholder="Ex: Conteúdo ofensivo, spam, etc..."
+              placeholder={t('pages.console.addComment')}
               className="w-full h-24 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 text-sm focus:outline-none focus:border-white/40 resize-none"
             />
 

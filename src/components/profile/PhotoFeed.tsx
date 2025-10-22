@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera, Heart, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { PhotoModal } from './PhotoModal';
 import { HabboPhotoEnhanced } from '@/hooks/useHabboPhotosEnhanced';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PhotoFeedProps {
   photos: HabboPhotoEnhanced[];
@@ -18,6 +19,7 @@ export const PhotoFeed: React.FC<PhotoFeedProps> = ({
   hotel = 'br',
   className = '' 
 }) => {
+  const { t } = useI18n();
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   const formatDate = (dateString?: string) => {
@@ -76,7 +78,7 @@ export const PhotoFeed: React.FC<PhotoFeedProps> = ({
         </CardHeader>
         <CardContent className="text-center py-8">
           <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground">Nenhuma foto encontrada</p>
+          <p className="text-muted-foreground">{t('pages.console.noPhotos')}</p>
           <p className="text-sm text-muted-foreground mt-1">
             As fotos podem não estar disponíveis publicamente
           </p>

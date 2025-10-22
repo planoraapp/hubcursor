@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { useLatestHomes } from '@/hooks/useLatestHomes';
 import { useTopRatedHomes } from '@/hooks/useTopRatedHomes';
 import { useMostVisitedHomes } from '@/hooks/useMostVisitedHomes';
@@ -28,6 +29,7 @@ const Homes: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { habboAccount, isLoggedIn } = useAuth();
+  const { t } = useI18n();
   const { data: latestHomes, isLoading: loadingLatest, refetch: refetchLatest } = useLatestHomes();
   const { data: topRatedHomes, isLoading: loadingTopRated } = useTopRatedHomes();
   const { data: mostVisitedHomes, isLoading: loadingMostVisited } = useMostVisitedHomes();
@@ -51,7 +53,7 @@ const Homes: React.FC = () => {
 
       if (error) {
         toast({
-          title: "Erro ao buscar usuários",
+          title: t('messages.errorSearch'),
           description: error.message,
           variant: "destructive"
         });
@@ -61,8 +63,8 @@ const Homes: React.FC = () => {
       setUsers(data || []);
     } catch (error) {
       toast({
-        title: "Erro ao buscar usuários",
-        description: "Ocorreu um erro inesperado",
+        title: t('messages.errorSearch'),
+        description: t('messages.errorSearchDescription'),
         variant: "destructive"
       });
     }
@@ -120,8 +122,8 @@ const Homes: React.FC = () => {
 
       if (accountsError && usersError) {
         toast({
-          title: "Erro ao buscar usuários",
-          description: "Ocorreu um erro na busca",
+          title: t('messages.errorSearch'),
+          description: t('messages.errorSearchDescription'),
           variant: "destructive"
         });
         setLoading(false);
@@ -277,8 +279,8 @@ const Homes: React.FC = () => {
         if (accountsError) {
           console.error('Erro ao buscar contas:', accountsError);
           toast({
-            title: "Erro ao buscar usuários",
-            description: "Ocorreu um erro na busca",
+            title: t('messages.errorSearch'),
+            description: t('messages.errorSearchDescription'),
             variant: "destructive"
           });
           setLoading(false);
@@ -476,7 +478,7 @@ const Homes: React.FC = () => {
                       letterSpacing: '0.3px'
                     }}>
                     <Search className="w-5 h-5 text-white" />
-                    Buscar Usuários com Homes
+                    {t('pages.homes.searchButton')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 h-full flex flex-col justify-between">
@@ -485,7 +487,7 @@ const Homes: React.FC = () => {
                       <div className="relative flex-1">
                         <Input
                           type="text"
-                          placeholder="Digite o nome do usuário Habbo (busca automática)..."
+                          placeholder={t('pages.homes.searchPlaceholder')}
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -508,11 +510,11 @@ const Homes: React.FC = () => {
                         }}
                       >
                         <Search className="w-4 h-4 mr-2" />
-                        {loading ? 'Buscando...' : 'Buscar'}
+                        {loading ? t('buttons.searching') : t('buttons.search')}
                       </Button>
                     </div>
                     <p className="text-gray-600 mt-2 volter-body-text">
-                      <AccentFixedText>💡 Dica: Digite pelo menos 2 caracteres para buscar automaticamente. A busca mostra homes cadastradas e perfis descobertos.</AccentFixedText>
+                      <AccentFixedText>{t('messages.searchTip')}</AccentFixedText>
                     </p>
                   </div>
                 </CardContent>
@@ -552,10 +554,10 @@ const Homes: React.FC = () => {
                   <CardContent className="p-8 text-center">
                     <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-bold text-gray-700 mb-2 volter-font">
-                      Nenhum usuário encontrado
+                      {t('messages.noResults')}
                     </h3>
                     <p className="text-gray-600 volter-font">
-                      Tente buscar por um nome diferente ou deixe o campo vazio para ver usuários online.
+                      {t('messages.noResultsDescription')}
                     </p>
                   </CardContent>
                 </Card>

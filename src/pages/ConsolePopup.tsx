@@ -1,8 +1,10 @@
 import React, { useEffect, Suspense } from 'react';
 import PopupConsole from '@/components/console/PopupConsole';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/hooks/useAuth';
+import { I18nProvider } from '@/contexts/I18nContext';
 import { NotificationProvider } from '@/hooks/useNotification';
 import { Toaster } from '@/components/ui/toaster';
 import { Loader2 } from 'lucide-react';
@@ -28,6 +30,7 @@ const popupQueryClient = new QueryClient({
 
 const ConsolePopupContent: React.FC = () => {
   const { isLoggedIn } = useAuth();
+  const { t } = useI18n();
 
   // Listener para mensagens do parent window
   useEffect(() => {
@@ -68,7 +71,7 @@ const ConsolePopupContent: React.FC = () => {
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin text-white mx-auto mb-4" />
-              <p className="text-white text-sm">Carregando console...</p>
+              <p className="text-white text-sm">{t('messages.loadingConsole')}</p>
             </div>
           </div>
         }>
@@ -83,10 +86,12 @@ const ConsolePopup: React.FC = () => {
   return (
     <QueryClientProvider client={popupQueryClient}>
       <AuthProvider>
-        <NotificationProvider>
-          <ConsolePopupContent />
-          <Toaster />
-        </NotificationProvider>
+        <I18nProvider>
+          <NotificationProvider>
+            <ConsolePopupContent />
+            <Toaster />
+          </NotificationProvider>
+        </I18nProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

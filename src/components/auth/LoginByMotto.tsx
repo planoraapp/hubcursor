@@ -7,6 +7,7 @@ import { Loader2, Copy, CheckCircle2, RefreshCw, Eye, EyeOff } from 'lucide-reac
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface LoginByMottoProps {
   onLoginSuccess?: () => void;
@@ -25,6 +26,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const { login, refreshAccount } = useAuth();
+  const { t } = useI18n();
 
   const handleGenerateCode = async () => {
     if (!habboName.trim()) {
@@ -85,7 +87,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
     if (!verificationCode.trim()) {
       toast({
         title: "Erro",
-        description: "Digite o código de verificação",
+        description: t('auth.verification.enterCode'),
         variant: "destructive"
       });
       return;
@@ -131,7 +133,7 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
       }
       
       toast({
-        title: "Erro na Verificação",
+        title: t('auth.verification.error'),
         description: errorMessage,
         variant: "destructive"
       });
@@ -348,10 +350,10 @@ export const LoginByMotto: React.FC<LoginByMottoProps> = ({ onLoginSuccess }) =>
               <div className="text-sm text-primary volter-font space-y-2">
                 <p className="font-bold">📋 INSTRUÇÕES:</p>
                 <ol className="list-decimal list-inside space-y-1 pl-2">
-                  <li>Copie o código acima</li>
-                  <li>Vá para o Hotel Habbo</li>
-                  <li>Mude seu <strong>motto/missão</strong> para: <code className="bg-primary/10 px-1 rounded">{verificationCode}</code></li>
-                  <li>Clique em "Verificar Login" abaixo</li>
+                  <li>{t('auth.mottoInstructions.copyCode')}</li>
+                  <li>{t('auth.mottoInstructions.goToHotel')}</li>
+                  <li>{t('auth.mottoInstructions.changeMotto')}: <code className="bg-primary/10 px-1 rounded">{verificationCode}</code></li>
+                  <li>{t('auth.mottoInstructions.clickVerify')}</li>
                 </ol>
               </div>
             </CardContent>

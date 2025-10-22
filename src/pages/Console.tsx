@@ -4,12 +4,14 @@ import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { FunctionalConsole } from '@/components/console/FunctionalConsole';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
 
 const Console: React.FC = () => {
   const { isLoggedIn, habboAccount } = useAuth();
+  const { t } = useI18n();
   const messageHandlerRef = useRef<((event: MessageEvent) => void) | null>(null);
 
   const openPopupConsole = () => {
@@ -24,7 +26,7 @@ const Console: React.FC = () => {
     const popup = window.open('/console-popup', 'ConsolePopup', popupFeatures);
     
     if (!popup) {
-      alert('Popup bloqueado! Por favor, permita popups para este site.');
+      alert(t('messages.popupBlocked'));
       return;
     }
     

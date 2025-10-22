@@ -4,6 +4,7 @@ import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Send } from 'lucide-re
 import { EnhancedPhoto } from '@/types/habbo';
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { useCommentRateLimit } from '@/hooks/useCommentRateLimit';
 import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commentValidation';
 import { toast } from 'sonner';
@@ -26,6 +27,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
   onBack,
   onUserClick = () => {}
 }) => {
+  const { t } = useI18n();
   const { habboAccount } = useAuth();
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,7 +223,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                         </div>
                       ) : (
                         <div className="text-center text-white/60 text-sm">
-                          Ainda não há curtidas nesta foto
+{t('pages.console.noLikesYet')}
                         </div>
                       )}
                     </div>
@@ -325,7 +327,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                 <div className="flex-1 relative">
                   <input 
                     type="text" 
-                    placeholder="Adicione um comentário..." 
+                    placeholder={t('pages.console.addComment')} 
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     maxLength={COMMENT_CONFIG.MAX_LENGTH}
@@ -339,7 +341,7 @@ export const IndividualPhotoView: React.FC<IndividualPhotoViewProps> = ({
                       type="submit"
                       disabled={isSubmitting}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Enviar comentário"
+                      title={t('pages.console.sendComment')}
                     >
                       <Send className="w-4 h-4" />
                     </button>

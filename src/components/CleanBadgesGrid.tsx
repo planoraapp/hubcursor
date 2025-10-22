@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useHabboAssetsBadges } from '../hooks/useHabboAssetsBadges';
-import { useLanguage } from '../hooks/useLanguage';
+import { useI18n } from '@/contexts/I18nContext';
 import { Search, Grid, List, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -22,7 +22,7 @@ interface BadgeItem {
 }
 
 export const CleanBadgesGrid: React.FC = () => {
-  const { t } = useLanguage();
+  const { t } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');

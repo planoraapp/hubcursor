@@ -9,6 +9,7 @@ import { getUserByName } from '../services/habboApi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { generateUniqueUsername } from '@/utils/usernameUtils';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface UserProfileModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   habboName, 
   onStartConversation 
 }) => {
+  const { t } = useI18n();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -139,7 +141,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white volter-font"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  Enviar Mensagem
+                  {t('pages.console.message')}
                 </Button>
               )}
             </div>

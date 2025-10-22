@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Trophy, X } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
+import { translateBadge } from '@/utils/badgeTranslations';
 
 interface BadgesModalProps {
   isOpen: boolean;
@@ -21,6 +23,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
   userName,
   onNavigateToProfile
 }) => {
+  const { language, t } = useI18n();
   const [selectedBadge, setSelectedBadge] = useState<any>(null);
 
   // Função para gerar URLs de emblemas com múltiplos fallbacks
@@ -57,7 +60,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
               textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
             }}>
               <Trophy className="w-5 h-5 text-white" />
-              Emblemas de {userName} ({badges.length})
+              {t('pages.console.badgesOf', { username: userName, count: badges.length })}
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -72,6 +75,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-4 p-4">
               {Array.isArray(badges) ? badges.map((badge, index) => {
                 const badgeUrls = getBadgeUrls(badge.code);
+                const translatedBadge = translateBadge(badge.code, badge.name, badge.description || '', language);
                 return (
                   <Popover key={`${badge.code}-${index}`} open={selectedBadge?.code === badge.code} onOpenChange={(open) => {
                     if (open) {
@@ -85,7 +89,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                         <div className="relative">
                           <img
                             src={badgeUrls[0]}
-                            alt={badge.name}
+                            alt={translatedBadge.name}
                             className="w-12 h-12 mx-auto group-hover:scale-110 transition-transform"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -101,11 +105,11 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                           />
                         </div>
                         <p className="text-xs text-white/60 mt-2 truncate leading-tight">
-                          {badge.name}
+                          {translatedBadge.name}
                         </p>
-                        {badge.description && (
+                        {translatedBadge.description && (
                           <p className="text-xs text-white/40 mt-1 line-clamp-2 leading-tight">
-                            {badge.description}
+                            {translatedBadge.description}
                           </p>
                         )}
                       </div>
@@ -118,7 +122,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                         <div className="relative w-16 h-16 flex-shrink-0">
                           <img
                             src={badgeUrls[0]}
-                            alt={badge.name}
+                            alt={translatedBadge.name}
                             className="w-full h-full object-contain"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -135,7 +139,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                         </div>
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-bold text-lg text-white">{badge.name}</h3>
+                            <h3 className="font-bold text-lg text-white">{translatedBadge.name}</h3>
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -148,7 +152,7 @@ export const BadgesModal: React.FC<BadgesModalProps> = ({
                           
                           <div className="space-y-1">
                             <p className="text-sm text-white/70 leading-relaxed">
-                              {badge.description || "- sem descrição"}
+                              {translatedBadge.description || "- sem descrição"}
                             </p>
                           </div>
                         </div>

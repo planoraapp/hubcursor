@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Camera, ExternalLink, MapPin, Calendar, Heart } from 'lucide-react';
 import { PhotoModal } from './PhotoModal';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface HabboPhoto {
   id: string;
@@ -28,6 +29,7 @@ export const EnhancedPhotosGrid: React.FC<EnhancedPhotosGridProps> = ({
   hotel = 'com.br',
   className = '' 
 }) => {
+  const { t } = useI18n();
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   const formatDate = (dateString?: string) => {
@@ -67,7 +69,7 @@ export const EnhancedPhotosGrid: React.FC<EnhancedPhotosGridProps> = ({
     return (
       <div className={`text-center py-8 ${className}`}>
         <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-        <p className="text-muted-foreground">Nenhuma foto encontrada</p>
+        <p className="text-muted-foreground">{t('pages.console.noPhotos')}</p>
         <p className="text-sm text-muted-foreground mt-1">
           As fotos podem não estar disponíveis publicamente
         </p>

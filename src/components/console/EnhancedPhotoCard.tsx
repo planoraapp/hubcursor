@@ -4,6 +4,7 @@ import { Heart, MessageCircle, User, Calendar, MapPin, MoreHorizontal, Send } fr
 import { usePhotoLikes } from '@/hooks/usePhotoLikes';
 import { usePhotoComments } from '@/hooks/usePhotoComments';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { useCommentRateLimit } from '@/hooks/useCommentRateLimit';
 import { validateComment, sanitizeComment, COMMENT_CONFIG } from '@/utils/commentValidation';
 import { PhotoCardProps, PhotoType } from '@/types/habbo';
@@ -18,6 +19,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   showDivider = false,
   className = ''
 }) => {
+  const { t } = useI18n();
   const { habboAccount } = useAuth();
   const [showLikesPopover, setShowLikesPopover] = useState(false);
   const [showCommentsPopover, setShowCommentsPopover] = useState(false);
@@ -104,7 +106,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    if (dateString === "Invalid Date") return "Há alguns dias";
+    if (dateString === "Invalid Date") return t('time.now');
     return dateString;
   };
 
@@ -313,7 +315,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
               onClick={handleLikesClick}
               className="text-xs text-white/60 hover:text-white transition-colors"
             >
-              {hasMoreLikes ? `e mais ${likesCount - recentLikers.length}` : `${likesCount} curtida${likesCount !== 1 ? 's' : ''}`}
+              {hasMoreLikes ? `e mais ${likesCount - recentLikers.length}` : `${likesCount} ${likesCount === 1 ? t('pages.console.likes') : t('pages.console.likesPlural')}`}
             </button>
           </div>
         </div>
@@ -346,7 +348,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Adicione um comentário..."
+              placeholder={t('pages.console.addComment')}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               maxLength={COMMENT_CONFIG.MAX_LENGTH}
@@ -360,11 +362,11 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
                 type="submit"
                 disabled={isSubmitting}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Enviar comentário"
+                title={t('pages.console.sendComment')}
               >
                 <img 
                   src="/assets/write.png" 
-                  alt="Enviar comentário" 
+                  alt={t('pages.console.sendComment')} 
                   className="w-4 h-4" 
                 />
               </button>

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Home, Star } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface RoomsModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
   userName,
   onNavigateToProfile
 }) => {
+  const { t } = useI18n();
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
   const [loadedImages, setLoadedImages] = useState<{ [roomId: string]: string }>({});
 
@@ -78,7 +80,7 @@ export const RoomsModal: React.FC<RoomsModalProps> = ({
               textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
             }}>
               <Home className="w-5 h-5 text-white" />
-              Quartos de {userName} ({rooms.length})
+              {t('pages.console.roomsOf', { username: userName, count: rooms.length })}
             </DialogTitle>
           </DialogHeader>
         </div>

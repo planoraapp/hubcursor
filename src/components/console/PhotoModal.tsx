@@ -33,7 +33,7 @@ export const PhotoModal: React.FC<PhotoModalProps> = ({ isOpen, onClose, photo }
           <div className="flex-1 flex items-center justify-center bg-black/20 p-8">
             <img
               src={photo.imageUrl}
-              alt="Foto ampliada"
+              alt={t('pages.console.enlargedPhoto')}
               className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
               loading="lazy"
             />

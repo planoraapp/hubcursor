@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Crown, ExternalLink, Users, X } from 'lucide-react';
 import { getGroupDetails, getGroupMembers, getRoomDetails } from '@/services/habboApi';
 import { supabase } from '@/integrations/supabase/client';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface GroupsModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
   userName,
   onNavigateToProfile
 }) => {
+  const { t } = useI18n();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [groupDetails, setGroupDetails] = useState<Map<string, any>>(new Map());
 
@@ -252,7 +254,7 @@ export const GroupsModal: React.FC<GroupsModalProps> = ({
               textShadow: '2px 2px 0px #000000, -1px -1px 0px #000000, 1px -1px 0px #000000, -1px 1px 0px #000000'
             }}>
               <Crown className="w-5 h-5 text-white" />
-              Grupos de {userName} ({groups.length})
+              {t('pages.console.groupsOf', { username: userName, count: groups.length })}
             </DialogTitle>
           </DialogHeader>
         </div>

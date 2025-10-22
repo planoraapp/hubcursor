@@ -3,6 +3,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Camera } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PhotosModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const PhotosModal: React.FC<PhotosModalProps> = ({
   photos, 
   userName 
 }) => {
+  const { t } = useI18n();
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -55,7 +57,7 @@ export const PhotosModal: React.FC<PhotosModalProps> = ({
           {photos.length === 0 && (
             <div className="text-center text-gray-500 py-8">
               <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma foto encontrada</p>
+              <p>{t('pages.console.noPhotos')}</p>
               <p className="text-sm mt-2">Fotos não disponíveis publicamente</p>
             </div>
           )}

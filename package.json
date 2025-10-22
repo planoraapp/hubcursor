@@ -13,7 +13,8 @@
     "badge:populate": "node scripts/populate-badges-database.cjs",
     "badge:check": "node scripts/daily-badge-checker.cjs",
     "badge:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-daily-badge-monitoring.ps1",
-    "trax:upload": "node scripts/upload-trax-samples.js"
+    "trax:upload": "node scripts/upload-trax-samples.js",
+    "test:keep-alive": "node scripts/test-keep-alive.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.886.0",

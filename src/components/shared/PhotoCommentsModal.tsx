@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, MessageCircle, Send, Trash2, AlertTriangle, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface PhotoComment {
   id: string;
@@ -38,6 +39,7 @@ export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
   isAddingComment = false,
   isDeletingComment = false
 }) => {
+  const { t } = useI18n();
   const [newComment, setNewComment] = useState('');
   const [isVisible, setIsVisible] = useState(false);
 
@@ -166,7 +168,7 @@ export const PhotoCommentsModal: React.FC<PhotoCommentsModalProps> = ({
               <Input
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Adicione um comentário..."
+                placeholder={t('pages.console.addComment')}
                 className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
                 disabled={isAddingComment}
               />

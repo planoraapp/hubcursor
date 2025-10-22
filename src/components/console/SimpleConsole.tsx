@@ -9,8 +9,8 @@ const SimpleConsole: React.FC = () => {
   const tabs = [
     {
       id: 'account' as const,
-      label: 'My Info',
-      icon: <img src="/assets/my-info.png" alt="My Info" className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
+      label: t('pages.console.myInfo'),
+      icon: <img src="/assets/my-info.png" alt={t('pages.console.myInfo')} className="h-7 w-auto" style={{ imageRendering: 'pixelated' }} />,
       color: '#FDCC00',
       hoverColor: '#FEE100',
       activeColor: '#FBCC00'

@@ -25,8 +25,8 @@ export const CountryFlags = ({ hotelId, className = '' }: CountryFlagsProps) => 
     <img 
       src={getFlagAsset(hotelId)}
       alt={`${hotelId.toUpperCase()} Flag`}
-      className={`w-5 h-4 ${className}`}
-      style={{ imageRendering: 'pixelated' }}
+      className={className || 'w-5 h-4'}
+      style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
     />
   );
 };

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface HabboAccount {
   id: string;
@@ -31,6 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [habboAccount, setHabboAccount] = useState<HabboAccount | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const isLoggedIn = !!habboAccount;
 
@@ -69,8 +71,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (functionError || !data?.success) {
         toast({
-          title: "Erro no login",
-          description: data?.error || "Usuário não encontrado ou senha incorreta",
+          title: t('auth.loginError'),
+          description: data?.error || t('auth.invalidCredentials'),
           variant: "destructive"
         });
         return false;
@@ -104,8 +106,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       logger.error('Erro no login:', error);
       toast({
-        title: "Erro no login",
-        description: "Erro inesperado ao fazer login",
+        title: t('auth.loginError'),
+        description: t('auth.unexpectedError'),
         variant: "destructive"
       });
       return false;
