@@ -291,11 +291,6 @@ export class ViaJovemCompleteService {
       sets.push({ id, gender, club, colorable, selectable, preselectable, sellable, parts });
     });
 
-    console.log('✅ [ViaJovemComplete] XML parsing completed:', {
-      palettes: palettes.length,
-      sets: sets.length,
-      totalParts: sets.reduce((sum, set) => sum + set.parts.length, 0)
-    });
 
     return { palettes, sets };
   }
@@ -502,10 +497,6 @@ export class ViaJovemCompleteService {
       });
     });
 
-    console.log('✅ [ViaJovemComplete] Categories processed:', {
-      totalCategories: categories.size,
-      totalItems: Array.from(categories.values()).reduce((sum, cat) => sum + cat.items.length, 0)
-    });
 
     return Array.from(categories.values());
   }

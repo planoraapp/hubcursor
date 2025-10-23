@@ -135,8 +135,11 @@ export const HabboUserPanel = () => {
               </button>
             </div>
 
+            {/* Linha Divisória */}
+            <div className="border-t border-slate-300 mb-2"></div>
+
             {/* Avatar and Info */}
-            <div className={`flex items-start gap-3 ${isCollapsed ? 'mb-1' : 'mb-6'}`}>
+            <div className={`flex items-start gap-3 ${isCollapsed ? 'mb-1' : 'mb-4'}`}>
               <div className="flex-shrink-0 relative">
                 {/* Sombra circular simulando luz acima */}
                 {!isCollapsed && (

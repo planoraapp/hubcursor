@@ -187,7 +187,7 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
 
   // Obter URL da imagem do handitem usando imagens reais
   const getHanditemImageUrl = (handitem: HabboHanditem): string => {
-  // Mapeamento de imagens reais da ViaJovem e outras fontes
+  // Mapeamento de imagens reais de fontes oficiais
   const realImages: { [key: number]: string } = {
     // UseItems (drk) - para beber
     1: 'https://i.imgur.com/1BGBH0d.png', // Chá Refrescante

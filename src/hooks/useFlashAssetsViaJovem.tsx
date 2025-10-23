@@ -180,12 +180,6 @@ export const useFlashAssetsViaJovem = () => {
       }, {} as Record<string, number>);
       setCategoryStats(stats);
       
-      console.log('🎯 [FlashAssetsViaJovem] Mapeamento final:', {
-        totalOriginal: flashData.length,
-        totalMapeado: mappedItems.length,
-        categorias: Object.keys(stats).length,
-        estatisticas: stats
-      });
     }
   }, [flashData]);
   

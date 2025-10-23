@@ -301,7 +301,7 @@ export const Login: React.FC = () => {
                               onError={(e) => {
                                 console.error(`Erro ao carregar bandeira ${hotel.name}:`, hotel.flag);
                                 // Fallback para bandeira local
-                                e.currentTarget.src = `/flags/${hotel.code}.png`;
+                                e.currentTarget.src = `/flags/${hotel.code === 'us' ? 'flagcom' : hotel.code === 'br' ? 'flagbrazil' : hotel.code === 'de' ? 'flagdeus' : hotel.code === 'es' ? 'flagspain' : hotel.code === 'fr' ? 'flagfrance' : hotel.code === 'it' ? 'flagitaly' : hotel.code === 'nl' ? 'flagnetl' : hotel.code === 'tr' ? 'flagtrky' : hotel.code === 'fi' ? 'flafinland' : 'flagcom'}.png`;
                               }}
                             />
                           </button>

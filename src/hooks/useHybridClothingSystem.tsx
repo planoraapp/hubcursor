@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOfficialFigureData } from './useFigureDataOfficial';
+import { mapSWFToHabboCategory, isValidHabboCategory } from '@/utils/clothingCategoryMapper';
 
 export interface HybridClothingItem {
   id: string;
@@ -17,13 +18,28 @@ export interface HybridClothingItem {
   source: 'OFFICIAL' | 'SUPABASE' | 'HABBOAPI';
 }
 
-// Mapping SWF names to official categories and IDs
+// Mapping SWF names to official categories and IDs - Updated to use correct mapping
 const SWF_TO_OFFICIAL_MAP: Record<string, { category: string; figureId: string }> = {
   'acc_chest_U_acousticguitar.swf': { category: 'ca', figureId: '1001' },
   'acc_chest_M_fish.swf': { category: 'ca', figureId: '1002' },
   'acc_chest_anubisbackpack.swf': { category: 'ca', figureId: '1003' },
   'hair_F_ponytail.swf': { category: 'hr', figureId: '155' },
-  'shirt_M_polo.swf': { category: 'cc', figureId: '180' },
+  'shirt_M_polo.swf': { category: 'ch', figureId: '180' }, // Corrigido: shirt -> ch (camisetas)
+  
+  // Exemplos de calças baseados na ViaJovem
+  'trousers_M_jeans.swf': { category: 'lg', figureId: '270' },
+  'pants_F_leggings.swf': { category: 'lg', figureId: '275' },
+  'bottoms_M_cargo.swf': { category: 'lg', figureId: '280' },
+  'skirt_F_floral.swf': { category: 'lg', figureId: '281' },
+  'shorts_M_sport.swf': { category: 'lg', figureId: '285' },
+  'uniform_M_military.swf': { category: 'lg', figureId: '3023' },
+  'costume_F_princess.swf': { category: 'lg', figureId: '3078' },
+  'armor_M_knight.swf': { category: 'lg', figureId: '3088' },
+  'kimono_F_traditional.swf': { category: 'lg', figureId: '3116' },
+  'bikini_F_beach.swf': { category: 'lg', figureId: '3201' },
+  'swimsuit_M_speedo.swf': { category: 'lg', figureId: '3216' },
+  'sweatpants_M_comfort.swf': { category: 'lg', figureId: '3290' },
+  
   // Add more mappings as needed
 };
 
@@ -39,7 +55,7 @@ const fetchSupabaseAssets = async (): Promise<any[]> => {
 const generateThumbnailUrl = (item: HybridClothingItem, colorId?: string): string => {
   const gender = item.gender === 'U' ? 'M' : item.gender;
   const color = colorId || (item.colors[0] || '1');
-  const headOnly = ['hr', 'hd', 'fa', 'ey'].includes(item.category) ? '&headonly=1' : '';
+  const headOnly = ['hr', 'hd', 'fa'].includes(item.category) ? '&headonly=1' : '';
   
   // Primary: Official Habbo Imaging
   return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${color}&gender=${gender}&size=l${headOnly}`;

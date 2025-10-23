@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { usePuhekuplaClothing } from './usePuhekuplaData';
 import { realFigureDataService } from '@/services/RealFigureDataService';
 import { viaJovemCompleteService } from '@/services/ViaJovemCompleteService';
+import { mapSWFToHabboCategory, isValidHabboCategory } from '@/utils/clothingCategoryMapper';
 
 export interface UnifiedHabboClothingItem {
   id: string;
@@ -56,35 +57,35 @@ export interface ColorPalettes {
 // Função para obter nome da categoria baseado na documentação oficial do Habbo
 const getCategoryDisplayName = (category: string): string => {
   const categoryNames: Record<string, string> = {
-    // CORPO - Rosto e Corpo
-    'hd': 'Rosto e Corpo',
+    // CORPO - Rostos
+    'hd': 'Rostos',
     
-    // CABEÇA - Cabelo/Penteados
-    'hr': 'Cabelo/Penteados',
+    // CABEÇA - Cabelos
+    'hr': 'Cabelos',
     
     // CABEÇA - Chapéus
     'ha': 'Chapéus',
     
-    // CABEÇA - Acessórios de Cabeça
-    'he': 'Acessórios de Cabeça',
+    // CABEÇA - Acessórios de Cabelo
+    'he': 'Acess. Cabelo',
     
     // CABEÇA - Óculos
     'ea': 'Óculos',
     
-    // CABEÇA - Máscaras (acessórios faciais)
-    'fa': 'Máscaras',
+    // CABEÇA - Rosto (acessórios faciais)
+    'fa': 'Rosto',
     
-    // TORSO - Camisas
-    'ch': 'Camisas',
+    // TORSO - Camisetas
+    'ch': 'Camisetas',
     
-    // TORSO - Casacos/Vestidos/Jaquetas
-    'cc': 'Casacos/Vestidos',
+    // TORSO - Casacos
+    'cc': 'Casacos',
     
     // TORSO - Estampas/Impressões
     'cp': 'Estampas',
     
-    // TORSO - Bijuteria/Jóias (acessórios de topo)
-    'ca': 'Acessórios do Peito',
+    // TORSO - Acessórios
+    'ca': 'Acessórios',
     
     // PERNAS - Calça
     'lg': 'Calças',
@@ -189,10 +190,6 @@ export const useUnifiedHabboClothing = () => {
       try {
         // PRIORIDADE 1: Tentar carregar dados completos da ViaJovem (figuredata.xml + furnidata.json)
                 const viaJovemData = await viaJovemCompleteService.getCategories();
-        console.log('📊 [useUnifiedHabboClothing] ViaJovem data received:', {
-          totalCategories: viaJovemData.length,
-          categories: viaJovemData.map(cat => ({ id: cat.id, name: cat.displayName, itemCount: cat.items.length }))
-        });
         const convertedData = convertViaJovemCompleteToUnified(viaJovemData);
         setError(null);
         setData(convertedData);
@@ -204,10 +201,6 @@ export const useUnifiedHabboClothing = () => {
           // PRIORIDADE 2: Tentar carregar dados do Puhekupla
           if (puhekuplaData.data?.result?.clothing) {
                         const puhekuplaUnified = convertPuhekuplaToUnified(puhekuplaData.data.result.clothing);
-            console.log('📊 [useUnifiedHabboClothing] Puhekupla converted data:', {
-              totalCategories: Object.keys(puhekuplaUnified).length,
-              categories: Object.entries(puhekuplaUnified).map(([key, value]) => ({ id: key, itemCount: value.length }))
-            });
             setData(puhekuplaUnified);
             setColorPalettes({});
             return; // Sucesso, não tentar outros métodos
@@ -470,22 +463,21 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
             return; // Pular item inválido
     }
     
-    // Validar categoria baseada na documentação oficial
-    const validCategories = ['hd', 'hr', 'ch', 'lg', 'sh', 'ha', 'he', 'ea', 'fa', 'cp', 'cc', 'ca', 'wa', 'bd', 'rh', 'lh', 'dr', 'sk', 'su'];
-    if (!validCategories.includes(category)) {
+    // Aplicar mapeamento correto baseado nos padrões SWF do Habbo
+    const mappedCategory = mapSWFToHabboCategory(item.code || category);
+    
+    // Validar categoria usando o mapeamento
+    if (!isValidHabboCategory(mappedCategory)) {
             return; // Pular categoria inválida
     }
+    
+    // Usar a categoria mapeada
+    category = mappedCategory;
     
     if (!unifiedData[category]) {
       unifiedData[category] = [];
     }
     
-    console.log('✅ [convertPuhekuplaToUnified] Processing item:', { 
-      code: item.code, 
-      category, 
-      figureId, 
-      name: item.name?.substring(0, 30) || 'unnamed' 
-    });
     
     // Detectar raridade baseada no nome real do Puhekupla
     const assetName = (item.name || '').toLowerCase();
@@ -564,7 +556,6 @@ const convertPuhekuplaToUnified = (puhekuplaClothing: any[]): UnifiedClothingDat
           }
   });
   
-  console.log('✅ [convertPuhekuplaToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
   return unifiedData;
 };
 
@@ -574,10 +565,18 @@ const convertRealFigureDataToUnified = (realData: any): UnifiedClothingData => {
   
   Object.entries(realData).forEach(([categoryId, categoryData]: [string, any]) => {
     if (categoryData && categoryData.items) {
-      unifiedData[categoryId] = categoryData.items.map((item: any) => ({
+      // Aplicar mapeamento correto para a categoria
+      const mappedCategory = mapSWFToHabboCategory(categoryId);
+      
+      // Validar categoria usando o mapeamento
+      if (!isValidHabboCategory(mappedCategory)) {
+        return; // Pular categoria inválida
+      }
+      
+      unifiedData[mappedCategory] = categoryData.items.map((item: any) => ({
         id: item.id,
         figureId: item.figureId,
-        category: item.category,
+        category: mappedCategory, // Usar categoria mapeada
         gender: item.gender,
         colors: item.colors,
         name: item.name,
@@ -606,7 +605,6 @@ const convertRealFigureDataToUnified = (realData: any): UnifiedClothingData => {
     }
   });
   
-  console.log('✅ [convertRealFigureDataToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
   return unifiedData;
 };
 
@@ -616,10 +614,18 @@ const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingD
   
   viaJovemData.forEach(category => {
     if (category && category.items) {
-      unifiedData[category.id] = category.items.map((item: any) => ({
+      // Aplicar mapeamento correto para a categoria
+      const mappedCategory = mapSWFToHabboCategory(category.id);
+      
+      // Validar categoria usando o mapeamento
+      if (!isValidHabboCategory(mappedCategory)) {
+        return; // Pular categoria inválida
+      }
+      
+      unifiedData[mappedCategory] = category.items.map((item: any) => ({
         id: item.id,
         figureId: item.figureId,
-        category: item.category,
+        category: mappedCategory, // Usar categoria mapeada
         gender: item.gender,
         colors: item.colors,
         name: item.name,
@@ -649,7 +655,6 @@ const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingD
     }
   });
   
-  console.log('✅ [convertViaJovemCompleteToUnified] Converted to unified format:', Object.keys(unifiedData).length, 'categories');
   return unifiedData;
 };
 
@@ -657,32 +662,212 @@ const convertViaJovemCompleteToUnified = (viaJovemData: any[]): UnifiedClothingD
 const generateMockUnifiedData = (): UnifiedClothingData => {
   const mockData: UnifiedClothingData = {};
   
-  const categories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'ca', 'wa', 'cp'];
+  const categories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'he', 'ca', 'wa', 'cp'];
   const genders: Array<'M' | 'F' | 'U'> = ['M', 'F', 'U'];
   
   categories.forEach(category => {
     mockData[category] = [];
     
-    // Gerar 20 itens mock por categoria
-    for (let i = 0; i < 20; i++) {
-      const figureId = (100 + i).toString();
-      const gender = genders[i % 3];
+    if (category === 'lg') {
+      // Dados específicos de calças baseados no exemplo fornecido
+      const pantsData = [
+        // HC (Habbo Club) - 22 calças
+        { id: '3006', name: 'Calça HC 3006', rarity: 'hc', isDuotone: true },
+        { id: '3017', name: 'Calça HC 3017', rarity: 'hc', isDuotone: true },
+        { id: '3018', name: 'Calça HC 3018', rarity: 'hc', isDuotone: false },
+        { id: '3019', name: 'Calça HC 3019', rarity: 'hc', isDuotone: false },
+        { id: '3047', name: 'Calça HC 3047', rarity: 'hc', isDuotone: false },
+        { id: '3057', name: 'Calça HC 3057', rarity: 'hc', isDuotone: false },
+        { id: '3058', name: 'Calça HC 3058', rarity: 'hc', isDuotone: false },
+        { id: '3061', name: 'Calça HC 3061', rarity: 'hc', isDuotone: false },
+        { id: '3136', name: 'Calça HC 3136', rarity: 'hc', isDuotone: false },
+        { id: '3138', name: 'Calça HC 3138', rarity: 'hc', isDuotone: true },
+        { id: '3166', name: 'Calça HC 3166', rarity: 'hc', isDuotone: false },
+        { id: '3174', name: 'Calça HC 3174', rarity: 'hc', isDuotone: true },
+        { id: '3190', name: 'Calça HC 3190', rarity: 'hc', isDuotone: true },
+        { id: '3191', name: 'Calça HC 3191', rarity: 'hc', isDuotone: true },
+        { id: '3192', name: 'Calça HC 3192', rarity: 'hc', isDuotone: false },
+        { id: '3202', name: 'Calça HC 3202', rarity: 'hc', isDuotone: true },
+        { id: '3235', name: 'Calça HC 3235', rarity: 'hc', isDuotone: false },
+        { id: '3257', name: 'Calça HC 3257', rarity: 'hc', isDuotone: false },
+        { id: '3267', name: 'Calça HC 3267', rarity: 'hc', isDuotone: true },
+        { id: '3282', name: 'Calça HC 3282', rarity: 'hc', isDuotone: false },
+        { id: '3283', name: 'Calça HC 3283', rarity: 'hc', isDuotone: true },
+        { id: '3502', name: 'Calça HC 3502', rarity: 'hc', isDuotone: false },
+        
+        // Sellable (Vendáveis) - 80 calças
+        { id: '3320', name: 'Jeans pula-brejo', rarity: 'sellable', isDuotone: true },
+        { id: '3328', name: 'Jeans rasgados', rarity: 'sellable', isDuotone: true },
+        { id: '3333', name: 'Fantasia de Sereia', rarity: 'sellable', isDuotone: false },
+        { id: '3337', name: 'Fantasia Felina', rarity: 'sellable', isDuotone: false },
+        { id: '3341', name: 'Saia tribal', rarity: 'sellable', isDuotone: true },
+        { id: '3353', name: 'Leggings de estampa animal', rarity: 'sellable', isDuotone: false },
+        { id: '3355', name: 'Saia máxi floral', rarity: 'sellable', isDuotone: true },
+        { id: '3361', name: 'Mocky Maus', rarity: 'sellable', isDuotone: false },
+        { id: '3364', name: 'Kimono Floral', rarity: 'sellable', isDuotone: true },
+        { id: '3365', name: 'Kimono Azul', rarity: 'sellable', isDuotone: false },
+        { id: '3384', name: 'Cybertraje', rarity: 'sellable', isDuotone: true },
+        { id: '3387', name: 'Saia de skatista', rarity: 'sellable', isDuotone: true },
+        { id: '3391', name: 'Short de bala', rarity: 'sellable', isDuotone: true },
+        { id: '3401', name: 'Menina gulosa', rarity: 'sellable', isDuotone: true },
+        { id: '3407', name: 'Uniforme militar de desfile', rarity: 'sellable', isDuotone: true },
+        { id: '3408', name: 'Uniforme militar de desfile', rarity: 'sellable', isDuotone: true },
+        { id: '3418', name: 'Uniforme de recruta', rarity: 'sellable', isDuotone: false },
+        { id: '3434', name: 'Roupa Dino', rarity: 'sellable', isDuotone: true },
+        { id: '3449', name: 'Armadura do Cavaleiro Brilhante', rarity: 'sellable', isDuotone: false },
+        { id: '3460', name: 'Calça do papai Noel', rarity: 'sellable', isDuotone: false },
+        { id: '3483', name: 'Calça do Pijama', rarity: 'sellable', isDuotone: true },
+        { id: '3521', name: 'Calça Esportiva', rarity: 'sellable', isDuotone: true },
+        { id: '3526', name: 'Roupa Conforto Máximo', rarity: 'sellable', isDuotone: true },
+        { id: '3596', name: 'Visual Princesa do Deserto', rarity: 'sellable', isDuotone: true },
+        { id: '3607', name: 'Pernas Armadura Medieval de Aço', rarity: 'sellable', isDuotone: true },
+        { id: '3626', name: 'Calças Vitorianas', rarity: 'sellable', isDuotone: true },
+        { id: '3695', name: 'Saia Harajuku', rarity: 'sellable', isDuotone: false },
+        { id: '3787', name: 'Calça Rasgada Grunge', rarity: 'sellable', isDuotone: true },
+        { id: '3842', name: 'Saia Hippie', rarity: 'sellable', isDuotone: true },
+        { id: '3864', name: 'Traje Boneco de Neve', rarity: 'sellable', isDuotone: false },
+        { id: '3915', name: 'Calça Yoga', rarity: 'sellable', isDuotone: true },
+        { id: '3933', name: 'Traje Chef Chocolatier', rarity: 'sellable', isDuotone: false },
+        { id: '3950', name: 'Sari', rarity: 'sellable', isDuotone: true },
+        { id: '3968', name: 'Toalha na Cintura', rarity: 'sellable', isDuotone: false },
+        { id: '4012', name: 'Saia Teia de Aranha', rarity: 'sellable', isDuotone: false },
+        { id: '4017', name: 'Calça Cyberpunk', rarity: 'sellable', isDuotone: true },
+        { id: '4034', name: 'Kilt Tartan', rarity: 'sellable', isDuotone: true },
+        { id: '4066', name: 'Calça Cintura Alta', rarity: 'sellable', isDuotone: false },
+        { id: '4081', name: 'Calça Moletom Camuflada', rarity: 'sellable', isDuotone: false },
+        { id: '4082', name: 'Calça Moletom Tie-Dye Dark', rarity: 'sellable', isDuotone: false },
+        { id: '4083', name: 'Calça Moletom Tie-Dye Arco-Íris', rarity: 'sellable', isDuotone: false },
+        { id: '4092', name: 'Calças Couro Vegano', rarity: 'sellable', isDuotone: false },
+        { id: '4102', name: 'Calça Moletom Geométrica', rarity: 'sellable', isDuotone: true },
+        { id: '4113', name: 'Calça Hip-Hop', rarity: 'sellable', isDuotone: true },
+        { id: '4114', name: 'Calça Moletom Básica', rarity: 'sellable', isDuotone: true },
+        { id: '4119', name: 'Saia Holográfica', rarity: 'sellable', isDuotone: false },
+        { id: '4125', name: 'Calça Moletom Multicor', rarity: 'sellable', isDuotone: false },
+        { id: '4167', name: 'Traje Disco', rarity: 'sellable', isDuotone: false },
+        { id: '4306', name: 'Teletubbies - Visual Tinky Winky', rarity: 'sellable', isDuotone: false },
+        { id: '4309', name: 'Teletubbies - Visual Dipsy', rarity: 'sellable', isDuotone: false },
+        { id: '4312', name: 'Teletubbies - Visual Laa-Laa', rarity: 'sellable', isDuotone: false },
+        { id: '4315', name: 'Teletubbies - Visual Po', rarity: 'sellable', isDuotone: false },
+        { id: '4341', name: 'Visual Explorador da Vida Selvagem', rarity: 'sellable', isDuotone: false },
+        { id: '4358', name: 'Saia My Melody', rarity: 'sellable', isDuotone: false },
+        { id: '4369', name: 'Saia Punk H-Pop Idols', rarity: 'sellable', isDuotone: true },
+        { id: '4373', name: 'Calça Grunge H-Pop Idols', rarity: 'sellable', isDuotone: false },
+        { id: '4375', name: 'Saia Hanbok', rarity: 'sellable', isDuotone: false },
+        { id: '4934', name: 'Traje Feudal', rarity: 'sellable', isDuotone: true },
+        { id: '5119', name: 'Calça Patchwork Customizada', rarity: 'sellable', isDuotone: true },
+        { id: '5152', name: 'Calça Sellable 5152', rarity: 'sellable', isDuotone: false },
+        { id: '5163', name: 'Calça Sellable 5163', rarity: 'sellable', isDuotone: false },
+        { id: '5312', name: 'Traje Mamãe Noel Tropical', rarity: 'sellable', isDuotone: true },
+        { id: '5332', name: 'Calça Sellable 5332', rarity: 'sellable', isDuotone: false },
+        { id: '5363', name: 'Traje Biscoito Natalino', rarity: 'sellable', isDuotone: false },
+        { id: '5545', name: 'Calça Cargo Tech', rarity: 'sellable', isDuotone: true },
+        { id: '5582', name: 'Conjunto Moletom Habbo Couture', rarity: 'sellable', isDuotone: true },
+        { id: '5594', name: 'Calça Cargo Baggy', rarity: 'sellable', isDuotone: false },
+        { id: '5632', name: 'Traje de Líder', rarity: 'sellable', isDuotone: false },
+        { id: '5732', name: 'Smoking de Baile Sangrento', rarity: 'sellable', isDuotone: true },
+        { id: '5745', name: 'Traje Mariachi', rarity: 'sellable', isDuotone: true },
+        { id: '5909', name: 'Biquíni de Crochê', rarity: 'sellable', isDuotone: true },
+        { id: '5927', name: 'Shortinho Suspensório Coelhinho', rarity: 'sellable', isDuotone: true },
+        { id: '5970', name: 'Calças Bratz Eitan', rarity: 'sellable', isDuotone: false },
+        { id: '5974', name: 'Saia Bratz Jade', rarity: 'sellable', isDuotone: true },
+        { id: '6000', name: 'Biquíni Ombro Único', rarity: 'sellable', isDuotone: false },
+        { id: '6017', name: 'Traje do Boto', rarity: 'sellable', isDuotone: true },
+        { id: '6088', name: 'Biquíni Babados', rarity: 'sellable', isDuotone: true },
+        { id: '6089', name: 'Traje de Banho', rarity: 'sellable', isDuotone: true },
+        { id: '6123', name: 'Skatista Pro', rarity: 'sellable', isDuotone: true },
+        
+        // LTD (Limited) - 2 calças
+        { id: '5113', name: 'Traje Coelhinho Eco-Solar LTD', rarity: 'ltd', isDuotone: false },
+        { id: '5190', name: 'Traje Entidade do Fogo', rarity: 'ltd', isDuotone: false },
+        
+        // Raro - 10 calças
+        { id: '3781', name: 'Saia Plissada Romântica', rarity: 'rare', isDuotone: true },
+        { id: '3924', name: 'Macacão Coelhinho', rarity: 'rare', isDuotone: true },
+        { id: '4002', name: 'Visual Elegância Gótica', rarity: 'rare', isDuotone: true },
+        { id: '4011', name: 'Visual Abóbora', rarity: 'rare', isDuotone: false },
+        { id: '4138', name: 'Traje Muay Thai', rarity: 'rare', isDuotone: false },
+        { id: '4191', name: 'Traje Shinobi', rarity: 'rare', isDuotone: true },
+        { id: '5022', name: 'Look Árvore de Natal', rarity: 'rare', isDuotone: true },
+        { id: '5165', name: 'Visual Estudante de Artes', rarity: 'rare', isDuotone: true },
+        { id: '5243', name: 'Look Urbano', rarity: 'rare', isDuotone: false },
+        { id: '6013', name: 'Traje Sereia Iara', rarity: 'rare', isDuotone: true },
+        
+        // NFT - 14 calças
+        { id: '5106', name: 'Traje Fogos de Artifício 2023', rarity: 'nft', isDuotone: false },
+        { id: '5226', name: 'Bermuda Girassol', rarity: 'nft', isDuotone: false },
+        { id: '5261', name: 'Biquini Azul', rarity: 'nft', isDuotone: false },
+        { id: '5264', name: 'Biquini Pink', rarity: 'nft', isDuotone: false },
+        { id: '5265', name: 'Bermuda de Praia Azul', rarity: 'nft', isDuotone: false },
+        { id: '5266', name: 'Bermuda de Praia Pink', rarity: 'nft', isDuotone: false },
+        { id: '5398', name: 'Jeans de Roqueiro Rasgados', rarity: 'nft', isDuotone: true },
+        { id: '5399', name: 'Shorts de Roqueiro Estripador', rarity: 'nft', isDuotone: true },
+        { id: '5546', name: 'Camiseta Framboesa', rarity: 'nft', isDuotone: false },
+        { id: '5547', name: 'Camiseta Mirtilo', rarity: 'nft', isDuotone: false },
+        { id: '5548', name: 'Camiseta Morango', rarity: 'nft', isDuotone: false },
+        { id: '5584', name: 'Calça Grafite', rarity: 'nft', isDuotone: true },
+        { id: '5623', name: 'Calça Listrada', rarity: 'nft', isDuotone: true },
+        { id: '6137', name: 'Short Jeans', rarity: 'nft', isDuotone: false },
+        
+        // NonHC (Básicas) - 12 calças
+        { id: '270', name: 'Calça Básica 270', rarity: 'normal', isDuotone: false },
+        { id: '275', name: 'Calça Básica 275', rarity: 'normal', isDuotone: false },
+        { id: '280', name: 'Calça Básica 280', rarity: 'normal', isDuotone: false },
+        { id: '281', name: 'Calça Básica 281', rarity: 'normal', isDuotone: false },
+        { id: '285', name: 'Calça Básica 285', rarity: 'normal', isDuotone: false },
+        { id: '3023', name: 'Calça Básica 3023', rarity: 'normal', isDuotone: false },
+        { id: '3078', name: 'Calça Básica 3078', rarity: 'normal', isDuotone: false },
+        { id: '3088', name: 'Calça Básica 3088', rarity: 'normal', isDuotone: true },
+        { id: '3116', name: 'Calça Básica 3116', rarity: 'normal', isDuotone: true },
+        { id: '3201', name: 'Calça Básica 3201', rarity: 'normal', isDuotone: true },
+        { id: '3216', name: 'Calça Básica 3216', rarity: 'normal', isDuotone: false },
+        { id: '3290', name: 'Calça Básica 3290', rarity: 'normal', isDuotone: false }
+      ];
       
-      mockData[category].push({
-        id: `mock_${category}_${figureId}`,
-        figureId,
-        category,
-        gender,
-        colors: ['1', '2', '3', '45', '61', '92'],
-        club: i % 5 === 0 ? 'HC' : 'FREE',
-        name: `${category.toUpperCase()} Mock ${figureId}`,
-        source: 'official-habbo',
-        thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92.${category}-${figureId}-1&gender=${gender}&direction=2&head_direction=2&size=s`,
-        isValidated: false
+      pantsData.forEach((pants, index) => {
+        const gender = genders[index % 3];
+        const colors = pants.isDuotone ? ['82', '61'] : ['82'];
+        
+        mockData[category].push({
+          id: `lg_${pants.id}`,
+          figureId: pants.id,
+          category: 'lg',
+          gender,
+          colors,
+          club: pants.rarity === 'hc' ? 'HC' : 'FREE',
+          name: pants.name,
+          source: 'official-habbo',
+          thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=lg-${pants.id}-${colors[0]}${pants.isDuotone ? `-${colors[1]}` : ''}&gender=${gender}&direction=2&head_direction=2&size=m`,
+          isValidated: false,
+          rarity: pants.rarity,
+          isDuotone: pants.isDuotone,
+          isNFT: pants.rarity === 'nft',
+          isLTD: pants.rarity === 'ltd',
+          isRare: pants.rarity === 'rare',
+          isHC: pants.rarity === 'hc',
+          isSellable: pants.rarity === 'sellable'
+        });
       });
+    } else {
+      // Gerar dados mock padrão para outras categorias
+      for (let i = 0; i < 20; i++) {
+        const figureId = (100 + i).toString();
+        const gender = genders[i % 3];
+        
+        mockData[category].push({
+          id: `mock_${category}_${figureId}`,
+          figureId,
+          category,
+          gender,
+          colors: ['1', '2', '3', '45', '61', '92'],
+          club: i % 5 === 0 ? 'HC' : 'FREE',
+          name: `${category.toUpperCase()} Mock ${figureId}`,
+          source: 'official-habbo',
+          thumbnailUrl: `https://www.habbo.com/habbo-imaging/avatarimage?figure=hd-180-1.hr-828-45.ch-3216-92.lg-3116-92.sh-3297-92.${category}-${figureId}-1&gender=${gender}&direction=2&head_direction=2&size=s`,
+          isValidated: false
+        });
+      }
     }
   });
   
-  console.log('🎭 [MockData] Generated mock unified data:', Object.keys(mockData).length, 'categories');
   return mockData;
 };

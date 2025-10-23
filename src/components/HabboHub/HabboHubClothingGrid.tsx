@@ -49,7 +49,7 @@ export const HabboHubClothingGrid: React.FC<HabboHubClothingGridProps> = ({
   const getItemThumbnail = (item: any) => {
     const gender = selectedGender === 'all' ? 'M' : selectedGender;
     const color = selectedColor || '1';
-    const headOnly = ['hr', 'hd', 'fa', 'ey'].includes(item.category) ? '&headonly=1' : '';
+    const headOnly = ['hr', 'hd', 'fa'].includes(item.category) ? '&headonly=1' : '';
     
     return `https://www.habbo.com/habbo-imaging/avatarimage?figure=${item.category}-${item.figureId}-${color}&gender=${gender}&size=l${headOnly}`;
   };
