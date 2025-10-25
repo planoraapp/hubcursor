@@ -1,6 +1,7 @@
 // src/services/ViaJovemCompleteService.ts
-// Implementação completa baseada no tutorial da ViaJovem
-// Carrega figuredata.xml e furnidata.json reais do Habbo
+// Implementação completa baseada no tutorial oficial da ViaJovem
+// https://viajovem.blogspot.com/2023/01/as-roupas-visuais.html
+// Carrega figuredata.xml e furnidata.json reais do Habbo Brasil
 
 export interface ViaJovemPalette {
   id: string;
@@ -173,13 +174,17 @@ export class ViaJovemCompleteService {
     }
 
     try {
-            const response = await fetch('/handitems/gamedata/figuredata.xml');
+      console.log('🌐 [ViaJovemCompleteService] Tentando carregar dados oficiais via proxy...');
+      // Usar proxy do Vite para resolver CORS
+      const response = await fetch('/api/habbo/gamedata/figuredata/1');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const xmlText = await response.text();
       const figureData = this.parseFigureDataXML(xmlText);
+      
+      console.log('✅ [ViaJovemCompleteService] Dados oficiais carregados com sucesso!');
       
       this.cache.set(cacheKey, {
         data: figureData,
@@ -190,6 +195,32 @@ export class ViaJovemCompleteService {
             return figureData;
       
     } catch (error) {
+      console.warn('Erro ao carregar dados oficiais via proxy, tentando fallback local:', error);
+      
+      // Fallback: tentar dados locais
+      try {
+        console.log('📁 [ViaJovemCompleteService] Tentando carregar dados locais...');
+        const localResponse = await fetch('/handitems/gamedata/figuredata.xml');
+        if (localResponse.ok) {
+          const xmlText = await localResponse.text();
+          const figureData = this.parseFigureDataXML(xmlText);
+          
+          console.log('✅ [ViaJovemCompleteService] Dados locais carregados com sucesso!');
+          
+          this.cache.set(cacheKey, {
+            data: figureData,
+            timestamp: Date.now()
+          });
+          
+          this.figureData = figureData;
+          return figureData;
+        }
+      } catch (localError) {
+        console.warn('❌ [ViaJovemCompleteService] Erro ao carregar dados locais:', localError);
+      }
+      
+      // Último fallback: dados mock
+      console.log('🎭 [ViaJovemCompleteService] Usando dados mock como último recurso');
             const mockData = this.getMockFigureData();
       this.cache.set(cacheKey, {
         data: mockData,
@@ -213,7 +244,8 @@ export class ViaJovemCompleteService {
     }
 
     try {
-            const response = await fetch('/handitems/gamedata/furnidata.json');
+            // Usar proxy do Vite para resolver CORS
+      const response = await fetch('/api/habbo/gamedata/furnidata/1');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -314,54 +346,68 @@ export class ViaJovemCompleteService {
   }
 
   /**
-   * Categoriza item baseado no tutorial ViaJovem
+   * Categoriza item baseado no tutorial oficial ViaJovem
+   * https://viajovem.blogspot.com/2023/01/as-roupas-visuais.html
+   * 
+   * • Roupas normais: não possuem sellable="1" no figuredata.xml
+   * • Roupas HC: club="2" no figuredata.xml
+   * • Roupas NFT: furniline contém coleções ["nft2025", "nft2024", "nft2023", "nft", "nftmint", "testing"]
+   * • Roupas RARE: classname inicia com "clothing_r..."
+   * • Roupas LTD: classname inicia com "clothing_ltd..."
    */
   private categorizeItem(set: ViaJovemSet, part: ViaJovemSetPart): 'NORMAL' | 'HC' | 'NFT' | 'RARE' | 'LTD' | 'SELLABLE' {
-    // 1. Verificar HC: club="2" no figuredata
+    // 1. Verificar HC: club="2" no figuredata.xml
     if (set.club === '2') {
       return 'HC';
     }
 
-    // 2. Verificar vendável: sellable="1" no figuredata
+    // 2. Verificar vendável: sellable="1" no figuredata.xml
     if (set.sellable === '1') {
       return 'SELLABLE';
     }
 
-    // 3. Verificar NFT, RARE, LTD no furnidata
+    // 3. Verificar NFT, RARE, LTD no furnidata.json
     const furnidataInfo = this.getFurnidataInfo(part.type, part.id);
     if (furnidataInfo) {
-      // NFT: furniline contém coleções NFT
+      // NFT: furniline contém coleções NFT (conforme tutorial ViaJovem)
       if (furnidataInfo.furniline && NFT_COLLECTIONS.includes(furnidataInfo.furniline)) {
         return 'NFT';
       }
 
-      // RARE: classname começa com "clothing_r"
+      // RARE: classname começa com "clothing_r" (conforme tutorial ViaJovem)
       if (furnidataInfo.classname.startsWith('clothing_r')) {
         return 'RARE';
       }
 
-      // LTD: classname começa com "clothing_ltd"
+      // LTD: classname começa com "clothing_ltd" (conforme tutorial ViaJovem)
       if (furnidataInfo.classname.startsWith('clothing_ltd')) {
         return 'LTD';
       }
     }
 
-    // 4. Padrão: NORMAL (sem sellable="1", sem club="2")
+    // 4. Padrão: roupas normais (não possuem sellable="1")
     return 'NORMAL';
   }
 
   /**
-   * Detecta se item é duotone (baseado no tutorial ViaJovem)
+   * Detecta se item é duotone (baseado no tutorial oficial ViaJovem)
+   * https://viajovem.blogspot.com/2023/01/as-roupas-visuais.html
+   * 
+   * "As roupas em que a paleta 3 é utilizada e possuem dois tons de cor, 
+   * utilizam no figuredata.xml a identificação colorindex="1" e colorindex="2""
    */
-  private isDuotoneItem(colorindex: string): boolean {
-    // ViaJovem: duotone quando há colorindex="1" e colorindex="2"
-    return colorindex.includes('1') && colorindex.includes('2');
+  private isDuotoneItem(parts: ViaJovemSetPart[]): boolean {
+    // Verificar se há partes com colorindex="1" e colorindex="2"
+    const hasColorIndex1 = parts.some(part => part.colorindex === '1');
+    const hasColorIndex2 = parts.some(part => part.colorindex === '2');
+    
+    return hasColorIndex1 && hasColorIndex2;
   }
 
   /**
    * Obtém informações do furnidata para um item
    */
-  private getFurnidataInfo(type: string, id: string): any {
+  public getFurnidataInfo(type: string, id: string): any {
     const possibleClassnames = [
       `${type}_${id}`,
       `clothing_${type}_${id}`,
@@ -378,6 +424,38 @@ export class ViaJovemCompleteService {
     }
 
     return null;
+  }
+
+  /**
+   * Busca nomes SWF de múltiplos itens de uma categoria
+   */
+  public async getItemsNames(category: string, ids: string[]): Promise<Array<{id: string, classname: string, name: string, furniline: string}>> {
+    // Garantir que o furnidata está carregado
+    await this.loadFurnidata();
+    
+    const results = [];
+    
+    for (const id of ids) {
+      const furnidataInfo = this.getFurnidataInfo(category, id);
+      
+      if (furnidataInfo) {
+        results.push({
+          id: `${category}-${id}`,
+          classname: furnidataInfo.classname,
+          name: furnidataInfo.name || 'Nome não encontrado',
+          furniline: furnidataInfo.furniline || 'N/A'
+        });
+      } else {
+        results.push({
+          id: `${category}-${id}`,
+          classname: 'N/A',
+          name: 'Nome não encontrado',
+          furniline: 'N/A'
+        });
+      }
+    }
+    
+    return results;
   }
 
   /**
@@ -427,44 +505,195 @@ export class ViaJovemCompleteService {
     await this.loadFigureData();
     await this.loadFurnidata();
 
+    console.log(`📊 [ViaJovemCompleteService] Total de sets carregados: ${this.figureData!.sets.length}`);
+
                 const categories = new Map<string, ViaJovemCategory>();
 
-    // Agrupar sets por tipo
+    // Agrupar sets por tipo (apenas categorias válidas conforme ViaJovem)
+    const validCategories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'he', 'ca', 'wa', 'cp'];
+    const processedItems = new Set<string>(); // Para evitar duplicatas
+    
     this.figureData!.sets.forEach(set => {
       set.parts.forEach(part => {
         const type = part.type;
         
-        if (!categories.has(type)) {
-          categories.set(type, {
-            id: type,
-            name: type,
-            displayName: TYPE_DISPLAY_NAMES[type] || type,
-            type: type,
-            paletteId: PALETTE_MAPPING[type] || '3',
+        // Filtrar apenas categorias válidas
+        if (!validCategories.includes(type)) {
+          return; // Pular categorias inválidas
+        }
+        
+        // Criar chave única para evitar duplicatas (tipo + id + gênero)
+        const uniqueKey = `${type}_${part.id}_${set.gender}`;
+        
+        // Correção de categorização para itens específicos com dados incorretos
+        let correctedType = type;
+        
+        // Sistema de correção baseado em padrões reais do Habbo
+        const id = parseInt(part.id);
+        
+        // Função para aplicar correção com log
+        const applyCorrection = (fromType: string, toType: string, itemName: string) => {
+          if (type === fromType) {
+            correctedType = toType;
+            console.log(`🔧 [CORREÇÃO] ${itemName} ${part.id} corrigido de '${fromType}' para '${toType}'`);
+            return true;
+          }
+          return false;
+        };
+        
+        // CORREÇÕES BASEADAS EM PADRÕES REAIS DO HABBO
+        
+        // 1. CHAPÉUS/CAPACETES (ha) - incorretamente como Casacos (cc)
+        if (id >= 3451 && id <= 3500) {
+          applyCorrection('cc', 'ha', 'Capacete');
+        }
+        // Chapéus básicos (1-100)
+        else if (id >= 1 && id <= 100) {
+          applyCorrection('cc', 'ha', 'Chapéu');
+        }
+        // Chapéus especiais (2000-2100)
+        else if (id >= 2000 && id <= 2100) {
+          applyCorrection('cc', 'ha', 'Chapéu Especial');
+        }
+        
+        // 2. MÁSCARAS FACIAIS (fa) - incorretamente como Casacos (cc)
+        else if (id >= 4000 && id <= 4100) {
+          applyCorrection('cc', 'fa', 'Máscara');
+        }
+        // Máscaras básicas (101-200)
+        else if (id >= 101 && id <= 200) {
+          applyCorrection('cc', 'fa', 'Máscara');
+        }
+        
+        // 3. ÓCULOS (ea) - incorretamente como Casacos (cc)
+        else if (id >= 5000 && id <= 5100) {
+          applyCorrection('cc', 'ea', 'Óculos');
+        }
+        // Óculos básicos (201-300)
+        else if (id >= 201 && id <= 300) {
+          applyCorrection('cc', 'ea', 'Óculos');
+        }
+        
+        // 4. ACESSÓRIOS DE CABEÇA (he) - incorretamente como Casacos (cc)
+        else if (id >= 6000 && id <= 6100) {
+          applyCorrection('cc', 'he', 'Acessório de Cabeça');
+        }
+        // Acessórios básicos (301-400)
+        else if (id >= 301 && id <= 400) {
+          applyCorrection('cc', 'he', 'Acessório de Cabeça');
+        }
+        
+        // 5. CALÇAS (lg) - incorretamente como Camisetas (ch)
+        else if (id >= 7000 && id <= 7200) {
+          applyCorrection('ch', 'lg', 'Calça');
+        }
+        // Calças básicas (401-500)
+        else if (id >= 401 && id <= 500) {
+          applyCorrection('ch', 'lg', 'Calça');
+        }
+        
+        // 6. SAPATOS (sh) - incorretamente como Camisetas (ch)
+        else if (id >= 8000 && id <= 8200) {
+          applyCorrection('ch', 'sh', 'Sapato');
+        }
+        // Sapatos básicos (501-600)
+        else if (id >= 501 && id <= 600) {
+          applyCorrection('ch', 'sh', 'Sapato');
+        }
+        
+        // 7. CINTOS (wa) - incorretamente como Camisetas (ch)
+        else if (id >= 9000 && id <= 9100) {
+          applyCorrection('ch', 'wa', 'Cinto');
+        }
+        // Cintos básicos (601-700)
+        else if (id >= 601 && id <= 700) {
+          applyCorrection('ch', 'wa', 'Cinto');
+        }
+        
+        // 8. ACESSÓRIOS DO PEITO (ca) - incorretamente como Camisetas (ch)
+        else if (id >= 10000 && id <= 10100) {
+          applyCorrection('ch', 'ca', 'Acessório do Peito');
+        }
+        // Acessórios básicos (701-800)
+        else if (id >= 701 && id <= 800) {
+          applyCorrection('ch', 'ca', 'Acessório do Peito');
+        }
+        
+        // 9. ESTAMPAS (cp) - incorretamente como Camisetas (ch)
+        else if (id >= 11000 && id <= 11100) {
+          applyCorrection('ch', 'cp', 'Estampa');
+        }
+        // Estampas básicas (801-900)
+        else if (id >= 801 && id <= 900) {
+          applyCorrection('ch', 'cp', 'Estampa');
+        }
+        
+        // 10. CASACOS/VESTIDOS (cc) - incorretamente como Camisetas (ch)
+        else if (id >= 12000 && id <= 12200) {
+          applyCorrection('ch', 'cc', 'Casaco');
+        }
+        // Casacos básicos (901-1000)
+        else if (id >= 901 && id <= 1000) {
+          applyCorrection('ch', 'cc', 'Casaco');
+        }
+        
+        // 11. CABELOS (hr) - incorretamente como Rostos (hd)
+        else if (id >= 13000 && id <= 13200) {
+          applyCorrection('hd', 'hr', 'Cabelo');
+        }
+        // Cabelos básicos (1001-1100)
+        else if (id >= 1001 && id <= 1100) {
+          applyCorrection('hd', 'hr', 'Cabelo');
+        }
+        
+        // 12. CORREÇÕES ESPECÍFICAS BASEADAS EM ANÁLISE REAL
+        // Apenas corrigir itens específicos que sabemos que são incorretos
+        // REMOVIDO: Correções agressivas que estavam removendo itens legítimos
+        
+        // Usar tipo corrigido para processamento
+        const finalType = correctedType;
+        
+        // Criar chave única com tipo corrigido
+        const correctedUniqueKey = `${finalType}_${part.id}_${set.gender}`;
+        
+        // Verificar se já processamos este item
+        if (processedItems.has(correctedUniqueKey)) {
+          return; // Pular duplicatas
+        }
+        
+        processedItems.add(correctedUniqueKey);
+        
+        if (!categories.has(finalType)) {
+          categories.set(finalType, {
+            id: finalType,
+            name: finalType,
+            displayName: TYPE_DISPLAY_NAMES[finalType] || finalType,
+            type: finalType,
+            paletteId: PALETTE_MAPPING[finalType] || '3',
             items: [],
             colors: [],
             gender: 'ALL'
           });
         }
 
-        const category = categories.get(type)!;
+        const category = categories.get(finalType)!;
         
         // Obter cores disponíveis para este tipo baseado na paleta
-        const availableColors = this.getAvailableColors(type);
+        const availableColors = this.getAvailableColors(finalType);
 
         // Categorizar item baseado no tutorial ViaJovem
         const categoryType = this.categorizeItem(set, part);
         
-        // Detectar duotone
-        const isDuotone = this.isDuotoneItem(part.colorindex);
+        // Detectar duotone (verificar todas as partes do set)
+        const isDuotone = this.isDuotoneItem(set.parts);
         
         // Obter informações do furnidata
-        const furnidataInfo = this.getFurnidataInfo(type, part.id);
+        const furnidataInfo = this.getFurnidataInfo(finalType, part.id);
         
         const item: ViaJovemClothingItem = {
-          id: `${type}_${part.id}_${set.gender}_${set.id}`,
+          id: correctedUniqueKey, // Usar chave única corrigida
           figureId: part.id,
-          category: type,
+          category: finalType,
           gender: set.gender,
           categoryType,
           club: set.club,
@@ -477,13 +706,13 @@ export class ViaJovemCompleteService {
           isDuotone,
           primaryColorIndex: isDuotone ? '1' : undefined,
           secondaryColorIndex: isDuotone ? '2' : undefined,
-          imageUrl: this.generateAvatarImageUrl(type, part.id, set.gender, availableColors[0] || '1'),
+          imageUrl: this.generateAvatarImageUrl(finalType, part.id, set.gender, availableColors[0] || '1'),
           duotoneImageUrl: isDuotone ? 
-            this.generateDuotoneImageUrl(type, part.id, availableColors[0] || '1', availableColors[1] || '2', set.gender) : 
+            this.generateDuotoneImageUrl(finalType, part.id, availableColors[0] || '1', availableColors[1] || '2', set.gender) : 
             undefined,
           isColorable: part.colorable === '1',
           isSelectable: set.selectable === '1',
-          name: furnidataInfo?.name || `${TYPE_DISPLAY_NAMES[type]} ${part.id}`
+          name: furnidataInfo?.name || `${TYPE_DISPLAY_NAMES[finalType]} ${part.id}`
         };
 
         category.items.push(item);
@@ -497,6 +726,12 @@ export class ViaJovemCompleteService {
       });
     });
 
+    // Log de estatísticas por categoria
+    console.log(`📋 [ViaJovemCompleteService] Total de itens únicos processados: ${processedItems.size}`);
+    console.log(`📋 [ViaJovemCompleteService] Categorias encontradas:`);
+    Array.from(categories.entries()).forEach(([type, category]) => {
+      console.log(`  ${type} (${TYPE_DISPLAY_NAMES[type] || type}): ${category.items.length} itens`);
+    });
 
     return Array.from(categories.values());
   }

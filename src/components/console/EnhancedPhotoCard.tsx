@@ -106,7 +106,27 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    if (dateString === "Invalid Date") return t('time.now');
+    if (!dateString || dateString === "Invalid Date") return t('time.now');
+    
+    // Se a data já está formatada (contém "/" ou "-"), retornar como está
+    if (dateString.includes('/') || dateString.includes('-')) {
+      return dateString;
+    }
+    
+    // Tentar parsear como timestamp ou data ISO
+    try {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+    } catch (e) {
+      // Se falhar, retornar como está
+    }
+    
     return dateString;
   };
 

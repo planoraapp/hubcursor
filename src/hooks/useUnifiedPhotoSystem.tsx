@@ -55,16 +55,38 @@ export const useUnifiedPhotoSystem = (
         // Logs removidos para evitar flicker
 
         if (data && Array.isArray(data)) {
-          const unifiedPhotos: UnifiedPhoto[] = data.map(photo => ({
-            id: photo.id || photo.photo_id,
-            photo_id: photo.photo_id,
-            imageUrl: photo.imageUrl,
-            date: photo.date,
-            likes: photo.likes || 0,
-            timestamp: photo.timestamp,
-            roomName: photo.roomName || 'Quarto do jogo',
-            source: 'api' as const
-          }));
+          const unifiedPhotos: UnifiedPhoto[] = data.map(photo => {
+            // Determinar o timestamp correto
+            let finalTimestamp = Date.now();
+            
+            if (photo.timestamp) {
+              finalTimestamp = typeof photo.timestamp === 'number' ? photo.timestamp : new Date(photo.timestamp).getTime();
+            } else if (photo.date) {
+              // Se não há timestamp, tentar parsear a data
+              const parsedDate = new Date(photo.date);
+              if (!isNaN(parsedDate.getTime())) {
+                finalTimestamp = parsedDate.getTime();
+              }
+            }
+            
+            // Formatar a data corretamente
+            const formattedDate = new Date(finalTimestamp).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric'
+            });
+            
+            return {
+              id: photo.id || photo.photo_id,
+              photo_id: photo.photo_id,
+              imageUrl: photo.imageUrl,
+              date: formattedDate,
+              likes: photo.likes || 0,
+              timestamp: finalTimestamp,
+              roomName: photo.roomName || 'Quarto do jogo',
+              source: 'api' as const
+            };
+          });
 
           // Logs removidos para evitar flicker
 

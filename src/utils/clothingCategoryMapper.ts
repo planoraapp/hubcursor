@@ -55,29 +55,36 @@ export const SWF_TO_HABBO_CATEGORY_MAP: SWFTypeMapping[] = [
  * Mapeia um código SWF para a categoria correta do Habbo
  */
 export function mapSWFToHabboCategory(swfCode: string): string {
+  if (!swfCode) return 'ch';
+  
   // Remove espaços e converte para minúsculo
   const cleanCode = swfCode.toLowerCase().trim();
   
-  // Procura pelo prefixo que corresponde
+  // 1. Verificar se já é uma categoria válida do Habbo (conforme estrutura ViaJovem)
+  const validCategories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'he', 'ca', 'wa', 'cp'];
+  if (validCategories.includes(cleanCode)) {
+    return cleanCode;
+  }
+  
+  // 2. Procura pelo prefixo que corresponde
   for (const mapping of SWF_TO_HABBO_CATEGORY_MAP) {
     if (cleanCode.startsWith(mapping.swfPrefix)) {
       return mapping.habboCategory;
     }
   }
   
-  // Se não encontrar, tenta extrair da estrutura padrão do Habbo
+  // 3. Se não encontrar, tenta extrair da estrutura padrão do Habbo
   // Formato: categoria-id-cor (ex: hd-180-1)
   const parts = cleanCode.split('-');
   if (parts.length >= 2) {
     const category = parts[0];
     // Valida se é uma categoria válida do Habbo
-    const validCategories = ['hd', 'hr', 'ch', 'cc', 'lg', 'sh', 'ha', 'ea', 'fa', 'he', 'ca', 'wa', 'cp'];
     if (validCategories.includes(category)) {
       return category;
     }
   }
   
-  // Fallback: retorna categoria padrão baseada no contexto
+  // 4. Fallback: retorna categoria padrão baseada no contexto
   console.warn(`Não foi possível mapear o código SWF: ${swfCode}`);
   return 'ch'; // Camiseta como fallback
 }

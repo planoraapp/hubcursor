@@ -12,7 +12,7 @@ if (import.meta.main) {
     }
 
     try {
-      const { username, hotel, limit = 50, offset = 0 } = await req.json();
+      const { username, hotel, limit = 300, offset = 0 } = await req.json();
       
       if (!username) {
         return new Response(JSON.stringify({ error: "Username is required" }), {
@@ -62,58 +62,76 @@ if (import.meta.main) {
         });
       }
 
-      // 4. Configurações otimizadas - buscar mais fotos para melhor ordenação cronológica
-      const batchSize = Math.min(publicFriends.length, 10); // Processar até 10 amigos por vez
-      const photosPerFriend = 5; // Máximo 5 fotos por amigo para diversidade
+      // 4. OTIMIZAÇÃO CRÍTICA: Processar mais amigos para ter mais fotos recentes
+      const MAX_FRIENDS_TO_PROCESS = 30; // Aumentado de 20 para 30
+      const photosPerFriend = 50; // Aumentado para 50 fotos por amigo
+      const friendsToProcess = publicFriends.slice(0, MAX_FRIENDS_TO_PROCESS);
       const allPhotosWithMeta = [];
 
-      // 5. Processar amigos em lotes
-      for (let i = 0; i < batchSize; i++) {
-        const friend = publicFriends[i];
-        try {
-          const friendPhotosUrl = `https://www.habbo.${hotel === "br" ? "com.br" : hotel}/extradata/public/users/${friend.uniqueId}/photos`;
-          const photosResponse = await fetch(friendPhotosUrl);
-          
-          if (photosResponse.ok) {
-            const photosData = await photosResponse.json();
-            if (photosData && photosData.length > 0) {
-              // Pegar apenas as fotos mais recentes (limitadas)
-              const recentPhotos = photosData
-                .slice(0, photosPerFriend)
-                .map(photo => {
-                  let timestamp = Date.now();
-                  
-                  // Priorizar timestamp mais preciso
-                  if (photo.time) {
-                    let parsedTime = parseInt(photo.time);
-                    if (!isNaN(parsedTime)) {
-                      // Converter de segundos para milissegundos se necessário
-                      if (parsedTime < 946684800000) { // Antes de 2000
-                        parsedTime = parsedTime * 1000;
+      console.log(`[habbo-optimized-friends-photos] Processing ${friendsToProcess.length} friends (limited from ${publicFriends.length} total)`);
+
+      // 5. Processar amigos em paralelo com limitação de concorrência
+      const CONCURRENT_LIMIT = 5; // Processar 5 amigos por vez
+      for (let i = 0; i < friendsToProcess.length; i += CONCURRENT_LIMIT) {
+        const batch = friendsToProcess.slice(i, i + CONCURRENT_LIMIT);
+        
+        // Processar batch em paralelo
+        await Promise.all(batch.map(async (friend) => {
+          try {
+            const friendPhotosUrl = `https://www.habbo.${hotel === "br" ? "com.br" : hotel}/extradata/public/users/${friend.uniqueId}/photos`;
+            const photosResponse = await fetch(friendPhotosUrl);
+            
+            if (photosResponse.ok) {
+              const photosData = await photosResponse.json();
+              if (photosData && photosData.length > 0) {
+                // Pegar apenas as fotos mais recentes (limitadas)
+                const recentPhotos = photosData
+                  .slice(0, photosPerFriend)
+                  .map(photo => {
+                    let timestamp = Date.now();
+                    
+                    // Priorizar timestamp mais preciso
+                    if (photo.time) {
+                      let parsedTime = parseInt(photo.time);
+                      if (!isNaN(parsedTime)) {
+                        // Converter de segundos para milissegundos se necessário
+                        if (parsedTime < 946684800000) { // Antes de 2000
+                          parsedTime = parsedTime * 1000;
+                        }
+                        timestamp = parsedTime;
                       }
-                      timestamp = parsedTime;
+                    } else if (photo.creationTime) {
+                      const parsedTime = new Date(photo.creationTime).getTime();
+                      if (!isNaN(parsedTime)) {
+                        timestamp = parsedTime;
+                      }
+                    } else if (photo.url) {
+                      // Extrair timestamp do nome do arquivo se não houver timestamp explícito
+                      // Padrão: p-464837-1760409069755.png (o último número é o timestamp)
+                      const match = photo.url.match(/p-\d+-(\d+)\./);
+                      if (match && match[1]) {
+                        const extractedTimestamp = parseInt(match[1]);
+                        if (!isNaN(extractedTimestamp) && extractedTimestamp > 946684800000) {
+                          timestamp = extractedTimestamp;
+                        }
+                      }
                     }
-                  } else if (photo.creationTime) {
-                    const parsedTime = new Date(photo.creationTime).getTime();
-                    if (!isNaN(parsedTime)) {
-                      timestamp = parsedTime;
-                    }
-                  }
-                  
-                  return {
-                    photo,
-                    friend,
-                    realTimestamp: timestamp
-                  };
-                });
-              
-              allPhotosWithMeta.push(...recentPhotos);
-              console.log(`[habbo-optimized-friends-photos] Added ${recentPhotos.length} photos from ${friend.name}`);
+                    
+                    return {
+                      photo,
+                      friend,
+                      realTimestamp: timestamp
+                    };
+                  });
+                
+                allPhotosWithMeta.push(...recentPhotos);
+                console.log(`[habbo-optimized-friends-photos] Added ${recentPhotos.length} photos from ${friend.name}`);
+              }
             }
+          } catch (error) {
+            console.log(`[habbo-optimized-friends-photos] Could not fetch photos for friend: ${friend.name}`);
           }
-        } catch (error) {
-          console.log(`[habbo-optimized-friends-photos] Could not fetch photos for friend: ${friend.name}`);
-        }
+        }));
       }
       
       // 6. ORDENAÇÃO CRONOLÓGICA CORRETA - mais recente primeiro
@@ -149,6 +167,7 @@ if (import.meta.main) {
 
       console.log(`[habbo-optimized-friends-photos] Returning ${finalPhotos.length} photos (hasMore: ${hasMore}, nextOffset: ${nextOffset})`);
       console.log(`[habbo-optimized-friends-photos] First photo timestamp: ${finalPhotos[0]?.timestamp ? new Date(finalPhotos[0].timestamp).toISOString() : 'N/A'}`);
+      console.log(`[habbo-optimized-friends-photos] Limit requested: ${limit}, Total collected: ${allPhotosWithMeta.length}`);
 
       return new Response(JSON.stringify({
         photos: finalPhotos,

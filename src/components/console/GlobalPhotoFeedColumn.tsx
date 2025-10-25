@@ -8,6 +8,7 @@ import {
 import { useGlobalPhotoFeed } from '@/hooks/useGlobalPhotoFeed';
 import { EnhancedPhotoCard } from '@/components/console/EnhancedPhotoCard';
 import { ProfileModal } from '@/components/ProfileModal';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface GlobalPhotoFeedColumnProps {
   hotel?: string;
@@ -18,6 +19,7 @@ export const GlobalPhotoFeedColumn: React.FC<GlobalPhotoFeedColumnProps> = ({
   hotel = 'br',
   className = ''
 }) => {
+  const { t } = useI18n();
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 

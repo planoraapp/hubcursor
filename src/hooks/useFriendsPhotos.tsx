@@ -30,8 +30,13 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
         return [];
       }
 
-      const { data, error } = await supabase.functions.invoke('habbo-friends-photos', {
-        body: { username: currentUserName, hotel }
+      const { data, error } = await supabase.functions.invoke('habbo-optimized-friends-photos', {
+        body: { 
+          username: currentUserName, 
+          hotel,
+          limit: 300,
+          offset: 0
+        }
       });
 
       if (error) {
@@ -42,25 +47,44 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
         return [];
       }
 
-      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${Array.isArray(data) ? data.length : 0} photos`);
+      // A função habbo-optimized-friends-photos retorna { photos, hasMore, nextOffset }
+      const photos = Array.isArray(data) ? data : (data.photos || []);
       
-      // Filter and sort photos chronologically with diversity algorithm
-      const photos = Array.isArray(data) ? data : [];
+      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos with limit 300`);
       const validPhotos = photos
-        .filter(photo => photo.imageUrl && photo.userName && photo.timestamp)
-        .map(photo => ({
-          ...photo,
-          timestamp: photo.timestamp || Date.now(),
-          date: photo.timestamp ? new Date(photo.timestamp).toLocaleDateString('pt-BR') : 'Data inválida',
-          caption: photo.caption || '',
-          roomName: photo.roomName || ''
-        }));
+        .filter(photo => photo.imageUrl && photo.userName && (photo.timestamp || photo.date))
+        .map(photo => {
+          // Determinar o timestamp correto
+          let finalTimestamp = Date.now();
+          
+          if (photo.timestamp) {
+            finalTimestamp = typeof photo.timestamp === 'number' ? photo.timestamp : new Date(photo.timestamp).getTime();
+          } else if (photo.date) {
+            // Se não há timestamp, tentar parsear a data
+            const parsedDate = new Date(photo.date);
+            if (!isNaN(parsedDate.getTime())) {
+              finalTimestamp = parsedDate.getTime();
+            }
+          }
+          
+          // Formatar a data corretamente
+          const formattedDate = new Date(finalTimestamp).toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          });
+          
+          return {
+            ...photo,
+            timestamp: finalTimestamp,
+            date: formattedDate,
+            caption: photo.caption || '',
+            roomName: photo.roomName || ''
+          };
+        });
 
-      // Apply diversity algorithm to prevent same user from dominating the feed
-      const diversifiedPhotos = applyDiversityAlgorithm(validPhotos);
-      
-      // Sort by timestamp (most recent first) - this is the key change!
-      const sortedPhotos = diversifiedPhotos.sort((a, b) => {
+      // Sort by timestamp (most recent first) - NEW BEHAVIOR: no diversity algorithm
+      const sortedPhotos = validPhotos.sort((a, b) => {
         const timestampA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp || a.date).getTime();
         const timestampB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp || b.date).getTime();
         
@@ -78,39 +102,13 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       return sortedPhotos;
     },
     enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
-    staleTime: 5 * 60 * 1000, // Reduzido para 5 minutos
+    staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 15 * 60 * 1000, // 15 minutos
-    refetchOnWindowFocus: false, // Disabled automatic refresh
-    refetchOnReconnect: false, // Disabled automatic refresh
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchInterval: false, // Disabled automatic polling - now on-demand only
     retry: 1
   });
 };
 
-// Diversity algorithm to prevent same user from dominating the feed
-function applyDiversityAlgorithm(photos: FriendPhoto[]): FriendPhoto[] {
-  if (photos.length <= 3) return photos;
-  
-  const userPhotoCounts = new Map<string, number>();
-  const diversifiedPhotos: FriendPhoto[] = [];
-  const maxPhotosPerUser = Math.max(2, Math.floor(photos.length / 5)); // Max 2 photos per user, or 1/5 of total
-  
-  // Sort photos by timestamp first
-  const sortedPhotos = [...photos].sort((a, b) => {
-    const timestampA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp || a.date).getTime();
-    const timestampB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp || b.date).getTime();
-    return timestampB - timestampA;
-  });
-  
-  // Apply diversity while maintaining chronological order
-  for (const photo of sortedPhotos) {
-    const currentCount = userPhotoCounts.get(photo.userName) || 0;
-    
-    if (currentCount < maxPhotosPerUser) {
-      diversifiedPhotos.push(photo);
-      userPhotoCounts.set(photo.userName, currentCount + 1);
-    }
-  }
-  
-  return diversifiedPhotos;
-}
+

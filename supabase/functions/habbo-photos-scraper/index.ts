@@ -91,7 +91,8 @@ serve(async (req) => {
     }
 
     const photosData = await photosResponse.json();
-    console.log(`[habbo-photos-scraper] Raw photos data:`, photosData);
+    console.log(`[habbo-photos-scraper] Raw photos data (first 2):`, photosData.slice(0, 2));
+    console.log(`[habbo-photos-scraper] Total photos: ${photosData.length}`);
 
     // Step 3: Transform photos to our format
     const photos: HabboPhoto[] = photosData.map((photo: any) => {
@@ -121,6 +122,7 @@ serve(async (req) => {
           if (!isNaN(extractedTimestamp) && extractedTimestamp > 946684800000) {
             // Verificar se é um timestamp válido (após 2000)
             timestamp = extractedTimestamp;
+            console.log(`[habbo-photos-scraper] Extracted timestamp ${timestamp} (${new Date(timestamp).toLocaleDateString('pt-BR')}) from URL: ${url.substring(0, 100)}`);
           }
         }
       }
@@ -162,3 +164,4 @@ serve(async (req) => {
     });
   }
 });
+

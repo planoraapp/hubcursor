@@ -1033,24 +1033,36 @@ const FeedTab: React.FC<any> = ({
     
     setIsSearching(true);
     try {
-      // Aqui você pode integrar com a API de busca do Habbo
-      // Por enquanto, vamos simular uma busca
+      // Buscar usuário na API real do Habbo
+      const hotel = selectedCountry || 'br';
+      const hotelUrl = hotel === 'br' ? 'com.br' : hotel;
+      const response = await fetch(`https://www.habbo.${hotelUrl}/api/public/users?name=${encodeURIComponent(searchTerm)}`);
       
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        setSearchResults([]);
+        return;
+      }
       
-      // Mock de resultados (substitua pela API real)
-      setSearchResults([
-        {
-          name: searchTerm,
-          motto: 'HUB-XXXXX',
-          online: true,
-          figureString: 'hd-180-1.ch-255-66.lg-285-110.sh-290-62.ha-1012-110.hr-828-61',
-          uniqueId: '12345'
-        }
-      ]);
+      const data = await response.json();
+      
+      // A API retorna um objeto ou array
+      const user = Array.isArray(data) ? data[0] : data;
+      
+      if (!user || !user.uniqueId) {
+        setSearchResults([]);
+        return;
+      }
+      
+      // Formatar resultado
+      setSearchResults([{
+        name: user.name,
+        motto: user.motto || '',
+        online: user.online || false,
+        figureString: user.figureString || '',
+        uniqueId: user.uniqueId
+      }]);
     } catch (error) {
-      // Error handled silently
+      console.error('Error searching user:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -1529,14 +1541,15 @@ const FeedTab: React.FC<any> = ({
             {searchResults.map((user, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 p-2 bg-white/10 rounded border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
+                className="flex items-center gap-3 p-2 bg-white/10 rounded border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
                 onClick={() => onNavigateToProfile(user.name)}
               >
-                <img
-                  src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${user.figureString}&size=s`}
-                  alt={user.name}
-                  className="w-6 h-6 rounded"
-                />
+                                 <img
+                   src={`https://www.habbo.com.br/habbo-imaging/avatarimage?figure=${user.figureString}&size=m&head_direction=3&headonly=1`}
+                   alt={user.name}
+                   className="w-8 h-8 rounded"
+                   style={{ imageRendering: 'pixelated' }}
+                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-white text-sm truncate">{user.name}</div>
                   <div className="text-xs text-white/60 truncate">{user.motto}</div>

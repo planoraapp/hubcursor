@@ -791,80 +791,10 @@ const AvatarEditorOfficial = () => {
         return result;
       });
           } else {
-      // Fallback para dados Templarios
-            const templariosItems = getItemsByCategory(selectedCategory, selectedGender);
-      items = Object.entries(templariosItems).map(([itemId, itemData]) => {
-        // Sistema de detecção automática para dados Templarios (fallback)
-        // Criar item temporário para usar generateItemDisplayName
-        const tempItem = {
-          figureId: itemId,
-          id: itemId,
-          gender: itemData.gender || 'U',
-          club: itemData.club === 1 ? 'HC' : 'FREE',
-          scientificCode: null,
-          swfUrl: null,
-          name: null
-        };
-        
-        // Obter nome científico do asset para análise
-        const assetName = generateItemDisplayName(tempItem).toLowerCase();
-        const itemName = itemId.toLowerCase();
-        
-        // 1. DETECTAR NFTs - Prioridade máxima
-        const isNFT = itemName.includes('nft') || assetName.includes('nft');
-        
-        // 2. DETECTAR LTDs - Segunda prioridade
-        const isLTD = itemData.club === 2 || 
-                     itemName.includes('ltd') || 
-                     itemName.includes('limited') ||
-                     assetName.includes('ltd') ||
-                     assetName.includes('limited') ||
-                     assetName.includes('loyalty');
-        
-        // 3. DETECTAR RAROS - Terceira prioridade
-        const isRare = itemName.includes('_r_') || 
-                      itemName.includes('rare') ||
-                      assetName.includes('_r_') ||
-                      assetName.includes('rare');
-        
-        // 4. DETECTAR HC - Quarta prioridade
-        const isHC = itemData.club === 1 || 
-                    itemName.includes('hc') || 
-                    itemName.includes('club') ||
-                    assetName.includes('_hc') ||
-                    assetName.includes('club');
-        
-        // 5. DETECTAR VENDÁVEIS - Quinta prioridade
-        const isSellable = itemName.includes('sellable') || 
-                          itemName.includes('vend') ||
-                          assetName.includes('sellable') ||
-                          assetName.includes('vend');
-        
-        // 6. ITENS NORMAIS - Fallback
-        const isNormal = !isNFT && !isLTD && !isRare && !isHC && !isSellable;
-        
-        return {
-        id: itemId,
-        figureId: itemId,
-        category: selectedCategory,
-        gender: itemData.gender || 'U',
-        club: itemData.club === 1 ? 'HC' : 'FREE',
-        name: `${selectedCategory} ${itemId}`,
-        thumbnailUrl: '',
-        colorable: itemData.colorable === 1,
-        selectable: true,
-          sellable: isSellable,
-          colors: ['1', '2', '3', '4', '5'],
-          isHC,
-          isLTD,
-          isNFT,
-          isRare,
-          isSellable,
-          isNormal,
-          isDuotone: itemData.duotone === 1
-        };
-      });
-          }
+      // SEM FALLBACK - Usar apenas dados corretos do ViaJovemCompleteService
+      console.log(`⚠️ [AvatarEditorOfficial] Nenhum item encontrado para categoria ${selectedCategory} nos dados unificados`);
+      items = [];
+    }
     
     // Filtrar por gênero
     const genderFiltered = items.filter(item => 
