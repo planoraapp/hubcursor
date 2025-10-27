@@ -105,29 +105,69 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
     return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(userName)}&size=s&direction=2&head_direction=3&headonly=1`;
   };
 
-  const formatDate = (dateString: string) => {
+  const getRelativeTime = (dateString: string, timestamp?: number) => {
     if (!dateString || dateString === "Invalid Date") return t('time.now');
     
-    // Se a data já está formatada (contém "/" ou "-"), retornar como está
-    if (dateString.includes('/') || dateString.includes('-')) {
+    let photoDate: Date;
+    
+    // Tentar usar timestamp se disponível (mais preciso)
+    if (timestamp && timestamp > 0) {
+      photoDate = new Date(timestamp);
+    } else {
+      // Tentar parsear dateString
+      if (dateString.includes('/')) {
+        // Formato DD/MM/YYYY
+        const parts = dateString.split('/');
+        if (parts.length === 3) {
+          photoDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        } else {
+          photoDate = new Date(dateString);
+        }
+      } else {
+        photoDate = new Date(dateString);
+      }
+    }
+    
+    if (isNaN(photoDate.getTime())) {
       return dateString;
     }
     
-    // Tentar parsear como timestamp ou data ISO
-    try {
-      const date = new Date(dateString);
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
-        });
-      }
-    } catch (e) {
-      // Se falhar, retornar como está
+    const now = new Date();
+    const diffMs = now.getTime() - photoDate.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    // Menos de 1 minuto: "agora"
+    if (diffMinutes < 1) {
+      return t('time.now');
     }
     
-    return dateString;
+    // Menos de 1 hora: "há X min"
+    if (diffMinutes < 60) {
+      return `há ${diffMinutes} min`;
+    }
+    
+    // Menos de 24 horas: "há Xh"
+    if (diffHours < 24) {
+      return `há ${diffHours}h`;
+    }
+    
+    // Menos de 7 dias: "há X dias"
+    if (diffDays < 7) {
+      return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
+    }
+    
+    // Mais de 7 dias: mostrar data completa
+    return photoDate.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatDate = (dateString: string, timestamp?: number) => {
+    return getRelativeTime(dateString, timestamp);
   };
 
   const getPhotoTypeClass = (type: PhotoType, contentWidth?: number, contentHeight?: number) => {
@@ -189,7 +229,7 @@ export const EnhancedPhotoCard: React.FC<PhotoCardProps> = ({
               {photo.userName}
             </button>
             <div className="text-xs text-white/60">
-              {formatDate(photo.date)}
+              {formatDate(photo.date, photo.timestamp as number)}
             </div>
           </div>
           <button className="text-white/60 hover:text-white transition-colors">

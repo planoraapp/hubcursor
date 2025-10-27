@@ -1809,7 +1809,7 @@ const AvatarEditorOfficial = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="text-lg">⚙️</span>
+                  <img src="/assets/settings.gif" alt="⚙️" className="w-6 h-6" style={{ imageRendering: 'pixelated' }} />
                   Configuração de Posição das Imagens
                 </CardTitle>
               </CardHeader>

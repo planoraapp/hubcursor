@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { Search, Send, MoreVertical, AlertCircle, Ban, Flag, ChevronLeft, X } from 'lucide-react';
 import { useChat, Conversation } from '@/hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/contexts/I18nContext';
 import { cn } from '@/lib/utils';
 
 interface ChatInterfaceProps {
@@ -10,6 +11,7 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ friends, onNavigateToProfile }) => {
+  const { t } = useI18n();
   const { habboAccount } = useAuth();
   const userId = habboAccount?.supabase_user_id;
   

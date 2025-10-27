@@ -532,7 +532,7 @@ export const FunctionalConsole: React.FC = () => {
                           }`}
                           title={isHidden ? t('pages.console.restorePhoto') : t('pages.console.hidePhoto')}
                         >
-                          {isHidden ? '↺' : 'X'}
+                          {isHidden ? '↺' : <img src="/assets/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
                       {!isEditMode && (
@@ -1371,7 +1371,7 @@ const FeedTab: React.FC<any> = ({
                           className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600/90 text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
                           title={isHidden ? t('pages.console.showPhoto') : t('pages.console.hidePhoto')}
                         >
-                          {isHidden ? '+' : 'X'}
+                          {isHidden ? '+' : <img src="/assets/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">

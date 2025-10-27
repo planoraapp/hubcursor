@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
 import { EnhancedPhotoCard } from "@/components/console/EnhancedPhotoCard";
 import { EnhancedPhoto } from "@/types/habbo";
@@ -153,6 +153,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   onNavigateToProfile
 }) => {
   const { t } = useI18n();
+  const { habboAccount, isLoggedIn } = useAuth();
   const {
     data: photos,
     isLoading,
@@ -161,11 +162,48 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   } = useFriendsPhotos(currentUserName, hotel);
 
   const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
-  const { habboAccount } = useAuth();
+
+  // Refetch quando o componente é montado para garantir dados atualizados
+  useEffect(() => {
+    if (isLoggedIn && currentUserName) {
+      console.log('[🔄 FRIENDS FEED] Refetching on mount...');
+      refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Executar apenas uma vez ao montar
+
+  // Debug: log quando photos mudar
+  useEffect(() => {
+    if (photos && photos.length > 0) {
+      console.log(`[📊 FRIENDS FEED] Displaying ${photos.length} photos`);
+      console.log(`[📊 FRIENDS FEED] First photo:`, {
+        user: photos[0].userName,
+        date: photos[0].date,
+        timestamp: photos[0].timestamp
+      });
+    }
+  }, [photos]);
 
   const handleRetry = () => {
     refetch();
   };
+
+  // Verificar se está logado
+  if (!isLoggedIn || !habboAccount) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="text-4xl mb-4">👤</div>
+          <p className="text-white/80 mb-2 font-semibold">
+            {t('pages.console.loginRequired')}
+          </p>
+          <p className="text-white/60 text-sm">
+            {t('pages.console.loginRequiredDescription')}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -232,8 +270,9 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   likesCount: photo.likes,
                   userLiked: false,
                   type: 'PHOTO' as const,
-                  caption: '',
-                  roomName: ''
+                  caption: photo.caption || '',
+                  roomName: photo.roomName || '',
+                  timestamp: photo.timestamp
                 } as EnhancedPhoto}
                 onUserClick={onNavigateToProfile}
                 onLikesClick={() => {}}
@@ -247,8 +286,9 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
                   likesCount: photo.likes,
                   userLiked: false,
                   type: 'PHOTO' as const,
-                  caption: '',
-                  roomName: ''
+                  caption: photo.caption || '',
+                  roomName: photo.roomName || '',
+                  timestamp: photo.timestamp
                 } as EnhancedPhoto)}
                 showDivider={index < photos.length - 1}
               />

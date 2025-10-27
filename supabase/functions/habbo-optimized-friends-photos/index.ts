@@ -62,13 +62,14 @@ if (import.meta.main) {
         });
       }
 
-      // 4. OTIMIZAÇÃO CRÍTICA: Processar mais amigos para ter mais fotos recentes
-      const MAX_FRIENDS_TO_PROCESS = 30; // Aumentado de 20 para 30
-      const photosPerFriend = 50; // Aumentado para 50 fotos por amigo
+      // 4. OTIMIZAÇÃO CRÍTICA: Processar MAIS amigos para encontrar fotos mais recentes
+      // Estratégia: processar até 50 amigos para aumentar chances de pegar fotos recentes
+      const MAX_FRIENDS_TO_PROCESS = 50; // Aumentar para buscar em mais amigos
       const friendsToProcess = publicFriends.slice(0, MAX_FRIENDS_TO_PROCESS);
       const allPhotosWithMeta = [];
 
       console.log(`[habbo-optimized-friends-photos] Processing ${friendsToProcess.length} friends (limited from ${publicFriends.length} total)`);
+      console.log(`[habbo-optimized-friends-photos] Friends list:`, friendsToProcess.slice(0, 10).map(f => f.name));
 
       // 5. Processar amigos em paralelo com limitação de concorrência
       const CONCURRENT_LIMIT = 5; // Processar 5 amigos por vez
@@ -84,48 +85,76 @@ if (import.meta.main) {
             if (photosResponse.ok) {
               const photosData = await photosResponse.json();
               if (photosData && photosData.length > 0) {
-                // Pegar apenas as fotos mais recentes (limitadas)
-                const recentPhotos = photosData
-                  .slice(0, photosPerFriend)
-                  .map(photo => {
-                    let timestamp = Date.now();
-                    
-                    // Priorizar timestamp mais preciso
-                    if (photo.time) {
-                      let parsedTime = parseInt(photo.time);
-                      if (!isNaN(parsedTime)) {
-                        // Converter de segundos para milissegundos se necessário
-                        if (parsedTime < 946684800000) { // Antes de 2000
-                          parsedTime = parsedTime * 1000;
-                        }
-                        timestamp = parsedTime;
+                console.log(`[habbo-optimized-friends-photos] Raw photos from ${friend.name}: ${photosData.length} total`);
+                
+                // Log das primeiras 5 fotos da API (ordem original)
+                console.log(`[habbo-optimized-friends-photos] ${friend.name} - Raw first 5 photos:`, photosData.slice(0, 5).map((p, i) => ({
+                  index: i,
+                  id: p.id,
+                  url: p.url?.substring(0, 60),
+                  time: p.time,
+                  creationTime: p.creationTime,
+                  timestampFromTime: p.time ? (parseInt(p.time) < 946684800000 ? parseInt(p.time) * 1000 : parseInt(p.time)) : null
+                })));
+                
+                // Mapear TODAS as fotos com timestamps primeiro
+                const photosWithTimestamps = photosData.map(photo => {
+                  let timestamp = Date.now();
+                  
+                  // Priorizar timestamp mais preciso
+                  if (photo.time) {
+                    let parsedTime = parseInt(photo.time);
+                    if (!isNaN(parsedTime)) {
+                      // Converter de segundos para milissegundos se necessário
+                      if (parsedTime < 946684800000) { // Antes de 2000
+                        parsedTime = parsedTime * 1000;
                       }
-                    } else if (photo.creationTime) {
-                      const parsedTime = new Date(photo.creationTime).getTime();
-                      if (!isNaN(parsedTime)) {
-                        timestamp = parsedTime;
-                      }
-                    } else if (photo.url) {
-                      // Extrair timestamp do nome do arquivo se não houver timestamp explícito
-                      // Padrão: p-464837-1760409069755.png (o último número é o timestamp)
-                      const match = photo.url.match(/p-\d+-(\d+)\./);
-                      if (match && match[1]) {
-                        const extractedTimestamp = parseInt(match[1]);
-                        if (!isNaN(extractedTimestamp) && extractedTimestamp > 946684800000) {
-                          timestamp = extractedTimestamp;
-                        }
+                      timestamp = parsedTime;
+                    }
+                  } else if (photo.creationTime) {
+                    const parsedTime = new Date(photo.creationTime).getTime();
+                    if (!isNaN(parsedTime)) {
+                      timestamp = parsedTime;
+                    }
+                  } else if (photo.url) {
+                    // Extrair timestamp do nome do arquivo se não houver timestamp explícito
+                    // Padrão: p-464837-1760409069755.png (o último número é o timestamp)
+                    const match = photo.url.match(/p-\d+-(\d+)\./);
+                    if (match && match[1]) {
+                      const extractedTimestamp = parseInt(match[1]);
+                      if (!isNaN(extractedTimestamp) && extractedTimestamp > 946684800000) {
+                        timestamp = extractedTimestamp;
                       }
                     }
-                    
-                    return {
-                      photo,
-                      friend,
-                      realTimestamp: timestamp
-                    };
-                  });
+                  }
+                  
+                  return {
+                    photo,
+                    friend,
+                    realTimestamp: timestamp
+                  };
+                });
                 
-                allPhotosWithMeta.push(...recentPhotos);
-                console.log(`[habbo-optimized-friends-photos] Added ${recentPhotos.length} photos from ${friend.name}`);
+                // ORDENAR as fotos por timestamp (mais recente primeiro) - SEM FILTRO DE DATA
+                const sortedPhotos = photosWithTimestamps
+                  .sort((a, b) => b.realTimestamp - a.realTimestamp);
+                
+                if (sortedPhotos.length > 0) {
+                  console.log(`[habbo-optimized-friends-photos] ${friend.name} - Added ${sortedPhotos.length} photos (from ${photosWithTimestamps.length} total)`);
+                  console.log(`[habbo-optimized-friends-photos] ${friend.name} - Most recent: ${new Date(sortedPhotos[0].realTimestamp).toLocaleString('pt-BR')}, Oldest: ${new Date(sortedPhotos[sortedPhotos.length - 1].realTimestamp).toLocaleString('pt-BR')}`);
+                  
+                  // Log detalhado das primeiras 3 fotos da API
+                  const apiFirst3 = photosData.slice(0, 3);
+                  console.log(`[habbo-optimized-friends-photos] ${friend.name} - First 3 photos from Habbo API:`, apiFirst3.map(p => ({
+                    id: p.id,
+                    url: p.url?.substring(0, 60) || 'no url',
+                    time: p.time,
+                    creationTime: p.creationTime
+                  })));
+                }
+                
+                // Adicionar TODAS as fotos (sem limite de tempo)
+                allPhotosWithMeta.push(...sortedPhotos);
               }
             }
           } catch (error) {
@@ -134,12 +163,24 @@ if (import.meta.main) {
         }));
       }
       
-      // 6. ORDENAÇÃO CRONOLÓGICA CORRETA - mais recente primeiro
+      // 6. ORDENAÇÃO CRONOLÓGICA GLOBAL - mais recente primeiro
       allPhotosWithMeta.sort((a, b) => b.realTimestamp - a.realTimestamp);
       
-      console.log(`[habbo-optimized-friends-photos] Total photos collected: ${allPhotosWithMeta.length}`);
+      console.log(`[habbo-optimized-friends-photos] ====== TOTAL COLLECTED: ${allPhotosWithMeta.length} photos ======`);
       
-      // 7. Aplicar paginação
+      // Log detalhado das primeiras 10 fotos para debug
+      if (allPhotosWithMeta.length > 0) {
+        const first10 = allPhotosWithMeta.slice(0, 10);
+        console.log(`[habbo-optimized-friends-photos] Top 10 most recent photos:`);
+        first10.forEach((p, i) => {
+          const date = new Date(p.realTimestamp);
+          const now = Date.now();
+          const diffHours = Math.floor((now - p.realTimestamp) / (1000 * 60 * 60));
+          console.log(`  ${i + 1}. ${p.friend.name} - ${date.toLocaleString('pt-BR')} (há ~${diffHours}h)`);
+        });
+      }
+      
+      // 7. Aplicar paginação SEM filtro de tempo - mostrar TODAS as fotos mais recentes
       const startIndex = offset;
       const endIndex = Math.min(startIndex + limit, allPhotosWithMeta.length);
       const paginatedPhotos = allPhotosWithMeta.slice(startIndex, endIndex);
@@ -164,6 +205,12 @@ if (import.meta.main) {
 
       const hasMore = endIndex < allPhotosWithMeta.length;
       const nextOffset = hasMore ? endIndex : 0;
+      
+      console.log(`[habbo-optimized-friends-photos] ====== PHOTOS SUMMARY ======`);
+      console.log(`[habbo-optimized-friends-photos] Total friends processed: ${friendsToProcess.length}`);
+      console.log(`[habbo-optimized-friends-photos] Total photos collected: ${allPhotosWithMeta.length}`);
+      console.log(`[habbo-optimized-friends-photos] Photos returned: ${finalPhotos.length}`);
+      console.log(`[habbo-optimized-friends-photos] Most recent photo: ${finalPhotos[0]?.userName || 'N/A'} - ${finalPhotos[0]?.date || 'N/A'}`);
 
       console.log(`[habbo-optimized-friends-photos] Returning ${finalPhotos.length} photos (hasMore: ${hasMore}, nextOffset: ${nextOffset})`);
       console.log(`[habbo-optimized-friends-photos] First photo timestamp: ${finalPhotos[0]?.timestamp ? new Date(finalPhotos[0].timestamp).toISOString() : 'N/A'}`);

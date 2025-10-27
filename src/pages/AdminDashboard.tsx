@@ -451,9 +451,10 @@ export const AdminDashboard: React.FC = () => {
                     <Button
                       onClick={() => navigate('/admin/settings')}
                       variant="outline"
-                      className="w-full volter-font"
+                      className="w-full volter-font flex items-center justify-center gap-2"
                     >
-                      ⚙️ Configurações
+                      <img src="/assets/settings.gif" alt="⚙️" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
+                      Configurações
                     </Button>
                   </CardContent>
                 </Card>

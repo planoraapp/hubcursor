@@ -34,7 +34,7 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
         body: { 
           username: currentUserName, 
           hotel,
-          limit: 300,
+          limit: 200, // Aumentar para pegar mais fotos
           offset: 0
         }
       });
@@ -50,9 +50,50 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       // A função habbo-optimized-friends-photos retorna { photos, hasMore, nextOffset }
       const photos = Array.isArray(data) ? data : (data.photos || []);
       
-      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos with limit 300`);
+      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos with limit 200`);
+      if (photos.length > 0) {
+        const first3 = photos.slice(0, 3);
+        console.log(`[📸 FRIENDS PHOTOS] First 3 photos from backend:`, first3.map((p, i) => ({
+          index: i,
+          user: p.userName,
+          date: p.date,
+          timestamp: p.timestamp,
+          timestampDate: p.timestamp ? new Date(p.timestamp).toLocaleString('pt-BR') : 'no timestamp',
+          hoursAgo: p.timestamp ? Math.floor((Date.now() - p.timestamp) / (1000 * 60 * 60)) : 'N/A',
+          url: p.imageUrl?.substring(0, 80) || 'no url'
+        })));
+        
+        // Verificar a foto mais recente
+        const mostRecentPhoto = photos[0];
+        const currentDate = new Date();
+        const photoDate = mostRecentPhoto.timestamp ? new Date(mostRecentPhoto.timestamp) : new Date();
+        const daysDiff = Math.floor((currentDate.getTime() - photoDate.getTime()) / (1000 * 60 * 60 * 24));
+        console.log(`[📊 FRIENDS PHOTOS] Most recent photo: ${mostRecentPhoto.userName} - ${mostRecentPhoto.date} (há ${daysDiff} dias)`);
+        
+        // Ver se as fotos estão ordenadas corretamente
+        const timestamps = photos.slice(0, 10).map(p => p.timestamp).filter(Boolean);
+        if (timestamps.length > 1) {
+          const isDescending = timestamps.every((ts, idx) => idx === 0 || timestamps[idx - 1] >= ts);
+          const now = Date.now();
+          const hoursAgoList = timestamps.map(ts => Math.floor((now - ts) / (1000 * 60 * 60)));
+          console.log(`[📊 FRIENDS PHOTOS] First 10 photos timestamps:`, timestamps.map(ts => new Date(ts).toLocaleString('pt-BR')));
+          console.log(`[📊 FRIENDS PHOTOS] Hours ago for first 10:`, hoursAgoList);
+          console.log(`[📊 FRIENDS PHOTOS] Are timestamps descending (recent first)? ${isDescending}`);
+        }
+      }
       const validPhotos = photos
-        .filter(photo => photo.imageUrl && photo.userName && (photo.timestamp || photo.date))
+        .filter(photo => {
+          const isValid = photo.imageUrl && photo.userName && (photo.timestamp || photo.date);
+          if (!isValid) {
+            console.log(`[⚠️ INVALID PHOTO FILTERED:`, { 
+              hasUrl: !!photo.imageUrl, 
+              hasUser: !!photo.userName, 
+              hasTimestamp: !!photo.timestamp,
+              hasDate: !!photo.date
+            });
+          }
+          return isValid;
+        })
         .map(photo => {
           // Determinar o timestamp correto
           let finalTimestamp = Date.now();
@@ -99,13 +140,25 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
         return result;
       });
 
+      // Log das fotos após ordenação
+      if (sortedPhotos.length > 0) {
+        console.log(`[📊 FRIENDS PHOTOS] After sorting - First 3 photos:`, sortedPhotos.slice(0, 3).map((p, i) => ({
+          index: i,
+          user: p.userName,
+          date: p.date,
+          timestamp: p.timestamp,
+          timestampDate: p.timestamp ? new Date(p.timestamp).toLocaleString('pt-BR') : 'no timestamp'
+        })));
+      }
+
       return sortedPhotos;
     },
     enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 15 * 60 * 1000, // 15 minutos
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    staleTime: 0, // Sem cache - sempre busca dados frescos
+    gcTime: 0, // Sem cache - sempre busca dados frescos
+    refetchOnWindowFocus: true, // Atualiza ao focar na janela
+    refetchOnReconnect: true, // Atualiza ao reconectar
+    refetchOnMount: 'always', // SEMPRE atualiza ao montar o componente
     refetchInterval: false, // Disabled automatic polling - now on-demand only
     retry: 1
   });

@@ -166,6 +166,7 @@ export interface EnhancedPhoto {
   preview_url?: string;
   taken_date?: string;
   photo_type?: string;
+  timestamp?: number;
 }
 
 export interface PhotoCardProps {

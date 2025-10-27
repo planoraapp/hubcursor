@@ -116,7 +116,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
           <PopoverHeader className="border-amber-200">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10 border border-amber-300">
-                <AvatarImage src="/assets/frank.png" />
+                <AvatarImage src="/assets/mockuser.png" />
                 <AvatarFallback className="bg-amber-100">V</AvatarFallback>
               </Avatar>
               <div>
