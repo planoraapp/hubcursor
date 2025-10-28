@@ -8,6 +8,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
+import { getBannerImageBySeed } from '@/utils/bannerUtils';
 
 const Console: React.FC = () => {
   const { isLoggedIn, habboAccount } = useAuth();
@@ -82,6 +83,7 @@ const Console: React.FC = () => {
                 <PageBanner 
                   title="🖥️ Console do Habbo"
                   subtitle="Gerencie sua experiência no HabboHub"
+                  backgroundImage={getBannerImageBySeed('console')}
                 />
                 
                 {/* Console e botão lado a lado */}

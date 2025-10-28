@@ -13,16 +13,30 @@ const PageBanner: React.FC<PageBannerProps> = ({
   backgroundImage = 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/backgroundshome/bg_pattern_clouds.gif',
   className = ''
 }) => {
+  // Detect if this is an extended banner (web_view_bg) or a repeat pattern
+  const isExtendedBanner = backgroundImage?.includes('web_view_bg');
+  
+  const backgroundStyle = isExtendedBanner 
+    ? {
+        backgroundImage: `url(${backgroundImage})`,
+        filter: 'brightness(0.7) contrast(1.1)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }
+    : {
+        backgroundImage: `url(${backgroundImage})`,
+        filter: 'brightness(0.7) contrast(1.1)',
+        backgroundSize: '120px 120px',
+        backgroundRepeat: 'repeat'
+      };
+  
     return (
     <div className={`relative overflow-hidden rounded-lg mb-8 ${className}`}>
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-repeat"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          filter: 'brightness(0.7) contrast(1.1)',
-          backgroundSize: '120px 120px'
-        }}
+        className={isExtendedBanner ? "absolute inset-0" : "absolute inset-0 bg-repeat"}
+        style={backgroundStyle}
       />
       
       {/* Overlay for better text readability */}

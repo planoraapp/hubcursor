@@ -28,12 +28,7 @@ const AccountManager = lazy(() => import('./pages/AccountManager').then(m => ({ 
 const Tools = lazy(() => import('./pages/Tools'))
 const HanditemCatalog = lazy(() => import('./pages/HanditemCatalog'))
 const AvatarEditor = lazy(() => import('./pages/AvatarEditor'))
-const AltCodesPage = lazy(() => import('./pages/AltCodes'))
 const Profile = lazy(() => import('./pages/Profile'))
-const NotificationDemo = lazy(() => import('./pages/NotificationDemo'))
-const HubHome = lazy(() => import('./pages/HubHome'))
-const FontTest = lazy(() => import('./components/FontTest').then(m => ({ default: m.FontTest })))
-const FontAlternativeTest = lazy(() => import('./components/FontAlternativeTest').then(m => ({ default: m.FontAlternativeTest })))
 const HomeRedirect = lazy(() => import('./components/HomeRedirect'))
 
 // Utilitários de limpeza (não afetam loading)
@@ -155,18 +150,6 @@ const router = createBrowserRouter([
     element: withSuspense(AvatarEditor),
   },
   {
-    path: "/ferramentas/alt-codes",
-    element: withSuspense(AltCodesPage),
-  },
-  {
-    path: "/font-test",
-    element: withSuspense(FontTest),
-  },
-  {
-    path: "/font-alternatives",
-    element: withSuspense(FontAlternativeTest),
-  },
-  {
     path: "/tools",
     element: withSuspense(Tools),
   },
@@ -177,14 +160,6 @@ const router = createBrowserRouter([
   {
     path: "/profile/:username/:hotel",
     element: withSuspense(Profile),
-  },
-  {
-    path: "/notification-demo",
-    element: withSuspense(NotificationDemo),
-  },
-  {
-    path: "/hub-home",
-    element: withSuspense(HubHome),
   },
   {
     path: "*",
@@ -201,7 +176,7 @@ const AppWithNotifications = () => {
       <RouterProvider router={router} />
       <NotificationContainer 
         notifications={notifications}
-        onRemove={removeNotification}
+        onClose={removeNotification}
       />
       <Toaster />
     </>

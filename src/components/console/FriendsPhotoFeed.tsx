@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFriendsPhotos } from "@/hooks/useFriendsPhotos";
 import { EnhancedPhotoCard } from "@/components/console/EnhancedPhotoCard";
 import { EnhancedPhoto } from "@/types/habbo";
@@ -153,6 +154,7 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   onNavigateToProfile
 }) => {
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const { habboAccount, isLoggedIn } = useAuth();
   const {
     data: photos,
@@ -162,15 +164,20 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
   } = useFriendsPhotos(currentUserName, hotel);
 
   const [commentsModalPhoto, setCommentsModalPhoto] = useState<EnhancedPhoto | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Refetch quando o componente é montado para garantir dados atualizados
-  useEffect(() => {
-    if (isLoggedIn && currentUserName) {
-      console.log('[🔄 FRIENDS FEED] Refetching on mount...');
-      refetch();
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Invalidar cache e forçar busca completa
+      await queryClient.invalidateQueries({ 
+        queryKey: ['friends-photos'] 
+      });
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Executar apenas uma vez ao montar
+  };
 
   // Debug: log quando photos mudar
   useEffect(() => {
@@ -253,6 +260,18 @@ export const FriendsPhotoFeed: React.FC<FriendsPhotoFeedProps> = ({
             <h3 className="text-lg font-bold text-white">
               {t('pages.console.feedTitle')}
             </h3>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Atualizar feed"
+            >
+              {isRefreshing ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <RefreshCw className="w-5 h-5" />
+              )}
+            </button>
           </div>
 
           {/* Lista de fotos */}

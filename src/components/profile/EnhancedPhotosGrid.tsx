@@ -21,13 +21,15 @@ interface EnhancedPhotosGridProps {
   userName: string;
   hotel?: string;
   className?: string;
+  isProfilePrivate?: boolean;
 }
 
 export const EnhancedPhotosGrid: React.FC<EnhancedPhotosGridProps> = ({ 
   photos, 
   userName, 
   hotel = 'com.br',
-  className = '' 
+  className = '',
+  isProfilePrivate = false
 }) => {
   const { t } = useI18n();
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
@@ -66,6 +68,24 @@ export const EnhancedPhotosGrid: React.FC<EnhancedPhotosGridProps> = ({
   };
 
   if (!photos || photos.length === 0) {
+    // Se for perfil privado, mostrar ícone de cadeado
+    if (isProfilePrivate) {
+      return (
+        <div className={`text-center py-12 ${className}`}>
+          <img 
+            src="/assets/console/locked.png" 
+            alt="Perfil privado"
+            className="w-auto h-auto mx-auto mb-3"
+            style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+          />
+          <p className="text-muted-foreground font-medium">{t('pages.console.noPhotos')}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Este usuário tem o perfil privado
+          </p>
+        </div>
+      );
+    }
+    
     return (
       <div className={`text-center py-8 ${className}`}>
         <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />

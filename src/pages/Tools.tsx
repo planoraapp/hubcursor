@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { CollapsibleAppSidebar } from '@/components/CollapsibleAppSidebar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wrench } from 'lucide-react';
-import AltCodesCompact from '@/components/tools/AltCodesCompact';
 import BadgeModal from '@/components/tools/BadgeModal';
 import TraxMachineCompact from '@/components/tools/TraxMachineCompact';
 
@@ -13,6 +11,7 @@ import TamagotchiCompact from '../components/tools/TamagotchiCompact';
 import PageBanner from '@/components/ui/PageBanner';
 import Room7x7Modal from '@/components/tools/Room7x7Modal';
 import { AccentFixedText } from '@/components/AccentFixedText';
+import { getBannerImageBySeed } from '@/utils/bannerUtils';
 
 const Tools = () => {
   const navigate = useNavigate();
@@ -40,6 +39,7 @@ const Tools = () => {
               <PageBanner 
                 title="Ferramentas"
                 subtitle="Ferramentas úteis para a comunidade Habbo"
+                backgroundImage={getBannerImageBySeed('tools')}
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -90,9 +90,6 @@ const Tools = () => {
                   </CardContent>
                 </Card>
 
-                {/* Alt Codes Tool - Componente Compacto */}
-                <AltCodesCompact />
-
                 {/* Tamagotchi Tool - NOVO COMPONENTE */}
                 <TamagotchiCompact />
 
@@ -138,22 +135,6 @@ const Tools = () => {
                       <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded volter-body-text">Scroll Infinito</span>
                       <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded volter-body-text">Copy Código</span>
                     </div>
-                  </CardContent>
-                </Card>
-
-
-
-                <Card className="p-6 bg-white/60 backdrop-blur-sm border-2 border-dashed border-gray-300">
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-3xl">⚡</span>
-                    </div>
-                    <CardTitle className="volter-body-text text-xl text-gray-500 font-bold">Próximamente</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <p className="text-gray-400 volter-body-text">
-                      <AccentFixedText>Aguarde novidades e funcionalidades incríveis!</AccentFixedText>
-                    </p>
                   </CardContent>
                 </Card>
               </div>

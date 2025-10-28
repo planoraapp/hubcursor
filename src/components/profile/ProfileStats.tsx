@@ -46,9 +46,16 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ habboUser, stats }) 
           
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Status:</span>
-            <Badge className={habboUser.is_online ? 'bg-green-500' : 'bg-red-500'}>
-              {habboUser.is_online ? 'Online' : 'Offline'}
-            </Badge>
+            {habboUser.is_online ? (
+              <Badge className="bg-green-500">Online</Badge>
+            ) : (
+              <img 
+                src="/assets/offline_icon.png" 
+                alt="Offline"
+                height="16"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            )}
           </div>
           
           <Separator />

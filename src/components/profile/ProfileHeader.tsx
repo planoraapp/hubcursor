@@ -51,16 +51,23 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ habboUser, avatarU
                 }}
               />
               
-              {/* Indicador de status online/offline - bolinha pixel art */}
+              {/* Indicador de status online/offline */}
               <div className="absolute bottom-2 right-2">
-                <div 
-                  className={`w-4 h-4 rounded-full border-2 border-white shadow-lg ${
-                    habboUser.is_online ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                  style={{
-                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.8)'
-                  }}
-                />
+                {habboUser.is_online ? (
+                  <div 
+                    className="w-4 h-4 rounded-full border-2 border-white shadow-lg bg-green-500"
+                    style={{
+                      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.8)'
+                    }}
+                  />
+                ) : (
+                  <img 
+                    src="/assets/offline_icon.png" 
+                    alt="Offline"
+                    height="16"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                )}
               </div>
             </div>
           </div>

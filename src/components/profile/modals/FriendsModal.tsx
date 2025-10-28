@@ -29,6 +29,12 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
     return `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${username}&size=m&direction=2&head_direction=2&action=std`;
   };
 
+  // Debug: verificar dados dos amigos
+  if (friends && friends.length > 0) {
+    console.log('Friends data:', friends[0]);
+    console.log('Friend profileVisible:', friends[0].profileVisible);
+  }
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -88,24 +94,40 @@ export const FriendsModal: React.FC<FriendsModalProps> = ({
                             target.style.display = 'none';
                           }}
                         />
+                        {/* Ícone de cadeado para perfil privado */}
+                        {friend.profileVisible === false && (
+                          <img 
+                            src="/assets/console/locked.png" 
+                            alt="Perfil privado"
+                            className="absolute top-0 right-0 w-6 h-6 z-10"
+                            style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                          />
+                        )}
                       </div>
+                      {/* Status online/offline */}
                       <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#4A5568] ${
                         friend.online ? 'bg-green-500' : 'bg-red-500'
                       }`}></div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center justify-between mb-1">
                         <p className="font-medium text-sm truncate text-white">{friend.name}</p>
-                        <Badge 
-                          variant={friend.online ? "default" : "secondary"} 
-                          className={`text-xs ${
-                            friend.online 
-                              ? "bg-green-500/20 text-green-300 border-green-400/30" 
-                              : "bg-white/10 text-white/60 border-white/20"
-                          }`}
-                        >
-                          {friend.online ? 'Online' : 'Offline'}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1">
+                          <img 
+                            src={friend.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
+                            alt={friend.online ? 'Online' : 'Offline'}
+                            height="16"
+                            style={{ imageRendering: 'pixelated' }}
+                          />
+                          {friend.profileVisible === false && (
+                            <img 
+                              src="/assets/console/locked.png"
+                              alt="Perfil privado"
+                              height="16"
+                              style={{ imageRendering: 'pixelated' }}
+                            />
+                          )}
+                        </div>
                       </div>
                       <p className="text-xs text-white/60 truncate italic">
                         "{friend.motto || 'Sem motto'}"

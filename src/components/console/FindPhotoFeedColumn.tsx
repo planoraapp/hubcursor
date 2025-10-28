@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, RefreshCw, Search, Heart, Loader2, AlertCircle, Globe, MessageCircle, Ellipsis, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useGlobalPhotos } from '@/hooks/useGlobalPhotos';
 import { useMyConsoleProfile } from '@/hooks/useMyConsoleProfile';
 import { useI18n } from '@/contexts/I18nContext';
@@ -179,7 +178,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
             <img
               src="/assets/console/hotelfilter.png"
               alt="Filtro"
-              className="h-5 w-auto object-contain"
+              className="h-6 w-auto object-contain"
               style={{ imageRendering: 'pixelated' }}
             />
             Feed Global da Comunidade
@@ -216,7 +215,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
             <img
               src="/assets/console/hotelfilter.png"
               alt="Filtro"
-              className="h-5 w-auto object-contain"
+              className="h-6 w-auto object-contain"
               style={{ imageRendering: 'pixelated' }}
             />
             Feed Global da Comunidade
@@ -248,7 +247,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
             <img
               src="/assets/console/hotelfilter.png"
               alt="Filtro"
-              className="h-5 w-auto object-contain"
+              className="h-6 w-auto object-contain"
               style={{ imageRendering: 'pixelated' }}
             />
             Feed Global da Comunidade
@@ -274,7 +273,7 @@ export const FindPhotoFeedColumn: React.FC = () => {
             <img
               src="/assets/console/hotelfilter.png"
               alt="Filtro"
-              className="h-5 w-auto object-contain"
+              className="h-6 w-auto object-contain"
               style={{ imageRendering: 'pixelated' }}
             />
             Feed Global da Comunidade
@@ -284,15 +283,28 @@ export const FindPhotoFeedColumn: React.FC = () => {
         
         {/* Barra de busca */}
         <div className="px-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
-            <Input
+          <div className="flex items-center bg-white/10 border border-white/20 rounded focus-within:border-white/60 transition-colors h-8">
+            <input
               type="text"
               placeholder={t('pages.console.searchUser')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-yellow-400"
+              className="flex-1 px-3 py-1 bg-transparent text-white placeholder-white/50 focus:outline-none text-sm h-full"
             />
+            
+            {/* Botão de busca integrado */}
+            <button
+              disabled={!searchTerm.trim()}
+              className="px-2 py-1 text-white/60 hover:text-white disabled:text-white/30 transition-colors flex items-center justify-center h-full"
+              title="Buscar"
+            >
+              <img 
+                src="/assets/search.png" 
+                alt="Buscar" 
+                className="w-auto h-auto"
+                style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+              />
+            </button>
           </div>
         </div>
         

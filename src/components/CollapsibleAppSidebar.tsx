@@ -48,7 +48,7 @@ export function CollapsibleAppSidebar() {
   };
 
   const menuItems = [
-    { nameKey: 'nav.home', path: '/', icon: '/assets/home.png' },
+    { nameKey: 'nav.home', path: '/', icon: '/assets/homebutton.png' },
     { nameKey: 'nav.console', path: '/console', icon: '/assets/consoleoff.gif' },
     { nameKey: 'nav.homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
     { nameKey: 'nav.journal', path: '/journal', icon: '/assets/news.png' },

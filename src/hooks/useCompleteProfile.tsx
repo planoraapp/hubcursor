@@ -116,9 +116,19 @@ export const useCompleteProfile = (username: string, hotel: string = 'com.br') =
         ]);
 
         const badges = badgesResponse.status === 'fulfilled' ? await badgesResponse.value.json().catch(() => []) : [];
-        const friends = friendsResponse.status === 'fulfilled' ? await friendsResponse.value.json().catch(() => []) : [];
+        let friends = friendsResponse.status === 'fulfilled' ? await friendsResponse.value.json().catch(() => []) : [];
         const groups = groupsResponse.status === 'fulfilled' ? await groupsResponse.value.json().catch(() => []) : [];
-        const rooms = roomsResponse.status === 'fulfilled' ? await roomsResponse.value.json().catch(() => []) : [];return {
+        const rooms = roomsResponse.status === 'fulfilled' ? await roomsResponse.value.json().catch(() => []) : [];
+
+        // Garantir que friends tenha profileVisible (a API já retorna isso)
+        if (friends.length > 0) {
+          friends = friends.map(friend => ({
+            ...friend,
+            profileVisible: friend.profileVisible == null ? true : friend.profileVisible // Default para true se não especificado
+          }));
+        }
+
+        return {
           uniqueId: userData.uniqueId,
           name: userData.name,
           figureString: userData.figureString,

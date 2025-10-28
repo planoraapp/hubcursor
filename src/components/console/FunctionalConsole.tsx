@@ -2,7 +2,7 @@ import React, { useState, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Search, Trophy, Home, Crown, Camera, Heart, MessageCircle, Globe } from 'lucide-react';
+import { User, RefreshCw, Loader2, AlertCircle, Users, MessageSquare, Trophy, Home, Crown, Camera, Heart, MessageCircle, Globe } from 'lucide-react';
 import { useCompleteProfile } from '@/hooks/useCompleteProfile';
 import { useUnifiedPhotoSystem } from '@/hooks/useUnifiedPhotoSystem';
 import { useAuth } from '@/hooks/useAuth';
@@ -253,21 +253,6 @@ export const FunctionalConsole: React.FC = () => {
 
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-        {/* Mensagem para perfil privado */}
-        {isProfilePrivate && (
-          <div className="p-4 bg-yellow-600/20 border-b border-yellow-400/30">
-            <div className="flex items-center gap-3">
-              <div className="text-yellow-400 text-lg">🔒</div>
-              <div>
-                <h4 className="text-yellow-200 font-semibold">Perfil Privado</h4>
-                <p className="text-yellow-200/80 text-sm">
-                  Este usuário tem o perfil privado. Abra as configurações do jogo e torne seu perfil público para exibir mais informações.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
         {/* Header do usuário com borda inferior */}
         <div className="p-4 border-b border-white/20 relative">
           {/* Bandeira no extremo superior direito */}
@@ -294,9 +279,9 @@ export const FunctionalConsole: React.FC = () => {
               </div>
               {/* Status centralizado abaixo do avatar */}
               <img 
-                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
+                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
                 alt={user?.online ? 'Online' : 'Offline'}
-                className="h-4 w-auto object-contain"
+                height="16"
                 style={{ imageRendering: 'pixelated' }}
               />
             </div>
@@ -528,7 +513,7 @@ export const FunctionalConsole: React.FC = () => {
                           className={`absolute top-1 right-1 z-10 text-white p-1 rounded-full text-xs flex items-center justify-center w-6 h-6 transition-all ${
                             isHidden 
                               ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
-                              : 'bg-red-500/80 hover:bg-red-600 hover:scale-110'
+                              : 'bg-transparent'
                           }`}
                           title={isHidden ? t('pages.console.restorePhoto') : t('pages.console.hidePhoto')}
                         >
@@ -1097,26 +1082,6 @@ const FeedTab: React.FC<any> = ({
   if (isViewingOtherUser) {
     return (
       <div className="rounded-lg bg-transparent text-white border-0 shadow-none h-full flex flex-col overflow-y-auto overflow-x-hidden scrollbar-hide hover:scrollbar-thin hover:scrollbar-thumb-white/20 hover:scrollbar-track-transparent">
-        {/* Mensagem para perfil privado */}
-        {isProfilePrivate && (
-          <div className="p-4 bg-yellow-600/20 border-b border-yellow-400/30">
-            <div className="flex items-center gap-3">
-              <div className="text-yellow-400 text-lg">🔒</div>
-              <div>
-                <h4 className="text-yellow-200 font-semibold">
-                  {isPrivateProfile ? 'Perfil Privado' : 'Dados Limitados'}
-                </h4>
-                <p className="text-yellow-200/80 text-sm">
-                  {isPrivateProfile 
-                    ? 'Este usuário tem o perfil privado. Para exibir mais informações, o usuário precisa tornar seu perfil público nas configurações do jogo.'
-                    : 'Este usuário não tem dados públicos disponíveis ou tem o perfil restrito.'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
         {/* Header do usuário com borda inferior */}
         <div className="p-4 border-b border-white/20 relative">
           {/* Bandeira no extremo superior direito */}
@@ -1143,9 +1108,9 @@ const FeedTab: React.FC<any> = ({
               </div>
               {/* Status centralizado abaixo do avatar */}
               <img 
-                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/offline.gif'}
+                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
                 alt={user?.online ? 'Online' : 'Offline'}
-                className="h-4 w-auto object-contain"
+                height="16"
                 style={{ imageRendering: 'pixelated' }}
               />
             </div>
@@ -1368,7 +1333,7 @@ const FeedTab: React.FC<any> = ({
                       {isEditMode && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); togglePhotoVisibility(photoId); }}
-                          className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600/90 text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
+                          className="absolute top-1 right-1 bg-transparent text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
                           title={isHidden ? t('pages.console.showPhoto') : t('pages.console.hidePhoto')}
                         >
                           {isHidden ? '+' : <img src="/assets/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
@@ -1392,6 +1357,16 @@ const FeedTab: React.FC<any> = ({
                   </div>
                 );
               })
+            ) : isProfilePrivate ? (
+              <div className="col-span-3 flex flex-col items-center justify-center py-8">
+                <img 
+                  src="/assets/console/locked.png" 
+                  alt="Perfil privado"
+                  className="w-auto h-auto mb-3"
+                  style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                />
+                <p className="text-sm text-white/60">Este usuário tem o perfil privado</p>
+              </div>
             ) : !isProfilePrivate && hasNoPhotos ? (
               <div className="col-span-3 flex flex-col items-center justify-center py-8 text-white/60">
                 <div className="text-4xl mb-2">📷</div>
@@ -1527,7 +1502,12 @@ const FeedTab: React.FC<any> = ({
                 {isSearching ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
-                  <Search className="w-3 h-3" />
+                  <img 
+                    src="/assets/search.png" 
+                    alt="Buscar" 
+                    className="w-auto h-auto"
+                    style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                  />
                 )}
               </button>
             </div>
@@ -1754,7 +1734,12 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
                     {isSearching ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Search className="w-3 h-3" />
+                      <img 
+                        src="/assets/search.png" 
+                        alt="Buscar" 
+                        className="w-auto h-auto"
+                        style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+                      />
                     )}
                   </button>
                 </div>
@@ -1883,7 +1868,12 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
             className="flex-1 px-3 py-2 bg-white/10 border border-black rounded text-white placeholder-white/50"
           />
           <Button className="bg-blue-600 hover:bg-blue-700">
-            <Search className="w-8 h-8" />
+            <img 
+              src="/assets/search.png" 
+              alt="Buscar" 
+              className="w-auto h-auto"
+              style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
+            />
           </Button>
         </div>
         

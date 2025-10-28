@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import SimpleBadgeImage from './SimpleBadgeImage';
-// import realBadgeDescriptions from '@/data/real-badge-descriptions.json';
-// import fullBadgeInfo from '@/data/full-badge-info.json';
 
 interface BadgeTooltipProps {
   code: string;
@@ -38,55 +36,57 @@ const BadgeTooltip = ({
     if (description) {
       return description;
     }
-    
-    // Primeiro, buscar descrição real da API
-    if (realBadgeDescriptions[badgeCode as keyof typeof realBadgeDescriptions]) {
-      return realBadgeDescriptions[badgeCode as keyof typeof realBadgeDescriptions];
-    }
-
-    // Buscar por prefixo nas descrições reais
-    for (const [prefix, desc] of Object.entries(realBadgeDescriptions)) {
-      if (badgeCode.startsWith(prefix)) {
-        return desc;
-      }
-    }
 
     // Fallback para descrições baseadas em padrões
-    if (badgeCode.includes('ACH_')) {
+    const upperCode = badgeCode.toUpperCase();
+    
+    if (upperCode.includes('ACH_')) {
       return 'Conquista do Habbo Hotel';
     }
-    if (badgeCode.startsWith('BR')) {
+    if (upperCode.startsWith('BR')) {
       return 'Emblema do Brasil';
     }
-    if (badgeCode.startsWith('US')) {
+    if (upperCode.startsWith('US')) {
       return 'Emblema dos Estados Unidos';
     }
-    if (badgeCode.startsWith('ES')) {
+    if (upperCode.startsWith('ES')) {
       return 'Emblema da Espanha';
     }
-    if (badgeCode.startsWith('DE')) {
+    if (upperCode.startsWith('DE')) {
       return 'Emblema da Alemanha';
     }
-    if (badgeCode.startsWith('UK')) {
+    if (upperCode.startsWith('UK')) {
       return 'Emblema do Reino Unido';
     }
-    if (badgeCode.startsWith('FR')) {
+    if (upperCode.startsWith('FR')) {
       return 'Emblema da França';
     }
-    if (badgeCode.startsWith('IT')) {
+    if (upperCode.startsWith('IT')) {
       return 'Emblema da Itália';
     }
-    if (badgeCode.startsWith('NL')) {
+    if (upperCode.startsWith('NL')) {
       return 'Emblema da Holanda';
     }
-    if (badgeCode.startsWith('NB')) {
+    if (upperCode.startsWith('PT')) {
+      return 'Emblema de Portugal';
+    }
+    if (upperCode.startsWith('FI')) {
+      return 'Emblema da Finlândia';
+    }
+    if (upperCode.startsWith('HC')) {
+      return 'Badge do Habbo Club';
+    }
+    if (upperCode.startsWith('NB')) {
       return 'Emblema Nomeado';
     }
-    if (badgeCode.startsWith('HWS')) {
+    if (upperCode.startsWith('HWS')) {
       return 'Habbo Winter Special';
     }
-    if (badgeCode.startsWith('WUP')) {
+    if (upperCode.startsWith('WUP')) {
       return 'Wake Up Party';
+    }
+    if (upperCode === 'ADM' || upperCode === 'MOD' || upperCode === 'STAFF' || upperCode === 'VIP') {
+      return 'Badge oficial do staff Habbo';
     }
 
     return `Emblema ${badgeCode}`;
@@ -94,10 +94,7 @@ const BadgeTooltip = ({
 
   // Função para obter nome real do emblema
   const getBadgeName = (badgeCode: string): string => {
-    if (fullBadgeInfo[badgeCode as keyof typeof fullBadgeInfo]) {
-      return fullBadgeInfo[badgeCode as keyof typeof fullBadgeInfo].name;
-    }
-    return badgeCode;
+    return name || badgeCode;
   };
 
   // Função para calcular posição do tooltip

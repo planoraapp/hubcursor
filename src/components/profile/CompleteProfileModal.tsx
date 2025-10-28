@@ -85,11 +85,19 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                         e.currentTarget.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${profile.name}&size=l&direction=2&head_direction=3&action=std`;
                       }}
                     />
-                    <Badge 
-                      className={`absolute -bottom-2 -right-2 ${profile.online ? 'bg-green-500' : 'bg-red-500'} text-white`}
-                    >
-                      {profile.online ? 'Online' : 'Offline'}
-                    </Badge>
+                    {profile.online ? (
+                      <Badge className="absolute -bottom-2 -right-2 bg-green-500 text-white">
+                        Online
+                      </Badge>
+                    ) : (
+                      <img 
+                        src="/assets/offline_icon.png" 
+                        alt="Offline"
+                        className="absolute -bottom-2 -right-2"
+                        height="16"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
                   </div>
                 </div>
                 

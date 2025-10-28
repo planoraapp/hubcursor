@@ -34,7 +34,7 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
         body: { 
           username: currentUserName, 
           hotel,
-          limit: 200, // Aumentar para pegar mais fotos
+          limit: 50, // Limite inicial de 50 fotos
           offset: 0
         }
       });
@@ -50,7 +50,7 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       // A função habbo-optimized-friends-photos retorna { photos, hasMore, nextOffset }
       const photos = Array.isArray(data) ? data : (data.photos || []);
       
-      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos with limit 200`);
+      console.log(`[✅ FRIENDS PHOTOS] Successfully fetched ${photos.length} photos (limit 50)`);
       if (photos.length > 0) {
         const first3 = photos.slice(0, 3);
         console.log(`[📸 FRIENDS PHOTOS] First 3 photos from backend:`, first3.map((p, i) => ({
@@ -81,17 +81,11 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
           console.log(`[📊 FRIENDS PHOTOS] Are timestamps descending (recent first)? ${isDescending}`);
         }
       }
+      // Processar todas as fotos SEM FILTRO DE DATA
       const validPhotos = photos
         .filter(photo => {
+          // Validar apenas dados obrigatórios
           const isValid = photo.imageUrl && photo.userName && (photo.timestamp || photo.date);
-          if (!isValid) {
-            console.log(`[⚠️ INVALID PHOTO FILTERED:`, { 
-              hasUrl: !!photo.imageUrl, 
-              hasUser: !!photo.userName, 
-              hasTimestamp: !!photo.timestamp,
-              hasDate: !!photo.date
-            });
-          }
           return isValid;
         })
         .map(photo => {
@@ -141,25 +135,22 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       });
 
       // Log das fotos após ordenação
+      console.log(`[📊 FRIENDS PHOTOS] Total fetched: ${photos.length}, Showing: ${sortedPhotos.length}`);
+      
       if (sortedPhotos.length > 0) {
-        console.log(`[📊 FRIENDS PHOTOS] After sorting - First 3 photos:`, sortedPhotos.slice(0, 3).map((p, i) => ({
-          index: i,
-          user: p.userName,
-          date: p.date,
-          timestamp: p.timestamp,
-          timestampDate: p.timestamp ? new Date(p.timestamp).toLocaleString('pt-BR') : 'no timestamp'
-        })));
+        const mostRecent = sortedPhotos[0];
+        const ageInHours = Math.floor((Date.now() - mostRecent.timestamp) / (1000 * 60 * 60));
+        console.log(`[📊 FRIENDS PHOTOS] Most recent: ${mostRecent.userName} - há ${ageInHours}h`);
       }
 
       return sortedPhotos;
     },
     enabled: !!currentUserName && !profileLoading && !!completeProfile?.data?.friends?.length,
-    staleTime: 0, // Sem cache - sempre busca dados frescos
-    gcTime: 0, // Sem cache - sempre busca dados frescos
-    refetchOnWindowFocus: true, // Atualiza ao focar na janela
-    refetchOnReconnect: true, // Atualiza ao reconectar
-    refetchOnMount: 'always', // SEMPRE atualiza ao montar o componente
-    refetchInterval: false, // Disabled automatic polling - now on-demand only
+    staleTime: 5 * 60 * 1000, // Cache local por 5 minutos - bem otimizado
+    gcTime: 30 * 60 * 1000, // Mantém no cache por 30 minutos
+    refetchOnWindowFocus: false, // Não atualiza ao focar
+    refetchOnReconnect: false, // Não atualiza ao reconectar
+    refetchOnMount: false, // SEMPRE usa cache ao abrir a aba (rápido!)
     retry: 1
   });
 };

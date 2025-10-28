@@ -4,7 +4,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { CountryFlags } from '@/components/marketplace/CountryFlags';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, ChevronLeft, Home, Award, Globe, Bell, Wifi } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, Award, Globe, Bell, Wifi } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface HabboUserProfile {
@@ -253,7 +253,12 @@ export const HabboUserPanel = () => {
                 >
                   {removeAccents(t('sidebar.userPanel.hubHome'))}
                 </span>
-                <Home className="w-4 h-4 text-blue-400" />
+                <img 
+                  src="/assets/homebutton.png" 
+                  alt="Home" 
+                  className="w-4 h-4 object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </button>
             </Link>
             

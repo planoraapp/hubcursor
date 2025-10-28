@@ -22,6 +22,7 @@ import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import PageBanner from '@/components/ui/PageBanner';
 import { HotelTag } from '@/components/HotelTag';
 import { AccentFixedText } from '@/components/AccentFixedText';
+import { getBannerImageBySeed } from '@/utils/bannerUtils';
 
 import type { HabboUser } from '@/types/habbo';
 
@@ -359,6 +360,7 @@ const Homes: React.FC = () => {
               <PageBanner 
                 title="Habbo Home"
                 subtitle="Explore as homes dos usuários do HabboHub"
+                backgroundImage={getBannerImageBySeed('homes')}
               />
               
               {/* Busca e Minha Home */}

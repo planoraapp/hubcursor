@@ -32,7 +32,7 @@ const translations = {
     
     // Sidebar
     'sidebar.userPanel.monthlyXP': 'XP Mensal',
-    'sidebar.userPanel.hubHome': 'Hub Home',
+    'sidebar.userPanel.hubHome': 'Perfil',
     'sidebar.userPanel.settings': 'Configurações',
     'sidebar.userPanel.logout': 'Sair',
     'sidebar.userPanel.status': 'Status no Site',
@@ -86,7 +86,7 @@ const translations = {
     'pages.console.selectCountry': 'Selecionar país',
     'pages.console.likes': 'curtida',
     'pages.console.likesPlural': 'curtidas',
-    'pages.console.myInfo': 'Minhas Informações',
+    'pages.console.myInfo': 'Perfil',
     'pages.console.createdAt': 'Criado em:',
     'pages.console.lastAccess': 'Último acesso:',
     'pages.console.friends': 'Amigos',
@@ -236,7 +236,7 @@ const translations = {
     
     // Sidebar
     'sidebar.userPanel.monthlyXP': 'Monthly XP',
-    'sidebar.userPanel.hubHome': 'Hub Home',
+    'sidebar.userPanel.hubHome': 'Profile',
     'sidebar.userPanel.settings': 'Settings',
     'sidebar.userPanel.logout': 'Logout',
     'sidebar.userPanel.status': 'Site Status',
@@ -290,7 +290,7 @@ const translations = {
     'pages.console.selectCountry': 'Select country',
     'pages.console.likes': 'like',
     'pages.console.likesPlural': 'likes',
-    'pages.console.myInfo': 'My Info',
+    'pages.console.myInfo': 'Profile',
     'pages.console.createdAt': 'Created at:',
     'pages.console.lastAccess': 'Last access:',
     'pages.console.friends': 'Friends',
@@ -440,7 +440,7 @@ const translations = {
     
     // Sidebar
     'sidebar.userPanel.monthlyXP': 'XP Mensual',
-    'sidebar.userPanel.hubHome': 'Hub Home',
+    'sidebar.userPanel.hubHome': 'Perfil',
     'sidebar.userPanel.settings': 'Configuración',
     'sidebar.userPanel.logout': 'Salir',
     'sidebar.userPanel.status': 'Estado del Sitio',
@@ -494,7 +494,7 @@ const translations = {
     'pages.console.selectCountry': 'Seleccionar país',
     'pages.console.likes': 'me gusta',
     'pages.console.likesPlural': 'me gusta',
-    'pages.console.myInfo': 'Mi Información',
+    'pages.console.myInfo': 'Perfil',
     'pages.console.createdAt': 'Creado en:',
     'pages.console.lastAccess': 'Último acceso:',
     'pages.console.friends': 'Amigos',

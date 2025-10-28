@@ -8,6 +8,7 @@ import { Users, MessageSquare, Star } from 'lucide-react';
 import PageBanner from '@/components/ui/PageBanner';
 import { AccentFixedText } from '@/components/AccentFixedText';
 import { useI18n } from '@/contexts/I18nContext';
+import { getBannerImageBySeed } from '@/utils/bannerUtils';
 
 // Temporariamente desabilitar hooks pesados para melhorar performance
 // import { useInitializeUserFeed } from '@/hooks/useInitializeUserFeed';
@@ -35,6 +36,7 @@ export const Home: React.FC = () => {
               <PageBanner 
                 title="🏠 HabboHub"
                 subtitle={t('pages.home.subtitle')}
+                backgroundImage={getBannerImageBySeed('home')}
               />
 
               {/* Features Grid */}

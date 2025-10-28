@@ -521,7 +521,7 @@ export const Login: React.FC = () => {
                                 />
                               </div>
                             </div>
-                          )})
+                          )}
 
                           {/* Mensagem de sucesso */}
                           {mottoStep === 'complete' && (
@@ -577,10 +577,10 @@ export const Login: React.FC = () => {
                                   </>
                                 ) : (
                                   'Verificar Habbo'
-                                )})
+                                )}
                               </Button>
                             </div>
-                          )})
+                          )}
 
                           {loginMode === 'motto' && mottoStep === 'password' && (
                             <div className="flex justify-center">
@@ -605,10 +605,10 @@ export const Login: React.FC = () => {
                                   </>
                                 ) : (
                                   'Criar Conta'
-                                )})
+                                )}
                               </Button>
                             </div>
-                          )})
+                          )}
 
                           {loginMode === 'motto' && mottoStep === 'complete' && (
                             <div className="flex justify-center">
