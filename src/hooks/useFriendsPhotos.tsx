@@ -16,11 +16,14 @@ export interface FriendPhoto {
 }
 
 export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') => {
+  // Normalizar hotel: 'ptbr' -> 'br' (o backend espera 'br')
+  const normalizedHotel = hotel === 'ptbr' ? 'br' : hotel;
+  
   // Get complete profile to access friends list
-  const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(currentUserName, hotel === 'br' ? 'com.br' : hotel);
+  const { data: completeProfile, isLoading: profileLoading } = useCompleteProfile(currentUserName, normalizedHotel === 'br' ? 'com.br' : normalizedHotel);
   
   return useQuery({
-    queryKey: ['friends-photos', currentUserName, hotel, completeProfile?.data?.friends?.length],
+    queryKey: ['friends-photos', currentUserName, normalizedHotel, completeProfile?.data?.friends?.length],
     queryFn: async (): Promise<FriendPhoto[]> => {
       if (!currentUserName) {
         throw new Error('Username is required');
@@ -33,7 +36,7 @@ export const useFriendsPhotos = (currentUserName: string, hotel: string = 'br') 
       const { data, error } = await supabase.functions.invoke('habbo-optimized-friends-photos', {
         body: { 
           username: currentUserName, 
-          hotel,
+          hotel: normalizedHotel, // Usar hotel normalizado
           limit: 50, // Limite inicial de 50 fotos
           offset: 0
         }

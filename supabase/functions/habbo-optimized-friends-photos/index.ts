@@ -21,10 +21,13 @@ if (import.meta.main) {
         });
       }
 
-      console.log(`[habbo-optimized-friends-photos] Fetching ${limit} photos (offset: ${offset}) for ${username} on ${hotel}`);
+      // Normalizar hotel: 'ptbr' -> 'br' (a API do Habbo usa 'com.br' para Brasil/Portugal)
+      const normalizedHotel = hotel === 'ptbr' ? 'br' : hotel;
+
+      console.log(`[habbo-optimized-friends-photos] Fetching ${limit} photos (offset: ${offset}) for ${username} on ${normalizedHotel} (original: ${hotel})`);
 
       // 1. Buscar dados do usuário para obter uniqueId
-      const userApiUrl = `https://www.habbo.${hotel === "br" ? "com.br" : hotel}/api/public/users?name=${encodeURIComponent(username)}`;
+      const userApiUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/api/public/users?name=${encodeURIComponent(username)}`;
       const userResponse = await fetch(userApiUrl);
       
       if (!userResponse.ok) {
@@ -35,7 +38,7 @@ if (import.meta.main) {
       const uniqueId = userData.uniqueId;
 
       // 2. Buscar perfil completo para obter lista de amigos
-      const profileUrl = `https://www.habbo.${hotel === "br" ? "com.br" : hotel}/api/public/users/${uniqueId}/profile`;
+      const profileUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/api/public/users/${uniqueId}/profile`;
       const profileResponse = await fetch(profileUrl);
       
       if (!profileResponse.ok) {
@@ -77,7 +80,7 @@ if (import.meta.main) {
         // Processar batch em paralelo
         await Promise.all(batch.map(async (friend) => {
           try {
-            const friendPhotosUrl = `https://www.habbo.${hotel === "br" ? "com.br" : hotel}/extradata/public/users/${friend.uniqueId}/photos`;
+            const friendPhotosUrl = `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/extradata/public/users/${friend.uniqueId}/photos`;
             const photosResponse = await fetch(friendPhotosUrl);
             
             if (photosResponse.ok) {
@@ -181,7 +184,7 @@ if (import.meta.main) {
           date: new Date(realTimestamp).toLocaleDateString("pt-BR"),
           likes: photo.likesCount || 0,
           userName: friend.name,
-          userAvatar: `https://www.habbo.${hotel === "br" ? "com.br" : hotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
+          userAvatar: `https://www.habbo.${normalizedHotel === "br" ? "com.br" : normalizedHotel}/habbo-imaging/avatarimage?figure=${friend.figureString}&size=s&direction=2&head_direction=3&action=std`,
           timestamp: realTimestamp,
           roomName: photo.roomName || "Quarto do jogo",
           caption: photo.caption || ""
