@@ -15,10 +15,10 @@ export const ToolsPopover: React.FC<ToolsPopoverProps> = ({ isOpen, onClose, cur
   const navigate = useNavigate();
 
   const toolsItems = [
-    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Carrinho.png', path: '/catalogo' },
-    { id: 'emblemas', label: t('emblemas'), icon: '/assets/emblemas.png', path: '/emblemas' },
-    { id: 'editor', label: t('editor'), icon: '/assets/editorvisuais.png', path: '/editor' },
-    { id: 'mercado', label: t('mercado'), icon: '/assets/Diamante.png', path: '/mercado' },
+    { id: 'catalogo', label: t('catalogo'), icon: '/assets/Tools/Carrinho.png', path: '/catalogo' },
+    { id: 'emblemas', label: t('emblemas'), icon: '/assets/Tools/emblemas.png', path: '/emblemas' },
+    { id: 'editor', label: t('editor'), icon: '/assets/Tools/editorvisuais.png', path: '/editor' },
+    { id: 'mercado', label: t('mercado'), icon: '/assets/Tools/Diamante.png', path: '/mercado' },
   ];
 
   const handleItemClick = (path: string) => {

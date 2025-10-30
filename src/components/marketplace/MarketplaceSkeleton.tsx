@@ -8,7 +8,7 @@ export const MarketplaceSkeleton = () => {
         className="p-4 border-b-2 border-black rounded-t-lg"
         style={{
           background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-          backgroundImage: 'url(/assets/bghabbohub.png)',
+          backgroundImage: 'url(/assets/site/bghabbohub.png)',
           backgroundSize: 'cover'
         }}
       >

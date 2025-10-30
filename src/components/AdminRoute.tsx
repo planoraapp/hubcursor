@@ -13,7 +13,7 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundImage: 'url(/assets/site/bghabbohub.png)',
         backgroundRepeat: 'repeat'
       }}>
         <div className="text-center">

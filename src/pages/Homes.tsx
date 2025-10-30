@@ -198,7 +198,7 @@ const Homes: React.FC = () => {
     
     // Se for um nome de background (como "bghabbohub"), tentar construir a URL
     if (homeData.background_value === 'bghabbohub') {
-      return `url(/assets/bghabbohub.png)`;
+      return `url(/assets/site/bghabbohub.png)`;
     }
     
     // Fallback para o tipo definido
@@ -214,9 +214,9 @@ const Homes: React.FC = () => {
       case 'default':
         // Para tipo "default", tentar construir a URL baseada no valor
         if (homeData.background_value === 'bghabbohub') {
-          return `url(/assets/bghabbohub.png)`;
+          return `url(/assets/site/bghabbohub.png)`;
         }
-        return `url(/assets/${homeData.background_value}.png)`;
+        return `url(/assets/site/${homeData.background_value}.png)`;
       default:
         return null;
     }
@@ -353,7 +353,7 @@ const Homes: React.FC = () => {
           <SidebarInset className="flex-1">
             
             <main className="flex-1 p-8 min-h-screen" style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}>
             <div className="max-w-7xl mx-auto">

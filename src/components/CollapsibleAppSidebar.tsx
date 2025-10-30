@@ -48,11 +48,11 @@ export function CollapsibleAppSidebar() {
   };
 
   const menuItems = [
-    { nameKey: 'nav.home', path: '/', icon: '/assets/homebutton.png' },
-    { nameKey: 'nav.console', path: '/console', icon: '/assets/consoleoff.gif' },
+    { nameKey: 'nav.home', path: '/', icon: '/assets/buttons/homebutton.png' },
+    { nameKey: 'nav.console', path: '/console', icon: '/assets/console/consoleoff.gif' },
     { nameKey: 'nav.homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
-    { nameKey: 'nav.journal', path: '/journal', icon: '/assets/news.png' },
-    { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/ferramentas.png' },
+    { nameKey: 'nav.journal', path: '/journal', icon: '/assets/journal/news.png' },
+    { nameKey: 'nav.tools', path: '/ferramentas', icon: '/assets/Tools/ferramentas.png' },
   ];
 
   // Adicionar menu de admin se o usuário for admin
@@ -81,8 +81,19 @@ export function CollapsibleAppSidebar() {
               maxHeight: '48px'
             }}
             onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
+              const target = e.currentTarget as HTMLImageElement;
+              const current = target.getAttribute('src') || '';
+              if (current.includes('/assets/buttons/')) {
+                target.src = '/assets/homebutton.png';
+              } else if (current.includes('/assets/console/consoleoff.gif')) {
+                target.src = '/assets/consoleoff.gif';
+              } else if (current.includes('/assets/journal/news.png')) {
+                target.src = '/assets/news.png';
+              } else if (current.includes('/assets/Tools/ferramentas.png')) {
+                target.src = '/assets/ferramentas.png';
+              } else {
+                target.src = '/placeholder.svg';
+              }
             }}
           />
         </div>
@@ -144,7 +155,7 @@ export function CollapsibleAppSidebar() {
           <div className="w-full flex justify-center items-center">
             {isCollapsed ? (
               <img 
-                src="/assets/hub.gif" 
+                src="/assets/site/hub.gif" 
                 alt="Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ 
@@ -152,13 +163,13 @@ export function CollapsibleAppSidebar() {
                   objectFit: 'contain'
                 }}
                 onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/assets/hubbeta.gif";
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.src = "/assets/hub.gif";
                 }}
               />
             ) : (
               <img 
-                src="/assets/hubbeta.gif" 
+                src="/assets/site/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-auto h-auto max-w-full max-h-16"
                 style={{ 
@@ -166,8 +177,8 @@ export function CollapsibleAppSidebar() {
                   objectFit: 'contain'
                 }}
                 onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/assets/hub.gif";
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.src = "/assets/hubbeta.gif";
                 }}
               />
             )}

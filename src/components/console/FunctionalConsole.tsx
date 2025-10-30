@@ -279,7 +279,7 @@ export const FunctionalConsole: React.FC = () => {
               </div>
               {/* Status centralizado abaixo do avatar */}
               <img 
-                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
+                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/site/offline_icon.png'}
                 alt={user?.online ? 'Online' : 'Offline'}
                 height="16"
                 style={{ imageRendering: 'pixelated' }}
@@ -517,7 +517,7 @@ export const FunctionalConsole: React.FC = () => {
                           }`}
                           title={isHidden ? t('pages.console.restorePhoto') : t('pages.console.hidePhoto')}
                         >
-                          {isHidden ? '↺' : <img src="/assets/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
+                          {isHidden ? '↺' : <img src="/assets/console/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
                       {!isEditMode && (
@@ -1107,8 +1107,8 @@ const FeedTab: React.FC<any> = ({
                 />
               </div>
               {/* Status centralizado abaixo do avatar */}
-              <img 
-                src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/offline_icon.png'}
+                    <img 
+                      src={user?.online ? 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/home-assets/online.gif' : '/assets/site/offline_icon.png'}
                 alt={user?.online ? 'Online' : 'Offline'}
                 height="16"
                 style={{ imageRendering: 'pixelated' }}
@@ -1336,7 +1336,7 @@ const FeedTab: React.FC<any> = ({
                           className="absolute top-1 right-1 bg-transparent text-white p-1 rounded-full text-xs flex items-center justify-center w-5 h-5"
                           title={isHidden ? t('pages.console.showPhoto') : t('pages.console.hidePhoto')}
                         >
-                          {isHidden ? '+' : <img src="/assets/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
+                          {isHidden ? '+' : <img src="/assets/console/minimize.png" alt="X" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />}
                         </button>
                       )}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors">
@@ -1502,8 +1502,8 @@ const FeedTab: React.FC<any> = ({
                 {isSearching ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
-                  <img 
-                    src="/assets/search.png" 
+                              <img 
+                                src="/assets/console/search.png" 
                     alt="Buscar" 
                     className="w-auto h-auto"
                     style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
@@ -1734,8 +1734,8 @@ const PhotosTab: React.FC<any> = ({ isLoading }) => {
                     {isSearching ? (
                       <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <img 
-                        src="/assets/search.png" 
+                  <img 
+                    src="/assets/console/search.png" 
                         alt="Buscar" 
                         className="w-auto h-auto"
                         style={{ imageRendering: 'pixelated', objectFit: 'contain' }}
@@ -1869,7 +1869,7 @@ const SearchTab: React.FC<any> = ({ onStartConversation }) => {
           />
           <Button className="bg-blue-600 hover:bg-blue-700">
             <img 
-              src="/assets/search.png" 
+              src="/assets/console/search.png" 
               alt="Buscar" 
               className="w-auto h-auto"
               style={{ imageRendering: 'pixelated', objectFit: 'contain' }}

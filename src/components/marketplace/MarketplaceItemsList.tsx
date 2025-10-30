@@ -73,7 +73,7 @@ export const MarketplaceItemsList = ({
       <Card className="border-2 border-black shadow-lg">
         <CardHeader className="pb-3" style={{
           background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-          backgroundImage: 'url(/assets/bghabbohub.png)',
+          backgroundImage: 'url(/assets/site/bghabbohub.png)',
           backgroundSize: 'cover'
         }}>
           <CardTitle className="text-white volter-font text-lg" style={{
@@ -99,7 +99,7 @@ export const MarketplaceItemsList = ({
     <Card className="border-2 border-black shadow-lg">
       <CardHeader className="pb-3" style={{
         background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)',
-        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundImage: 'url(/assets/site/bghabbohub.png)',
         backgroundSize: 'cover'
       }}>
         <CardTitle className="text-white volter-font text-lg flex items-center gap-2" style={{

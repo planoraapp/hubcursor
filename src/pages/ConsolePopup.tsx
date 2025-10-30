@@ -60,7 +60,7 @@ const ConsolePopupContent: React.FC = () => {
     <div 
       className="w-full h-screen overflow-hidden"
       style={{ 
-        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundImage: 'url(/assets/site/bghabbohub.png)',
         backgroundRepeat: 'repeat',
         backgroundSize: 'auto'
       }}

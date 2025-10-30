@@ -34,7 +34,7 @@ const getHomeBackgroundUrl = (home: any) => {
   
   // Se for um nome de background (como "bghabbohub"), tentar construir a URL
   if (home.background_value === 'bghabbohub') {
-    return `url(/assets/bghabbohub.png)`;
+    return `url(/assets/site/bghabbohub.png)`;
   }
   
   // Fallback para o tipo definido
@@ -50,7 +50,7 @@ const getHomeBackgroundUrl = (home: any) => {
     case 'default':
       // Para tipo "default", tentar construir a URL baseada no valor
       if (home.background_value === 'bghabbohub') {
-        return `url(/assets/bghabbohub.png)`;
+        return `url(/assets/site/bghabbohub.png)`;
       }
       return `url(/assets/${home.background_value}.png)`;
     default:

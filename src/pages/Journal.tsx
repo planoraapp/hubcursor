@@ -46,7 +46,7 @@ const Journal = () => {
       author: 'Beebop',
       authorAvatar: 'https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png',
       fansite: 'HabboHub',
-      fansiteLogo: '/assets/bghabbohub.png',
+      fansiteLogo: '/assets/site/bghabbohub.png',
       image: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjDhGLvOEcU_FGqcBTve1JyAoNt4ddcqAqfBMrvY4SF2YhRPDTBZOjReNooP8907PJAViP3-0XmR-_hdbwhRvBt-8h6UCYEnERTxbJgQaqWhGECue1XiP2EsQXuO-s0GN6_8XthY9OmNNM/s1600/ts_fire.gif',
       category: 'Destaque',
       date: '2024-01-15',
@@ -121,7 +121,7 @@ const Journal = () => {
           <main 
             className="flex-1 min-h-screen p-4 sm:p-8" 
             style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}
           >
@@ -154,7 +154,7 @@ const Journal = () => {
                   <div className="flex items-center justify-center">
                     {/* Logo no canto esquerdo */}
                     <img 
-                      src="/assets/bghabbohub.png" 
+                      src="/assets/site/bghabbohub.png" 
                       alt="Logo" 
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 object-contain hidden sm:block"
                       style={{ imageRendering: 'pixelated' }}
@@ -169,7 +169,7 @@ const Journal = () => {
 
                     {/* Logo no canto direito */}
                     <img 
-                      src="/assets/bghabbohub.png" 
+                      src="/assets/site/bghabbohub.png" 
                       alt="Logo" 
                       className="absolute right-0 top-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 object-contain hidden sm:block"
                       style={{ imageRendering: 'pixelated' }}
@@ -978,7 +978,7 @@ const Journal = () => {
                             <div className="border-2 border-black p-6">
                               <div className="flex items-start gap-6 mb-4">
                                 <img 
-                                  src="/assets/bghabbohub.png"
+                                  src="/assets/site/bghabbohub.png"
                                   alt="HabboHub"
                                   className="w-24 h-24 object-cover"
                                   style={{ imageRendering: 'pixelated' }}

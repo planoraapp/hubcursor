@@ -60,7 +60,7 @@ const AdminPanel = () => {
       author: 'Beebop',
       authorAvatar: 'https://www.habbo.com.br/habbo-imaging/avatar/hr-155-45.hd-208-10.ch-3538-67.lg-275-82.sh-295-92.fa-1206-90%2Cs-0.g-1.d-2.h-2.a-0%2C41cb5bfd4dcecf4bf5de00b7ea872714.png',
       fansite: 'HabboHub',
-      fansiteLogo: '/assets/bghabbohub.png',
+      fansiteLogo: '/assets/site/bghabbohub.png',
       image: 'https://www.habbo.com.br/habbo-imaging/badge/b05114s36135s99999.gif',
       category: 'Atualização',
       date: '2024-01-15',
@@ -157,7 +157,7 @@ const AdminPanel = () => {
           <main 
             className="flex-1 p-8 bg-repeat min-h-screen" 
             style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}
           >

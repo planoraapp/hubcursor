@@ -91,7 +91,7 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                       </Badge>
                     ) : (
                       <img 
-                        src="/assets/offline_icon.png" 
+                        src="/assets/site/offline_icon.png" 
                         alt="Offline"
                         className="absolute -bottom-2 -right-2"
                         height="16"

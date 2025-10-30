@@ -13,7 +13,7 @@ export const HabboHubBackground: React.FC<HabboHubBackgroundProps> = ({
     <div 
       className={`min-h-screen ${className}`}
       style={{ 
-        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundImage: 'url(/assets/site/bghabbohub.png)',
         backgroundRepeat: 'repeat'
       }}
     >

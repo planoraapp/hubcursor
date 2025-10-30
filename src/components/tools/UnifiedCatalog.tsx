@@ -31,11 +31,15 @@ import { useToast } from '@/hooks/use-toast';
 interface UnifiedCatalogProps {
   onHanditemSelect?: (handitem: HabboHanditem) => void;
   onFurniSelect?: (furni: HabboFurni) => void;
+  externalSearchTerm?: string; // quando fornecido, usa busca externa e esconde input
+  hideHeader?: boolean; // oculta barra de busca/ações e filtros de categoria
 }
 
 export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({ 
   onHanditemSelect, 
-  onFurniSelect 
+  onFurniSelect,
+  externalSearchTerm,
+  hideHeader
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
@@ -123,6 +127,8 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
   };
 
   // Filtrar handitems
+  const effectiveSearchTerm = externalSearchTerm ?? searchTerm;
+
   const filteredHanditems = useMemo(() => {
     let filtered = handitems.filter(item => 
       item.id !== 0 && // Nenhum
@@ -173,16 +179,16 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
     }
 
     // Filtro por busca
-    if (searchTerm) {
+    if (effectiveSearchTerm) {
       filtered = filtered.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.toString().includes(searchTerm) ||
-        item.assetPrefix.toLowerCase().includes(searchTerm.toLowerCase())
+        item.name.toLowerCase().includes(effectiveSearchTerm.toLowerCase()) ||
+        item.id.toString().includes(effectiveSearchTerm) ||
+        item.assetPrefix.toLowerCase().includes(effectiveSearchTerm.toLowerCase())
       );
     }
 
     return filtered;
-  }, [handitems, selectedCategory, searchTerm]);
+  }, [handitems, selectedCategory, effectiveSearchTerm]);
 
 
   // Obter URL da imagem do handitem usando imagens reais
@@ -528,49 +534,49 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
 
   return (
     <div className="space-y-6">
-
-      {/* Controles de busca e filtro */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar handitems ou mobílias..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+      {!hideHeader && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Buscar handitems ou mobílias..."
+                    value={externalSearchTerm ?? searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                    disabled={!!externalSearchTerm}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={loadData} 
+                  disabled={isLoading}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  Atualizar
+                </Button>
+                <Button 
+                  onClick={extractData} 
+                  disabled={isExtracting}
+                  variant="default"
+                  className="flex items-center gap-2"
+                >
+                  <Zap className={`h-4 w-4 ${isExtracting ? 'animate-pulse' : ''}`} />
+                  {isExtracting ? 'Extraindo...' : 'Extrair do Servidor'}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={loadData} 
-                disabled={isLoading}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-              <Button 
-                onClick={extractData} 
-                disabled={isExtracting}
-                variant="default"
-                className="flex items-center gap-2"
-              >
-                <Zap className={`h-4 w-4 ${isExtracting ? 'animate-pulse' : ''}`} />
-                {isExtracting ? 'Extraindo...' : 'Extrair do Servidor'}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Seção de handitems */}
-        <div className="w-full space-y-4">
-          {/* Filtros de categoria para handitems */}
+      <div className="w-full space-y-4">
+        {!hideHeader && (
           <div className="flex flex-wrap gap-2">
             {Object.entries(HANDITEM_CATEGORIES).map(([key, category]) => (
               <Button
@@ -585,58 +591,58 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
               </Button>
             ))}
           </div>
+        )}
 
-          {/* Lista de handitems */}
-          <ScrollArea className="h-[600px]">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="flex flex-col items-center gap-2">
-                  <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-                  <p className="text-sm text-gray-500">Carregando handitems...</p>
-                </div>
+        <ScrollArea className="h-[600px]">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="flex flex-col items-center gap-2">
+                <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                <p className="text-sm text-gray-500">Carregando handitems...</p>
               </div>
-            ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {filteredHanditems.map((handitem) => (
                 <Card 
                   key={`${handitem.assetPrefix}-${handitem.id}`}
-                      className="cursor-pointer hover:shadow-md transition-all duration-200 group hover:scale-105"
-                      onClick={() => copyHanditemId(handitem)}
-                      title="Clique para copiar o ID"
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex items-center justify-center">
-                            <img 
-                              src={getHanditemImageUrl(handitem)} 
-                            alt={handitem.name}
-                              className="max-w-12 max-h-12 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                            <ImageIcon className="h-6 w-6 text-gray-400 hidden" />
+                  className="cursor-pointer hover:shadow-md transition-all duration-200 group hover:scale-105"
+                  onClick={() => copyHanditemId(handitem)}
+                  title="Clique para copiar o ID"
+                >
+                  <CardContent className="p-3">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center justify-center">
+                        <img 
+                          src={getHanditemImageUrl(handitem)} 
+                          alt={handitem.name}
+                          className="max-w-12 max-h-12 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                        <ImageIcon className="h-6 w-6 text-gray-400 hidden" />
                       </div>
-                          <div className="text-center w-full">
-                            <h3 className="font-medium text-xs truncate mb-1">
+                      <div className="text-center w-full">
+                        <h3 className="font-medium text-xs truncate mb-1">
                           {handitem.name}
                         </h3>
-                            <div className="flex items-center justify-center gap-1">
-                              <span className="text-xs text-gray-500">
-                                ID: {handitem.id}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  copyHanditemId(handitem);
-                                }}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-xs text-gray-500">
+                            ID: {handitem.id}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyHanditemId(handitem);
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -644,9 +650,9 @@ export const UnifiedCatalog: React.FC<UnifiedCatalogProps> = ({
                 </Card>
               ))}
             </div>
-            )}
-          </ScrollArea>
-                      </div>
+          )}
+        </ScrollArea>
+      </div>
     </div>
   );
 };

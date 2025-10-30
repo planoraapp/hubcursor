@@ -27,7 +27,7 @@ export const Home: React.FC = () => {
           <main 
             className="flex-1 p-8 min-h-screen"
             style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat'
             }}
           >

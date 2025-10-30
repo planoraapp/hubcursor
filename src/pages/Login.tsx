@@ -212,7 +212,7 @@ export const Login: React.FC = () => {
             <main 
               className="flex-1 p-8 bg-repeat min-h-screen flex items-center justify-center" 
               style={{ 
-                backgroundImage: 'url(/assets/bghabbohub.png)',
+                backgroundImage: 'url(/assets/site/bghabbohub.png)',
                 backgroundRepeat: 'repeat',
                 backgroundPosition: 'center',
                 backgroundSize: 'auto'
@@ -237,7 +237,7 @@ export const Login: React.FC = () => {
           <main 
             className="flex-1 p-8 bg-repeat min-h-screen" 
             style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat',
               backgroundPosition: 'center',
               backgroundSize: 'auto'
@@ -247,7 +247,7 @@ export const Login: React.FC = () => {
               {/* Logo do HabboHub */}
               <div className="text-center mb-8">
                 <img 
-                  src="/assets/hubbeta.gif" 
+                  src="/assets/site/hubbeta.gif" 
                   alt="HabboHub" 
                   className="mx-auto mb-8"
                   style={{ 

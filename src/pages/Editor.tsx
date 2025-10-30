@@ -9,7 +9,7 @@ const Editor = () => {
     <SidebarProvider>
       <div 
         className="min-h-screen flex w-full bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/bghabbohub.png)' }}
+        style={{ backgroundImage: 'url(/assets/site/bghabbohub.png)' }}
       >
         <NewAppSidebar />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide">

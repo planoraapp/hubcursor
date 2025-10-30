@@ -43,7 +43,7 @@ export const UserTrackedItems = ({ hotel }: UserTrackedItemsProps) => {
             className="p-2 border-b-2 border-black rounded-t-lg flex items-center gap-2"
             style={{
               background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #4F46E5 100%)',
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundSize: 'cover'
             }}
           >

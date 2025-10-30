@@ -254,7 +254,7 @@ export const HabboUserPanel = () => {
                   {removeAccents(t('sidebar.userPanel.hubHome'))}
                 </span>
                 <img 
-                  src="/assets/homebutton.png" 
+                  src="/assets/buttons/homebutton.png" 
                   alt="Home" 
                   className="w-4 h-4 object-contain"
                   style={{ imageRendering: 'pixelated' }}

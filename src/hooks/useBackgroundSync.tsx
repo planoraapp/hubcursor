@@ -57,11 +57,11 @@ export const useBackgroundSync = () => {
           const syncData: BackgroundSyncData = {
             habbohub: {
               background_type: 'image',
-              background_value: '/assets/bghabbohub.png' // fallback
+              background_value: '/assets/site/bghabbohub.png' // fallback
             },
             beebop: {
               background_type: 'image', 
-              background_value: '/assets/bghabbohub.png' // fallback
+              background_value: '/assets/site/bghabbohub.png' // fallback
             }
           };
 

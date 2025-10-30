@@ -24,11 +24,11 @@ const TamagotchiCompact = () => {
       useEmoji: false,
       // URLs dos sprites reais organizados (melhor animação)
       spriteUrls: {
-        0: '/assets/pets-organized-complete/monkey/monkey_idle_0.png',
-        1: '/assets/pets-organized-complete/monkey/monkey_idle_1.png',
-        2: '/assets/pets-organized-complete/monkey/monkey_idle_2.png',
-        3: '/assets/pets-organized-complete/monkey/monkey_idle_3.png',
-        7: '/assets/pets-organized-complete/monkey/monkey_idle_7.png'
+        0: '/assets/pets/monkey/monkey_idle_0.png',
+        1: '/assets/pets/monkey/monkey_idle_1.png',
+        2: '/assets/pets/monkey/monkey_idle_2.png',
+        3: '/assets/pets/monkey/monkey_idle_3.png',
+        7: '/assets/pets/monkey/monkey_idle_7.png'
       }
     },
     {
@@ -37,11 +37,11 @@ const TamagotchiCompact = () => {
       emoji: '🐕',
       useEmoji: false,
       spriteUrls: {
-        0: '/assets/pets-organized-complete/dog/dog_idle_0.png',
-        1: '/assets/pets-organized-complete/dog/dog_idle_1.png',
-        2: '/assets/pets-organized-complete/dog/dog_idle_2.png',
-        3: '/assets/pets-organized-complete/dog/dog_idle_3.png',
-        7: '/assets/pets-organized-complete/dog/dog_idle_7.png'
+        0: '/assets/pets/dog/dog_idle_0.png',
+        1: '/assets/pets/dog/dog_idle_1.png',
+        2: '/assets/pets/dog/dog_idle_2.png',
+        3: '/assets/pets/dog/dog_idle_3.png',
+        7: '/assets/pets/dog/dog_idle_7.png'
       }
     },
     {
@@ -50,11 +50,11 @@ const TamagotchiCompact = () => {
       emoji: '🐱',
       useEmoji: false,
       spriteUrls: {
-        0: '/assets/pets-organized-complete/cat/cat_idle_0.png',
-        1: '/assets/pets-organized-complete/cat/cat_idle_1.png',
-        2: '/assets/pets-organized-complete/cat/cat_idle_2.png',
-        3: '/assets/pets-organized-complete/cat/cat_idle_3.png',
-        7: '/assets/pets-organized-complete/cat/cat_idle_7.png'
+        0: '/assets/pets/cat/cat_idle_0.png',
+        1: '/assets/pets/cat/cat_idle_1.png',
+        2: '/assets/pets/cat/cat_idle_2.png',
+        3: '/assets/pets/cat/cat_idle_3.png',
+        7: '/assets/pets/cat/cat_idle_7.png'
       }
     },
     {
@@ -63,11 +63,11 @@ const TamagotchiCompact = () => {
       emoji: '🐻',
       useEmoji: false,
       spriteUrls: {
-        0: '/assets/pets-organized-complete/bear/bear_idle_0.png',
-        1: '/assets/pets-organized-complete/bear/bear_idle_1.png',
-        2: '/assets/pets-organized-complete/bear/bear_idle_2.png',
-        3: '/assets/pets-organized-complete/bear/bear_idle_3.png',
-        7: '/assets/pets-organized-complete/bear/bear_idle_7.png'
+        0: '/assets/pets/bear/bear_idle_0.png',
+        1: '/assets/pets/bear/bear_idle_1.png',
+        2: '/assets/pets/bear/bear_idle_2.png',
+        3: '/assets/pets/bear/bear_idle_3.png',
+        7: '/assets/pets/bear/bear_idle_7.png'
       }
     },
     {
@@ -76,11 +76,11 @@ const TamagotchiCompact = () => {
       emoji: '🐉',
       useEmoji: false,
       spriteUrls: {
-        0: '/assets/pets-organized-complete/dragon/dragon_idle_0.png',
-        2: '/assets/pets-organized-complete/dragon/dragon_idle_2.png',
-        3: '/assets/pets-organized-complete/dragon/dragon_idle_3.png',
-        5: '/assets/pets-organized-complete/dragon/dragon_idle_5.png',
-        7: '/assets/pets-organized-complete/dragon/dragon_idle_7.png'
+        0: '/assets/pets/dragon/dragon_idle_0.png',
+        2: '/assets/pets/dragon/dragon_idle_2.png',
+        3: '/assets/pets/dragon/dragon_idle_3.png',
+        5: '/assets/pets/dragon/dragon_idle_5.png',
+        7: '/assets/pets/dragon/dragon_idle_7.png'
       }
     }
   ];

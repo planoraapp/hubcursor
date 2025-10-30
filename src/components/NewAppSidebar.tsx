@@ -25,10 +25,10 @@ export function NewAppSidebar() {
 
   const menuItems = [
     { name: 'Início', path: '/', icon: '/assets/home.png' },
-    { name: 'Console', path: '/console', icon: '/assets/consoleoff.gif' },
+    { name: 'Console', path: '/console', icon: '/assets/console/consoleoff.gif' },
     { name: 'Homes', path: '/homes', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif' },
-    { name: 'Jornal', path: '/journal', icon: '/assets/news.png' },
-    { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/ferramentas.png' },
+    { name: 'Jornal', path: '/journal', icon: '/assets/journal/news.png' },
+    { name: 'Ferramentas', path: '/ferramentas', icon: '/assets/Tools/ferramentas.png' },
   ];
 
   const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
@@ -49,8 +49,17 @@ export function NewAppSidebar() {
             minHeight: isCollapsed ? '20px' : '16px'
           }}
           onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
+            const target = e.currentTarget as HTMLImageElement;
+            const current = target.getAttribute('src') || '';
+            if (current.includes('/assets/console/consoleoff.gif')) {
+              target.src = '/assets/consoleoff.gif';
+            } else if (current.includes('/assets/journal/news.png')) {
+              target.src = '/assets/news.png';
+            } else if (current.includes('/assets/Tools/ferramentas.png')) {
+              target.src = '/assets/ferramentas.png';
+            } else {
+              target.style.display = 'none';
+            }
           }}
         />
         {!isCollapsed && (
@@ -100,7 +109,7 @@ export function NewAppSidebar() {
           <div className="w-full flex justify-center">
             {isCollapsed ? (
               <img 
-                src="/assets/hub.gif" 
+                src="/assets/site/hub.gif" 
                 alt="Hub" 
                 className="w-12 h-12"
                 onError={(e) => {
@@ -110,12 +119,12 @@ export function NewAppSidebar() {
               />
             ) : (
               <img 
-                src="/assets/bghabbohub.png" 
+                src="/assets/site/hubbeta.gif" 
                 alt="Habbo Hub" 
                 className="w-full h-auto max-w-[200px]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "/assets/habbohub.png";
+                  target.src = "/assets/hubbeta.gif";
                 }}
               />
             )}

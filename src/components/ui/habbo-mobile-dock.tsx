@@ -71,14 +71,14 @@ const HabboMobileDock: React.FC<HabboMobileDockProps> = ({
     const newsItem: DockItem = { 
       id: 'journal', 
       label: 'Jornal', 
-      icon: '/assets/news.png',
+      icon: '/assets/journal/news.png',
       order: 4 
     };
     
     const toolsItem: DockItem = { 
       id: 'tools', 
       label: 'Ferramentas', 
-      icon: '/assets/ferramentas.png',
+      icon: '/assets/Tools/ferramentas.png',
       order: 5 
     };
 

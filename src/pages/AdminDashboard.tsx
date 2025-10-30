@@ -181,7 +181,7 @@ export const AdminDashboard: React.FC = () => {
             <div 
               className="flex items-center justify-center min-h-screen"
               style={{ 
-                backgroundImage: 'url(/assets/bghabbohub.png)',
+                backgroundImage: 'url(/assets/site/bghabbohub.png)',
                 backgroundRepeat: 'repeat',
                 backgroundSize: 'auto'
               }}
@@ -205,7 +205,7 @@ export const AdminDashboard: React.FC = () => {
           <main 
             className="flex-1 p-4 md:p-8 overflow-y-auto scrollbar-hide min-h-screen"
             style={{ 
-              backgroundImage: 'url(/assets/bghabbohub.png)',
+              backgroundImage: 'url(/assets/site/bghabbohub.png)',
               backgroundRepeat: 'repeat',
               backgroundSize: 'auto'
             }}

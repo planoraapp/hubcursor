@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter, Eye, Zap, AlertCircle, Music, Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { Copy, Search, Package, Utensils, Coffee, Candy, Wrench, Smartphone, Gamepad2, RefreshCw, Download, Filter, Eye, Zap, AlertCircle } from 'lucide-react';
 import { HanditemImage } from './HanditemImage';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,7 +16,7 @@ import { handitemDiscovery, DiscoveredHanditem } from '@/utils/handitemDiscovery
 import { avatarPreview, AvatarOptions } from '@/utils/avatarPreview';
 import { UnifiedCatalog } from './UnifiedCatalog';
 import { HabboHanditem, HabboFurni } from '@/services/HabboAPIService';
-import { TraxPlayerWidget } from '@/components/widgets/TraxPlayerWidget';
+// Trax removido deste contexto
 
 interface HanditemData {
   name: string;
@@ -2118,7 +2118,7 @@ const HanditemToolFixed: React.FC = () => {
   // Sistema de Itens Rastreados
   const { trackedItems, trackItem, untrackItem, isTracked } = useTrackedItems('br');
 
-  const defaultHabboName = habboAccount?.habbo_username || "Beebop";
+  const defaultHabboName = habboAccount?.habbo_name || "Beebop";
 
   // Funções do Sistema de Trax
   const handlePlayPause = () => {
@@ -2258,37 +2258,62 @@ const HanditemToolFixed: React.FC = () => {
     );
   }, [defaultHabboName, selectedHanditem]);
 
+  const resolveMobiHanditemImage = useCallback((handitem: HanditemData) => {
+    if (handitem.iconUrl && handitem.iconUrl.trim().length > 0) return handitem.iconUrl;
+    // tentativa por id local (se disponível no projeto)
+    return `/handitems/images/${handitem.inGameId}.png`;
+  }, []);
+
+  // ===== Correção de IDs de Handitems a partir do catálogo local =====
+  interface CatalogHanditemIndex { [lowerName: string]: { id: number; name: string } }
+  const [handitemByName, setHanditemByName] = useState<CatalogHanditemIndex>({});
+
+  useEffect(() => {
+    const loadCatalogIndex = async () => {
+      try {
+        const res = await fetch('/handitems/handitems.json');
+        const data = await res.json();
+        const index: CatalogHanditemIndex = {};
+        if (Array.isArray(data)) {
+          for (const it of data) {
+            const nm = (it?.name || it?.nome || '').toString().trim();
+            const idNum = Number(it?.id);
+            if (nm && Number.isFinite(idNum)) {
+              index[nm.toLowerCase()] = { id: idNum, name: nm };
+            }
+          }
+        } else if (data?.handitems && Array.isArray(data.handitems)) {
+          for (const it of data.handitems) {
+            const nm = (it?.name || it?.nome || '').toString().trim();
+            const idNum = Number(it?.id);
+            if (nm && Number.isFinite(idNum)) {
+              index[nm.toLowerCase()] = { id: idNum, name: nm };
+            }
+          }
+        }
+        setHanditemByName(index);
+      } catch (e) {
+        // silencioso
+      }
+    };
+    loadCatalogIndex();
+  }, []);
+
+  const getCorrectedHanditem = useCallback((item: HanditemData) => {
+    const key = (item.name || '').toLowerCase();
+    const found = handitemByName[key];
+    if (found) {
+      return { id: found.id, name: found.name };
+    }
+    return { id: item.inGameId, name: item.name };
+  }, [handitemByName]);
+
   return (
     <div className="space-y-6">
-      {/* Abas */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-4">
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'catalog' | 'unified' | 'current' | 'trax')}>
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="catalog" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Catálogo Atual
-              </TabsTrigger>
-              <TabsTrigger value="unified" className="flex items-center gap-2">
-                <Filter className="w-4 h-4" />
-                Catálogo Unificado
-              </TabsTrigger>
-              <TabsTrigger value="current" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Catálogo Completo
-              </TabsTrigger>
-              <TabsTrigger value="trax" className="flex items-center gap-2">
-                <Music className="w-4 h-4" />
-                Sistema Trax
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </CardContent>
-      </Card>
+      {/* Removidas abas: Catálogo Completo e Sistema Trax; visão unificada abaixo */}
 
-      {/* Conteúdo das abas */}
-      {activeTab === 'catalog' ? (
-        <div className="space-y-6">
+      {/* Conteúdo unificado */}
+      <div className="space-y-6">
           {/* Header */}
           <Card className="bg-card border-border">
             <CardHeader>
@@ -2357,76 +2382,103 @@ const HanditemToolFixed: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Mobis Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-        {filteredMobis.map((mobi) => (
-          <Card 
-            key={mobi.furniId}
-            className="bg-card border-border hover:shadow-lg transition-all cursor-pointer group"
-            onClick={() => setSelectedMobi(mobi)}
-          >
-            <CardContent className="p-2">
-              <div className="aspect-square relative mb-2 bg-muted rounded-lg overflow-hidden">
-                <img
-                  src={mobi.imageUrl}
-                  alt={mobi.name}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://placehold.co/150x150/e0e0e0/333333?text=Mobi';
-                  }}
-                />
-                <div className="absolute top-1 right-1 w-6 h-6 bg-background rounded-full border border-border flex items-center justify-center">
-                  <img
-                    src={mobi.iconUrl}
-                    alt="Ícone"
-                    className="w-4 h-4"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://i.imgur.com/8DdHXoN.png';
-                    }}
-                  />
-                </div>
-              </div>
-              
-              <h3 className="volter-font font-bold text-xs mb-1 line-clamp-2">{mobi.name}</h3>
-              <p className="text-xs text-muted-foreground volter-font mb-1">{mobi.function}</p>
-              
-              <div className="flex flex-wrap gap-1">
-                {mobi.handitems.slice(0, 4).map((item, idx) => (
-                  <img
-                    key={idx}
-                    src={item.iconUrl}
-                    alt={item.name}
-                    title={item.name}
-                    className="w-4 h-4 border border-border rounded"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://placehold.co/20x20/cccccc/ffffff?text=?';
-                    }}
-                  />
-                ))}
-                {mobi.handitems.length > 6 && (
-                  <div className="w-5 h-5 bg-muted border border-border rounded flex items-center justify-center text-xs volter-font">
-                    +{mobi.handitems.length - 6}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredMobis.length === 0 && (
+      {/* Catálogos lado a lado */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="volter-font text-lg font-bold text-muted-foreground mb-2">
-              Nenhum mobi encontrado
-            </h3>
-            <p className="text-muted-foreground volter-font">
-              Tente ajustar os filtros ou termos de busca
-            </p>
+          <CardHeader>
+            <CardTitle className="volter-font text-xl">Mobis</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <ScrollArea className="h-[600px]">
+              {filteredMobis.length > 0 ? (
+                <div className="grid grid-cols-3 gap-3">
+                  {filteredMobis.map((mobi) => (
+                    <Card 
+                      key={mobi.furniId}
+                      className="bg-card border-border hover:shadow-lg transition-all cursor-pointer group"
+                      onClick={() => setSelectedMobi(mobi)}
+                    >
+                      <CardContent className="p-2">
+                        <div className="aspect-square relative mb-2 bg-muted rounded-lg overflow-hidden">
+                          <img
+                            src={mobi.imageUrl}
+                            alt={mobi.name}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://placehold.co/150x150/e0e0e0/333333?text=Mobi';
+                            }}
+                          />
+                          <div className="absolute top-1 right-1 w-6 h-6 bg-background rounded-full border border-border flex items-center justify-center">
+                            <img
+                              src={mobi.iconUrl}
+                              alt="Ícone"
+                              className="w-4 h-4"
+                              onError={(e) => {
+                                e.currentTarget.src = 'https://i.imgur.com/8DdHXoN.png';
+                              }}
+                            />
+                          </div>
+                        </div>
+                        
+                        <h3 className="volter-font font-bold text-xs mb-1 line-clamp-2">{mobi.name}</h3>
+                        <p className="text-xs text-muted-foreground volter-font mb-1">{mobi.function}</p>
+                        
+                        <div className="flex flex-wrap gap-1">
+                          {mobi.handitems.slice(0, 4).map((item, idx) => {
+                            const corrected = getCorrectedHanditem(item);
+                            const imgSrc = `/handitems/images/${corrected.id}.png`;
+                            return (
+                              <img
+                                key={idx}
+                                src={imgSrc}
+                                alt={corrected.name}
+                                title={corrected.name}
+                                className="w-4 h-4 border border-border rounded"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/handitems/handitem_placeholder.png';
+                                }}
+                              />
+                            );
+                          })}
+                          {mobi.handitems.length > 6 && (
+                            <div className="w-5 h-5 bg-muted border border-border rounded flex items-center justify-center text-xs volter-font">
+                              +{mobi.handitems.length - 6}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8">
+                  <Card className="bg-card border-border">
+                    <CardContent className="p-8 text-center">
+                      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="volter-font text-lg font-bold text-muted-foreground mb-2">
+                        Nenhum mobi encontrado
+                      </h3>
+                      <p className="text-muted-foreground volter-font">
+                        Tente ajustar os filtros ou termos de busca
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </ScrollArea>
           </CardContent>
         </Card>
-      )}
+
+        {/* Coluna Direita: Catálogo Unificado (Handitems) com scroll próprio */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="volter-font text-xl">Handitems</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <UnifiedCatalog externalSearchTerm={searchTerm} hideHeader />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Modal */}
       <Dialog open={!!selectedMobi} onOpenChange={() => setSelectedMobi(null)}>
@@ -2480,26 +2532,27 @@ const HanditemToolFixed: React.FC = () => {
                     {selectedMobi.handitems.map((item) => {
                       const itemClassname = `handitem_${item.webId}`;
                       const isItemTracked = isTracked(itemClassname);
+                      const corrected = getCorrectedHanditem(item);
                       
                       return (
                         <Card
-                          key={item.inGameId}
+                          key={`${item.inGameId}-${corrected.id}`}
                           className="p-3 cursor-pointer hover:bg-muted/50 transition-colors"
                           onClick={() => handleCopyHanditemId(item)}
                         >
                           <div className="flex items-center gap-3">
-                            <img
-                              src={item.iconUrl}
-                              alt={item.name}
+                             <img
+                              src={`/handitems/images/${corrected.id}.png`}
+                              alt={corrected.name}
                               className="w-8 h-8 border border-border rounded"
                               onError={(e) => {
-                                e.currentTarget.src = 'https://placehold.co/32x32/cccccc/ffffff?text=?';
+                                e.currentTarget.src = '/handitems/handitem_placeholder.png';
                               }}
                             />
                             <div className="flex-1">
-                              <h5 className="volter-font font-bold text-sm">{item.name}</h5>
+                              <h5 className="volter-font font-bold text-sm">{corrected.name}</h5>
                               <p className="text-xs text-muted-foreground">
-                                ID: {item.inGameId} • {item.categoryType}
+                                ID: {corrected.id} • {item.categoryType}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -2543,161 +2596,9 @@ const HanditemToolFixed: React.FC = () => {
               </div>
             </div>
           )}
-         </DialogContent>
-       </Dialog>
+        </DialogContent>
+      </Dialog>
         </div>
-      ) : activeTab === 'unified' ? (
-        <UnifiedCatalog 
-          onHanditemSelect={(handitem) => {
-                        // Aqui você pode adicionar lógica para quando um handitem é selecionado
-          }}
-          onFurniSelect={(furni) => {
-                        // Aqui você pode adicionar lógica para quando uma mobília é selecionada
-          }}
-        />
-      ) : activeTab === 'trax' ? (
-        <div className="space-y-6">
-          {/* Header do Sistema Trax */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="volter-font text-2xl text-primary flex items-center gap-2">
-                <Music className="w-6 h-6" />
-                Sistema Trax - Player de Música
-              </CardTitle>
-              <p className="text-muted-foreground volter-font">
-                Controle de música e sistema de rastreamento de itens
-              </p>
-            </CardHeader>
-          </Card>
-
-          {/* Player de Música */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Music className="w-5 h-5 text-purple-600" />
-                  Trax Player
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Music className="w-10 h-10 text-purple-600" />
-                  </div>
-                  <div className="font-bold text-lg volter-font">{currentTrack.title}</div>
-                  <div className="text-sm text-gray-600 volter-font">{currentTrack.artist}</div>
-                  <div className="text-xs text-gray-500 volter-font">{currentTrack.duration}</div>
-                </div>
-                
-                <div className="flex items-center justify-center gap-3">
-                  <Button variant="outline" size="sm" onClick={() => handleTrackChange('prev')}>
-                    <SkipBack className="w-4 h-4" />
-                  </Button>
-                  <Button 
-                    onClick={handlePlayPause}
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleTrackChange('next')}>
-                    <SkipForward className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-purple-600 h-2 rounded-full transition-all duration-300" style={{ width: '45%' }}></div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Itens Rastreados */}
-            <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-blue-600" />
-                  Itens Rastreados ({trackedItems.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-64">
-                  {trackedItems.length === 0 ? (
-                    <div className="text-center text-gray-500 py-8">
-                      <Eye className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p className="volter-font">Nenhum item rastreado</p>
-                      <p className="text-sm">Adicione itens do catálogo para rastrear</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {trackedItems.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-white rounded-lg border">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                              <Package className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{item.name}</p>
-                              <p className="text-xs text-gray-500">{item.classname}</p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleUntrackItem(item.classname)}
-                          >
-                            Remover
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Estatísticas do Sistema */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-green-600" />
-                  <div>
-                    <p className="font-semibold text-green-800">Sistema Ativo</p>
-                    <p className="text-sm text-green-600">Trax funcionando perfeitamente</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-orange-600" />
-                  <div>
-                    <p className="font-semibold text-orange-800">Itens Monitorados</p>
-                    <p className="text-sm text-orange-600">{trackedItems.length} itens ativos</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Music className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <p className="font-semibold text-purple-800">Status da Música</p>
-                    <p className="text-sm text-purple-600">{isPlaying ? 'Tocando' : 'Pausada'}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : (
-        <CurrentCatalog />
-      )}
 
       {/* Modal de Preview de Avatar */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>

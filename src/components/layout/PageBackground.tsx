@@ -11,7 +11,7 @@ export const PageBackground: React.FC<PageBackgroundProps> = ({ children, classN
     <div 
       className={`min-h-screen ${className}`}
       style={{ 
-        backgroundImage: 'url("/assets/bghabbohub.png")',
+        backgroundImage: 'url("/assets/site/bghabbohub.png")',
         backgroundRepeat: 'repeat'
       }}
     >

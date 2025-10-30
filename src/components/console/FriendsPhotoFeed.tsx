@@ -128,7 +128,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ photo, onClose }) => {
                   title={t('pages.console.sendComment')}
                 >
                   <img 
-                    src="/assets/write.png" 
+                    src="/assets/console/write.png" 
                     alt={t('pages.console.sendComment')} 
                     className="w-4 h-4" 
                   />

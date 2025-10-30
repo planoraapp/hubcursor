@@ -126,8 +126,8 @@ const HabboHome: React.FC = () => {
     { id: 'home', label: 'Início', icon: '/assets/home.png', order: 1 },
     { id: 'homes', label: 'Home', icon: 'https://wueccgeizznjmjgmuscy.supabase.co/storage/v1/object/public/habbo-hub-images/home.gif', order: 2 },
     { id: 'console', label: 'Console', icon: '/assets/consoleon3.gif', order: 3 },
-    { id: 'journal', label: 'Jornal', icon: '/assets/news.png', order: 4 },
-    { id: 'tools', label: 'Ferramentas', icon: '/assets/ferramentas.png', order: 5 }
+    { id: 'journal', label: 'Jornal', icon: '/assets/journal/news.png', order: 4 },
+    { id: 'tools', label: 'Ferramentas', icon: '/assets/Tools/ferramentas.png', order: 5 }
   ];
 
   const handleMobileItemClick = (itemId: string) => {
@@ -151,7 +151,7 @@ const HabboHome: React.FC = () => {
   if (loading) {
     const loadingContent = (
       <div className="flex-1 flex items-center justify-center" style={{ 
-        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundImage: 'url(/assets/site/bghabbohub.png)',
         backgroundRepeat: 'repeat'
       }}>
         <div className="text-center">
@@ -186,7 +186,7 @@ const HabboHome: React.FC = () => {
   if (!habboData) {
     const errorContent = (
       <div className="flex-1 flex items-center justify-center" style={{ 
-        backgroundImage: 'url(/assets/bghabbohub.png)',
+        backgroundImage: 'url(/assets/site/bghabbohub.png)',
         backgroundRepeat: 'repeat'
       }}>
         <Card className="max-w-md mx-auto bg-white/95 backdrop-blur-sm shadow-xl border-2 border-black">
@@ -228,7 +228,7 @@ const HabboHome: React.FC = () => {
 
   const homeContent = (
     <div className="flex-1 relative" style={{ 
-      backgroundImage: 'url(/assets/bghabbohub.png)',
+      backgroundImage: 'url(/assets/site/bghabbohub.png)',
       backgroundRepeat: 'repeat'
     }}>
 
